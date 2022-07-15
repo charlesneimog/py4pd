@@ -1,0 +1,8 @@
+#N canvas 660 122 1096 683 12;
+#X obj 98 82 py2pd;
+#X msg 108 47 home;
+#X msg 98 14 run py function 9 1;
+#X obj 98 127 print hi;
+#X connect 0 0 3 0;
+#X connect 1 0 0 0;
+#X connect 2 0 0 0;
