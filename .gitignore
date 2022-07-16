@@ -5,5 +5,6 @@
 *.o
 *.sh
 # ignore .vscode folder
-# .vscode
-# .__pycache__
+.vscode
+__pycache__
+__pycache__/py.cpython-310.pyc
