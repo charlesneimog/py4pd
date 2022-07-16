@@ -40,10 +40,8 @@ static void py_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     Py_Initialize();
 
     Py_GetPythonHome();
-    Py_SetPythonHome("C:/Users/Neimog/Git/py-from-C/");
-    // post("Python home: %s", Py_GetPythonHome());
     PyRun_SimpleString("import sys");
-    PyRun_SimpleString("sys.path.append('C:/Users/Neimog/Git/py-from-C/')");
+    PyRun_SimpleString("sys.path.append('C:/Users/Neimog/Git/py4pd')");
     
     // PyRun_SimpleString("sys.path.append(os.getcwd())");
 
@@ -139,16 +137,16 @@ void *py_new(void){
 
 // ============================================
 
-void py2pd_free(t_py *x){
+void py4pd_free(t_py *x){
     outlet_free(x->out_A);
     pd_free((t_pd *)x);
 }
 
 // ====================================================
-void py2pd_setup(void){
-    py_class =     class_new(gensym("py2pd"), // cria o objeto quando escrevemos py2pd
+void py4pd_setup(void){
+    py_class =     class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
                         (t_newmethod)py_new, // o methodo de inicializacao | pointer genérico
-                        (t_method)py2pd_free, // quando voce deleta o objeto
+                        (t_method)py4pd_free, // quando voce deleta o objeto
                         sizeof(t_py), // quanta memoria precisamos para esse objeto
                         CLASS_DEFAULT, // nao há uma GUI especial para esse objeto
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
