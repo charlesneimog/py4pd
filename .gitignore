@@ -4,3 +4,6 @@
 *.dll
 *.o
 *.sh
+# ignore .vscode folder
+# .vscode
+# .__pycache__

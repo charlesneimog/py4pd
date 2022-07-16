@@ -1,6 +1,0 @@
-{
-    "files.associations": {
-        "*.omlib": "lisp",
-        "python.h": "c"
-    }
-}
