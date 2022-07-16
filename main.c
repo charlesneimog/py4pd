@@ -66,7 +66,7 @@ static void py_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     pName = PyUnicode_DecodeFSDefault(script_file_name_char); // Esse é o nome do script Python
     pModule = PyImport_Import(pName); 
     Py_DECREF(pName);
-
+    post("pModule == %s.", pModule)
     if (pModule != NULL) {
         pFunc = PyObject_GetAttrString(pModule, function_name->s_name);
         /* pFunc is a new reference */

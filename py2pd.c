@@ -1,6 +1,7 @@
 #include <Python.h>
 #include <m_pd.h>
 
+// DEFINE GLOBAL VARIABLES DEBUG
 
 static t_class *py_class;
 
@@ -35,62 +36,55 @@ static void py_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
         return;
     }
     
+    Py_SetProgramName("py4pd"); 
     Py_Initialize();
 
-
-    // get handle to python sys.path object
-    PyObject *sys = PyImport_ImportModule("sys");
-    PyObject *path = PyObject_GetAttrString(sys, "path");
-
-    // make a list of paths to add to sys.path
-    PyObject *newPaths = PyUnicode_Split(PyUnicode_FromWideChar(L"a:b:c", -1), PyUnicode_FromWideChar(L":", 1), -1);
-
-    // iterate through list and add all paths
-    // declade i as int
-    int py_args;
+    Py_GetPythonHome();
+    Py_SetPythonHome("C:/Users/Neimog/Git/py-from-C/");
+    // post("Python home: %s", Py_GetPythonHome());
+    PyRun_SimpleString("import sys");
+    PyRun_SimpleString("sys.path.append('C:/Users/Neimog/Git/py-from-C/')");
     
-    for(int args=0; py_args<PyList_Size(newPaths); py_args++) {
-        PyList_Append(path, PyList_GetItem(newPaths, py_args));
-    }
+    // PyRun_SimpleString("sys.path.append(os.getcwd())");
 
-    // print out sys.path after appends
-    PyObject *newlist = PyUnicode_Join(PyUnicode_FromWideChar(L":", -1), path);
-    printf("newlist = %ls\n", PyUnicode_AsWideCharString(newlist, NULL));
-
-    // ============== DEBUG ============== 
-    
     t_symbol *script_file_name = atom_gensym(argv+0);
-    post("Script Name = %s.", script_file_name->s_name);
-
     t_symbol *function_name = atom_gensym(argv+1);
-    post("Function Name = %s.", function_name->s_name);
-
     t_symbol *functions_args = atom_gensym(argv+2);
-    post("Function Args = %s.", functions_args->s_name);
-
+    
+    // ============== DEBUG ============== 
+    if (0 == 1) {
+        post("Script Name = %s.", script_file_name->s_name);
+        post("Function Name = %s.", function_name->s_name);
+        post("Function Args = %s.", functions_args->s_name);
+    }
+    
     // ============== DEBUG ============== 
 
-    // script_file_name to char
     char *script_file_name_char = script_file_name->s_name;
     
-    pName = PyUnicode_DecodeFSDefault(script_file_name_char); // Esse é o nome do script Python
+    pName = PyUnicode_DecodeFSDefault(script_file_name->s_name); // Esse é o nome do script Python
     pModule = PyImport_Import(pName); 
     Py_DECREF(pName);
 
     int i;
     if (pModule != NULL) {
         pFunc = PyObject_GetAttrString(pModule, function_name->s_name);
-        /* pFunc is a new reference */
-
+ 
         if (pFunc && PyCallable_Check(pFunc)) {
             pArgs = PyTuple_New(argc - 2);
             for (i = 0; i < argc - 2; ++i) {
                 
-                pValue = PyFloat_FromDouble(atom_getfloat(argv+i));
-                //
-                // print pValue
-                post("pValue = %f", atom_getfloat(argv+i));
-                
+                if (argv[i+2].a_type == A_FLOAT) {
+                    pValue = PyFloat_FromDouble(argv[i+2].a_w.w_float);
+                    // post("Argument %d is Float = %f.", i, argv[i+2].a_w.w_float);
+                } else if (argv[i+2].a_type == A_SYMBOL) {
+                    pValue = PyUnicode_DecodeFSDefault(argv[i+2].a_w.w_symbol->s_name);
+                    // post("Argument %d is Symbol = %s.", i, argv[i+2].a_w.w_symbol->s_name);
+                } else {
+                    pValue = Py_None;
+                    Py_INCREF(Py_None);
+                }
+                      
                 if (!pValue) {
                     Py_DECREF(pArgs);
                     Py_DECREF(pModule);
@@ -100,8 +94,11 @@ static void py_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
                 /* pValue reference stolen here: */
                 PyTuple_SetItem(pArgs, i, pValue);
             }
+            
+            
             pValue = PyObject_CallObject(pFunc, pArgs);
             Py_DECREF(pArgs);
+            // post("Return value: %s", pValue);
             if (pValue != NULL) {
                 Py_DECREF(pValue);
                 outlet_float(x->out_A, PyLong_AsLong(pValue));
