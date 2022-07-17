@@ -1,22 +1,22 @@
 #N canvas 669 50 1096 853 12;
-#X msg 114 161 home;
 #X obj 98 330 print py4pd;
 #X obj 98 285 py4pd;
 #X msg 98 105 run py function \$1 10;
 #X obj 101 22 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
--1 -1 0 1;
+-1 -1 100 1;
 #X obj 368 157 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
--1 -1 0 1;
+-1 -1 1600 1;
 #X msg 365 216 args \$1 10;
-#X msg 183 235 import;
-#X msg 156 206 args 302389;
-#X msg 158 161 set py test2om;
-#X connect 0 0 2 0;
+#X msg 201 235 import;
+#X msg 174 206 args 302389;
+#X msg 114 161 home;
+#X msg 176 161 set py function;
+#X connect 1 0 0 0;
 #X connect 2 0 1 0;
 #X connect 3 0 2 0;
-#X connect 4 0 3 0;
-#X connect 5 0 6 0;
-#X connect 6 0 2 0;
-#X connect 7 0 2 0;
-#X connect 8 0 2 0;
-#X connect 9 0 2 0;
+#X connect 4 0 5 0;
+#X connect 5 0 1 0;
+#X connect 6 0 1 0;
+#X connect 7 0 1 0;
+#X connect 8 0 1 0;
+#X connect 9 0 1 0;

@@ -1,7 +1,7 @@
 // =================================
 // Exact copy of https://github.com/pure-data/pure-data/src/x_gui.c 
-#include "m_pd.h"
-#include "g_canvas.h"
+#include <m_pd.h>
+#include <g_canvas.h>
 #include <stdio.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -10,20 +10,13 @@
 #ifdef _MSC_VER
 #define snprintf _snprintf  /* for pdcontrol object */
 #endif
-// =================================
+// end of the copy of x_gui.c
 
-// ============ Python includes ====
 #include <Python.h>
 
-// =================================
 
-
-
-// =================================
 // =================================
 // ============ Pd Object code  ====
-// =================================
-// =================================
 // =================================
 
 static t_class *py_class;
@@ -34,6 +27,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_canvas        *x_canvas; // pointer to the canvas
     PyObject        *module; // python object
     PyObject        *function; // function name
+    t_float         *set_was_called; // flag to check if the set function was called
     t_symbol        *packages_path; // packages path 
     t_symbol        *home_path; // home path this always is the path folder (?)
     t_symbol        *name; // function name
@@ -42,27 +36,23 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 
 // ====================================
 
-static void py_home(t_py *x, t_symbol *s, t_floatarg f) {
-    {
-    t_canvas *c = x->x_canvas;
-    int i;
-    for (i = 0; i < (int)f; i++)
-    {
-        while (!c->gl_env)  /* back up to containing canvas or abstraction */
-            c = c->gl_owner;
-        if (c->gl_owner)    /* back up one more into an owner if any */
-            c = c->gl_owner;
+static void py_home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+    if (argc < 1) {
+        post("The home path is: %s", x->home_path->s_name);
+        return; // is this necessary?
     }
-    if (*s->s_name)
-    {
-        char buf[MAXPDSTRING];
-        snprintf(buf, MAXPDSTRING, "%s/%s",
-            canvas_getdir(c)->s_name, s->s_name);
-        buf[MAXPDSTRING-1] = 0;
-        outlet_symbol(x->out_A, gensym(buf));
-    }
-    else outlet_symbol(x->out_A, canvas_getdir(c));
 }
+
+// ====================================
+
+static void py_packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+    if (argc < 1) {
+        post("The packages path is: %s", x->packages_path->s_name);
+        return; // is this necessary?
+    }
+    else {
+        x->packages_path = atom_getsymbol(argv);
+    }
 }
 
 // ====================================
@@ -81,16 +71,24 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     Py_SetProgramName(py_name_ptr); 
     Py_Initialize();
     Py_GetPythonHome();
-    PyRun_SimpleString("import sys");
-    PyRun_SimpleString("sys.path.append('C:/Users/Neimog/Git/py4pd')"); // TODO: set path using where pd patch is located
 
+    // PyRun_SimpleString("sys.path.append(x->home_path->s_name)"); 
+    char *home_path_str = x->home_path->s_name;
+    // create a string with this = "sys.path.append(' + home_path_str + ')"
+    char *sys_path_str = malloc(strlen(home_path_str) + strlen("sys.path.append('") + strlen("')") + 1);
+    sprintf(sys_path_str, "sys.path.append('%s')", home_path_str);
+    PyRun_SimpleString("import sys");
+    PyRun_SimpleString(sys_path_str);
+    free(sys_path_str); // free the memory allocated for the string
+    
     // ============================================================
     // site modules are in the site-packages folder, 
     // here I add it to the path to make possible import functions of modules inside the site-packages folder
     
     PyObject* sys = PyImport_ImportModule("sys");
     PyObject* sys_path = PyObject_GetAttrString(sys, "path");
-    PyObject* folder_path = PyUnicode_FromString("C:/Users/Neimog/Documents/OM#/temp-files/OM-py-env/Lib/site-packages/");
+    char *site_path_str = x->packages_path->s_name;
+    PyObject* folder_path = PyUnicode_FromString(site_path_str);
     PyList_Append( sys_path, folder_path);
     
     // ============================================================
@@ -107,10 +105,12 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         x->function = pFunc;
         x->module = pModule;
         post("py4pd | function '%s' loaded!", function_name->s_name);
+        x->set_was_called = 1;
         return;
     } else {
         // post PyErr_Print() in pd
         pd_error(x, "py4pd | function %s not loaded!", function_name->s_name);
+        x->set_was_called = 0;
         post("\n===== PYTHON ERROR =====");
         // show python error in pd using post
         PyObject *ptype, *pvalue, *ptraceback;
@@ -126,6 +126,11 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 
 static void py_run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    if (x->set_was_called == 0) {
+        pd_error(x, "You need to send a message ||| set {script_file_name} {function_name} ||| first!");
+        return;
+    }
+    
     PyObject *pName, *pFunc; // pDict, *pModule,
     PyObject *pArgs, *pValue;
     pFunc = x->function;
@@ -266,18 +271,19 @@ static void py_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 
 void *py_new(void){
+    // pd things
     t_py *x = (t_py *)pd_new(py_class); // pointer para a classe
-
-    // set name 
-    char *name = "py4pd";
-    x->name = gensym(name);
+    x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     x->out_A = outlet_new(&x->x_obj, &s_anything); // cria um outlet
+    // ========
+
+    // py things
+    t_canvas *c = x->x_canvas; 
+    x->home_path = canvas_getdir(c);     // set name 
+    char *name = "py4pd";
+    x->name = gensym(name); // set program name
     return(x);
 }
-
-
-
-
 
 // ============================================
 // ============================================
@@ -287,11 +293,16 @@ void py4pd_free(t_py *x){
     PyObject  *pModule, *pFunc; // pDict, *pName,
     pFunc = x->function;
     pModule = x->module;
-    Py_DECREF(pFunc);
-    Py_DECREF(pModule);
-    Py_FinalizeEx();
-    // outlet_free(x->out_A);
-    // pd_free((t_pd *)x);
+    if (pModule != NULL) {
+        Py_DECREF(pModule);
+    }
+    if (pFunc != NULL) {
+        Py_DECREF(pFunc);
+    }
+    if (Py_FinalizeEx() < 0) {
+        return;
+    }
+
 }
 
 // ====================================================
@@ -305,7 +316,7 @@ void py4pd_setup(void){
     
     // class_addmethod(py_class, (t_method)pycontrol_dir, gensym("path"), A_DEFFLOAT, A_DEFSYMBOL, 0);
     class_addmethod(py_class, (t_method)py_run, gensym("run"), A_GIMME, 0); 
-    class_addmethod(py_class, (t_method)py_home, gensym("home"), A_DEFFLOAT, A_DEFSYMBOL, 0);
+    class_addmethod(py_class, (t_method)py_home, gensym("home"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)py_set_function, gensym("set"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)py_run_without_quit_py, gensym("args"), A_GIMME, 0);
     // class_addmethod(py_class, (t_method)py_import, gensym("import"), 0, 0);
