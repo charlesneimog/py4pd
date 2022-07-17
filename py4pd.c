@@ -11,6 +11,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject        *module; // python object
     PyObject        *function; // function name
     t_symbol        *packages_path; // packages path 
+    t_symbol        *home_path; // home path 
     t_symbol        *name; // function name
     t_outlet        *out_A; // outlet 1.
 }t_py;
