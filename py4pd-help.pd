@@ -1,11 +1,20 @@
-#N canvas 359 84 1096 683 12;
-#X msg 149 161 home;
-#X obj 98 267 print py4pd;
-#X obj 98 222 py4pd;
+#N canvas 536 49 1096 853 12;
+#X msg 114 161 home;
+#X obj 98 330 print py4pd;
+#X obj 98 285 py4pd;
 #X msg 98 105 run py function \$1 10;
 #X obj 101 22 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
--1 -1 500 1;
+-1 -1 5200 1;
+#X msg 158 161 set py function;
+#X msg 185 208 args 30 43;
+#X obj 368 157 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 900 1;
+#X msg 365 216 args \$1 10;
 #X connect 0 0 2 0;
 #X connect 2 0 1 0;
 #X connect 3 0 2 0;
 #X connect 4 0 3 0;
+#X connect 5 0 2 0;
+#X connect 6 0 2 0;
+#X connect 7 0 8 0;
+#X connect 8 0 2 0;
