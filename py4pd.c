@@ -1,4 +1,4 @@
-// ================================================================
+// =================================
 // Exact copy of https://github.com/pure-data/pure-data/src/x_gui.c 
 #include "m_pd.h"
 #include "g_canvas.h"
@@ -10,17 +10,25 @@
 #ifdef _MSC_VER
 #define snprintf _snprintf  /* for pdcontrol object */
 #endif
-// ================================================================
+// =================================
 
-// ============ Python includes ===================================
+// ============ Python includes ====
 #include <Python.h>
-// ============ Python includes ===================================
+
+// =================================
 
 
+
+// =================================
+// =================================
+// ============ Pd Object code  ====
+// =================================
+// =================================
+// =================================
 
 static t_class *py_class;
 
-// ============================================
+// =====================================
 typedef struct _py { // It seems that all the objects are some kind of class.
     t_object        x_obj; // convensao no puredata source code
     t_canvas        *x_canvas; // pointer to the canvas
