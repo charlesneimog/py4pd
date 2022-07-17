@@ -1,26 +1,60 @@
-#include <Python.h>
-#include <m_pd.h>
+// ================================================================
+// Exact copy of https://github.com/pure-data/pure-data/src/x_gui.c 
+#include "m_pd.h"
+#include "g_canvas.h"
+#include <stdio.h>
+#include <string.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef _MSC_VER
+#define snprintf _snprintf  /* for pdcontrol object */
+#endif
+// ================================================================
 
-// DEFINE GLOBAL VARIABLES DEBUG
+// ============ Python includes ===================================
+#include <Python.h>
+// ============ Python includes ===================================
+
+
 
 static t_class *py_class;
 
 // ============================================
 typedef struct _py { // It seems that all the objects are some kind of class.
     t_object        x_obj; // convensao no puredata source code
+    t_canvas        *x_canvas; // pointer to the canvas
     PyObject        *module; // python object
     PyObject        *function; // function name
     t_symbol        *packages_path; // packages path 
-    t_symbol        *home_path; // home path 
+    t_symbol        *home_path; // home path this always is the path folder (?)
     t_symbol        *name; // function name
     t_outlet        *out_A; // outlet 1.
 }t_py;
 
 // ====================================
 
-static void py_home(t_py *x) {
-    post("Not implemented yet");
-    
+static void py_home(t_py *x, t_symbol *s, t_floatarg f) {
+    {
+    t_canvas *c = x->x_canvas;
+    int i;
+    for (i = 0; i < (int)f; i++)
+    {
+        while (!c->gl_env)  /* back up to containing canvas or abstraction */
+            c = c->gl_owner;
+        if (c->gl_owner)    /* back up one more into an owner if any */
+            c = c->gl_owner;
+    }
+    if (*s->s_name)
+    {
+        char buf[MAXPDSTRING];
+        snprintf(buf, MAXPDSTRING, "%s/%s",
+            canvas_getdir(c)->s_name, s->s_name);
+        buf[MAXPDSTRING-1] = 0;
+        outlet_symbol(x->out_A, gensym(buf));
+    }
+    else outlet_symbol(x->out_A, canvas_getdir(c));
+}
 }
 
 // ====================================
@@ -124,7 +158,6 @@ static void py_run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv)
     }
 
 }
-
 
 // ============================================
 // ============================================
@@ -234,6 +267,10 @@ void *py_new(void){
     return(x);
 }
 
+
+
+
+
 // ============================================
 // ============================================
 // ============================================
@@ -260,7 +297,7 @@ void py4pd_setup(void){
     
     // class_addmethod(py_class, (t_method)pycontrol_dir, gensym("path"), A_DEFFLOAT, A_DEFSYMBOL, 0);
     class_addmethod(py_class, (t_method)py_run, gensym("run"), A_GIMME, 0); 
-    class_addmethod(py_class, (t_method)py_home, gensym("home"), 0);
+    class_addmethod(py_class, (t_method)py_home, gensym("home"), A_DEFFLOAT, A_DEFSYMBOL, 0);
     class_addmethod(py_class, (t_method)py_set_function, gensym("set"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)py_run_without_quit_py, gensym("args"), A_GIMME, 0);
     // class_addmethod(py_class, (t_method)py_import, gensym("import"), 0, 0);
