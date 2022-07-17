@@ -30,7 +30,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_float         *set_was_called; // flag to check if the set function was called
     t_symbol        *packages_path; // packages path 
     t_symbol        *home_path; // home path this always is the path folder (?)
-    t_symbol        *name; // function name
+    t_symbol        *function_name; // function name
     t_outlet        *out_A; // outlet 1.
 }t_py;
 
@@ -46,18 +46,37 @@ static void py_home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 // ====================================
 
 static void py_packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+
     if (argc < 1) {
         post("The packages path is: %s", x->packages_path->s_name);
         return; // is this necessary?
     }
     else {
-        x->packages_path = atom_getsymbol(argv);
+        if (argc < 2 && argc > 0){
+            x->packages_path = atom_getsymbol(argv);
+            post("The packages path is now: %s", x->packages_path->s_name);
+        }   
+        else
+            pd_error(x, "It seems that your package folder has |spaces|. It can not have |spaces|!");
+            post("I intend to implement this feature in the future!");
+            return;
     }
 }
 
 // ====================================
 
 static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    t_symbol *script_file_name = atom_gensym(argv+0);
+    t_symbol *function_name = atom_gensym(argv+1);
+
+    if (!x->function_name){
+        if (x->set_was_called == 1 && x->function_name == function_name) {
+        post("The function was already set!");
+        return;
+        }
+    }
+    
+    
     PyObject *pName, *pModule, *pDict, *pFunc;
     PyObject *pArgs, *pValue;
 
@@ -72,39 +91,49 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     Py_Initialize();
     Py_GetPythonHome();
 
-    // PyRun_SimpleString("sys.path.append(x->home_path->s_name)"); 
+    // ============================================================
+    // Here a set the home folder of Python to be in the same folder as the pd patch 
     char *home_path_str = x->home_path->s_name;
-    // create a string with this = "sys.path.append(' + home_path_str + ')"
     char *sys_path_str = malloc(strlen(home_path_str) + strlen("sys.path.append('") + strlen("')") + 1);
     sprintf(sys_path_str, "sys.path.append('%s')", home_path_str);
     PyRun_SimpleString("import sys");
     PyRun_SimpleString(sys_path_str);
-    free(sys_path_str); // free the memory allocated for the string
+    // free(sys_path_str); // free the memory allocated for the string
     
     // ============================================================
     // site modules are in the site-packages folder, 
     // here I add it to the path to make possible import functions of modules inside the site-packages folder
     
+
+    char *site_path_str = x->packages_path->s_name;
+
+    // append quotes (") to site_path_str
+
+    // char *site_path_str_append = malloc(strlen(site_path_str) + 3);
+    // sprintf(site_path_str_append, '"%s"', site_path_str);
+    // post("site_path_str_append: %s", site_path_str_append);
+
     PyObject* sys = PyImport_ImportModule("sys");
     PyObject* sys_path = PyObject_GetAttrString(sys, "path");
-    char *site_path_str = x->packages_path->s_name;
-    PyObject* folder_path = PyUnicode_FromString(site_path_str);
-    PyList_Append( sys_path, folder_path);
+    PyObject* folder_path = PyUnicode_FromString("C:/Users/Neimog/Documents/OM#/temp-files/OM-py-env/Lib/site-packages"); // 
+    //PyObject* folder_path = PyUnicode_FromString(site_path_str_append); //
+    PyList_Append(sys_path, folder_path);
+    free(site_path_str); 
+    Py_DECREF(folder_path);
+    Py_DECREF(sys_path);
     
     // ============================================================
     
-    t_symbol *script_file_name = atom_gensym(argv+0);
-    t_symbol *function_name = atom_gensym(argv+1);
-        
-    pName = PyUnicode_DecodeFSDefault(script_file_name->s_name); // Esse é o nome do script Python
+    pName = PyUnicode_DecodeFSDefault(script_file_name->s_name); // Name of script file
     pModule = PyImport_Import(pName);
-    pFunc = PyObject_GetAttrString(pModule, function_name->s_name); // Esse é o nome da função Python 
+    pFunc = PyObject_GetAttrString(pModule, function_name->s_name); // Name of the Function name inside the script file
     Py_DECREF(pName);
-    if (pFunc && PyCallable_Check(pFunc)){ // Verifica se a função existe
+    if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable
         // pFunc equal x_function
         x->function = pFunc;
         x->module = pModule;
         post("py4pd | function '%s' loaded!", function_name->s_name);
+        x->function_name = function_name;
         x->set_was_called = 1;
         return;
     } else {
@@ -139,11 +168,9 @@ static void py_run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv)
     int i;
     for (i = 0; i < argc; ++i) {
         if (argv[i].a_type == A_FLOAT) {
-            pValue = PyFloat_FromDouble(argv[i+0].a_w.w_float);
-            // post("py4pd | run method | float: %f", argv[i+0].a_w.w_float);
+            pValue = PyFloat_FromDouble(argv[i+0].a_w.w_float); // convert to python float
         } else if (argv[i].a_type == A_SYMBOL) {
-            pValue = PyUnicode_DecodeFSDefault(argv[i].a_w.w_symbol->s_name);
-            // post("py4pd | run method | symbol: %s", argv[i].a_w.w_symbol->s_name);
+            pValue = PyUnicode_DecodeFSDefault(argv[i].a_w.w_symbol->s_name); // convert to python string
         } else {
             pValue = Py_None;
             Py_INCREF(Py_None);
@@ -280,8 +307,7 @@ void *py_new(void){
     // py things
     t_canvas *c = x->x_canvas; 
     x->home_path = canvas_getdir(c);     // set name 
-    char *name = "py4pd";
-    x->name = gensym(name); // set program name
+    x->packages_path = canvas_getdir(c); // set name
     return(x);
 }
 
@@ -319,5 +345,5 @@ void py4pd_setup(void){
     class_addmethod(py_class, (t_method)py_home, gensym("home"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)py_set_function, gensym("set"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)py_run_without_quit_py, gensym("args"), A_GIMME, 0);
-    // class_addmethod(py_class, (t_method)py_import, gensym("import"), 0, 0);
+    class_addmethod(py_class, (t_method)py_packages, gensym("packages"), A_GIMME, 0);
     }
