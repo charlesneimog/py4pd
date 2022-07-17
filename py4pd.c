@@ -10,6 +10,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_object        x_obj; // convensao no puredata source code
     PyObject        *module; // python object
     PyObject        *function; // function name
+    t_symbol        *packages_path; // packages path 
     t_symbol        *name; // function name
     t_outlet        *out_A; // outlet 1.
 }t_py;
@@ -40,10 +41,12 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     PyRun_SimpleString("import sys");
     PyRun_SimpleString("sys.path.append('C:/Users/Neimog/Git/py4pd')"); // TODO: set path using where pd patch is located
 
-    // site modules are in the site-packages folder
+    // ============================================================
+    // site modules are in the site-packages folder, 
+    // here I add it to the path to make possible import functions of modules inside the site-packages folder
     
-    PyObject* sys = PyImport_ImportModule( "sys" );
-    PyObject* sys_path = PyObject_GetAttrString( sys, "path" );
+    PyObject* sys = PyImport_ImportModule("sys");
+    PyObject* sys_path = PyObject_GetAttrString(sys, "path");
     PyObject* folder_path = PyUnicode_FromString("C:/Users/Neimog/Documents/OM#/temp-files/OM-py-env/Lib/site-packages/");
     PyList_Append( sys_path, folder_path);
     
