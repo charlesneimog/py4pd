@@ -7,14 +7,10 @@ static t_class *py_class;
 
 // ============================================
 typedef struct _py { // It seems that all the objects are some kind of class.
-    t_object        x_obj; // convensao no puredata source
-    t_symbol        *x_pyvariables; // array variables???
-    t_symbol        *x_pyenvironment; // function name
-    t_symbol        *x_pyscript; // symbol of the function
-    t_float         *debug; // float value
-    t_canvas        *x_canvas; // canvas
+    t_object        x_obj; // convensao no puredata source code
     PyObject        *module; // python object
     PyObject        *function; // function name
+    t_symbol        *name; // function name
     t_outlet        *out_A; // outlet 1.
 }t_py;
 
@@ -31,16 +27,28 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     PyObject *pName, *pModule, *pDict, *pFunc;
     PyObject *pArgs, *pValue;
 
-    if (argc < 2) {
+    if (argc < 2) { // check is the number of arguments is correct
         pd_error(x,"py4pd | run method | missing arguments");
         return;
     }
-    Py_SetProgramName("py4pd"); 
+    wchar_t py_name[5];
+    wchar_t *py_name_ptr = py_name;
+    py_name_ptr = "py4pd";
+    Py_SetProgramName(py_name_ptr); 
     Py_Initialize();
     Py_GetPythonHome();
     PyRun_SimpleString("import sys");
-    PyRun_SimpleString("sys.path.append('C:/Users/Neimog/Git/py4pd')"); // set path using where pd patch is located
+    PyRun_SimpleString("sys.path.append('C:/Users/Neimog/Git/py4pd')"); // TODO: set path using where pd patch is located
 
+    // site modules are in the site-packages folder
+    
+    PyObject* sys = PyImport_ImportModule( "sys" );
+    PyObject* sys_path = PyObject_GetAttrString( sys, "path" );
+    PyObject* folder_path = PyUnicode_FromString("C:/Users/Neimog/Documents/OM#/temp-files/OM-py-env/Lib/site-packages/");
+    PyList_Append( sys_path, folder_path);
+    
+    // ============================================================
+    
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
         
@@ -52,7 +60,7 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         // pFunc equal x_function
         x->function = pFunc;
         x->module = pModule;
-        post("py4pd | function %s loaded!", function_name->s_name);
+        post("py4pd | function '%s' loaded!", function_name->s_name);
         return;
     } else {
         // post PyErr_Print() in pd
@@ -70,11 +78,12 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 }
 
 // ============================================
+
 static void py_run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    PyObject *pName, *pModule, *pFunc; // pDict
+    PyObject *pName, *pFunc; // pDict, *pModule,
     PyObject *pArgs, *pValue;
     pFunc = x->function;
-    pModule = x->module;
+    // pModule = x->module;
     pArgs = PyTuple_New(argc);
     int i;
     for (i = 0; i < argc; ++i) {
@@ -90,8 +99,6 @@ static void py_run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv)
         }
                 
         if (!pValue) {
-            // Py_DECREF(pArgs);
-            // Py_DECREF(pModule);
             pd_error(x, "Cannot convert argument\n");
             return;
         }
@@ -136,7 +143,10 @@ static void py_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
         return;
     }
 
-    Py_SetProgramName("py4pd"); 
+    wchar_t py_name[5];
+    wchar_t *py_name_ptr = py_name;
+    py_name_ptr = "py4pd";
+    Py_SetProgramName(py_name_ptr);  
     Py_Initialize();
     Py_GetPythonHome();
     PyRun_SimpleString("import sys");
@@ -212,6 +222,10 @@ static void py_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
 void *py_new(void){
     t_py *x = (t_py *)pd_new(py_class); // pointer para a classe
+
+    // set name 
+    char *name = "py4pd";
+    x->name = gensym(name);
     x->out_A = outlet_new(&x->x_obj, &s_anything); // cria um outlet
     return(x);
 }
@@ -221,9 +235,14 @@ void *py_new(void){
 // ============================================
 
 void py4pd_free(t_py *x){
+    PyObject  *pModule, *pFunc; // pDict, *pName,
+    pFunc = x->function;
+    pModule = x->module;
+    Py_DECREF(pFunc);
+    Py_DECREF(pModule);
     Py_FinalizeEx();
-    outlet_free(x->out_A);
-    pd_free((t_pd *)x);
+    // outlet_free(x->out_A);
+    // pd_free((t_pd *)x);
 }
 
 // ====================================================
@@ -240,4 +259,5 @@ void py4pd_setup(void){
     class_addmethod(py_class, (t_method)py_home, gensym("home"), 0);
     class_addmethod(py_class, (t_method)py_set_function, gensym("set"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)py_run_without_quit_py, gensym("args"), A_GIMME, 0);
+    // class_addmethod(py_class, (t_method)py_import, gensym("import"), 0, 0);
     }
