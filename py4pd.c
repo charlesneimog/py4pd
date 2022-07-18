@@ -225,7 +225,16 @@ static void py_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     PyObject *pName, *pModule, *pDict, *pFunc;
     PyObject *pArgs, *pValue;
-
+    
+    if (x->function_name != NULL){
+        Py_XDECREF(x->function);
+        Py_XDECREF(x->module);
+        x->function = NULL;
+        x->module = NULL;
+        x->function_name = NULL;
+        x->set_was_called = 0;
+    }
+    
     if (argc < 3) {
         pd_error(x,"py4pd | run method | missing arguments");
         return;
@@ -296,6 +305,7 @@ static void py_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     else {
         PyErr_Print();
         pd_error(x, "Failed to load \"%s\"\n", script_file_name->s_name);
+        
         return ;
     }
     if (Py_FinalizeEx() < 0) {
