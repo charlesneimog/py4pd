@@ -37,7 +37,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 // ============== METHODS =====================
 // ============================================
 
-static void py_home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     if (argc < 1) {
         post("The home path is: %s", x->home_path->s_name);
         return; // is this necessary?
@@ -50,7 +50,7 @@ static void py_home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 // ============================================
 // ============================================
 
-static void py_packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     if (argc < 1) {
         post("The packages path is: %s", x->packages_path->s_name);
@@ -72,7 +72,7 @@ static void py_packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 // ====================================
 // ====================================
 
-static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
     
@@ -105,7 +105,7 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     wchar_t py_name[5];
     wchar_t *py_name_ptr = py_name;
     py_name_ptr = "py4pd";
-    Py_SetProgramName(py_name_ptr); 
+    Py_SetProgramName(py_name_ptr); // set program name
     Py_Initialize();
     Py_GetPythonHome();
 
@@ -115,7 +115,7 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     sprintf(sys_path_str, "sys.path.append('%s')", home_path_str);
     PyRun_SimpleString("import sys");
     PyRun_SimpleString(sys_path_str);
-    free(sys_path_str); // free the memory allocated for the string
+    free(sys_path_str); // free the memory allocated for the string, check if this is necessary
     
     // =====================
 
@@ -164,7 +164,7 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 // ============================================
 
-static void py_run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv){
     if (x->set_was_called == 0) {
         pd_error(x, "You need to send a message ||| set {script_file_name} {function_name} ||| first!");
         return;
@@ -213,7 +213,7 @@ static void py_run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv)
 // ============================================
 // ============================================
 
-static void py_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     PyObject *pName, *pModule, *pDict, *pFunc;
     PyObject *pArgs, *pValue;
@@ -352,9 +352,9 @@ void py4pd_setup(void){
                         CLASS_DEFAULT, // nao há uma GUI especial para esse objeto
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
     
-    class_addmethod(py_class, (t_method)py_run, gensym("run"), A_GIMME, 0); 
-    class_addmethod(py_class, (t_method)py_home, gensym("home"), A_GIMME, 0);
-    class_addmethod(py_class, (t_method)py_set_function, gensym("set"), A_GIMME, 0);
-    class_addmethod(py_class, (t_method)py_run_without_quit_py, gensym("args"), A_GIMME, 0); // TODO: better name for this method
-    class_addmethod(py_class, (t_method)py_packages, gensym("packages"), A_GIMME, 0);
+    class_addmethod(py_class, (t_method)run, gensym("run"), A_GIMME, 0); 
+    class_addmethod(py_class, (t_method)home, gensym("home"), A_GIMME, 0);
+    class_addmethod(py_class, (t_method)set_function, gensym("set"), A_GIMME, 0);
+    class_addmethod(py_class, (t_method)run_without_quit_py, gensym("args"), A_GIMME, 0); // TODO: better name for this method
+    class_addmethod(py_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
     }
