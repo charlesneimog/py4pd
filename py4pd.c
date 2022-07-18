@@ -100,7 +100,7 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         return;
     }
     
-    PyObject *pName, *pModule, *pDict, *pFunc;
+    PyObject *pName, *pModule, *pDict, *pFunc,  *py_func_obj=NULL;
     PyObject *pArgs, *pValue;
     wchar_t py_name[5];
     wchar_t *py_name_ptr = py_name;
@@ -142,10 +142,6 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         post("py4pd | function '%s' loaded!", function_name->s_name);
         x->function_name = function_name;
         x->set_was_called = 1;
-        // TODO: check the number of arguments and the type of arguments
-        
-         
-        
         return;
     } else {
         // post PyErr_Print() in pd
@@ -202,8 +198,13 @@ static void py_run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv)
         Py_DECREF(pValue);
     }
     else {
-        PyErr_Print();
-        pd_error(x,"Call failed\n");
+        // Convert PyErr_Print to string
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "Call failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
         return;
     }
 
