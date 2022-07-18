@@ -33,7 +33,9 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_outlet        *out_A; // outlet 1.
 }t_py;
 
-// ====================================
+// ============================================
+// ============== METHODS =====================
+// ============================================
 
 static void py_home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     if (argc < 1) {
@@ -44,7 +46,9 @@ static void py_home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     // TODO: make it work with path with spaces
 }
 
-// ====================================
+// ============================================
+// ============================================
+// ============================================
 
 static void py_packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
@@ -64,12 +68,8 @@ static void py_packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
 }
 
-// ==================================== test
-static void py_test(t_py *x, t_symbol *s, int argc, t_atom *argv) {
-    post("test");
-}
-
-
+// ====================================
+// ====================================
 // ====================================
 
 static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
@@ -93,7 +93,7 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         }      
     }
 
-    // ===========================================================
+    // =====================
 
     if (argc < 2) { // check is the number of arguments is correct | set "function_script" "function_name"
         pd_error(x,"py4pd :: The set message needs two arguments! The 'Script name' and the 'function name'!");
@@ -109,7 +109,7 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     Py_Initialize();
     Py_GetPythonHome();
 
-    // ============================================================
+    // =====================
     char *home_path_str = x->home_path->s_name;
     char *sys_path_str = malloc(strlen(home_path_str) + strlen("sys.path.append('") + strlen("')") + 1);
     sprintf(sys_path_str, "sys.path.append('%s')", home_path_str);
@@ -117,14 +117,15 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     PyRun_SimpleString(sys_path_str);
     free(sys_path_str); // free the memory allocated for the string
     
-    // ============================================================
+    // =====================
 
     char *site_path_str = x->packages_path->s_name;
 
     PyObject* sys = PyImport_ImportModule("sys");
     PyObject* sys_path = PyObject_GetAttrString(sys, "path");
+    // TODO: make possible to set own site-packages path
     PyObject* folder_path = PyUnicode_FromString("C:/Users/Neimog/Documents/OM#/temp-files/OM-py-env/Lib/site-packages"); // 
-    //PyObject* folder_path = PyUnicode_FromString(site_path_str_append); // TODO: make possible to set own path
+    // TODO: make possible to set own site-packages path
     PyList_Append(sys_path, folder_path);
     Py_DECREF(folder_path);
     Py_DECREF(sys_path);
@@ -146,20 +147,21 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     } else {
         // post PyErr_Print() in pd
         pd_error(x, "py4pd | function %s not loaded!", function_name->s_name);
-        x->set_was_called = 0;
+        x->set_was_called = 0; // set the flag to 0 because it crash Pd if user try to use args method
         x->function_name = NULL;
-        post("\n===== PYTHON ERROR =====");
-        // show python error in pd using post
+        post("");
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
-        post("%s", PyUnicode_AsUTF8(pstr));
-        post("========================\n");
+        pd_error(x, "Call failed:\n %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
         return;
     }
 }
 
+// ============================================
+// ============================================
 // ============================================
 
 static void py_run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv){
@@ -171,7 +173,6 @@ static void py_run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv)
     PyObject *pName, *pFunc; // pDict, *pModule,
     PyObject *pArgs, *pValue;
     pFunc = x->function;
-    // pModule = x->module;
     pArgs = PyTuple_New(argc);
     int i;
     for (i = 0; i < argc; ++i) {
@@ -198,7 +199,6 @@ static void py_run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv)
         Py_DECREF(pValue);
     }
     else {
-        // Convert PyErr_Print to string
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
@@ -207,16 +207,8 @@ static void py_run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv)
         Py_DECREF(pstr);
         return;
     }
-
 }
 
-// ============================================
-// ============================================
-// ============================================
-// ============================================
-// ============================================
-// ============================================
-// ============================================
 // ============================================
 // ============================================
 // ============================================
@@ -227,12 +219,12 @@ static void py_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     PyObject *pArgs, *pValue;
     
     if (x->function_name != NULL){
-        Py_XDECREF(x->function);
-        Py_XDECREF(x->module);
-        x->function = NULL;
-        x->module = NULL;
-        x->function_name = NULL;
-        x->set_was_called = 0;
+        Py_XDECREF(x->function); // free the memory allocated for the function
+        Py_XDECREF(x->module); // free the memory allocated for the module
+        x->function = NULL; // clear the function pointer
+        x->module = NULL; // clear the module pointer
+        x->function_name = NULL; // clear the function name pointer
+        x->set_was_called = 0; // set the flag to 0 because it crash Pd if user try to use args method without set first
     }
     
     if (argc < 3) {
@@ -246,7 +238,7 @@ static void py_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     Py_SetProgramName(py_name_ptr);  
     Py_Initialize();
     Py_GetPythonHome();
-    PyRun_SimpleString("import sys");
+    PyRun_SimpleString("import sys"); // TODO: make this like the set method
     PyRun_SimpleString("sys.path.append('C:/Users/Neimog/Git/py4pd')"); // set path using where pd patch is located
 
     t_symbol *script_file_name = atom_gensym(argv+0);
@@ -315,7 +307,7 @@ static void py_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 }
 
 // ============================================
-// ============================================
+// =========== CREATION OF OBJECT =============
 // ============================================
 
 void *py_new(void){
@@ -333,7 +325,7 @@ void *py_new(void){
 }
 
 // ============================================
-// ============================================
+// =========== REMOVE OBJECT ==================
 // ============================================
 
 void py4pd_free(t_py *x){
@@ -360,11 +352,9 @@ void py4pd_setup(void){
                         CLASS_DEFAULT, // nao há uma GUI especial para esse objeto
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
     
-    // class_addmethod(py_class, (t_method)pycontrol_dir, gensym("path"), A_DEFFLOAT, A_DEFSYMBOL, 0);
     class_addmethod(py_class, (t_method)py_run, gensym("run"), A_GIMME, 0); 
     class_addmethod(py_class, (t_method)py_home, gensym("home"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)py_set_function, gensym("set"), A_GIMME, 0);
-    class_addmethod(py_class, (t_method)py_run_without_quit_py, gensym("args"), A_GIMME, 0);
+    class_addmethod(py_class, (t_method)py_run_without_quit_py, gensym("args"), A_GIMME, 0); // TODO: better name for this method
     class_addmethod(py_class, (t_method)py_packages, gensym("packages"), A_GIMME, 0);
-    class_addmethod(py_class, (t_method)py_test, gensym("test"), A_GIMME, 0);
     }
