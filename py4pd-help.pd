@@ -1,24 +1,29 @@
-#N canvas 669 50 1096 853 12;
-#X obj 98 418 print py4pd;
-#X obj 98 373 py4pd;
-#X msg 98 105 run py function \$1 10;
-#X obj 101 22 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+#N canvas 540 39 1245 761 12;
+#X obj 19 318 print py4pd;
+#X obj 19 292 py4pd;
+#X obj 63 24 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
 -1 -1 0 1;
-#X obj 368 157 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
--1 -1 3800 1;
-#X msg 201 235 import;
-#X msg 174 206 args 302389;
-#X msg 114 161 home;
-#X msg 176 161 set py function;
-#X msg 311 287 packages, f 10;
-#X msg 365 216 args \$1 10;
+#X obj 456 37 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X msg 234 64 args 302389;
+#X msg 18 64 home;
+#X msg 453 64 args \$1 10;
+#X msg 325 64 set py function1;
+#X msg 373 133 set py function2;
+#X msg 373 185 args \$1;
+#X obj 376 163 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+-1 -1 0 1;
+#X msg 60 64 run py function1 \$1 10;
+#X msg 78 115 run py function2 10;
 #X connect 1 0 0 0;
-#X connect 2 0 1 0;
-#X connect 3 0 2 0;
-#X connect 4 0 10 0;
+#X connect 2 0 11 0;
+#X connect 3 0 6 0;
+#X connect 4 0 1 0;
 #X connect 5 0 1 0;
 #X connect 6 0 1 0;
 #X connect 7 0 1 0;
 #X connect 8 0 1 0;
 #X connect 9 0 1 0;
-#X connect 10 0 1 0;
+#X connect 10 0 9 0;
+#X connect 11 0 1 0;
+#X connect 12 0 1 0;

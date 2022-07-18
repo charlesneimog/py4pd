@@ -14,7 +14,6 @@
 
 #include <Python.h>
 
-
 // =================================
 // ============ Pd Object code  ====
 // =================================
@@ -41,6 +40,8 @@ static void py_home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         post("The home path is: %s", x->home_path->s_name);
         return; // is this necessary?
     }
+    // TODO: make it define others paths 
+    // TODO: make it work with path with spaces
 }
 
 // ====================================
@@ -63,27 +64,44 @@ static void py_packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
 }
 
+// ==================================== test
+static void py_test(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+    post("test");
+}
+
+
 // ====================================
 
 static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
-
-    if (!x->function_name){
-        if (x->set_was_called == 1 && x->function_name == function_name) {
-        post("The function was already set!");
-        return;
-        }
-    }
     
+    if (x->function_name != NULL){
+        int function_is_equal = strcmp(function_name->s_name, x->function_name->s_name);
+        if (function_is_equal == 0){    // If the user wants to call the same function again! This is not necessary at first glance. 
+            pd_error(x, "WARNING :: The function was already called!");
+            pd_error(x, "WARNING :: Calling the function again! This make it slower!");
+            post("");
+            return;
+        }
+        else{ // If the function is different, then we need to delete the old function and create a new one.
+            Py_XDECREF(x->function);
+            Py_XDECREF(x->module);
+            x->function = NULL;
+            x->module = NULL;
+            x->function_name = NULL;
+        }      
+    }
+
+    // ===========================================================
+
+    if (argc < 2) { // check is the number of arguments is correct | set "function_script" "function_name"
+        pd_error(x,"py4pd :: The set message needs two arguments! The 'Script name' and the 'function name'!");
+        return;
+    }
     
     PyObject *pName, *pModule, *pDict, *pFunc;
     PyObject *pArgs, *pValue;
-
-    if (argc < 2) { // check is the number of arguments is correct
-        pd_error(x,"py4pd | run method | missing arguments");
-        return;
-    }
     wchar_t py_name[5];
     wchar_t *py_name_ptr = py_name;
     py_name_ptr = "py4pd";
@@ -92,33 +110,22 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     Py_GetPythonHome();
 
     // ============================================================
-    // Here a set the home folder of Python to be in the same folder as the pd patch 
     char *home_path_str = x->home_path->s_name;
     char *sys_path_str = malloc(strlen(home_path_str) + strlen("sys.path.append('") + strlen("')") + 1);
     sprintf(sys_path_str, "sys.path.append('%s')", home_path_str);
     PyRun_SimpleString("import sys");
     PyRun_SimpleString(sys_path_str);
-    // free(sys_path_str); // free the memory allocated for the string
+    free(sys_path_str); // free the memory allocated for the string
     
     // ============================================================
-    // site modules are in the site-packages folder, 
-    // here I add it to the path to make possible import functions of modules inside the site-packages folder
-    
 
     char *site_path_str = x->packages_path->s_name;
-
-    // append quotes (") to site_path_str
-
-    // char *site_path_str_append = malloc(strlen(site_path_str) + 3);
-    // sprintf(site_path_str_append, '"%s"', site_path_str);
-    // post("site_path_str_append: %s", site_path_str_append);
 
     PyObject* sys = PyImport_ImportModule("sys");
     PyObject* sys_path = PyObject_GetAttrString(sys, "path");
     PyObject* folder_path = PyUnicode_FromString("C:/Users/Neimog/Documents/OM#/temp-files/OM-py-env/Lib/site-packages"); // 
-    //PyObject* folder_path = PyUnicode_FromString(site_path_str_append); //
+    //PyObject* folder_path = PyUnicode_FromString(site_path_str_append); // TODO: make possible to set own path
     PyList_Append(sys_path, folder_path);
-    free(site_path_str); 
     Py_DECREF(folder_path);
     Py_DECREF(sys_path);
     
@@ -135,11 +142,16 @@ static void py_set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         post("py4pd | function '%s' loaded!", function_name->s_name);
         x->function_name = function_name;
         x->set_was_called = 1;
+        // TODO: check the number of arguments and the type of arguments
+        
+         
+        
         return;
     } else {
         // post PyErr_Print() in pd
         pd_error(x, "py4pd | function %s not loaded!", function_name->s_name);
         x->set_was_called = 0;
+        x->function_name = NULL;
         post("\n===== PYTHON ERROR =====");
         // show python error in pd using post
         PyObject *ptype, *pvalue, *ptraceback;
@@ -180,16 +192,14 @@ static void py_run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv)
             pd_error(x, "Cannot convert argument\n");
             return;
         }
+        
         PyTuple_SetItem(pArgs, i, pValue);
     }
 
     pValue = PyObject_CallObject(pFunc, pArgs);
-    
-    // Py_DECREF(pArgs);
-    
     if (pValue != NULL) {
+        outlet_float(x->out_A, PyLong_AsLong(pValue)); // TODO: make it iterate with more types
         Py_DECREF(pValue);
-        outlet_float(x->out_A, PyLong_AsLong(pValue));
     }
     else {
         PyErr_Print();
@@ -328,7 +338,6 @@ void py4pd_free(t_py *x){
     if (Py_FinalizeEx() < 0) {
         return;
     }
-
 }
 
 // ====================================================
@@ -346,4 +355,5 @@ void py4pd_setup(void){
     class_addmethod(py_class, (t_method)py_set_function, gensym("set"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)py_run_without_quit_py, gensym("args"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)py_packages, gensym("packages"), A_GIMME, 0);
+    class_addmethod(py_class, (t_method)py_test, gensym("test"), A_GIMME, 0);
     }
