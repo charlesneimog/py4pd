@@ -167,6 +167,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 static void run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv){
     if (x->set_was_called == 0) {
         pd_error(x, "You need to send a message ||| set {script_file_name} {function_name} ||| first!");
+        // TODO: after use run method, create another message.
         return;
     }
     
@@ -311,6 +312,18 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 
 void *py_new(void){
+    // credits
+    post("");
+    post("");
+    post("");
+    post("py4pd by Charles K. Neimog");
+    post("version 0.0         ");
+    post("Based on Python 3.10.0  ");
+    post("");
+    post("It uses code from: Alexandre Porres, Thomas Grill and Miller Puckette and others");
+    post("");
+    post("");
+
     // pd things
     t_py *x = (t_py *)pd_new(py_class); // pointer para a classe
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
