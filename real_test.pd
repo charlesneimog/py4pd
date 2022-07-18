@@ -1,4 +1,4 @@
-#N canvas 809 304 890 449 12;
+#N canvas 551 59 890 664 12;
 #X obj 39 137 py4pd;
 #X msg 39 30 set choral cknnote;
 #X msg 200 69 set py function1;
