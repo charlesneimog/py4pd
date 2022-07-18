@@ -170,6 +170,10 @@ static void run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv){
         // TODO: after use run method, create another message.
         return;
     }
+    else if (x->set_was_called == 2){
+        pd_error(x, "After use the run method, you need set the message set again!");
+        return;
+    }
     
     PyObject *pName, *pFunc; // pDict, *pModule,
     PyObject *pArgs, *pValue;
@@ -177,8 +181,11 @@ static void run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv){
     pArgs = PyTuple_New(argc);
     int i;
     for (i = 0; i < argc; ++i) {
-        if (argv[i].a_type == A_FLOAT) {
-            pValue = PyFloat_FromDouble(argv[i+0].a_w.w_float); // convert to python float
+        if (argv[i].a_type == A_FLOAT) { 
+            
+            // TODO: if int convert to int, instead of float
+
+            pValue = PyFloat_FromDouble(argv[i+0].a_w.w_float); // convert to python float 
         } else if (argv[i].a_type == A_SYMBOL) {
             pValue = PyUnicode_DecodeFSDefault(argv[i].a_w.w_symbol->s_name); // convert to python string
         } else {
