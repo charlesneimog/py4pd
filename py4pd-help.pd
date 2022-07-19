@@ -1,18 +1,35 @@
-#N canvas 381 57 1460 816 12;
-#X obj 18 322 print py4pd;
-#X obj 505 37 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+#N canvas 364 11 1605 951 12;
+#X obj 18 384 print py4pd;
+#X obj 579 203 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
 -1 -1 0 1;
-#X msg 283 64 args 302389;
-#X msg 18 64 home;
-#X msg 502 64 args \$1 10;
-#X msg 374 64 set py function1;
-#X msg 468 185 args \$1;
-#X obj 471 163 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+#X msg 16 14 home;
+#X msg 576 230 args \$1 10;
+#X msg 542 351 args \$1;
+#X obj 545 329 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
 -1 -1 0 1;
-#X obj 93 155 r py4pd;
-#X msg 468 133 set py function4;
-#X msg 60 64 set choral cknnote;
-#X msg 73 100 set py function6;
-#X msg 392 227 args 200;
-#X connect 1 0 4 0;
-#X connect 7 0 6 0;
+#X msg 542 299 set py function4;
+#X msg 466 393 args 200;
+#X obj 18 358 py4pd;
+#X obj 16 142 s py4pd;
+#X msg 51 78 packages;
+#X obj 18 334 r py4pd;
+#X msg 46 42 home C:/Users/Neimog/Git/py4pd/;
+#X msg 47 109 packages C:/Users/Neimog/Documents/OM#/temp-files/OM-py-env/Lib/site-packages
+, f 78;
+#X text 116 77 See where is the packages path!;
+#X text 52 13 See where is the home path!;
+#X text 277 42 Define home Path!;
+#X text 604 109 Define packages Path!;
+#X obj 232 262 s py4pd;
+#X msg 253 205 run 20;
+#X msg 232 169 set py function6;
+#X connect 1 0 3 0;
+#X connect 2 0 9 0;
+#X connect 5 0 4 0;
+#X connect 8 0 0 0;
+#X connect 10 0 9 0;
+#X connect 11 0 8 0;
+#X connect 12 0 9 0;
+#X connect 13 0 9 0;
+#X connect 19 0 18 0;
+#X connect 20 0 18 0;
