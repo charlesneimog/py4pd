@@ -26,7 +26,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_canvas        *x_canvas; // pointer to the canvas
     PyObject        *module; // python object
     PyObject        *function; // function name
-    t_float         *set_was_called; // flag to check if the set function was called
+    t_float         *function_called; // flag to check if the set function was called
     t_symbol        *packages_path; // packages path 
     t_symbol        *home_path; // home path this always is the path folder (?)
     t_symbol        *function_name; // function name
@@ -161,14 +161,15 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         x->function = pFunc;
         x->module = pModule;
         post("py4pd | function '%s' loaded!", function_name->s_name);
-        x->function_name = function_name;
-        x->set_was_called = 1;
+        x->function_name = function_name; // why 
+        x->function_called = malloc(sizeof(int)); // TODO: Better way to solve the warning!
+        *(x->function_called) = 1; // TODO: Better way to solve the warning!
         return;
 
     } else {
         // post PyErr_Print() in pd
         pd_error(x, "py4pd | function %s not loaded!", function_name->s_name);
-        x->set_was_called = 0; // set the flag to 0 because it crash Pd if user try to use args method
+        x->function_called = 0; // set the flag to 0 because it crash Pd if user try to use args method
         x->function_name = NULL;
         post("");
         PyObject *ptype, *pvalue, *ptraceback;
@@ -188,7 +189,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     
-    if (x->set_was_called == 0) { // if the set method was not called, then we can not run the function :)
+    if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
         pd_error(x, "You need to send a message ||| 'set {script} {function}'!");
         return;
     }
@@ -324,6 +325,7 @@ void *py_new(void){
     t_py *x = (t_py *)pd_new(py_class); // pointer para a classe
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     x->out_A = outlet_new(&x->x_obj, &s_anything); // cria um outlet
+    x->function_called = 0;
     // ========
 
     // py things
