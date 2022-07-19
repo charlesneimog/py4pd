@@ -464,11 +464,11 @@ else ifeq ($(target.arch), aarch64)
 
 # Intel 32 bit, build with SSE and SSE2 instructions
 else ifneq ($(filter i%86, $(target.arch)),)
-  arch.c.flags = -march=pentium4 -mfpmath=sse -msse -msse2 
+  arch.c.flags = -march=pentium4 -mfpmath=sse -msse -msse2
 
 # Intel/AMD 64 bit, build with SSE, SSE2 and SSE3 instructions
 else ifeq ($(target.arch), x86_64)
-  arch.c.flags = -march=core2 -mfpmath=sse -msse -msse2 -msse3 
+  arch.c.flags = -march=core2 -mfpmath=sse -msse -msse2 -msse3
 
 # if none of the above architectures detected
 else
@@ -577,21 +577,21 @@ ifeq ($(system), Windows)
      arch.c.flags := -march=pentium4 -msse -msse2 -mfpmath=sse
   else ifeq ($(target.arch), x86_64)
     cpp.flags := -DMSW -DNT -DPD_LONGINTTYPE=__int64
-    arch.c.flags := -march=core2 -msse -msse2 -msse3 -mfpmath=sse 
+    arch.c.flags := -march=core2 -msse -msse2 -msse3 -mfpmath=sse
   else
     arch.c.flags =
   endif
   extension = dll
   c.flags :=
-  c.ldflags :=-static-libgcc   -shared \
-     -Wl,--enable-auto-import "$(PDBINDIR)/pd.dll"
+  c.ldflags := -static-libgcc -shared \
+    -Wl,--enable-auto-import "$(PDBINDIR)/pd.dll"
   c.ldlibs :=
   cxx.flags := -fcheck-new
-  cxx.ldflags := -static-libgcc    -static-libstdc++ -shared \
+  cxx.ldflags := -static-libgcc -static-libstdc++ -shared \
     -Wl,--enable-auto-import "$(PDBINDIR)/pd.dll"
   cxx.ldlibs :=
   shared.extension = dll
-  shared.ldflags := -static-libgcc    -shared "$(PDBINDIR)/pd.dll"
+  shared.ldflags := -static-libgcc -shared "$(PDBINDIR)/pd.dll"
   stripflags = --strip-all
 endif
 
@@ -651,14 +651,14 @@ LDFLAGS := $(arch.ld.flags)
 shared.ldflags += $(LDFLAGS)
 
 # accumulated flags for C compiler / linker
-c.flags := $(cpp.flags) $(c.flags) $(cflags) $(CFLAGS) 
-c.ldflags := $(c.ldflags) $(ldflags) $(LDFLAGS) 
-c.ldlibs := $(c.ldlibs) $(ldlibs) 
+c.flags := $(cpp.flags) $(c.flags) $(cflags) $(CFLAGS)
+c.ldflags := $(c.ldflags) $(ldflags) $(LDFLAGS)
+c.ldlibs := $(c.ldlibs) $(ldlibs)
 
 # accumulated flags for C++ compiler / linker
-cxx.flags := $(cpp.flags) $(cxx.flags) $(cflags) $(CFLAGS) 
-cxx.ldflags := $(cxx.ldflags) $(ldflags) $(LDFLAGS) 
-cxx.ldlibs := $(cxx.ldlibs) $(ldlibs) 
+cxx.flags := $(cpp.flags) $(cxx.flags) $(cflags) $(CFLAGS)
+cxx.ldflags := $(cxx.ldflags) $(ldflags) $(LDFLAGS)
+cxx.ldlibs := $(cxx.ldlibs) $(ldlibs)
 
 
 ################################################################################
@@ -756,7 +756,6 @@ compile-cxx := $(CXX)
 # before rules begin.
 
 # print Makefile.pdlibbuilder version before possible termination
-
 $(info ++++ info: using Makefile.pdlibbuilder version $(version))
 
 # Terminate if target triplet remained empty, to avoid all sorts of confusing
