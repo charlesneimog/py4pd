@@ -22,7 +22,6 @@
 #X text 604 109 Define packages Path!;
 #X obj 18 262 s py4pd;
 #X msg 18 191 set py function6;
-#X msg 39 227 run 20000;
 #N canvas 9 527 585 287 modules 1;
 #X obj 17 86 s py4pd;
 #X msg 38 51 run 20000;
@@ -30,6 +29,7 @@
 #X connect 1 0 0 0;
 #X connect 2 0 0 0;
 #X restore 177 190 pd modules;
+#X msg 39 227 run 200;
 #X connect 1 0 3 0;
 #X connect 2 0 9 0;
 #X connect 5 0 4 0;
@@ -39,4 +39,4 @@
 #X connect 12 0 9 0;
 #X connect 13 0 9 0;
 #X connect 19 0 18 0;
-#X connect 20 0 18 0;
+#X connect 21 0 18 0;

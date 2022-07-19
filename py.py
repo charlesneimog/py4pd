@@ -21,6 +21,7 @@ def function5(x):
 
 
 def function6(x):
+    "I count until x. x is the number received."
     list = []
     for x in range(1, x, 1):
         list.append(x)

@@ -73,6 +73,37 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
 }
 
+
+// ====================================
+// ====================================
+// ====================================
+
+static void documentation(t_py *x){
+    PyObject *pFunc;
+    if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
+        pd_error(x, "To see the documentaion you need to set the function first!");
+        return;
+    }
+    pFunc = x->function;
+    if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable
+        PyObject *pDoc = PyObject_GetAttrString(pFunc, "__doc__"); // Get the documentation of the function
+        if (pDoc != NULL){
+            post("");
+            post("=== Documentation of the function: %s", x->function_name->s_name);
+            post("");
+            const char *Doc = PyUnicode_AsUTF8(pDoc); 
+            post("%s", Doc);
+            post("");
+            post("=== End of documentation");
+            post("");
+        }
+        else{
+            post("No documentation found!");
+        }
+    }
+}
+
+
 // ====================================
 // ====================================
 // ====================================
@@ -173,13 +204,19 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         PyObject *pDoc = PyObject_GetAttrString(pFunc, "__doc__"); // Get the documentation of the function
         
         if (pDoc != NULL){
-            char *doc_str = PyUnicode_AsUTF8(pDoc);
-            post("%s", doc_str);
+            post("");
+            post("=== Documentation of the function: %s", function_name->s_name);
+            post("");
+            const char *Doc = PyUnicode_AsUTF8(pDoc); // WARNING: initialization discards 'const' qualifier 
+            post("%s", Doc);
+            post("");
+            post("=== End of documentation");
+            post("");
         }
         else{
             post("No documentation found!");
         }
-        
+
         // =====================
         // pFunc equal x_function
         x->function = pFunc;
@@ -390,7 +427,9 @@ void py4pd_setup(void){
     // class_addmethod(py_class, (t_method)py_thread, gensym("thread"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)home, gensym("home"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
+    class_addmethod(py_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
+    class_addmethod(py_class, (t_method)documentation, gensym("documentation"), 0, 0);
     class_addmethod(py_class, (t_method)set_function, gensym("set"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)run, gensym("run"), A_GIMME, 0); // TODO: better name for this method
-    class_addmethod(py_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
+    
     }
