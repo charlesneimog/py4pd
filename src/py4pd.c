@@ -206,8 +206,6 @@ static void reload(t_py *x){
 }
 
 
-
-
 // ====================================
 // ====================================
 // ====================================
@@ -344,14 +342,17 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     pFunc = x->function;
     pArgs = PyTuple_New(argc);
     int i;
-    for (i = 0; i < argc; ++i) {
+
     // DOC: CONVERTION TO PYTHON OBJECTS
+    // DOC: CONVERTION TO PYTHON OBJECTS
+
+    for (i = 0; i < argc; ++i) {
+    
         // NUMBERS 
         if (argv[i].a_type == A_FLOAT) { 
             float arg_float = atom_getfloat(argv+i);
             if (arg_float == (int)arg_float){ // DOC: If the float is an integer, then convert to int
                 int arg_int = (int)arg_float;
-                post("arg_int: %d", arg_int);
                 pValue = PyLong_FromLong(arg_int);
             }
             else{ // If the int is an integer, then convert to int
@@ -367,42 +368,21 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
         }
 
         // TODO: Lists
-        
         // ERROR IF THE ARGUMENT IS NOT A NUMBER OR A STRING       
         if (!pValue) {
             pd_error(x, "Cannot convert argument\n");
             return;
         }
-        
+        // DOC: END OF CONVERTION TO PYTHON OBJECTS
+
         PyTuple_SetItem(pArgs, i, pValue);
     }
 
     pValue = PyObject_CallObject(pFunc, pArgs);
     if (pValue != NULL) {                       // DOC: if the function returns a value   
-        post("py4pd | function '%s' returned a value!", x->function_name->s_name);
-        int list_length = PyList_Size(pValue);  // DOC: check length of the returned value
-        if (list_length == 1){ // if is Atom
-            // what is the type of pValue?
-            if (PyLong_Check(pValue)) {
-                long result = PyLong_AsLong(pValue);
-                post("py4pd | result: %ld", result);
-
-
-            } else if (PyFloat_Check(pValue)) {
-                double result = PyFloat_AsDouble(pValue);
-                float result_float = (float)result;
-                // outlet_float(x->out_A, result);
-            } else if (PyUnicode_Check(pValue)) {
-                const char *result = PyUnicode_AsUTF8(pValue); // WARNING: See http://gg.gg/11t8iv
-                outlet_symbol(x->out_A, gensym(result)); // adding const in char solve this, but I don't understand why it works! :)
-            } else { 
-                // check if pValue is a list.    
-                // if yes, accumulate and output it using out_A 
-                pd_error(x, "Cannot convert list item\n");
-                Py_DECREF(pValue);
-                return;
-                }
-        } else { // DOC: If the function return a list list
+        
+        // check if pValue is a list
+        if (PyList_Check(pValue)){ // DOC: If the function return a list list
             int list_size = PyList_Size(pValue);
             // make array with size of list_size
             t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));            
@@ -431,7 +411,26 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
                 }
             }
             outlet_list(x->out_A, 0, list_size, list_array); // The loop seems slow :(. TODO: possible do in other way?
-        }         
+        } else {
+            if (PyLong_Check(pValue)) {
+                long result = PyLong_AsLong(pValue);
+                outlet_float(x->out_A, result);
+            } else if (PyFloat_Check(pValue)) {
+                double result = PyFloat_AsDouble(pValue);
+                float result_float = (float)result;
+                outlet_float(x->out_A, result_float);
+                // outlet_float(x->out_A, result);
+            } else if (PyUnicode_Check(pValue)) {
+                const char *result = PyUnicode_AsUTF8(pValue); // WARNING: See http://gg.gg/11t8iv
+                outlet_symbol(x->out_A, gensym(result)); // adding const in char solve this, but I don't understand why it works! :)
+            } else { 
+                // check if pValue is a list.    
+                // if yes, accumulate and output it using out_A 
+                pd_error(x, "Cannot convert list item\n");
+                Py_DECREF(pValue);
+                return;
+                }
+        }
         Py_DECREF(pValue);
     }
     else { // DOC: if the function returns a error

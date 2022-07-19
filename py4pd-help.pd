@@ -1,6 +1,6 @@
-#N canvas 835 191 825 477 12;
+#N canvas 959 99 809 497 12;
 #X obj 18 384 print py4pd;
-#X obj 579 203 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
+#X obj 148 193 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
 -1 -1 0 1;
 #X msg 16 14 home;
 #X obj 18 358 py4pd;
@@ -21,12 +21,10 @@
 #X msg 17 15 set modules to_om;
 #X connect 1 0 0 0;
 #X connect 2 0 0 0;
-#X restore 177 190 pd modules;
-#X obj 576 279 s py4pd;
-#X msg 576 230 run \$1 10;
-#X msg 39 227 run 200;
-#X msg 18 191 set py function6;
-#N canvas 726 90 450 300 vscode 1;
+#X restore 18 448 pd modules;
+#X obj 145 263 s py4pd;
+#X msg 145 220 run \$1 10;
+#N canvas 316 497 450 300 vscode 0;
 #X obj 28 123 s py4pd;
 #X msg 28 21 documentation;
 #X msg 138 22 vscode;
@@ -36,6 +34,8 @@
 #X connect 3 0 0 0;
 #X restore 18 425 pd vscode;
 #X text 89 425 vscode \, reload and documentation of functions;
+#X msg 39 227 run 2000;
+#X msg 18 191 set py function6;
 #X connect 1 0 16 0;
 #X connect 2 0 4 0;
 #X connect 3 0 0 0;
@@ -44,5 +44,5 @@
 #X connect 7 0 4 0;
 #X connect 8 0 4 0;
 #X connect 16 0 15 0;
-#X connect 17 0 13 0;
-#X connect 18 0 13 0;
+#X connect 19 0 13 0;
+#X connect 20 0 13 0;
