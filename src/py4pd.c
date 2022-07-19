@@ -147,6 +147,7 @@ static void vscode(t_py *x){
     ShellExecuteEx(&sei);
     CloseHandle(sei.hProcess);
     free(command);
+    post("Vscode opened!");
     return;
 
     #else // if not windows 64bits
@@ -154,6 +155,56 @@ static void vscode(t_py *x){
     return;
     #endif
 }
+
+// ====================================
+// ====================================
+// ====================================
+
+static void reload(t_py *x){
+    PyObject *pName, *pFunc, *pModule, *pReload;
+    if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
+        pd_error(x, "To reload the script you need to set the function first!");
+        return;
+    }
+    pFunc = x->function;
+    pModule = x->module;
+
+    // reload the module
+    pName = PyUnicode_DecodeFSDefault(x->script_name->s_name); // Name of script file
+    pModule = PyImport_Import(pName);
+    pReload = PyImport_ReloadModule(pModule);
+    if (pReload == NULL) {
+        pd_error(x, "Error reloading the module!");
+        x->function_called = 0;
+        Py_DECREF(x->function);
+        Py_DECREF(x->module);
+        return;
+    } else{
+        Py_XDECREF(x->module);
+        pFunc = PyObject_GetAttrString(pModule, x->function_name->s_name); // Function name inside the script file
+        Py_DECREF(pName); // DOC: Py_DECREF(pName) is not necessary! 
+        if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable 
+            x->function = pFunc;
+            x->module = pModule;
+            x->script_name = x->script_name;
+            x->function_name = x->function_name; // why 
+            x->function_called = malloc(sizeof(int)); // TODO: Better way to solve the warning???
+            *(x->function_called) = 1; // 
+            post("The module was reloaded!");
+            return; 
+        }
+        else{
+            pd_error(x, "Error reloading the module!");
+            x->function_called = 0;
+            Py_DECREF(x->function);
+            Py_DECREF(x->module);
+            return;
+        }
+
+    }
+    
+}
+
 
 
 
@@ -457,6 +508,7 @@ void py4pd_setup(void){
     class_addmethod(py_class, (t_method)home, gensym("home"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)vscode, gensym("vscode"), 0, 0);
+    class_addmethod(py_class, (t_method)reload, gensym("reload"), 0, 0);
     class_addmethod(py_class, (t_method)documentation, gensym("documentation"), 0, 0);
     class_addmethod(py_class, (t_method)set_function, gensym("set"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)run, gensym("run"), A_GIMME, 0); // TODO: better name for this method
