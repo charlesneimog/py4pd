@@ -46,181 +46,181 @@ static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     // TODO: make it work with path with spaces
 }
 
-// ============================================
-// ============================================
-// ============================================
+// // ============================================
+// // ============================================
+// // ============================================
 
-/*
-// Copyright (c) 2015 Pierre Guillot.
-// For information on usage and redistribution, and for a DISCLAIMER OF ALL
-// WARRANTIES, see the file, "LICENSE.txt," in this distribution.
-*/
-
-
-// IF WINDOWS
-#ifdef _WIN32
-#include "thread/pthreadwin/pthread.h"
-#endif
-// IF LINUX
-#ifdef __linux__
-#include <pthread.h>
-#endif
-
-// IF MACOS
-#ifdef __APPLE__
-#include <pthread.h>
-#endif
-
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-
-#define BUFSIZE 64
-#define NCONSUMER 1
-#define NLOOPS 1
+// /*
+// // Copyright (c) 2015 Pierre Guillot.
+// // For information on usage and redistribution, and for a DISCLAIMER OF ALL
+// // WARRANTIES, see the file, "LICENSE.txt," in this distribution.
+// */
 
 
-//! @brief A sample data structure for threads to use.
-//! @details The structure is passed by void pointer to the thread so it can be any data type.
-//! The structure owns a mutex to synchronize the access to the data.
-typedef struct _data
-{
-    pthread_mutex_t mutex;          //!< The mutex.
-    pthread_cond_t  condwrite;      //!< The condition.
-    pthread_cond_t  condread;       //!< The condition.
-    char            occupied;       //!< The state.
-    char            buffer[BUFSIZE];//!< The buffer.
-}t_data;
+// // IF WINDOWS
+// #ifdef _WIN32
+// #include "thread/pthreadwin/pthread.h"
+// #endif
+// // IF LINUX
+// #ifdef __linux__
+// #include <pthread.h>
+// #endif
 
-//! @brief The function that writes in the buffer.
-//! @details The function uses the mutex to ensure the synchronization of the access to the
-//! data and uses condition to to ensure that all the consumer has read the data.
+// // IF MACOS
+// #ifdef __APPLE__
+// #include <pthread.h>
+// #endif
 
-static void func_producer(t_data* t)
-{
-    size_t i;
-    //! Locks the access to the data
-    pthread_mutex_lock(&t->mutex);
-    //! Wait the condition to write the data
-    printf("func_producer wait...\n");
-    while(t->occupied)
-    {
-        pthread_cond_wait(&t->condwrite, &t->mutex);
-    }
-    assert(!t->occupied);
-    printf("func_producer run...\n");
-    //! Write to the buffer.
-    for(i = 0; i < BUFSIZE; i++)
-    {
-        t->buffer[i] = (char)i;
-    }
-    t->occupied = NCONSUMER;
-    //! Signal that the buffer can be read
-    printf("func_producer signal\n");
+// #include <string.h>
+// #include <stdio.h>
+// #include <stdlib.h>
+// #include <assert.h>
+
+// #define BUFSIZE 64
+// #define NCONSUMER 1
+// #define NLOOPS 1
+
+
+// //! @brief A sample data structure for threads to use.
+// //! @details The structure is passed by void pointer to the thread so it can be any data type.
+// //! The structure owns a mutex to synchronize the access to the data.
+// typedef struct _data
+// {
+//     pthread_mutex_t mutex;          //!< The mutex.
+//     pthread_cond_t  condwrite;      //!< The condition.
+//     pthread_cond_t  condread;       //!< The condition.
+//     char            occupied;       //!< The state.
+//     char            buffer[BUFSIZE];//!< The buffer.
+// }t_data;
+
+// //! @brief The function that writes in the buffer.
+// //! @details The function uses the mutex to ensure the synchronization of the access to the
+// //! data and uses condition to to ensure that all the consumer has read the data.
+
+// static void func_producer(t_data* t)
+// {
+//     size_t i;
+//     //! Locks the access to the data
+//     pthread_mutex_lock(&t->mutex);
+//     //! Wait the condition to write the data
+//     printf("func_producer wait...\n");
+//     while(t->occupied)
+//     {
+//         pthread_cond_wait(&t->condwrite, &t->mutex);
+//     }
+//     assert(!t->occupied);
+//     printf("func_producer run...\n");
+//     //! Write to the buffer.
+//     for(i = 0; i < BUFSIZE; i++)
+//     {
+//         t->buffer[i] = (char)i;
+//     }
+//     t->occupied = NCONSUMER;
+//     //! Signal that the buffer can be read
+//     printf("func_producer signal\n");
     
-    for (i = 0; i < 100000; i++)
-    {
-        // print i
-        i = i;
-    }
-    pthread_cond_signal(&t->condread);
-    //! Unlocks the access to the data
-    pthread_mutex_unlock(&t->mutex);
-}
+//     for (i = 0; i < 100000; i++)
+//     {
+//         // print i
+//         i = i;
+//     }
+//     pthread_cond_signal(&t->condread);
+//     //! Unlocks the access to the data
+//     pthread_mutex_unlock(&t->mutex);
+// }
 
-//! @brief The function that reads from the buffer.
-//! @details The function uses the mutex to ensure the synchronization of the access to the
-//! data and uses condition to to ensure that all the producer has write the data.
-static void func_consumer(t_data* t)
-{
-    size_t i;
-    //! Locks the access to the data
-    pthread_mutex_lock(&t->mutex);
-    //! Wait the condition to write the data
-    printf("func_consumer wait...\n");
-    while(!t->occupied)
-    {
-        pthread_cond_wait(&t->condread, &t->mutex);
-    }
-    assert(t->occupied);
-    printf("func_consumer run...\n");
-    //! Write to the buffer.
-    for(i = 0; i < BUFSIZE; i++)
-    {
-        assert(t->buffer[i] == i);
-    }
-    t->occupied--;
-    printf("func_consumer signal\n");
-    if(t->occupied)
-    {
-        //! Signal that the buffer can be read by another thread
-        pthread_cond_signal(&t->condread);
-    }
-    else
-    {
-        //! Signal that the buffer can be write
-        pthread_cond_signal(&t->condwrite);
-    }
-    //! Unlocks the access to the data
-    pthread_mutex_unlock(&t->mutex);
-}
+// //! @brief The function that reads from the buffer.
+// //! @details The function uses the mutex to ensure the synchronization of the access to the
+// //! data and uses condition to to ensure that all the producer has write the data.
+// static void func_consumer(t_data* t)
+// {
+//     size_t i;
+//     //! Locks the access to the data
+//     pthread_mutex_lock(&t->mutex);
+//     //! Wait the condition to write the data
+//     printf("func_consumer wait...\n");
+//     while(!t->occupied)
+//     {
+//         pthread_cond_wait(&t->condread, &t->mutex);
+//     }
+//     assert(t->occupied);
+//     printf("func_consumer run...\n");
+//     //! Write to the buffer.
+//     for(i = 0; i < BUFSIZE; i++)
+//     {
+//         assert(t->buffer[i] == i);
+//     }
+//     t->occupied--;
+//     printf("func_consumer signal\n");
+//     if(t->occupied)
+//     {
+//         //! Signal that the buffer can be read by another thread
+//         pthread_cond_signal(&t->condread);
+//     }
+//     else
+//     {
+//         //! Signal that the buffer can be write
+//         pthread_cond_signal(&t->condwrite);
+//     }
+//     //! Unlocks the access to the data
+//     pthread_mutex_unlock(&t->mutex);
+// }
 
 
-// ============================================
-// ============================================
-// ============================================
+// // ============================================
+// // ============================================
+// // ============================================
 
-static void py_thread(t_py *x, t_symbol *s, int argc, t_atom *argv)
-{
-    size_t i, j;
-    //! The data structure that will be accessed by the threads
-    t_data data;
-    //! The set of consumer threads
-    pthread_t  producer;
-    pthread_t  consumers[NCONSUMER];
-    //! Note that the data is free to be filled
-    data.occupied = 0;
+// static void py_thread(t_py *x, t_symbol *s, int argc, t_atom *argv)
+// {
+//     size_t i, j;
+//     //! The data structure that will be accessed by the threads
+//     t_data data;
+//     //! The set of consumer threads
+//     pthread_t  producer;
+//     pthread_t  consumers[NCONSUMER];
+//     //! Note that the data is free to be filled
+//     data.occupied = 0;
 
-    printf("O test do thread... \n");
+//     printf("O test do thread... \n");
     
-    //! Initializes the mutex of the data structure
-    pthread_mutex_init(&data.mutex, NULL);
-    //! Initializes the conditions of the data structure
-    pthread_cond_init(&data.condread, NULL);
-    pthread_cond_init(&data.condwrite, NULL);
+//     //! Initializes the mutex of the data structure
+//     pthread_mutex_init(&data.mutex, NULL);
+//     //! Initializes the conditions of the data structure
+//     pthread_cond_init(&data.condread, NULL);
+//     pthread_cond_init(&data.condwrite, NULL);
     
-    for(j = 0; j < NLOOPS; j++)
-    {
-        //! Fill the data's buffer with 0
-        for(i = 0; i < BUFSIZE; i++)
-        {
-            data.buffer[i] = 0;
-        }
-        //! Detaches all the threads
-        for(i = 0; i < NCONSUMER; i++)
-        {
-            pthread_create(consumers+i, 0, (void *)func_consumer, &data);
-        }
-        pthread_create(&producer, 0, (void *)func_producer, &data);
+//     for(j = 0; j < NLOOPS; j++)
+//     {
+//         //! Fill the data's buffer with 0
+//         for(i = 0; i < BUFSIZE; i++)
+//         {
+//             data.buffer[i] = 0;
+//         }
+//         //! Detaches all the threads
+//         for(i = 0; i < NCONSUMER; i++)
+//         {
+//             pthread_create(consumers+i, 0, (void *)func_consumer, &data);
+//         }
+//         pthread_create(&producer, 0, (void *)func_producer, &data);
         
-        //! Joins all the threads
-        pthread_join(producer, NULL);
-        for(i = 0; i < NCONSUMER; i++)
-        {
-            pthread_join(consumers[i], NULL);
-        }        
-    }
+//         //! Joins all the threads
+//         pthread_join(producer, NULL);
+//         for(i = 0; i < NCONSUMER; i++)
+//         {
+//             pthread_join(consumers[i], NULL);
+//         }        
+//     }
     
-    //! Destroy the conditions of the data structure
-    pthread_cond_destroy(&data.condread);
-    pthread_cond_destroy(&data.condwrite);
-    //! Destroy the mutex of the data structure
-    pthread_mutex_destroy(&data.mutex);
+//     //! Destroy the conditions of the data structure
+//     pthread_cond_destroy(&data.condread);
+//     pthread_cond_destroy(&data.condwrite);
+//     //! Destroy the mutex of the data structure
+//     pthread_mutex_destroy(&data.mutex);
     
-    printf("ok\n");
-    return 0;
-}
+//     printf("ok\n");
+//     return 0;
+// }
 
 
 
@@ -385,13 +385,11 @@ static void run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv){
             if (arg_float == (int)arg_float){ // If the float is an integer, then convert to int
                 // is a int
                 int arg_int = (int)arg_float;
-                post("arg_int: %d", arg_int);
                 pValue = PyLong_FromLong(arg_int);
 
             }
             else{
                 // is a float
-                post("arg_float: %f", arg_float);
                 pValue = PyFloat_FromDouble(arg_float);
             }
 
@@ -583,7 +581,7 @@ void py4pd_setup(void){
                         CLASS_DEFAULT, // nao há uma GUI especial para esse objeto
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
     
-    class_addmethod(py_class, (t_method)py_thread, gensym("thread"), A_GIMME, 0);
+    // class_addmethod(py_class, (t_method)py_thread, gensym("thread"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)run, gensym("run"), A_GIMME, 0); 
     class_addmethod(py_class, (t_method)home, gensym("home"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)set_function, gensym("set"), A_GIMME, 0);
