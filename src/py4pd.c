@@ -41,7 +41,10 @@ static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     if (argc < 1) {
         post("The home path is: %s", x->home_path->s_name);
         return; // is this necessary?
+    } else {
+        x->home_path = atom_getsymbol(argv);
     }
+
     // TODO: make it define others paths 
     // TODO: make it work with path with spaces
 }

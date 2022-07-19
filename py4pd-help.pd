@@ -1,8 +1,6 @@
-#N canvas 388 40 1367 711 12;
+#N canvas 381 57 1460 816 12;
 #X obj 18 322 print py4pd;
 #X obj 18 296 py4pd;
-#X obj 63 24 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
--1 -1 0 1;
 #X obj 505 37 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
 -1 -1 0 1;
 #X msg 283 64 args 302389;
@@ -13,26 +11,34 @@
 #X obj 471 163 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
 -1 -1 0 1;
 #X msg 78 115 run py function2 10;
-#X msg 337 280 thread;
-#X msg 60 64 run scripts/py function1 \$1 10;
 #X obj 93 155 r py4pd;
-#X obj 393 319 s py4pd;
-#X msg 393 280 set scripts/py function2;
 #X msg 468 133 set py function4;
-#X msg 290 243 args 4.3;
+#X msg 387 227 args 4.3;
+#X msg 60 64 set choral cknnote;
+#N canvas 254 193 1097 643 (subpatch) 1;
+#X msg 43 49 thread;
+#X obj 96 215 s py4pd;
+#X msg 137 131 home C:/Users/Neimog/Git/py4pd/scripts;
+#X msg 181 166 args C4 320;
+#X msg 15 14 packages C:/Users/Neimog/Git/py4pd/py4pd/Lib/site-packages
+;
+#X msg 96 87 set py function2;
+#X connect 0 0 1 0;
+#X connect 2 0 1 0;
+#X connect 3 0 1 0;
+#X connect 4 0 1 0;
+#X connect 5 0 1 0;
+#X restore 670 242 pd;
 #X connect 1 0 0 0;
-#X connect 2 0 12 0;
-#X connect 3 0 6 0;
+#X connect 2 0 5 0;
+#X connect 3 0 1 0;
 #X connect 4 0 1 0;
 #X connect 5 0 1 0;
 #X connect 6 0 1 0;
 #X connect 7 0 1 0;
-#X connect 8 0 1 0;
-#X connect 9 0 8 0;
+#X connect 8 0 7 0;
+#X connect 9 0 1 0;
 #X connect 10 0 1 0;
-#X connect 11 0 14 0;
+#X connect 11 0 1 0;
 #X connect 12 0 1 0;
 #X connect 13 0 1 0;
-#X connect 15 0 14 0;
-#X connect 16 0 1 0;
-#X connect 17 0 1 0;

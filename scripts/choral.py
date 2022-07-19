@@ -26,4 +26,4 @@ def cknnote(note, freq):
     go_to_folder = 'cd "' + folder + '"'
     cmd_line = go_to_folder + ' && "C:/Program Files (x86)/LilyPond/usr/bin/lilypond.exe" -s -fpng -dresolution=1200 ' + str(ly_file)
     subprocess.Popen(cmd_line, stdout=subprocess.PIPE, shell=True).stdout.read()
-    return 1
+    return ly_file
