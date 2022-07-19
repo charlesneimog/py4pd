@@ -1,7 +1,10 @@
-[submodule "MrsWatson"]
-	path = resources/executables/MrsWatson_git
-	url = https://github.com/teragonaudio/MrsWatson.git
+[submodule "thread"]
+	path = ../thread
+	url = https://github.com/pierreguillot/thread.git
 	ignore = dirty
 
 
 
+[submodule "pd-lib-builder"]
+	path = pd-lib-builder
+	url = https://github.com/pure-data/pd-lib-builder
