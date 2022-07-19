@@ -1,0 +1,27 @@
+#N canvas 231 295 791 550 10;
+#X obj 180 298 outlet;
+#X obj 74 19 inlet;
+#X obj 249 155 del, f 12;
+#X obj 249 130 t b f, f 12;
+#X obj 249 181 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144
+-1 -1;
+#X msg 181 257 63 0 4;
+#X obj 84 147 pack f 0 f;
+#X obj 83 204 cyclone/prepend set;
+#X msg 95 90 0;
+#X obj 74 49 unpack f f f f;
+#X obj 241 80 abs;
+#X connect 1 0 9 0;
+#X connect 2 0 4 0;
+#X connect 3 0 2 0;
+#X connect 3 1 2 1;
+#X connect 4 0 5 0;
+#X connect 5 0 0 0;
+#X connect 6 0 7 0;
+#X connect 7 0 5 0;
+#X connect 8 0 6 1;
+#X connect 9 0 6 0;
+#X connect 9 1 8 0;
+#X connect 9 2 6 2;
+#X connect 9 3 10 0;
+#X connect 10 0 3 0;

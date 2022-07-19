@@ -50,196 +50,6 @@ static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 // // ============================================
 // // ============================================
 
-// /*
-// // Copyright (c) 2015 Pierre Guillot.
-// // For information on usage and redistribution, and for a DISCLAIMER OF ALL
-// // WARRANTIES, see the file, "LICENSE.txt," in this distribution.
-// */
-
-
-// // IF WINDOWS
-// #ifdef _WIN32
-// #include "thread/pthreadwin/pthread.h"
-// #endif
-// // IF LINUX
-// #ifdef __linux__
-// #include <pthread.h>
-// #endif
-
-// // IF MACOS
-// #ifdef __APPLE__
-// #include <pthread.h>
-// #endif
-
-// #include <string.h>
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <assert.h>
-
-// #define BUFSIZE 64
-// #define NCONSUMER 1
-// #define NLOOPS 1
-
-
-// //! @brief A sample data structure for threads to use.
-// //! @details The structure is passed by void pointer to the thread so it can be any data type.
-// //! The structure owns a mutex to synchronize the access to the data.
-// typedef struct _data
-// {
-//     pthread_mutex_t mutex;          //!< The mutex.
-//     pthread_cond_t  condwrite;      //!< The condition.
-//     pthread_cond_t  condread;       //!< The condition.
-//     char            occupied;       //!< The state.
-//     char            buffer[BUFSIZE];//!< The buffer.
-// }t_data;
-
-// //! @brief The function that writes in the buffer.
-// //! @details The function uses the mutex to ensure the synchronization of the access to the
-// //! data and uses condition to to ensure that all the consumer has read the data.
-
-// static void func_producer(t_data* t)
-// {
-//     size_t i;
-//     //! Locks the access to the data
-//     pthread_mutex_lock(&t->mutex);
-//     //! Wait the condition to write the data
-//     printf("func_producer wait...\n");
-//     while(t->occupied)
-//     {
-//         pthread_cond_wait(&t->condwrite, &t->mutex);
-//     }
-//     assert(!t->occupied);
-//     printf("func_producer run...\n");
-//     //! Write to the buffer.
-//     for(i = 0; i < BUFSIZE; i++)
-//     {
-//         t->buffer[i] = (char)i;
-//     }
-//     t->occupied = NCONSUMER;
-//     //! Signal that the buffer can be read
-//     printf("func_producer signal\n");
-    
-//     for (i = 0; i < 100000; i++)
-//     {
-//         // print i
-//         i = i;
-//     }
-//     pthread_cond_signal(&t->condread);
-//     //! Unlocks the access to the data
-//     pthread_mutex_unlock(&t->mutex);
-// }
-
-// //! @brief The function that reads from the buffer.
-// //! @details The function uses the mutex to ensure the synchronization of the access to the
-// //! data and uses condition to to ensure that all the producer has write the data.
-// static void func_consumer(t_data* t)
-// {
-//     size_t i;
-//     //! Locks the access to the data
-//     pthread_mutex_lock(&t->mutex);
-//     //! Wait the condition to write the data
-//     printf("func_consumer wait...\n");
-//     while(!t->occupied)
-//     {
-//         pthread_cond_wait(&t->condread, &t->mutex);
-//     }
-//     assert(t->occupied);
-//     printf("func_consumer run...\n");
-//     //! Write to the buffer.
-//     for(i = 0; i < BUFSIZE; i++)
-//     {
-//         assert(t->buffer[i] == i);
-//     }
-//     t->occupied--;
-//     printf("func_consumer signal\n");
-//     if(t->occupied)
-//     {
-//         //! Signal that the buffer can be read by another thread
-//         pthread_cond_signal(&t->condread);
-//     }
-//     else
-//     {
-//         //! Signal that the buffer can be write
-//         pthread_cond_signal(&t->condwrite);
-//     }
-//     //! Unlocks the access to the data
-//     pthread_mutex_unlock(&t->mutex);
-// }
-
-
-// // ============================================
-// // ============================================
-// // ============================================
-
-// static void py_thread(t_py *x, t_symbol *s, int argc, t_atom *argv)
-// {
-//     size_t i, j;
-//     //! The data structure that will be accessed by the threads
-//     t_data data;
-//     //! The set of consumer threads
-//     pthread_t  producer;
-//     pthread_t  consumers[NCONSUMER];
-//     //! Note that the data is free to be filled
-//     data.occupied = 0;
-
-//     printf("O test do thread... \n");
-    
-//     //! Initializes the mutex of the data structure
-//     pthread_mutex_init(&data.mutex, NULL);
-//     //! Initializes the conditions of the data structure
-//     pthread_cond_init(&data.condread, NULL);
-//     pthread_cond_init(&data.condwrite, NULL);
-    
-//     for(j = 0; j < NLOOPS; j++)
-//     {
-//         //! Fill the data's buffer with 0
-//         for(i = 0; i < BUFSIZE; i++)
-//         {
-//             data.buffer[i] = 0;
-//         }
-//         //! Detaches all the threads
-//         for(i = 0; i < NCONSUMER; i++)
-//         {
-//             pthread_create(consumers+i, 0, (void *)func_consumer, &data);
-//         }
-//         pthread_create(&producer, 0, (void *)func_producer, &data);
-        
-//         //! Joins all the threads
-//         pthread_join(producer, NULL);
-//         for(i = 0; i < NCONSUMER; i++)
-//         {
-//             pthread_join(consumers[i], NULL);
-//         }        
-//     }
-    
-//     //! Destroy the conditions of the data structure
-//     pthread_cond_destroy(&data.condread);
-//     pthread_cond_destroy(&data.condwrite);
-//     //! Destroy the mutex of the data structure
-//     pthread_mutex_destroy(&data.mutex);
-    
-//     printf("ok\n");
-//     return 0;
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ============================================
-// ============================================
-// ============================================
-
 static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     if (argc < 1) {
@@ -314,10 +124,13 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     PyObject* sys = PyImport_ImportModule("sys");
     PyObject* sys_path = PyObject_GetAttrString(sys, "path");
     // TODO: make possible to set own site-packages path
-    PyObject* folder_path = PyUnicode_FromString("C:/Users/Neimog/Documents/OM#/temp-files/OM-py-env/Lib/site-packages"); // 
-    // TODO: make possible to set own site-packages path
-    PyList_Append(sys_path, folder_path);
-    Py_DECREF(folder_path);
+    // set x->packages_path to the site-packages path
+    PyList_Append(sys_path, PyUnicode_FromString(site_path_str));
+
+
+    // PyObject* folder_path = PyUnicode_FromString("C:/Users/Neimog/Documents/OM#/temp-files/OM-py-env/Lib/site-packages"); // 
+    // PyList_Append(sys_path, folder_path);
+    // Py_DECREF(folder_path);
     Py_DECREF(sys_path);
     
     // ============================================================
@@ -354,14 +167,14 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 // ============================================
 
-static void run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     if (x->set_was_called == 0) {
         pd_error(x, "You need to send a message ||| set {script_file_name} {function_name} ||| first!");
         // TODO: after use run method, create another message.
         return;
     }
     else if (x->set_was_called == 2){
-        pd_error(x, "After use the run method, you need set the message set again!");
+        pd_error(x, "After use the run method, you need set the function again!");
         return;
     }
     
@@ -374,34 +187,25 @@ static void run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     // ARGUMENTS CONVERTION
         // NUMBERS 
-        
         if (argv[i].a_type == A_FLOAT) { 
-            // different from int and float
-            // TODO: if int convert to int, instead of float
-            // ORIGINAL: pValue = PyFloat_FromDouble(argv[i+0].a_w.w_float); // convert to python float 
-
             float arg_float = atom_getfloat(argv+i);
-            
             if (arg_float == (int)arg_float){ // If the float is an integer, then convert to int
-                // is a int
                 int arg_int = (int)arg_float;
                 pValue = PyLong_FromLong(arg_int);
-
             }
-            else{
-                // is a float
+            else{ // If the int is an integer, then convert to int
                 pValue = PyFloat_FromDouble(arg_float);
             }
 
-
-
+        // STRINGS
         } else if (argv[i].a_type == A_SYMBOL) {
             pValue = PyUnicode_DecodeFSDefault(argv[i].a_w.w_symbol->s_name); // convert to python string
         } else {
             pValue = Py_None;
             Py_INCREF(Py_None);
         }
-                
+
+        // ERROR IF THE ARGUMENT IS NOT A NUMBER OR A STRING       
         if (!pValue) {
             pd_error(x, "Cannot convert argument\n");
             return;
@@ -411,8 +215,63 @@ static void run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
 
     pValue = PyObject_CallObject(pFunc, pArgs);
-    if (pValue != NULL) {
-        outlet_float(x->out_A, PyLong_AsLong(pValue)); // TODO: make it iterate with more types
+    
+    
+    if (pValue != NULL) { // if the function returns a value
+        // check length of the returned value
+        int list_length = PyList_Size(pValue);
+        if (list_length == 1){
+            
+            post("py4pd | function returned a single argument!");
+            // what is the type of pValue?
+            if (PyLong_Check(pValue)) {
+                long result = PyLong_AsLong(pValue);
+                outlet_float(x->out_A, result);
+            } else if (PyFloat_Check(pValue)) {
+                double result = PyFloat_AsDouble(pValue);
+                outlet_float(x->out_A, result);
+            } else if (PyUnicode_Check(pValue)) {
+                // result UTF-8 string
+                char *result = PyUnicode_AsUTF8(pValue);
+                outlet_symbol(x->out_A, gensym(result));
+            // check if pValue is a list.
+            // if yes, accumulate and output it using out_A 
+
+            } else {
+                pd_error(x, "Cannot convert list item\n");
+                Py_DECREF(pValue);
+                return;
+                }
+        } else {
+            int list_size = PyList_Size(pValue);
+            // make array with size of list_size
+            t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));            
+            int i;
+            for (i = 0; i < list_size; ++i) {
+                PyObject *pValue_i = PyList_GetItem(pValue, i);
+                if (PyLong_Check(pValue_i)) {
+                    long result = PyLong_AsLong(pValue_i);
+                    float result_float = (float)result;
+                    list_array[i].a_type = A_FLOAT;
+                    list_array[i].a_w.w_float = result_float;
+
+                } else if (PyFloat_Check(pValue_i)) {
+                    double result = PyFloat_AsDouble(pValue_i);
+                    float result_float = (float)result;
+                    list_array[i].a_type = A_FLOAT;
+                    list_array[i].a_w.w_float = result_float;
+                } else if (PyUnicode_Check(pValue_i)) {
+                    char *result = PyUnicode_AsUTF8(pValue_i);
+                    list_array[i].a_type = A_SYMBOL;
+                    list_array[i].a_w.w_symbol = gensym(result);
+                } else {
+                    pd_error(x, "Cannot convert list item\n");
+                    Py_DECREF(pValue);
+                    return;
+                }
+            }
+            outlet_list(x->out_A, 0, list_size, list_array); // The loop seems slow :(. TODO: possible do in other way?
+        }         
         Py_DECREF(pValue);
     }
     else {
@@ -424,103 +283,6 @@ static void run_without_quit_py(t_py *x, t_symbol *s, int argc, t_atom *argv){
         Py_DECREF(pstr);
         return;
     }
-}
-
-// ============================================
-// ============================================
-// ============================================
-
-static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
-
-    PyObject *pName, *pModule, *pDict, *pFunc;
-    PyObject *pArgs, *pValue;
-    
-    if (x->function_name != NULL){
-        Py_XDECREF(x->function); // free the memory allocated for the function
-        Py_XDECREF(x->module); // free the memory allocated for the module
-        x->function = NULL; // clear the function pointer
-        x->module = NULL; // clear the module pointer
-        x->function_name = NULL; // clear the function name pointer
-        x->set_was_called = 0; // set the flag to 0 because it crash Pd if user try to use args method without set first
-    }
-    
-    if (argc < 3) {
-        pd_error(x,"py4pd | run method | missing arguments");
-        return;
-    }
-
-    wchar_t py_name[5];
-    wchar_t *py_name_ptr = py_name;
-    py_name_ptr = "py4pd";
-    Py_SetProgramName(py_name_ptr);  
-    Py_Initialize();
-    Py_GetPythonHome();
-    PyRun_SimpleString("import sys"); // TODO: make this like the set method
-    PyRun_SimpleString("sys.path.append('C:/Users/Neimog/Git/py4pd')"); // set path using where pd patch is located
-
-    t_symbol *script_file_name = atom_gensym(argv+0);
-    t_symbol *function_name = atom_gensym(argv+1);
-        
-    pName = PyUnicode_DecodeFSDefault(script_file_name->s_name); // Esse é o nome do script Python
-    pModule = PyImport_Import(pName); 
-    Py_DECREF(pName);
-
-    int i;
-    if (pModule != NULL) {
-        pFunc = PyObject_GetAttrString(pModule, function_name->s_name);
-        if (pFunc && PyCallable_Check(pFunc)) {
-            pArgs = PyTuple_New(argc - 2);
-            for (i = 0; i < argc - 2; ++i) {
-                if (argv[i+2].a_type == A_FLOAT) {
-                    pValue = PyFloat_FromDouble(argv[i+2].a_w.w_float);
-                } else if (argv[i+2].a_type == A_SYMBOL) {
-                    pValue = PyUnicode_DecodeFSDefault(argv[i+2].a_w.w_symbol->s_name);
-                } else {
-                    pValue = Py_None;
-                    Py_INCREF(Py_None);
-                }
-                      
-                if (!pValue) {
-                    Py_DECREF(pArgs);
-                    Py_DECREF(pModule);
-                    pd_error(x, "Cannot convert argument\n");
-                    return;
-                }
-                PyTuple_SetItem(pArgs, i, pValue);
-            }
-
-            pValue = PyObject_CallObject(pFunc, pArgs);
-            Py_DECREF(pArgs);
-            if (pValue != NULL) {
-                Py_DECREF(pValue);
-                outlet_float(x->out_A, PyLong_AsLong(pValue));
-            }
-            else {
-                Py_DECREF(pFunc);
-                Py_DECREF(pModule);
-                PyErr_Print();
-                pd_error(x,"Call failed\n");
-                return;
-            }
-        }
-        else {
-            if (PyErr_Occurred())
-                PyErr_Print();
-            pd_error(x, "Cannot find function \"%s\"\n", function_name->s_name);
-        }
-        Py_XDECREF(pFunc);
-        Py_DECREF(pModule);
-    }
-    else {
-        PyErr_Print();
-        pd_error(x, "Failed to load \"%s\"\n", script_file_name->s_name);
-        
-        return ;
-    }
-    if (Py_FinalizeEx() < 0) {
-        return;
-    }
-    return;
 }
 
 // ============================================
@@ -582,9 +344,9 @@ void py4pd_setup(void){
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
     
     // class_addmethod(py_class, (t_method)py_thread, gensym("thread"), A_GIMME, 0);
-    class_addmethod(py_class, (t_method)run, gensym("run"), A_GIMME, 0); 
     class_addmethod(py_class, (t_method)home, gensym("home"), A_GIMME, 0);
+    class_addmethod(py_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)set_function, gensym("set"), A_GIMME, 0);
-    class_addmethod(py_class, (t_method)run_without_quit_py, gensym("args"), A_GIMME, 0); // TODO: better name for this method
+    class_addmethod(py_class, (t_method)run, gensym("args"), A_GIMME, 0); // TODO: better name for this method
     class_addmethod(py_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
     }
