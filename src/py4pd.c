@@ -307,7 +307,7 @@ void *py_new(void){
     post("version 0.0         ");
     post("Based on Python 3.10.0  ");
     post("");
-    post("It uses code from: Alexandre Porres, Thomas Grill and Miller Puckette and others");
+    post("It uses code from: Alexandre Porres, Thomas Grill, Miller Puckette, SOPI research group and others");
     post("");
     post("");
 
