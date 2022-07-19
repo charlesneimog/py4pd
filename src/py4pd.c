@@ -92,7 +92,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     // check if script file exists
     char script_file_path[MAXPDSTRING];
-    snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->packages_path->s_name, script_file_name->s_name);
+    snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name, script_file_name->s_name);
     if (access(script_file_path, F_OK) == -1) {
         pd_error(x, "The script file %s does not exist!", script_file_path);
         return;
@@ -116,7 +116,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
 
     // =====================
-
+    // DOC: check number of arguments
     if (argc < 2) { // check is the number of arguments is correct | set "function_script" "function_name"
         pd_error(x,"py4pd :: The set message needs two arguments! The 'Script name' and the 'function name'!");
         return;
@@ -146,7 +146,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     PyObject* sys = PyImport_ImportModule("sys");
     PyObject* sys_path = PyObject_GetAttrString(sys, "path");
-    // TODO: make possible to set own site-packages path
     PyList_Append(sys_path, PyUnicode_FromString(site_path_str));
     Py_DECREF(sys_path);
     
@@ -154,6 +153,17 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     
     pName = PyUnicode_DecodeFSDefault(script_file_name->s_name); // Name of script file
     pModule = PyImport_Import(pName);
+
+    // check if module is NULL
+    if (pModule == NULL) {
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "Call failed:\n %s", PyUnicode_AsUTF8(pstr));
+        return;
+    }
+
     pFunc = PyObject_GetAttrString(pModule, function_name->s_name); // Name of the Function name inside the script file
     Py_DECREF(pName);
     if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable
