@@ -1,4 +1,4 @@
-#N canvas 364 11 1605 951 12;
+#N canvas 835 191 825 477 12;
 #X obj 18 384 print py4pd;
 #X obj 579 203 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
 -1 -1 0 1;
@@ -23,7 +23,7 @@
 #X obj 18 262 s py4pd;
 #X msg 18 191 set py function6;
 #X msg 39 227 run 20000;
-#N canvas 613 81 585 287 modules 1;
+#N canvas 9 527 585 287 modules 1;
 #X obj 17 86 s py4pd;
 #X msg 38 51 run 20000;
 #X msg 17 15 set modules to_om;

@@ -141,18 +141,18 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     free(sys_path_str); // free the memory allocated for the string, check if this is necessary
     
     // =====================
-
+    // DOC: Set the packages path
     const char *site_path_str = x->packages_path->s_name;
-
     PyObject* sys = PyImport_ImportModule("sys");
     PyObject* sys_path = PyObject_GetAttrString(sys, "path");
     PyList_Append(sys_path, PyUnicode_FromString(site_path_str));
     Py_DECREF(sys_path);
+    Py_DECREF(sys);
     
-    // ============================================================
-    
+    // =====================
     pName = PyUnicode_DecodeFSDefault(script_file_name->s_name); // Name of script file
     pModule = PyImport_Import(pName);
+    // =====================
 
     // check if module is NULL
     if (pModule == NULL) {
@@ -160,20 +160,34 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "Call failed:\n %s", PyUnicode_AsUTF8(pstr));
+        pd_error(x, "Call failed: %s", PyUnicode_AsUTF8(pstr));
         return;
     }
-
-    pFunc = PyObject_GetAttrString(pModule, function_name->s_name); // Name of the Function name inside the script file
-    Py_DECREF(pName);
+ 
+    pFunc = PyObject_GetAttrString(pModule, function_name->s_name); // Function name inside the script file
+    Py_DECREF(pName); // DOC: Py_DECREF(pName) is not necessary! 
     if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable
+        // TODO: print documentation of the function
+
+        // =====================
+        PyObject *pDoc = PyObject_GetAttrString(pFunc, "__doc__"); // Get the documentation of the function
+        
+        if (pDoc != NULL){
+            char *doc_str = PyUnicode_AsUTF8(pDoc);
+            post("%s", doc_str);
+        }
+        else{
+            post("No documentation found!");
+        }
+        
+        // =====================
         // pFunc equal x_function
         x->function = pFunc;
         x->module = pModule;
         post("py4pd | function '%s' loaded!", function_name->s_name);
         x->function_name = function_name; // why 
-        x->function_called = malloc(sizeof(int)); // TODO: Better way to solve the warning!
-        *(x->function_called) = 1; // TODO: Better way to solve the warning!
+        x->function_called = malloc(sizeof(int)); // TODO: Better way to solve the warning???
+        *(x->function_called) = 1; // 
         return;
 
     } else {
