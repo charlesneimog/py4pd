@@ -4,12 +4,16 @@
 #include <g_canvas.h>
 #include <stdio.h>
 #include <string.h>
+
+// If windows 64bits include 
+#ifdef _WIN64
+#include <windows.h>
+#endif
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef _MSC_VER
-#define snprintf _snprintf  /* for pdcontrol object */
-#endif
+
 // end of the copy of x_gui.c
 
 #include <Python.h>
@@ -30,6 +34,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_symbol        *packages_path; // packages path 
     t_symbol        *home_path; // home path this always is the path folder (?)
     t_symbol        *function_name; // function name
+    t_symbol        *script_name; // script name
     t_outlet        *out_A; // outlet 1.
 }t_py;
 
@@ -73,7 +78,6 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
 }
 
-
 // ====================================
 // ====================================
 // ====================================
@@ -84,24 +88,73 @@ static void documentation(t_py *x){
         pd_error(x, "To see the documentaion you need to set the function first!");
         return;
     }
+
     pFunc = x->function;
     if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable
         PyObject *pDoc = PyObject_GetAttrString(pFunc, "__doc__"); // Get the documentation of the function
         if (pDoc != NULL){
-            post("");
-            post("=== Documentation of the function: %s", x->function_name->s_name);
-            post("");
             const char *Doc = PyUnicode_AsUTF8(pDoc); 
-            post("%s", Doc);
-            post("");
-            post("=== End of documentation");
-            post("");
+            if (Doc != NULL){
+                post("");
+                post("=== Documentation of the function ==> %s", x->function_name->s_name);
+                post("");
+                post("%s", Doc);
+                post("");
+                post("=== End of documentation");
+                post("");
+            }
+            else{
+                post("");
+                pd_error(x, "No documentation found!");
+                post("");
+            }
         }
         else{
-            post("No documentation found!");
+            post("");
+            pd_error(x, "No documentation found!");
+            post("");
         }
     }
 }
+
+// ====================================
+// ====================================
+// ====================================
+
+static void vscode(t_py *x){
+    
+    
+    // If Windows OS run, if not then warn the user
+    #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
+
+    
+    if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
+        pd_error(x, "To open vscode you need to set the function first!");
+        return;
+    }
+    post("Opening vscode...");
+    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
+    sprintf(command, "/c code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
+    // execute cmd using ShellExecuteEx
+    // create a new thread to execute the command
+    SHELLEXECUTEINFO sei = {0};
+    sei.cbSize = sizeof(sei);
+    sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+    // sei.lpVerb = "open";
+    sei.lpFile = "cmd.exe ";
+    sei.lpParameters = command;
+    sei.nShow = SW_HIDE;
+    ShellExecuteEx(&sei);
+    CloseHandle(sei.hProcess);
+    free(command);
+    return;
+
+    #else // if not windows 64bits
+    pd_error(x, "This is not available on your system!");
+    return;
+    #endif
+}
+
 
 
 // ====================================
@@ -197,30 +250,12 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
  
     pFunc = PyObject_GetAttrString(pModule, function_name->s_name); // Function name inside the script file
     Py_DECREF(pName); // DOC: Py_DECREF(pName) is not necessary! 
-    if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable
-        // TODO: print documentation of the function
-
-        // =====================
-        PyObject *pDoc = PyObject_GetAttrString(pFunc, "__doc__"); // Get the documentation of the function
-        
-        if (pDoc != NULL){
-            post("");
-            post("=== Documentation of the function: %s", function_name->s_name);
-            post("");
-            const char *Doc = PyUnicode_AsUTF8(pDoc); // WARNING: initialization discards 'const' qualifier 
-            post("%s", Doc);
-            post("");
-            post("=== End of documentation");
-            post("");
-        }
-        else{
-            post("No documentation found!");
-        }
-
+    if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable   
         // =====================
         // pFunc equal x_function
         x->function = pFunc;
         x->module = pModule;
+        x->script_name = script_file_name;
         post("py4pd | function '%s' loaded!", function_name->s_name);
         x->function_name = function_name; // why 
         x->function_called = malloc(sizeof(int)); // TODO: Better way to solve the warning???
@@ -254,20 +289,18 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
         pd_error(x, "You need to send a message ||| 'set {script} {function}'!");
         return;
     }
-
-    PyObject *pName, *pFunc; // pDict, *pModule,
-    PyObject *pArgs, *pValue;
+    PyObject *pName, *pFunc, *pArgs, *pValue; // pDict, *pModule,
     pFunc = x->function;
     pArgs = PyTuple_New(argc);
     int i;
     for (i = 0; i < argc; ++i) {
-
-    // ARGUMENTS CONVERTION
+    // DOC: CONVERTION TO PYTHON OBJECTS
         // NUMBERS 
         if (argv[i].a_type == A_FLOAT) { 
             float arg_float = atom_getfloat(argv+i);
-            if (arg_float == (int)arg_float){ // If the float is an integer, then convert to int
+            if (arg_float == (int)arg_float){ // DOC: If the float is an integer, then convert to int
                 int arg_int = (int)arg_float;
+                post("arg_int: %d", arg_int);
                 pValue = PyLong_FromLong(arg_int);
             }
             else{ // If the int is an integer, then convert to int
@@ -294,26 +327,23 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
 
     pValue = PyObject_CallObject(pFunc, pArgs);
-    
-    if (pValue != NULL) { // if the function returns a value
-        // check length of the returned value
-        int list_length = PyList_Size(pValue);
+    if (pValue != NULL) {                       // DOC: if the function returns a value   
+        post("py4pd | function '%s' returned a value!", x->function_name->s_name);
+        int list_length = PyList_Size(pValue);  // DOC: check length of the returned value
         if (list_length == 1){ // if is Atom
-            
             // what is the type of pValue?
             if (PyLong_Check(pValue)) {
                 long result = PyLong_AsLong(pValue);
-                outlet_float(x->out_A, result);
+                post("py4pd | result: %ld", result);
+
+
             } else if (PyFloat_Check(pValue)) {
                 double result = PyFloat_AsDouble(pValue);
-                outlet_float(x->out_A, result);
+                float result_float = (float)result;
+                // outlet_float(x->out_A, result);
             } else if (PyUnicode_Check(pValue)) {
-                const char *result = PyUnicode_AsUTF8(pValue); // WARNING: initialization discards 'const' qualifier from pointer target type
-                                                               // https://www.tutorialspoint.com/difference-between-const-char-p-char-const-p-and-const-char-const-p-in-c#:~:text=const%20char*%20const%20says%20that,point%20to%20another%20constant%20char.
-                                                               // adding const in char solve this, but I don't understand why it works! :)
-
-                outlet_symbol(x->out_A, gensym(result));
-            
+                const char *result = PyUnicode_AsUTF8(pValue); // WARNING: See http://gg.gg/11t8iv
+                outlet_symbol(x->out_A, gensym(result)); // adding const in char solve this, but I don't understand why it works! :)
             } else { 
                 // check if pValue is a list.    
                 // if yes, accumulate and output it using out_A 
@@ -321,11 +351,10 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
                 Py_DECREF(pValue);
                 return;
                 }
-        } else { // if is a list
+        } else { // DOC: If the function return a list list
             int list_size = PyList_Size(pValue);
             // make array with size of list_size
             t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));            
-
             for (i = 0; i < list_size; ++i) {
                 PyObject *pValue_i = PyList_GetItem(pValue, i);
                 if (PyLong_Check(pValue_i)) {
@@ -427,9 +456,10 @@ void py4pd_setup(void){
     // class_addmethod(py_class, (t_method)py_thread, gensym("thread"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)home, gensym("home"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
-    class_addmethod(py_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
+    class_addmethod(py_class, (t_method)vscode, gensym("vscode"), 0, 0);
     class_addmethod(py_class, (t_method)documentation, gensym("documentation"), 0, 0);
     class_addmethod(py_class, (t_method)set_function, gensym("set"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)run, gensym("run"), A_GIMME, 0); // TODO: better name for this method
+
     
     }

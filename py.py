@@ -8,7 +8,6 @@ def function2(x):
     return int(x)
 
 def function3(x):
-    print("I received the number: " + str(x))
     return x
 
 def function4(x):
@@ -18,7 +17,6 @@ def function4(x):
 
 def function5(x):
     return f'O numero é {x}.'
-
 
 def function6(x):
     "I count until x. x is the number received."
