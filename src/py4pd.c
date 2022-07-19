@@ -38,11 +38,11 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 // ============================================
 
 static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
-    
-    s = NULL;
+    (void)s; // unused but required by pd
+
     if (argc < 1) {
         post("The home path is: %s", x->home_path->s_name);
-        return; // is this necessary?
+        return; // QUESTION: is this necessary?
     } else {
         x->home_path = atom_getsymbol(argv);
         post("The home path set to: %s", x->home_path->s_name);
@@ -55,7 +55,7 @@ static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 // // ============================================
 
 static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
-
+    (void)s; 
     if (argc < 1) {
         post("The packages path is: %s", x->packages_path->s_name);
         return; // is this necessary?
@@ -65,10 +65,11 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
             x->packages_path = atom_getsymbol(argv);
             post("The packages path is now: %s", x->packages_path->s_name);
         }   
-        else
+        else{
             pd_error(x, "It seems that your package folder has |spaces|. It can not have |spaces|!");
             post("I intend to implement this feature in the future!");
             return;
+        }    
     }
 }
 
@@ -80,6 +81,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
     
+    (void)s;
     // Erros handling
     // Check if script has .py extension
     char *extension = strrchr(script_file_name->s_name, '.');
@@ -104,7 +106,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
             post("");
             return;
         }
-        else{ // If the function is different, then we need to delete the old function and create a new one.
+        else{ // DOC: If the function is different, then we need to delete the old function and create a new one.
             Py_XDECREF(x->function);
             Py_XDECREF(x->module);
             x->function = NULL;
@@ -182,11 +184,13 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 
 static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    (void)s;
+    
     if (x->set_was_called == 0) { // if the set method was not called, then we can not run the function :)
         pd_error(x, "You need to send a message ||| 'set {script} {function}'!");
         return;
     }
-    
+
     PyObject *pName, *pFunc; // pDict, *pModule,
     PyObject *pArgs, *pValue;
     pFunc = x->function;
@@ -283,7 +287,7 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
         }         
         Py_DECREF(pValue);
     }
-    else {
+    else { // DOC: if the function returns a error
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
