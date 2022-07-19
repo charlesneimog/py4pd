@@ -26,7 +26,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_canvas        *x_canvas; // pointer to the canvas
     PyObject        *module; // python object
     PyObject        *function; // function name
-    t_int           *set_was_called; // flag to check if the set function was called
+    t_float         *set_was_called; // flag to check if the set function was called
     t_symbol        *packages_path; // packages path 
     t_symbol        *home_path; // home path this always is the path folder (?)
     t_symbol        *function_name; // function name
@@ -124,15 +124,16 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     
     PyObject *pName, *pModule, *pDict, *pFunc,  *py_func_obj=NULL;
     PyObject *pArgs, *pValue;
-    wchar_t py_name[5];
-    wchar_t *py_name_ptr = py_name;
-    py_name_ptr = "py4pd";
+
+    const wchar_t *py_name_ptr;
+    // Copilot: Define program name in py_name_ptr
+    py_name_ptr = Py_DecodeLocale(script_file_name->s_name, NULL);
     Py_SetProgramName(py_name_ptr); // set program name
     Py_Initialize();
     Py_GetPythonHome();
 
     // =====================
-    char *home_path_str = x->home_path->s_name;
+    const char *home_path_str = x->home_path->s_name;
     char *sys_path_str = malloc(strlen(home_path_str) + strlen("sys.path.append('") + strlen("')") + 1);
     sprintf(sys_path_str, "sys.path.append('%s')", home_path_str);
     PyRun_SimpleString("import sys");
@@ -141,7 +142,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     
     // =====================
 
-    char *site_path_str = x->packages_path->s_name;
+    const char *site_path_str = x->packages_path->s_name;
 
     PyObject* sys = PyImport_ImportModule("sys");
     PyObject* sys_path = PyObject_GetAttrString(sys, "path");
@@ -163,6 +164,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         x->function_name = function_name;
         x->set_was_called = 1;
         return;
+
     } else {
         // post PyErr_Print() in pd
         pd_error(x, "py4pd | function %s not loaded!", function_name->s_name);
@@ -244,13 +246,15 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
                 double result = PyFloat_AsDouble(pValue);
                 outlet_float(x->out_A, result);
             } else if (PyUnicode_Check(pValue)) {
-                // result UTF-8 string
-                char *result = PyUnicode_AsUTF8(pValue);
-                outlet_symbol(x->out_A, gensym(result));
-            // check if pValue is a list.
-            // if yes, accumulate and output it using out_A 
+                const char *result = PyUnicode_AsUTF8(pValue); // WARNING: initialization discards 'const' qualifier from pointer target type
+                                                               // https://www.tutorialspoint.com/difference-between-const-char-p-char-const-p-and-const-char-const-p-in-c#:~:text=const%20char*%20const%20says%20that,point%20to%20another%20constant%20char.
+                                                               // adding const in char solve this, but I don't understand why it works! :)
 
-            } else {
+                outlet_symbol(x->out_A, gensym(result));
+            
+            } else { 
+                // check if pValue is a list.    
+                // if yes, accumulate and output it using out_A 
                 pd_error(x, "Cannot convert list item\n");
                 Py_DECREF(pValue);
                 return;
@@ -259,7 +263,7 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
             int list_size = PyList_Size(pValue);
             // make array with size of list_size
             t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));            
-            int i;
+
             for (i = 0; i < list_size; ++i) {
                 PyObject *pValue_i = PyList_GetItem(pValue, i);
                 if (PyLong_Check(pValue_i)) {
@@ -274,7 +278,8 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
                     list_array[i].a_type = A_FLOAT;
                     list_array[i].a_w.w_float = result_float;
                 } else if (PyUnicode_Check(pValue_i)) {
-                    char *result = PyUnicode_AsUTF8(pValue_i);
+                    const char *result = PyUnicode_AsUTF8(pValue_i); // WARNING: initialization discards 'const' qualifier 
+                                                                     // from pointer target type [-Wdiscarded-qualifiers]
                     list_array[i].a_type = A_SYMBOL;
                     list_array[i].a_w.w_symbol = gensym(result);
                 } else {
