@@ -1,6 +1,5 @@
 #N canvas 381 57 1460 816 12;
 #X obj 18 322 print py4pd;
-#X obj 18 296 py4pd;
 #X obj 505 37 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
 -1 -1 0 1;
 #X msg 283 64 args 302389;
@@ -14,17 +13,6 @@
 #X msg 468 133 set py function4;
 #X msg 60 64 set choral cknnote;
 #X msg 73 100 set py function6;
-#X msg 387 227 args 20;
-#X connect 1 0 0 0;
-#X connect 2 0 5 0;
-#X connect 3 0 1 0;
-#X connect 4 0 1 0;
-#X connect 5 0 1 0;
-#X connect 6 0 1 0;
-#X connect 7 0 1 0;
-#X connect 8 0 7 0;
-#X connect 9 0 1 0;
-#X connect 10 0 1 0;
-#X connect 11 0 1 0;
-#X connect 12 0 1 0;
-#X connect 13 0 1 0;
+#X msg 392 227 args 200;
+#X connect 1 0 4 0;
+#X connect 7 0 6 0;
