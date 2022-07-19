@@ -367,6 +367,6 @@ void py4pd_setup(void){
     class_addmethod(py_class, (t_method)home, gensym("home"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)set_function, gensym("set"), A_GIMME, 0);
-    class_addmethod(py_class, (t_method)run, gensym("args"), A_GIMME, 0); // TODO: better name for this method
+    class_addmethod(py_class, (t_method)run, gensym("run"), A_GIMME, 0); // TODO: better name for this method
     class_addmethod(py_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
     }
