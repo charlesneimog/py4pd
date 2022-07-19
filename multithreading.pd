@@ -1,0 +1,23 @@
+#N canvas 551 59 1292 793 12;
+#X obj 39 194 py4pd;
+#X msg 39 130 set choral cknnote;
+#X msg 178 130 args A4 440;
+#X obj 92 194 loadbang;
+#X obj 36 295 stdout;
+#X obj 39 50 r set;
+#X obj 39 77 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X obj 178 83 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X obj 178 56 r args;
+#X obj 96 241 bng 15 250 50 0 empty empty empty 17 7 0 10 -262144 -1
+-1;
+#X connect 0 0 4 0;
+#X connect 1 0 0 0;
+#X connect 2 0 0 0;
+#X connect 3 0 9 0;
+#X connect 5 0 6 0;
+#X connect 6 0 1 0;
+#X connect 7 0 2 0;
+#X connect 8 0 7 0;
+#X connect 9 0 4 0;
