@@ -1,5 +1,3 @@
-from om_py import to_om
-
 def function1(x, y):
     x = int(x)
     y = int(y)

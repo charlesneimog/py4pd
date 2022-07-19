@@ -26,7 +26,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_canvas        *x_canvas; // pointer to the canvas
     PyObject        *module; // python object
     PyObject        *function; // function name
-    t_float         *set_was_called; // flag to check if the set function was called
+    t_int           *set_was_called; // flag to check if the set function was called
     t_symbol        *packages_path; // packages path 
     t_symbol        *home_path; // home path this always is the path folder (?)
     t_symbol        *function_name; // function name
@@ -38,14 +38,15 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 // ============================================
 
 static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+    
+    s = NULL;
     if (argc < 1) {
         post("The home path is: %s", x->home_path->s_name);
         return; // is this necessary?
     } else {
         x->home_path = atom_getsymbol(argv);
+        post("The home path set to: %s", x->home_path->s_name);
     }
-
-    // TODO: make it define others paths 
     // TODO: make it work with path with spaces
 }
 
@@ -78,6 +79,22 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
+    
+    // Erros handling
+    // Check if script has .py extension
+    char *extension = strrchr(script_file_name->s_name, '.');
+    if (extension != NULL) {
+        pd_error(x, "Please dont use extensions in the script file name!");
+        return;
+    }
+
+    // check if script file exists
+    char script_file_path[MAXPDSTRING];
+    snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->packages_path->s_name, script_file_name->s_name);
+    if (access(script_file_path, F_OK) == -1) {
+        pd_error(x, "The script file %s does not exist!", script_file_path);
+        return;
+    }
     
     if (x->function_name != NULL){
         int function_is_equal = strcmp(function_name->s_name, x->function_name->s_name);
@@ -127,13 +144,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     PyObject* sys = PyImport_ImportModule("sys");
     PyObject* sys_path = PyObject_GetAttrString(sys, "path");
     // TODO: make possible to set own site-packages path
-    // set x->packages_path to the site-packages path
     PyList_Append(sys_path, PyUnicode_FromString(site_path_str));
-
-
-    // PyObject* folder_path = PyUnicode_FromString("C:/Users/Neimog/Documents/OM#/temp-files/OM-py-env/Lib/site-packages"); // 
-    // PyList_Append(sys_path, folder_path);
-    // Py_DECREF(folder_path);
     Py_DECREF(sys_path);
     
     // ============================================================
@@ -171,13 +182,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 
 static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    if (x->set_was_called == 0) {
-        pd_error(x, "You need to send a message ||| set {script_file_name} {function_name} ||| first!");
-        // TODO: after use run method, create another message.
-        return;
-    }
-    else if (x->set_was_called == 2){
-        pd_error(x, "After use the run method, you need set the function again!");
+    if (x->set_was_called == 0) { // if the set method was not called, then we can not run the function :)
+        pd_error(x, "You need to send a message ||| 'set {script} {function}'!");
         return;
     }
     
@@ -208,6 +214,8 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
             Py_INCREF(Py_None);
         }
 
+        // TODO: Lists
+        
         // ERROR IF THE ARGUMENT IS NOT A NUMBER OR A STRING       
         if (!pValue) {
             pd_error(x, "Cannot convert argument\n");
@@ -219,13 +227,11 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     pValue = PyObject_CallObject(pFunc, pArgs);
     
-    
     if (pValue != NULL) { // if the function returns a value
         // check length of the returned value
         int list_length = PyList_Size(pValue);
-        if (list_length == 1){
+        if (list_length == 1){ // if is Atom
             
-            post("py4pd | function returned a single argument!");
             // what is the type of pValue?
             if (PyLong_Check(pValue)) {
                 long result = PyLong_AsLong(pValue);
@@ -245,7 +251,7 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
                 Py_DECREF(pValue);
                 return;
                 }
-        } else {
+        } else { // if is a list
             int list_size = PyList_Size(pValue);
             // make array with size of list_size
             t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));            

@@ -10,25 +10,11 @@
 #X msg 468 185 args \$1;
 #X obj 471 163 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
 -1 -1 0 1;
-#X msg 78 115 run py function2 10;
 #X obj 93 155 r py4pd;
 #X msg 468 133 set py function4;
 #X msg 387 227 args 4.3;
 #X msg 60 64 set choral cknnote;
-#N canvas 254 193 1097 643 (subpatch) 1;
-#X msg 43 49 thread;
-#X obj 96 215 s py4pd;
-#X msg 137 131 home C:/Users/Neimog/Git/py4pd/scripts;
-#X msg 181 166 args C4 320;
-#X msg 15 14 packages C:/Users/Neimog/Git/py4pd/py4pd/Lib/site-packages
-;
-#X msg 96 87 set py function2;
-#X connect 0 0 1 0;
-#X connect 2 0 1 0;
-#X connect 3 0 1 0;
-#X connect 4 0 1 0;
-#X connect 5 0 1 0;
-#X restore 670 242 pd;
+#X msg 73 100 set py function2;
 #X connect 1 0 0 0;
 #X connect 2 0 5 0;
 #X connect 3 0 1 0;
