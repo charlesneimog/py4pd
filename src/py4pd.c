@@ -200,9 +200,7 @@ static void reload(t_py *x){
             Py_DECREF(x->module);
             return;
         }
-
-    }
-    
+    } 
 }
 
 
