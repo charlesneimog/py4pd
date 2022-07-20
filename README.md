@@ -13,11 +13,11 @@ py4pd allows the use of Python inside PureData. It has the same objective as py/
 
 #### Using Python Modules
 
-The py4pd is builded to work with site-packages from `venv` (on Windows venv/Lib/site-packages), but it will work with conda too. For example, if my enviroment is installed in `C:/Users/Neimog/Git/py4pd/py4pd/`, you can sent a message `packages  C:/Users/Neimog/Git/py4pd/py4pd/Lib/site-packages` that you will be able to use all modules installed in the enviroment.
+The py4pd is built to work with site packages from `venv` (on Windows venv/Lib/site-packages), but it will work with conda too. For example, if my environment is installed in `C:/Users/Neimog/Git/py4pd/py4pd/`, you can send a message `packages  C:/Users/Neimog/Git/py4pd/py4pd/Lib/site-packages that you will be able to use all modules installed in the environment.
 
 #### Run 
 
-You need to define functions in the `.py` file to use it in PureData. For example, let's say that I want to build a Diamond Tonality from Harry Partch. Then I define the `otonal_diamond` function in the `partch.py` script inside the folder where my Pd Patch is saved. 
+You need to define functions in the `.py` file to use PureData. For example, let's say that I want to build a Diamond Tonality from Harry Partch. Then I define the `otonal_diamond` function in the `partch.py` script inside the folder where my Pd Patch is saved. 
 
 ``` Python
 def otonal_diamond(limit, diagonal, fundamental):
@@ -31,7 +31,7 @@ def otonal_diamond(limit, diagonal, fundamental):
     return otonal[diagonal]
 ```
 
-Then a sent the message `set {script_without_.py} {function_name}`, in this case, `set partch otonal_diamond` and run it using `args 13 3 440`. That means that the object will return a Diamond limite 13, the third Diagonal (in this case not the same that the figures), with the A4 how fundamental.
+Then a sent the message `set {script_without_.py} {function_name}`, in this case, `set partch otonal_diamond` and run it using `args 13 3 440`. That means that the object will return a Diamond limit of 13, the third Diagonal (in this case, not the same that the figures), with the A4 how fundamental.
 
 <img src="https://user-images.githubusercontent.com/31707161/179780465-0bec0a51-8bdb-4733-a846-7e1952311277.png" width=40% height=40%> 
 
@@ -39,7 +39,7 @@ Then a sent the message `set {script_without_.py} {function_name}`, in this case
 
 ### Building
 
-For now, I just am using it for Windows OS, I think that py/pyext work well in Linux and Mac/OS. To compile it for Windows you need `MINGW64`. Then, in mingw64 terminal type:
+For now, I just am using it for Windows OS. I think that py/pyext works well in Linux and Mac/OS. To compile for Windows, you need MINGW64. Then, in mingw64 terminal type
 
 
 ``` bash 
