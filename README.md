@@ -9,7 +9,7 @@ py4pd allows the use of Python inside PureData. It has the same objective as py/
 2. [C api from Python Docs](https://docs.python.org/3/extending/embedding.html);
 
 
-## Documentation
+### Documentation
 
 #### Using Python Modules
 
@@ -34,3 +34,20 @@ def otonal_diamond(limit, diagonal, fundamental):
 Then a sent the message `set {script_without_.py} {function_name}`, in this case, `set partch otonal_diamond` and run it using `args 13 3 440`. That means that the object will return a Diamond limite 13, the third Diagonal (in this case not the same that the figures), with the A4 how fundamental.
 
 ![image](https://user-images.githubusercontent.com/31707161/179780465-0bec0a51-8bdb-4733-a846-7e1952311277.png)
+
+### Building
+
+For now, I just am using it for Windows OS, I think that py/pyext work well in Linux and Mac/OS. To compile it for Windows you need `MINGW64`. Then, in mingw64 terminal type:
+
+
+``` bash 
+cd PATH_TO_THIS_REPO
+gcc -DPD -I"PATH_TO_PD/src" -I"PATH_TO_PYTHON3.10/include/"  -o py4pd.o -c ./src/py4pd.c
+gcc -static-libgcc -I"PATH_TO_PD/src"  -shared -Wl,--enable-auto-import "PATH_TO_PD/bin/pd.dll" "PATH_TO_PYTHON3.10/python310.dll" -o py4pd.dll py4pd.o
+```
+
+
+
+
+
+
