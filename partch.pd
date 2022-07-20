@@ -25,7 +25,7 @@
 #X obj 379 153 cyclone/round 1;
 #X obj 20 325 cyclone/round 1;
 #X obj 20 270 t f f;
-#X msg 272 503 77;
+#X msg 272 503 72;
 #X obj 379 301 cyclone/prepend set;
 #X obj 20 428 t f b;
 #X obj 406 236 s channel;
@@ -96,9 +96,9 @@
 #X obj 156 220 print;
 #X obj 29 164 pack f 60 1 200;
 #X obj 200 110 hsl 128 15 50 5000 0 0 empty empty empty -2 -8 0 10
--262144 -1 -1 2500 0;
+-262144 -1 -1 0 0;
 #X obj 148 82 hsl 128 15 30 100 0 0 empty empty empty -2 -8 0 10 -262144
--1 -1 6100 0;
+-1 -1 0 0;
 #X msg 227 222 panic;
 #X obj 61 29 inlet;
 #X obj 28 263 outlet;
@@ -126,7 +126,7 @@
 #X connect 0 0 2 0;
 #X connect 2 0 1 0;
 #X restore 90 213 pd load;
-#X msg 53 57 run 13 3 440;
+#X msg 53 57 run 13 6 440 23;
 #X connect 1 0 4 0;
 #X connect 2 0 1 0;
 #X connect 3 0 0 0;
