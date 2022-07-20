@@ -121,18 +121,26 @@ static void documentation(t_py *x){
 // ====================================
 // ====================================
 
-/* TODO: 
+/* 
+TODO: 
 
 With a separate thread, the script can be executed in the background, 
 without the need to wait for the end of the script.
-*/
 
-/* TODO: 
+TODO: 
 
 Make it process in a separate thread independent of the pd thread, then 
 we can gerenerate, for example, Scores in realtime using this function.
 
+TODO: 
+
+Work with list: One ideia is to, trough a other function, make a list manipulation inside 
+the C code. For exemplo, I could use the run_list [1 2 3 4 5] 1 4 (Partch function) and then
+make C understand that what is inside [1 2 3 4 5] is a list not 5 numbers. 
+
 */
+
+
 
 
 // ====================================
@@ -141,9 +149,7 @@ we can gerenerate, for example, Scores in realtime using this function.
 
 static void vscode(t_py *x){
     // If Windows OS run, if not then warn the user
-    
-
-    
+       
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
         pd_error(x, "To open vscode you need to set the function first!");
         return;
