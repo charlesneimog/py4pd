@@ -141,7 +141,7 @@ we can gerenerate, for example, Scores in realtime using this function.
 
 static void vscode(t_py *x){
     // If Windows OS run, if not then warn the user
-    #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
+    
 
     
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
@@ -153,6 +153,7 @@ static void vscode(t_py *x){
     sprintf(command, "/c code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
     // execute cmd using ShellExecuteEx
     // create a new thread to execute the command
+    #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
     SHELLEXECUTEINFO sei = {0};
     sei.cbSize = sizeof(sei);
     sei.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -166,8 +167,11 @@ static void vscode(t_py *x){
     post("Vscode opened!");
     return;
 
+    // Not Windows OS
+
     #else // if not windows 64bits
-    pd_error(x, "This is not available on your system!");
+    system(command);
+    pd_error(x, "This is not fully available on your system!");
     return;
     #endif
 }
