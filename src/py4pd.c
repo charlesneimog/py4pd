@@ -121,9 +121,25 @@ static void documentation(t_py *x){
 // ====================================
 // ====================================
 
+/* TODO: 
+
+With a separate thread, the script can be executed in the background, 
+without the need to wait for the end of the script.
+*/
+
+/* TODO: 
+
+Make it process in a separate thread independent of the pd thread, then 
+we can gerenerate, for example, Scores in realtime using this function.
+
+*/
+
+
+// ====================================
+// ====================================
+// ====================================
+
 static void vscode(t_py *x){
-    
-    
     // If Windows OS run, if not then warn the user
     #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
 
