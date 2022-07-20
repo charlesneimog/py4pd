@@ -342,7 +342,6 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     int i;
 
     // DOC: CONVERTION TO PYTHON OBJECTS
-    // DOC: CONVERTION TO PYTHON OBJECTS
 
     for (i = 0; i < argc; ++i) {
     
