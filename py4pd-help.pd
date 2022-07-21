@@ -1,7 +1,7 @@
 #N canvas 959 99 809 497 12;
 #X obj 18 384 print py4pd;
-#X obj 151 249 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
--1 -1 2100 1;
+#X obj 151 249 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 #fcfcfc
+#000000 #000000 0 1;
 #X msg 16 14 home;
 #X obj 18 358 py4pd;
 #X obj 16 142 s py4pd;
@@ -15,16 +15,20 @@
 #X text 277 42 Define home Path!;
 #X text 604 109 Define packages Path!;
 #X obj 18 262 s py4pd;
-#N canvas 9 527 585 287 modules 0;
-#X obj 17 86 s py4pd;
+#N canvas 542 678 585 287 modules 1;
+#X obj 17 165 s py4pd;
 #X msg 38 51 run 20000;
 #X msg 17 15 set modules to_om;
+#X msg 265 79 run 20 20 20;
+#X msg 266 48 set math sum;
 #X connect 1 0 0 0;
 #X connect 2 0 0 0;
+#X connect 3 0 0 0;
+#X connect 4 0 0 0;
 #X restore 18 448 pd modules;
 #X obj 148 322 s py4pd;
 #X msg 148 279 run \$1 10;
-#N canvas 316 497 450 300 vscode 0;
+#N canvas 316 497 450 300 vscode 1;
 #X obj 28 123 s py4pd;
 #X msg 28 21 documentation;
 #X msg 138 22 vscode;
@@ -35,11 +39,11 @@
 #X restore 18 425 pd vscode;
 #X text 89 425 vscode \, reload and documentation of functions;
 #X msg 39 227 run 2000;
-#X msg 18 191 set py function1;
 #X obj 153 182 metro 1;
-#X obj 153 152 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
-1;
+#X obj 153 152 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000
+#000000 0 1;
 #X obj 143 215 random 100;
+#X msg 18 191 set py function6;
 #X connect 1 0 16 0;
 #X connect 2 0 4 0;
 #X connect 3 0 0 0;
@@ -49,7 +53,7 @@
 #X connect 8 0 4 0;
 #X connect 16 0 15 0;
 #X connect 19 0 13 0;
-#X connect 20 0 13 0;
-#X connect 21 0 23 0;
-#X connect 22 0 21 0;
-#X connect 23 0 1 0;
+#X connect 20 0 22 0;
+#X connect 21 0 20 0;
+#X connect 22 0 1 0;
+#X connect 23 0 13 0;

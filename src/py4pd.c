@@ -138,9 +138,30 @@ Work with list: One ideia is to, trough a other function, make a list manipulati
 the C code. For exemplo, I could use the run_list [1 2 3 4 5] 1 4 (Partch function) and then
 make C understand that what is inside [1 2 3 4 5] is a list not 5 numbers. 
 
+WARNING: 
+
+===================================================================================
+./src/py4pd.c: In function 'set_function':
+./src/py4pd.c:283:23: warning: unused variable 'pValue' [-Wunused-variable]
+  283 |     PyObject *pArgs, *pValue;
+      |                       ^~~~~~
+./src/py4pd.c:283:15: warning: unused variable 'pArgs' [-Wunused-variable]
+  283 |     PyObject *pArgs, *pValue;
+      |               ^~~~~
+./src/py4pd.c:282:50: warning: unused variable 'py_func_obj' [-Wunused-variable]
+  282 |     PyObject *pName, *pModule, *pDict, *pFunc,  *py_func_obj=NULL;
+      |                                                  ^~~~~~~~~~~
+./src/py4pd.c:282:33: warning: unused variable 'pDict' [-Wunused-variable]
+  282 |     PyObject *pName, *pModule, *pDict, *pFunc,  *py_func_obj=NULL;
+      |                                 ^~~~~
+./src/py4pd.c: In function 'run':
+./src/py4pd.c:365:15: warning: unused variable 'pName' [-Wunused-variable]
+  365 |     PyObject *pName, *pFunc, *pArgs, *pValue; // pDict, *pModule,
+
+===================================================================================
+
+
 */
-
-
 
 
 // ====================================
@@ -155,11 +176,10 @@ static void vscode(t_py *x){
         return;
     }
     post("Opening vscode...");
+    
+    #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
     char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
     sprintf(command, "/c code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
-    // execute cmd using ShellExecuteEx
-    // create a new thread to execute the command
-    #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
     SHELLEXECUTEINFO sei = {0};
     sei.cbSize = sizeof(sei);
     sei.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -176,8 +196,10 @@ static void vscode(t_py *x){
     // Not Windows OS
 
     #else // if not windows 64bits
+    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
+    sprintf(command, "code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
     system(command);
-    pd_error(x, "This is not fully available on your system!");
+    pd_error(x, "Not tested in your Platform, please send me a bug report!");
     return;
     #endif
 }
@@ -208,7 +230,7 @@ static void reload(t_py *x){
     } else{
         Py_XDECREF(x->module);
         pFunc = PyObject_GetAttrString(pModule, x->function_name->s_name); // Function name inside the script file
-        Py_DECREF(pName); // DOC: Py_DECREF(pName) is not necessary! 
+        Py_DECREF(pName); // DOC: Py_DECREF(pName) is necessary?
         if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable 
             x->function = pFunc;
             x->module = pModule;
@@ -279,8 +301,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         return;
     }
     
-    PyObject *pName, *pModule, *pDict, *pFunc,  *py_func_obj=NULL;
-    PyObject *pArgs, *pValue;
+    PyObject *pName, *pModule, *pFunc;
 
     const wchar_t *py_name_ptr;
     // Copilot: Define program name in py_name_ptr
