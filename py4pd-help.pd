@@ -28,14 +28,16 @@
 #X restore 18 448 pd modules;
 #X obj 148 322 s py4pd;
 #X msg 148 279 run \$1 10;
-#N canvas 316 497 450 300 vscode 1;
+#N canvas 47 515 450 300 vscode 1;
 #X obj 28 123 s py4pd;
 #X msg 28 21 documentation;
 #X msg 138 22 vscode;
-#X msg 111 79 reload;
+#X msg 159 56 reload;
+#X msg 248 66 create om;
 #X connect 1 0 0 0;
 #X connect 2 0 0 0;
 #X connect 3 0 0 0;
+#X connect 4 0 0 0;
 #X restore 18 425 pd vscode;
 #X text 89 425 vscode \, reload and documentation of functions;
 #X msg 39 227 run 2000;
