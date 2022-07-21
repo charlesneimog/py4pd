@@ -138,30 +138,128 @@ Work with list: One ideia is to, trough a other function, make a list manipulati
 the C code. For exemplo, I could use the run_list [1 2 3 4 5] 1 4 (Partch function) and then
 make C understand that what is inside [1 2 3 4 5] is a list not 5 numbers. 
 
-WARNING: 
-
-===================================================================================
-./src/py4pd.c: In function 'set_function':
-./src/py4pd.c:283:23: warning: unused variable 'pValue' [-Wunused-variable]
-  283 |     PyObject *pArgs, *pValue;
-      |                       ^~~~~~
-./src/py4pd.c:283:15: warning: unused variable 'pArgs' [-Wunused-variable]
-  283 |     PyObject *pArgs, *pValue;
-      |               ^~~~~
-./src/py4pd.c:282:50: warning: unused variable 'py_func_obj' [-Wunused-variable]
-  282 |     PyObject *pName, *pModule, *pDict, *pFunc,  *py_func_obj=NULL;
-      |                                                  ^~~~~~~~~~~
-./src/py4pd.c:282:33: warning: unused variable 'pDict' [-Wunused-variable]
-  282 |     PyObject *pName, *pModule, *pDict, *pFunc,  *py_func_obj=NULL;
-      |                                 ^~~~~
-./src/py4pd.c: In function 'run':
-./src/py4pd.c:365:15: warning: unused variable 'pName' [-Wunused-variable]
-  365 |     PyObject *pName, *pFunc, *pArgs, *pValue; // pDict, *pModule,
-
-===================================================================================
-
-
+;===========================================================
+;===========================================================
+;===========================================================
 */
+
+
+// ============================================
+// ============================================
+// ============================================
+
+void convert_list_inside_list(t_py *x, PyObject *pValue, t_atom *list_array, int list_size) {  
+    if (PyList_Check(pValue)){ // DOC: If the function return a list list
+        int list_size = PyList_Size(pValue);
+        t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));   
+        // loop through the list and convert the atoms and save in list, if a list of lists is found, then call the function again
+        
+        for (int i = 0; i < list_size; i++){
+            PyObject *pValue_j = PyList_GetItem(pValue_j, i);
+            if (PyList_Check(pValue_j)){
+                convert_list_inside_list(x, pValue_j, list_array, list_size);
+            }
+            else{
+                if (PyLong_Check(pValue_j)) {
+                    long result = PyLong_AsLong(pValue_j);
+                    float result_float = (float)result;
+                    list_array[i].a_type = A_FLOAT;
+                    list_array[i].a_w.w_float = result_float;
+                    
+                } else if (PyFloat_Check(pValue_j)) {
+                    double result = PyFloat_AsDouble(pValue_j);
+                    float result_float = (float)result;
+                    list_array[i].a_type = A_FLOAT;
+                    list_array[i].a_w.w_float = result_float;
+
+                } else if (PyUnicode_Check(pValue_j)) {
+                    const char *result = PyUnicode_AsUTF8(pValue_j); 
+                    list_array[i].a_type = A_SYMBOL;
+                    list_array[i].a_w.w_symbol = gensym(result);
+
+                } else if (PyList_Check(pValue_j)) {
+                    return convert_list_inside_list(x, pValue_j, list_array, list_size);
+                } else {
+                    pd_error(x, "Cannot convert list item\n");
+                    return;
+                }
+            }
+        }
+        return;
+    } else {
+        if (PyLong_Check(pValue)) {
+            long result = PyLong_AsLong(pValue);
+            outlet_float(x->out_A, result);
+        } else if (PyFloat_Check(pValue)) {
+            long result = PyLong_AsLong(pValue);
+            outlet_float(x->out_A, result);
+        } else if (PyUnicode_Check(pValue)) {
+            const char *result = PyUnicode_AsUTF8(pValue); // WARNING: initialization discards 'const' qualifier 
+                                                            // from pointer target type [-Wdiscarded-qualifiers]
+            outlet_symbol(x->out_A, gensym(result));
+        } else {
+            pd_error(x, "Cannot convert list item\n");
+            return;
+        }
+    }
+}
+        
+        
+        
+        
+        
+        
+//         int i;         
+//         for (i = 0; i < list_size; ++i) {
+//             PyObject *pValue_i = PyList_GetItem(pValue, i);
+//             if (PyLong_Check(pValue_i)) {
+//                 long result = PyLong_AsLong(pValue_i);
+//                 float result_float = (float)result;
+//                 list_array[i].a_type = A_FLOAT;
+//                 list_array[i].a_w.w_float = result_float;
+
+//             } else if (PyFloat_Check(pValue_i)) {
+//                 double result = PyFloat_AsDouble(pValue_i);
+//                 float result_float = (float)result;
+//                 list_array[i].a_type = A_FLOAT;
+//                 list_array[i].a_w.w_float = result_float;
+//             } else if (PyUnicode_Check(pValue_i)) {
+//                 const char *result = PyUnicode_AsUTF8(pValue_i); // WARNING: initialization discards 'const' qualifier 
+//                                                                     // from pointer target type [-Wdiscarded-qualifiers]
+//                 list_array[i].a_type = A_SYMBOL;
+//                 list_array[i].a_w.w_symbol = gensym(result);
+//             } else if (PyList_Check(pValue_i)) {
+//                 convert_list_inside_list(x, pValue_i, list_array, list_size);
+//             } else {
+//                 pd_error(x, "Cannot convert list item\n");
+//                 return;
+//             }
+//         }
+//         return list_array; // The loop seems slow :(. TODO: possible do in other way?
+//     } else {
+//         if (PyLong_Check(pValue)) {
+//             long result = PyLong_AsLong(pValue);
+//             return result;
+//         } else if (PyFloat_Check(pValue)) {
+//             double result = PyFloat_AsDouble(pValue);
+//             float result_float = (float)result;
+//             return result_float;
+//             // outlet_float(x->out_A, result);
+//         } else if (PyUnicode_Check(pValue)) {
+//             const char *result = PyUnicode_AsUTF8(pValue); // WARNING: See http://gg.gg/11t8iv
+//             return result; 
+//         } else { 
+//             // check if pValue is a list.    
+//             // if yes, accumulate and output it using out_A 
+//             pd_error(x, "Cannot convert item\n");
+//             return;
+//         }
+//     }
+// }
+
+// ============================================
+// ============================================
+
 static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // If Windows OS run, if not then warn the user
     t_symbol *script_file_name = atom_gensym(argv+0);   
@@ -477,7 +575,8 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
                     list_array[i].a_type = A_SYMBOL;
                     list_array[i].a_w.w_symbol = gensym(result);
                 } else if (PyList_Check(pValue_i)) {
-                    post("py4pd | list inside list not supported yet!");
+                    convert_list_inside_list(x, pValue_i, list_array+i, list_size);
+                    post("recursive call");
                     list_array[i].a_type = A_FLOAT;
                     list_array[i].a_w.w_float = 0;
                 } else {
@@ -519,67 +618,6 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
         return;
     }
 }
-
-// ============================================
-// ============================================
-// ============================================
-
-void convert_list_inside_list(t_py *x, PyObject *pValue, t_atom *list_array, int list_size) {  
-    if (PyList_Check(pValue)){ // DOC: If the function return a list list
-        int list_size = PyList_Size(pValue);
-        // make array with size of list_size
-        t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));   
-        int i;         
-        for (i = 0; i < list_size; ++i) {
-            PyObject *pValue_i = PyList_GetItem(pValue, i);
-            if (PyLong_Check(pValue_i)) {
-                long result = PyLong_AsLong(pValue_i);
-                float result_float = (float)result;
-                list_array[i].a_type = A_FLOAT;
-                list_array[i].a_w.w_float = result_float;
-
-            } else if (PyFloat_Check(pValue_i)) {
-                double result = PyFloat_AsDouble(pValue_i);
-                float result_float = (float)result;
-                list_array[i].a_type = A_FLOAT;
-                list_array[i].a_w.w_float = result_float;
-            } else if (PyUnicode_Check(pValue_i)) {
-                const char *result = PyUnicode_AsUTF8(pValue_i); // WARNING: initialization discards 'const' qualifier 
-                                                                    // from pointer target type [-Wdiscarded-qualifiers]
-                list_array[i].a_type = A_SYMBOL;
-                list_array[i].a_w.w_symbol = gensym(result);
-            } else if (PyList_Check(pValue_i)) {
-                convert_list_inside_list(x, pValue_i, list_array, list_size);
-            } else {
-                pd_error(x, "Cannot convert list item\n");
-                Py_DECREF(pValue);
-                return;
-            }
-        }
-        outlet_list(x->out_A, 0, list_size, list_array); // The loop seems slow :(. TODO: possible do in other way?
-    } else {
-        if (PyLong_Check(pValue)) {
-            long result = PyLong_AsLong(pValue);
-            outlet_float(x->out_A, result);
-        } else if (PyFloat_Check(pValue)) {
-            double result = PyFloat_AsDouble(pValue);
-            float result_float = (float)result;
-            outlet_float(x->out_A, result_float);
-            // outlet_float(x->out_A, result);
-        } else if (PyUnicode_Check(pValue)) {
-            const char *result = PyUnicode_AsUTF8(pValue); // WARNING: See http://gg.gg/11t8iv
-            outlet_symbol(x->out_A, gensym(result)); // adding const in char solve this, but I don't understand why it works! :)
-        } else { 
-            // check if pValue is a list.    
-            // if yes, accumulate and output it using out_A 
-            pd_error(x, "Cannot convert list item\n");
-            Py_DECREF(pValue);
-            return;
-            }
-    }
-    Py_DECREF(pValue);
-}
-
 
 
 // ============================================
