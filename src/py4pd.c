@@ -299,6 +299,7 @@ static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     sei.cbSize = sizeof(sei);
     sei.fMask = SEE_MASK_NOCLOSEPROCESS;
     // sei.lpVerb = "open";
+    
     sei.lpFile = "cmd.exe ";
     sei.lpParameters = command;
     sei.nShow = SW_HIDE;
