@@ -1,7 +1,11 @@
 # library name
 lib.name = py4pd
 
-ldlibs = -L ${py_lib}  -l $(version)
+# python libs
+
+cflags = -I $(PYTHON_INCLUDE)
+
+ldlibs = -L ${PYTHON_LIB}  -l $(PYTHON_VERSION)
 
 # input source file (class name == source file basename)
 class.sources = src/py4pd.c
