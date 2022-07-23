@@ -42,6 +42,28 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 // ============== METHODS =====================
 // ============================================
 
+// static void pip_install(t_py *x){
+//     // run scritp to install pip
+//     FILE* fp;
+//     char *script_name = "/get-pip.py";
+//     const char *script_path = x->home_path->s_name;
+//     char *script_path_full = malloc(strlen(script_path) + strlen(script_name) + 1);
+//     strcpy(script_path_full, script_path);
+//     strcat(script_path_full, script_name);
+//     post("%s\n", script_path_full);
+//     post("Ok!\n");
+
+//     // read script_path_full and save it in a string
+//     PyRun_SimpleFile(fp, script_path_full);
+
+
+// }
+    
+    
+// // ============================================
+// // ============================================
+// // ============================================
+
 static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; // unused but required by pd
 
@@ -262,6 +284,10 @@ void convert_list_inside_list(t_py *x, PyObject *pValue, t_atom *list_array, int
 
 static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // If Windows OS run, if not then warn the user
+    (void)s;
+    (void)argc;
+    
+    
     t_symbol *script_file_name = atom_gensym(argv+0);   
     
     post("Opening vscode...");
@@ -510,7 +536,7 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
         pd_error(x, "You need to send a message ||| 'set {script} {function}'!");
         return;
     }
-    PyObject *pName, *pFunc, *pArgs, *pValue; // pDict, *pModule,
+    PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
     pFunc = x->function;
     pArgs = PyTuple_New(argc);
     int i;
@@ -681,6 +707,7 @@ void py4pd_setup(void){
     
     // class_addmethod(py_class, (t_method)py_thread, gensym("thread"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)home, gensym("home"), A_GIMME, 0);
+    // class_addmethod(py_class, (t_method)pip_install, gensym("pip_install"), 0, 0);
     class_addmethod(py_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)vscode, gensym("vscode"), 0, 0);
     class_addmethod(py_class, (t_method)reload, gensym("reload"), 0, 0);

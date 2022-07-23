@@ -42,6 +42,48 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 // ============== METHODS =====================
 // ============================================
 
+static void pip_install(t_py *x){
+    // this will install pip from get-pip.py to make possible to install packages
+    // this is a hacky way to install pip
+
+    // run scritp to install pip
+    char *script_name = "get-pip.py";
+    char *script_path = x->home_path->s_name;
+    char *script_path_full = malloc(strlen(script_path) + strlen(script_name) + 1);
+    strcpy(script_path_full, script_path);
+    strcat(script_path_full, script_name);
+    post("%s\n", script_path_full);
+
+    // run file with embedded python
+    // check if get-pip.py exists
+    if(access(script_path_full, F_OK) != -1){
+        FILE* cp = fopen(script_path_full, "r");
+        if (!cp){
+            pd_error(x, "Error opening file: %s\n", script_path_full);
+            return;
+        }
+
+    Py_Initialize();
+    int rc = PyRun_SimpleFile(cp, script_path_full);
+    fclose(cp);
+    Py_Finalize();  
+    return;
+    }
+    else{
+        pd_error(x, "Error opening file: %s\n", script_path_full);
+        return;
+    }
+}
+
+
+
+
+
+// // ============================================
+// // ============================================
+// // ============================================
+
+
 static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; // unused but required by pd
 
@@ -650,6 +692,7 @@ void py4pd_setup(void){
     class_addmethod(py_class, (t_method)documentation, gensym("documentation"), 0, 0);
     class_addmethod(py_class, (t_method)set_function, gensym("set"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)run, gensym("run"), A_GIMME, 0); // TODO: better name for this method
+    class_addmethod(py_class, (t_method)pip_install, gensym("pip_install"), 0, 0); // TODO: better name for this method
 
     
     }
