@@ -44,7 +44,7 @@ For now, I just am using it for Windows OS. I think that py/pyext works well in 
 #### Windows OS
 
 ``` bash 
-make PYTHON_LIB="Python libs" PYTHON_INCLUDE="Where Python.h is" PYTHON_VERSION=python310 {or python311}
+make PYTHON_INCLUDE="C:/Users/%USERNAME%/AppData/Local/Programs/Python/Python310/include" PYTHON_DLL="C:/Users/%USERNAME%/AppData/Local/Programs/Python/Python310/python310.dll"
 ```
 
 #### Linux - version 3.10
