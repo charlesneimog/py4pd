@@ -136,13 +136,13 @@ static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // If Windows OS run, if not then warn the user
     (void)s;
     (void)argc;
-    (void)argv;
-        
+    
+    const char *script_name = argv[0].a_w.w_symbol->s_name;
     post("Opening vscode...");
     #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
 
-    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
-    sprintf(command, "/c code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
+    char *command = malloc(strlen(x->home_path->s_name) + strlen(script_name) + 20);
+    sprintf(command, "/c code %s/%s.py", x->home_path->s_name, script_name);
     SHELLEXECUTEINFO sei = {0};
     sei.cbSize = sizeof(sei);
     sei.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -159,8 +159,8 @@ static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // Not Windows OS
 
     #else // if not windows 64bits
-    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
-    sprintf(command, "code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
+    char *command = malloc(strlen(x->home_path->s_name) + strlen(script_name) + 20);
+    sprintf(command, "code %s/%s.py", x->home_path->s_name, script_name);
 
     pd4py_system_func(command);
     pd_error(x, "Not tested in your Platform, please send me a bug report!");
@@ -509,7 +509,7 @@ void *py_new(void){
     post("version 0.0.1        ");
     post("Based on Python 3.10.5  ");
     post("");
-    post("It is inspired by the work of Thomas Grill and SOPI research group");
+    post("It is inspired by the work of Thomas Grill and SOPI research group.");
     post("");
     post("");
 
