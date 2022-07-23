@@ -43,7 +43,7 @@ For now, I just am using it for Windows OS. I think that py/pyext works well in 
 
 
 ``` bash 
-make py_lib="Python libs" PYTHON_INCLUDE="Where Python.h is" PYTHON_VERSION=python310 {or python311}
+make PYTHON_LIB="Python libs" PYTHON_INCLUDE="Where Python.h is" PYTHON_VERSION=python310 {or python311}
 ```
 
 
