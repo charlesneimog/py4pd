@@ -1,15 +1,15 @@
-#N canvas 229 63 1591 642 12;
+#N canvas 583 153 1591 642 12;
 #X obj 19 285 print py4pd;
 #X obj 157 82 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 #fcfcfc
 #000000 #000000 0 1;
 #X msg 455 98 home;
 #X obj 19 259 py4pd;
 #X obj 456 267 s py4pd;
-#X msg 490 162 packages;
+#X msg 480 183 packages;
 #X obj 19 235 r py4pd;
-#X text 555 161 See where is the packages path!;
+#X text 545 182 See where is the packages path!;
 #X text 491 97 See where is the home path!;
-#X text 543 125 Define home Path!;
+#X text 776 99 Define home Path!;
 #X obj 16 88 s py4pd;
 #N canvas 542 678 585 287 modules 1;
 #X obj 17 165 s py4pd;
@@ -44,8 +44,12 @@
 #X obj 154 57 random 100;
 #X msg 16 17 set py function1;
 #X msg 487 234 packages ./py4pd/Lib/site-packages, f 35;
-#X msg 485 126 home ./;
 #X obj 487 209 loadbang;
+#X msg 480 126 home /home/neimog/Downloads/py4pd/scripts;
+#X text 782 123 If in Linux \, you need to use complete paths \, not
+just relatives;
+#X text 749 233 If in Linux \, you need to use complete paths \, not
+just relatives;
 #X connect 1 0 13 0;
 #X connect 2 0 4 0;
 #X connect 3 0 0 0;
@@ -58,5 +62,5 @@
 #X connect 18 0 1 0;
 #X connect 19 0 10 0;
 #X connect 20 0 4 0;
-#X connect 21 0 4 0;
-#X connect 22 0 20 0;
+#X connect 21 0 20 0;
+#X connect 22 0 4 0;

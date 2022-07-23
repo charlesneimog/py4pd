@@ -5,7 +5,23 @@ lib.name = py4pd
 
 cflags = -I $(PYTHON_INCLUDE)
 
-ldlibs = -L ${PYTHON_LIB}  -l $(PYTHON_VERSION)
+# if running in Windows, define ldlibs = -L ${PYTHON_LIB} -l $(PYTHON_VERSION)
+# if running in  Linux, define ldlibs =  -l python$(PYTHON_VERSION)
+# if running in  Mac, define ldlibs = -l python$(PYTHON_VERSION)
+
+uname := $(shell uname -s)
+
+ifeq (MINGW,$(findstring MINGW,$(uname)))
+  ldlibs = -L ${PYTHON_LIB} -l $(PYTHON_VERSION)
+endif
+
+ifeq (Linux,$(findstring Linux,$(uname)))
+  ldlibs = -l $(PYTHON_VERSION) 
+endif
+
+ifeq (Darwin,$(findstring Darwin,$(uname)))
+  ldlibs = -l $(PYTHON_VERSION)
+endif
 
 # input source file (class name == source file basename)
 class.sources = src/py4pd.c
