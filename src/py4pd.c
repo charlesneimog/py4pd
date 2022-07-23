@@ -38,27 +38,6 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_outlet        *out_A; // outlet 1.
 }t_py;
 
-// ============================================
-// ============== METHODS =====================
-// ============================================
-
-// static void pip_install(t_py *x){
-//     // run scritp to install pip
-//     FILE* fp;
-//     char *script_name = "/get-pip.py";
-//     const char *script_path = x->home_path->s_name;
-//     char *script_path_full = malloc(strlen(script_path) + strlen(script_name) + 1);
-//     strcpy(script_path_full, script_path);
-//     strcat(script_path_full, script_name);
-//     post("%s\n", script_path_full);
-//     post("Ok!\n");
-
-//     // read script_path_full and save it in a string
-//     PyRun_SimpleFile(fp, script_path_full);
-
-
-// }
-    
     
 // // ============================================
 // // ============================================
@@ -143,103 +122,6 @@ static void documentation(t_py *x){
 // ====================================
 // ====================================
 
-/* 
-TODO: 
-
-With a separate thread, the script can be executed in the background, 
-without the need to wait for the end of the script.
-
-TODO: 
-
-Make it process in a separate thread independent of the pd thread, then 
-we can gerenerate, for example, Scores in realtime using this function.
-
-TODO: 
-
-Work with list: One ideia is to, trough a other function, make a list manipulation inside 
-the C code. For exemplo, I could use the run_list [1 2 3 4 5] 1 4 (Partch function) and then
-make C understand that what is inside [1 2 3 4 5] is a list not 5 numbers. 
-
-;===========================================================
-;===========================================================
-;===========================================================
-*/
-
-
-// ============================================
-// ============================================
-// ============================================
-
-/*
-void convert_list_inside_list(t_py *x, PyObject *pValue, t_atom *list_array, int list_size) {  
-    if (PyList_Check(pValue)){ // DOC: If the function return a list list
-        int list_size = PyList_Size(pValue);
-        
-        // warning: declaration of ‘list_array’ shadows a parameter [-Wshadow]
-        // github solve this problem:
-        t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));
-
-
-        t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));   
-        // loop through the list and convert the atoms and save in list, if a list of lists is found, then call the function again
-        
-        for (int i = 0; i < list_size; i++){
-            PyObject *pValue_j = PyList_GetItem(pValue_j, i);
-            if (PyList_Check(pValue_j)){
-                convert_list_inside_list(x, pValue_j, list_array, list_size);
-            }
-            else{
-                if (PyLong_Check(pValue_j)) {
-                    long result = PyLong_AsLong(pValue_j);
-                    float result_float = (float)result;
-                    list_array[i].a_type = A_FLOAT;
-                    list_array[i].a_w.w_float = result_float;
-                    
-                } else if (PyFloat_Check(pValue_j)) {
-                    double result = PyFloat_AsDouble(pValue_j);
-                    float result_float = (float)result;
-                    list_array[i].a_type = A_FLOAT;
-                    list_array[i].a_w.w_float = result_float;
-
-                } else if (PyUnicode_Check(pValue_j)) {
-                    const char *result = PyUnicode_AsUTF8(pValue_j); 
-                    list_array[i].a_type = A_SYMBOL;
-                    list_array[i].a_w.w_symbol = gensym(result);
-
-                } else if (PyList_Check(pValue_j)) {
-                    return convert_list_inside_list(x, pValue_j, list_array, list_size);
-                } else {
-                    pd_error(x, "Cannot convert list item\n");
-                    return;
-                }
-            }
-        }
-        return;
-    } else {
-        if (PyLong_Check(pValue)) {
-            long result = PyLong_AsLong(pValue);
-            outlet_float(x->out_A, result);
-        } else if (PyFloat_Check(pValue)) {
-            long result = PyLong_AsLong(pValue);
-            outlet_float(x->out_A, result);
-        } else if (PyUnicode_Check(pValue)) {
-            const char *result = PyUnicode_AsUTF8(pValue); // WARNING: initialization discards 'const' qualifier 
-                                                            // from pointer target type [-Wdiscarded-qualifiers]
-            outlet_symbol(x->out_A, gensym(result));
-        } else {
-            pd_error(x, "Cannot convert list item\n");
-            return;
-        }
-    }
-}
-
-*/
-
-// just because I do not like warnings!!
-
-// ============================================
-// ============================================
-
 void pd4py_system_func (const char *command){
     int result = system(command);
     if (result == -1){
@@ -254,13 +136,13 @@ static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // If Windows OS run, if not then warn the user
     (void)s;
     (void)argc;
-    (void)argv;
-        
+    
+    const char *script_name = argv[0].a_w.w_symbol->s_name;
     post("Opening vscode...");
     #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
 
-    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
-    sprintf(command, "/c code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
+    char *command = malloc(strlen(x->home_path->s_name) + strlen(script_name) + 20);
+    sprintf(command, "/c code %s/%s.py", x->home_path->s_name, script_name);
     SHELLEXECUTEINFO sei = {0};
     sei.cbSize = sizeof(sei);
     sei.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -277,8 +159,8 @@ static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // Not Windows OS
 
     #else // if not windows 64bits
-    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
-    sprintf(command, "code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
+    char *command = malloc(strlen(x->home_path->s_name) + strlen(script_name) + 20);
+    sprintf(command, "code %s/%s.py", x->home_path->s_name, script_name);
 
     pd4py_system_func(command);
     pd_error(x, "Not tested in your Platform, please send me a bug report!");
@@ -624,10 +506,10 @@ void *py_new(void){
     post("");
     post("");
     post("py4pd by Charles K. Neimog");
-    post("version 0.0         ");
-    post("Based on Python 3.10.0  ");
+    post("version 0.0.1        ");
+    post("Based on Python 3.10.5  ");
     post("");
-    post("It is inspired by the work of Thomas Grill and SOPI research group, Miller Puckette and others");
+    post("It is inspired by the work of Thomas Grill and SOPI research group.");
     post("");
     post("");
 
@@ -673,9 +555,7 @@ void py4pd_setup(void){
                         CLASS_DEFAULT, // nao há uma GUI especial para esse objeto
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
     
-    // class_addmethod(py_class, (t_method)py_thread, gensym("thread"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)home, gensym("home"), A_GIMME, 0);
-    // class_addmethod(py_class, (t_method)pip_install, gensym("pip_install"), 0, 0);
     class_addmethod(py_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)vscode, gensym("vscode"), 0, 0);
     class_addmethod(py_class, (t_method)reload, gensym("reload"), 0, 0);
@@ -683,6 +563,4 @@ void py4pd_setup(void){
     class_addmethod(py_class, (t_method)documentation, gensym("documentation"), 0, 0);
     class_addmethod(py_class, (t_method)set_function, gensym("set"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)run, gensym("run"), A_GIMME, 0); // TODO: better name for this method
-
-    
     }
