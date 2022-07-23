@@ -41,13 +41,13 @@ Then a sent the message `set {script_without_.py} {function_name}`, in this case
 
 For now, I just am using it for Windows OS. I think that py/pyext works well in Linux and Mac/OS. To compile for Windows, you need MINGW64. Then, in mingw64 terminal:
 
-Windows OS
+#### Windows OS
 
 ``` bash 
 make PYTHON_LIB="Python libs" PYTHON_INCLUDE="Where Python.h is" PYTHON_VERSION=python310 {or python311}
 ```
 
-Linux - version 3.10
+#### Linux - version 3.10
 * First you need to run: `sudo apt-get install python3.10-dev`.
 
 ``` bash 
