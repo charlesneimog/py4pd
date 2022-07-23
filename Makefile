@@ -3,15 +3,36 @@ lib.name = py4pd
 
 # python libs
 
-cflags = -I $(PYTHON_INCLUDE)
+uname := $(shell uname -s)
 
-ldlibs = -L ${PYTHON_LIB}  -l $(PYTHON_VERSION)
+ifeq (MINGW,$(findstring MINGW,$(uname)))
+  cflags = -I $(PYTHON_INCLUDE)
+  ldlibs =  $(PYTHON_DLL)
+  pythondll_name = $(shell basename $(PYTHON_DLL))
+  $(shell cp $(PYTHON_DLL) $(pythondll_name))
+
+endif
+
+ifeq (Linux,$(findstring Linux,$(uname)))
+  cflags = -I $(PYTHON_INCLUDE)
+  ldlibs = -l $(PYTHON_VERSION) 
+endif
+
+ifeq (Darwin,$(findstring Darwin,$(uname)))
+  cflags = -I $(PYTHON_INCLUDE)
+  ldlibs = -l $(PYTHON_VERSION)
+endif
 
 # input source file (class name == source file basename)
 class.sources = src/py4pd.c
 
 # all extra files to be included in binary distribution of the library
-datafiles = py4pd-help.pd 
+
+datafiles = \
+$(wildcard Help-files/*.pd) \
+$(wildcard scripts/*.py) \
+$(wildcard py4pd-help.pd) \
+$(PYTHON_DLL)
 
 # include Makefile.pdlibbuilder
 # (for real-world projects see the "Project Management" section

@@ -170,9 +170,16 @@ make C understand that what is inside [1 2 3 4 5] is a list not 5 numbers.
 // ============================================
 // ============================================
 
+/*
 void convert_list_inside_list(t_py *x, PyObject *pValue, t_atom *list_array, int list_size) {  
     if (PyList_Check(pValue)){ // DOC: If the function return a list list
         int list_size = PyList_Size(pValue);
+        
+        // warning: declaration of ‘list_array’ shadows a parameter [-Wshadow]
+        // github solve this problem:
+        t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));
+
+
         t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));   
         // loop through the list and convert the atoms and save in list, if a list of lists is found, then call the function again
         
@@ -225,59 +232,20 @@ void convert_list_inside_list(t_py *x, PyObject *pValue, t_atom *list_array, int
         }
     }
 }
-        
-        
-        
-        
-        
-        
-//         int i;         
-//         for (i = 0; i < list_size; ++i) {
-//             PyObject *pValue_i = PyList_GetItem(pValue, i);
-//             if (PyLong_Check(pValue_i)) {
-//                 long result = PyLong_AsLong(pValue_i);
-//                 float result_float = (float)result;
-//                 list_array[i].a_type = A_FLOAT;
-//                 list_array[i].a_w.w_float = result_float;
 
-//             } else if (PyFloat_Check(pValue_i)) {
-//                 double result = PyFloat_AsDouble(pValue_i);
-//                 float result_float = (float)result;
-//                 list_array[i].a_type = A_FLOAT;
-//                 list_array[i].a_w.w_float = result_float;
-//             } else if (PyUnicode_Check(pValue_i)) {
-//                 const char *result = PyUnicode_AsUTF8(pValue_i); // WARNING: initialization discards 'const' qualifier 
-//                                                                     // from pointer target type [-Wdiscarded-qualifiers]
-//                 list_array[i].a_type = A_SYMBOL;
-//                 list_array[i].a_w.w_symbol = gensym(result);
-//             } else if (PyList_Check(pValue_i)) {
-//                 convert_list_inside_list(x, pValue_i, list_array, list_size);
-//             } else {
-//                 pd_error(x, "Cannot convert list item\n");
-//                 return;
-//             }
-//         }
-//         return list_array; // The loop seems slow :(. TODO: possible do in other way?
-//     } else {
-//         if (PyLong_Check(pValue)) {
-//             long result = PyLong_AsLong(pValue);
-//             return result;
-//         } else if (PyFloat_Check(pValue)) {
-//             double result = PyFloat_AsDouble(pValue);
-//             float result_float = (float)result;
-//             return result_float;
-//             // outlet_float(x->out_A, result);
-//         } else if (PyUnicode_Check(pValue)) {
-//             const char *result = PyUnicode_AsUTF8(pValue); // WARNING: See http://gg.gg/11t8iv
-//             return result; 
-//         } else { 
-//             // check if pValue is a list.    
-//             // if yes, accumulate and output it using out_A 
-//             pd_error(x, "Cannot convert item\n");
-//             return;
-//         }
-//     }
-// }
+*/
+
+// just because I do not like warnings!!
+
+// ============================================
+// ============================================
+
+void pd4py_system_func (const char *command){
+    int result = system(command);
+    if (result == -1){
+        post("Error: %s", command);
+    }
+}
 
 // ============================================
 // ============================================
@@ -286,15 +254,13 @@ static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // If Windows OS run, if not then warn the user
     (void)s;
     (void)argc;
-    
-    
-    t_symbol *script_file_name = atom_gensym(argv+0);   
-    
+    (void)argv;
+        
     post("Opening vscode...");
-    
     #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
-    char *command = malloc(strlen(x->home_path->s_name) + strlen(script_file_name->s_name) + 20);
-    sprintf(command, "/c code %s/%s.py", x->home_path->s_name, script_file_name->s_name);
+
+    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
+    sprintf(command, "/c code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
     SHELLEXECUTEINFO sei = {0};
     sei.cbSize = sizeof(sei);
     sei.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -313,7 +279,8 @@ static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     #else // if not windows 64bits
     char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
     sprintf(command, "code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
-    system(command);
+
+    pd4py_system_func(command);
     pd_error(x, "Not tested in your Platform, please send me a bug report!");
     return;
     #endif
@@ -352,7 +319,7 @@ static void vscode(t_py *x){
     #else // if not windows 64bits
     char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
     sprintf(command, "code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
-    system(command);
+    pd4py_system_func(command);
     pd_error(x, "Not tested in your Platform, please send me a bug report!");
     return;
     #endif
@@ -602,10 +569,10 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
                     list_array[i].a_type = A_SYMBOL;
                     list_array[i].a_w.w_symbol = gensym(result);
                 } else if (PyList_Check(pValue_i)) {
-                    convert_list_inside_list(x, pValue_i, list_array+i, list_size);
-                    post("recursive call");
-                    list_array[i].a_type = A_FLOAT;
-                    list_array[i].a_w.w_float = 0;
+                    // convert_list_inside_list(x, pValue_i, list_array+i, list_size);
+                    pd_error(x, "recursive call not implemented yet");
+                    //list_array[i].a_type = A_FLOAT;
+                    //list_array[i].a_w.w_float = 0;
                 } else {
                     pd_error(x, "Cannot convert list item\n");
                     Py_DECREF(pValue);

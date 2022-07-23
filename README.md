@@ -43,9 +43,7 @@ For now, I just am using it for Windows OS. I think that py/pyext works well in 
 
 
 ``` bash 
-cd PATH_TO_THIS_REPO
-gcc -DPD -I"PATH_TO_PD/src" -I"PATH_TO_PYTHON3.10/include/"  -o py4pd.o -c ./src/py4pd.c
-gcc -static-libgcc -I"PATH_TO_PD/src"  -shared -Wl,--enable-auto-import "PATH_TO_PD/bin/pd.dll" "PATH_TO_PYTHON3.10/python310.dll" -o py4pd.dll py4pd.o
+make PYTHON_LIB="Python libs" PYTHON_INCLUDE="Where Python.h is" PYTHON_VERSION=python310 {or python311}
 ```
 
 
