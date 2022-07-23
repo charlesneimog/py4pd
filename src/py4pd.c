@@ -556,6 +556,7 @@ void py4pd_setup(void){
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
     
     class_addmethod(py_class, (t_method)home, gensym("home"), A_GIMME, 0);
+    class_addmethod(py_class, (t_method)vscode, gensym("click"), 0, 0);
     class_addmethod(py_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)vscode, gensym("vscode"), 0, 0);
     class_addmethod(py_class, (t_method)reload, gensym("reload"), 0, 0);
@@ -564,3 +565,4 @@ void py4pd_setup(void){
     class_addmethod(py_class, (t_method)set_function, gensym("set"), A_GIMME, 0);
     class_addmethod(py_class, (t_method)run, gensym("run"), A_GIMME, 0); // TODO: better name for this method
     }
+
