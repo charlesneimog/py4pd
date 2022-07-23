@@ -39,14 +39,24 @@ Then a sent the message `set {script_without_.py} {function_name}`, in this case
 
 ### Building
 
-For now, I just am using it for Windows OS. I think that py/pyext works well in Linux and Mac/OS. To compile for Windows, you need MINGW64. Then, in mingw64 terminal:
+For now, I just am using it for Windows OS. I think that py/pyext works well in Linux and Mac/OS. To compile for Windows, you need mingw64. Then, in mingw64 terminal:
 
+#### Windows OS - replace %USERNAME% for your username.
 
 ``` bash 
+<<<<<<< HEAD
 make PYTHON_LIB="Python libs" PYTHON_INCLUDE="Where Python.h is" PYTHON_VERSION=python310 {or python311}
+=======
+make PYTHON_INCLUDE="C:/Users/%USERNAME%/AppData/Local/Programs/Python/Python310/include" PYTHON_DLL="C:/Users/%USERNAME%/AppData/Local/Programs/Python/Python310/python310.dll"
 ```
 
+#### Linux - version 3.10
+* First you need to run: `sudo apt-get install python3.10-dev`.
 
+``` bash 
+make PYTHON_INCLUDE=/usr/include/python3.10/ PYTHON_VERSION=python3.10 
+>>>>>>> 70c2d3337500d696e6049657da24a545b29470c4
+```
 
 
 
