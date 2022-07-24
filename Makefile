@@ -6,7 +6,8 @@ lib.name = py4pd
 uname := $(shell uname -s)
 
 ifeq (MINGW,$(findstring MINGW,$(uname)))
-  cflags = -I $(PYTHON_INCLUDE)
+  # remove -Wcast-function-type for mingw 
+  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type
   ldlibs =  $(PYTHON_DLL)
   pythondll_name = $(shell basename $(PYTHON_DLL))
   $(shell cp $(PYTHON_DLL) $(pythondll_name))
@@ -14,7 +15,7 @@ ifeq (MINGW,$(findstring MINGW,$(uname)))
 endif
 
 ifeq (Linux,$(findstring Linux,$(uname)))
-  cflags = -I $(PYTHON_INCLUDE)
+  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type
   ldlibs = -l $(PYTHON_VERSION) 
 endif
 

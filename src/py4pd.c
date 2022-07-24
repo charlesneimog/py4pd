@@ -22,7 +22,7 @@
 // ============ Pd Object code  ====
 // =================================
 
-static t_class *py_class;
+static t_class *py4pd_class; // 
 
 // =====================================
 typedef struct _py { // It seems that all the objects are some kind of class.
@@ -497,12 +497,12 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
 
 // ============================================
-// =========== CREATION OF OBJECT =============
+// =========== SETUP OF OBJECT ================
 // ============================================
 
+void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
 
-void *py_new(t_symbol *s, int argc, t_atom *argv){
-    t_py *x = (t_py *)pd_new(py_class);
+    t_py *x = (t_py *)pd_new(py4pd_class);
     // credits
     post("");
     post("");
@@ -520,14 +520,12 @@ void *py_new(t_symbol *s, int argc, t_atom *argv){
     x->out_A = outlet_new(&x->x_obj, &s_anything); // cria um outlet
     x->function_called = 0;
     // ========
-
     // py things
     t_canvas *c = x->x_canvas; 
     x->home_path = canvas_getdir(c);     // set name 
     x->packages_path = canvas_getdir(c); // set name
     // get arguments and print it
     if (argc == 2) {
-        // -Wcast-function-type warning
         set_function(x, s, argc, argv);
     } 
     return(x);
@@ -555,22 +553,22 @@ void py4pd_free(t_py *x){
 
 // ====================================================
 void py4pd_setup(void){
-    py_class =     class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
-                        (t_newmethod)py_new, // cria o objeto quando escrevemos py4pd                         
+    py4pd_class =     class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
+                        (t_newmethod)py4pd_new, // metodo de criação do objeto             
                         (t_method)py4pd_free, // quando voce deleta o objeto
                         sizeof(t_py), // quanta memoria precisamos para esse objeto
                         CLASS_DEFAULT, // nao há uma GUI especial para esse objeto???
                         A_GIMME, // o argumento é um símbolo
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
     
-    class_addmethod(py_class, (t_method)home, gensym("home"), A_GIMME, 0);
-    class_addmethod(py_class, (t_method)vscode, gensym("click"), 0, 0);
-    class_addmethod(py_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
-    class_addmethod(py_class, (t_method)vscode, gensym("vscode"), 0, 0);
-    class_addmethod(py_class, (t_method)reload, gensym("reload"), 0, 0);
-    class_addmethod(py_class, (t_method)create, gensym("create"), A_GIMME, 0);
-    class_addmethod(py_class, (t_method)documentation, gensym("documentation"), 0, 0);
-    class_addmethod(py_class, (t_method)set_function, gensym("set"), A_GIMME, 0);
-    class_addmethod(py_class, (t_method)run, gensym("run"), A_GIMME, 0); // TODO: better name for this method
+    class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0);
+    class_addmethod(py4pd_class, (t_method)vscode, gensym("click"), 0, 0);
+    class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
+    class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0);
+    class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0);
+    class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0);
+    class_addmethod(py4pd_class, (t_method)documentation, gensym("documentation"), 0, 0);
+    class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0);
+    class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0); // TODO: better name for this method
     }
 
