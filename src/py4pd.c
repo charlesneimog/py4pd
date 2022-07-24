@@ -500,7 +500,9 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // =========== CREATION OF OBJECT =============
 // ============================================
 
-void *py_new(void){
+
+void *py_new(t_symbol *s, int argc, t_atom *argv){
+    t_py *x = (t_py *)pd_new(py_class);
     // credits
     post("");
     post("");
@@ -511,10 +513,9 @@ void *py_new(void){
     post("");
     post("It is inspired by the work of Thomas Grill and SOPI research group.");
     post("");
-    post("");
 
     // pd things
-    t_py *x = (t_py *)pd_new(py_class); // pointer para a classe
+     // pointer para a classe
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     x->out_A = outlet_new(&x->x_obj, &s_anything); // cria um outlet
     x->function_called = 0;
@@ -524,8 +525,14 @@ void *py_new(void){
     t_canvas *c = x->x_canvas; 
     x->home_path = canvas_getdir(c);     // set name 
     x->packages_path = canvas_getdir(c); // set name
+    // get arguments and print it
+    if (argc == 2) {
+        // -Wcast-function-type warning
+        set_function(x, s, argc, argv);
+    } 
     return(x);
 }
+
 
 // ============================================
 // =========== REMOVE OBJECT ==================
@@ -549,10 +556,11 @@ void py4pd_free(t_py *x){
 // ====================================================
 void py4pd_setup(void){
     py_class =     class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
-                        (t_newmethod)py_new, // o methodo de inicializacao | pointer genérico
+                        (t_newmethod)py_new, // cria o objeto quando escrevemos py4pd                         
                         (t_method)py4pd_free, // quando voce deleta o objeto
                         sizeof(t_py), // quanta memoria precisamos para esse objeto
-                        CLASS_DEFAULT, // nao há uma GUI especial para esse objeto
+                        CLASS_DEFAULT, // nao há uma GUI especial para esse objeto???
+                        A_GIMME, // o argumento é um símbolo
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
     
     class_addmethod(py_class, (t_method)home, gensym("home"), A_GIMME, 0);
