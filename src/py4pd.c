@@ -83,6 +83,77 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 // ====================================
 // ====================================
 
+static void env_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    // If Windows OS run, if not then warn the user
+    (void)s;
+    (void)argc;
+    (void)argv;
+    
+    // concat venv_path with the name py4pd
+    char *command = malloc(strlen(x->home_path->s_name) + strlen("py4pd") + 20);
+    sprintf(command, "/c python -m venv %s/py4pd_packages", x->home_path->s_name);
+
+    // path to venv, 
+    char *pip = malloc(strlen(x->home_path->s_name) + strlen("/py4pd_packages/") + 40);
+    sprintf(pip, "%s/py4pd_packages/Scripts/pip.exe", x->home_path->s_name);
+    // check if pip_path exists
+    if (access(pip, F_OK) == -1) {
+        SHELLEXECUTEINFO sei = {0};
+        sei.cbSize = sizeof(sei);
+        sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+        sei.lpFile = "cmd.exe ";
+        sei.lpParameters = command;
+        sei.nShow = SW_HIDE;
+        ShellExecuteEx(&sei);
+        CloseHandle(sei.hProcess);
+        free(command);
+        return;
+    } else{
+        pd_error(x, "The pip already installed!");
+    }
+}
+
+// ====================================
+// ====================================
+// ====================================
+static void pip_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    (void)s;
+    (void)argc;
+    
+    char *package = atom_getsymbol(argv+0)->s_name;
+    
+    char *pip = malloc(strlen(x->home_path->s_name) + strlen("%s/py4pd_packages/Scripts/pip.exe") + 40);
+    sprintf(pip, "%s/py4pd_packages/Scripts/pip.exe", x->home_path->s_name);
+    if (access(pip, F_OK) == -1) {
+        pd_error(x, "The pip path does not exist. Send a message {env_install} to install pip first!");
+        return;
+    } else{
+        char *command = malloc(strlen(x->packages_path->s_name) + strlen("py4pd") + 20);
+        sprintf(command, "/c %s install %s", pip, package);
+        post("Installing %s", package);
+        SHELLEXECUTEINFO sei = {0};
+        sei.cbSize = sizeof(sei);
+        sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+        sei.lpFile = "cmd.exe ";
+        sei.lpParameters = command;
+        sei.nShow = SW_HIDE;
+        ShellExecuteEx(&sei);
+        CloseHandle(sei.hProcess);
+        free(command);
+        post("%s installed!", package);
+        return;
+    }
+}
+
+
+
+
+
+
+// ====================================
+// ====================================
+// ====================================
+
 static void documentation(t_py *x){
     PyObject *pFunc;
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
@@ -524,6 +595,19 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     t_canvas *c = x->x_canvas; 
     x->home_path = canvas_getdir(c);     // set name 
     x->packages_path = canvas_getdir(c); // set name
+
+    char *pip = malloc(strlen(x->home_path->s_name) + strlen("%s/py4pd_packages/Scripts/pip.exe") + 40);
+    sprintf(pip, "%s/py4pd_packages/Scripts/pip.exe", x->home_path->s_name);
+    if (access(pip, F_OK) == -1)
+        post("Enviroment not found");
+    else{
+        char *packages = malloc(strlen(x->home_path->s_name) + strlen("%s/Lib/site-packages/") + 40);
+        sprintf(packages, "%s/py4pd_packages/Lib/site-packages/", x->home_path->s_name);
+        post("packages: %s", packages);
+        // set x->packages_path to packages
+        x->packages_path = gensym(packages);
+    }
+    free(pip);
     // get arguments and print it
     if (argc == 2) {
         set_function(x, s, argc, argv);
@@ -564,6 +648,8 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0);
     class_addmethod(py4pd_class, (t_method)vscode, gensym("click"), 0, 0);
     class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
+    class_addmethod(py4pd_class, (t_method)env_install, gensym("env_install"), 0, 0);
+    class_addmethod(py4pd_class, (t_method)pip_install, gensym("pip"), 0, 0);
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0);
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0);
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0);
