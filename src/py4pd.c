@@ -583,10 +583,10 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     post("");
 
     // pd things
-     // pointer para a classe
+    // pointer para a classe
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     x->out_A = outlet_new(&x->x_obj, &s_anything); // cria um outlet
-    x->function_called = 0;
+    
     // ========
     // py things
     t_canvas *c = x->x_canvas; 
@@ -603,6 +603,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         post("packages: %s", packages);
         // set x->packages_path to packages
         x->packages_path = gensym(packages);
+        x->function_called = 0;
     }
     free(pip);
     // get arguments and print it
