@@ -91,8 +91,8 @@ static void env_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)argv;
     
     // concat venv_path with the name py4pd
-    char *command = malloc(strlen(x->home_path->s_name) + strlen("py4pd") + 20);
-    sprintf(command, "/c python -m venv %s/py4pd_packages", x->home_path->s_name);
+    char *pip_install = malloc(strlen(x->home_path->s_name) + strlen("py4pd") + 20);
+    sprintf(pip_install, "/c python -m venv %s/py4pd_packages", x->home_path->s_name);
 
     // path to venv, 
     char *pip = malloc(strlen(x->home_path->s_name) + strlen("/py4pd_packages/") + 40);
@@ -103,11 +103,10 @@ static void env_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
         sei.cbSize = sizeof(sei);
         sei.fMask = SEE_MASK_NOCLOSEPROCESS;
         sei.lpFile = "cmd.exe ";
-        sei.lpParameters = command;
+        sei.lpParameters = pip_install;
         sei.nShow = SW_HIDE;
         ShellExecuteEx(&sei);
         CloseHandle(sei.hProcess);
-        free(command);
         return;
     } else{
         pd_error(x, "The pip already installed!");
@@ -129,18 +128,17 @@ static void pip_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
         pd_error(x, "The pip path does not exist. Send a message {env_install} to install pip first!");
         return;
     } else{
-        char *command = malloc(strlen(x->packages_path->s_name) + strlen("py4pd") + 20);
-        sprintf(command, "/c %s install %s", pip, package);
+        char *pip_cmd = malloc(strlen(x->packages_path->s_name) + strlen("py4pd") + 20);
+        sprintf(pip_cmd, "/c %s install %s", pip, package);
         post("Installing %s", package);
         SHELLEXECUTEINFO sei = {0};
         sei.cbSize = sizeof(sei);
         sei.fMask = SEE_MASK_NOCLOSEPROCESS;
         sei.lpFile = "cmd.exe ";
-        sei.lpParameters = command;
+        sei.lpParameters = pip_cmd;
         sei.nShow = SW_HIDE;
         ShellExecuteEx(&sei);
         CloseHandle(sei.hProcess);
-        free(command);
         post("%s installed!", package);
         return;
     }
@@ -261,7 +259,7 @@ static void vscode(t_py *x){
     sei.nShow = SW_HIDE;
     ShellExecuteEx(&sei);
     CloseHandle(sei.hProcess);
-    free(command);
+
     return;
 
     // Not Windows OS
@@ -603,12 +601,14 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         post("packages: %s", packages);
         // set x->packages_path to packages
         x->packages_path = gensym(packages);
-        x->function_called = 0;
+        
     }
     free(pip);
     // get arguments and print it
     if (argc == 2) {
         set_function(x, s, argc, argv);
+        x->function_called = malloc(sizeof(int)); // TODO: Better way to solve the warning???
+        *(x->function_called) = 1;
     } 
     return(x);
 }
