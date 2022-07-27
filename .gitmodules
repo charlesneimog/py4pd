@@ -1,6 +1,0 @@
-[submodule "thread"]
-	path = ../thread
-	url = https://github.com/pierreguillot/thread.git
-	ignore = dirty
-
-
