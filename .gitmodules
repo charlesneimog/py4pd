@@ -4,4 +4,4 @@
 
 [submodule "pd-lib-builder"]
 	path = pd-lib-builder
-	url = git submodule add https://github.com/pure-data/pd-lib-builder.git
+	url = https://github.com/pure-data/pd-lib-builder.git
