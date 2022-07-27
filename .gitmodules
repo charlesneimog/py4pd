@@ -1,3 +1,7 @@
 [submodule "thread"]
 	path = thread
 	url = https://github.com/pierreguillot/thread.git
+
+[submodule "pd-lib-builder"]
+	path = pd-lib-builder
+	url = git submodule add https://github.com/pure-data/pd-lib-builder.git
