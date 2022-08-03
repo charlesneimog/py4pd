@@ -26,6 +26,7 @@ static t_class *py4pd_class; //
 
 // =====================================
 typedef struct _py { // It seems that all the objects are some kind of class.
+    
     t_object        x_obj; // convensao no puredata source code
     t_canvas        *x_canvas; // pointer to the canvas
     PyObject        *module; // python object
@@ -38,36 +39,6 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_symbol        *script_name; // script name
     t_outlet        *out_A; // outlet 1.
 }t_py;
-
-
-
-// // ============================================
-// // ============================================
-// // ============================================
-static void amount_of_args(t_py *x, t_symbol *s, int argc, t_atom *argv)
-{
-    (void)s;
-    PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
-    pFunc = x->function;
-    
-    PyObject *inspect=NULL, *getargspec=NULL, *argspec=NULL, *args=NULL;
-
-    inspect = PyImport_ImportModule("inspect");
-    getargspec = PyObject_GetAttrString(inspect, "getargspec");
-    argspec = PyObject_CallFunctionObjArgs(getargspec, pFunc, NULL);
-    args = PyObject_GetAttrString(argspec, "args");
-    int py_args = PyObject_Size(args);
-    int i;
-    for (i = 0; i < py_args; i++) {
-        PyObject *arg = PyObject_GetItem(args, PyLong_FromLong(i));
-        char *arg_name = PyUnicode_AsUTF8(arg);
-        post("Arg %d: %s", i + 1, arg_name);
-    }
-    post("This function have %d arguments", py_args);
-
-}
-
-
 
 // // ============================================
 // // ============================================
@@ -349,7 +320,6 @@ static void reload(t_py *x){
     } 
 }
 
-
 // ====================================
 // ====================================
 // ====================================
@@ -443,12 +413,19 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     pFunc = PyObject_GetAttrString(pModule, function_name->s_name); // Function name inside the script file
     Py_DECREF(pName); // DOC: Py_DECREF(pName) is not necessary! 
     if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable   
-        // =====================
-        // pFunc equal x_function
+        PyObject *inspect=NULL, *getargspec=NULL, *argspec=NULL, *args=NULL;
+        inspect = PyImport_ImportModule("inspect");
+        getargspec = PyObject_GetAttrString(inspect, "getargspec");
+        argspec = PyObject_CallFunctionObjArgs(getargspec, pFunc, NULL);
+        args = PyObject_GetAttrString(argspec, "args");
+        int py_args = PyObject_Size(args);
+        post("py4pd | function '%s' loaded!", function_name->s_name);
+        post("");
+        post("It has %i arguments!", py_args);
+        post("")
         x->function = pFunc;
         x->module = pModule;
         x->script_name = script_file_name;
-        post("py4pd | function '%s' loaded!", function_name->s_name);
         x->function_name = function_name; // why 
         x->function_called = malloc(sizeof(int)); // TODO: Better way to solve the warning???
         *(x->function_called) = 1; // 
@@ -683,6 +660,6 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)documentation, gensym("documentation"), 0, 0);
     class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0);
     class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0); // TODO: better name for this method
-    class_addmethod(py4pd_class, (t_method)amount_of_args, gensym("args"), A_GIMME, 0); // TODO: better name for this method
+    // class_addmethod(py4pd_class, (t_method)amount_of_args, gensym("args"), A_GIMME, 0); // TODO: better name for this method
     }
 
