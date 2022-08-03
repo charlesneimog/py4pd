@@ -422,7 +422,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         post("py4pd | function '%s' loaded!", function_name->s_name);
         post("");
         post("It has %i arguments!", py_args);
-        post("")
+        post("");
         x->function = pFunc;
         x->module = pModule;
         x->script_name = script_file_name;
