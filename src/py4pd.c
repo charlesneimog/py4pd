@@ -39,7 +39,36 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_outlet        *out_A; // outlet 1.
 }t_py;
 
+
+
+// // ============================================
+// // ============================================
+// // ============================================
+static void amount_of_args(t_py *x, t_symbol *s, int argc, t_atom *argv)
+{
+    (void)s;
+    PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
+    pFunc = x->function;
     
+    PyObject *inspect=NULL, *getargspec=NULL, *argspec=NULL, *args=NULL;
+
+    inspect = PyImport_ImportModule("inspect");
+    getargspec = PyObject_GetAttrString(inspect, "getargspec");
+    argspec = PyObject_CallFunctionObjArgs(getargspec, pFunc, NULL);
+    args = PyObject_GetAttrString(argspec, "args");
+    int py_args = PyObject_Size(args);
+    int i;
+    for (i = 0; i < py_args; i++) {
+        PyObject *arg = PyObject_GetItem(args, PyLong_FromLong(i));
+        char *arg_name = PyUnicode_AsUTF8(arg);
+        post("Arg %d: %s", i + 1, arg_name);
+    }
+    post("This function have %d arguments", py_args);
+
+}
+
+
+
 // // ============================================
 // // ============================================
 // // ============================================
@@ -654,5 +683,6 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)documentation, gensym("documentation"), 0, 0);
     class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0);
     class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0); // TODO: better name for this method
+    class_addmethod(py4pd_class, (t_method)amount_of_args, gensym("args"), A_GIMME, 0); // TODO: better name for this method
     }
 
