@@ -596,15 +596,12 @@ DWORD WINAPI ThreadFunc(LPVOID lpParam) {
     struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParam;
     // define x, s, argc and argv
     t_py *x = &arg->x;
-    t_symbol *s = &arg->s;
     int argc = arg->argc;
     t_atom *argv = arg->argv;
-
-    // post argv = argv
-    post("argv = %s", argv);
     
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
         pd_error(x, "You need to send a message ||| 'set {script} {function}'!");
+        free(arg);
         return 0;
     }
     PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
@@ -639,6 +636,7 @@ DWORD WINAPI ThreadFunc(LPVOID lpParam) {
         // ERROR IF THE ARGUMENT IS NOT A NUMBER OR A STRING       
         if (!pValue) {
             pd_error(x, "Cannot convert argument\n");
+            free(arg);
             return 0;
         }
         // DOC: END OF CONVERTION TO PYTHON OBJECTS
@@ -679,6 +677,7 @@ DWORD WINAPI ThreadFunc(LPVOID lpParam) {
                 } else {
                     pd_error(x, "Cannot convert list item\n");
                     Py_DECREF(pValue);
+                    free(arg);
                     return 0;
                 }
             }
@@ -700,6 +699,7 @@ DWORD WINAPI ThreadFunc(LPVOID lpParam) {
                 // if yes, accumulate and output it using out_A 
                 pd_error(x, "Cannot convert list item\n");
                 Py_DECREF(pValue);
+                free(arg);
                 return 0;
                 }
         }
@@ -712,8 +712,11 @@ DWORD WINAPI ThreadFunc(LPVOID lpParam) {
         PyObject *pstr = PyObject_Str(pvalue);
         pd_error(x, "Call failed: %s", PyUnicode_AsUTF8(pstr));
         Py_DECREF(pstr);
+        free(arg);
         return 0;
     }
+    free(arg);
+    return 0;
 }
 
 // ============================================
@@ -721,6 +724,7 @@ DWORD WINAPI ThreadFunc(LPVOID lpParam) {
 // ============================================
 
 static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    (void)s;
     DWORD threadID;
     HANDLE hThread;
     // TODO: This is not working. Why?
@@ -739,6 +743,7 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     } else {
         return;
     }
+    free(arg);
 }
 
 #endif
@@ -854,7 +859,6 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)env_install, gensym("env_install"), 0, 0);
     class_addmethod(py4pd_class, (t_method)pip_install, gensym("pip"), 0, 0);
     #endif
-
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0);
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0);
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0);
