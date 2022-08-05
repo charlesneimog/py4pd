@@ -14,7 +14,7 @@
 #include <unistd.h>
 #endif
 
-#ifdef UNIX
+#ifdef __linux__
 #include <pthread.h>
 #endif
 
@@ -179,6 +179,7 @@ static void documentation(t_py *x){
                 post("");
             }
             else{
+                
                 post("");
                 pd_error(x, "No documentation found!");
                 post("");
@@ -751,8 +752,7 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
 #endif
 
 // If OS is Linux or Mac OS then use this function
-#ifdef __linux__ 
-
+#ifdef __linux__
 
 // what is the linux equivalent for Lvoid Parameter(void *lpParameter)
 static void *ThreadFunc(void *lpParameter) {
@@ -880,21 +880,9 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     arg->x = *x;
     arg->argc = argc;
     arg->argv = argv;
-    
-    
-    
     pthread_create(&thread, NULL, ThreadFunc, arg);
 
-
-
-
-
-
 }
-
-
-
-
 
 #endif
 
