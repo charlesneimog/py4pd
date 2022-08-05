@@ -25,4 +25,10 @@ def function6(x):
     return list
 
 def function7(a, b, c):
-    return a + b + c
+    x = a + b + c
+    for i in range(1, 100000, 1):
+        x = x + 1 + i
+
+    return x
+
+   

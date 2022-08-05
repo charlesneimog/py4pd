@@ -52,7 +52,7 @@ just relatives;
 just relatives;
 #X obj 258 327 noise~;
 #X obj 267 433 dac~;
-#X msg 299 200 thread 23 29;
+#X msg 299 200 thread 1 1;
 #X connect 1 0 13 0;
 #X connect 2 0 4 0;
 #X connect 3 0 0 0;
