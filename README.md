@@ -46,7 +46,7 @@ For now, I just am using it for Windows OS. I think that py/pyext works well in 
 ``` bash 
 make PYTHON_INCLUDE="C:/Users/%USERNAME%/AppData/Local/Programs/Python/Python310/include" PYTHON_DLL="C:/Users/%USERNAME%/AppData/Local/Programs/Python/Python310/python310.dll"
 ```
-
+-----------------
 If you want to try to build it on Linux:
 
 #### Linux - version 3.10
