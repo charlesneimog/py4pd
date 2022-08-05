@@ -40,6 +40,7 @@ just relatives;
 just relatives;
 #X obj 258 327 noise~;
 #X obj 267 433 dac~;
+<<<<<<< HEAD
 #N canvas 69 661 450 300 coding 1;
 #X obj 28 123 s py4pd;
 #X msg 28 21 documentation;
@@ -54,6 +55,9 @@ just relatives;
 #X text 560 12 Coding with py4pd;
 #X msg 299 200 thread 23 29 20;
 #X msg 16 17 set py function7;
+=======
+#X msg 299 200 thread 1 1;
+>>>>>>> a4600c1f405aef12aa8dcfb64720d11d8d3eef88
 #X connect 1 0 13 0;
 #X connect 2 0 4 0;
 #X connect 3 0 0 0;
