@@ -14,6 +14,13 @@
 #include <unistd.h>
 #endif
 
+#ifdef UNIX
+#include <pthread.h>
+#endif
+
+
+
+
 // Python include
 #include <Python.h>
 
