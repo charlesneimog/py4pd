@@ -179,7 +179,7 @@ static void documentation(t_py *x){
                 post("");
             }
             else{
-                
+
                 post("");
                 pd_error(x, "No documentation found!");
                 post("");
@@ -597,7 +597,6 @@ DWORD WINAPI ThreadFunc(LPVOID lpParam) {
     struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParam;
     // define x, s, argc and argv
     t_py *x = &arg->x;
-    t_symbol *s = &arg->s;
     int argc = arg->argc;
     t_atom *argv = arg->argv;
 
@@ -715,10 +714,10 @@ DWORD WINAPI ThreadFunc(LPVOID lpParam) {
         PyObject *pstr = PyObject_Str(pvalue);
         pd_error(x, "Call failed: %s", PyUnicode_AsUTF8(pstr));
         Py_DECREF(pstr);
-        free(arg);
+        arg = NULL;
         return 0;
     }
-    free(arg);
+    arg = NULL;
     return 0;
 }
 
@@ -735,24 +734,24 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     arg->x = *x;
     arg->argc = argc;
     arg->argv = argv;
-
     // Pd is crashing when I try to create a thread.
-
     hThread = CreateThread(NULL, 0, ThreadFunc, arg, 0, &threadID);
-
     if (hThread == NULL) {
         pd_error(x, "CreateThread failed");
+        arg = NULL;
         return;
-    } else {
-        return;
-    }
-    free(arg);
+    } 
 }
 
 #endif
 
+
+// ============================================
+// ============= UNIX =========================
+// ============================================
+
 // If OS is Linux or Mac OS then use this function
-#ifdef __linux__
+#ifdef UNIX
 
 // what is the linux equivalent for Lvoid Parameter(void *lpParameter)
 static void *ThreadFunc(void *lpParameter) {
