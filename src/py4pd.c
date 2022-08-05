@@ -83,6 +83,8 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 // ====================================
 // ====================================
 
+#ifdef _WIN64
+
 static void env_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // If Windows OS run, if not then warn the user
     (void)s;
@@ -115,6 +117,8 @@ static void env_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ====================================
 // ====================================
 // ====================================
+
+
 static void pip_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     (void)argc;
@@ -143,6 +147,7 @@ static void pip_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
 }
 
+#endif
 
 // ====================================
 // ====================================
@@ -821,8 +826,11 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)create_thread, gensym("thread"), A_GIMME, 0);
     class_addmethod(py4pd_class, (t_method)vscode, gensym("click"), 0, 0);
     class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
+    #ifdef _WIN64
     class_addmethod(py4pd_class, (t_method)env_install, gensym("env_install"), 0, 0);
     class_addmethod(py4pd_class, (t_method)pip_install, gensym("pip"), 0, 0);
+    #endif
+
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0);
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0);
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0);
