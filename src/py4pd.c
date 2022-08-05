@@ -1,5 +1,5 @@
 // =================================
-// Exact copy of https://github.com/pure-data/pure-data/src/x_gui.c 
+// https://github.com/pure-data/pure-data/src/x_gui.c 
 #include <m_pd.h>
 #include <g_canvas.h>
 #include <stdio.h>
@@ -14,8 +14,7 @@
 #include <unistd.h>
 #endif
 
-// end of the copy of x_gui.c
-
+// Python include
 #include <Python.h>
 
 // =================================
@@ -567,6 +566,175 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
 }
 
+// ============================================
+// =========== CREATE WIN THREAD ==============
+// ============================================
+
+struct thread_arg_struct {
+    t_py x;
+    t_symbol s;
+    int argc;
+    t_atom *argv;
+} thread_arg;
+
+
+// ============================================
+// ============================================
+// ============================================
+#ifdef _WIN64
+
+DWORD WINAPI ThreadFunc(LPVOID lpParam) {
+    struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParam;
+    // define x, s, argc and argv
+    t_py *x = &arg->x;
+    t_symbol *s = &arg->s;
+    int argc = arg->argc;
+    t_atom *argv = arg->argv;
+
+    // post argv = argv
+    post("argv = %s", argv);
+    
+    if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
+        pd_error(x, "You need to send a message ||| 'set {script} {function}'!");
+        return 0;
+    }
+    PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
+    pFunc = x->function;
+    pArgs = PyTuple_New(argc);
+    int i;
+
+    // DOC: CONVERTION TO PYTHON OBJECTS
+
+    for (i = 0; i < argc; ++i) {
+    
+        // NUMBERS 
+        if (argv[i].a_type == A_FLOAT) { 
+            float arg_float = atom_getfloat(argv+i);
+            if (arg_float == (int)arg_float){ // DOC: If the float is an integer, then convert to int
+                int arg_int = (int)arg_float;
+                pValue = PyLong_FromLong(arg_int);
+            }
+            else{ // If the int is an integer, then convert to int
+                pValue = PyFloat_FromDouble(arg_float);
+            }
+
+        // STRINGS
+        } else if (argv[i].a_type == A_SYMBOL) {
+            pValue = PyUnicode_DecodeFSDefault(argv[i].a_w.w_symbol->s_name); // convert to python string
+        } else {
+            pValue = Py_None;
+            Py_INCREF(Py_None);
+        }
+
+        // TODO: Lists
+        // ERROR IF THE ARGUMENT IS NOT A NUMBER OR A STRING       
+        if (!pValue) {
+            pd_error(x, "Cannot convert argument\n");
+            return 0;
+        }
+        // DOC: END OF CONVERTION TO PYTHON OBJECTS
+
+        PyTuple_SetItem(pArgs, i, pValue);
+    }
+
+    pValue = PyObject_CallObject(pFunc, pArgs);
+    if (pValue != NULL) {                       // DOC: if the function returns a value   
+        // check if pValue is a list
+        if (PyList_Check(pValue)){ // DOC: If the function return a list list
+            int list_size = PyList_Size(pValue);
+            // make array with size of list_size
+            t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));            
+            for (i = 0; i < list_size; ++i) {
+                PyObject *pValue_i = PyList_GetItem(pValue, i);
+                if (PyLong_Check(pValue_i)) {
+                    long result = PyLong_AsLong(pValue_i);
+                    float result_float = (float)result;
+                    list_array[i].a_type = A_FLOAT;
+                    list_array[i].a_w.w_float = result_float;
+
+                } else if (PyFloat_Check(pValue_i)) {
+                    double result = PyFloat_AsDouble(pValue_i);
+                    float result_float = (float)result;
+                    list_array[i].a_type = A_FLOAT;
+                    list_array[i].a_w.w_float = result_float;
+                } else if (PyUnicode_Check(pValue_i)) {
+                    const char *result = PyUnicode_AsUTF8(pValue_i); // WARNING: initialization discards 'const' qualifier 
+                                                                     // from pointer target type [-Wdiscarded-qualifiers]
+                    list_array[i].a_type = A_SYMBOL;
+                    list_array[i].a_w.w_symbol = gensym(result);
+                } else if (PyList_Check(pValue_i)) {
+                    // convert_list_inside_list(x, pValue_i, list_array+i, list_size);
+                    pd_error(x, "recursive call not implemented yet");
+                    //list_array[i].a_type = A_FLOAT;
+                    //list_array[i].a_w.w_float = 0;
+                } else {
+                    pd_error(x, "Cannot convert list item\n");
+                    Py_DECREF(pValue);
+                    return 0;
+                }
+            }
+            outlet_list(x->out_A, 0, list_size, list_array); // The loop seems slow :(. TODO: possible do in other way?
+        } else {
+            if (PyLong_Check(pValue)) {
+                long result = PyLong_AsLong(pValue);
+                outlet_float(x->out_A, result);
+            } else if (PyFloat_Check(pValue)) {
+                double result = PyFloat_AsDouble(pValue);
+                float result_float = (float)result;
+                outlet_float(x->out_A, result_float);
+                // outlet_float(x->out_A, result);
+            } else if (PyUnicode_Check(pValue)) {
+                const char *result = PyUnicode_AsUTF8(pValue); // WARNING: See http://gg.gg/11t8iv
+                outlet_symbol(x->out_A, gensym(result)); // adding const in char solve this, but I don't understand why it works! :)
+            } else { 
+                // check if pValue is a list.    
+                // if yes, accumulate and output it using out_A 
+                pd_error(x, "Cannot convert list item\n");
+                Py_DECREF(pValue);
+                return 0;
+                }
+        }
+        Py_DECREF(pValue);
+    }
+    else { // DOC: if the function returns a error
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "Call failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
+        return 0;
+    }
+}
+
+
+
+// ============================================
+// ============================================
+// ============================================
+
+static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    DWORD threadID;
+    HANDLE hThread;
+    // TODO: This is not working. Why?
+    struct thread_arg_struct *arg = (struct thread_arg_struct *)malloc(sizeof(struct thread_arg_struct));
+    arg->x = *x;
+    arg->argc = argc;
+    arg->argv = argv;
+
+    // Pd is crashing when I try to create a thread.
+
+    hThread = CreateThread(NULL, 0, ThreadFunc, arg, 0, &threadID);
+
+    if (hThread == NULL) {
+        pd_error(x, "CreateThread failed");
+        return;
+    } else {
+        return;
+    }
+}
+
+#endif
 
 // ============================================
 // =========== SETUP OF OBJECT ================
@@ -650,6 +818,7 @@ void py4pd_setup(void){
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
     
     class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0);
+    class_addmethod(py4pd_class, (t_method)create_thread, gensym("thread"), A_GIMME, 0);
     class_addmethod(py4pd_class, (t_method)vscode, gensym("click"), 0, 0);
     class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
     class_addmethod(py4pd_class, (t_method)env_install, gensym("env_install"), 0, 0);
