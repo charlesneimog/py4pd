@@ -562,7 +562,7 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
                 // outlet_float(x->out_A, result);
             } else if (PyUnicode_Check(pValue)) {
                 const char *result = PyUnicode_AsUTF8(pValue); // WARNING: See http://gg.gg/11t8iv
-                outlet_symbol(x->out_A, gensym(result)); // adding const in char solve this, but I don't understand why it works! :)
+                outlet_symbol(x->out_A, gensym(result)); 
             } else { 
                 // check if pValue is a list.    
                 // if yes, accumulate and output it using out_A 
