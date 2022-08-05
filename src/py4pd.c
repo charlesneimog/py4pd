@@ -22,13 +22,15 @@
 #include <Python.h>
 
 
-// TODO: Way to set global variables
-// TODO: Reset the function (like panic for sfont~)
-// TODO: make function home work with spaces
-// TODO: Return list from python in all run functions
 
+/* 
+TODO: Way to set global variables, I think that will be important for things like general path (lilypond, etc)
+TODO: Reset the function (like panic for sfont~), In some calls seems that the *function become NULL? WARNING: Possible error of logic
+TODO: make function home work with spaces, mainly for Windows OS where the use of lilypond in python need to be specified with spaces
+TODO: Return list from python in all run functions
+TODO: Add some way to run list how arguments 
 
-
+*/
 
 // =================================
 // ============ Pd Object code  ====
@@ -385,10 +387,9 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         return;
     }
     
-    PyObject *pName, *pModule, *pFunc;
+    PyObject *pName, *pModule, *pFunc; // DOC: Create the variables of the python objects
 
     const wchar_t *py_name_ptr;
-    // Copilot: Define program name in py_name_ptr
     py_name_ptr = Py_DecodeLocale(script_file_name->s_name, NULL);
     Py_SetProgramName(py_name_ptr); // set program name
     Py_Initialize();
