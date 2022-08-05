@@ -18,9 +18,6 @@
 #include <pthread.h>
 #endif
 
-
-
-
 // Python include
 #include <Python.h>
 
@@ -714,8 +711,6 @@ DWORD WINAPI ThreadFunc(LPVOID lpParam) {
     }
 }
 
-
-
 // ============================================
 // ============================================
 // ============================================
@@ -739,6 +734,28 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     } else {
         return;
     }
+}
+
+#endif
+
+#ifdef UNIX
+static void *ThreadFunc(void *arg) {
+    struct thread_arg_struct *args = (struct thread_arg_struct *)arg;
+    t_py *x = args->x;
+    int argc = args->argc;
+    t_atom *argv = args->argv;
+    sleep(2000);
+    post("ThreadFunc working on Linux");
+    return NULL;
+}
+
+static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    pthread_t thread;
+    struct thread_arg_struct *arg = (struct thread_arg_struct *)malloc(sizeof(struct thread_arg_struct));
+    arg->x = *x;
+    arg->argc = argc;
+    arg->argv = argv;
+    pthread_create(&thread, NULL, ThreadFunc, arg);
 }
 
 #endif
