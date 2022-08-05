@@ -246,7 +246,6 @@ static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     sprintf(command, "code %s/%s.py", x->home_path->s_name, script_name);
 
     pd4py_system_func(command);
-    pd_error(x, "Not tested in your Platform, please send me a bug report!");
     return;
     #endif
 }
@@ -632,14 +631,12 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     } 
 }
 
-#endif
-
 // ============================================
 // ============= UNIX =========================
 // ============================================
 
 // If OS is Linux or Mac OS then use this function
-#ifdef UNIX
+#else
 
 // what is the linux equivalent for Lvoid Parameter(void *lpParameter)
 static void *ThreadFunc(void *lpParameter) {
