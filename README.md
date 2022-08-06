@@ -10,7 +10,7 @@ py4pd allows the use of Python inside PureData. It has the same objective as py/
 
 ### Documentation
 
-*[!]* On Windows and Linux you need to install Python 3.10
+**[!]** On Windows and Linux you need to install Python 3.10
 
 #### Using Python Modules
 
