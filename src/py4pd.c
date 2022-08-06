@@ -683,10 +683,7 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 
 static void thread(t_py *x, t_floatarg f){
-    // x->thread = (int)f;
-    *(x->function_called) = (int)f;
-    int thread = *(x->function_called);
-
+    int thread = (int)f;
     if (thread == 1) {
         post("Threading enabled");
     } else if (thread == 0) {
