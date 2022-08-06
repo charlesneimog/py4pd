@@ -31,7 +31,7 @@ def otonal_diamond(limit, diagonal, fundamental):
     return otonal[diagonal]
 ```
 
-Then a sent the message `set {script_without_.py} {function_name}`, in this case, `set partch otonal_diamond` and run it using `args 13 3 440`. That means that the object will return a Diamond limit of 13, the third Diagonal (in this case, not the same that the figures), with the A4 how fundamental.
+Then a sent the message `set {script_without_.py} {function_name}`, in this case, `set partch otonal_diamond` and run it using `run 13 3 440`. That means that the object will return a Diamond limit of 13, the third Diagonal (in this case, not the same that the figures), with the A4 how fundamental.
 
 <img src="https://user-images.githubusercontent.com/31707161/179780465-0bec0a51-8bdb-4733-a846-7e1952311277.png" width=40% height=40%> 
 
