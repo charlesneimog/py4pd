@@ -25,6 +25,7 @@ TODO: Reset the function (like panic for sfont~), In some calls seems that the *
 TODO: make function home work with spaces, mainly for Windows OS where the use of lilypond in python need to be specified with spaces
 TODO: Return list from python in all run functions
 TODO: Add some way to run list how arguments 
+TODO: Add way to turn on/off threading
 
 */
 
@@ -41,6 +42,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_canvas        *x_canvas; // pointer to the canvas
     PyObject        *module; // python object
     PyObject        *function; // function name
+    t_float         *thread; // arguments
     t_float         *function_called; // flag to check if the set function was called
     t_float         *create_inlets; // flag to check if the set function was called
     t_symbol        *packages_path; // packages path 
@@ -133,8 +135,9 @@ static void pip_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     (void)argc;
     
-    char *package = atom_getsymbol(argv+0)->s_name;
-    
+    char *package = malloc(strlen(atom_getsymbol(argv+0)->s_name) + 1);
+    strcpy(package, atom_getsymbol(argv+0)->s_name);
+
     char *pip = malloc(strlen(x->home_path->s_name) + strlen("%s/py4pd_packages/Scripts/pip.exe") + 40);
     sprintf(pip, "%s/py4pd_packages/Scripts/pip.exe", x->home_path->s_name);
     if (access(pip, F_OK) == -1) {
@@ -464,7 +467,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 // ============================================
 
-static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
@@ -604,7 +607,7 @@ DWORD WINAPI ThreadFunc(LPVOID lpParam) {
     int argc = arg->argc;
     t_symbol *s = &arg->s;
     t_atom *argv = arg->argv;
-    run(x, s, argc, argv);
+    run_function(x, s, argc, argv);
     return 0;
 }
 // ============================================
@@ -642,11 +645,13 @@ static void *ThreadFunc(void *lpParameter) {
     t_symbol *s = &arg->s;
     int argc = arg->argc;
     t_atom *argv = arg->argv;
-    run(x, s, argc, argv);
+    run_function(x, s, argc, argv);
+    return NULL;
 }
 
 // create_thread in Linux
 static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    (void)s;
     pthread_t thread;
     struct thread_arg_struct *arg = (struct thread_arg_struct *)malloc(sizeof(struct thread_arg_struct));
     arg->x = *x;
@@ -657,6 +662,40 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
 }
 
 #endif
+
+// ============================================
+// ============================================
+// ============================================
+
+static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    // convert pointer x->thread to a int
+    
+    int thread = *(x->function_called);
+    if (thread == 1) {
+        create_thread(x, s, argc, argv);
+    } else {
+        run_function(x, s, argc, argv);
+    }
+}
+
+// ============================================
+// ============================================
+// ============================================
+
+static void thread(t_py *x, t_floatarg f){
+    // x->thread = (int)f;
+    *(x->function_called) = (int)f;
+    int thread = *(x->function_called);
+
+    if (thread == 1) {
+        post("Threading enabled");
+    } else if (thread == 0) {
+        post("Threading disabled");
+    } else {
+        pd_error(x, "Threading status must be 0 or 1");
+    }
+}
+
 
 // ============================================
 // =========== SETUP OF OBJECT ================
@@ -680,7 +719,11 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     // pointer para a classe
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     x->out_A = outlet_new(&x->x_obj, &s_anything); // cria um outlet
-    
+
+
+    x->thread = malloc(sizeof(int));
+    x->thread = 0;
+
     // ========
     // py things
     t_canvas *c = x->x_canvas; 
@@ -739,20 +782,19 @@ void py4pd_setup(void){
                         A_GIMME, // o argumento é um símbolo
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
     
-    class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0);
-    class_addmethod(py4pd_class, (t_method)create_thread, gensym("thread"), A_GIMME, 0);
-    class_addmethod(py4pd_class, (t_method)vscode, gensym("click"), 0, 0);
-    class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0);
+    class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0); // set home path
+    class_addmethod(py4pd_class, (t_method)vscode, gensym("click"), 0, 0); // when click open vscode
+    class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0); // set packages path
     #ifdef _WIN64
-    class_addmethod(py4pd_class, (t_method)env_install, gensym("env_install"), 0, 0);
-    class_addmethod(py4pd_class, (t_method)pip_install, gensym("pip"), 0, 0);
+    class_addmethod(py4pd_class, (t_method)env_install, gensym("env_install"), 0, 0); // install enviroment
+    class_addmethod(py4pd_class, (t_method)pip_install, gensym("pip"), 0, 0); // install packages with pip
     #endif
-    class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0);
-    class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0);
-    class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0);
-    class_addmethod(py4pd_class, (t_method)documentation, gensym("documentation"), 0, 0);
-    class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0);
-    class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0); // TODO: better name for this method
-    // class_addmethod(py4pd_class, (t_method)amount_of_args, gensym("args"), A_GIMME, 0); // TODO: better name for this method
+    class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open vscode
+    class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script
+    class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
+    class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
+    class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0); // set function to be called
+    class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
+    class_addmethod(py4pd_class, (t_method)thread, gensym("thread"), A_FLOAT, 0); // on/off threading
     }
 
