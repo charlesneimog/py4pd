@@ -8,20 +8,16 @@
 // If windows 64bits include 
 #ifdef _WIN64
 #include <windows.h>
+#else 
+#include <pthread.h>
 #endif
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 
-#ifdef __linux__
-#include <pthread.h>
-#endif
-
 // Python include
 #include <Python.h>
-
-
 
 /* 
 TODO: Way to set global variables, I think that will be important for things like general path (lilypond, etc)
