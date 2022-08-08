@@ -25,16 +25,6 @@ def function6(x):
     return list
 
 def function7(a, b, c):
-<<<<<<< HEAD
     for i in range(1, 100000, 1):
         sum = a + b + c + i
     return sum
-=======
-    x = a + b + c
-    for i in range(1, 100000, 1):
-        x = x + 1 + i
-
-    return x
-
-   
->>>>>>> a4600c1f405aef12aa8dcfb64720d11d8d3eef88
