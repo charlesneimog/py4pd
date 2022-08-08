@@ -26,7 +26,6 @@ TODO: make function home work with spaces, mainly for Windows OS where the use o
 TODO: Return list from python in all run functions
 TODO: Add some way to run list how arguments 
 TODO: Add way to turn on/off threading
-
 */
 
 // =================================
@@ -794,4 +793,3 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class, (t_method)thread, gensym("thread"), A_FLOAT, 0); // on/off threading
     }
-
