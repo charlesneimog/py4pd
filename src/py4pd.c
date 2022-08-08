@@ -366,8 +366,11 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         if (function_is_equal == 0){    // If the user wants to call the same function again! This is not necessary at first glance. 
             pd_error(x, "WARNING :: The function was already called!");
             pd_error(x, "WARNING :: Calling the function again! This make it slower!");
-            post("");
-            return;
+            Py_XDECREF(x->function);
+            Py_XDECREF(x->module);
+            x->function = NULL;
+            x->module = NULL;
+            x->function_name = NULL;
         }
         else{ // DOC: If the function is different, then we need to delete the old function and create a new one.
             Py_XDECREF(x->function);
@@ -621,13 +624,24 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     arg->x = *x;
     arg->argc = argc;
     arg->argv = argv;
-    // Pd is crashing when I try to create a thread.
-    hThread = CreateThread(NULL, 0, ThreadFunc, arg, 0, &threadID);
-    if (hThread == NULL) {
-        pd_error(x, "CreateThread failed");
+
+    // check if function is called 
+    int was_called = x->function_called;
+    post("was_called: %d", was_called);
+    if (was_called == 1) {
+        // Pd is crashing when I try to create a thread.
+        hThread = CreateThread(NULL, 0, ThreadFunc, arg, 0, &threadID);
+        if (hThread == NULL) {
+            pd_error(x, "CreateThread failed");
+            arg = NULL;
+            return;
+            }
+        } 
+    else {
+        pd_error(x, "You need to set the function first");
         arg = NULL;
         return;
-    } 
+    }
 }
 
 // ============================================
@@ -668,12 +682,13 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
 static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // convert pointer x->thread to a int
-    
-    int thread = *(x->function_called);
+    int thread = *(x->thread);
     if (thread == 1) {
         create_thread(x, s, argc, argv);
-    } else {
+    } else if (thread == 2) {
         run_function(x, s, argc, argv);
+    } else {
+        pd_error(x, "Thread not created");
     }
 }
 
@@ -685,8 +700,11 @@ static void thread(t_py *x, t_floatarg f){
     int thread = (int)f;
     if (thread == 1) {
         post("Threading enabled");
+        x->thread = malloc(sizeof(int)); 
+        *(x->thread) = 1; // 
     } else if (thread == 0) {
-        post("Threading disabled");
+        x->thread = malloc(sizeof(int)); 
+        *(x->thread) = 2; // 
     } else {
         pd_error(x, "Threading status must be 0 or 1");
     }
@@ -716,9 +734,11 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     x->out_A = outlet_new(&x->x_obj, &s_anything); // cria um outlet
 
-
     x->thread = malloc(sizeof(int));
-    x->thread = 0;
+    x->thread = malloc(sizeof(int)); 
+    *(x->thread) = 1; // solution but it is weird
+    
+    post("INFO [+] Thread by default is enabled");
 
     // ========
     // py things
@@ -729,7 +749,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     char *pip = malloc(strlen(x->home_path->s_name) + strlen("%s/py4pd_packages/Scripts/pip.exe") + 40);
     sprintf(pip, "%s/py4pd_packages/Scripts/pip.exe", x->home_path->s_name);
     if (access(pip, F_OK) == -1)
-        post("Enviroment not found");
+        post("INFO [+] Enviroment not found");
     else{
         char *packages = malloc(strlen(x->home_path->s_name) + strlen("%s/Lib/site-packages/") + 40);
         sprintf(packages, "%s/py4pd_packages/Lib/site-packages/", x->home_path->s_name);

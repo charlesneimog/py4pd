@@ -28,3 +28,15 @@ def function7(a, b, c):
     for i in range(1, 100000, 1):
         sum = a + b + c + i
     return sum
+
+def thread_test():
+    import time
+    # sleep for 4 seconds
+    time.sleep(5.2)
+    # make hour of the day
+    hour = time.strftime("%H")
+    # make minute of the hour
+    minute = time.strftime("%M")
+    # make second of the minute
+    second = time.strftime("%S")
+    return f'{hour}:{minute}:{second}'
