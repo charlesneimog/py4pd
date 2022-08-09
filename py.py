@@ -1,4 +1,4 @@
-def function1(x, y):
+def sum(x, y):
     x = int(x)
     y = int(y)
     return x + y

@@ -25,7 +25,7 @@ TODO: Reset the function (like panic for sfont~), In some calls seems that the *
 TODO: make function home work with spaces, mainly for Windows OS where the use of lilypond in python need to be specified with spaces
 TODO: Return list from python in all run functions
 TODO: Add some way to run list how arguments 
-TODO: Add way to turn on/off threading
+TODO: If the run method set before the end of the thread, there is an error, that close all PureData.
 */
 
 // =================================
@@ -626,21 +626,19 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     arg->argv = argv;
 
     // check if function is called 
-    int was_called = x->function_called;
-    post("was_called: %d", was_called);
-    if (was_called == 1) {
+    
+    if (x->function_called == 0) {
         // Pd is crashing when I try to create a thread.
+        pd_error(x, "You need to call a function before run");
+        return;
+        } 
+    else {
         hThread = CreateThread(NULL, 0, ThreadFunc, arg, 0, &threadID);
         if (hThread == NULL) {
             pd_error(x, "CreateThread failed");
             arg = NULL;
             return;
-            }
-        } 
-    else {
-        pd_error(x, "You need to set the function first");
-        arg = NULL;
-        return;
+        }
     }
 }
 
