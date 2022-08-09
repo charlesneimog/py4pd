@@ -42,7 +42,6 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject        *module; // python object
     PyObject        *function; // function name
     t_float         *thread; // arguments
-    t_float         *thread_running; // thread running
     t_float         *function_called; // flag to check if the set function was called
     t_float         *create_inlets; // flag to check if the set function was called
     t_symbol        *packages_path; // packages path 
@@ -608,20 +607,18 @@ struct thread_arg_struct {
 // ============================================
 #ifdef _WIN64
 
+
+// make GLOBAL variable for the thread running or not
+// this is used to stop the thread when the object is deleted
+// (the thread is not deleted when the object is deleted)
+// this is a workaround for the problem that the thread is not deleted when the object is deleted
+
 DWORD WINAPI ThreadFunc(LPVOID lpParam) {
-    struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParam;
-    // define x, s, argc and argv
-    // set x->thread_running to 1
-       
+    struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParam;       
     t_py *x = &arg->x;
     int argc = arg->argc;
     t_symbol *s = &arg->s;
     t_atom *argv = arg->argv;
-    
-    // malloc x->thread_running to 1
-    x->thread_running = (int *)malloc(sizeof(int));
-    *(x->thread_running) = 1;
-
     run_function(x, s, argc, argv);
     return 0;
 }
@@ -633,21 +630,22 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     DWORD threadID;
     HANDLE hThread;
+
     struct thread_arg_struct *arg = (struct thread_arg_struct *)malloc(sizeof(struct thread_arg_struct));
     arg->x = *x;
     arg->argc = argc;
     arg->argv = argv;
 
-    // check if function is called 
+    
     
     if (x->function_called == 0) {
         // Pd is crashing when I try to create a thread.
-        pd_error(x, "You need to call a function before run");
+        pd_error(x, "You need to call a function before run!");
         return;
         } 
     else {
-        
-        if (x->thread_running == 0){
+        // post x->thread_running 
+        if (0 == 0){
             hThread = CreateThread(NULL, 0, ThreadFunc, arg, 0, &threadID);
             if (hThread == NULL) {
                 pd_error(x, "CreateThread failed");
@@ -751,7 +749,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     x->out_A = outlet_new(&x->x_obj, &s_anything); // cria um outlet
 
-    x->thread = malloc(sizeof(int));
     x->thread = malloc(sizeof(int)); 
     *(x->thread) = 1; // solution but it is weird
     

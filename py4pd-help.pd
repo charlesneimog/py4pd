@@ -1,4 +1,4 @@
-#N canvas 389 0 1514 1016 12;
+#N canvas 570 25 762 548 12;
 #X declare -path else;
 #X obj 165 86 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
 -1 -1 0 1;
@@ -10,22 +10,22 @@
 #X text 111 274 See where is the packages path!;
 #X text 59 189 See where is the home path!;
 #X obj 16 88 s py4pd;
-#N canvas 1127 674 585 287 modules 0;
-#X obj 17 165 s py4pd;
-#X msg 38 51 run 20000;
-#X msg 17 15 set modules to_om;
-#X msg 265 79 run 20 20 20;
-#X msg 236 111 pip_install;
-#X msg 266 48 set modules to_om;
+#N canvas 1022 602 627 287 modules 0;
+#X obj 17 171 s py4pd;
+#X msg 78 110 pip_install;
+#X msg 17 15 set modules randint;
+#X msg 38 47 run 1 4;
+#X msg 70 80 doc;
+#X text 234 20 In modules.py I just use the 'from random import *'
+Using that you will be able to use all python func- tions of diferrent
+modules inside PureData.;
 #X connect 1 0 0 0;
 #X connect 2 0 0 0;
 #X connect 3 0 0 0;
 #X connect 4 0 0 0;
-#X connect 5 0 0 0;
 #X restore 320 38 pd modules;
 #X obj 162 134 s py4pd;
 #X msg 162 105 run \$1 10;
-#X obj 162 39 metro 1;
 #X obj 162 19 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
 1;
 #X obj 162 61 random 100;
@@ -36,21 +36,28 @@
 just relatives;
 #X text 315 325 If in Linux \, you need to use complete paths \, not
 just relatives;
-#N canvas 1081 660 450 300 coding 1;
-#X obj 28 123 s py4pd;
-#X msg 28 21 documentation;
-#X msg 138 22 vscode;
-#X msg 159 56 reload;
-#X msg 248 66 create om;
+#N canvas 140 568 637 300 coding 0;
+#X obj 27 205 s py4pd;
+#X msg 48 57 vscode;
+#X msg 67 90 reload;
+#X msg 94 128 create om;
+#X msg 28 21 doc;
+#X text 56 21 Shows the doc of the function!;
+#X text 103 56 Open vscode if it is in the PATH!;
+#X text 118 91 Reload the function \, if you change it you need to
+reload!;
+#X text 170 128 If you want to create a new script \, you can run create
+\, if the files already exits it will not replace it \, just open it.
+;
 #X connect 1 0 0 0;
 #X connect 2 0 0 0;
 #X connect 3 0 0 0;
 #X connect 4 0 0 0;
 #X restore 320 15 pd coding;
 #X text 393 15 Coding with py4pd;
-#N canvas 217 325 1017 478 thread 0;
+#N canvas 217 325 1017 478 thread 1;
 #X msg 17 42 thread \$1;
-#X obj 17 17 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1 1
+#X obj 17 17 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0 1
 ;
 #X text 32 14 on/off;
 #X obj 538 29 loadbang;
@@ -231,7 +238,7 @@ $f2 + 1 \; i_\$0 = i_\$0 + 1;
 #X text 382 249 Part of ELSE \; https://github.com/porres/pd-else;
 #X text 380 228 Alexandre Torres Porres (2017-2018);
 #N canvas 185 381 450 300 \$0-cnv 0;
-#X obj 101 101 cnv 10 61 20 empty 1003-display 09:51:39 2 10 0 12 -233017
+#X obj 101 101 cnv 10 12 20 empty 1003-display empty 2 10 0 12 -233017
 -66577 0;
 #X coords 0 1 1 -1 14 22 2 100 100;
 #X restore 100 100 pd \$0-cnv;
@@ -556,10 +563,10 @@ $f2 + 1 \; i_\$0 = i_\$0 + 1;
 #X connect 13 0 14 1;
 #X connect 14 0 2 0;
 #X connect 14 1 3 0;
-#X coords 0 1 1 -1 63 22 2 100 100;
+#X coords 0 1 1 -1 14 22 2 100 100;
 #X restore 17 186 pd;
 #X msg 608 68 \; pd dsp \$1;
-#X obj 608 30 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
+#X obj 608 30 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
 1;
 #X obj 17 150 else/symbol2any;
 #X msg 134 44 set py thread_test;
@@ -587,7 +594,7 @@ work \, just is wait the python script finish his work!;
 #X connect 15 0 13 0;
 #X restore 321 62 pd thread;
 #X text 390 61 Documentation about thread with python!;
-#X msg 37 53 run;
+#X msg 26 47 run;
 #X obj 21 508 s py4pd_answer;
 #X text 62 470 Here the Object!;
 #X obj 127 508 print py4pd_answer;
@@ -596,18 +603,21 @@ work \, just is wait the python script finish his work!;
 ;
 #X text 350 218 Define home Path! 'Where py4pd look for scripts.py'
 ;
+#X msg 62 48 doc;
+#X obj 162 39 metro 100;
 #X connect 0 0 11 0;
 #X connect 1 0 3 0;
-#X connect 2 0 25 0;
-#X connect 2 0 27 0;
+#X connect 2 0 24 0;
+#X connect 2 0 26 0;
 #X connect 4 0 3 0;
 #X connect 5 0 2 0;
 #X connect 11 0 10 0;
-#X connect 12 0 14 0;
-#X connect 13 0 12 0;
-#X connect 14 0 0 0;
-#X connect 15 0 3 0;
-#X connect 16 0 15 0;
-#X connect 17 0 3 0;
-#X connect 24 0 8 0;
-#X connect 28 0 8 0;
+#X connect 12 0 31 0;
+#X connect 13 0 0 0;
+#X connect 14 0 3 0;
+#X connect 15 0 14 0;
+#X connect 16 0 3 0;
+#X connect 23 0 8 0;
+#X connect 27 0 8 0;
+#X connect 30 0 8 0;
+#X connect 31 0 13 0;
