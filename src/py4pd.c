@@ -42,6 +42,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject        *module; // python object
     PyObject        *function; // function name
     t_float         *thread; // arguments
+    t_float         *thread_running; // thread running
     t_float         *function_called; // flag to check if the set function was called
     t_float         *create_inlets; // flag to check if the set function was called
     t_symbol        *packages_path; // packages path 
@@ -605,10 +606,17 @@ struct thread_arg_struct {
 DWORD WINAPI ThreadFunc(LPVOID lpParam) {
     struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParam;
     // define x, s, argc and argv
+    // set x->thread_running to 1
+       
     t_py *x = &arg->x;
     int argc = arg->argc;
     t_symbol *s = &arg->s;
     t_atom *argv = arg->argv;
+    
+    // malloc x->thread_running to 1
+    x->thread_running = (int *)malloc(sizeof(int));
+    *(x->thread_running) = 1;
+
     run_function(x, s, argc, argv);
     return 0;
 }
@@ -633,10 +641,16 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
         return;
         } 
     else {
-        hThread = CreateThread(NULL, 0, ThreadFunc, arg, 0, &threadID);
-        if (hThread == NULL) {
-            pd_error(x, "CreateThread failed");
-            arg = NULL;
+        
+        if (x->thread_running == 0){
+            hThread = CreateThread(NULL, 0, ThreadFunc, arg, 0, &threadID);
+            if (hThread == NULL) {
+                pd_error(x, "CreateThread failed");
+                arg = NULL;
+                return;
+            }
+        } else {
+            pd_error(x, "Thread already running");
             return;
         }
     }
