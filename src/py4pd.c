@@ -81,11 +81,16 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     else {
         if (argc < 2 && argc > 0){
             x->packages_path = atom_getsymbol(argv);
+            // probe if the path is valid
+            if (access(x->packages_path->s_name, F_OK) != -1) {
+                post("The packages path set to: %s", x->packages_path->s_name);
+            } else {
+                pd_error(x, "The packages path is not valid");
+            }
             post("The packages path is now: %s", x->packages_path->s_name);
         }   
         else{
-            pd_error(x, "It seems that your package folder has |spaces|. It can not have |spaces|!");
-            post("I intend to implement this feature in the future!");
+            pd_error(x, "It seems that your package folder has |spaces|. It can not have |spaces|! If not, you set more than one argument");
             return;
         }    
     }

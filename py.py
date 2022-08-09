@@ -1,42 +1,31 @@
 def sum(x, y):
+    "It sums two numbers."
     x = int(x)
     y = int(y)
     return x + y
 
-def function2(x):
-    return int(x)
-
-def function3(x):
-    return x
-
-def function4(x):
-    for x in range(1, x, 1):
-        x = x + 1
-    return x
-
-def function5(x):
-    return f'O numero é {x}.'
-
-def function6(x):
-    "I count until x. x is the number received."
+def arithm_ser(begin, end, step):
+    "It calculates the arithmetic series."
     list = []
-    for x in range(1, x, 1):
+    for x in range(begin, end, step):
         list.append(x)
     return list
 
-def function7(a, b, c):
-    for i in range(1, 100000, 1):
-        sum = a + b + c + i
-    return sum
+def fibonacci(n):
+    "Calculate the nth fibonacci number."
+    if n == 0:
+        return 0
+    elif n == 1:
+        return 1
+    else:
+        return fibonacci(n-1) + fibonacci(n-2)
 
 def thread_test():
+    "It tests the threading module. Just return the hour after 5 seconds."
     import time
-    # sleep for 4 seconds
-    time.sleep(5.2)
-    # make hour of the day
+    time.sleep(5)
     hour = time.strftime("%H")
-    # make minute of the hour
     minute = time.strftime("%M")
-    # make second of the minute
     second = time.strftime("%S")
     return f'{hour}:{minute}:{second}'
+

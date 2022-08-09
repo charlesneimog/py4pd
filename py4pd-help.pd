@@ -1,15 +1,14 @@
-#N canvas 566 36 1272 800 12;
+#N canvas 389 0 1514 1016 12;
 #X declare -path else;
 #X obj 165 86 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 -262144
--1 -1 5100 1;
-#X msg 456 98 home;
-#X obj 19 247 py4pd;
-#X obj 456 267 s py4pd;
-#X msg 480 183 packages;
-#X obj 19 212 r py4pd;
-#X text 545 182 See where is the packages path!;
-#X text 491 97 See where is the home path!;
-#X text 776 99 Define home Path!;
+-1 -1 0 1;
+#X msg 22 190 home;
+#X obj 21 471 py4pd;
+#X obj 22 376 s py4pd;
+#X msg 46 275 packages;
+#X obj 21 436 r py4pd;
+#X text 111 274 See where is the packages path!;
+#X text 59 189 See where is the home path!;
 #X obj 16 88 s py4pd;
 #N canvas 1127 674 585 287 modules 0;
 #X obj 17 165 s py4pd;
@@ -23,19 +22,19 @@
 #X connect 3 0 0 0;
 #X connect 4 0 0 0;
 #X connect 5 0 0 0;
-#X restore 487 35 pd modules;
+#X restore 320 38 pd modules;
 #X obj 162 134 s py4pd;
 #X msg 162 105 run \$1 10;
 #X obj 162 39 metro 1;
 #X obj 162 19 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
 1;
 #X obj 162 61 random 100;
-#X msg 487 234 packages ./py4pd/Lib/site-packages, f 35;
-#X obj 487 209 loadbang;
-#X msg 480 126 home /home/neimog/Downloads/py4pd/scripts;
-#X text 782 123 If in Linux \, you need to use complete paths \, not
+#X msg 53 326 packages ./py4pd/Lib/site-packages, f 35;
+#X obj 53 301 loadbang;
+#X msg 46 218 home /home/neimog/Downloads/py4pd/scripts;
+#X text 351 243 If in Linux \, you need to use complete paths \, not
 just relatives;
-#X text 749 233 If in Linux \, you need to use complete paths \, not
+#X text 315 325 If in Linux \, you need to use complete paths \, not
 just relatives;
 #N canvas 1081 660 450 300 coding 1;
 #X obj 28 123 s py4pd;
@@ -47,19 +46,19 @@ just relatives;
 #X connect 2 0 0 0;
 #X connect 3 0 0 0;
 #X connect 4 0 0 0;
-#X restore 487 12 pd coding;
-#X text 560 12 Coding with py4pd;
-#N canvas 5 513 1017 478 thread 1;
+#X restore 320 15 pd coding;
+#X text 393 15 Coding with py4pd;
+#N canvas 217 325 1017 478 thread 0;
 #X msg 17 42 thread \$1;
-#X obj 17 17 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0 1
+#X obj 17 17 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1 1
 ;
 #X text 32 14 on/off;
-#X obj 701 15 loadbang;
-#X obj 621 122 *~;
-#X msg 701 80 0.3;
-#X obj 621 83 osc~;
-#X obj 620 191 dac~;
-#X msg 621 57 200;
+#X obj 538 29 loadbang;
+#X obj 458 136 *~;
+#X msg 538 94 0.3;
+#X obj 458 97 osc~;
+#X obj 457 205 dac~;
+#X msg 458 71 200;
 #X msg 99 43 run;
 #N canvas 0 50 450 300 (subpatch) 0;
 #X obj 463 165 namecanvas \$0-canvas, f 21;
@@ -232,7 +231,7 @@ $f2 + 1 \; i_\$0 = i_\$0 + 1;
 #X text 382 249 Part of ELSE \; https://github.com/porres/pd-else;
 #X text 380 228 Alexandre Torres Porres (2017-2018);
 #N canvas 185 381 450 300 \$0-cnv 0;
-#X obj 101 101 cnv 10 12 20 empty 1003-display empty 2 10 0 12 -233017
+#X obj 101 101 cnv 10 61 20 empty 1003-display 09:51:39 2 10 0 12 -233017
 -66577 0;
 #X coords 0 1 1 -1 14 22 2 100 100;
 #X restore 100 100 pd \$0-cnv;
@@ -557,21 +556,22 @@ $f2 + 1 \; i_\$0 = i_\$0 + 1;
 #X connect 13 0 14 1;
 #X connect 14 0 2 0;
 #X connect 14 1 3 0;
-#X coords 0 1 1 -1 14 22 2 100 100;
+#X coords 0 1 1 -1 63 22 2 100 100;
 #X restore 17 186 pd;
-#X msg 771 54 \; pd dsp \$1;
-#X obj 771 16 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+#X msg 608 68 \; pd dsp \$1;
+#X obj 608 30 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
 1;
 #X obj 17 150 else/symbol2any;
 #X msg 134 44 set py thread_test;
-#X text 146 115 1 Set the function thread_test \; 2 Then turn on the
+#X obj 17 83 py4pd;
+#X text 17 238 1 Set the function thread_test \; 2 Then turn on the
 dsp and thread mode \; 3 It will just output the hour 5s after you
 press run \; For python scripts that need some time to execute \, the
-thread mode will allow to all PD process run. This means that py4pd
-will not interrupt the audio signal. Try to run the same function with
-the thread mode off.;
-#X obj 17 83 py4pd;
-#X connect 0 0 16 0;
+thread mode will allow do not stop the PD process to run. This means
+that py4pd will not interrupt the audio signal. Try to run the same
+function with the thread mode off. Wait 5 seconds! Pd do not stop to
+work \, just is wait the python script finish his work!;
+#X connect 0 0 15 0;
 #X connect 1 0 0 0;
 #X connect 3 0 5 0;
 #X connect 3 0 8 0;
@@ -580,30 +580,34 @@ the thread mode off.;
 #X connect 5 0 4 1;
 #X connect 6 0 4 0;
 #X connect 8 0 6 0;
-#X connect 9 0 16 0;
+#X connect 9 0 15 0;
 #X connect 12 0 11 0;
 #X connect 13 0 10 0;
-#X connect 14 0 16 0;
-#X connect 16 0 13 0;
-#X restore 488 59 pd thread;
-#X text 557 58 Documentation about thread with python!;
+#X connect 14 0 15 0;
+#X connect 15 0 13 0;
+#X restore 321 62 pd thread;
+#X text 390 61 Documentation about thread with python!;
 #X msg 37 53 run;
-#X obj 19 284 s py4pd_answer;
-#X text 60 246 Here the Object!;
-#X obj 125 284 print py4pd_answer;
+#X obj 21 508 s py4pd_answer;
+#X text 62 470 Here the Object!;
+#X obj 127 508 print py4pd_answer;
 #X msg 16 17 set py sum;
-#X connect 0 0 12 0;
+#X text 79 377 Enviroment Name - Always lib - Always site-packages
+;
+#X text 350 218 Define home Path! 'Where py4pd look for scripts.py'
+;
+#X connect 0 0 11 0;
 #X connect 1 0 3 0;
-#X connect 2 0 26 0;
-#X connect 2 0 28 0;
+#X connect 2 0 25 0;
+#X connect 2 0 27 0;
 #X connect 4 0 3 0;
 #X connect 5 0 2 0;
-#X connect 12 0 11 0;
-#X connect 13 0 15 0;
-#X connect 14 0 13 0;
-#X connect 15 0 0 0;
-#X connect 16 0 3 0;
-#X connect 17 0 16 0;
-#X connect 18 0 3 0;
-#X connect 25 0 9 0;
-#X connect 29 0 9 0;
+#X connect 11 0 10 0;
+#X connect 12 0 14 0;
+#X connect 13 0 12 0;
+#X connect 14 0 0 0;
+#X connect 15 0 3 0;
+#X connect 16 0 15 0;
+#X connect 17 0 3 0;
+#X connect 24 0 8 0;
+#X connect 28 0 8 0;
