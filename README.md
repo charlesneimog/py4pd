@@ -51,7 +51,9 @@ make PYTHON_INCLUDE="C:/Users/%USERNAME%/AppData/Local/Programs/Python/Python310
 If you want to try to build it on Linux:
 
 #### Linux - version 3.10
-* First you need to run: `sudo apt-get install python3.10-dev`.
+* First you need to run: 
+    `sudo add-apt-repository ppa:deadsnakes/ppa`.
+    `sudo apt-get install python3.10-dev`.
 
 ``` bash 
 make PYTHON_INCLUDE=/usr/include/python3.10/ PYTHON_VERSION=python3.10 
