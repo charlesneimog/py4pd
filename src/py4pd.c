@@ -4,6 +4,8 @@
 #include <g_canvas.h>
 #include <stdio.h>
 #include <string.h>
+#include <complex.h>
+
 
 // If windows 64bits include 
 #ifdef _WIN64
@@ -16,6 +18,8 @@
 #include <unistd.h>
 #endif
 
+
+
 // Python include
 #include <Python.h>
 
@@ -27,6 +31,10 @@ TODO: Return list from python in all run functions
 TODO: Add some way to run list how arguments 
 TODO: If the run method set before the end of the thread, there is an error, that close all PureData.
 */
+
+// GLOBAL VARIABLE FOR THREAD, 0 = NO THREAD, 1 = THREAD RUNNING.
+
+static int thread_running = 0;
 
 // =================================
 // ============ Pd Object code  ====
@@ -82,14 +90,13 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
             x->packages_path = atom_getsymbol(argv);
             // probe if the path is valid
             if (access(x->packages_path->s_name, F_OK) != -1) {
-                post("The packages path set to: %s", x->packages_path->s_name);
+                // do nothing
             } else {
                 pd_error(x, "The packages path is not valid");
             }
-            post("The packages path is now: %s", x->packages_path->s_name);
         }   
         else{
-            pd_error(x, "It seems that your package folder has |spaces|. It can not have |spaces|! If not, you set more than one argument");
+            pd_error(x, "It seems that your package folder has |spaces|.");
             return;
         }    
     }
@@ -349,6 +356,9 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
     
+    post("INFO [+] Script file: %s.py", script_file_name->s_name);
+    post("INFO [+] Function name: %s", function_name->s_name);
+
     (void)s;
     // Erros handling
     // Check if script has .py extension
@@ -389,7 +399,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // =====================
     // DOC: check number of arguments
     if (argc < 2) { // check is the number of arguments is correct | set "function_script" "function_name"
-        pd_error(x,"py4pd :: The set message needs two arguments! The 'Script name' and the 'function name'!");
+        pd_error(x,"INFO [+] The set message needs two arguments! The 'Script name' and the 'function name'!");
         return;
     }
     
@@ -399,13 +409,13 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     py_name_ptr = Py_DecodeLocale(script_file_name->s_name, NULL);
     Py_SetProgramName(py_name_ptr); // set program name
     Py_Initialize();
-    Py_GetPythonHome();
+
 
     // =====================
     const char *home_path_str = x->home_path->s_name;
     char *sys_path_str = malloc(strlen(home_path_str) + strlen("sys.path.append('") + strlen("')") + 1);
-    sprintf(sys_path_str, "sys.path.append('%s')", home_path_str);
     PyRun_SimpleString("import sys");
+    sprintf(sys_path_str, "sys.path.append('%s')", home_path_str);
     PyRun_SimpleString(sys_path_str);
     free(sys_path_str); // free the memory allocated for the string, check if this is necessary
     
@@ -525,33 +535,29 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         // check if pValue is a list
         if (PyList_Check(pValue)){ // DOC: If the function return a list list
             int list_size = PyList_Size(pValue);
+            // post("py4pd | function '%s' returned %i values!", x->function_name->s_name, list_size);
             // make array with size of list_size
             t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));            
             for (i = 0; i < list_size; ++i) {
                 PyObject *pValue_i = PyList_GetItem(pValue, i);
-                if (PyLong_Check(pValue_i)) {
+                if (PyLong_Check(pValue_i)) { // DOC: If the function return a list of integers
                     long result = PyLong_AsLong(pValue_i);
                     float result_float = (float)result;
                     list_array[i].a_type = A_FLOAT;
                     list_array[i].a_w.w_float = result_float;
 
-                } else if (PyFloat_Check(pValue_i)) {
+                } else if (PyFloat_Check(pValue_i)) { // DOC: If the function return a list of floats
                     double result = PyFloat_AsDouble(pValue_i);
                     float result_float = (float)result;
                     list_array[i].a_type = A_FLOAT;
                     list_array[i].a_w.w_float = result_float;
-                } else if (PyUnicode_Check(pValue_i)) {
-                    const char *result = PyUnicode_AsUTF8(pValue_i); // WARNING: initialization discards 'const' qualifier 
-                                                                     // from pointer target type [-Wdiscarded-qualifiers]
+                } else if (PyUnicode_Check(pValue_i)) { // DOC: If the function return a list of strings
+                    const char *result = PyUnicode_AsUTF8(pValue_i); 
                     list_array[i].a_type = A_SYMBOL;
                     list_array[i].a_w.w_symbol = gensym(result);
-                } else if (PyList_Check(pValue_i)) {
-                    // convert_list_inside_list(x, pValue_i, list_array+i, list_size);
-                    pd_error(x, "recursive call not implemented yet");
-                    //list_array[i].a_type = A_FLOAT;
-                    //list_array[i].a_w.w_float = 0;
                 } else {
-                    pd_error(x, "Cannot convert list item\n");
+                    pd_error(x, "py4pd just convert int, float, string!\n");
+                    pd_error(x, "The value received is of type %s", Py_TYPE(pValue_i)->tp_name);
                     Py_DECREF(pValue);
                     return;
                 }
@@ -569,13 +575,17 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
             } else if (PyUnicode_Check(pValue)) {
                 const char *result = PyUnicode_AsUTF8(pValue); // WARNING: See http://gg.gg/11t8iv
                 outlet_symbol(x->out_A, gensym(result)); 
-            } else { 
-                // check if pValue is a list.    
-                // if yes, accumulate and output it using out_A 
-                pd_error(x, "Cannot convert list item\n");
+            } // check pValue is a Complex
+            else if (PyComplex_Check(pValue)) {
+                // send a complex number to Puredata
+                post("py4pd | function '%s' returned a complex number!", x->function_name->s_name);
+                return;
+            } else {
+                pd_error(x, "py4pd just convert int, float, string!\n");
+                pd_error(x, "The value received is of type %s", Py_TYPE(pValue)->tp_name);
                 Py_DECREF(pValue);
                 return;
-                }
+            }
         }
         Py_DECREF(pValue);
     }
@@ -619,7 +629,9 @@ DWORD WINAPI ThreadFunc(LPVOID lpParam) {
     int argc = arg->argc;
     t_symbol *s = &arg->s;
     t_atom *argv = arg->argv;
+    thread_running = 1;
     run_function(x, s, argc, argv);
+    thread_running = 0;
     return 0;
 }
 // ============================================
@@ -630,30 +642,29 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     DWORD threadID;
     HANDLE hThread;
-
     struct thread_arg_struct *arg = (struct thread_arg_struct *)malloc(sizeof(struct thread_arg_struct));
+    // arg->x must be equal x not *x
     arg->x = *x;
     arg->argc = argc;
     arg->argv = argv;
 
-    
-    
     if (x->function_called == 0) {
         // Pd is crashing when I try to create a thread.
         pd_error(x, "You need to call a function before run!");
+        free(arg);
         return;
         } 
     else {
-        // post x->thread_running 
-        if (0 == 0){
+        if (thread_running == 0){
             hThread = CreateThread(NULL, 0, ThreadFunc, arg, 0, &threadID);
             if (hThread == NULL) {
                 pd_error(x, "CreateThread failed");
-                arg = NULL;
+                free(arg);
                 return;
             }
         } else {
-            pd_error(x, "Thread already running");
+            pd_error(x, "ERROR [!] Just one thread can be running at a time!");
+            free(arg);
             return;
         }
     }
@@ -673,20 +684,42 @@ static void *ThreadFunc(void *lpParameter) {
     t_symbol *s = &arg->s;
     int argc = arg->argc;
     t_atom *argv = arg->argv;
+    thread_running = 1;
     run_function(x, s, argc, argv);
+    thread_running = 0;
     return NULL;
 }
 
 // create_thread in Linux
 static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
-    pthread_t thread;
     struct thread_arg_struct *arg = (struct thread_arg_struct *)malloc(sizeof(struct thread_arg_struct));
     arg->x = *x;
     arg->argc = argc;
     arg->argv = argv;
-    pthread_create(&thread, NULL, ThreadFunc, arg);
-
+    if (x->function_called == 0) {
+        // Pd is crashing when I try to create a thread.
+        pd_error(x, "You need to call a function before run!");
+        free(arg);
+        return;
+    }
+    else {
+        if (thread_running == 0){
+            pthread_t thread;
+            pthread_t hThread;
+            hThread = pthread_create(&thread, NULL, ThreadFunc, arg);
+            // check if hThread is equal to 0
+            if (hThread != 0) {
+                pd_error(x, "CreateThread failed");
+                free(arg);
+                return;
+            }
+        } else {
+            pd_error(x, "ERROR [!] Just one thread can be running at a time!");
+            free(arg);
+            return;
+        }
+    }
 }
 
 #endif
@@ -717,9 +750,12 @@ static void thread(t_py *x, t_floatarg f){
         post("Threading enabled");
         x->thread = malloc(sizeof(int)); 
         *(x->thread) = 1; // 
+        return;
     } else if (thread == 0) {
         x->thread = malloc(sizeof(int)); 
         *(x->thread) = 2; // 
+        post("Threading disabled");
+        return;
     } else {
         pd_error(x, "Threading status must be 0 or 1");
     }
@@ -748,40 +784,44 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     // pointer para a classe
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     x->out_A = outlet_new(&x->x_obj, &s_anything); // cria um outlet
-
-    x->thread = malloc(sizeof(int)); 
-    *(x->thread) = 1; // solution but it is weird
-    
-    post("INFO [+] Thread by default is enabled");
-
-    // ========
-    // py things
     t_canvas *c = x->x_canvas; 
     x->home_path = canvas_getdir(c);     // set name 
     x->packages_path = canvas_getdir(c); // set name
+    x->thread = malloc(sizeof(int)); 
+    *(x->thread) = 1; // solution but it is weird
+    post("INFO [+] Thread by default is enabled");
 
-    char *pip = malloc(strlen(x->home_path->s_name) + strlen("%s/py4pd_packages/Scripts/pip.exe") + 40);
-    sprintf(pip, "%s/py4pd_packages/Scripts/pip.exe", x->home_path->s_name);
-    if (access(pip, F_OK) == -1)
-        post("INFO [+] Enviroment not found");
-    else{
-        char *packages = malloc(strlen(x->home_path->s_name) + strlen("%s/Lib/site-packages/") + 40);
-        sprintf(packages, "%s/py4pd_packages/Lib/site-packages/", x->home_path->s_name);
-        post("packages: %s", packages);
-        // set x->packages_path to packages
-        x->packages_path = gensym(packages);
-        
+    // check if in x->home_path there is a file py4pd.config
+    char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1));
+    strcpy(config_path, x->home_path->s_name);
+    strcat(config_path, "/py4pd.cfg");
+    if (access(config_path, F_OK) != -1) {
+        FILE* file = fopen(config_path, "r"); /* should check the result */
+        char line[256];
+        while (fgets(line, sizeof(line), file)) {
+            // get line that starts with packages =
+            if (strstr(line, "packages =") != NULL) {
+                char *packages_path = (char *)malloc(sizeof(char) * (strlen(line) - strlen("packages = ") + 1));
+                strcpy(packages_path, line + strlen("packages = "));
+                packages_path[strlen(packages_path) - 1] = '\0';
+                // if packages_path is not empty then set x->packages_path
+                if (strlen(packages_path) > 0) {
+                    x->packages_path = gensym(packages_path);
+                    post("INFO [+] Packages path set to %s", x->packages_path->s_name);
+                }
+            }
+        }
+    } else {
+        // file does not exist
+        post("INFO [!] Could not find py4pd.cfg in home directory");
     }
-    free(pip);
     // get arguments and print it
     if (argc == 2) {
         set_function(x, s, argc, argv);
-        x->function_called = malloc(sizeof(int)); // TODO: Better way to solve the warning???
-        *(x->function_called) = 1;
+        
     } 
     return(x);
 }
-
 
 // ============================================
 // =========== REMOVE OBJECT ==================
@@ -791,14 +831,13 @@ void py4pd_free(t_py *x){
     PyObject  *pModule, *pFunc; // pDict, *pName,
     pFunc = x->function;
     pModule = x->module;
+    // clear all struct
+
     if (pModule != NULL) {
         Py_DECREF(pModule);
     }
     if (pFunc != NULL) {
         Py_DECREF(pFunc);
-    }
-    if (Py_FinalizeEx() < 0) {
-        return;
     }
 }
 
@@ -812,6 +851,8 @@ void py4pd_setup(void){
                         A_GIMME, // o argumento é um símbolo
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
     
+    // add method for bang
+    class_addbang(py4pd_class, run);
     class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0); // set home path
     class_addmethod(py4pd_class, (t_method)vscode, gensym("click"), 0, 0); // when click open vscode
     class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0); // set packages path

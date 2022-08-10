@@ -55,18 +55,18 @@ reload!;
 #X connect 4 0 0 0;
 #X restore 320 15 pd coding;
 #X text 393 15 Coding with py4pd;
-#N canvas 217 325 1017 478 thread 1;
-#X msg 17 42 thread \$1;
-#X obj 17 17 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0 1
+#N canvas 217 325 565 451 thread 1;
+#X msg 17 87 thread \$1;
+#X obj 17 62 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1 1
 ;
-#X text 32 14 on/off;
-#X obj 538 29 loadbang;
-#X obj 458 136 *~;
-#X msg 538 94 0.3;
-#X obj 458 97 osc~;
-#X obj 457 205 dac~;
-#X msg 458 71 200;
-#X msg 99 43 run;
+#X text 32 59 on/off;
+#X obj 355 48 loadbang;
+#X obj 275 155 *~;
+#X msg 355 113 0.3;
+#X obj 275 116 osc~;
+#X obj 274 224 dac~;
+#X msg 275 90 200;
+#X msg 99 88 run;
 #N canvas 0 50 450 300 (subpatch) 0;
 #X obj 463 165 namecanvas \$0-canvas, f 21;
 #X obj 42 27 inlet;
@@ -238,7 +238,7 @@ $f2 + 1 \; i_\$0 = i_\$0 + 1;
 #X text 382 249 Part of ELSE \; https://github.com/porres/pd-else;
 #X text 380 228 Alexandre Torres Porres (2017-2018);
 #N canvas 185 381 450 300 \$0-cnv 0;
-#X obj 101 101 cnv 10 12 20 empty 1003-display empty 2 10 0 12 -233017
+#X obj 101 101 cnv 10 61 20 empty 1003-display 16:09:42 2 10 0 12 -233017
 -66577 0;
 #X coords 0 1 1 -1 14 22 2 100 100;
 #X restore 100 100 pd \$0-cnv;
@@ -563,21 +563,23 @@ $f2 + 1 \; i_\$0 = i_\$0 + 1;
 #X connect 13 0 14 1;
 #X connect 14 0 2 0;
 #X connect 14 1 3 0;
-#X coords 0 1 1 -1 14 22 2 100 100;
-#X restore 17 186 pd;
-#X msg 608 68 \; pd dsp \$1;
-#X obj 608 30 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 0
+#X coords 0 1 1 -1 63 22 2 100 100;
+#X restore 17 231 pd;
+#X msg 425 87 \; pd dsp \$1;
+#X obj 425 49 tgl 15 0 empty empty empty 17 7 0 10 -262144 -1 -1 1
 1;
-#X obj 17 150 else/symbol2any;
-#X msg 134 44 set py thread_test;
-#X obj 17 83 py4pd;
-#X text 17 238 1 Set the function thread_test \; 2 Then turn on the
+#X obj 17 195 else/symbol2any;
+#X msg 134 89 set py thread_test;
+#X obj 17 128 py4pd;
+#X text 17 280 1 Set the function thread_test \; 2 Then turn on the
 dsp and thread mode \; 3 It will just output the hour 5s after you
 press run \; For python scripts that need some time to execute \, the
 thread mode will allow do not stop the PD process to run. This means
 that py4pd will not interrupt the audio signal. Try to run the same
 function with the thread mode off. Wait 5 seconds! Pd do not stop to
 work \, just is wait the python script finish his work!;
+#X obj 17 8 loadbang;
+#X msg 17 32 1;
 #X connect 0 0 15 0;
 #X connect 1 0 0 0;
 #X connect 3 0 5 0;
@@ -592,6 +594,8 @@ work \, just is wait the python script finish his work!;
 #X connect 13 0 10 0;
 #X connect 14 0 15 0;
 #X connect 15 0 13 0;
+#X connect 17 0 18 0;
+#X connect 18 0 1 0;
 #X restore 321 62 pd thread;
 #X text 390 61 Documentation about thread with python!;
 #X msg 26 47 run;
