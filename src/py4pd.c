@@ -452,10 +452,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         argspec = PyObject_CallFunctionObjArgs(getargspec, pFunc, NULL);
         args = PyObject_GetAttrString(argspec, "args");
         int py_args = PyObject_Size(args);
-        post("py4pd | function '%s' loaded!", function_name->s_name);
-        post("");
-        post("It has %i arguments!", py_args);
-        post("");
+        post("INFO [+] Function loaded!");
+        post("INFO [+] It has %i arguments!", py_args);
         x->function = pFunc;
         x->module = pModule;
         x->script_name = script_file_name;
@@ -466,10 +464,9 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     } else {
         // post PyErr_Print() in pd
-        pd_error(x, "py4pd | function %s not loaded!", function_name->s_name);
+        pd_error(x, "Function %s not loaded!", function_name->s_name);
         x->function_called = 0; // set the flag to 0 because it crash Pd if user try to use args method
         x->function_name = NULL;
-        post("");
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
@@ -488,7 +485,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
-        pd_error(x, "You need to send a message ||| 'set {script} {function}'!");
+        pd_error(x, "ERROR [!] The message need to be formatted like 'set {script_name} {function_name}'!");
         return;
     }
     PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
@@ -518,8 +515,6 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
             pValue = Py_None;
             Py_INCREF(Py_None);
         }
-
-        
         // ERROR IF THE ARGUMENT IS NOT A NUMBER OR A STRING       
         if (!pValue) {
             pd_error(x, "Cannot convert argument\n");
@@ -531,58 +526,50 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
 
     pValue = PyObject_CallObject(pFunc, pArgs);
-    if (pValue != NULL) {                       // DOC: if the function returns a value   
-        // check if pValue is a list
-        if (PyList_Check(pValue)){ // DOC: If the function return a list list
+    if (pValue != NULL) {                                // DOC: if the function returns a value   
+        if (PyList_Check(pValue)){                       // DOC: If the function return a list list
             int list_size = PyList_Size(pValue);
-            // post("py4pd | function '%s' returned %i values!", x->function_name->s_name, list_size);
-            // make array with size of list_size
             t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));            
             for (i = 0; i < list_size; ++i) {
                 PyObject *pValue_i = PyList_GetItem(pValue, i);
-                if (PyLong_Check(pValue_i)) { // DOC: If the function return a list of integers
+                if (PyLong_Check(pValue_i)) {            // DOC: If the function return a list of integers
                     long result = PyLong_AsLong(pValue_i);
                     float result_float = (float)result;
                     list_array[i].a_type = A_FLOAT;
                     list_array[i].a_w.w_float = result_float;
 
-                } else if (PyFloat_Check(pValue_i)) { // DOC: If the function return a list of floats
+                } else if (PyFloat_Check(pValue_i)) {    // DOC: If the function return a list of floats
                     double result = PyFloat_AsDouble(pValue_i);
                     float result_float = (float)result;
                     list_array[i].a_type = A_FLOAT;
                     list_array[i].a_w.w_float = result_float;
-                } else if (PyUnicode_Check(pValue_i)) { // DOC: If the function return a list of strings
+                } else if (PyUnicode_Check(pValue_i)) {  // DOC: If the function return a list of strings
                     const char *result = PyUnicode_AsUTF8(pValue_i); 
                     list_array[i].a_type = A_SYMBOL;
                     list_array[i].a_w.w_symbol = gensym(result);
                 } else {
-                    pd_error(x, "py4pd just convert int, float, string!\n");
-                    pd_error(x, "The value received is of type %s", Py_TYPE(pValue_i)->tp_name);
+                    pd_error(x, "ERROR [!] py4pd just convert int, float and string!\n");
+                    pd_error(x, "INFO  [!] The value received is of type %s", Py_TYPE(pValue)->tp_name);
                     Py_DECREF(pValue);
                     return;
                 }
             }
-            outlet_list(x->out_A, 0, list_size, list_array); // The loop seems slow :(. TODO: possible do in other way?
+            outlet_list(x->out_A, 0, list_size, list_array); // TODO: possible do in other way? Seems slow!
         } else {
             if (PyLong_Check(pValue)) {
-                long result = PyLong_AsLong(pValue);
+                long result = PyLong_AsLong(pValue); // DOC: If the function return a integer
                 outlet_float(x->out_A, result);
             } else if (PyFloat_Check(pValue)) {
-                double result = PyFloat_AsDouble(pValue);
+                double result = PyFloat_AsDouble(pValue); // DOC: If the function return a float
                 float result_float = (float)result;
                 outlet_float(x->out_A, result_float);
                 // outlet_float(x->out_A, result);
             } else if (PyUnicode_Check(pValue)) {
-                const char *result = PyUnicode_AsUTF8(pValue); // WARNING: See http://gg.gg/11t8iv
+                const char *result = PyUnicode_AsUTF8(pValue); // DOC: If the function return a string
                 outlet_symbol(x->out_A, gensym(result)); 
-            } // check pValue is a Complex
-            else if (PyComplex_Check(pValue)) {
-                // send a complex number to Puredata
-                post("py4pd | function '%s' returned a complex number!", x->function_name->s_name);
-                return;
             } else {
-                pd_error(x, "py4pd just convert int, float, string!\n");
-                pd_error(x, "The value received is of type %s", Py_TYPE(pValue)->tp_name);
+                pd_error(x, "ERROR [!] py4pd just convert int, float and string!\n");
+                pd_error(x, "INFO  [!] The value received is of type %s", Py_TYPE(pValue)->tp_name);
                 Py_DECREF(pValue);
                 return;
             }
@@ -594,7 +581,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "Call failed: %s", PyUnicode_AsUTF8(pstr));
+        pd_error(x, "ERROR [!] Call failed: %s", PyUnicode_AsUTF8(pstr));
         Py_DECREF(pstr);
         return;
     }
@@ -617,13 +604,7 @@ struct thread_arg_struct {
 // ============================================
 #ifdef _WIN64
 
-
-// make GLOBAL variable for the thread running or not
-// this is used to stop the thread when the object is deleted
-// (the thread is not deleted when the object is deleted)
-// this is a workaround for the problem that the thread is not deleted when the object is deleted
-
-DWORD WINAPI ThreadFunc(LPVOID lpParam) {
+DWORD WINAPI ThreadFunc(LPVOID lpParam) { // DOC: Thread function in Windows
     struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParam;       
     t_py *x = &arg->x;
     int argc = arg->argc;
@@ -650,7 +631,7 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     if (x->function_called == 0) {
         // Pd is crashing when I try to create a thread.
-        pd_error(x, "You need to call a function before run!");
+        pd_error(x, "INFO [!] You need to call a function before run!");
         free(arg);
         return;
         } 
@@ -658,7 +639,7 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
         if (thread_running == 0){
             hThread = CreateThread(NULL, 0, ThreadFunc, arg, 0, &threadID);
             if (hThread == NULL) {
-                pd_error(x, "CreateThread failed");
+                pd_error(x, "ERROR [!] CreateThread failed");
                 free(arg);
                 return;
             }
@@ -699,7 +680,7 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     arg->argv = argv;
     if (x->function_called == 0) {
         // Pd is crashing when I try to create a thread.
-        pd_error(x, "You need to call a function before run!");
+        pd_error(x, "INFO [!] You need to call a function before run!");
         free(arg);
         return;
     }
@@ -710,7 +691,7 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
             hThread = pthread_create(&thread, NULL, ThreadFunc, arg);
             // check if hThread is equal to 0
             if (hThread != 0) {
-                pd_error(x, "CreateThread failed");
+                pd_error(x, "ERROR [!] CreateThread failed");
                 free(arg);
                 return;
             }
@@ -736,7 +717,7 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     } else if (thread == 2) {
         run_function(x, s, argc, argv);
     } else {
-        pd_error(x, "Thread not created");
+        pd_error(x, "ERROR [!] Thread not created");
     }
 }
 
@@ -747,17 +728,17 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 static void thread(t_py *x, t_floatarg f){
     int thread = (int)f;
     if (thread == 1) {
-        post("Threading enabled");
+        post("INFO [!] Threading enabled");
         x->thread = malloc(sizeof(int)); 
         *(x->thread) = 1; // 
         return;
     } else if (thread == 0) {
         x->thread = malloc(sizeof(int)); 
         *(x->thread) = 2; // 
-        post("Threading disabled");
+        post("INFO [!] Threading disabled");
         return;
     } else {
-        pd_error(x, "Threading status must be 0 or 1");
+        pd_error(x, "INFO [!] Threading status must be 0 or 1");
     }
 }
 
@@ -773,11 +754,11 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     post("");
     post("");
     post("");
-    post("py4pd by Charles K. Neimog");
-    post("version 0.0.1        ");
-    post("Based on Python 3.10.5  ");
+    post("INFO [!] py4pd by Charles K. Neimog");
+    post("INFO [!] version 0.0.1        ");
+    post("INFO [!] Based on Python 3.10.5  ");
     post("");
-    post("It is inspired by the work of Thomas Grill and SOPI research group.");
+    post("INFO [!] It is inspired by the work of Thomas Grill and SOPI research group.");
     post("");
 
     // pd things
@@ -799,12 +780,10 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         FILE* file = fopen(config_path, "r"); /* should check the result */
         char line[256];
         while (fgets(line, sizeof(line), file)) {
-            // get line that starts with packages =
             if (strstr(line, "packages =") != NULL) {
                 char *packages_path = (char *)malloc(sizeof(char) * (strlen(line) - strlen("packages = ") + 1));
                 strcpy(packages_path, line + strlen("packages = "));
                 packages_path[strlen(packages_path) - 1] = '\0';
-                // if packages_path is not empty then set x->packages_path
                 if (strlen(packages_path) > 0) {
                     x->packages_path = gensym(packages_path);
                     post("INFO [+] Packages path set to %s", x->packages_path->s_name);
