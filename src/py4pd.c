@@ -110,68 +110,6 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
 #ifdef _WIN64
 
-static void env_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    // If Windows OS run, if not then warn the user
-    (void)s;
-    (void)argc;
-    (void)argv;
-    
-    // concat venv_path with the name py4pd
-    char *pip_install = malloc(strlen(x->home_path->s_name) + strlen("py4pd") + 20);
-    sprintf(pip_install, "/c python -m venv %s/py4pd_packages", x->home_path->s_name);
-
-    // path to venv, 
-    char *pip = malloc(strlen(x->home_path->s_name) + strlen("/py4pd_packages/") + 40);
-    sprintf(pip, "%s/py4pd_packages/Scripts/pip.exe", x->home_path->s_name);
-    // check if pip_path exists
-    if (access(pip, F_OK) == -1) {
-        SHELLEXECUTEINFO sei = {0};
-        sei.cbSize = sizeof(sei);
-        sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-        sei.lpFile = "cmd.exe ";
-        sei.lpParameters = pip_install;
-        sei.nShow = SW_HIDE;
-        ShellExecuteEx(&sei);
-        CloseHandle(sei.hProcess);
-        return;
-    } else{
-        pd_error(x, "The pip already installed!");
-    }
-}
-
-// ====================================
-// ====================================
-// ====================================
-
-
-static void pip_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    (void)s;
-    (void)argc;
-    
-    char *package = malloc(strlen(atom_getsymbol(argv+0)->s_name) + 1);
-    strcpy(package, atom_getsymbol(argv+0)->s_name);
-
-    char *pip = malloc(strlen(x->home_path->s_name) + strlen("%s/py4pd_packages/Scripts/pip.exe") + 40);
-    sprintf(pip, "%s/py4pd_packages/Scripts/pip.exe", x->home_path->s_name);
-    if (access(pip, F_OK) == -1) {
-        pd_error(x, "The pip path does not exist. Send a message {env_install} to install pip first!");
-        return;
-    } else{
-        char *pip_cmd = malloc(strlen(x->packages_path->s_name) + strlen("py4pd") + 20);
-        sprintf(pip_cmd, "/c %s install %s", pip, package);
-        post("[py4pd] Installing %s", package);
-        SHELLEXECUTEINFO sei = {0};
-        sei.cbSize = sizeof(sei);
-        sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-        sei.lpFile = "cmd.exe ";
-        sei.lpParameters = pip_cmd;
-        sei.nShow = SW_HIDE;
-        ShellExecuteEx(&sei);
-        CloseHandle(sei.hProcess);
-        post("[py4pd] %s installed!", package);
-        return;
-    }
-}
 
 #endif
 
@@ -607,6 +545,70 @@ struct thread_arg_struct {
 // ============================================
 #ifdef _WIN64
 
+static void env_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    // If Windows OS run, if not then warn the user
+    (void)s;
+    (void)argc;
+    (void)argv;
+    
+    // concat venv_path with the name py4pd
+    char *pip_install = malloc(strlen(x->home_path->s_name) + strlen("py4pd") + 20);
+    sprintf(pip_install, "/c python -m venv %s/py4pd_packages", x->home_path->s_name);
+
+    // path to venv, 
+    char *pip = malloc(strlen(x->home_path->s_name) + strlen("/py4pd_packages/") + 40);
+    sprintf(pip, "%s/py4pd_packages/Scripts/pip.exe", x->home_path->s_name);
+    // check if pip_path exists
+    if (access(pip, F_OK) == -1) {
+        SHELLEXECUTEINFO sei = {0};
+        sei.cbSize = sizeof(sei);
+        sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+        sei.lpFile = "cmd.exe ";
+        sei.lpParameters = pip_install;
+        sei.nShow = SW_HIDE;
+        ShellExecuteEx(&sei);
+        CloseHandle(sei.hProcess);
+        return;
+    } else{
+        pd_error(x, "The pip already installed!");
+    }
+}
+
+// ====================================
+// ====================================
+// ====================================
+
+
+static void pip_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    (void)s;
+    (void)argc;
+    
+    char *package = malloc(strlen(atom_getsymbol(argv+0)->s_name) + 1);
+    strcpy(package, atom_getsymbol(argv+0)->s_name);
+
+    char *pip = malloc(strlen(x->home_path->s_name) + strlen("%s/py4pd_packages/Scripts/pip.exe") + 40);
+    sprintf(pip, "%s/py4pd_packages/Scripts/pip.exe", x->home_path->s_name);
+    if (access(pip, F_OK) == -1) {
+        pd_error(x, "The pip path does not exist. Send a message {env_install} to install pip first!");
+        return;
+    } else{
+        char *pip_cmd = malloc(strlen(x->packages_path->s_name) + strlen("py4pd") + 20);
+        sprintf(pip_cmd, "/c %s install %s", pip, package);
+        post("[py4pd] Installing %s", package);
+        SHELLEXECUTEINFO sei = {0};
+        sei.cbSize = sizeof(sei);
+        sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+        sei.lpFile = "cmd.exe ";
+        sei.lpParameters = pip_cmd;
+        sei.nShow = SW_HIDE;
+        ShellExecuteEx(&sei);
+        CloseHandle(sei.hProcess);
+        post("[py4pd] %s installed!", package);
+        return;
+    }
+}
+
+
 DWORD WINAPI ThreadFunc(LPVOID lpParam) { // DOC: Thread function in Windows
     struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParam;       
     t_py *x = &arg->x;
@@ -798,7 +800,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     }
     // get arguments and print it
     if (argc == 2) {
-        set_function(x, s, argc, argv);
+        set_function(x, s, argc, argv); // this not work with python submodules
     }
     return(x);
 }
