@@ -54,7 +54,6 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject        *function; // function name
     t_float         *thread; // arguments
     t_float         *function_called; // flag to check if the set function was called
-    t_float         *create_inlets; // flag to check if the set function was called
     t_symbol        *packages_path; // packages path 
     t_symbol        *home_path; // home path this always is the path folder (?)
     t_symbol        *function_name; // function name
