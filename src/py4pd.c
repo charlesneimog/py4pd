@@ -18,8 +18,6 @@
 #include <unistd.h>
 #endif
 
-
-
 // Python include
 #include <Python.h>
 
@@ -39,6 +37,11 @@ TODO: The set function need to run after the load of the object, but before the 
 
 static int thread_running = 0; // 0 = NO THREAD, 1 = THREAD RUNNING.
 
+
+// define a global array variable 
+static int object_count = 1;
+static int thread_status[100];
+
 // =================================
 // ============ Pd Object code  ====
 // =================================
@@ -52,6 +55,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_canvas        *x_canvas; // pointer to the canvas
     PyObject        *module; // python object
     PyObject        *function; // function name
+    int             *object_number; // object number
     t_float         *thread; // arguments
     t_float         *function_called; // flag to check if the set function was called
     t_symbol        *packages_path; // packages path 
@@ -348,7 +352,13 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     PyObject *pName, *pModule, *pFunc; // DOC: Create the variables of the python objects
 
     const wchar_t *py_name_ptr;
-    py_name_ptr = Py_DecodeLocale(script_file_name->s_name, NULL);
+    
+    // generate aleatory name 
+    char *random_name = malloc(sizeof(char) * 10);
+    sprintf(random_name, "py4pd_%d", rand());
+    post("[py4pd] Random name: %s", random_name);
+    py_name_ptr = Py_DecodeLocale(random_name, NULL);
+
     Py_SetProgramName(py_name_ptr); // set program name
     Py_Initialize();
 
@@ -615,9 +625,11 @@ DWORD WINAPI ThreadFunc(LPVOID lpParam) { // DOC: Thread function in Windows
     int argc = arg->argc;
     t_symbol *s = &arg->s;
     t_atom *argv = arg->argv;
-    thread_running = 1;
+
+    int object_number = x->object_number;
+    thread_status[object_number] = 1;
     run_function(x, s, argc, argv);
-    thread_running = 0;
+    thread_status[object_number] = 0;
     return 0;
 }
 // ============================================
@@ -634,6 +646,11 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     arg->argc = argc;
     arg->argv = argv;
 
+    // convert t_float x->object_number to int
+
+    int object_number = x->object_number;
+    // 
+
     if (x->function_called == 0) {
         // Pd is crashing when I try to create a thread.
         pd_error(x, "[py4pd] You need to call a function before run!");
@@ -641,7 +658,7 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
         return;
         } 
     else {
-        if (thread_running == 0){
+        if (thread_status[object_number] == 0){
             hThread = CreateThread(NULL, 0, ThreadFunc, arg, 0, &threadID);
             if (hThread == NULL) {
                 pd_error(x, "[py4pd] CreateThread failed");
@@ -747,7 +764,6 @@ static void thread(t_py *x, t_floatarg f){
     }
 }
 
-
 // ============================================
 // =========== SETUP OF OBJECT ================
 // ============================================
@@ -762,10 +778,14 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     post("[py4pd] Based on Python 3.10.5  ");
     post("[py4pd] Inspired by the work of Thomas Grill and SOPI research group.");
 
+    x->object_number = object_count;
+    post("[py4pd] Object number: %d", object_count);
+    object_count++;
+
     // pd things
     // pointer para a classe
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
-    x->out_A = outlet_new(&x->x_obj, &s_anything); // cria um outlet
+    x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet
     t_canvas *c = x->x_canvas; 
     x->home_path = canvas_getdir(c);     // set name 
     x->packages_path = canvas_getdir(c); // set name
@@ -813,6 +833,7 @@ void py4pd_free(t_py *x){
     PyObject  *pModule, *pFunc; // pDict, *pName,
     pFunc = x->function;
     pModule = x->module;
+    object_count--;
     // clear all struct
 
     if (pModule != NULL) {
