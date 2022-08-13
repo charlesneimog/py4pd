@@ -5,7 +5,8 @@
 *.o
 *.sh
 .vscode/*
-
+Python
+py4pd.zip
 DLLs/*
 Lib/*
 scripts/*
