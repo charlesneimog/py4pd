@@ -35,9 +35,6 @@ TODO: The set function need to run after the load of the object, but before the 
 
 // GLOBAL VARIABLE FOR THREAD, 0 = NO THREAD, 1 = THREAD RUNNING.
 
-static int thread_running = 0; // 0 = NO THREAD, 1 = THREAD RUNNING.
-
-
 // define a global array variable 
 static int object_count = 1;
 static int thread_status[100];
@@ -299,7 +296,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
-    
+        
     // Check if the already was set
     if (x->function_name != NULL){
         int function_is_equal = strcmp(function_name->s_name, x->function_name->s_name);
@@ -340,7 +337,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         return;
     }
     
-    
 
     // =====================
     // DOC: check number of arguments
@@ -351,16 +347,17 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     
     PyObject *pName, *pModule, *pFunc; // DOC: Create the variables of the python objects
 
-    const wchar_t *py_name_ptr;
-    
-    // generate aleatory name 
-    char *random_name = malloc(sizeof(char) * 10);
-    sprintf(random_name, "py4pd_%d", rand());
-    post("[py4pd] Random name: %s", random_name);
-    py_name_ptr = Py_DecodeLocale(random_name, NULL);
+    const wchar_t *py_name_ptr; // DOC: Program name pointer
+    char *random_name = malloc(sizeof(char) * 10); // DOC: Random name for the program name
+    sprintf(random_name, "py4pd_%d", *(x->object_number)); // DOC: Set
+    post("[py4pd] Random name: %s", random_name); // DOC: Print the random name
+    py_name_ptr = Py_DecodeLocale(random_name, NULL); // DOC: Decode the random name
 
     Py_SetProgramName(py_name_ptr); // set program name
-    Py_Initialize();
+    Py_Initialize(); // initialize python
+    
+    // Inicialize allowing threads
+    // PyEval_SaveThread(); // DOC: Save the thread
 
 
     // =====================
@@ -434,7 +431,9 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
-    
+
+    int running_on_thread = *(x->function_called);
+
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
         pd_error(x, "[py4pd] The message need to be formatted like 'set {script_name} {function_name}'!");
         return;
@@ -471,9 +470,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
             pd_error(x, "Cannot convert argument\n");
             return;
         }
-        // DOC: END OF CONVERTION TO PYTHON OBJECTS
-
-        PyTuple_SetItem(pArgs, i, pValue);
+        PyTuple_SetItem(pArgs, i, pValue); // DOC: Set the argument in the tuple
     }
 
     pValue = PyObject_CallObject(pFunc, pArgs);
@@ -506,18 +503,22 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
                 }
             }
             outlet_list(x->out_A, 0, list_size, list_array); // TODO: possible do in other way? Seems slow!
+            return;
         } else {
             if (PyLong_Check(pValue)) {
                 long result = PyLong_AsLong(pValue); // DOC: If the function return a integer
                 outlet_float(x->out_A, result);
+                return;
             } else if (PyFloat_Check(pValue)) {
                 double result = PyFloat_AsDouble(pValue); // DOC: If the function return a float
                 float result_float = (float)result;
                 outlet_float(x->out_A, result_float);
+                return;
                 // outlet_float(x->out_A, result);
             } else if (PyUnicode_Check(pValue)) {
                 const char *result = PyUnicode_AsUTF8(pValue); // DOC: If the function return a string
                 outlet_symbol(x->out_A, gensym(result)); 
+                return;
             } else {
                 pd_error(x, "[py4pd] py4pd just convert int, float and string!\n");
                 pd_error(x, "INFO  [!] The value received is of type %s", Py_TYPE(pValue)->tp_name);
@@ -537,18 +538,6 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         return;
     }
 }
-
-// ============================================
-// =========== CREATE WIN THREAD ==============
-// ============================================
-
-struct thread_arg_struct {
-    t_py x;
-    t_symbol s;
-    int argc;
-    t_atom *argv;
-} thread_arg;
-
 
 // ============================================
 // ============================================
@@ -618,7 +607,19 @@ static void pip_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
 }
 
+// ============================================
+// =========== CREATE WIN THREAD ==============
+// ============================================
 
+struct thread_arg_struct {
+    t_py x;
+    t_symbol s;
+    int argc;
+    t_atom *argv;
+    PyGILState_STATE gil_state;
+} thread_arg;
+
+// ============================================
 DWORD WINAPI ThreadFunc(LPVOID lpParam) { // DOC: Thread function in Windows
     struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParam;       
     t_py *x = &arg->x;
@@ -626,7 +627,7 @@ DWORD WINAPI ThreadFunc(LPVOID lpParam) { // DOC: Thread function in Windows
     t_symbol *s = &arg->s;
     t_atom *argv = arg->argv;
 
-    int object_number = x->object_number;
+    int object_number = *(x->object_number);
     thread_status[object_number] = 1;
     run_function(x, s, argc, argv);
     thread_status[object_number] = 0;
@@ -648,7 +649,7 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     // convert t_float x->object_number to int
 
-    int object_number = x->object_number;
+    int object_number = *(x->object_number);
     // 
 
     if (x->function_called == 0) {
@@ -778,8 +779,9 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     post("[py4pd] Based on Python 3.10.5  ");
     post("[py4pd] Inspired by the work of Thomas Grill and SOPI research group.");
 
-    x->object_number = object_count;
-    post("[py4pd] Object number: %d", object_count);
+    // Object count
+    x->object_number = malloc(sizeof(int));
+    *(x->object_number) = object_count;
     object_count++;
 
     // pd things
