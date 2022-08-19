@@ -1,0 +1,5 @@
+#N canvas 959 185 846 300 12;
+#X obj 116 142 py4pd;
+#X msg 154 40 set outlet_from_py outlet_from_py;
+#X msg 43 45 run 1;
+#X connect 1 0 0 0;

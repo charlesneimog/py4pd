@@ -528,7 +528,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
 
-    int running_on_thread = *(x->function_called);
+    // int running_on_thread = *(x->function_called);
     // PyGILState_STATE gstate = PyGILState_Ensure();
 
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
@@ -794,14 +794,16 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
 // what is the linux equivalent for Lvoid Parameter(void *lpParameter)
 static void *ThreadFunc(void *lpParameter) {
+    
     struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParameter;
-    t_py *x = &arg->x;
+    t_py *x = &arg->x; 
     t_symbol *s = &arg->s;
     int argc = arg->argc;
     t_atom *argv = arg->argv;
-    thread_running = 1;
+    int object_number = *(x->object_number);
+    thread_status[object_number] = 1;
     run_function(x, s, argc, argv);
-    thread_running = 0;
+    thread_status[object_number] = 0;
     return NULL;
 }
 
@@ -812,21 +814,25 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     arg->x = *x;
     arg->argc = argc;
     arg->argv = argv;
+    int object_number = *(x->object_number);
     if (x->function_called == 0) {
         // Pd is crashing when I try to create a thread.
         pd_error(x, "[py4pd] You need to call a function before run!");
         free(arg);
         return;
-    }
-    else {
-        if (thread_running == 0){
+    } else {
+        if (thread_status[object_number] == 0){
             pthread_t thread;
             pthread_t hThread;
             hThread = pthread_create(&thread, NULL, ThreadFunc, arg);
-            // check if hThread is equal to 0
-            if (hThread != 0) {
+            // define x->state
+            x->state = 1;
+            // PyEval_RestoreThread(x->state);
+            if (hThread == NULL) {
                 pd_error(x, "[py4pd] CreateThread failed");
                 free(arg);
+                return;
+            } else {
                 return;
             }
         } else {
@@ -836,7 +842,7 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
         }
     }
 }
-
+    
 #endif
 
 // ============================================
@@ -897,9 +903,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     *(x->object_number) = object_count;
     object_count++;
 
-
-
-
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet
     t_canvas *c = x->x_canvas; 
@@ -939,9 +942,8 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         set_function(x, s, argc, argv); // this not work with python submodules
     }
 
-    // save the t_py *x in a global variable
+    // save the t_py *x in a global variable TODO: How send this using PyCObject?
     py4pd_object = x;
-
     return(x);
 }
 
@@ -998,5 +1000,9 @@ void py4pd_setup(void){
 // ====================================================================
 
 // dll export function
+#ifdef _WIN64
+
 __declspec(dllexport) void py4pd_setup(void); // when I add python module for some reson pd not see py4pd_setup
+
+#endif
 
