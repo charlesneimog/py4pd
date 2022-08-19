@@ -1,0 +1,10 @@
+#N canvas 570 25 762 548 12;
+#X obj 252 273 py4pd;
+#X msg 248 178 set ext main;
+#X msg 417 195 run;
+#X obj 249 372 print module;
+#X msg 144 211 reload;
+#X connect 0 0 3 0;
+#X connect 1 0 0 0;
+#X connect 2 0 0 0;
+#X connect 4 0 0 0;
