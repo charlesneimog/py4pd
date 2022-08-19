@@ -29,3 +29,12 @@ def thread_test():
     second = time.strftime("%S")
     return f'{hour}:{minute}:{second}'
 
+def pd_output():
+    "It sends some output to the py4pd output."
+    import pd # import the py4pd module (embedded in the python interpreter)
+    import time
+    for x in range(10):
+        pd.out(x)
+        time.sleep(0.5)
+    
+    

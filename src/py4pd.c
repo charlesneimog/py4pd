@@ -142,8 +142,11 @@ static struct PyModuleDef pdmodule = {
     NULL, /* module documentation, may be NULL */
     -1,       /* size of per-interpreter state of the module,
                  or -1 if the module keeps state in global variables. */
-    PdMethods
-
+    PdMethods,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
 };
 
 // =================================
@@ -778,8 +781,12 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     else {
         if (thread_status[object_number] == 0){
             hThread = CreateThread(NULL, 0, ThreadFunc, arg, 0, &threadID);
-            // define x->state
-            x->state = 1;
+            // define x->state == int
+            // 
+            //x->state = 1; //  warning: assignment to 'int *' from 'int' makes pointer from integer without a cast [-Wint-conversion]
+            x->state = malloc(sizeof(int));
+            *(x->state) = 1;
+
             // PyEval_RestoreThread(x->state);
             if (hThread == NULL) {
                 pd_error(x, "[py4pd] CreateThread failed");
