@@ -47,7 +47,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_canvas        *x_canvas; // pointer to the canvas
     PyObject        *module; // python object
     PyObject        *function; // function name  
-    PyThreadState   *state; // thread state
+    int             *state; // thread state
     int             *object_number; // object number
     t_float         *thread; // arguments
     t_float         *function_called; // flag to check if the set function was called
@@ -70,8 +70,12 @@ static t_py *py4pd_object;
 // ======================================
 
 static PyObject *pdout(PyObject *self, PyObject *args){
+    // self is void
+    (void)self;
+    
     float f;
-    const char *string;
+    char *string;
+
     if (PyArg_ParseTuple(args, "f", &f)){
         outlet_float(py4pd_object->out_A, f);
         PyErr_Clear();
@@ -110,7 +114,7 @@ static PyObject *pdout(PyObject *self, PyObject *args){
                 pd_error(py4pd_object, "INFO  [!] The value received is of type %s", Py_TYPE(pValue_i)->tp_name);
                 Py_DECREF(pValue_i);
                 Py_DECREF(args);
-                return;
+                return NULL;
             }
         }
         outlet_list(py4pd_object->out_A, 0, list_size, list_array); 
@@ -139,6 +143,7 @@ static struct PyModuleDef pdmodule = {
     -1,       /* size of per-interpreter state of the module,
                  or -1 if the module keeps state in global variables. */
     PdMethods
+
 };
 
 // =================================
@@ -655,6 +660,18 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 // ============================================
 // ============================================
+struct thread_arg_struct {
+    t_py x;
+    t_symbol s;
+    int argc;
+    t_atom *argv;
+    PyGILState_STATE gil_state;
+} thread_arg;
+
+// ============================================
+// ============================================
+// ============================================
+
 #ifdef _WIN64
 
 static void env_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
@@ -724,13 +741,7 @@ static void pip_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // =========== CREATE WIN THREAD ==============
 // ============================================
 
-struct thread_arg_struct {
-    t_py x;
-    t_symbol s;
-    int argc;
-    t_atom *argv;
-    PyGILState_STATE gil_state;
-} thread_arg;
+
 
 // ============================================
 DWORD WINAPI ThreadFunc(LPVOID lpParam) { // DOC: Thread function in Windows
@@ -825,10 +836,11 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
             pthread_t thread;
             pthread_t hThread;
             hThread = pthread_create(&thread, NULL, ThreadFunc, arg);
-            // define x->state
-            x->state = 1;
-            // PyEval_RestoreThread(x->state);
-            if (hThread == NULL) {
+            // convert int * to int
+            int state = 1;
+            x->state = &state;
+            // check the Thread was created
+            if (hThread != 0) {
                 pd_error(x, "[py4pd] CreateThread failed");
                 free(arg);
                 return;
