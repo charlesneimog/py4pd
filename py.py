@@ -37,4 +37,14 @@ def pd_output():
         pd.out(x)
         time.sleep(0.5)
     
-    
+def pd_message():
+    "It sends a message to the py4pd message box."
+    import pd # import the py4pd module (embedded in the python interpreter)
+    pd.message("Hello from python!")
+    return None
+
+def pd_error():
+    "It sends a message to the py4pd message box."
+    import pd # import the py4pd module (embedded in the python interpreter)
+    pd.error("Python error!")
+    return None

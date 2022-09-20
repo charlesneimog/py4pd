@@ -5,16 +5,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <complex.h>
-
-
-// If windows 64bits include 
-#ifdef _WIN64
+#ifdef _WIN64 // If windows 64bits include 
 #include <windows.h>
 #else 
 #include <pthread.h>
 #endif
-
-#ifdef HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H // from Pure Data source code
 #include <unistd.h>
 #endif
 
@@ -24,21 +20,28 @@
 
 /* 
 TODO: Way to set global variables, I think that will be important for things like general path (lilypond, etc)
-TODO: Reset the function (like panic for sfont~), In some calls seems that the *function become NULL? WARNING: Possible error of logic
+
+TODO: Reset the function (like panic for sfont~), In some calls seems that the *function become NULL? 
+
 TODO: make function home work with spaces, mainly for Windows OS where the use of lilypond in python need to be specified with spaces
-TODO: Return list from python in all run functions
-TODO: Add some way to run list how arguments 
+
+TODO: Add some way to run list how arguments
+    FORMULA I: Work with [1 2 3 4 5] and transform this to a list for Python
+    FORMULA II: MAKE SOME SPECIAL OBJECT TO WORK WITH LISTS 
+    
 TODO: If the run method set before the end of the thread, there is an error, that close all PureData.
+
 TODO: The set function need to run after the load of the object, but before the start of the thread???
         It does not load external modules in the pd_new.
 
 */
-// GLOBAL VARIABLE FOR THREAD, 0 = NO THREAD, 1 = THREAD RUNNING.
 
-// define a global array variable 
 static int object_count = 1;
 static int thread_status[100];
 static t_class *py4pd_class; // 
+
+
+// define global pointer for py_object
 
 // =====================================
 typedef struct _py { // It seems that all the objects are some kind of class.
@@ -49,6 +52,9 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject        *function; // function name  
     int             *state; // thread state
     int             *object_number; // object number
+    int             *audio; // audio flag
+    t_inlet         *in1;
+    t_float         x_f;
     t_float         *thread; // arguments
     t_float         *function_called; // flag to check if the set function was called
     t_symbol        *packages_path; // packages path 
@@ -56,7 +62,9 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_symbol        *object_path;
     t_symbol        *function_name; // function name
     t_symbol        *script_name; // script name
+    int             *py_arg_numbers; // number of arguments
     t_outlet        *out_A; // outlet 1.
+    t_outlet        *out_B; // outlet 2. FOR AUDIO
 }t_py;
 
 
@@ -64,6 +72,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 // // ============================================
 
 static t_py *py4pd_object;
+
 
 // ======================================
 // ======== PD Module for Python ========
@@ -123,14 +132,44 @@ static PyObject *pdout(PyObject *self, PyObject *args){
         PyErr_SetString(PyExc_TypeError, "pdout: argument must be a float or a string"); // Colocar melhor descrição do erro
         return NULL;
     }
-
     return PyLong_FromLong(0);
 }
 
 // =================================
+static PyObject *pdmessage(PyObject *self, PyObject *args){
+    (void)self;
+    char *string;
+    if (PyArg_ParseTuple(args, "s", &string)){
+        post("[py]: %s", string);
+        PyErr_Clear();
+    } else {
+        PyErr_SetString(PyExc_TypeError, "pdmessage: argument must be a string"); // Colocar melhor descrição do erro
+        return NULL;
+    }
+    return PyLong_FromLong(0);
+}
 
+// =================================
+static PyObject *pderror(PyObject *self, PyObject *args){
+    (void)self;
+    char *string;
+    if (PyArg_ParseTuple(args, "s", &string)){
+        post("Not working yet");
+        pd_error(py4pd_object, "Ocorreu um erro");
+        PyErr_Clear();
+    } else {
+        PyErr_SetString(PyExc_TypeError, "pdmessage: argument must be a string"); // Colocar melhor descrição do erro
+        return NULL;
+    }
+    return PyLong_FromLong(0);
+} // WARNING: This function is not working yet.
+ 
+
+// =================================
 static PyMethodDef PdMethods[] = { // here we define the function spam_system
-    {"out", pdout, METH_VARARGS, "Output float atoms from Python."}, // one function for now
+    {"out", pdout, METH_VARARGS, "Output in out0 from PureData"}, // one function for now
+    {"message", pdmessage, METH_VARARGS, "Print informations in PureData Console"}, // one function for now
+    {"error", pderror, METH_VARARGS, "Print error in PureData"}, // one function for now
     {NULL, NULL, 0, NULL}        
 };
 
@@ -425,6 +464,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     char *extension = strrchr(script_file_name->s_name, '.');
     if (extension != NULL) {
         pd_error(x, "[py4pd] Don't use extensions in the script file name!");
+        Py_XDECREF(x->function);
+        Py_XDECREF(x->module);
         return;
     }
 
@@ -433,6 +474,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name, script_file_name->s_name);
     if (access(script_file_path, F_OK) == -1) {
         pd_error(x, "The script file %s does not exist!", script_file_path);
+        Py_XDECREF(x->function);
+        Py_XDECREF(x->module);
         return;
     }
     
@@ -444,13 +487,13 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         return;
     }
     
+    // =====================
     PyObject *pName, *pModule, *pFunc; // DOC: Create the variables of the python objects
     const wchar_t *py_name_ptr; // DOC: Program name pointer
     char *random_name = malloc(sizeof(char) * 10); // DOC: Random name for the program name
     sprintf(random_name, "py4pd_%d", *(x->object_number)); // DOC: Set
     post("[py4pd] Random name: %s", random_name); // DOC: Print the random name
     py_name_ptr = Py_DecodeLocale(random_name, NULL); // DOC: Decode the random name
-
 
     // =============== DOC: add pd Module for Python =================================
     if (PyImport_AppendInittab("pd", PyInit_pd) == -1) {
@@ -469,6 +512,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     char *add_packages = malloc(strlen(site_path_str) + strlen("sys.path.append('") + strlen("')") + 1);
     sprintf(add_packages, "sys.path.append('%s')", site_path_str);
     PyRun_SimpleString("import sys");
+    // print add_add_packages
+    // post("[py4pd] %s", add_packages);
     PyRun_SimpleString(add_packages);
     free(add_packages);
 
@@ -484,13 +529,16 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     pModule = PyImport_Import(pName);
     // =====================
 
-    // check if module is NULL
+    // check if the module was loaded
     if (pModule == NULL) {
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
         pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_XDECREF(pstr);
+        Py_XDECREF(pModule);
+        Py_XDECREF(pName);
         return;
     }
  
@@ -505,12 +553,17 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         int py_args = PyObject_Size(args);
         post("[py4pd] Function loaded!");
         post("[py4pd] It has %i arguments!", py_args);
+        x->py_arg_numbers = py_args;
         x->function = pFunc;
         x->module = pModule;
         x->script_name = script_file_name;
         x->function_name = function_name; 
         x->function_called = malloc(sizeof(int)); 
         *(x->function_called) = 1; // 
+        Py_XDECREF(inspect);
+        Py_XDECREF(getargspec);
+        Py_XDECREF(argspec);
+        Py_XDECREF(args);
         return;
 
     } else {
@@ -524,6 +577,12 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         PyObject *pstr = PyObject_Str(pvalue);
         pd_error(x, "Call failed:\n %s", PyUnicode_AsUTF8(pstr));
         Py_DECREF(pstr);
+        Py_XDECREF(pModule);
+        Py_XDECREF(pFunc);
+        Py_XDECREF(pName);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
         return;
     }
 }
@@ -536,6 +595,14 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
 
+    
+    // check if number of argc is same as x_py_arg_numbers
+    if (argc != x->py_arg_numbers){
+        pd_error(x, "[py4pd] Number of arguments is not correct!");
+        return;
+    }
+    
+    
     // int running_on_thread = *(x->function_called);
     // PyGILState_STATE gstate = PyGILState_Ensure();
 
@@ -781,13 +848,8 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     else {
         if (thread_status[object_number] == 0){
             hThread = CreateThread(NULL, 0, ThreadFunc, arg, 0, &threadID);
-            // define x->state == int
-            // 
-            //x->state = 1; //  warning: assignment to 'int *' from 'int' makes pointer from integer without a cast [-Wint-conversion]
-            x->state = malloc(sizeof(int));
-            *(x->state) = 1;
-
-            // PyEval_RestoreThread(x->state);
+            x->state = malloc(sizeof(int)); // 
+            *(x->state) = 1; // DOC: 1 = thread is running, not two threads can run at the same time
             if (hThread == NULL) {
                 pd_error(x, "[py4pd] CreateThread failed");
                 free(arg);
@@ -864,10 +926,8 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     
 #endif
 
-// ============================================
-// ============================================
-// ============================================
 
+// ============================================
 static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // convert pointer x->thread to a int
     int thread = *(x->thread);
@@ -902,9 +962,64 @@ static void thread(t_py *x, t_floatarg f){
 }
 
 // ============================================
-// =========== SETUP OF OBJECT ================
+// ============= PY4PD AUDIO ==================
 // ============================================
 
+t_int *xfade_tilde_perform(t_int *w)
+{
+  
+  t_py *x = (t_py *)(w[1]); /* the first element is a pointer to the dataspace of this object */
+  t_sample    *in1 =      (t_sample *)(w[2]); /* here is a pointer to the t_sample arrays that hold the 2 input signals */
+  t_sample    *out =      (t_sample *)(w[3]); /* here comes the signalblock that will hold the output signal */
+  int            n =             (int)(w[4]); /* all signalblocks are of the same length */
+  int i; /* just a counter */
+
+  /* this is the main routine:
+   * mix the 2 input signals into the output signal
+   */
+  for(i=0; i<n; i++)
+    {
+      out[i]=in1[i];
+    }
+
+  /* return a pointer to the dataspace for the next dsp-object */
+  return (w+5);
+}
+
+
+// ============================================
+
+void py4pd_audio(t_py *x, t_signal **sp){
+    dsp_add(xfade_tilde_perform, 3, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
+}
+
+// ============================================
+
+void turn_audio(t_py *x, t_floatarg f){
+    int audio = (int)f;
+    if (audio == 1) {
+        post("[py4pd] Audio enabled");
+        x->audio = malloc(sizeof(int)); 
+        *(x->audio) = 1; // 
+        x->out_B = outlet_new(&x->x_obj, &s_signal);
+        py4pd_object = x;
+        return(x);
+    } else if (audio == 0) {
+        x->audio = malloc(sizeof(int)); 
+        *(x->audio) = 2; // 
+        post("[py4pd] Audio disabled");
+        outlet_free(x->out_B);
+        py4pd_object = x;
+        return(x);
+    } else {
+        pd_error(x, "[py4pd] Audio status must be 0 or 1");
+    }
+}
+
+
+// ============================================
+// =========== SETUP OF OBJECT ================
+// ============================================
 
 
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
@@ -913,19 +1028,28 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     // credits
     post("");
     post("[py4pd] py4pd by Charles K. Neimog");
-    post("[py4pd] version 0.0.1        ");
-    post("[py4pd] Based on Python 3.10.5  ");
-    post("[py4pd] Inspired by the work of Thomas Grill and SOPI research group.");
+    post("[py4pd] version 0.0.3       ");
+    post("[py4pd] based on Python 3.10.5  ");
+    post("[py4pd] inspired by the work of Thomas Grill and SOPI research group.");
 
     // Object count
     x->object_number = malloc(sizeof(int));
     *(x->object_number) = object_count;
     object_count++;
+    x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
 
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
-    x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet
-    t_canvas *c = x->x_canvas; 
+    t_canvas *c = x->x_canvas;  // p
+
     x->home_path = canvas_getdir(c);     // set name 
+
+    // change \ to / in x->home_path | PlugData give the path with \ and Python need /
+    char *p = x->home_path;
+    while (*p) {
+        if (*p == '\\') *p = '/';
+        p++;
+    }
+
     x->packages_path = canvas_getdir(c); // set name
     x->thread = malloc(sizeof(int)); 
     *(x->thread) = 1; // solution but it is weird
@@ -933,31 +1057,34 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     post("[py4pd] Home folder is: %s", x->home_path->s_name);
 
     // check if in x->home_path there is a file py4pd.config
-    char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1));
-    strcpy(config_path, x->home_path->s_name);
-    strcat(config_path, "/py4pd.cfg");
-    if (access(config_path, F_OK) != -1) {
+
+    char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1)); // 
+    strcpy(config_path, x->home_path->s_name); // copy string one into the result.
+    strcat(config_path, "/py4pd.cfg"); // append string two to the result.
+    if (access(config_path, F_OK) != -1) { // check if file exists
         FILE* file = fopen(config_path, "r"); /* should check the result */
-        char line[256];
-        while (fgets(line, sizeof(line), file)) {
-            if (strstr(line, "packages =") != NULL) {
-                char *packages_path = (char *)malloc(sizeof(char) * (strlen(line) - strlen("packages = ") + 1));
-                strcpy(packages_path, line + strlen("packages = "));
-                packages_path[strlen(packages_path) - 1] = '\0';
-                if (strlen(packages_path) > 0) {
-                    x->packages_path = gensym(packages_path);
-                    
-                    // x->packages_path = gensym(packages_path);
-                    post("[py4pd] Packages path set to %s", x->packages_path->s_name);
+        char line[256]; // line buffer
+        while (fgets(line, sizeof(line), file)) { // read a line
+            if (strstr(line, "packages =") != NULL) { // check if line contains "packages ="
+                char *packages_path = (char *)malloc(sizeof(char) * (strlen(line) - strlen("packages = ") + 1)); // 
+                strcpy(packages_path, line + strlen("packages = ")); // copy string one into the result.
+                packages_path[strlen(packages_path) - 1] = '\0'; // remove last character
+                if (strlen(packages_path) > 0) { // check if path is not empty
+                    x->packages_path = gensym(packages_path); // set name
+                    post("[py4pd] Packages path set to %s", packages_path); // print path
                 }
+                free(packages_path); // free memory
             }
         }
+        fclose(file); // close file
+        // free(line); // free memory
     } else {
-        // file does not exist
-        post("[py4pd] Could not find py4pd.cfg in home directory");
+        post("[py4pd] Could not find py4pd.cfg in home directory"); // print path
     }
-    // get arguments and print it
-    if (argc == 2) {
+    
+    free(config_path); // free memory
+    if (argc > 1) { // check if there are two arguments
+        // 
         set_function(x, s, argc, argv); // this not work with python submodules
     }
 
@@ -1003,6 +1130,13 @@ void py4pd_setup(void){
     #ifdef _WIN64
     class_addmethod(py4pd_class, (t_method)env_install, gensym("env_install"), 0, 0); // install enviroment
     class_addmethod(py4pd_class, (t_method)pip_install, gensym("pip"), 0, 0); // install packages with pip
+
+    // Audio support
+    // class_addmethod(py4pd_class, (t_method)turn_audio, gensym("sound"), A_FLOAT, 0); // install python
+    // class_addmethod(py4pd_class, (t_method)py4pd_audio, gensym("dsp"), A_CANT, 0);
+    // CLASS_MAINSIGNALIN(py4pd_class, t_py, x_f);
+    // end audio support
+
     #endif
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open vscode
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script
