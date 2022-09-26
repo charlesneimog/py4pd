@@ -20,3 +20,4 @@ __pycache__/py.cpython-310.pyc
 *.count
 *.png
 *.m_amd64
+*.txt
