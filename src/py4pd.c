@@ -1052,8 +1052,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
 
     x->packages_path = canvas_getdir(c); // set name
     x->thread = malloc(sizeof(int)); 
-    *(x->thread) = 1; // solution but it is weird
-    post("[py4pd] Thread by default is enabled");
+    *(x->thread) = 0; // solution but it is weird
     post("[py4pd] Home folder is: %s", x->home_path->s_name);
 
     // check if in x->home_path there is a file py4pd.config
