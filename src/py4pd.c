@@ -553,6 +553,9 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         int py_args = PyObject_Size(args);
         post("[py4pd] Function loaded!");
         post("[py4pd] It has %i arguments!", py_args);
+        // x->py_arg_numbers = py_args;
+        // warning: assignment to 'int *' from 'int' makes pointer from integer without a cast [-Wint-conversion] in x->py_arg_numbers = py_args;
+        // The solution is to use a pointer to the int variable
         x->py_arg_numbers = py_args;
         x->function = pFunc;
         x->module = pModule;
@@ -595,8 +598,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
 
-    
-    // check if number of argc is same as x_py_arg_numbers
+
     if (argc != x->py_arg_numbers){
         pd_error(x, "[py4pd] Number of arguments is not correct!");
         return;
@@ -811,9 +813,6 @@ static void pip_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // =========== CREATE WIN THREAD ==============
 // ============================================
 
-
-
-// ============================================
 DWORD WINAPI ThreadFunc(LPVOID lpParam) { // DOC: Thread function in Windows
     struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParam;       
     t_py *x = &arg->x;
@@ -926,7 +925,6 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     
 #endif
 
-
 // ============================================
 static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // convert pointer x->thread to a int
@@ -965,32 +963,32 @@ static void thread(t_py *x, t_floatarg f){
 // ============= PY4PD AUDIO ==================
 // ============================================
 
-t_int *xfade_tilde_perform(t_int *w)
+t_int *py4pd_perform(t_int *w)
 {
-  
-  t_py *x = (t_py *)(w[1]); /* the first element is a pointer to the dataspace of this object */
-  t_sample    *in1 =      (t_sample *)(w[2]); /* here is a pointer to the t_sample arrays that hold the 2 input signals */
-  t_sample    *out =      (t_sample *)(w[3]); /* here comes the signalblock that will hold the output signal */
-  int            n =             (int)(w[4]); /* all signalblocks are of the same length */
-  int i; /* just a counter */
+    (void)w;
+    // t_py *x = (t_py *)(w[1]); /* the first element is a pointer to the dataspace of this object */
+    t_sample    *in1 =      (t_sample *)(w[2]); /* here is a pointer to the t_sample arrays that hold the 2 input signals */
+    t_sample    *out =      (t_sample *)(w[3]); /* here comes the signalblock that will hold the output signal */
+    int            n =             (int)(w[4]); /* all signalblocks are of the same length */
+    int i; /* just a counter */
 
-  /* this is the main routine:
-   * mix the 2 input signals into the output signal
-   */
-  for(i=0; i<n; i++)
-    {
-      out[i]=in1[i];
-    }
+    /* this is the main routine:
+    * mix the 2 input signals into the output signal
+    */
+    for(i=0; i<n; i++)
+        {
+        out[i]=in1[i];
+        }
 
-  /* return a pointer to the dataspace for the next dsp-object */
-  return (w+5);
+    /* return a pointer to the dataspace for the next dsp-object */
+    return (w+5);
 }
 
 
 // ============================================
 
 void py4pd_audio(t_py *x, t_signal **sp){
-    dsp_add(xfade_tilde_perform, 3, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
+    dsp_add(py4pd_perform, 3, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
 }
 
 // ============================================
@@ -1003,14 +1001,14 @@ void turn_audio(t_py *x, t_floatarg f){
         *(x->audio) = 1; // 
         x->out_B = outlet_new(&x->x_obj, &s_signal);
         py4pd_object = x;
-        return(x);
+        return;
     } else if (audio == 0) {
         x->audio = malloc(sizeof(int)); 
         *(x->audio) = 2; // 
         post("[py4pd] Audio disabled");
         outlet_free(x->out_B);
         py4pd_object = x;
-        return(x);
+        return;
     } else {
         pd_error(x, "[py4pd] Audio status must be 0 or 1");
     }
@@ -1052,7 +1050,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
 
     x->packages_path = canvas_getdir(c); // set name
     x->thread = malloc(sizeof(int)); 
-    *(x->thread) = 0; // solution but it is weird
+    *(x->thread) = 2; // solution but it is weird, 2 is used as false because 0 gives error! 
     post("[py4pd] Home folder is: %s", x->home_path->s_name);
 
     // check if in x->home_path there is a file py4pd.config
