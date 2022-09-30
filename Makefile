@@ -7,7 +7,7 @@ uname := $(shell uname -s)
 
 ifeq (MINGW,$(findstring MINGW,$(uname)))
   # remove -Wcast-function-type for mingw 
-  cflags = -I $(PYTHON_INCLUDE)  -Wno-cast-function-type 
+  cflags = -I $(PYTHON_INCLUDE) -I C:/Users/Neimog/miniconda3/envs/composition/lib/site-packages/numpy/core/include -Wno-cast-function-type 
   ldlibs =  $(PYTHON_DLL)  
   pythondll_name = $(shell basename $(PYTHON_DLL))
   $(shell cp $(PYTHON_DLL) $(pythondll_name))
@@ -20,7 +20,7 @@ ifeq (Linux,$(findstring Linux,$(uname)))
 endif
 
 ifeq (Darwin,$(findstring Darwin,$(uname)))
-  cflags = -I $(PYTHON_INCLUDE)
+  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type
   ldlibs = -l $(PYTHON_VERSION)
 endif
 
@@ -40,3 +40,4 @@ $(PYTHON_DLL)
 # in tips-tricks.md)
 PDLIBBUILDER_DIR=./pd-lib-builder/
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
+

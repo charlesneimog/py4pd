@@ -18,6 +18,10 @@
 #define PY_SSIZE_T_CLEAN // Good practice to use this
 #include <Python.h>
 
+// Include NPY_FLOAT to use with numpy and audio processing
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <numpy/arrayobject.h>
+
 /* 
 TODO: Way to set global variables, I think that will be important for things like general path (lilypond, etc)
 
@@ -44,8 +48,8 @@ static t_class *py4pd_class; //
 // define global pointer for py_object
 
 // =====================================
-typedef struct _py { // It seems that all the objects are some kind of class.
-    
+typedef struct _py_tilde { // It seems that all the objects are some kind of class.
+
     t_object        x_obj; // convensao no puredata source code
     t_canvas        *x_canvas; // pointer to the canvas
     PyObject        *module; // python object
@@ -57,6 +61,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_float         x_f;
     t_float         *thread; // arguments
     t_float         *function_called; // flag to check if the set function was called
+    t_float         *audio_warning; // function name
     t_symbol        *packages_path; // packages path 
     t_symbol        *home_path; // home path this always is the path folder (?)
     t_symbol        *object_path;
@@ -64,14 +69,14 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_symbol        *script_name; // script name
     int             *py_arg_numbers; // number of arguments
     t_outlet        *out_A; // outlet 1.
-}t_py;
+    t_outlet        *out_B; // outlet 2. FOR AUDIO
+}t_py_tilde;
 
 
 // PD GLOBAL OBJECT
 // // ============================================
 
-static t_py *py4pd_object;
-
+static t_py_tilde *py4pd_object;
 
 // ======================================
 // ======== PD Module for Python ========
@@ -116,7 +121,6 @@ static PyObject *pdout(PyObject *self, PyObject *args){
                 list_array[i].a_w.w_symbol = gensym(result);
             } else if (Py_IsNone(pValue_i)) {        // DOC: If the function return a list of None
                     // post("None");
-            
             } else {
                 pd_error(py4pd_object, "[py4pd] py4pd just convert int, float and string!\n");
                 pd_error(py4pd_object, "INFO  [!] The value received is of type %s", Py_TYPE(pValue_i)->tp_name);
@@ -212,7 +216,7 @@ PyMODINIT_FUNC PyInit_pd(void){
 // =================================
 
 
-static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+static void home(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; // unused but required by pd
     if (argc < 1) {
         post("[py4pd] The home path is: %s", x->home_path->s_name);
@@ -227,7 +231,7 @@ static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 // // ============================================
 // // ============================================
 
-static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+static void packages(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; 
     if (argc < 1) {
         post("[py4pd] The packages path is: %s", x->packages_path->s_name);
@@ -254,7 +258,7 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 // ====================================
 // ====================================
 
-static void documentation(t_py *x){
+static void documentation(t_py_tilde *x){
     PyObject *pFunc;
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
         pd_error(x, "[py4pd] To see the documentaion you need to set the function first!");
@@ -302,7 +306,7 @@ void pd4py_system_func (const char *command){
 // ============================================
 // ============================================
 
-static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void create(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     // If Windows OS run, if not then warn the user
     (void)s;
     (void)argc;
@@ -341,7 +345,7 @@ static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ====================================
 // ====================================
 
-static void vscode(t_py *x){
+static void vscode(t_py_tilde *x){
     // If Windows OS run, if not then warn the user
        
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
@@ -380,7 +384,7 @@ static void vscode(t_py *x){
 // ====================================
 // ====================================
 
-static void reload(t_py *x){
+static void reload(t_py_tilde *x){
     PyObject *pName, *pFunc, *pModule, *pReload;
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
         pd_error(x, "To reload the script you need to set the function first!");
@@ -428,7 +432,7 @@ static void reload(t_py *x){
 // ====================================
 
 
-static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void set_function(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
 
     t_symbol *script_file_name = atom_gensym(argv+0);
@@ -594,7 +598,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 // ============================================
 
-static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void run_function(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
 
 
@@ -728,7 +732,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 // ============================================
 struct thread_arg_struct {
-    t_py x;
+    t_py_tilde x;
     t_symbol s;
     int argc;
     t_atom *argv;
@@ -741,7 +745,7 @@ struct thread_arg_struct {
 
 #ifdef _WIN64
 
-static void env_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void env_install(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     // If Windows OS run, if not then warn the user
     (void)s;
     (void)argc;
@@ -775,7 +779,7 @@ static void env_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ====================================
 
 
-static void pip_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void pip_install(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     (void)argc;
     
@@ -810,7 +814,7 @@ static void pip_install(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
 DWORD WINAPI ThreadFunc(LPVOID lpParam) { // DOC: Thread function in Windows
     struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParam;       
-    t_py *x = &arg->x;
+    t_py_tilde *x = &arg->x;
     int argc = arg->argc;
     t_symbol *s = &arg->s;
     t_atom *argv = arg->argv;
@@ -824,7 +828,7 @@ DWORD WINAPI ThreadFunc(LPVOID lpParam) { // DOC: Thread function in Windows
 // ============================================
 // ============================================
 
-static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void create_thread(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     DWORD threadID;
     HANDLE hThread;
@@ -870,7 +874,7 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
 static void *ThreadFunc(void *lpParameter) {
     
     struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParameter;
-    t_py *x = &arg->x; 
+    t_py_tilde *x = &arg->x; 
     t_symbol *s = &arg->s;
     int argc = arg->argc;
     t_atom *argv = arg->argv;
@@ -882,7 +886,7 @@ static void *ThreadFunc(void *lpParameter) {
 }
 
 // create_thread in Linux
-static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void create_thread(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     struct thread_arg_struct *arg = (struct thread_arg_struct *)malloc(sizeof(struct thread_arg_struct));
     arg->x = *x;
@@ -921,7 +925,7 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
 #endif
 
 // ============================================
-static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void run(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     // convert pointer x->thread to a int
     int thread = *(x->thread);
     if (thread == 1) {
@@ -937,7 +941,7 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 // ============================================
 
-static void thread(t_py *x, t_floatarg f){
+static void thread(t_py_tilde *x, t_floatarg f){
     int thread = (int)f;
     if (thread == 1) {
         post("[py4pd] Threading enabled");
@@ -955,11 +959,54 @@ static void thread(t_py *x, t_floatarg f){
 }
 
 // ============================================
+// ============= PY4PD AUDIO ==================
+// ============================================
+
+static t_int * py4pd_perform(t_int *w){
+    t_float     *in = (t_float *) (w[1]);
+     int          n  = (int) (w[2]);
+    t_py_tilde *x  = (t_py_tilde *) (w[3]);
+    // transform in to a numpy array
+    // check if the function is called
+    if (x->function_called == 0) {
+        // post x->audio_warning
+
+        if (x->audio_warning == 0) { // TODO: Need to fix this!!!
+            pd_error(x, "[py4pd] You need to call a function before run!");
+            x->audio_warning = malloc(sizeof(unsigned int));
+            x->audio_warning = 1;
+        }
+        return (w + 4);
+    }
+    PyObject *py_in = PyArray_SimpleNewFromData(1, &n, NPY_FLOAT, in);
+    PyObject *py_out = PyObject_CallFunctionObjArgs(x->function, py_in, NULL);
+    PyArrayObject *py_out_array = (PyArrayObject *)PyArray_FROM_OTF(py_out, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
+    t_float *out = (t_float *)PyArray_DATA(py_out_array);
+    // copy the output to the output vector
+    return (w + 4); // next block's address
+}
+
+
+// ============================================
+static void py4pd_dsp(t_py_tilde *x, t_signal **sp){
+  dsp_add(py4pd_perform, 3, sp[0]->s_vec, sp[0]->s_n, x);
+}
+
+// create_audio_output ========================
+static void create_audio_output(t_py_tilde *x){
+    // create a new signal out in out_A
+    outlet_new(&x->x_obj, gensym("signal"));
+    
+}
+
+
+// ============================================
 // =========== SETUP OF OBJECT ================
 // ============================================
 
-void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
-    t_py *x = (t_py *)pd_new(py4pd_class);
+
+void *py4pd_tilde_new(t_symbol *s, int argc, t_atom *argv){ 
+    t_py_tilde *x = (t_py_tilde *)pd_new(py4pd_class);
     // credits
     post("");
     post("[py4pd] py4pd by Charles K. Neimog");
@@ -986,6 +1033,9 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     x->thread = malloc(sizeof(int)); 
     *(x->thread) = 2; // solution but it is weird, 2 is used as false because 0 gives error! 
     post("[py4pd] Home folder is: %s", x->home_path->s_name);
+
+    // audio_warning == 0
+    x->audio_warning = 0;
     
     // check if in x->home_path there is a file py4pd.config
     char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1)); // 
@@ -1016,7 +1066,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         // 
         set_function(x, s, argc, argv); // this not work with python submodules
     }
-    // save the t_py *x in a global variable TODO: How send this using PyCObject?
+    // save the t_py_tilde *x in a global variable TODO: How send this using PyCObject?
     py4pd_object = x;
     return(x);
 }
@@ -1025,7 +1075,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
 // =========== REMOVE OBJECT ==================
 // ============================================
 
-void py4pd_free(t_py *x){
+void py4pd_free(t_py_tilde *x){
     PyObject  *pModule, *pFunc; // pDict, *pName,
     pFunc = x->function;
     pModule = x->module;
@@ -1041,10 +1091,10 @@ void py4pd_free(t_py *x){
 
 // ====================================================
 void py4pd_setup(void){
-    py4pd_class =     class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
-                        (t_newmethod)py4pd_new, // metodo de criação do objeto             
+    py4pd_class =     class_new(gensym("py4pd~"), // cria o objeto quando escrevemos py4pd
+                        (t_newmethod)py4pd_tilde_new, // metodo de criação do objeto             
                         (t_method)py4pd_free, // quando voce deleta o objeto
-                        sizeof(t_py), // quanta memoria precisamos para esse objeto
+                        sizeof(t_py_tilde), // quanta memoria precisamos para esse objeto
                         CLASS_DEFAULT, // nao há uma GUI especial para esse objeto???
                         A_GIMME, // o argumento é um símbolo
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
@@ -1057,6 +1107,13 @@ void py4pd_setup(void){
     #ifdef _WIN64
     class_addmethod(py4pd_class, (t_method)env_install, gensym("env_install"), 0, 0); // install enviroment
     class_addmethod(py4pd_class, (t_method)pip_install, gensym("pip"), 0, 0); // install packages with pip
+
+    // Audio support
+    class_addmethod(py4pd_class, (t_method)create_audio_output, gensym("audio_output"), 0, 0); // Create Audio Output
+    class_addmethod(py4pd_class, (t_method)py4pd_dsp, gensym("dsp"), 0);
+    CLASS_MAINSIGNALIN(py4pd_class, t_py_tilde, x_f);
+    // end audio support
+
     #endif
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open vscode
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script

@@ -6,6 +6,7 @@
 *.sh
 .vscode/*
 Python
+bin
 py4pd.zip
 DLLs/*
 Lib/*
