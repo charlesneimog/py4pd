@@ -62,6 +62,13 @@ If you want to try to build it on Linux:
 make PYTHON_INCLUDE=/usr/include/python3.10/ PYTHON_VERSION=python3.10 
 ```
 
+#### MacOS - version 3.10
+* First you need to install Python 3.10 (https://www.python.org/downloads/) then run:
+
+``` bash 
+sudo ln -s /Library/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib /usr/local/lib/libpython3.10.dylib
+make PYTHON_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.10/include/python3.10 PYTHON_VERSION=python3.10
+```
 
 
 
