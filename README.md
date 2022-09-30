@@ -43,12 +43,12 @@ Then a sent the message `set {script_without_.py} {function_name}`, in this case
 For now, I just am using it for Windows OS. I think that py/pyext works well in Linux and Mac/OS. To compile for Windows, you need msys2. 
 Then, in mingw64 terminal:
 
-#### Windows OS - replace %USERNAME% for your username.
+#### Windows OS - replace `<username>` for your username.
 
 ``` bash 
 pacman -S make autoconf automake libtool
 pacman -S mingw64/mingw-w64-x86_64-gcc 
-make PDBINDIR="C:/Program Files/Pd/bin" PDINCLUDEDIR="C:/Program Files/Pd/src" PYTHON_INCLUDE="C:/Users/%USERNAME%/AppData/Local/Programs/Python/Python310/include" PYTHON_DLL="C:/Users/%USERNAME%/AppData/Local/Programs/Python/Python310/python310.dll"
+make PYTHON_INCLUDE="C:/Users/<username>/AppData/Local/Programs/Python/Python310/include" PYTHON_DLL="C:/Users/<username>/AppData/Local/Programs/Python/Python310/python310.dll"
 ```
 -----------------
 If you want to try to build it on Linux:
