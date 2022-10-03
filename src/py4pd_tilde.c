@@ -216,7 +216,7 @@ PyMODINIT_FUNC PyInit_pd(void){
 // =================================
 
 
-static void home(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv) {
+static void home_tilde(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; // unused but required by pd
     if (argc < 1) {
         post("[py4pd] The home path is: %s", x->home_path->s_name);
@@ -1075,7 +1075,7 @@ void *py4pd_tilde_new(t_symbol *s, int argc, t_atom *argv){
 // =========== REMOVE OBJECT ==================
 // ============================================
 
-void py4pd_free(t_py_tilde *x){
+void py4pd_tilde_free(t_py_tilde *x){
     PyObject  *pModule, *pFunc; // pDict, *pName,
     pFunc = x->function;
     pModule = x->module;
@@ -1090,10 +1090,10 @@ void py4pd_free(t_py_tilde *x){
 }
 
 // ====================================================
-void py4pd_setup(void){
+void py4pd_tilde_setup(void){
     py4pd_class =     class_new(gensym("py4pd~"), // cria o objeto quando escrevemos py4pd
                         (t_newmethod)py4pd_tilde_new, // metodo de criação do objeto             
-                        (t_method)py4pd_free, // quando voce deleta o objeto
+                        (t_method)py4pd_tilde_free, // quando voce deleta o objeto
                         sizeof(t_py_tilde), // quanta memoria precisamos para esse objeto
                         CLASS_DEFAULT, // nao há uma GUI especial para esse objeto???
                         A_GIMME, // o argumento é um símbolo
@@ -1101,19 +1101,17 @@ void py4pd_setup(void){
     
     // add method for bang
     class_addbang(py4pd_class, run);
-    class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0); // set home path
+    class_addmethod(py4pd_class, (t_method)home_tilde, gensym("home"), A_GIMME, 0); // set home path
     class_addmethod(py4pd_class, (t_method)vscode, gensym("click"), 0, 0); // when click open vscode
     class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0); // set packages path
     #ifdef _WIN64
     class_addmethod(py4pd_class, (t_method)env_install, gensym("env_install"), 0, 0); // install enviroment
     class_addmethod(py4pd_class, (t_method)pip_install, gensym("pip"), 0, 0); // install packages with pip
-
     // Audio support
     class_addmethod(py4pd_class, (t_method)create_audio_output, gensym("audio_output"), 0, 0); // Create Audio Output
     class_addmethod(py4pd_class, (t_method)py4pd_dsp, gensym("dsp"), 0);
     CLASS_MAINSIGNALIN(py4pd_class, t_py_tilde, x_f);
     // end audio support
-
     #endif
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open vscode
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script

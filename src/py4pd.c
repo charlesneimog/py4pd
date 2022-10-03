@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <complex.h>
+
 #ifdef _WIN64 // If windows 64bits include 
 #include <windows.h>
 #else 
@@ -52,7 +53,6 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject        *function; // function name  
     int             *state; // thread state
     int             *object_number; // object number
-    int             *audio; // audio flag
     t_inlet         *in1;
     t_float         x_f;
     t_float         *thread; // arguments
@@ -62,7 +62,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_symbol        *object_path;
     t_symbol        *function_name; // function name
     t_symbol        *script_name; // script name
-    int             *py_arg_numbers; // number of arguments
+    t_float         *py_arg_numbers; // number of arguments
     t_outlet        *out_A; // outlet 1.
 }t_py;
 
@@ -488,41 +488,31 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     
     // =====================
     PyObject *pName, *pModule, *pFunc; // DOC: Create the variables of the python objects
+
+    // ===================== // DOC: Set Program name
     const wchar_t *py_name_ptr; // DOC: Program name pointer
-    char *random_name = malloc(sizeof(char) * 10); // DOC: Random name for the program name
-    sprintf(random_name, "py4pd_%d", *(x->object_number)); // DOC: Set
-    post("[py4pd] Random name: %s", random_name); // DOC: Print the random name
-    py_name_ptr = Py_DecodeLocale(random_name, NULL); // DOC: Decode the random name
+    char *program_name = malloc(sizeof(char) * 10); // DOC: Random name for the program name
+    sprintf(program_name, "py4pd_%d", *(x->object_number)); // DOC: Set
+    py_name_ptr = Py_DecodeLocale(program_name, NULL); // DOC: Decode the random name
 
     // =============== DOC: add pd Module for Python =================================
     if (PyImport_AppendInittab("pd", PyInit_pd) == -1) {
         pd_error(x, "[py4pd] Could not load py4pd module! Please report, this shouldn't happen!\n");
-        post("You can not use 'import pd' in your script!");
     } 
-
-    // =============== DOC: add spam Module for Python =================================
 
     Py_SetProgramName(py_name_ptr); // set program name
     Py_Initialize(); // initialize python
 
     // =====================
-    // DOC: Set the packages path
-    const char *site_path_str = x->packages_path->s_name;
-    char *add_packages = malloc(strlen(site_path_str) + strlen("sys.path.append('") + strlen("')") + 1);
-    sprintf(add_packages, "sys.path.append('%s')", site_path_str);
-    PyRun_SimpleString("import sys");
-    // print add_add_packages
-    // post("[py4pd] %s", add_packages);
-    PyRun_SimpleString(add_packages);
-    free(add_packages);
+    // Add aditional path to python to work with Pure Data
+    PyObject *home_path = PyUnicode_FromString(x->home_path->s_name);
+    PyObject *site_package = PyUnicode_FromString(x->packages_path->s_name);
+    PyObject *sys_path = PySys_GetObject("path");
+    PyList_Insert(sys_path, 0, home_path);
+    PyList_Insert(sys_path, 0, site_package);
+    Py_DECREF(home_path);
+    Py_DECREF(site_package);
 
-    // =====================
-    const char *home_path_str = x->home_path->s_name;
-    char *sys_path_str = malloc(strlen(home_path_str) + strlen("sys.path.append('") + strlen("')") + 1);
-    sprintf(sys_path_str, "sys.path.append('%s')", home_path_str);
-    PyRun_SimpleString(sys_path_str);
-    free(sys_path_str); // free the memory allocated for the string, check if this is necessary
-    
     // =====================
     pName = PyUnicode_DecodeFSDefault(script_file_name->s_name); // Name of script file
     pModule = PyImport_Import(pName);
@@ -597,22 +587,32 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
 
+    if (argc != x->py_arg_numbers) {
+        pd_error(x, "[py4pd] Wrong number of arguments!");
+        //pd_error(x, "[py4pd] Function %s has %i arguments!", x->function_name->s_name, *(x->py_arg_numbers));
+        return;
+    }
 
-    if (argc != x->py_arg_numbers){
-        pd_error(x, "[py4pd] Number of arguments is not correct!");
-        return;
-    }
-    
-    // int running_on_thread = *(x->function_called);
-    // PyGILState_STATE gstate = PyGILState_Ensure();
-    if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
-        pd_error(x, "[py4pd] The message need to be formatted like 'set {script_name} {function_name}'!");
-        return;
-    }
     PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
     pFunc = x->function;
     pArgs = PyTuple_New(argc);
     int i;
+    if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
+        if(pFunc != NULL){
+            // create t_atom *argv from x->script_name and x->function_name
+            t_atom *argv = malloc(sizeof(t_atom) * 2);
+            SETSYMBOL(argv, x->script_name);
+            SETSYMBOL(argv+1, x->function_name);
+            set_function(x, NULL, 2, argv);
+        } else{
+            pd_error(x, "[py4pd] The message need to be formatted like 'set {script_name} {function_name}'!");
+            return;
+        }
+        
+        
+        
+    }
+    
     // DOC: CONVERTION TO PYTHON OBJECTS
     for (i = 0; i < argc; ++i) {
         // NUMBERS 
@@ -672,7 +672,6 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
                     pd_error(x, "INFO  [!] The value received is of type %s", Py_TYPE(pValue_i)->tp_name);
                     Py_DECREF(pValue_i);
                     Py_DECREF(pArgs);
-                    //PyGILState_Release(gstate);
                     return;
                 }
             }
@@ -976,11 +975,11 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     x->home_path = canvas_getdir(c);     // set name 
 
     // change \ to / in x->home_path | PlugData give the path with \ and Python need /
-    char *p = x->home_path;
-    while (*p) {
-        if (*p == '\\') *p = '/';
-        p++;
-    }
+    // char *p = x->home_path;
+    // while (*p) {
+    //     if (*p == '\\') *p = '/';
+    //     p++;
+    // }
 
     x->packages_path = canvas_getdir(c); // set name
     x->thread = malloc(sizeof(int)); 
@@ -1071,7 +1070,7 @@ void py4pd_setup(void){
 // ====================================================================
 // ====================================================================
 
-// dll export function
+// // dll export function
 #ifdef _WIN64
 
 __declspec(dllexport) void py4pd_setup(void); // when I add python module for some reson pd not see py4pd_setup
