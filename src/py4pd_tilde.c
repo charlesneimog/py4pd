@@ -122,8 +122,8 @@ static PyObject *pdout(PyObject *self, PyObject *args){
             } else if (Py_IsNone(pValue_i)) {        // DOC: If the function return a list of None
                     // post("None");
             } else {
-                pd_error(py4pd_object, "[py4pd] py4pd just convert int, float and string!\n");
-                pd_error(py4pd_object, "INFO  [!] The value received is of type %s", Py_TYPE(pValue_i)->tp_name);
+                pd_error(py4pd_object, "[py4pd~] py4pd just convert int, float and string!\n");
+                pd_error(py4pd_object, "INFO [!] The value received is of type %s", Py_TYPE(pValue_i)->tp_name);
                 Py_DECREF(pValue_i);
                 Py_DECREF(args);
                 return NULL;
@@ -219,11 +219,11 @@ PyMODINIT_FUNC PyInit_pd(void){
 static void home_tilde(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; // unused but required by pd
     if (argc < 1) {
-        post("[py4pd] The home path is: %s", x->home_path->s_name);
+        post("[py4pd~] The home path is: %s", x->home_path->s_name);
         return; 
     } else {
         x->home_path = atom_getsymbol(argv);
-        post("[py4pd] The home path set to: %s", x->home_path->s_name);
+        post("[py4pd~] The home path set to: %s", x->home_path->s_name);
     }
 }
 
@@ -234,7 +234,7 @@ static void home_tilde(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv) {
 static void packages(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; 
     if (argc < 1) {
-        post("[py4pd] The packages path is: %s", x->packages_path->s_name);
+        post("[py4pd~] The packages path is: %s", x->packages_path->s_name);
         return; // is this necessary?
     }
     else {
@@ -261,7 +261,7 @@ static void packages(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv) {
 static void documentation(t_py_tilde *x){
     PyObject *pFunc;
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
-        pd_error(x, "[py4pd] To see the documentaion you need to set the function first!");
+        pd_error(x, "[py4pd~] To see the documentaion you need to set the function first!");
         return;
     }
 
@@ -280,13 +280,13 @@ static void documentation(t_py_tilde *x){
             else{
 
                 post("");
-                pd_error(x, "[py4pd] No documentation found!");
+                pd_error(x, "[py4pd~] No documentation found!");
                 post("");
             }
         }
         else{
             post("");
-            pd_error(x, "[py4pd] No documentation found!");
+            pd_error(x, "[py4pd~] No documentation found!");
             post("");
         }
     }
@@ -299,7 +299,7 @@ static void documentation(t_py_tilde *x){
 void pd4py_system_func (const char *command){
     int result = system(command);
     if (result == -1){
-        post("[py4pd] %s", command);
+        post("[py4pd~] %s", command);
     }
 }
 
@@ -312,7 +312,7 @@ static void create(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     (void)argc;
     
     const char *script_name = argv[0].a_w.w_symbol->s_name;
-    post("[py4pd] Opening vscode...");
+    post("[py4pd~] Opening vscode...");
     #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
 
     char *command = malloc(strlen(x->home_path->s_name) + strlen(script_name) + 20);
@@ -349,10 +349,10 @@ static void vscode(t_py_tilde *x){
     // If Windows OS run, if not then warn the user
        
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
-        pd_error(x, "[py4pd] To open vscode you need to set the function first!");
+        pd_error(x, "[py4pd~] To open vscode you need to set the function first!");
         return;
     }
-    post("[py4pd] Opening vscode...");
+    post("[py4pd~] Opening vscode...");
     
     #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
     char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
@@ -442,7 +442,7 @@ static void set_function(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     if (x->function_name != NULL){
         int function_is_equal = strcmp(function_name->s_name, x->function_name->s_name);
         if (function_is_equal == 0){    // If the user wants to call the same function again! This is not necessary at first glance. 
-            pd_error(x, "[py4pd] The function was already called!");
+            pd_error(x, "[py4pd~] The function was already called!");
             Py_XDECREF(x->function);
             Py_XDECREF(x->module);
             x->function = NULL;
@@ -459,19 +459,19 @@ static void set_function(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     }
 
     // Infos
-    post("[py4pd] Script file: %s.py", script_file_name->s_name);
-    post("[py4pd] Function name: %s", function_name->s_name);
+    post("[py4pd~] Script file: %s.py", script_file_name->s_name);
+    post("[py4pd~] Function name: %s", function_name->s_name);
 
     // Erro handling
     // Check if script has .py extension
     char *extension = strrchr(script_file_name->s_name, '.');
     if (extension != NULL) {
-        pd_error(x, "[py4pd] Don't use extensions in the script file name!");
+        pd_error(x, "[py4pd~] Don't use extensions in the script file name!");
         Py_XDECREF(x->function);
         Py_XDECREF(x->module);
         return;
     }
-
+    
     // check if script file exists
     char script_file_path[MAXPDSTRING];
     snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name, script_file_name->s_name);
@@ -482,11 +482,10 @@ static void set_function(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
         return;
     }
     
-
     // =====================
     // DOC: check number of arguments
     if (argc < 2) { // check is the number of arguments is correct | set "function_script" "function_name"
-        pd_error(x,"[py4pd] {set} message needs two arguments! The 'Script name' and the 'function name'!");
+        pd_error(x,"[py4pd~] {set} message needs two arguments! The 'Script name' and the 'function name'!");
         return;
     }
     
@@ -495,12 +494,12 @@ static void set_function(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     const wchar_t *py_name_ptr; // DOC: Program name pointer
     char *random_name = malloc(sizeof(char) * 10); // DOC: Random name for the program name
     sprintf(random_name, "py4pd_%d", *(x->object_number)); // DOC: Set
-    post("[py4pd] Random name: %s", random_name); // DOC: Print the random name
+    post("[py4pd~] Random name: %s", random_name); // DOC: Print the random name
     py_name_ptr = Py_DecodeLocale(random_name, NULL); // DOC: Decode the random name
 
     // =============== DOC: add pd Module for Python =================================
     if (PyImport_AppendInittab("pd", PyInit_pd) == -1) {
-        pd_error(x, "[py4pd] Could not load py4pd module! Please report, this shouldn't happen!\n");
+        pd_error(x, "[py4pd~] Could not load py4pd module! Please report, this shouldn't happen!\n");
         post("You can not use 'import pd' in your script!");
     } 
 
@@ -508,7 +507,7 @@ static void set_function(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
 
     Py_SetProgramName(py_name_ptr); // set program name
     Py_Initialize(); // initialize python
-
+    return;
     // =====================
     // DOC: Set the packages path
     const char *site_path_str = x->packages_path->s_name;
@@ -516,7 +515,7 @@ static void set_function(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     sprintf(add_packages, "sys.path.append('%s')", site_path_str);
     PyRun_SimpleString("import sys");
     // print add_add_packages
-    // post("[py4pd] %s", add_packages);
+    // post("[py4pd~] %s", add_packages);
     PyRun_SimpleString(add_packages);
     free(add_packages);
 
@@ -538,7 +537,7 @@ static void set_function(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        pd_error(x, "[py4pd~] Call failed: %s", PyUnicode_AsUTF8(pstr));
         Py_XDECREF(pstr);
         Py_XDECREF(pModule);
         Py_XDECREF(pName);
@@ -554,8 +553,8 @@ static void set_function(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
         argspec = PyObject_CallFunctionObjArgs(getargspec, pFunc, NULL);
         args = PyObject_GetAttrString(argspec, "args");
         int py_args = PyObject_Size(args);
-        post("[py4pd] Function loaded!");
-        post("[py4pd] It has %i arguments!", py_args);
+        post("[py4pd~] Function loaded!");
+        post("[py4pd~] It has %i arguments!", py_args);
         // x->py_arg_numbers = py_args;
         // warning: assignment to 'int *' from 'int' makes pointer from integer without a cast [-Wint-conversion] in x->py_arg_numbers = py_args;
         // The solution is to use a pointer to the int variable
@@ -566,6 +565,7 @@ static void set_function(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
         x->function_name = function_name; 
         x->function_called = malloc(sizeof(unsigned int));
         *(x->function_called) = 1; // 
+        py4pd_object = x;
         Py_XDECREF(inspect);
         Py_XDECREF(getargspec);
         Py_XDECREF(argspec);
@@ -603,14 +603,14 @@ static void run_function(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
 
 
     if (argc != x->py_arg_numbers){
-        pd_error(x, "[py4pd] Number of arguments is not correct!");
+        pd_error(x, "[py4pd~] Number of arguments is not correct!");
         return;
     }
     
     // int running_on_thread = *(x->function_called);
     // PyGILState_STATE gstate = PyGILState_Ensure();
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
-        pd_error(x, "[py4pd] The message need to be formatted like 'set {script_name} {function_name}'!");
+        pd_error(x, "[py4pd~] The message need to be formatted like 'set {script_name} {function_name}'!");
         return;
     }
     PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
@@ -672,7 +672,7 @@ static void run_function(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
                      // post("None");
                 
                 } else {
-                    pd_error(x, "[py4pd] py4pd just convert int, float and string!\n");
+                    pd_error(x, "[py4pd~] py4pd just convert int, float and string!\n");
                     pd_error(x, "INFO  [!] The value received is of type %s", Py_TYPE(pValue_i)->tp_name);
                     Py_DECREF(pValue_i);
                     Py_DECREF(pArgs);
@@ -704,7 +704,7 @@ static void run_function(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
             } else if (Py_IsNone(pValue)) {
                 //post("None");
             } else {
-                pd_error(x, "[py4pd] py4pd just convert int, float and string!\n");
+                pd_error(x, "[py4pd~] py4pd just convert int, float and string!\n");
                 pd_error(x, "INFO  [!!!!] The value received is of type %s", Py_TYPE(pValue)->tp_name);
                 Py_DECREF(pValue);
                 Py_DECREF(pArgs);
@@ -718,7 +718,7 @@ static void run_function(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        pd_error(x, "[py4pd~] Call failed: %s", PyUnicode_AsUTF8(pstr));
         Py_DECREF(pstr);
         Py_DECREF(pvalue);
         Py_DECREF(ptype);
@@ -794,7 +794,7 @@ static void pip_install(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     } else{
         char *pip_cmd = malloc(strlen(x->packages_path->s_name) + strlen("py4pd") + 20);
         sprintf(pip_cmd, "/c %s install %s", pip, package);
-        post("[py4pd] Installing %s", package);
+        post("[py4pd~] Installing %s", package);
         SHELLEXECUTEINFO sei = {0};
         sei.cbSize = sizeof(sei);
         sei.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -803,7 +803,7 @@ static void pip_install(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
         sei.nShow = SW_HIDE;
         ShellExecuteEx(&sei);
         CloseHandle(sei.hProcess);
-        post("[py4pd] %s installed!", package);
+        post("[py4pd~] %s installed!", package);
         return;
     }
 }
@@ -839,7 +839,7 @@ static void create_thread(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     arg->argv = argv;
     int object_number = *(x->object_number);
     if (x->function_called == 0) {
-        pd_error(x, "[py4pd] You need to call a function before run!");
+        pd_error(x, "[py4pd~] You need to call a function before run!");
         free(arg);
         return;
         } 
@@ -849,14 +849,14 @@ static void create_thread(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
             x->state = malloc(sizeof(int)); // 
             *(x->state) = 1; // DOC: 1 = thread is running, not two threads can run at the same time
             if (hThread == NULL) {
-                pd_error(x, "[py4pd] CreateThread failed");
+                pd_error(x, "[py4pd~] CreateThread failed");
                 free(arg);
                 return;
             } else {
                 return;
             }
         } else {
-            pd_error(x, "[py4pd] Just one thread can be running at a time!");
+            pd_error(x, "[py4pd~] Just one thread can be running at a time!");
             free(arg);
             return;
         }
@@ -895,7 +895,7 @@ static void create_thread(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     int object_number = *(x->object_number);
     if (x->function_called == 0) {
         // Pd is crashing when I try to create a thread.
-        pd_error(x, "[py4pd] You need to call a function before run!");
+        pd_error(x, "[py4pd~] You need to call a function before run!");
         free(arg);
         return;
     } else {
@@ -908,14 +908,14 @@ static void create_thread(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
             x->state = &state;
             // check the Thread was created
             if (hThread != 0) {
-                pd_error(x, "[py4pd] CreateThread failed");
+                pd_error(x, "[py4pd~] CreateThread failed");
                 free(arg);
                 return;
             } else {
                 return;
             }
         } else {
-            pd_error(x, "[py4pd] Just one thread can be running at a time!");
+            pd_error(x, "[py4pd~] Just one thread can be running at a time!");
             free(arg);
             return;
         }
@@ -933,7 +933,7 @@ static void run(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
     } else if (thread == 2) {
         run_function(x, s, argc, argv);
     } else {
-        pd_error(x, "[py4pd] Thread not created");
+        pd_error(x, "[py4pd~] Thread not created");
     }
 }
 
@@ -944,17 +944,17 @@ static void run(t_py_tilde *x, t_symbol *s, int argc, t_atom *argv){
 static void thread(t_py_tilde *x, t_floatarg f){
     int thread = (int)f;
     if (thread == 1) {
-        post("[py4pd] Threading enabled");
+        post("[py4pd~] Threading enabled");
         x->thread = malloc(sizeof(int)); 
         *(x->thread) = 1; // 
         return;
     } else if (thread == 0) {
         x->thread = malloc(sizeof(int)); 
         *(x->thread) = 2; // 
-        post("[py4pd] Threading disabled");
+        post("[py4pd~] Threading disabled");
         return;
     } else {
-        pd_error(x, "[py4pd] Threading status must be 0 or 1");
+        pd_error(x, "[py4pd~] Threading status must be 0 or 1");
     }
 }
 
@@ -963,27 +963,53 @@ static void thread(t_py_tilde *x, t_floatarg f){
 // ============================================
 
 static t_int * py4pd_perform(t_int *w){
-    t_float     *in = (t_float *) (w[1]);
-     int          n  = (int) (w[2]);
+    t_float *py4pd = (t_float *) (w[1]); // the first element is a pointer to the dataspace of this object
+    t_sample *in1 =      (t_sample *)(w[2]); // here is a pointer to the t_sample arrays that hold the 2 input signals
     t_py_tilde *x  = (t_py_tilde *) (w[3]);
+    int py4pdBlocksize = (int)(w[4]); // the number of samples to process
     // transform in to a numpy array
     // check if the function is called
-    if (x->function_called == 0) {
-        // post x->audio_warning
-
-        if (x->audio_warning == 0) { // TODO: Need to fix this!!!
-            pd_error(x, "[py4pd] You need to call a function before run!");
-            x->audio_warning = malloc(sizeof(unsigned int));
-            x->audio_warning = 1;
+    if (py4pd_object->function_called == 0) {
+    //     // post function_called
+        post("function_called: %d", py4pd_object->function_called);
+        if (py4pd_object->audio_warning == 0) { // TODO: Need to fix this!!!
+            pd_error(py4pd_object, "[py4pd~] You need to call a function before run!");
+            py4pd_object->audio_warning = malloc(sizeof(unsigned int));
+            py4pd_object->audio_warning = 1;
         }
         return (w + 4);
     }
-    PyObject *py_in = PyArray_SimpleNewFromData(1, &n, NPY_FLOAT, in);
-    PyObject *py_out = PyObject_CallFunctionObjArgs(x->function, py_in, NULL);
-    PyArrayObject *py_out_array = (PyArrayObject *)PyArray_FROM_OTF(py_out, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
-    t_float *out = (t_float *)PyArray_DATA(py_out_array);
-    // copy the output to the output vector
-    return (w + 4); // next block's address
+    PyObject *pArgs = PyTuple_New(1);
+    PyObject *pValue;
+    // convert in1 to a numpy array
+    npy_intp dims[1] = {py4pdBlocksize};
+    PyObject *in1_array = PyArray_SimpleNewFromData(1, dims, NPY_FLOAT, in1);
+
+    // add in1_array to pArgs
+    PyTuple_SetItem(pArgs, 0, in1_array);
+
+    // run the function
+    pValue = PyObject_CallObject(py4pd_object->function, pArgs);
+    // call the function
+    if (pValue != NULL) {
+        // convert pValue to a numpy array
+        PyObject *out_array = PyArray_FROM_OTF(pValue, NPY_FLOAT, NPY_ARRAY_IN_ARRAY);
+        // convert out_array to a t_sample
+        t_sample *out = (t_sample *)PyArray_DATA(out_array);
+        // copy out to py4pd
+        memcpy(py4pd, out, py4pdBlocksize * sizeof(t_sample));
+        // free the memory
+        Py_DECREF(pArgs);
+        Py_DECREF(pValue);
+        Py_DECREF(out_array);
+        return (w + 4);
+    } else {
+        pd_error(py4pd_object, "[py4pd~] Function call failed");
+        Py_DECREF(pArgs);
+        if (PyErr_Occurred())
+            PyErr_Print();
+        return (w + 4);
+    }
 }
 
 
@@ -999,7 +1025,6 @@ static void create_audio_output(t_py_tilde *x){
     
 }
 
-
 // ============================================
 // =========== SETUP OF OBJECT ================
 // ============================================
@@ -1009,15 +1034,15 @@ void *py4pd_tilde_new(t_symbol *s, int argc, t_atom *argv){
     t_py_tilde *x = (t_py_tilde *)pd_new(py4pd_class);
     // credits
     post("");
-    post("[py4pd] py4pd by Charles K. Neimog");
-    post("[py4pd] version 0.0.3       ");
-    post("[py4pd] based on Python 3.10.5  ");
-    post("[py4pd] inspired by the work of Thomas Grill and SOPI research group.");
+    post("[py4pd~] py4pd by Charles K. Neimog");
+    post("[py4pd~] version 0.0.3       ");
+    post("[py4pd~] based on Python 3.10.5  ");
+    post("[py4pd~] inspired by the work of Thomas Grill and SOPI research group.");
     // Object count
     x->object_number = malloc(sizeof(int));
     *(x->object_number) = object_count;
     object_count++;
-    x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
+    x->out_A = outlet_new(&x->x_obj, &s_signal); // cria um outlet 
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     t_canvas *c = x->x_canvas;  // p
     x->home_path = canvas_getdir(c);     // set name 
@@ -1032,7 +1057,7 @@ void *py4pd_tilde_new(t_symbol *s, int argc, t_atom *argv){
     x->packages_path = canvas_getdir(c); // set name
     x->thread = malloc(sizeof(int)); 
     *(x->thread) = 2; // solution but it is weird, 2 is used as false because 0 gives error! 
-    post("[py4pd] Home folder is: %s", x->home_path->s_name);
+    post("[py4pd~] Home folder is: %s", x->home_path->s_name);
 
     // audio_warning == 0
     x->audio_warning = 0;
@@ -1051,7 +1076,7 @@ void *py4pd_tilde_new(t_symbol *s, int argc, t_atom *argv){
                 packages_path[strlen(packages_path) - 1] = '\0'; // remove last character
                 if (strlen(packages_path) > 0) { // check if path is not empty
                     x->packages_path = gensym(packages_path); // set name
-                    post("[py4pd] Packages path set to %s", packages_path); // print path
+                    post("[py4pd~] Packages path set to %s", packages_path); // print path
                 }
                 free(packages_path); // free memory
             }
@@ -1059,7 +1084,7 @@ void *py4pd_tilde_new(t_symbol *s, int argc, t_atom *argv){
         fclose(file); // close file
         // free(line); // free memory
     } else {
-        post("[py4pd] Could not find py4pd.cfg in home directory"); // print path
+        post("[py4pd~] Could not find py4pd.cfg in home directory"); // print path
     }
     free(config_path); // free memory
     if (argc > 1) { // check if there are two arguments
@@ -1129,7 +1154,7 @@ void py4pd_tilde_setup(void){
 // dll export function
 #ifdef _WIN64
 
-__declspec(dllexport) void py4pd_setup(void); // when I add python module for some reson pd not see py4pd_setup
+__declspec(dllexport) void py4pd_tilde_setup(void); // when I add python module for some reson pd not see py4pd_setup
 
 #endif
 

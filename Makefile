@@ -1,5 +1,5 @@
 # library name
-lib.name = py4pd py4pd~
+lib.name = py4pd
 
 # python libs
 
@@ -25,7 +25,8 @@ ifeq (Darwin,$(findstring Darwin,$(uname)))
 endif
 
 # input source file (class name == source file basename)
-class.sources = src/py4pd.c src/py4pd_tilde.c
+py4pd.class.sources = src/py4pd.c 
+py4pd~.class.sources = src/py4pd_tilde.c
 
 # all extra files to be included in binary distribution of the library
 datafiles = \

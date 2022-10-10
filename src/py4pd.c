@@ -46,7 +46,6 @@ static t_class *py4pd_class; //
 
 // =====================================
 typedef struct _py { // It seems that all the objects are some kind of class.
-    
     t_object        x_obj; // convensao no puredata source code
     t_canvas        *x_canvas; // pointer to the canvas
     PyObject        *module; // python object
@@ -54,6 +53,9 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     int             *state; // thread state
     int             *object_number; // object number
     t_inlet         *in1;
+
+    // set global for variables
+    PyObject        *globals;
     t_float         x_f;
     t_float         *thread; // arguments
     t_float         *function_called; // flag to check if the set function was called
@@ -207,10 +209,9 @@ PyMODINIT_FUNC PyInit_pd(void){
     return m;
 }
 
-// =================================
-// ============ Pd Object code  ====
-// =================================
-
+// =====================================================================
+// ============ Pd Object code =========================================
+// =====================================================================
 
 static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; // unused but required by pd
@@ -289,6 +290,40 @@ static void documentation(t_py *x){
 }
 
 // ====================================
+static void py4pd_globalVariables(t_py *x, t_symbol *s, int argc, t_atom *argv){
+
+    (void)s; // unused but required by pd
+    // argv[0] = name of the variable
+    // argv[1] = value of the variable
+    // PyRun_SimpleString("a = 1");
+
+    char *string;
+    
+    if (argc < 1) {
+        pd_error(x, "[py4pd] You need to set the variable name and value");
+        return;
+    }
+    else if (argc < 2) {
+        pd_error(x, "[py4pd] You need to set the variable value");
+        return;
+    }
+    else if (argc < 3) {
+        string = (char *)malloc(1000);
+        sprintf(string, "%s = %s", atom_getsymbol(argv)->s_name, atom_getsymbol(argv+1)->s_name);
+        PyRun_SimpleString(string);
+        free(string);
+    }
+    else{
+        pd_error(x, "[py4pd] Too many arguments");
+        return;
+    }
+    
+    
+
+}
+
+
+// ====================================
 // ====================================
 // ====================================
 
@@ -296,6 +331,7 @@ void pd4py_system_func (const char *command){
     int result = system(command);
     if (result == -1){
         post("[py4pd] %s", command);
+        return;
     }
 }
 
@@ -427,10 +463,8 @@ static void reload(t_py *x){
 // ====================================
 // ====================================
 
-
 static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
-
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
 
@@ -453,11 +487,9 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
             x->function_name = NULL;
         }      
     }
-
     // Infos
     post("[py4pd] Script file: %s.py", script_file_name->s_name);
     post("[py4pd] Function name: %s", function_name->s_name);
-
     // Erro handling
     // Check if script has .py extension
     char *extension = strrchr(script_file_name->s_name, '.');
@@ -478,28 +510,22 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         return;
     }
     
-
     // =====================
     // DOC: check number of arguments
     if (argc < 2) { // check is the number of arguments is correct | set "function_script" "function_name"
         pd_error(x,"[py4pd] {set} message needs two arguments! The 'Script name' and the 'function name'!");
         return;
     }
-    
     // =====================
-    PyObject *pName, *pModule, *pFunc; // DOC: Create the variables of the python objects
-
+    PyObject *pName, *pModule, *pFunc; // Create the variables of the python objects
     // ===================== // DOC: Set Program name
-    const wchar_t *py_name_ptr; // DOC: Program name pointer
-    char *program_name = malloc(sizeof(char) * 10); // DOC: Random name for the program name
-    sprintf(program_name, "py4pd_%d", *(x->object_number)); // DOC: Set
-    py_name_ptr = Py_DecodeLocale(program_name, NULL); // DOC: Decode the random name
+    const wchar_t *py_name_ptr; // 
+    char *program_name = malloc(sizeof(char) * 10); // 
+    sprintf(program_name, "py4pd_%d", *(x->object_number)); // 
+    py_name_ptr = Py_DecodeLocale(program_name, NULL); // 
 
     // =============== DOC: add pd Module for Python =================================
-    if (PyImport_AppendInittab("pd", PyInit_pd) == -1) {
-        pd_error(x, "[py4pd] Could not load py4pd module! Please report, this shouldn't happen!\n");
-    } 
-
+    PyImport_AppendInittab("pd", PyInit_pd); // DOC: Add the pd module to the python interpreter
     Py_SetProgramName(py_name_ptr); // set program name
     Py_Initialize(); // initialize python
 
@@ -509,7 +535,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     PyObject *site_package = PyUnicode_FromString(x->packages_path->s_name);
     PyObject *sys_path = PySys_GetObject("path");
     PyList_Insert(sys_path, 0, home_path);
-    PyList_Insert(sys_path, 0, site_package);
+    PyList_Insert(sys_path, 0, site_package); // BUG: not working
     Py_DECREF(home_path);
     Py_DECREF(site_package);
 
@@ -517,7 +543,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     pName = PyUnicode_DecodeFSDefault(script_file_name->s_name); // Name of script file
     pModule = PyImport_Import(pName);
     // =====================
-
     // check if the module was loaded
     if (pModule == NULL) {
         PyObject *ptype, *pvalue, *ptraceback;
@@ -532,7 +557,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
  
     pFunc = PyObject_GetAttrString(pModule, function_name->s_name); // Function name inside the script file
-    Py_DECREF(pName); // DOC: Py_DECREF(pName) is not necessary! 
+    Py_DECREF(pName); // DOC: Delete the name of the script file
     if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable   
         PyObject *inspect=NULL, *getargspec=NULL, *argspec=NULL, *args=NULL;
         inspect = PyImport_ImportModule("inspect");
@@ -579,20 +604,17 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
 }
 
-
 // ============================================
 // ============================================
 // ============================================
 
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
-
     if (argc != x->py_arg_numbers) {
         pd_error(x, "[py4pd] Wrong number of arguments!");
         //pd_error(x, "[py4pd] Function %s has %i arguments!", x->function_name->s_name, *(x->py_arg_numbers));
         return;
     }
-
     PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
     pFunc = x->function;
     pArgs = PyTuple_New(argc);
@@ -608,9 +630,6 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
             pd_error(x, "[py4pd] The message need to be formatted like 'set {script_name} {function_name}'!");
             return;
         }
-        
-        
-        
     }
     
     // DOC: CONVERTION TO PYTHON OBJECTS
@@ -697,7 +716,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
                 return;
             // now check if it return None
             } else if (Py_IsNone(pValue)) {
-                //post("None");
+                post("None");
             } else {
                 pd_error(x, "[py4pd] py4pd just convert int, float and string!\n");
                 pd_error(x, "INFO  [!!!!] The value received is of type %s", Py_TYPE(pValue)->tp_name);
@@ -972,18 +991,17 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     t_canvas *c = x->x_canvas;  // p
-    x->home_path = canvas_getdir(c);     // set name 
+    char *patch_dir = canvas_getdir(c); // directory of opened patch
 
-    // change \ to / in x->home_path | PlugData give the path with \ and Python need /
-    // char *p = x->home_path;
-    // while (*p) {
-    //     if (*p == '\\') *p = '/';
-    //     p++;
-    // }
-
-    x->packages_path = canvas_getdir(c); // set name
-    x->thread = malloc(sizeof(int)); 
-    *(x->thread) = 2; // solution but it is weird, 2 is used as false because 0 gives error! 
+    // Plug Data, 
+    // the patch of patch_dir use backslashes, replace them with forward slashes
+    char *plug_data = replace_str(patch_dir, "\\", "/");
+    // get the directory of the patch
+    
+    x->home_path = plug_data;     // set name of the home path
+    x->packages_path = plug_data; // set name of the packages path
+    x->thread = malloc(sizeof(int));   // set thread status
+    *(x->thread) = 2; // solution but it is weird!
     post("[py4pd] Home folder is: %s", x->home_path->s_name);
     
     // check if in x->home_path there is a file py4pd.config
@@ -1012,7 +1030,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     }
     free(config_path); // free memory
     if (argc > 1) { // check if there are two arguments
-        // 
         set_function(x, s, argc, argv); // this not work with python submodules
     }
     // save the t_py *x in a global variable TODO: How send this using PyCObject?
@@ -1050,20 +1067,32 @@ void py4pd_setup(void){
     
     // add method for bang
     class_addbang(py4pd_class, run);
-    class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0); // set home path
+
+    // Iterate with object
     class_addmethod(py4pd_class, (t_method)vscode, gensym("click"), 0, 0); // when click open vscode
+
+    // Config
+    class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0); // set home path
     class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0); // set packages path
+    class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0); // set function to be called
+    class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
+    class_addmethod(py4pd_class, (t_method)thread, gensym("thread"), A_FLOAT, 0); // on/off threading
+    class_addmethod(py4pd_class, (t_method)py4pd_globalVariables, gensym("global"), A_GIMME, 0); // on/off debug
+    
+    // Pip install Packages
     #ifdef _WIN64
     class_addmethod(py4pd_class, (t_method)env_install, gensym("env_install"), 0, 0); // install enviroment
     class_addmethod(py4pd_class, (t_method)pip_install, gensym("pip"), 0, 0); // install packages with pip
     #endif
+
+    // Coding
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open vscode
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
+
+    // Documentation
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
-    class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0); // set function to be called
-    class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
-    class_addmethod(py4pd_class, (t_method)thread, gensym("thread"), A_FLOAT, 0); // on/off threading
+
     }
 
 // ==================== PD FUNCTIONS INSIDE PYTHON ====================

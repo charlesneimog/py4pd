@@ -31,7 +31,7 @@ def thread_test():
 
 def pd_output():
     "It sends some output to the py4pd output."
-    import pd # import the py4pd module (embedded in the python interpreter)
+    # import pd # import the py4pd module (embedded in the python interpreter)
     import time
     for x in range(10):
         pd.out(x)

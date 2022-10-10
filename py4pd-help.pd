@@ -1,14 +1,14 @@
-#N canvas 570 73 762 548 12;
+#N canvas 570 73 806 602 12;
 #X declare -path else;
 #X obj 165 86 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 #fcfcfc
 #000000 #000000 0 1;
-#X msg 22 190 home;
+#X msg 22 251 home, f 7;
 #X obj 21 471 py4pd;
 #X obj 22 376 s py4pd;
-#X msg 46 275 packages;
+#X msg 43 335 packages, f 10;
 #X obj 21 436 r py4pd;
-#X text 111 274 See where is the packages path!;
-#X text 59 189 See where is the home path!;
+#X text 130 334 See where is the packages path!;
+#X text 85 250 See where is the home path!;
 #X obj 16 88 s py4pd;
 #N canvas 1022 602 627 287 modules 0;
 #X obj 17 171 s py4pd;
@@ -25,30 +25,29 @@ modules inside PureData.;
 #X connect 4 0 0 0;
 #X restore 320 38 pd modules;
 #X obj 162 134 s py4pd;
-#X msg 162 105 run \$1 10;
-#X obj 162 19 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000
+#X msg 162 105 run \$1 10, f 10;
+#X obj 162 15 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000
 #000000 0 1;
 #X obj 162 61 random 100;
-#X msg 53 326 packages ./py4pd/Lib/site-packages, f 35;
-#X obj 53 301 loadbang;
-#X msg 46 218 home /home/neimog/Downloads/py4pd/scripts;
-#X text 351 243 If in Linux \, you need to use complete paths \, not
-just relatives;
-#X text 315 325 If in Linux \, you need to use complete paths \, not
-just relatives;
+#X msg 45 289 home /home/neimog/Downloads/py4pd/scripts, f 42;
 #N canvas 140 568 637 300 coding 0;
 #X obj 27 205 s py4pd;
-#X msg 48 57 vscode;
-#X msg 67 90 reload;
-#X msg 94 128 create om;
-#X msg 28 21 doc;
-#X text 56 21 Shows the doc of the function!;
-#X text 103 56 Open vscode if it is in the PATH!;
-#X text 118 91 Reload the function \, if you change it you need to
+#X msg 48 57 vscode, f 8;
+#X msg 67 90 reload, f 8;
+#X msg 94 128 create om, f 11;
+#X msg 28 21 doc, f 6;
+#X text 83 20 Shows the doc of the function!;
+#X text 118 56 Open vscode if it is in the PATH!;
+#X text 135 89 Reload the function \, if you change it you need to
 reload!;
 #X text 170 128 If you want to create a new script \, you can run create
 \, if the files already exits it will not replace it \, just open it.
 ;
+#N canvas 0 50 450 250 (subpatch) 0;
+#X text 0 0 plugdatainfo <?xml version="1.0" encoding="UTF-8"?> <PlugDataInfo/>
+;
+#X coords 0 1 100 -1 1 1 1;
+#X restore 0 0 graph;
 #X connect 1 0 0 0;
 #X connect 2 0 0 0;
 #X connect 3 0 0 0;
@@ -56,17 +55,17 @@ reload!;
 #X restore 320 15 pd coding;
 #X text 393 15 Coding with py4pd;
 #N canvas 140 500 565 451 thread 0;
-#X msg 17 87 thread \$1;
+#X msg 17 87 thread \$1, f 10;
 #X obj 17 62 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000
 0 1;
 #X text 32 59 on/off;
 #X obj 355 48 loadbang;
 #X obj 275 155 *~;
-#X msg 355 113 0.3;
+#X msg 355 113 0.3, f 5;
 #X obj 275 116 osc~;
 #X obj 274 224 dac~;
-#X msg 275 90 200;
-#X msg 99 88 run;
+#X msg 275 90 200, f 6;
+#X msg 99 88 run, f 5;
 #N canvas 0 50 450 300 (subpatch) 0;
 #X obj 463 165 namecanvas \$0-canvas, f 21;
 #X obj 42 27 inlet;
@@ -242,9 +241,9 @@ $f2 + 1 \; i_\$0 = i_\$0 + 1;
 #404040 0;
 #X coords 0 1 1 -1 14 22 2 100 100;
 #X restore 100 100 pd \$0-cnv;
-#X obj 100 101 cnv 1 6 1 empty empty empty 20 12 0 14 #000000 #404040
+#X obj 100 101 cnv 1 6 4 empty empty empty 20 12 0 14 #000000 #404040
 0;
-#X obj 100 120 cnv 1 6 2 empty empty empty 20 12 0 14 #000000 #404040
+#X obj 100 120 cnv 1 6 4 empty empty empty 20 12 0 14 #000000 #404040
 0;
 #N canvas 673 182 374 528 get-symbol 0;
 #X obj 21 89 r \$0-bang;
@@ -558,6 +557,10 @@ $f2 + 1 \; i_\$0 = i_\$0 + 1;
 #X obj 220 166 r \$0-fixed;
 #X obj 146 201 else/router;
 #X obj 423 196 declare -path else;
+#N canvas 0 50 450 250 (subpatch) 0;
+#X text 0 0 plugdatainfo;
+#X coords 0 1 100 -1 1 1 1;
+#X restore 0 0 graph;
 #X connect 1 0 4 0;
 #X connect 1 0 10 0;
 #X connect 10 0 11 0;
@@ -567,11 +570,11 @@ $f2 + 1 \; i_\$0 = i_\$0 + 1;
 #X connect 14 1 3 0;
 #X coords 0 1 1 -1 14 22 2 100 100;
 #X restore 17 231 pd;
-#X msg 425 87 \; pd dsp \$1;
-#X obj 425 49 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000
+#X msg 431 87 \; pd dsp \$1, f 11;
+#X obj 431 48 tgl 30 0 empty empty empty 17 7 0 10 #fcfcfc #000000
 #000000 0 1;
 #X obj 17 195 else/symbol2any;
-#X msg 134 89 set py thread_test;
+#X msg 145 87 set py thread_test, f 18;
 #X obj 17 128 py4pd;
 #X text 17 280 1 Set the function thread_test \; 2 Then turn on the
 dsp and thread mode \; 3 It will just output the hour 5s after you
@@ -581,7 +584,13 @@ that py4pd will not interrupt the audio signal. Try to run the same
 function with the thread mode off. Wait 5 seconds! Pd do not stop to
 work \, just is wait the python script finish his work!;
 #X obj 17 8 loadbang;
-#X msg 17 32 1;
+#X msg 17 32 1, f 5;
+#N canvas 0 50 450 250 (subpatch) 0;
+#X text 0 0 plugdatainfo <?xml version="1.0" encoding="UTF-8"?> <PlugDataInfo/>
+;
+#X coords 0 1 100 -1 1 1 1;
+#X restore 0 0 graph;
+#X obj 89 164 print;
 #X connect 0 0 15 0;
 #X connect 1 0 0 0;
 #X connect 3 0 5 0;
@@ -596,22 +605,23 @@ work \, just is wait the python script finish his work!;
 #X connect 13 0 10 0;
 #X connect 14 0 15 0;
 #X connect 15 0 13 0;
+#X connect 15 0 20 0;
 #X connect 17 0 18 0;
 #X connect 18 0 1 0;
 #X restore 321 62 pd thread;
 #X text 390 61 Documentation about thread with python!;
-#X msg 26 47 run;
+#X msg 26 47 run, f 5;
 #X obj 21 508 s py4pd_answer;
-#X text 62 470 Here the Object!;
-#X obj 127 508 print py4pd_answer;
-#X msg 16 17 set py sum;
+#X text 95 470 Here the Object!;
+#X obj 148 508 print py4pd_answer;
+#X msg 16 17 set py sum, f 12;
 #X text 79 377 Enviroment Name - Always lib - Always site-packages
 ;
-#X text 350 218 Define home Path! 'Where py4pd look for scripts.py'
+#X text 356 290 Define home Path! 'Where py4pd look for scripts.py'
 ;
-#X msg 62 48 doc;
+#X msg 76 46 doc, f 6;
 #X obj 162 39 metro 100;
-#N canvas 460 555 839 327 embedded 1;
+#N canvas 460 555 839 327 embedded 0;
 #X obj 39 164 py4pd;
 #X msg 39 30 set py pd_output;
 #X msg 97 102 run;
@@ -662,19 +672,22 @@ things;
 #X connect 21 0 0 0;
 #X connect 22 0 21 0;
 #X restore 320 86 pd embedded module;
+#N canvas 0 50 450 250 (subpatch) 0;
+#X text 0 0 plugdatainfo <?xml version="1.0" encoding="UTF-8"?> <PlugDataInfo/>
+;
+#X coords 0 1 100 -1 1 1 1;
+#X restore 0 0 graph;
 #X connect 0 0 11 0;
 #X connect 1 0 3 0;
-#X connect 2 0 24 0;
-#X connect 2 0 26 0;
+#X connect 2 0 20 0;
+#X connect 2 0 22 0;
 #X connect 4 0 3 0;
 #X connect 5 0 2 0;
 #X connect 11 0 10 0;
-#X connect 12 0 31 0;
+#X connect 12 0 27 0;
 #X connect 13 0 0 0;
 #X connect 14 0 3 0;
-#X connect 15 0 14 0;
-#X connect 16 0 3 0;
+#X connect 19 0 8 0;
 #X connect 23 0 8 0;
-#X connect 27 0 8 0;
-#X connect 30 0 8 0;
-#X connect 31 0 13 0;
+#X connect 26 0 8 0;
+#X connect 27 0 13 0;
