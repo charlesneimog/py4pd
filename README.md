@@ -46,8 +46,7 @@ Then, in mingw64 terminal:
 #### Windows OS - replace `<username>` for your username.
 
 ``` bash 
-pacman -S make autoconf automake libtool
-pacman -S mingw64/mingw-w64-x86_64-gcc 
+pacman -S make autoconf automake libtool mingw-w64-x86_64-libwinpthread-git mingw64/mingw-w64-x86_64-gcc
 make PYTHON_INCLUDE="C:/Users/<username>/AppData/Local/Programs/Python/Python310/include" PYTHON_DLL="C:/Users/<username>/AppData/Local/Programs/Python/Python310/python310.dll"
 ```
 OBS.: Important, Do not use the Python310.dll of Miniconda or Other to compile `py4pd`. With the 'original' dll it is possible to replace where the python310.dll look for dynamics libraries, this seems not possible with python310.dll provide by Miniconda.
