@@ -6,38 +6,40 @@ lib.name = py4pd
 uname := $(shell uname -s)
 
 ifeq (MINGW,$(findstring MINGW,$(uname)))
-  # remove -Wcast-function-type for mingw 
-  cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type  
-  ldlibs =  $(PYTHON_DLL)  
+  cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -Wincompatible-pointer-types -Wint-conversion
+  ldlibs =  $(PYTHON_DLL) -lwinpthread
   pythondll_name = $(shell basename $(PYTHON_DLL))
   $(shell cp $(PYTHON_DLL) $(pythondll_name))
 
-endif
-
-ifeq (Linux,$(findstring Linux,$(uname)))
-  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type
+else ifeq (Linux,$(findstring Linux,$(uname)))
+  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wincompatible-pointer-types -Wint-conversion
   ldlibs = -l $(PYTHON_VERSION) 
-endif
 
-ifeq (Darwin,$(findstring Darwin,$(uname)))
-  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type
+else ifeq (Darwin,$(findstring Darwin,$(uname)))
+  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wincompatible-pointer-types -Wint-conversion
   ldlibs = -l $(PYTHON_VERSION)
+
+else
+  $(error "Unknown system type: $(uname)")
+  $(shell exit 1)
+
 endif
 
-# input source file (class name == source file basename)
-py4pd.class.sources = src/py4pd.c 
-py4pd~.class.sources = src/py4pd_tilde.c
+# =================================== Sources ===================================
 
-# all extra files to be included in binary distribution of the library
+py4pd.class.sources = src/py4pd.c src/module.c
+# py4pd~.class.sources = src/py4pd_tilde.c
+
+# =================================== Data ======================================
 datafiles = \
 $(wildcard Help-files/*.pd) \
 $(wildcard scripts/*.py) \
 $(wildcard py4pd-help.pd) \
+$(wildcard python310._pth) \
 $(PYTHON_DLL)
 
-# include Makefile.pdlibbuilder
-# (for real-world projects see the "Project Management" section
-# in tips-tricks.md)
+# =================================== Pd Lib Builder =============================
+
 PDLIBBUILDER_DIR=./pd-lib-builder/
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 

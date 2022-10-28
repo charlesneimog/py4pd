@@ -23,11 +23,11 @@ def fibonacci(n):
 def thread_test():
     "It tests the threading module. Just return the hour after 5 seconds."
     import time
+    import pd
+    pd.message("Starting thread...")
     time.sleep(5)
-    hour = time.strftime("%H")
-    minute = time.strftime("%M")
-    second = time.strftime("%S")
-    return f'{hour}:{minute}:{second}'
+    pd.message("Thread finished.")
+    return time.strftime("%H:%M:%S")
 
 def pd_output():
     "It sends some output to the py4pd output."
@@ -46,5 +46,6 @@ def pd_message():
 def pd_error():
     "It sends a message to the py4pd message box."
     import pd # import the py4pd module (embedded in the python interpreter)
+    # NOT WORKING
     pd.error("Python error!")
     return None

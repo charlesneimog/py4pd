@@ -1,7 +1,6 @@
 #N canvas 570 73 806 602 12;
 #X declare -path else;
-#X obj 165 86 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 #fcfcfc
-#000000 #000000 0 1;
+#X obj 165 86 hsl 128 15 0 127 0 0 empty empty empty -2 -8 0 10 #fcfcfc #000000 #000000 0 1;
 #X msg 22 251 home, f 7;
 #X obj 21 471 py4pd;
 #X obj 22 376 s py4pd;
@@ -16,9 +15,7 @@
 #X msg 17 15 set modules randint;
 #X msg 38 47 run 1 4;
 #X msg 70 80 doc;
-#X text 234 20 In modules.py I just use the 'from random import *'
-Using that you will be able to use all python func- tions of diferrent
-modules inside PureData.;
+#X text 234 20 In modules.py I just use the 'from random import *' Using that you will be able to use all python func- tions of diferrent modules inside PureData.;
 #X connect 1 0 0 0;
 #X connect 2 0 0 0;
 #X connect 3 0 0 0;
@@ -26,8 +23,7 @@ modules inside PureData.;
 #X restore 320 38 pd modules;
 #X obj 162 134 s py4pd;
 #X msg 162 105 run \$1 10, f 10;
-#X obj 162 15 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000
-#000000 0 1;
+#X obj 162 15 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000 0 1;
 #X obj 162 61 random 100;
 #X msg 45 289 home /home/neimog/Downloads/py4pd/scripts, f 42;
 #N canvas 140 568 637 300 coding 0;
@@ -38,14 +34,10 @@ modules inside PureData.;
 #X msg 28 21 doc, f 6;
 #X text 83 20 Shows the doc of the function!;
 #X text 118 56 Open vscode if it is in the PATH!;
-#X text 135 89 Reload the function \, if you change it you need to
-reload!;
-#X text 170 128 If you want to create a new script \, you can run create
-\, if the files already exits it will not replace it \, just open it.
-;
+#X text 135 89 Reload the function \, if you change it you need to reload!;
+#X text 170 128 If you want to create a new script \, you can run create \, if the files already exits it will not replace it \, just open it.;
 #N canvas 0 50 450 250 (subpatch) 0;
-#X text 0 0 plugdatainfo <?xml version="1.0" encoding="UTF-8"?> <PlugDataInfo/>
-;
+#X text 0 0 plugdatainfo <?xml version="1.0" encoding="UTF-8"?> <PlugDataInfo/>;
 #X coords 0 1 100 -1 1 1 1;
 #X restore 0 0 graph;
 #X connect 1 0 0 0;
@@ -54,17 +46,16 @@ reload!;
 #X connect 4 0 0 0;
 #X restore 320 15 pd coding;
 #X text 393 15 Coding with py4pd;
-#N canvas 140 500 565 451 thread 0;
+#N canvas 881 301 594 470 thread 0;
 #X msg 17 87 thread \$1, f 10;
-#X obj 17 62 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000
-0 1;
+#X obj 17 62 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000 0 1;
 #X text 32 59 on/off;
-#X obj 355 48 loadbang;
-#X obj 275 155 *~;
-#X msg 355 113 0.3, f 5;
-#X obj 275 116 osc~;
-#X obj 274 224 dac~;
-#X msg 275 90 200, f 6;
+#X obj 371 46 loadbang;
+#X obj 291 153 *~;
+#X msg 371 111 0.3, f 5;
+#X obj 291 114 osc~;
+#X obj 290 222 dac~;
+#X msg 291 88 200, f 6;
 #X msg 99 88 run, f 5;
 #N canvas 0 50 450 300 (subpatch) 0;
 #X obj 463 165 namecanvas \$0-canvas, f 21;
@@ -133,8 +124,7 @@ reload!;
 #X obj 83 157 trigger symbol symbol;
 #X obj 107 101 s \$0-message;
 #X obj 108 129 r \$0-resize-unfixed;
-#X msg 83 333 \; \$2-display label \$1 \, vis_size \$3 20 \; \$2-canvas
-coords 0 1 1 -1 \$4 22 2 100 100 1;
+#X msg 83 333 \; \$2-display label \$1 \, vis_size \$3 20 \; \$2-canvas coords 0 1 1 -1 \$4 22 2 100 100 1;
 #X connect 0 0 4 0;
 #X connect 0 0 5 0;
 #X connect 1 0 2 3;
@@ -192,8 +182,7 @@ coords 0 1 1 -1 \$4 22 2 100 100 1;
 #X obj 459 429 - 1;
 #X obj 392 593 outlet;
 #X obj 597 76 inlet;
-#X obj 187 272 expr (c_\$0 = (c_\$0 + ($f1 < 128 || $f1 > 191))) ==
-$f2 + 1 \; i_\$0 = i_\$0 + 1;
+#X obj 187 272 expr (c_\$0 = (c_\$0 + ($f1 < 128 || $f1 > 191))) == $f2 + 1 \; i_\$0 = i_\$0 + 1;
 #X obj 113 76 inlet;
 #X obj 187 434 != 0;
 #X obj 112 463 else/router;
@@ -237,14 +226,11 @@ $f2 + 1 \; i_\$0 = i_\$0 + 1;
 #X text 382 249 Part of ELSE \; https://github.com/porres/pd-else;
 #X text 380 228 Alexandre Torres Porres (2017-2018);
 #N canvas 185 381 450 300 \$0-cnv 0;
-#X obj 101 101 cnv 10 12 20 empty 1003-display empty 2 10 0 12 #e0e0e0
-#404040 0;
+#X obj 101 101 cnv 10 12 20 empty 1003-display empty 2 10 0 12 #e0e0e0 #404040 0;
 #X coords 0 1 1 -1 14 22 2 100 100;
 #X restore 100 100 pd \$0-cnv;
-#X obj 100 101 cnv 1 6 4 empty empty empty 20 12 0 14 #000000 #404040
-0;
-#X obj 100 120 cnv 1 6 4 empty empty empty 20 12 0 14 #000000 #404040
-0;
+#X obj 100 101 cnv 1 6 4 empty empty empty 20 12 0 14 #000000 #404040 0;
+#X obj 100 120 cnv 1 6 4 empty empty empty 20 12 0 14 #000000 #404040 0;
 #N canvas 673 182 374 528 get-symbol 0;
 #X obj 21 89 r \$0-bang;
 #X obj 59 184 symbol;
@@ -434,8 +420,7 @@ $f2 + 1 \; i_\$0 = i_\$0 + 1;
 #X connect 20 0 17 0;
 #X restore 211 405 pd off;
 #X obj 211 372 select 0 1;
-#X obj 211 340 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000
-#000000 0 1;
+#X obj 211 340 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000 0 1;
 #X msg 270 405 color -4.86997e+06 -1.34937e+07 0;
 #X obj 270 450 s \$0-display;
 #X obj 211 308 delay 50;
@@ -502,13 +487,10 @@ $f2 + 1 \; i_\$0 = i_\$0 + 1;
 #X obj 119 546 s \$0-arg-rate;
 #X obj 123 572 r \$0-set-rate;
 #X obj 387 185 symbol;
-#X obj 387 148 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc
-#000000 #000000;
+#X obj 387 148 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000;
 #X obj 507 224 s pd-\$0-cnv;
 #X msg 507 199 clear;
-#X msg 387 261 \; pd-\$2-cnv clear \, obj 101 101 cnv 10 12 20 empty
-\$2-display \$1 2 10 0 12 -233017 -66577 0 \, coords 0 1 1 -1 14 22
-2 100 100 1 \; \$2-canvas coords 0 1 1 -1 14 22 2 100 100 1;
+#X msg 387 261 \; pd-\$2-cnv clear \, obj 101 101 cnv 10 12 20 empty \$2-display \$1 2 10 0 12 -233017 -66577 0 \, coords 0 1 1 -1 14 22 2 100 100 1 \; \$2-canvas coords 0 1 1 -1 14 22 2 100 100 1;
 #X obj 387 219 pack symbol \$0;
 #X obj 268 388 t f b;
 #X obj 95 272 t b f;
@@ -570,24 +552,16 @@ $f2 + 1 \; i_\$0 = i_\$0 + 1;
 #X connect 14 1 3 0;
 #X coords 0 1 1 -1 14 22 2 100 100;
 #X restore 17 231 pd;
-#X msg 431 87 \; pd dsp \$1, f 11;
-#X obj 431 48 tgl 30 0 empty empty empty 17 7 0 10 #fcfcfc #000000
-#000000 0 1;
+#X msg 447 85 \; pd dsp \$1, f 11;
+#X obj 447 46 tgl 30 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000 0 1;
 #X obj 17 195 else/symbol2any;
-#X msg 145 87 set py thread_test, f 18;
+#X msg 145 87 set py thread_test;
 #X obj 17 128 py4pd;
-#X text 17 280 1 Set the function thread_test \; 2 Then turn on the
-dsp and thread mode \; 3 It will just output the hour 5s after you
-press run \; For python scripts that need some time to execute \, the
-thread mode will allow do not stop the PD process to run. This means
-that py4pd will not interrupt the audio signal. Try to run the same
-function with the thread mode off. Wait 5 seconds! Pd do not stop to
-work \, just is wait the python script finish his work!;
+#X text 17 280 1 Set the function thread_test \; 2 Then turn on the dsp and thread mode \; 3 It will just output the hour 5s after you press run \; For python scripts that need some time to execute \, the thread mode will allow do not stop the PD process to run. This means that py4pd will not interrupt the audio signal. Try to run the same function with the thread mode off. Wait 5 seconds! Pd do not stop to work \, just is wait the python script finish his work!;
 #X obj 17 8 loadbang;
 #X msg 17 32 1, f 5;
 #N canvas 0 50 450 250 (subpatch) 0;
-#X text 0 0 plugdatainfo <?xml version="1.0" encoding="UTF-8"?> <PlugDataInfo/>
-;
+#X text 0 0 plugdatainfo <?xml version="1.0" encoding="UTF-8"?> <PlugDataInfo/>;
 #X coords 0 1 100 -1 1 1 1;
 #X restore 0 0 graph;
 #X obj 89 164 print;
@@ -615,10 +589,8 @@ work \, just is wait the python script finish his work!;
 #X text 95 470 Here the Object!;
 #X obj 148 508 print py4pd_answer;
 #X msg 16 17 set py sum, f 12;
-#X text 79 377 Enviroment Name - Always lib - Always site-packages
-;
-#X text 356 290 Define home Path! 'Where py4pd look for scripts.py'
-;
+#X text 79 377 Enviroment Name - Always lib - Always site-packages;
+#X text 356 290 Define home Path! 'Where py4pd look for scripts.py';
 #X msg 76 46 doc, f 6;
 #X obj 162 39 metro 100;
 #N canvas 460 555 839 327 embedded 0;
@@ -631,26 +603,20 @@ work \, just is wait the python script finish his work!;
 #X obj 494 190 dac~;
 #X msg 495 79 200;
 #X msg 645 76 \; pd dsp \$1;
-#X obj 645 38 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000
-#000000 0 1;
+#X obj 645 38 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000 0 1;
 #X msg 39 188 set \$1;
 #X msg 39 212 9;
-#X text 92 163 This is more a thing for developers and Python users.
-;
-#X text 36 270 With this you can send values for pd without return
-\, this seems to be very useful for work with list of lists. And other
-things;
+#X text 92 163 This is more a thing for developers and Python users.;
+#X text 36 270 With this you can send values for pd without return \, this seems to be very useful for work with list of lists. And other things;
 #X obj 38 241 print pd.out;
 #X msg 52 54 set py pd_message;
 #X msg 67 77 set py pd_error;
 #X msg 200 104 thread \$1;
-#X obj 200 72 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000
-#000000 0 1;
+#X obj 200 72 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000 0 1;
 #X msg 575 102 0.0003;
 #X obj 495 145 *~ 0.002;
 #X msg 274 104 sound \$1;
-#X obj 274 74 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000
-#000000 0 1;
+#X obj 274 74 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000 0 1;
 #X connect 0 0 10 0;
 #X connect 0 0 14 0;
 #X connect 1 0 0 0;
@@ -673,10 +639,53 @@ things;
 #X connect 22 0 21 0;
 #X restore 320 86 pd embedded module;
 #N canvas 0 50 450 250 (subpatch) 0;
-#X text 0 0 plugdatainfo <?xml version="1.0" encoding="UTF-8"?> <PlugDataInfo/>
-;
+#X text 0 0 plugdatainfo <?xml version="1.0" encoding="UTF-8"?> <PlugDataInfo/>;
 #X coords 0 1 100 -1 1 1 1;
 #X restore 0 0 graph;
+#N canvas 881 301 934 596 debug 1;
+#X msg 17 87 thread \$1, f 10;
+#X obj 17 62 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000 0 1;
+#X text 32 59 on/off;
+#X msg 99 88 run, f 5;
+#X msg 145 87 set py thread_test;
+#X obj 17 128 py4pd;
+#X text 17 280 1 Set the function thread_test \; 2 Then turn on the dsp and thread mode \; 3 It will just output the hour 5s after you press run \; For python scripts that need some time to execute \, the thread mode will allow do not stop the PD process to run. This means that py4pd will not interrupt the audio signal. Try to run the same function with the thread mode off. Wait 5 seconds! Pd do not stop to work \, just is wait the python script finish his work!;
+#X obj 17 8 loadbang;
+#X msg 17 32 1, f 5;
+#N canvas 0 50 450 250 (subpatch) 0;
+#X text 0 0 plugdatainfo <?xml version="1.0" encoding="UTF-8"?> <PlugDataInfo/>;
+#X coords 0 1 100 -1 1 1 1;
+#X restore 0 0 graph;
+#X msg 309 86 thread \$1, f 10;
+#X obj 309 61 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000 0 1;
+#X text 324 58 on/off;
+#X msg 391 87 run, f 5;
+#X msg 437 86 set py thread_test;
+#X obj 309 127 py4pd;
+#X obj 309 7 loadbang;
+#X msg 309 31 1, f 5;
+#X obj 17 164 print thread-1;
+#X obj 309 211 print thread-2;
+#X obj 180 30 bng 19 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
+#X obj 309 161 cyclone/fromsymbol;
+#X connect 0 0 5 0;
+#X connect 1 0 0 0;
+#X connect 3 0 5 0;
+#X connect 4 0 5 0;
+#X connect 5 0 18 0;
+#X connect 7 0 8 0;
+#X connect 8 0 1 0;
+#X connect 10 0 15 0;
+#X connect 11 0 10 0;
+#X connect 13 0 15 0;
+#X connect 14 0 15 0;
+#X connect 15 0 21 0;
+#X connect 16 0 17 0;
+#X connect 17 0 11 0;
+#X connect 20 0 3 0;
+#X connect 20 0 13 0;
+#X connect 21 0 19 0;
+#X restore 334 146 pd debug thread;
 #X connect 0 0 11 0;
 #X connect 1 0 3 0;
 #X connect 2 0 20 0;
