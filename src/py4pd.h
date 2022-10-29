@@ -54,7 +54,8 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject            *globals;
 
     // define py_interpreter
-    PyInterpreterState   *py_interpreter;
+    PyThreadState       *py_main_interpreter;
+    PyThreadState       *py_thread_interpreter;
     t_float             x_f;
     t_float             *thread; // arguments
     t_float             *function_called; // flag to check if the set function was called
@@ -74,5 +75,8 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 static t_py *py4pd_object;
 
 static PyInterpreterState *pymain = NULL; // main interpreter state
+
+typedef PyGILState_STATE ThrState; // thread state
+static ThrState pythrsys; // thread state
 
 #endif

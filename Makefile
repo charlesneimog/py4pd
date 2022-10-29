@@ -34,8 +34,9 @@ py4pd.class.sources = src/py4pd.c src/module.c
 datafiles = \
 $(wildcard Help-files/*.pd) \
 $(wildcard scripts/*.py) \
+$(wildcard py.py) \
 $(wildcard py4pd-help.pd) \
-$(wildcard python310._pth) \
+$(wildcard python311._pth) \
 $(PYTHON_DLL)
 
 # =================================== Pd Lib Builder =============================

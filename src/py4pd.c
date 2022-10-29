@@ -1,6 +1,7 @@
 #include "py4pd.h"
 #include "module.h"
 
+
 static int object_count = 1;
 static int thread_status[100];
 static t_class *py4pd_class; // 
@@ -348,17 +349,17 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     Py_DECREF(pName); // DOC: Delete the name of the script file
     if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable   
         PyObject *inspect=NULL, *getargspec=NULL, *argspec=NULL, *args=NULL;
-        inspect = PyImport_ImportModule("inspect");
-        getargspec = PyObject_GetAttrString(inspect, "getargspec");
-        argspec = PyObject_CallFunctionObjArgs(getargspec, pFunc, NULL);
-        args = PyObject_GetAttrString(argspec, "args");
-        int py_args = PyObject_Size(args);
+        // inspect = PyImport_ImportModule("inspect");
+        // getargspec = PyObject_GetAttrString(inspect, "getargspec");
+        // argspec = PyObject_CallFunctionObjArgs(getargspec, pFunc, NULL);
+        // args = PyObject_GetAttrString(argspec, "args");
+        // int py_args = PyObject_Size(args);
         post("[py4pd] Function loaded!");
-        post("[py4pd] It has %i arguments!", py_args);
+        // post("[py4pd] It has %i arguments!", py_args);
+        // // x->py_arg_numbers = py_args;
+        // // warning: assignment to 'int *' from 'int' makes pointer from integer without a cast [-Wint-conversion] in x->py_arg_numbers = py_args;
+        // // The solution is to use a pointer to the int variable
         // x->py_arg_numbers = py_args;
-        // warning: assignment to 'int *' from 'int' makes pointer from integer without a cast [-Wint-conversion] in x->py_arg_numbers = py_args;
-        // The solution is to use a pointer to the int variable
-        x->py_arg_numbers = py_args;
         x->function = pFunc;
         x->module = pModule;
         x->script_name = script_file_name;
@@ -535,12 +536,12 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 
 static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    // set GIL is held
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
-    PyThreadState* ts = PyThreadState_New(x->py_interpreter);
+
+    // set interpreter state
+    PyThreadState* Inter = Py_NewInterpreter();
+    PyThreadState* ts = PyThreadState_New(Inter);
     PyThreadState_Swap(ts);
-    
+    // return;   
     (void)s;
     if (argc != x->py_arg_numbers) {
         pd_error(x, "[py4pd] Wrong number of arguments!");
@@ -592,9 +593,10 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
 
 
-    pValue = PyObject_CallObject(pFunc, pArgs); // DOC: Call the function
+    pValue = PyObject_CallObject(pFunc, pArgs); // DOC: Call and execute the function
 
 
+    // DOC: Convert Python object to Pd object
     if (pValue != NULL) {                                // DOC: if the function returns a value   
         if (PyList_Check(pValue)){                       // DOC: If the function return a list list
             int list_size = PyList_Size(pValue);
@@ -647,8 +649,9 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
                 
             } else if (PyUnicode_Check(pValue)) {
                 const char *result = PyUnicode_AsUTF8(pValue); // DOC: If the function return a string
+                post("Sou uma string");
                 outlet_symbol(x->out_A, gensym(result)); 
-                
+                                
             // now check if it return None
             } else if (Py_IsNone(pValue)) {
                 post("None");
@@ -657,7 +660,7 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
                 return;
             } else {
                 pd_error(x, "[py4pd] py4pd just convert int, float and string!\n");
-                pd_error(x, "INFO  [!!!] The value received is of type %s", Py_TYPE(pValue)->tp_name);
+                pd_error(x, "[py4pd] INFO - The value received is of type %s", Py_TYPE(pValue)->tp_name);
                 Py_DECREF(pValue);
                 Py_DECREF(pArgs);
                 
@@ -677,10 +680,11 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
         Py_DECREF(ptraceback);
     }
     Py_DECREF(pArgs);
+    // Remove the Python interpreter from the current thread
+    PyThreadState_Swap(NULL);
     PyThreadState_Clear(ts);
-    PyThreadState_DeleteCurrent();
-    PyEval_RestoreThread(ts);
-    return;
+    PyThreadState_Delete(ts);
+    return PyEval_ReleaseLock(); 
 }
 
 // ============================================
@@ -706,14 +710,16 @@ static void *ThreadFunc(void *lpParameter) {
     t_atom *argv = arg->argv;
     int object_number = *(x->object_number);
     thread_status[object_number] = 1;
-    
     run_function_thread(x, s, argc, argv);
-
     thread_status[object_number] = 0;
+    pthread_exit(0);
     return NULL;
 }
 
-// create_thread in Linux
+// ============================================
+// ============================================
+// ============================================
+
 static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     struct thread_arg_struct *arg = (struct thread_arg_struct *)malloc(sizeof(struct thread_arg_struct));
@@ -728,20 +734,26 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
         return;
     } else {
         if (thread_status[object_number] == 0){
+            // PyThread is not thread safe, so we need to lock the GIL
+                      
+            Py_BEGIN_ALLOW_THREADS
+            pthread_mutex_t mutex;
+            pthread_cond_t cond;
             pthread_t thread;
             pthread_t hThread;
-            hThread = pthread_create(&thread, NULL, ThreadFunc, arg);
-            // convert int * to int
+            PyThreadState *tstate = PyThreadState_Get();
+            PyEval_RestoreThread(tstate);
+            PyEval_SaveThread();
+            post("Thread created");
+
+            //  Create a thread, run the funcion ThreadFunc but don't wait for it to finish
+            pthread_create(&hThread, NULL, ThreadFunc, arg);
+            pthread_detach(hThread);     
+                           
+            Py_END_ALLOW_THREADS
             int state = 1;
             x->state = &state;
             // check the Thread was created
-            if (hThread != 0) {
-                pd_error(x, "[py4pd] CreateThread failed");
-                free(arg);
-                return;
-            } else {
-                return;
-            }
         } else {
             pd_error(x, "[py4pd] There is a thread running in this Object!");
             free(arg);
@@ -776,9 +788,12 @@ static void thread(t_py *x, t_floatarg f){
         post("[py4pd] Threading enabled");
         x->thread = malloc(sizeof(int)); 
         *(x->thread) = 1; // 
-        // release the GIL
-        PyGILState_STATE gstate;
-        gstate = PyGILState_Ensure();
+    
+        // PyEval_SaveThread();
+        
+        PyThreadState_Swap(x->py_main_interpreter);
+
+
         return;
     } else if (thread == 0) {
         x->thread = malloc(sizeof(int)); 
@@ -796,14 +811,16 @@ static void thread(t_py *x, t_floatarg f){
 
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
 
-
+    // Get Python version
+    const char *version = Py_GetVersion();
     t_py *x = (t_py *)pd_new(py4pd_class);
     // credits
     post("");
     post("[py4pd] py4pd by Charles K. Neimog");
     post("[py4pd] version 0.0.3       ");
-    post("[py4pd] based on Python 3.10.5  ");
+    post("[py4pd] Based on Python version %s", version);
     post("[py4pd] inspired by the work of Thomas Grill and SOPI research group.");
+    post("");
     // Object count
     x->object_number = malloc(sizeof(int));
     *(x->object_number) = object_count;
@@ -826,9 +843,8 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         // PyEval_SaveThread();
     }
 
-    // get  PyInterpreterState 
-    PyInterpreterState *interp = PyInterpreterState_Head();
-    x->py_interpreter = interp;
+    PyThreadState* _main = PyThreadState_Get();
+    x->py_main_interpreter = _main;
     
     x->home_path = patch_dir;     // set name of the home path
     x->packages_path = patch_dir; // set name of the packages path
@@ -917,7 +933,7 @@ void py4pd_setup(void){
     // Documentation
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
 
-    }
+}
 
 // ==================== PD FUNCTIONS INSIDE PYTHON ====================
 // ====================================================================
