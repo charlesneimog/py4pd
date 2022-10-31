@@ -823,7 +823,6 @@ static void thread(t_py *x, t_floatarg f){
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
 
     // Get Python version
-    const char *version = Py_GetVersion();
     t_py *x = (t_py *)pd_new(py4pd_class);
         
     // Object count
@@ -843,7 +842,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         post("");
         post("[py4pd] py4pd by Charles K. Neimog");
         post("[py4pd] version 0.0.3       ");
-        post("[py4pd] Based on Python version %s", version);
+        post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
         post("[py4pd] inspired by the work of Thomas Grill and SOPI research group.");
         post("");
         const wchar_t *py_name_ptr; // 
@@ -879,7 +878,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     x->packages_path = patch_dir; // set name of the packages path
     x->thread = malloc(sizeof(int));   // set thread status
     *(x->thread) = 2; // solution but it is weird!
-    post("[py4pd] Home folder is: %s", x->home_path->s_name);
     
     // check if in x->home_path there is a file py4pd.config
     char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1)); // 
@@ -897,7 +895,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
                 packages_path[strlen(packages_path) - 1] = '\0'; // remove last character
                 if (strlen(packages_path) > 0) { // check if path is not empty
                     x->packages_path = gensym(packages_path); // set name
-                    post("[py4pd] Packages path set to %s", packages_path); // print path
                 }
                 free(packages_path); // free memory
             }
