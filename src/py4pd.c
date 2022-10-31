@@ -839,6 +839,13 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     // check if python is initialized, if not, initialize it
     
     if (!Py_IsInitialized()) {
+        // Credits
+        post("");
+        post("[py4pd] py4pd by Charles K. Neimog");
+        post("[py4pd] version 0.0.3       ");
+        post("[py4pd] Based on Python version %s", version);
+        post("[py4pd] inspired by the work of Thomas Grill and SOPI research group.");
+        post("");
         const wchar_t *py_name_ptr; // 
         char *program_name = malloc(sizeof(char) * 5); // 
         sprintf(program_name, "py4pd"); // 
