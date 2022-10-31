@@ -1,4 +1,0 @@
-#N canvas 815 239 696 544 12;
-#X obj 24 67 py4pd;
-#X msg 24 21 global ckn 4;
-#X connect 1 0 0 0;
