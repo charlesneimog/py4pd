@@ -3,14 +3,14 @@
 # py4pd 
 #### [Download](https://github.com/charlesneimog/py4pd/releases)
 
-py4pd allows the use of Python inside PureData. It has the same objective as py/pyext being much simpler to keep compile, mainly for Windows OS. It was, in first place, a trying to compile py/pyext for Windows OS, but I couldn't. Then I did the object. It is based in samples of code from Internet and, of course, the code of py-pyext, mainly in the fork of SOPI research group.
+py4pd allows the use of Python inside PureData. It has the same objective as py/pyext being much simpler to keep compile, mainly for Windows OS. It was, in first place, a trying to compile py/pyext for Windows OS, but I couldn't. Then I did the object. It is based in samples of code from Internet and how py-pyext works, mainly in the fork of SOPI research group.
 1. [How to call Python from C](https://stackoverflow.com/questions/1056051/how-do-you-call-python-code-from-c-code);
 2. [C api from Python Docs](https://docs.python.org/3/extending/embedding.html);
 
 
 ### Documentation
 
-**[!]** On MacOS and Linux you need to install Python 3.10.
+**[ !!! ]** On MacOS and Linux, for now, you need to install Python 3.10.
 
 #### Using Python Modules
 
@@ -34,9 +34,7 @@ def otonal_diamond(limit, diagonal, fundamental):
 
 Then a sent the message `set {script_without_.py} {function_name}`, in this case, `set partch otonal_diamond` and run it using `run 13 3 440`. That means that the object will return a Diamond limit of 13, the third Diagonal (in this case, not the same that the figures), with the A4 how fundamental.
 
-<img src="https://user-images.githubusercontent.com/31707161/179780465-0bec0a51-8bdb-4733-a846-7e1952311277.png" width=40% height=40%> 
-
-
+<img src="https://user-images.githubusercontent.com/31707161/200134314-fb994d6a-dfa7-4b19-a578-1966a54adf5f.png" width=40% height=40%> 
 
 ### Building
 
@@ -49,10 +47,10 @@ Then, in mingw64 terminal:
 pacman -S make autoconf automake libtool mingw-w64-x86_64-libwinpthread-git mingw64/mingw-w64-x86_64-gcc
 make PYTHON_INCLUDE="C:/Users/<username>/AppData/Local/Programs/Python/Python310/include" PYTHON_DLL="C:/Users/<username>/AppData/Local/Programs/Python/Python310/python310.dll"
 ```
-OBS.: Important, Do not use the Python310.dll of Miniconda or Other to compile `py4pd`. With the 'original' dll it is possible to replace where the python310.dll look for dynamics libraries, this seems not possible with python310.dll provide by Miniconda.
+OBS.: **Important**, Do not use the `Python310.dll` of `miniconda`, `conda` or other to compile `py4pd`. With the 'original' dll it is possible to replace where the `python310.dll` look for dynamics libraries.
 
 -----------------
-If you want to try to build it on Linux:
+If you want to build it on Linux:
 
 #### Linux - version 3.10
 * First you need to run: 
@@ -64,7 +62,7 @@ make PYTHON_INCLUDE=/usr/include/python3.10/ PYTHON_VERSION=python3.10
 ```
 
 #### MacOS - version 3.10
-* First you need to install Python 3.10 (https://www.python.org/downloads/) then run:
+* First you need to install Python 3.10 (https://www.python.org/downloads/release/python-3108/) then run:
 
 ``` bash 
 sudo ln -s /Library/Frameworks/Python.framework/Versions/3.10/lib/libpython3.10.dylib /usr/local/lib/libpython3.10.dylib
