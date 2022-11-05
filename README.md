@@ -10,7 +10,7 @@ py4pd allows the use of Python inside PureData. It has the same objective as py/
 
 ### Documentation
 
-**[!]** On MacOS and Linux, for now, you need to install Python 3.10.
+**[ !!! ]** On MacOS and Linux, for now, you need to install Python 3.10.
 
 #### Using Python Modules
 
