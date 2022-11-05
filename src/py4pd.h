@@ -77,14 +77,15 @@ static t_py *py4pd_object;
 // create a pointer for the t_py class
 
 static t_class *py4pd_class;
+static int object_count = 1;
+static int thread_status[100];
 
 static PyInterpreterState *pymain = NULL; // main interpreter state
 
 typedef PyGILState_STATE ThrState; // thread state
 static ThrState pythrsys; // thread state
 
-// Set DEBUG
-
+// Set Debug mode
 #define DEBUG 1
 
 
