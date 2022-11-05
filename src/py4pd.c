@@ -1,13 +1,95 @@
 #include "py4pd.h"
 #include "module.h"
 
+// ===================================================================
+// ========================= Utilities ===============================
+// ===================================================================
 
-static int object_count = 1;
-static int thread_status[100];
-static t_class *py4pd_class; // 
+
+static PyObject *py4pd_convert_to_python(t_atom *pd_value) {
+    PyObject *pValue;
+    if (pd_value->a_type == A_FLOAT){ 
+            float arg_float = atom_getfloat(pd_value);
+            if (arg_float == (int)arg_float){ // DOC: If the float is an integer, then convert to int
+                int arg_int = (int)arg_float;
+                pValue = PyLong_FromLong(arg_int);
+            }
+            else{ // If the int is an integer, then convert to int
+                pValue = PyFloat_FromDouble(arg_float);
+            }
+    } else if (pd_value->a_type == A_SYMBOL) {
+        pValue = PyUnicode_DecodeFSDefault(pd_value->a_w.w_symbol->s_name);
+    } else {
+        pValue = Py_None;
+        Py_INCREF(Py_None);
+    }
+    return pValue;
+}
 
 
-// define global pointer for py_object
+// =====================================================================
+// convert Python object to Pd object
+static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
+    
+    if (PyList_Check(pValue)){                       // DOC: If the function return a list list
+        int list_size = PyList_Size(pValue);
+        t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));     
+        int i;       
+        for (i = 0; i < list_size; ++i) {
+            PyObject *pValue_i = PyList_GetItem(pValue, i);
+            if (PyLong_Check(pValue_i)) {            // DOC: If the function return a list of integers
+                long result = PyLong_AsLong(pValue_i);
+                float result_float = (float)result;
+                list_array[i].a_type = A_FLOAT;
+                list_array[i].a_w.w_float = result_float;
+
+            } else if (PyFloat_Check(pValue_i)) {    // DOC: If the function return a list of floats
+                double result = PyFloat_AsDouble(pValue_i);
+                float result_float = (float)result;
+                list_array[i].a_type = A_FLOAT;
+                list_array[i].a_w.w_float = result_float;
+            } else if (PyUnicode_Check(pValue_i)) {  // DOC: If the function return a list of strings
+                const char *result = PyUnicode_AsUTF8(pValue_i); 
+                list_array[i].a_type = A_SYMBOL;
+                list_array[i].a_w.w_symbol = gensym(result);
+            } else if (Py_IsNone(pValue_i)) {        // DOC: If the function return a list of None
+                post("None");
+            } else {
+                pd_error(x, "[py4pd] py4pd just convert int, float and string! Received: %s", Py_TYPE(pValue_i)->tp_name);
+                Py_DECREF(pValue_i);
+                return;
+            }
+        }
+        outlet_list(x->out_A, 0, list_size, list_array); // TODO: possible do in other way? Seems slow!
+        return;
+    } else {
+        if (PyLong_Check(pValue)) {
+            long result = PyLong_AsLong(pValue); // DOC: If the function return a integer
+            outlet_float(x->out_A, result);
+            //PyGILState_Release(gstate);
+            return;
+        } else if (PyFloat_Check(pValue)) {
+            double result = PyFloat_AsDouble(pValue); // DOC: If the function return a float
+            float result_float = (float)result;
+            outlet_float(x->out_A, result_float);
+            //PyGILState_Release(gstate);
+            return;
+            // outlet_float(x->out_A, result);
+        } else if (PyUnicode_Check(pValue)) {
+            const char *result = PyUnicode_AsUTF8(pValue); // DOC: If the function return a string
+            outlet_symbol(x->out_A, gensym(result)); 
+            return;
+            
+        } else if (Py_IsNone(pValue)) {
+            post("None");
+        } else {
+            pd_error(x, "[py4pd] py4pd just convert int, float and string!\n");
+            pd_error(x, "INFO  [!!!!] The value received is of type %s", Py_TYPE(pValue)->tp_name);
+            return;
+        }
+    }
+}
+        
 
 
 
@@ -19,11 +101,11 @@ static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; // unused but required by pd
     if (argc < 1) {
         post("[py4pd] The home path is: %s", x->home_path->s_name);
-        return; 
     } else {
         x->home_path = atom_getsymbol(argv);
         post("[py4pd] The home path set to: %s", x->home_path->s_name);
     }
+    return;
 }
 
 // // ============================================
@@ -375,6 +457,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     pFunc = PyObject_GetAttrString(pModule, function_name->s_name); // Function name inside the script file
     Py_DECREF(pName); // DOC: Delete the name of the script file
     if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable   
+        
+        // Get the number of arguments of the function 
         PyObject *inspect=NULL, *getargspec=NULL, *argspec=NULL, *args=NULL;
         inspect = PyImport_ImportModule("inspect");
         getargspec = PyObject_GetAttrString(inspect, "getargspec");
@@ -383,9 +467,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         int py_args = PyObject_Size(args);
         post("[py4pd] It has %i arguments!", py_args);
         x->py_arg_numbers = py_args;
-        // warning: assignment to 'int *' from 'int' makes pointer from integer without a cast [-Wint-conversion] in x->py_arg_numbers = py_args;
-        // The solution is to use a pointer to the int variable
-        x->py_arg_numbers = py_args;
+
+        // Salve called function in the object
         x->function = pFunc;
         x->module = pModule;
         x->script_name = script_file_name;
@@ -406,7 +489,9 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "Call failed:\n %s", PyUnicode_AsUTF8(pstr));
+        pd_error(x, "[py4pd] Call failed:\n %s", PyUnicode_AsUTF8(pstr));
+
+        // DOC: Delete unnecessary objects
         Py_DECREF(pstr);
         Py_XDECREF(pModule);
         Py_XDECREF(pFunc);
@@ -427,9 +512,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     if (argc != x->py_arg_numbers) {
-        pd_error(x, "[py4pd] Wrong number of arguments!");
-        //pd_error(x, "[py4pd] Function %s has %i arguments!", x->function_name->s_name, *(x->py_arg_numbers));
-        
+        pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %f arguments!", x->function_name->s_name, *(x->py_arg_numbers));
         return;
     }
     PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
@@ -451,25 +534,13 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     
     // DOC: CONVERTION TO PYTHON OBJECTS
     for (i = 0; i < argc; ++i) {
-        // NUMBERS 
-        if (argv[i].a_type == A_FLOAT) { 
-            float arg_float = atom_getfloat(argv+i);
-            if (arg_float == (int)arg_float){ // DOC: If the float is an integer, then convert to int
-                int arg_int = (int)arg_float;
-                pValue = PyLong_FromLong(arg_int);
-            }
-            else{ // If the int is an integer, then convert to int
-                pValue = PyFloat_FromDouble(arg_float);
-            }
-
-        // STRINGS
-        } else if (argv[i].a_type == A_SYMBOL) {
-            pValue = PyUnicode_DecodeFSDefault(argv[i].a_w.w_symbol->s_name); // convert to python string
-        } else {
-            pValue = Py_None;
-            Py_INCREF(Py_None);
+        t_atom *argv_i = malloc(sizeof(t_atom));
+        *argv_i = argv[i];
+        pValue = py4pd_convert_to_python(argv_i);
+        if (!pValue) {
+            pd_error(x, "Cannot convert argument\n");
+            return;
         }
-        // ERROR IF THE ARGUMENT IS NOT A NUMBER OR A STRING       
         if (!pValue) {
             pd_error(x, "Cannot convert argument\n");
             //PyGILState_Release(gstate);
@@ -480,68 +551,8 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     pValue = PyObject_CallObject(pFunc, pArgs);
     if (pValue != NULL) {                                // DOC: if the function returns a value   
-        if (PyList_Check(pValue)){                       // DOC: If the function return a list list
-            int list_size = PyList_Size(pValue);
-            t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));            
-            for (i = 0; i < list_size; ++i) {
-                PyObject *pValue_i = PyList_GetItem(pValue, i);
-                if (PyLong_Check(pValue_i)) {            // DOC: If the function return a list of integers
-                    long result = PyLong_AsLong(pValue_i);
-                    float result_float = (float)result;
-                    list_array[i].a_type = A_FLOAT;
-                    list_array[i].a_w.w_float = result_float;
-
-                } else if (PyFloat_Check(pValue_i)) {    // DOC: If the function return a list of floats
-                    double result = PyFloat_AsDouble(pValue_i);
-                    float result_float = (float)result;
-                    list_array[i].a_type = A_FLOAT;
-                    list_array[i].a_w.w_float = result_float;
-                } else if (PyUnicode_Check(pValue_i)) {  // DOC: If the function return a list of strings
-                    const char *result = PyUnicode_AsUTF8(pValue_i); 
-                    list_array[i].a_type = A_SYMBOL;
-                    list_array[i].a_w.w_symbol = gensym(result);
-                } else if (Py_IsNone(pValue_i)) {        // DOC: If the function return a list of None
-                    post("None");
-                } else {
-                    pd_error(x, "[py4pd] py4pd just convert int, float and string!\n");
-                    pd_error(x, "INFO [!] The value received is of type %s", Py_TYPE(pValue_i)->tp_name);
-                    Py_DECREF(pValue_i);
-                    Py_DECREF(pArgs);
-                    return;
-                }
-            }
-            outlet_list(x->out_A, 0, list_size, list_array); // TODO: possible do in other way? Seems slow!
-            return;
-        } else {
-            if (PyLong_Check(pValue)) {
-                long result = PyLong_AsLong(pValue); // DOC: If the function return a integer
-                outlet_float(x->out_A, result);
-                //PyGILState_Release(gstate);
-                return;
-            } else if (PyFloat_Check(pValue)) {
-                double result = PyFloat_AsDouble(pValue); // DOC: If the function return a float
-                float result_float = (float)result;
-                outlet_float(x->out_A, result_float);
-                //PyGILState_Release(gstate);
-                return;
-                // outlet_float(x->out_A, result);
-            } else if (PyUnicode_Check(pValue)) {
-                const char *result = PyUnicode_AsUTF8(pValue); // DOC: If the function return a string
-                outlet_symbol(x->out_A, gensym(result)); 
-                //PyGILState_Release(gstate);
-                return;
-            // now check if it return None
-            } else if (Py_IsNone(pValue)) {
-                post("None");
-            } else {
-                pd_error(x, "[py4pd] py4pd just convert int, float and string!\n");
-                pd_error(x, "INFO  [!!!!] The value received is of type %s", Py_TYPE(pValue)->tp_name);
-                Py_DECREF(pValue);
-                Py_DECREF(pArgs);
-                return;
-            }
-        }
-        Py_DECREF(pValue);
+        py4pd_convert_to_pd(x, pValue); // DOC: convert the value to pd
+        
     }
     else { // DOC: if the function returns a error
         PyObject *ptype, *pvalue, *ptraceback;
@@ -597,25 +608,9 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     
     // DOC: CONVERTION TO PYTHON OBJECTS
     for (i = 0; i < argc; ++i) {
-        // NUMBERS 
-        if (argv[i].a_type == A_FLOAT) { 
-            float arg_float = atom_getfloat(argv+i);
-            if (arg_float == (int)arg_float){ // DOC: If the float is an integer, then convert to int
-                int arg_int = (int)arg_float;
-                pValue = PyLong_FromLong(arg_int);
-            }
-            else{ // If the int is an integer, then convert to int
-                pValue = PyFloat_FromDouble(arg_float);
-            }
-
-        // STRINGS
-        } else if (argv[i].a_type == A_SYMBOL) {
-            pValue = PyUnicode_DecodeFSDefault(argv[i].a_w.w_symbol->s_name); // convert to python string
-        } else {
-            pValue = Py_None;
-            Py_INCREF(Py_None);
-        }
-        // ERROR IF THE ARGUMENT IS NOT A NUMBER OR A STRING       
+        t_atom *argv_i = malloc(sizeof(t_atom));
+        *argv_i = argv[i];
+        pValue = py4pd_convert_to_python(argv_i);
         if (!pValue) {
             pd_error(x, "Cannot convert argument\n");
             return;
@@ -623,78 +618,12 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
         PyTuple_SetItem(pArgs, i, pValue); // DOC: Set the argument in the tuple
     }
 
-
     pValue = PyObject_CallObject(pFunc, pArgs); // DOC: Call and execute the function
-
 
     // DOC: Convert Python object to Pd object
     if (pValue != NULL) {                                // DOC: if the function returns a value   
-        if (PyList_Check(pValue)){                       // DOC: If the function return a list list
-            int list_size = PyList_Size(pValue);
-            t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));            
-            for (i = 0; i < list_size; ++i) {
-                PyObject *pValue_i = PyList_GetItem(pValue, i);
-                if (PyLong_Check(pValue_i)) {            // DOC: If the function return a list of integers
-                    long result = PyLong_AsLong(pValue_i);
-                    float result_float = (float)result;
-                    list_array[i].a_type = A_FLOAT;
-                    list_array[i].a_w.w_float = result_float;
-
-                } else if (PyFloat_Check(pValue_i)) {    // DOC: If the function return a list of floats
-                    double result = PyFloat_AsDouble(pValue_i);
-                    float result_float = (float)result;
-                    list_array[i].a_type = A_FLOAT;
-                    list_array[i].a_w.w_float = result_float;
-                } else if (PyUnicode_Check(pValue_i)) {  // DOC: If the function return a list of strings
-                    const char *result = PyUnicode_AsUTF8(pValue_i); 
-                    list_array[i].a_type = A_SYMBOL;
-                    list_array[i].a_w.w_symbol = gensym(result);
-                } else if (Py_IsNone(pValue_i)) {        // DOC: If the function return a list of None
-                     // post("None");
-                
-                } else {
-                    pd_error(x, "[py4pd] py4pd just convert int, float and string!\n");
-                    pd_error(x, "INFO  [!] The value received is of type %s", Py_TYPE(pValue_i)->tp_name);
-                    Py_DECREF(pValue_i);
-                    Py_DECREF(pArgs);                   
-                }
-            }
-            // release the GIL
-            // PyGILState_Release(gstate);
-            PyThreadState *_save = NULL;
-            PyEval_RestoreThread(_save);
-            
-            outlet_list(x->out_A, 0, list_size, list_array); // TODO: possible do in other way? Seems slow!
-            
-        } else {
-            if (PyLong_Check(pValue)) {
-                long result = PyLong_AsLong(pValue); // DOC: If the function return a integer
-                // PyGILState_Release(gstate);
-                outlet_float(x->out_A, result);
-                
-            } else if (PyFloat_Check(pValue)) {
-                double result = PyFloat_AsDouble(pValue); // DOC: If the function return a float
-                float result_float = (float)result;
-                // PyGILState_Release(gstate);
-                outlet_float(x->out_A, result_float);
-                
-            } else if (PyUnicode_Check(pValue)) {
-                const char *result = PyUnicode_AsUTF8(pValue); // DOC: If the function return a string
-                post("Sou uma string");
-                outlet_symbol(x->out_A, gensym(result)); 
-                                
-            // now check if it return None
-            } else if (Py_IsNone(pValue)) { // DOC: If the function return a None
-                post("None");
-            } else {
-                pd_error(x, "[py4pd] py4pd just convert int, float and string!\n");
-                pd_error(x, "[py4pd] INFO - The value received is of type %s", Py_TYPE(pValue)->tp_name);
-                Py_DECREF(pValue);
-                Py_DECREF(pArgs);
-                
-            }
-        }
-        Py_DECREF(pValue);
+        // convert the python object to a t_atom
+        py4pd_convert_to_pd(x, pValue);
     }
     else { // DOC: if the function returns a error
         PyObject *ptype, *pvalue, *ptraceback;

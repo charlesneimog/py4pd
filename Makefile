@@ -27,7 +27,7 @@ endif
 
 # =================================== Sources ===================================
 
-py4pd.class.sources = src/py4pd.c src/module.c
+py4pd.class.sources = src/py4pd.c src/module.c 
 # py4pd~.class.sources = src/py4pd_tilde.c
 
 # =================================== Data ======================================
