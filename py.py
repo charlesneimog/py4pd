@@ -1,3 +1,5 @@
+from random import *
+
 def sum(x, y):
     "It sums two numbers."
     x = int(x)
@@ -23,7 +25,7 @@ def fibonacci(n):
 def thread_test():
     "It tests the threading module. Just return the hour after 5 seconds."
     import time
-    import pd
+    import pd # import the py4pd module (embedded in the python interpreter)
     pd.message("Starting thread...")
     time.sleep(5)
     pd.message("Thread finished.")
@@ -31,7 +33,7 @@ def thread_test():
 
 def pd_output():
     "It sends some output to the py4pd output."
-    # import pd # import the py4pd module (embedded in the python interpreter)
+    import pd # import the py4pd module (embedded in the python interpreter)
     import time
     for x in range(10):
         pd.out(x)

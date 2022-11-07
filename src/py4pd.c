@@ -90,9 +90,6 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
     }
 }
         
-
-
-
 // =====================================================================
 // ============ Pd Object code =========================================
 // =====================================================================
@@ -153,6 +150,7 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                 // do nothing
             } else {
                     pd_error(x, "The packages path is not valid");
+                    return;
                 }
         } else{
             pd_error(x, "It seems that your package folder has |spaces|.");
@@ -179,7 +177,7 @@ static void documentation(t_py *x){
             const char *Doc = PyUnicode_AsUTF8(pDoc); 
             if (Doc != NULL){
                 post("");
-                post("[+][+] %s [+][+]", x->function_name->s_name);
+                post("-------- %s --------", x->function_name->s_name);
                 post("");
                 post("%s", Doc);
                 post("");
@@ -246,21 +244,18 @@ void pd4py_system_func (const char *command){
 // ============================================
 
 static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    // If Windows OS run, if not then warn the user
     (void)s;
     (void)argc;
-    
     const char *script_name = argv[0].a_w.w_symbol->s_name;
     post("[py4pd] Opening vscode...");
-    #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
 
+    // DOC: Open VsCode in Windows 
+    #ifdef _WIN64 
     char *command = malloc(strlen(x->home_path->s_name) + strlen(script_name) + 20);
     sprintf(command, "/c code %s/%s.py", x->home_path->s_name, script_name);
     SHELLEXECUTEINFO sei = {0};
     sei.cbSize = sizeof(sei);
     sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-    // sei.lpVerb = "open";
-    
     sei.lpFile = "cmd.exe ";
     sei.lpParameters = command;
     sei.nShow = SW_HIDE;
@@ -269,12 +264,11 @@ static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     free(command);
     return;
 
-    // Not Windows OS
+    // DOC: Open VsCode in Linux and Mac
 
     #else // if not windows 64bits
     char *command = malloc(strlen(x->home_path->s_name) + strlen(script_name) + 20);
     sprintf(command, "code %s/%s.py", x->home_path->s_name, script_name);
-
     pd4py_system_func(command);
     return;
     #endif
@@ -292,7 +286,8 @@ static void vscode(t_py *x){
         return;
     }
     post("[py4pd] Opening vscode...");
-    
+
+    // DOC: Open VsCode in Windows
     #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
     char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
     sprintf(command, "/c code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
@@ -305,7 +300,6 @@ static void vscode(t_py *x){
     sei.nShow = SW_HIDE;
     ShellExecuteEx(&sei);
     CloseHandle(sei.hProcess);
-
     return;
 
     // Not Windows OS
@@ -375,11 +369,9 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
 
-
     PyGILState_STATE gstate;
     gstate = PyGILState_Ensure();
     
-
     // Check if the already was set
     if (x->function_name != NULL){
         int function_is_equal = strcmp(function_name->s_name, x->function_name->s_name);
@@ -412,7 +404,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     char script_file_path[MAXPDSTRING];
     snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name, script_file_name->s_name);
     if (access(script_file_path, F_OK) == -1) {
-        pd_error(x, "The script file %s does not exist!", script_file_path);
+        pd_error(x, "[py4pd] The script file %s does not exist!", script_file_path);
         Py_XDECREF(x->function);
         Py_XDECREF(x->module);
         return;
@@ -421,7 +413,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // =====================
     // DOC: check number of arguments
     if (argc < 2) { // check is the number of arguments is correct | set "function_script" "function_name"
-        pd_error(x,"[py4pd] {set} message needs two arguments! The 'Script name' and the 'function name'!");
+        pd_error(x,"[py4pd] 'set' message needs two arguments! The 'Script Name' and the 'Function Name'!");
         return;
     }
     // =====================
@@ -482,7 +474,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     } else {
         // post PyErr_Print() in pd
-        pd_error(x, "Function %s not loaded!", function_name->s_name);
+        pd_error(x, "[py4pd] Function %s not loaded!", function_name->s_name);
         x->function_called = 0; // set the flag to 0 because it crash Pd if user try to use args method
         x->function_name = NULL;
         PyObject *ptype, *pvalue, *ptraceback;
@@ -538,11 +530,11 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         *argv_i = argv[i];
         pValue = py4pd_convert_to_python(argv_i);
         if (!pValue) {
-            pd_error(x, "Cannot convert argument\n");
+            pd_error(x, "[py4pd] Cannot convert argument\n");
             return;
         }
         if (!pValue) {
-            pd_error(x, "Cannot convert argument\n");
+            pd_error(x, "[py4pd] Cannot convert argument\n");
             //PyGILState_Release(gstate);
             return;
         }
@@ -583,8 +575,6 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     // make it the current thread state and acquire the GIL
 
-    
-
     if (argc != x->py_arg_numbers) {
         pd_error(x, "[py4pd] Wrong number of arguments!");
         return;
@@ -612,7 +602,7 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
         *argv_i = argv[i];
         pValue = py4pd_convert_to_python(argv_i);
         if (!pValue) {
-            pd_error(x, "Cannot convert argument\n");
+            pd_error(x, "[py4pd] Cannot convert argument\n");
             return;
         }
         PyTuple_SetItem(pArgs, i, pValue); // DOC: Set the argument in the tuple
@@ -763,25 +753,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     t_canvas *c = x->x_canvas;  // p
     char *patch_dir = canvas_getdir(c); // directory of opened patch
 
-    
-    // check if python is initialized, if not, initialize it
-    
-    if (!Py_IsInitialized()) {
-        // Credits
-        post("");
-        post("[py4pd] py4pd by Charles K. Neimog");
-        post("[py4pd] version 0.0.3       ");
-        post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
-        post("[py4pd] inspired by the work of Thomas Grill and SOPI research group.");
-        post("");
-        const wchar_t *py_name_ptr; // 
-        char *program_name = malloc(sizeof(char) * 5); // 
-        sprintf(program_name, "py4pd"); // 
-        py_name_ptr = Py_DecodeLocale(program_name, NULL); // 
-        Py_SetProgramName(py_name_ptr); //
-        PyImport_AppendInittab("pd", PyInit_pd); // DOC: Add the pd module to the python interpreter
-        Py_Initialize(); // initialize python
-    }
 
     // // PyThreadState_New
     
@@ -844,8 +815,56 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     // make pointer for x
     t_py **py4pd_object_ptr = malloc(sizeof(t_py*));
     *py4pd_object_ptr = x;
-    // save pointer in global variable
     py4pd_object = py4pd_object_ptr;
+
+
+    
+
+
+    // if is Linux
+    #ifdef __linux__
+        // get Local of the object
+        
+        
+        
+        // private python path
+        char *private_python_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/private_python") + 1)); //
+        strcpy(private_python_path, x->home_path->s_name); // copy string one into the result.
+        strcat(private_python_path, "/private_python"); // append string two to the result.
+        // check if private_python directory exists
+        if (access(private_python_path, F_OK) != -1) { // check if file exists
+            // set private python path
+            // 
+            setenv("PYTHONHOME", private_python_path, 1);
+            post("[py4pd] Private Python path: %s", private_python_path);
+        } else {
+            post("[py4pd] Could not find private_python directory in home directory"); // print path
+        }
+
+    
+
+    #endif
+    
+    
+    
+    // check if python is initialized, if not, initialize it
+    if (!Py_IsInitialized()) {
+        // Credits
+        post("");
+        post("[py4pd] by Charles K. Neimog");
+        post("[py4pd] Version 0.0.3       ");
+        post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
+        post("[py4pd] Inspired by the work of Thomas Grill and SOPI research group.");
+        post("");
+        const wchar_t *py_name_ptr; // 
+        char *program_name = malloc(sizeof(char) * 5); // 
+        sprintf(program_name, "py4pd"); // 
+        py_name_ptr = Py_DecodeLocale(program_name, NULL); // 
+        Py_SetProgramName(py_name_ptr); //
+        PyImport_AppendInittab("pd", PyInit_pd); // DOC: Add the pd module to the python interpreter
+        Py_Initialize(); // initialize python
+    }
+
 
     return(x);
 }
