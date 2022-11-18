@@ -61,8 +61,9 @@ static PyObject *pdout(PyObject *self, PyObject *args){
     return PyLong_FromLong(0);
 }
 
-// =================================
+// ==================================
 static PyObject *pdmessage(PyObject *self, PyObject *args){
+    // self is void
     (void)self;
     char *string;
     if (PyArg_ParseTuple(args, "s", &string)){
@@ -75,6 +76,19 @@ static PyObject *pdmessage(PyObject *self, PyObject *args){
     return PyLong_FromLong(0);
 }
 
+
+
+// =================================
+static PyObject *pdprint(PyObject *self, PyObject *args){
+    (void)self;
+    char *string;
+    
+
+    libpd_message("py4pd", "Eu sou uma message do modulo pd incorporado ao Python");
+    
+    return PyLong_FromLong(0);
+}
+
 // =================================
 static PyObject *pderror(PyObject *self, PyObject *args){
     (void)self;
@@ -84,7 +98,7 @@ static PyObject *pderror(PyObject *self, PyObject *args){
         pd_error(py4pd_object, "Ocorreu um erro");
         PyErr_Clear();
     } else {
-        PyErr_SetString(PyExc_TypeError, "pdmessage: argument must be a string"); // Colocar melhor descrição do erro
+        PyErr_SetString(PyExc_TypeError, "message: argument must be a string"); // Colocar melhor descrição do erro
         return NULL;
     }
     return PyLong_FromLong(0);
@@ -94,8 +108,9 @@ static PyObject *pderror(PyObject *self, PyObject *args){
 // =================================
 static PyMethodDef PdMethods[] = { // here we define the function spam_system
     {"out", pdout, METH_VARARGS, "Output in out0 from PureData"}, // one function for now
-    {"message", pdmessage, METH_VARARGS, "Print informations in PureData Console"}, // one function for now
+    {"print", pdprint, METH_VARARGS, "Print informations in PureData Console"}, // one function for now
     {"error", pderror, METH_VARARGS, "Print error in PureData"}, // one function for now
+    {"send", pdmessage, METH_VARARGS, "Send a message to PureData using receives Objects"}, // one function for now	
     {NULL, NULL, 0, NULL}        
 };
 

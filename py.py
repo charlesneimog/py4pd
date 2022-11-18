@@ -26,9 +26,9 @@ def thread_test():
     "It tests the threading module. Just return the hour after 5 seconds."
     import time
     import pd # import the py4pd module (embedded in the python interpreter)
-    pd.message("Starting thread...")
+    pd.print("Starting thread...")
     time.sleep(5)
-    pd.message("Thread finished.")
+    pd.print("Thread finished.")
     return time.strftime("%H:%M:%S")
 
 def pd_output():
@@ -42,7 +42,7 @@ def pd_output():
 def pd_message():
     "It sends a message to the py4pd message box."
     import pd # import the py4pd module (embedded in the python interpreter)
-    pd.message("Hello from python!")
+    pd.print("Hello from python!")
     return None
 
 def pd_error():
@@ -51,3 +51,8 @@ def pd_error():
     # NOT WORKING
     pd.error("Python error!")
     return None
+
+def pd_send():
+    import pd
+    import random
+    pd.send()

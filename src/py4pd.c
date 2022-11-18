@@ -5,7 +5,6 @@
 // ========================= Utilities ===============================
 // ===================================================================
 
-
 static PyObject *py4pd_convert_to_python(t_atom *pd_value) {
     PyObject *pValue;
     if (pd_value->a_type == A_FLOAT){ 
@@ -25,7 +24,6 @@ static PyObject *py4pd_convert_to_python(t_atom *pd_value) {
     }
     return pValue;
 }
-
 
 // =====================================================================
 // convert Python object to Pd object
@@ -83,13 +81,28 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
         } else if (Py_IsNone(pValue)) {
             post("None");
         } else {
-            pd_error(x, "[py4pd] py4pd just convert int, float and string!\n");
-            pd_error(x, "INFO  [!!!!] The value received is of type %s", Py_TYPE(pValue)->tp_name);
+            pd_error(x, "[py4pd] py4pd just convert int, float and string or list of this atoms! Received: %s", Py_TYPE(pValue)->tp_name);
             return;
         }
     }
 }
-        
+
+// ===================================================================
+
+static char *py4pd_GetPath_of_Object(t_py *x) {
+    // get Path of loaded dynamic library on Windows with GetModuleFilename
+    char *path = (char *)malloc(1024);
+    HMODULE hModule = GetModuleHandle(NULL);
+    if (hModule != NULL) {
+        GetModuleFileName(hModule, path, 1024);
+    } else {
+        pd_error(x, "[py4pd] GetModuleHandle failed");
+    }
+    post("Path of loaded dynamic library: %s", path);
+    return path;
+}
+
+
 // =====================================================================
 // ============ Pd Object code =========================================
 // =====================================================================
@@ -862,6 +875,9 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         py_name_ptr = Py_DecodeLocale(program_name, NULL); // 
         Py_SetProgramName(py_name_ptr); //
         PyImport_AppendInittab("pd", PyInit_pd); // DOC: Add the pd module to the python interpreter
+
+
+
         Py_Initialize(); // initialize python
     }
 
@@ -916,6 +932,9 @@ void py4pd_setup(void){
 
     // Documentation
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
+
+    // Debug
+    class_addmethod(py4pd_class, (t_method)py4pd_GetPath_of_Object, gensym("dll"), 0); // on/off debug
 
 }
 
