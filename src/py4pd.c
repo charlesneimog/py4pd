@@ -89,18 +89,18 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
 
 // ===================================================================
 
-static char *py4pd_GetPath_of_Object(t_py *x) {
-    // get Path of loaded dynamic library on Windows with GetModuleFilename
-    char *path = (char *)malloc(1024);
-    HMODULE hModule = GetModuleHandle(NULL);
-    if (hModule != NULL) {
-        GetModuleFileName(hModule, path, 1024);
-    } else {
-        pd_error(x, "[py4pd] GetModuleHandle failed");
-    }
-    post("Path of loaded dynamic library: %s", path);
-    return path;
-}
+// static char *py4pd_GetPath_of_Object(t_py *x) {
+//     // get Path of loaded dynamic library on Windows with GetModuleFilename
+//     char *path = (char *)malloc(1024);
+//     HMODULE hModule = GetModuleHandle(NULL);
+//     if (hModule != NULL) {
+//         GetModuleFileName(hModule, path, 1024);
+//     } else {
+//         pd_error(x, "[py4pd] GetModuleHandle failed");
+//     }
+//     post("Path of loaded dynamic library: %s", path);
+//     return path;
+// }
 
 
 // =====================================================================
@@ -934,7 +934,7 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
 
     // Debug
-    class_addmethod(py4pd_class, (t_method)py4pd_GetPath_of_Object, gensym("dll"), 0); // on/off debug
+    // class_addmethod(py4pd_class, (t_method)py4pd_GetPath_of_Object, gensym("dll"), 0); // on/off debug
 
 }
 
