@@ -482,7 +482,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
             argspec = PyObject_CallFunctionObjArgs(getfullargspec, pFunc, NULL);
             args = PyTuple_GetItem(argspec, 0);
             int py_args = PyObject_Size(args);
-            post("[py4pd] The '%s' has %i arguments!", function_name->s_name, py_args);
+            post("[py4pd] The function '%s' has %i arguments!", function_name->s_name, py_args);
             post(" ");
             x->py_arg_numbers = py_args;
         } else {
