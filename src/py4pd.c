@@ -844,7 +844,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         // Credits
         post("");
         post("[py4pd] by Charles K. Neimog");
-        post("[py4pd] Version 0.0.3       ");
+        post("[py4pd] Version 0.0.4       ");
         post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
         post("[py4pd] Inspired by the work of Thomas Grill and SOPI research group.");
         post("");
