@@ -1,9 +1,16 @@
 #include "py4pd.h"
 #include "module.h"
 
+
 // ===================================================================
 // ========================= Utilities ===============================
 // ===================================================================
+
+
+/* \brief Convert the pd object to python object
+ * \param pd_value Pointer to the value from pd
+ * \return Pointer to the python object
+ */
 
 static PyObject *py4pd_convert_to_python(t_atom *pd_value) {
     PyObject *pValue;
@@ -26,7 +33,12 @@ static PyObject *py4pd_convert_to_python(t_atom *pd_value) {
 }
 
 // =====================================================================
-// convert Python object to Pd object
+/* \brief Convert the python object to pd object
+ * \param x Pointer to the py4pd object
+ * \param pValue Pointer to the python object
+ * \return void (output the result to the pd object)
+ */
+
 static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
     
     if (PyList_Check(pValue)){                       // DOC: If the function return a list list
@@ -87,25 +99,17 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
     }
 }
 
+
+// ===================================================================
+// ========================= Pd Object ===============================
 // ===================================================================
 
-// static char *py4pd_GetPath_of_Object(t_py *x) {
-//     // get Path of loaded dynamic library on Windows with GetModuleFilename
-//     char *path = (char *)malloc(1024);
-//     HMODULE hModule = GetModuleHandle(NULL);
-//     if (hModule != NULL) {
-//         GetModuleFileName(hModule, path, 1024);
-//     } else {
-//         pd_error(x, "[py4pd] GetModuleHandle failed");
-//     }
-//     post("Path of loaded dynamic library: %s", path);
-//     return path;
-// }
-
-
-// =====================================================================
-// ============ Pd Object code =========================================
-// =====================================================================
+/* \brief Define the home path of python
+ * \param s Pointer to the symbol
+ * \param argc Number of arguments
+ * \param argv Pointer to the arguments
+ * \return void
+ */
 
 static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; // unused but required by pd
@@ -119,9 +123,12 @@ static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // // ============================================
-// // ============================================
-// // ============================================
-
+// /* \brief Define the packages path of python
+//  * \param s Pointer to the symbol
+//  * \param argc Number of arguments
+//  * \param argv Pointer to the arguments
+//  * \return void
+//  */
 static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; 
     if (argc < 1) {
@@ -150,6 +157,7 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
                 else {
                     x->packages_path = atom_getsymbol(argv);
+                    post("[py4pd] The packages path set to: %s", x->packages_path->s_name);
                 }
             
             } else{
@@ -168,7 +176,8 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         } else{
             pd_error(x, "It seems that your package folder has |spaces|.");
             return;
-        }    
+        }
+        return;   
     }
 }
 
@@ -214,9 +223,6 @@ static void documentation(t_py *x){
 static void py4pd_globalVariables(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     (void)s; // unused but required by pd
-    // argv[0] = name of the variable
-    // argv[1] = value of the variable
-    // PyRun_SimpleString("a = 1");
 
     char *string;
     
@@ -321,9 +327,14 @@ static void vscode(t_py *x){
     char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
     sprintf(command, "code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
     pd4py_system_func(command);
-    pd_error(x, "Not tested in your Platform, please send me a bug report!");
-    return;
     #endif
+
+    // If macOS
+    #ifdef __APPLE__
+    pd_error(x, "Not tested in your Platform, please send me a report!");
+    #endif
+    return ;
+
 }
 
 // ====================================
@@ -463,27 +474,37 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     Py_DECREF(pName); // DOC: Delete the name of the script file
     if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable   
         
-        // Get the number of arguments of the function 
-        PyObject *inspect=NULL, *getargspec=NULL, *argspec=NULL, *args=NULL;
-        inspect = PyImport_ImportModule("inspect");
-        getargspec = PyObject_GetAttrString(inspect, "getargspec");
-        argspec = PyObject_CallFunctionObjArgs(getargspec, pFunc, NULL);
-        args = PyObject_GetAttrString(argspec, "args");
-        int py_args = PyObject_Size(args);
-        post("[py4pd] It has %i arguments!", py_args);
-        x->py_arg_numbers = py_args;
-
-        // Salve called function in the object
+        // if minor version is 11 or higher
+        if (PY_MINOR_VERSION >= 11){
+            PyObject *inspect=NULL, *getfullargspec=NULL, *argspec=NULL, *args=NULL;
+            inspect = PyImport_ImportModule("inspect");
+            getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
+            argspec = PyObject_CallFunctionObjArgs(getfullargspec, pFunc, NULL);
+            args = PyTuple_GetItem(argspec, 0);
+            int py_args = PyObject_Size(args);
+            post("[py4pd] The '%s' has %i arguments!", function_name->s_name, py_args);
+            post(" ");
+            x->py_arg_numbers = py_args;
+        } else {
+            PyObject *inspect=NULL, *getargspec=NULL, *argspec=NULL, *args=NULL;
+            inspect = PyImport_ImportModule("inspect");
+            getargspec = PyObject_GetAttrString(inspect, "getargspec");
+            argspec = PyObject_CallFunctionObjArgs(getargspec, pFunc, NULL);
+            args = PyTuple_GetItem(argspec, 0);
+            int py_args = PyObject_Size(args);
+            // print [py4pd] The %d has %i arguments!
+            post("[py4pd] The '%s' function has %i arguments!", function_name->s_name, py_args);
+            post(" ");
+            x->py_arg_numbers = py_args;
+        }
+             
+        // =====================
         x->function = pFunc;
         x->module = pModule;
         x->script_name = script_file_name;
         x->function_name = function_name; 
         x->function_called = malloc(sizeof(unsigned int));
         *(x->function_called) = 1; // 
-        Py_XDECREF(inspect);
-        Py_XDECREF(getargspec);
-        Py_XDECREF(argspec);
-        Py_XDECREF(args);
 
     } else {
         // post PyErr_Print() in pd
@@ -574,7 +595,6 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
 }
 
-
 // ============================================
 // ============================================
 // ============================================
@@ -582,12 +602,6 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     
-    // get x->py_thread_interpreter 
-    PyThreadState *py_thread_interpreter = x->py_thread_interpreter;
-    PyThreadState* ts = PyThreadState_New(py_thread_interpreter->interp);
-
-    // make it the current thread state and acquire the GIL
-
     if (argc != x->py_arg_numbers) {
         pd_error(x, "[py4pd] Wrong number of arguments!");
         return;
@@ -623,6 +637,9 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     pValue = PyObject_CallObject(pFunc, pArgs); // DOC: Call and execute the function
 
+
+
+
     // DOC: Convert Python object to Pd object
     if (pValue != NULL) {                                // DOC: if the function returns a value   
         // convert the python object to a t_atom
@@ -641,36 +658,42 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
     Py_DECREF(pArgs);
     // Remove the Python interpreter from the current thread
-    PyThreadState_Clear(ts);
+    
     
     return NULL;
 }
 
 // ============================================
-// ============================================
-// ============================================
+
 struct thread_arg_struct {
     t_py x;
     t_symbol s;
     int argc;
     t_atom *argv;
-    PyGILState_STATE gil_state;
+    PyThreadState *interp;
 } thread_arg;
 
 // ============================================
-// ============================================
-// ============================================
 
 static void *ThreadFunc(void *lpParameter) {
+        
     struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParameter;
+    // CHECK IF PYTHON IS INITIALIZED
     t_py *x = &arg->x; 
     t_symbol *s = &arg->s;
     int argc = arg->argc;
     t_atom *argv = arg->argv;
+    PyInterpreterState *interp = arg->interp;
     int object_number = *(x->object_number);
     thread_status[object_number] = 1;
-    run_function_thread(x, s, argc, argv);
+    PyGILState_STATE gstate;
+    // gstate = PyGILState_Ensure();
+    running_some_thread = 1;
+    run_function_thread(x, s, argc, argv);  
+    // PyGILState_Release(gstate);
     thread_status[object_number] = 0;
+    running_some_thread = 0;
+    
     return NULL;
 }
 
@@ -684,6 +707,7 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     arg->x = *x;
     arg->argc = argc;
     arg->argv = argv;
+
     int object_number = *(x->object_number);
     if (x->function_called == 0) {
         // Pd is crashing when I try to create a thread.
@@ -693,13 +717,9 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     } else {
         if (thread_status[object_number] == 0){
             // PyThread is not thread safe, so we need to lock the GIL
-                      
-            Py_BEGIN_ALLOW_THREADS
+            
             pthread_t thread;
             pthread_create(&thread, NULL, ThreadFunc, arg);
-            pthread_detach(thread);
-            Py_END_ALLOW_THREADS
-
             int state = 1;
             x->state = &state;
             // check the Thread was created
@@ -717,7 +737,7 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     
     int thread = *(x->thread);
     if (thread == 1) {
-        // create new python interpreter
+
         create_thread(x, s, argc, argv);
 
     } else if (thread == 2) {
@@ -737,6 +757,10 @@ static void thread(t_py *x, t_floatarg f){
         post("[py4pd] Threading enabled");
         x->thread = malloc(sizeof(int)); 
         *(x->thread) = 1; // 
+        // create a new python subinterpreter
+        // PyThreadState* object_thread = Py_NewInterpreter();
+        // x->py_thread_interpreter = object_thread;
+        // PyThreadState_Swap(x->py_main_interpreter);
         return;
     } else if (thread == 0) {
         x->thread = malloc(sizeof(int)); 
@@ -753,40 +777,17 @@ static void thread(t_py *x, t_floatarg f){
 // ============================================
 
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
-
-    // Get Python version
-    t_py *x = (t_py *)pd_new(py4pd_class);
+    object_count++; // count the number of objects
+    t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
         
     // Object count
     x->object_number = malloc(sizeof(int));
     *(x->object_number) = object_count;
-    object_count++;
+    
     x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     t_canvas *c = x->x_canvas;  // p
     char *patch_dir = canvas_getdir(c); // directory of opened patch
-
-
-    // // PyThreadState_New
-    
-    // // save PyThreadState_Get in a variable
-    // // PyThreadState *pythrsys = PyThreadState_Get();
-    
-    // // post pythrsys address
-    // post("[py4pd] PyThreadState_Get: %p", pythrsys);
-    // // get main interpreter state
-    // pymain = pythrsys->interp;
-
-    // // PyThreadState* _main = PyThreadState_Get();
-    // PyThreadState* python_main = PyThreadState_Get();
-    // x->py_main_interpreter = python_main;
-
-    // PyThreadState* python_thread = Py_NewInterpreter();
-    // x->py_thread_interpreter = python_thread;
-
-    // PyThreadState_Swap(python_main);
-
-
     x->home_path = patch_dir;     // set name of the home path
     x->packages_path = patch_dir; // set name of the packages path
     x->thread = malloc(sizeof(int));   // set thread status
@@ -801,22 +802,30 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         char line[256]; // line buffer
         while (fgets(line, sizeof(line), file)) { // read a line
             if (strstr(line, "packages =") != NULL) { // check if line contains "packages ="
-                // format to use in packages function
-                
                 char *packages_path = (char *)malloc(sizeof(char) * (strlen(line) - strlen("packages = ") + 1)); // 
                 strcpy(packages_path, line + strlen("packages = ")); // copy string one into the result.
-                packages_path[strlen(packages_path) - 1] = '\0'; // remove last character
+                
                 if (strlen(packages_path) > 0) { // check if path is not empty
-                    x->packages_path = gensym(packages_path); // set name
+                    // from packages_path remove the two last character
+                    packages_path[strlen(packages_path) - 1] = '\0'; // remove the last character
+                    packages_path[strlen(packages_path) - 1] = '\0'; // remove the last character
+
+                    // remove all spaces from packages_path
+                    char *i = packages_path;
+                    char *j = packages_path;
+                    while(*j != 0) {
+                        *i = *j++;
+                        if(*i != ' ')
+                            i++;
+                    }
+                    *i = 0;
+                    x->packages_path = gensym(packages_path); // set name of the packages path
                 }
                 free(packages_path); // free memory
             }
         }
-        
         fclose(file); // close file
-    
     } else {
-        
         post("[py4pd] Could not find py4pd.cfg in home directory"); // print path
     }
 
@@ -830,36 +839,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     *py4pd_object_ptr = x;
     py4pd_object = py4pd_object_ptr;
 
-
-    
-
-
-    // if is Linux
-    #ifdef __linux__
-        // get Local of the object
-        
-        
-        
-        // private python path
-        char *private_python_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/private_python") + 1)); //
-        strcpy(private_python_path, x->home_path->s_name); // copy string one into the result.
-        strcat(private_python_path, "/private_python"); // append string two to the result.
-        // check if private_python directory exists
-        if (access(private_python_path, F_OK) != -1) { // check if file exists
-            // set private python path
-            // 
-            setenv("PYTHONHOME", private_python_path, 1);
-            post("[py4pd] Private Python path: %s", private_python_path);
-        } else {
-            post("[py4pd] Could not find private_python directory in home directory"); // print path
-        }
-
-    
-
-    #endif
-    
-    
-    
     // check if python is initialized, if not, initialize it
     if (!Py_IsInitialized()) {
         // Credits
@@ -875,13 +854,11 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         py_name_ptr = Py_DecodeLocale(program_name, NULL); // 
         Py_SetProgramName(py_name_ptr); //
         PyImport_AppendInittab("pd", PyInit_pd); // DOC: Add the pd module to the python interpreter
-
-
-
-        Py_Initialize(); // initialize python
+        Py_InitializeEx(1);   // initialize python
+        PyThreadState* _main = PyThreadState_Get();
+        x->py_main_interpreter = _main;
+        free(program_name); // free memory
     }
-
-
     return(x);
 }
 
@@ -901,6 +878,13 @@ void py4pd_free(t_py *x){
     if (pFunc != NULL) {
         Py_DECREF(pFunc);
     }
+
+    if (object_count == 1) {
+        Py_Finalize();
+        post("[py4pd] Python interpreter finalized");
+    }
+
+
 }
 
 // ====================================================
@@ -938,14 +922,11 @@ void py4pd_setup(void){
 
 }
 
-// ==================== PD FUNCTIONS INSIDE PYTHON ====================
-// ====================================================================
-// ====================================================================
 
 // // dll export function
 #ifdef _WIN64
 
-__declspec(dllexport) void py4pd_setup(void); // when I add python module for some reson pd not see py4pd_setup
+__declspec(dllexport) void py4pd_setup(void); // when I add python module, for some reson, pd not see py4pd_setup
 
 #endif
 

@@ -12,15 +12,16 @@
 #include <pthread.h>
 
 #ifdef _WIN64 // If windows 64bits include 
-#include <windows.h>
+    #include <windows.h>
 #endif
 #ifdef HAVE_UNISTD_H // from Pure Data source code
-#include <unistd.h>
+    #include <unistd.h>
 #endif
 
 // Python include
 #define PY_SSIZE_T_CLEAN // Good practice to use this
 #include <Python.h>
+
 
 /* 
 TODO: Way to set global variables, I think that will be important for things like general path (lilypond, etc)
@@ -49,6 +50,10 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     int                 *state; // thread state
     int                 *object_number; // object number
     t_inlet             *in1;
+
+    // global lock
+    PyThreadState       *py_main_threadstate;
+    PyThreadState       *py_thread_threadstate;
 
     // set global for variables
     PyObject            *globals;
@@ -79,6 +84,7 @@ static t_py *py4pd_object;
 static t_class *py4pd_class;
 static int object_count = 1;
 static int thread_status[100];
+static int running_some_thread = 0;
 
 static PyInterpreterState *pymain = NULL; // main interpreter state
 
