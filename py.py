@@ -53,6 +53,7 @@ def pd_error():
     return None
 
 def pd_send():
+    "It sends a message to the py4pd message box."
     import pd
     import random
     pd.send()
