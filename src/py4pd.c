@@ -1,7 +1,6 @@
 #include "py4pd.h"
 #include "module.h"
 
-
 // ===================================================================
 // ========================= Utilities ===============================
 // ===================================================================
@@ -67,34 +66,34 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
             } else {
                 pd_error(x, "[py4pd] py4pd just convert int, float and string! Received: %s", Py_TYPE(pValue_i)->tp_name);
                 Py_DECREF(pValue_i);
-                return;
+                return NULL;
             }
         }
         outlet_list(x->out_A, 0, list_size, list_array); // TODO: possible do in other way? Seems slow!
-        return;
+        return NULL;
     } else {
         if (PyLong_Check(pValue)) {
             long result = PyLong_AsLong(pValue); // DOC: If the function return a integer
             outlet_float(x->out_A, result);
             //PyGILState_Release(gstate);
-            return;
+            return NULL;
         } else if (PyFloat_Check(pValue)) {
             double result = PyFloat_AsDouble(pValue); // DOC: If the function return a float
             float result_float = (float)result;
             outlet_float(x->out_A, result_float);
             //PyGILState_Release(gstate);
-            return;
+            return NULL;
             // outlet_float(x->out_A, result);
         } else if (PyUnicode_Check(pValue)) {
             const char *result = PyUnicode_AsUTF8(pValue); // DOC: If the function return a string
             outlet_symbol(x->out_A, gensym(result)); 
-            return;
+            return NULL;
             
         } else if (Py_IsNone(pValue)) {
             post("None");
         } else {
             pd_error(x, "[py4pd] py4pd just convert int, float and string or list of this atoms! Received: %s", Py_TYPE(pValue)->tp_name);
-            return;
+            return NULL;
         }
     }
 }
@@ -220,30 +219,17 @@ static void documentation(t_py *x){
 }
 
 // ====================================
-static void py4pd_globalVariables(t_py *x, t_symbol *s, int argc, t_atom *argv){
-
+static void globalVariables(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    // Set Global Variables
     (void)s; // unused but required by pd
+    t_symbol *variable_name = atom_getsymbol(argv + 0);
 
-    char *string;
+    if (argc < 2) {
+        pd_error(x, "[py4pd] You need to set a value for the variable!");
+        return;
+    }
+
     
-    if (argc < 1) {
-        pd_error(x, "[py4pd] You need to set the variable name and value");
-        return;
-    }
-    else if (argc < 2) {
-        pd_error(x, "[py4pd] You need to set the variable value");
-        return;
-    }
-    else if (argc < 3) {
-        string = (char *)malloc(1000);
-        sprintf(string, "%s = %s", atom_getsymbol(argv)->s_name, atom_getsymbol(argv+1)->s_name);
-        PyRun_SimpleString(string);
-        free(string);
-    }
-    else{
-        pd_error(x, "[py4pd] Too many arguments");
-        return;
-    }
 }
 
 
@@ -392,10 +378,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
-
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
-    
     // Check if the already was set
     if (x->function_name != NULL){
         int function_is_equal = strcmp(function_name->s_name, x->function_name->s_name);
@@ -449,7 +431,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     PyObject *site_package = PyUnicode_FromString(x->packages_path->s_name); // DOC: Place where the packages will be
     PyObject *sys_path = PySys_GetObject("path");
     PyList_Insert(sys_path, 0, home_path);
-    PyList_Insert(sys_path, 0, site_package); // BUG: not working
+    PyList_Insert(sys_path, 0, site_package);
     Py_DECREF(home_path);
     Py_DECREF(site_package);
 
@@ -492,7 +474,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
             argspec = PyObject_CallFunctionObjArgs(getargspec, pFunc, NULL);
             args = PyTuple_GetItem(argspec, 0);
             int py_args = PyObject_Size(args);
-            // print [py4pd] The %d has %i arguments!
             post("[py4pd] The '%s' function has %i arguments!", function_name->s_name, py_args);
             post(" ");
             x->py_arg_numbers = py_args;
@@ -526,7 +507,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);
     }
-    PyGILState_Release(gstate);
+    
     return;
 }
 
@@ -535,12 +516,14 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 // ============================================
 
+
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     if (argc != x->py_arg_numbers) {
         pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %f arguments!", x->function_name->s_name, *(x->py_arg_numbers));
         return;
     }
+      
     PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
     pFunc = x->function;
     pArgs = PyTuple_New(argc);
@@ -558,6 +541,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         }
     }
     
+
     // DOC: CONVERTION TO PYTHON OBJECTS
     for (i = 0; i < argc; ++i) {
         t_atom *argv_i = malloc(sizeof(t_atom));
@@ -565,11 +549,12 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         pValue = py4pd_convert_to_python(argv_i);
         if (!pValue) {
             pd_error(x, "[py4pd] Cannot convert argument\n");
+            // PyGILState_Release(gstate);
             return;
         }
         if (!pValue) {
             pd_error(x, "[py4pd] Cannot convert argument\n");
-            //PyGILState_Release(gstate);
+            // PyGILState_Release(gstate);
             return;
         }
         PyTuple_SetItem(pArgs, i, pValue); // DOC: Set the argument in the tuple
@@ -590,10 +575,11 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         Py_DECREF(pvalue);
         Py_DECREF(ptype);
         Py_DECREF(ptraceback);
-        //PyGILState_Release(gstate);
+        // PyGILState_Release(gstate);
         return;
     }
 }
+
 
 // ============================================
 // ============================================
@@ -658,8 +644,8 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
     Py_DECREF(pArgs);
     // Remove the Python interpreter from the current thread
-    
-    
+    // Acquire the GIL
+   
     return NULL;
 }
 
@@ -734,17 +720,41 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // convert pointer x->thread to a int
-    
     int thread = *(x->thread);
     if (thread == 1) {
-
         create_thread(x, s, argc, argv);
-
+        pd_error(x, "[py4pd] NOT WORKING YET!");
     } else if (thread == 2) {
+        // declare state
         run_function(x, s, argc, argv);
+        
     } else {
         pd_error(x, "[py4pd] Thread not created");
     }
+    return;
+}
+
+// ============================================
+static void inside_thread(){
+    PyGILState_STATE gstate = PyGILState_Ensure();
+    PyRun_SimpleString("print('Hello from inside the thread!')");
+    PyGILState_Release(gstate);
+    return NULL;
+}
+
+
+
+// ============================================
+static void debug_threaded_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    // declare state
+    Py_BEGIN_ALLOW_THREADS
+    pthread_t thread;
+    pthread_create(&thread, NULL, inside_thread, NULL);
+    pthread_join(thread, NULL);
+    Py_END_ALLOW_THREADS
+    post("[DEBUG] After create the thread!");
+    return;   
+    
 }
 
 // ============================================
@@ -787,7 +797,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     t_canvas *c = x->x_canvas;  // p
-    char *patch_dir = canvas_getdir(c); // directory of opened patch
+    t_symbol *patch_dir = canvas_getdir(c); // directory of opened patch
     x->home_path = patch_dir;     // set name of the home path
     x->packages_path = patch_dir; // set name of the packages path
     x->thread = malloc(sizeof(int));   // set thread status
@@ -841,6 +851,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
 
     // check if python is initialized, if not, initialize it
     if (!Py_IsInitialized()) {
+        
         // Credits
         post("");
         post("[py4pd] by Charles K. Neimog");
@@ -848,16 +859,10 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
         post("[py4pd] Inspired by the work of Thomas Grill and SOPI research group.");
         post("");
-        const wchar_t *py_name_ptr; // 
-        char *program_name = malloc(sizeof(char) * 5); // 
-        sprintf(program_name, "py4pd"); // 
-        py_name_ptr = Py_DecodeLocale(program_name, NULL); // 
-        Py_SetProgramName(py_name_ptr); //
+        
         PyImport_AppendInittab("pd", PyInit_pd); // DOC: Add the pd module to the python interpreter
-        Py_InitializeEx(1);   // initialize python
-        PyThreadState* _main = PyThreadState_Get();
-        x->py_main_interpreter = _main;
-        free(program_name); // free memory
+        Py_Initialize();
+        
     }
     return(x);
 }
@@ -889,7 +894,7 @@ void py4pd_free(t_py *x){
 
 // ====================================================
 void py4pd_setup(void){
-    py4pd_class =     class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
+    py4pd_class =       class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
                         (t_newmethod)py4pd_new, // metodo de criação do objeto             
                         (t_method)py4pd_free, // quando voce deleta o objeto
                         sizeof(t_py), // quanta memoria precisamos para esse objeto
@@ -909,16 +914,15 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0); // set function to be called
     class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class, (t_method)thread, gensym("thread"), A_FLOAT, 0); // on/off threading
-    class_addmethod(py4pd_class, (t_method)py4pd_globalVariables, gensym("global"), A_GIMME, 0); // on/off debug
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open vscode
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
-
+    class_addmethod(py4pd_class, (t_method)globalVariables, gensym("global"), A_GIMME, 0); // create file or open it
     // Documentation
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
 
     // Debug
-    // class_addmethod(py4pd_class, (t_method)py4pd_GetPath_of_Object, gensym("dll"), 0); // on/off debug
+    class_addmethod(py4pd_class, (t_method)debug_threaded_function, gensym("debug"), A_FLOAT, 0); // on/off debug
 
 }
 

@@ -79,24 +79,6 @@ static PyObject *pdout(PyObject *self, PyObject *args)
     return PyLong_FromLong(0);
 }
 
-// ==================================
-static PyObject *pdmessage(PyObject *self, PyObject *args)
-{
-    // self is void
-    (void)self;
-    char *string;
-    if (PyArg_ParseTuple(args, "s", &string))
-    {
-        post("[py]: %s", string);
-        PyErr_Clear();
-    }
-    else
-    {
-        PyErr_SetString(PyExc_TypeError, "pdmessage: argument must be a string"); // Colocar melhor descrição do erro
-        return NULL;
-    }
-    return PyLong_FromLong(0);
-}
 
 // =================================
 static PyObject *pdprint(PyObject *self, PyObject *args)
@@ -106,7 +88,7 @@ static PyObject *pdprint(PyObject *self, PyObject *args)
     // post string
     if (PyArg_ParseTuple(args, "s", &string))
     {
-        post("[py]: %s", string);
+        post("[py4pd - script]: %s", string);
         PyErr_Clear();
     }
     else
@@ -141,7 +123,6 @@ static PyMethodDef PdMethods[] = {                                              
     {"out", pdout, METH_VARARGS, "Output in out0 from PureData"},                           // one function for now
     {"print", pdprint, METH_VARARGS, "Print informations in PureData Console"},             // one function for now
     {"error", pderror, METH_VARARGS, "Print error in PureData"},                            // one function for now
-    {"send", pdmessage, METH_VARARGS, "Send a message to PureData using receives Objects"}, // one function for now
     {NULL, NULL, 0, NULL}};
 
 // =================================

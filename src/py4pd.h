@@ -22,6 +22,9 @@
 #define PY_SSIZE_T_CLEAN // Good practice to use this
 #include <Python.h>
 
+// Pd Module for Python
+// #include "module.h"
+
 
 /* 
 TODO: Way to set global variables, I think that will be important for things like general path (lilypond, etc)
@@ -88,8 +91,6 @@ static int running_some_thread = 0;
 
 static PyInterpreterState *pymain = NULL; // main interpreter state
 
-typedef PyGILState_STATE ThrState; // thread state
-static ThrState pythrsys; // thread state
 
 // Set Debug mode
 #define DEBUG 1
