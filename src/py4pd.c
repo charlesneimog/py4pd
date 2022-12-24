@@ -382,7 +382,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     if (x->function_name != NULL){
         int function_is_equal = strcmp(function_name->s_name, x->function_name->s_name);
         if (function_is_equal == 0){    // If the user wants to call the same function again! This is not necessary at first glance. 
-            pd_error(x, "[py4pd] The function was already called!");
             Py_XDECREF(x->function);
             Py_XDECREF(x->module);
             x->function = NULL;
@@ -719,7 +718,12 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
 // ============================================
 static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    // convert pointer x->thread to a int
+    (void)s;
+    // check if function was called
+    if (x->function_called == 0) {
+        pd_error(x, "[py4pd] You need to call a function before run!");
+        return;
+    }
     int thread = *(x->thread);
     if (thread == 1) {
         create_thread(x, s, argc, argv);
