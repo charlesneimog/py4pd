@@ -865,7 +865,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         post("");
         
         PyImport_AppendInittab("pd", PyInit_pd); // DOC: Add the pd module to the python interpreter
-        Py_Initialize();
+        Py_InitializeEx(1); // DOC: Initialize the Python interpreter. If 1, the signal handler is installed.
         
     }
     return(x);
