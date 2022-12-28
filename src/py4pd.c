@@ -663,7 +663,6 @@ struct thread_arg_struct {
 static void *ThreadFunc(void *lpParameter) {
         
     struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParameter;
-    // CHECK IF PYTHON IS INITIALIZED
     t_py *x = &arg->x; 
     t_symbol *s = &arg->s;
     int argc = arg->argc;
