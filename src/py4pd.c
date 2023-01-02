@@ -391,10 +391,17 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         else{ // DOC: If the function is different, then we need to delete the old function and create a new one.
             Py_XDECREF(x->function);
             Py_XDECREF(x->module);
+
             x->function = NULL;
             x->module = NULL;
             x->function_name = NULL;
         }      
+    }
+
+    // DOC: Check if function was already called
+    if (x->function_called == 1){
+        pd_error(x, "The function was already called, you need to reload the script to call another function!");
+        return;
     }
 
     char *extension = strrchr(script_file_name->s_name, '.');
