@@ -575,10 +575,10 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
         pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_DECREF(pvalue);
-        Py_DECREF(ptype);
-        Py_DECREF(ptraceback);
+        // Py_DECREF(pstr);
+        // Py_DECREF(pvalue);
+        // Py_DECREF(ptype);
+        // Py_DECREF(ptraceback);
         // PyGILState_Release(gstate);
         return;
     }
