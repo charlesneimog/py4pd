@@ -819,10 +819,10 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
                         strcpy(new_packages_path, x->home_path->s_name); // copy string one into the result.
                         strcat(new_packages_path, packages_path + 1); // append string two to the result.
                         post("[py4pd] Packages path: %s", new_packages_path);
-                        x->packages_path = gensym(new_packages_path);
+                        // x->packages_path = gensym(new_packages_path);
                         free(new_packages_path);
                     } else {
-                        post("[py4pd] Packages path: %s", packages_path);
+                        // post("[py4pd] Packages path: %s", packages_path);
                         x->packages_path = gensym(packages_path);
                     }
                 }
