@@ -127,11 +127,11 @@ static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 //  * \param argc Number of arguments
 //  * \param argv Pointer to the arguments
 //  * \return void
-//  */
+//  */ Packages path
 static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; 
     if (argc < 1) {
-        post("[py4pd] The packages path is: %s", x->packages_path->s_name);
+        // post("[py4pd] The packages path is: %s", x->packages_path->s_name);
         return; // is this necessary?
     }
     else {
@@ -818,7 +818,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
                         char *new_packages_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen(packages_path) + 1)); // 
                         strcpy(new_packages_path, x->home_path->s_name); // copy string one into the result.
                         strcat(new_packages_path, packages_path + 1); // append string two to the result.
-                        post("[py4pd] Packages path: %s", new_packages_path);
+                        //post("[py4pd] Packages path: %s", new_packages_path);
                         // x->packages_path = gensym(new_packages_path);
                         free(new_packages_path);
                     } else {
