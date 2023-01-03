@@ -355,8 +355,7 @@ static void reload(t_py *x){
             x->module = pModule;
             x->script_name = x->script_name;
             x->function_name = x->function_name; // why 
-            x->function_called = malloc(sizeof(int)); 
-            *(x->function_called) = 1; // 
+            x->function_called = 1; 
             post("The module was reloaded!");
             return; 
         }
@@ -400,7 +399,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     // DOC: Check if function was already called
     if (x->function_called == 1){
-        pd_error(x, "The function was already called, you need to reload the script to call another function!");
+        pd_error(x, "The function was already called!");
         return;
     }
 
@@ -490,8 +489,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         x->module = pModule;
         x->script_name = script_file_name;
         x->function_name = function_name; 
-        x->function_called = malloc(sizeof(unsigned int));
-        *(x->function_called) = 1; // 
+        x->function_called = 1;
 
     } else {
         // post PyErr_Print() in pd
@@ -526,7 +524,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     if (argc != x->py_arg_numbers) {
-        pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %f arguments!", x->function_name->s_name, *(x->py_arg_numbers));
+        pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %f arguments!", x->function_name->s_name, x->py_arg_numbers);
         return;
     }
       
@@ -539,7 +537,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
             // create t_atom *argv from x->script_name and x->function_name
             t_atom *argv = malloc(sizeof(t_atom) * 2);
             SETSYMBOL(argv, x->script_name);
-            SETSYMBOL(argv+1, x->function_name);
+            SETSYMBOL(argv + 1, x->function_name);
             set_function(x, NULL, 2, argv);
         } else{
             pd_error(x, "[py4pd] The message need to be formatted like 'set {script_name} {function_name}'!");
@@ -675,7 +673,7 @@ static void *ThreadFunc(void *lpParameter) {
     int argc = arg->argc;
     t_atom *argv = arg->argv;
     PyInterpreterState *interp = arg->interp;
-    int object_number = *(x->object_number);
+    int object_number = x->object_number;
     thread_status[object_number] = 1;
     PyGILState_STATE gstate;
     // gstate = PyGILState_Ensure();
@@ -699,7 +697,7 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     arg->argc = argc;
     arg->argv = argv;
 
-    int object_number = *(x->object_number);
+    int object_number = x->object_number;
     if (x->function_called == 0) {
         // Pd is crashing when I try to create a thread.
         pd_error(x, "[py4pd] You need to call a function before run!");
@@ -708,11 +706,9 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     } else {
         if (thread_status[object_number] == 0){
             // PyThread is not thread safe, so we need to lock the GIL
-            
             pthread_t thread;
             pthread_create(&thread, NULL, ThreadFunc, arg);
-            int state = 1;
-            x->state = &state;
+            x->state = 1;
             // check the Thread was created
         } else {
             pd_error(x, "[py4pd] There is a thread running in this Object!");
@@ -730,7 +726,7 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
         pd_error(x, "[py4pd] You need to call a function before run!");
         return;
     }
-    int thread = *(x->thread);
+    int thread = x->thread;
     if (thread == 1) {
         create_thread(x, s, argc, argv);
         pd_error(x, "[py4pd] NOT WORKING YET!");
@@ -775,16 +771,14 @@ static void thread(t_py *x, t_floatarg f){
     int thread = (int)f;
     if (thread == 1) {
         post("[py4pd] Threading enabled");
-        x->thread = malloc(sizeof(int)); 
-        *(x->thread) = 1; // 
+        x->thread = 1;
         // create a new python subinterpreter
         // PyThreadState* object_thread = Py_NewInterpreter();
         // x->py_thread_interpreter = object_thread;
         // PyThreadState_Swap(x->py_main_interpreter);
         return;
     } else if (thread == 0) {
-        x->thread = malloc(sizeof(int)); 
-        *(x->thread) = 2; // 
+        x->thread = 2; // 
         post("[py4pd] Threading disabled");
         return;
     } else {
@@ -801,17 +795,14 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
         
     // Object count
-    x->object_number = malloc(sizeof(int));
-    *(x->object_number) = object_count;
-    
+    x->object_number = object_count;
     x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     t_canvas *c = x->x_canvas;  // p
     t_symbol *patch_dir = canvas_getdir(c); // directory of opened patch
     x->home_path = patch_dir;     // set name of the home path
     x->packages_path = patch_dir; // set name of the packages path
-    x->thread = malloc(sizeof(int));   // set thread status
-    *(x->thread) = 2; // solution but it is weird!
+    x->thread = 2; // default is 2 (no threading)
     
     // check if in x->home_path there is a file py4pd.config
     char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1)); // 

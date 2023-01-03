@@ -50,8 +50,8 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_canvas            *x_canvas; // pointer to the canvas
     PyObject            *module; // python object
     PyObject            *function; // function name  
-    int                 *state; // thread state
-    int                 *object_number; // object number
+    t_int                 state; // thread state
+    t_int                 object_number; // object number
     t_inlet             *in1;
 
     // global lock
@@ -64,15 +64,15 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     // define py_interpreter
     PyInterpreterState       *py_main_interpreter;
     PyInterpreterState       *py_thread_interpreter;
-    t_float             x_f;
-    t_float             *thread; // arguments
-    t_float             *function_called; // flag to check if the set function was called
+    t_int                   thread; // arguments
+    t_int                   function_called; // flag to check if the set function was called
+    t_int                   py_arg_numbers; // number of arguments
     t_symbol            *packages_path; // packages path 
     t_symbol            *home_path; // home path this always is the path folder (?)
     t_symbol            *object_path;
     t_symbol            *function_name; // function name
     t_symbol            *script_name; // script name
-    t_float             *py_arg_numbers; // number of arguments
+    
     t_outlet            *out_A; // outlet 1.
 }t_py;
 
