@@ -219,18 +219,18 @@ static void documentation(t_py *x){
 }
 
 // ====================================
-static void globalVariables(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    // Set Global Variables
-    (void)s; // unused but required by pd
-    t_symbol *variable_name = atom_getsymbol(argv + 0);
-
-    if (argc < 2) {
-        pd_error(x, "[py4pd] You need to set a value for the variable!");
-        return;
-    }
-
-    
-}
+// static void globalVariables(t_py *x, t_symbol *s, int argc, t_atom *argv){
+//     // Set Global Variables
+//     (void)s; // unused but required by pd
+//     t_symbol *variable_name = atom_getsymbol(argv + 0);
+//
+//     if (argc < 2) {
+//         pd_error(x, "[py4pd] You need to set a value for the variable!");
+//         return;
+//     }
+//
+//     
+// }
 
 
 // ====================================
@@ -402,7 +402,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         pd_error(x, "The function was already called!");
         return;
     }
-
+    
+    // DOC: Check if there is extension (not to use it)
     char *extension = strrchr(script_file_name->s_name, '.');
     if (extension != NULL) {
         pd_error(x, "[py4pd] Don't use extensions in the script file name!");
@@ -439,6 +440,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     PyList_Insert(sys_path, 0, site_package);
     Py_DECREF(home_path);
     Py_DECREF(site_package);
+    
+    post("[py4pd] The packages are in: %s", x->packages_path->s_name);
 
     // =====================
     pName = PyUnicode_DecodeFSDefault(script_file_name->s_name); // Name of script file
@@ -527,38 +530,23 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %f arguments!", x->function_name->s_name, x->py_arg_numbers);
         return;
     }
-      
-    PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
-    pFunc = x->function;
-    pArgs = PyTuple_New(argc);
-    int i;
-    if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
-        if(pFunc != NULL){
-            // create t_atom *argv from x->script_name and x->function_name
-            t_atom *argv = malloc(sizeof(t_atom) * 2);
-            SETSYMBOL(argv, x->script_name);
-            SETSYMBOL(argv + 1, x->function_name);
-            set_function(x, NULL, 2, argv);
-        } else{
-            pd_error(x, "[py4pd] The message need to be formatted like 'set {script_name} {function_name}'!");
-            return;
-        }
-    }
     
 
+    if (x->function_called == 0) {
+        pd_error(x, "[py4pd] The function %s was not called!", x->function_name->s_name);
+        return;
+    }
+    PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
+    pFunc = x->function; // this makes the function callable 
+    pArgs = PyTuple_New(argc);
+    int i;
     // DOC: CONVERTION TO PYTHON OBJECTS
     for (i = 0; i < argc; ++i) {
-        t_atom *argv_i = malloc(sizeof(t_atom));
+        t_atom *argv_i = malloc(sizeof(t_atom)); // TODO: Check if this is necessary
         *argv_i = argv[i];
         pValue = py4pd_convert_to_python(argv_i);
         if (!pValue) {
-            pd_error(x, "[py4pd] Cannot convert argument\n");
-            // PyGILState_Release(gstate);
-            return;
-        }
-        if (!pValue) {
-            pd_error(x, "[py4pd] Cannot convert argument\n");
-            // PyGILState_Release(gstate);
+            pd_error(x, "[py4pd] Cannot convert argument\n"); 
             return;
         }
         PyTuple_SetItem(pArgs, i, pValue); // DOC: Set the argument in the tuple
@@ -566,8 +554,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     pValue = PyObject_CallObject(pFunc, pArgs);
     if (pValue != NULL) {                                // DOC: if the function returns a value   
-        py4pd_convert_to_pd(x, pValue); // DOC: convert the value to pd
-        
+        py4pd_convert_to_pd(x, pValue); // DOC: convert the value to pd        
     }
     else { // DOC: if the function returns a error
         PyObject *ptype, *pvalue, *ptraceback;
@@ -575,13 +562,9 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
         pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
-        // Py_DECREF(pstr);
-        // Py_DECREF(pvalue);
-        // Py_DECREF(ptype);
-        // Py_DECREF(ptraceback);
-        // PyGILState_Release(gstate);
-        return;
     }
+    Py_DECREF(pArgs);
+    return;
 }
 
 
@@ -646,7 +629,7 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
         Py_DECREF(ptype);
         Py_DECREF(ptraceback);
     }
-    Py_DECREF(pArgs);
+    // Py_DECREF(pArgs);
     // Remove the Python interpreter from the current thread
     // Acquire the GIL
    
@@ -751,17 +734,17 @@ static void inside_thread(){
 
 
 // ============================================
-static void debug_threaded_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    // declare state
-    Py_BEGIN_ALLOW_THREADS
-    pthread_t thread;
-    pthread_create(&thread, NULL, inside_thread, NULL);
-    pthread_join(thread, NULL);
-    Py_END_ALLOW_THREADS
-    post("[DEBUG] After create the thread!");
-    return;   
-    
-}
+// static void debug_threaded_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
+//     // declare state
+//     Py_BEGIN_ALLOW_THREADS
+//     pthread_t thread;
+//     pthread_create(&thread, NULL, inside_thread, NULL);
+//     pthread_join(thread, NULL);
+//     Py_END_ALLOW_THREADS
+//     post("[DEBUG] After create the thread!");
+//     return;   
+//     
+// }
 
 // ============================================
 // ============================================
@@ -830,7 +813,18 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
                             i++;
                     }
                     *i = 0;
-                    x->packages_path = gensym(packages_path); // set name of the packages path
+                    // if packages_path start with '.' add the home_path
+                    if (packages_path[0] == '.') {
+                        char *new_packages_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen(packages_path) + 1)); // 
+                        strcpy(new_packages_path, x->home_path->s_name); // copy string one into the result.
+                        strcat(new_packages_path, packages_path + 1); // append string two to the result.
+                        post("[py4pd] Packages path: %s", new_packages_path);
+                        x->packages_path = gensym(new_packages_path);
+                        free(new_packages_path);
+                    } else {
+                        post("[py4pd] Packages path: %s", packages_path);
+                        x->packages_path = gensym(packages_path);
+                    }
                 }
                 free(packages_path); // free memory
             }
@@ -846,7 +840,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     }
     // Create a pointer to x object and save it in the global variable py4pd_object
     // make pointer for x
-    t_py **py4pd_object_ptr = malloc(sizeof(t_py*));
+    t_py **py4pd_object_ptr = malloc(sizeof(t_py*)); // create a pointer to t_py
     *py4pd_object_ptr = x;
     py4pd_object = py4pd_object_ptr;
 
@@ -918,12 +912,12 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open vscode
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
-    class_addmethod(py4pd_class, (t_method)globalVariables, gensym("global"), A_GIMME, 0); // create file or open it
+    // class_addmethod(py4pd_class, (t_method)globalVariables, gensym("global"), A_GIMME, 0); // create file or open it
     // Documentation
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
 
     // Debug
-    class_addmethod(py4pd_class, (t_method)debug_threaded_function, gensym("debug"), A_FLOAT, 0); // on/off debug
+    // class_addmethod(py4pd_class, (t_method)debug_threaded_function, gensym("debug"), A_FLOAT, 0); // on/off debug
 
 }
 
