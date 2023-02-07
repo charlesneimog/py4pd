@@ -219,21 +219,6 @@ static void documentation(t_py *x){
 }
 
 // ====================================
-// static void globalVariables(t_py *x, t_symbol *s, int argc, t_atom *argv){
-//     // Set Global Variables
-//     (void)s; // unused but required by pd
-//     t_symbol *variable_name = atom_getsymbol(argv + 0);
-//
-//     if (argc < 2) {
-//         pd_error(x, "[py4pd] You need to set a value for the variable!");
-//         return;
-//     }
-//
-//     
-// }
-
-
-// ====================================
 // ====================================
 // ====================================
 
@@ -523,24 +508,132 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 // ============================================
 
+static void runList_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    (void)s;
+    int listStarted = 0;
+    int start = 0;
+    int end = 0;
+    t_atom startSymbol;
+    t_atom endSymbol;
+    PyObject *pFunc, *pArgs, *pValue;
+    pArgs = PyTuple_New(2);
+    // create array for the arguments
+    t_atom *argsInsideList = (t_atom *)getbytes(argc * sizeof(t_atom));
+    int argsInsideListCounter = 0;
+    int j;
+    int pyArgs = 0;
+    pFunc = x->function;
+    for (j = 0; j < argc; ++j){
+        if (argv[j].a_type == A_SYMBOL || listStarted == 1){ // loop for argc
+            int k;
+            if (argv[j].a_type == A_SYMBOL && argv[j].a_w.w_symbol->s_name[0] == '['){
+                char *str = argv[j].a_w.w_symbol->s_name;
+                str++;
+                start = j;
+                t_atom strAtom;
+                SETSYMBOL(&strAtom, gensym(str));
+                argsInsideList[argsInsideListCounter] = strAtom;
+                argsInsideListCounter++;
+                listStarted = 1;
+            }
+            else if (argv[j].a_type == A_FLOAT && listStarted == 1){
+                argsInsideList[argsInsideListCounter] = argv[j];
+                argsInsideListCounter++;
+
+            }
+            else if (argv[j].a_type == A_SYMBOL && argv[j].a_w.w_symbol->s_name[0] != '['){
+                int lenSymbol = 0;
+                for (k = 0; k < strlen(argv[j].a_w.w_symbol->s_name); ++k){
+                    if (argv[j].a_w.w_symbol->s_name[k] == ']'){
+                        lenSymbol = k;
+                        char *str = argv[j].a_w.w_symbol->s_name;
+                        str[lenSymbol] = '\0';
+                        end = j;
+                        // convert str to atom
+                        t_atom strAtom;
+                        SETSYMBOL(&strAtom, gensym(str));
+                        argsInsideList[argsInsideListCounter] = strAtom;
+                        argsInsideListCounter++;
+                        listStarted = 0;
+                        PyObject *C2Python = PyList_New(0);
+                        for (k = start; k <= end; ++k){
+                            if (argsInsideList[k].a_type == A_SYMBOL){
+                                PyObject *pValue = PyUnicode_FromString(argsInsideList[k].a_w.w_symbol->s_name);
+                                PyList_Append(C2Python, pValue);
+                            }
+                            else{
+                                PyObject *pValue = PyFloat_FromDouble(argsInsideList[k].a_w.w_float);
+                                PyList_Append(C2Python, pValue);
+                            }
+                        }
+                        // add the list to the args
+                        PyTuple_SetItem(pArgs, pyArgs, C2Python);
+                        pyArgs++;
+                        argsInsideListCounter = 0;
+                        break;
+                    }
+                }
+                if (end == 0 && argv[j].a_type == A_SYMBOL){
+                    argsInsideList[argsInsideListCounter] = argv[j];
+                    argsInsideListCounter++;
+                }
+            }
+            else{
+                argsInsideList[argsInsideListCounter] = argv[j];
+                argsInsideListCounter++;
+            }
+        }
+        else {
+            t_atom *argv_i = malloc(sizeof(t_atom)); // TODO: Check if this is necessary
+            *argv_i = argv[j];
+            pValue = py4pd_convert_to_python(argv_i);
+            if (!pValue) {
+                pd_error(x, "[py4pd] Cannot convert argument\n"); 
+                return;
+            }
+            PyTuple_SetItem(pArgs, pyArgs, pValue);
+            pyArgs++;
+            // post('here');
+        }
+    }
+
+    // call the function
+    post("Size: %d", PyTuple_GET_SIZE(pArgs));
+    
+
+
+
+
+
+
+    post("ok");
+    return;
+}
+
+
+
+// ============================================
+// ============================================
+// ============================================
 
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     if (argc != x->py_arg_numbers) {
+        // check if some t_atom is an Symbol
         pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %f arguments!", x->function_name->s_name, x->py_arg_numbers);
         return;
     }
     
-
     if (x->function_called == 0) {
         pd_error(x, "[py4pd] The function %s was not called!", x->function_name->s_name);
         return;
     }
+
     PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
     pFunc = x->function; // this makes the function callable 
     pArgs = PyTuple_New(argc);
-    int i;
     // DOC: CONVERTION TO PYTHON OBJECTS
+    int i;
     for (i = 0; i < argc; ++i) {
         t_atom *argv_i = malloc(sizeof(t_atom)); // TODO: Check if this is necessary
         *argv_i = argv[i];
@@ -597,6 +690,9 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
     
     // DOC: CONVERTION TO PYTHON OBJECTS
+    int j;
+    // create an array of t_atom to store the list
+    t_atom *list = malloc(sizeof(t_atom) * argc);
     for (i = 0; i < argc; ++i) {
         t_atom *argv_i = malloc(sizeof(t_atom));
         *argv_i = argv[i];
@@ -907,6 +1003,7 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0); // set packages path
     class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0); // set function to be called
     class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
+    class_addmethod(py4pd_class, (t_method)runList_function, gensym("runlist"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class, (t_method)thread, gensym("thread"), A_FLOAT, 0); // on/off threading
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open vscode
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script
