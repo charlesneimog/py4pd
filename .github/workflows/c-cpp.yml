@@ -26,7 +26,17 @@ jobs:
     - name: Upload artifact
       uses: actions/upload-artifact@v2
       with:
-        name: py4pd.pd_darwin
-        path: ./py4pd.pd_darwin
+        # upload add files inside src folder, 
+        name: MACOS_py4pd
+        path: 
+              ./py4pd.pd_darwin | 
+              ./src |
+              py.py |
+              py4pd.cfg | 
+              README.md |
+              py4pd-help.pd
+
+
+            
 
       
