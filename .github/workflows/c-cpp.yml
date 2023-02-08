@@ -21,9 +21,7 @@ jobs:
       run: brew install --cask pd
 
     - name: search for PureData bin and export VAR
-      run: |
-        export PD_BIN=$(find /Applications -name Pd -type f)
-        echo "PD_BIN=$PD_BIN" >> $GITHUB_ENV
+      run: ls /Applications/Pd-0.53-1.app/Contents/Resources/bin/
 
 
     - name: Build
