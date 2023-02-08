@@ -19,10 +19,6 @@ jobs:
 
     - name: Clone PureData
       run: git clone https://github.com/puredata/pure-data.git
-  
-
-    - name: Print Python3.11 includes
-      run: python3.11-config --includes
 
     - name: Build
       run: make PDINCLUDEDIR=pure-data/src PYTHON_VERSION=python3.11 PYTHON_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.11/include/python3.11
@@ -31,7 +27,7 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: py4pd.pd_darwin
-        path: ./ 
+        path: ./py4pd.pd_darwin
         if-no-files-found: error, pd Object not found
 
       
