@@ -25,7 +25,7 @@ jobs:
       run: python3.11-config --includes
 
     - name: Build
-      run: make PDINCLUDEDIR=pure-data/src PYTHON_VERSION=python3.11 PYTHON_INCLUDE=-I/Library/Frameworks/Python.framework/Versions/3.11/include/
+      run: make PDINCLUDEDIR=pure-data/src PYTHON_VERSION=python3.11 PYTHON_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.11/include/
 
 
       
