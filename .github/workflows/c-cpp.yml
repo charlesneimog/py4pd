@@ -1,0 +1,25 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+  
+
+jobs:
+  macos-universal-build:
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Clone PureData
+      run: git clone https://github.com/puredata/pure-data.git
+  
+    - name: Build
+      run: make PDINCLUDEDIR=pure-data/src 
+      
