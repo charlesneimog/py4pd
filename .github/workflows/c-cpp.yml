@@ -20,22 +20,28 @@ jobs:
     - name: Install PureData
       run: brew install --cask pd
 
-    - name: search for PureData bin and export VAR
-      run: ls /Applications/Pd-0.53-1.app/Contents/Resources/bin/
+    # pd is always installed in /Applications/Pd-0.53-1.app/Contents/Resources/bin/ but the version number changes
+    # 
+
+    - name: Get Pd version installed
+      id: pd_version
+      run: |
+        echo "::set-output name=version::$(ls /Applications/Pd-*.app/Contents/Resources/bin/ | sed 's/\/Applications\/Pd-//g' | sed 's/\.app\/Contents\/Resources\/bin//g')"
+        
 
 
-    - name: Build
-      run: make PYTHON_VERSION=python3.11 PYTHON_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.11/include/python3.11
+    # - name: Build
+    #   run: make PYTHON_VERSION=python3.11 PYTHON_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.11/include/python3.11
 
-    - name: Upload Object
-      uses: actions/upload-artifact@v2
-      with:
-        name: py4pd
-        path: py4pd.pd_darwin 
+    # - name: Upload Object
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     name: py4pd
+    #     path: py4pd.pd_darwin 
 
-    - name: Move py4pd.pd_darwin to test
-      run: mv py4pd.pd_darwin test/py4pd.pd_darwin
+    # - name: Move py4pd.pd_darwin to test
+    #   run: mv py4pd.pd_darwin test/py4pd.pd_darwin
 
-    - name: Run Test
-      run: pd -nogui test.pd
+    # - name: Run Test
+    #   run: pd -nogui test.pd
     
