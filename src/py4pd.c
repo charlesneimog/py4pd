@@ -937,7 +937,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     // make pointer for x
     t_py **py4pd_object_ptr = malloc(sizeof(t_py*)); // create a pointer to t_py
     *py4pd_object_ptr = x;
-    py4pd_object = py4pd_object_ptr;
+    // py4pd_object = py4pd_object_ptr;
 
     // check if python is initialized, if not, initialize it
     if (!Py_IsInitialized()) {
