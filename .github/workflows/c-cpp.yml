@@ -23,20 +23,35 @@ jobs:
     - name: Build
       run: make PDINCLUDEDIR=pure-data/src PYTHON_VERSION=python3.11 PYTHON_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.11/include/python3.11
 
-    - name: Upload artifact
+    - name: Upload Object
       uses: actions/upload-artifact@v2
       with:
-        # upload add files inside src folder, 
-        name: MACOS_py4pd
-        path: 
-              ./py4pd.pd_darwin | 
-              ./src |
-              py.py |
-              py4pd.cfg | 
-              README.md |
-              py4pd-help.pd
+        name: py4pd
+        path: py4pd.pd_darwin 
+    
+  linux-universal-build:
+    runs-on: ubuntu-latest
 
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        fetch-depth: 0
 
-            
+    - name: Clone PureData
+      run: git clone https://github.com/puredata/pure-data.git
+
+    - name: Install Python3.11 and dependencies
+      run: sudo apt-get install python3.11 python3.11-dev 
+
+    - name: Build
+      run: make PDINCLUDEDIR=pure-data/src PYTHON_VERSION=python3.11 PYTHON_INCLUDE=/usr/include/python3.11
+
+    - name: Upload Object
+      uses: actions/upload-artifact@v2
+      with:
+        name: py4pd
+        path: py4pd.pd_linux
+
 
       
