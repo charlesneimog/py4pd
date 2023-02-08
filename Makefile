@@ -6,7 +6,7 @@ lib.name = py4pd
 uname := $(shell uname -s)
 
 ifeq (MINGW,$(findstring MINGW,$(uname)))
-  cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -Wincompatible-pointer-types -Wint-conversion
+  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wincompatible-pointer-types -Wint-conversion
   ldlibs =  $(PYTHON_DLL) -lwinpthread
   pythondll_name = $(shell basename $(PYTHON_DLL))
   $(shell cp $(PYTHON_DLL) $(pythondll_name))
