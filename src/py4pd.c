@@ -66,34 +66,34 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
             } else {
                 pd_error(x, "[py4pd] py4pd just convert int, float and string! Received: %s", Py_TYPE(pValue_i)->tp_name);
                 Py_DECREF(pValue_i);
-                return;
+                return 0;
             }
         }
         outlet_list(x->out_A, 0, list_size, list_array); // TODO: possible do in other way? Seems slow!
-        return;
+        return 0;
     } else {
         if (PyLong_Check(pValue)) {
             long result = PyLong_AsLong(pValue); // DOC: If the function return a integer
             outlet_float(x->out_A, result);
             //PyGILState_Release(gstate);
-            return ;
+            return 0;
         } else if (PyFloat_Check(pValue)) {
             double result = PyFloat_AsDouble(pValue); // DOC: If the function return a float
             float result_float = (float)result;
             outlet_float(x->out_A, result_float);
             //PyGILState_Release(gstate);
-            return ;
+            return 0;
             // outlet_float(x->out_A, result);
         } else if (PyUnicode_Check(pValue)) {
             const char *result = PyUnicode_AsUTF8(pValue); // DOC: If the function return a string
             outlet_symbol(x->out_A, gensym(result)); 
-            return ;
+            return 0;
             
         } else if (Py_IsNone(pValue)) {
             post("None");
         } else {
             pd_error(x, "[py4pd] py4pd just convert int, float and string or list of this atoms! Received: %s", Py_TYPE(pValue)->tp_name);
-            return ;
+            return 0;
         }
     }
 }
