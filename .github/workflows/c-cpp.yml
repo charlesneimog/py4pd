@@ -20,6 +20,13 @@ jobs:
     - name: Install PureData
       run: brew install --cask pd
 
+    # search puredata and export VAR
+    - name: search for PureData bin and export VAR
+      run: |
+        export PD_BIN=$(find /Applications -name pd -type f)
+        echo "PD_BIN=$PD_BIN" >> $GITHUB_ENV
+
+
     - name: Build
       run: make PYTHON_VERSION=python3.11 PYTHON_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.11/include/python3.11
 
