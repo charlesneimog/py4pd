@@ -20,10 +20,9 @@ jobs:
     - name: Install PureData
       run: brew install --cask pd
 
-    # search puredata and export VAR
     - name: search for PureData bin and export VAR
       run: |
-        export PD_BIN=$(find /Applications -name pd -type f)
+        export PD_BIN=$(find /Applications -name Pd -type f)
         echo "PD_BIN=$PD_BIN" >> $GITHUB_ENV
 
 
