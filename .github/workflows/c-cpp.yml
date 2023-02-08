@@ -28,6 +28,5 @@ jobs:
       with:
         name: py4pd.pd_darwin
         path: ./py4pd.pd_darwin
-        if-no-files-found: error, pd Object not found
 
       
