@@ -762,7 +762,7 @@ static void *ThreadFunc(void *lpParameter) {
     thread_status[object_number] = 0;
     running_some_thread = 0;
     
-    return;
+    return 0;
 }
 
 // ============================================
