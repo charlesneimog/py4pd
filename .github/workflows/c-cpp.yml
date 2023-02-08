@@ -17,15 +17,15 @@ jobs:
         submodules: recursive
         fetch-depth: 0
 
-    # - name: Clone PureData
-    #   run: git clone https://github.com/puredata/pure-data.git
+    - name: Clone PureData
+      run: git clone https://github.com/puredata/pure-data.git
   
 
     - name: Print Python3.11 includes
       run: python3.11-config --includes
 
-    # - name: Build
-    #   run: make PDINCLUDEDIR=pure-data/src PYTHON_VERSION=python3.11 PYTHON_INCLUDE=u
+    - name: Build
+      run: make PDINCLUDEDIR=pure-data/src PYTHON_VERSION=python3.11 PYTHON_INCLUDE=-I/Library/Frameworks/Python.framework/Versions/3.11/include/python3.11
 
 
       
