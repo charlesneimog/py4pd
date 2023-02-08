@@ -729,7 +729,7 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // Remove the Python interpreter from the current thread
     // Acquire the GIL
    
-    return NULL;
+    return;
 }
 
 // ============================================
@@ -762,7 +762,7 @@ static void *ThreadFunc(void *lpParameter) {
     thread_status[object_number] = 0;
     running_some_thread = 0;
     
-    return NULL;
+    return;
 }
 
 // ============================================
@@ -824,7 +824,7 @@ static void inside_thread(){
     PyGILState_STATE gstate = PyGILState_Ensure();
     PyRun_SimpleString("print('Hello from inside the thread!')");
     PyGILState_Release(gstate);
-    return NULL;
+    return ;
 }
 
 
