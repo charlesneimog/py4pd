@@ -17,7 +17,7 @@ else ifeq (Linux,$(findstring Linux,$(uname)))
 
 else ifeq (Darwin,$(findstring Darwin,$(uname)))
   cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wincompatible-pointer-types -Wint-conversion
-  ldlibs = -l $(PYTHON_VERSION)
+  ldlibs = -L "/Library/Frameworks/Python.framework/Versions/3.11/lib/" -l python3.11
 
 else
   $(error "Unknown system type: $(uname)")
