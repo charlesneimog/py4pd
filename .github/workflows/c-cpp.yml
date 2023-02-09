@@ -49,24 +49,26 @@ jobs:
         submodules: recursive
         fetch-depth: 0
 
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
+    # - uses: actions/setup-python@v4
+    #   with:
+    #     python-version: '3.11'
 
-    - if: runner.os == 'Windows'
-      name: "Install mingw deps"
-      uses: msys2/setup-msys2@v2
-      with:
-          install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git
-          update: false
+    # - if: runner.os == 'Windows'
+    #   name: "Install mingw deps"
+    #   uses: msys2/setup-msys2@v2
+    #   with:
+    #       install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git
+    #       update: false
 
     - name: Create py4pd_WIN64
       run: mkdir py4pd_WIN64
 
         # run each file for line by line output
     - name: Move files to py4pd_WIN64
-      run: |
-          xcopy /s py4pd.cfg py4pd_WIN64\ && xcopy /s py.py py4pd_WIN64\ && xcopy /s python311._pth py4pd_WIN64\ && xcopy /s py4pd-help.pd py4pd_WIN64\ && xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll py4pd_WIN64\
+      run: 
+          # xcopy /s py4pd.cfg py4pd_WIN64\ 
+          # xcopy /s py.py py4pd_WIN64\ && xcopy /s python311._pth py4pd_WIN64\ && xcopy /s py4pd-help.pd py4pd_WIN64\ && xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll py4pd_WIN64\
+          cp py4pd.cfg py4pd_WIN64\ && cp py.py py4pd_WIN64\ && cp python311._pth py4pd_WIN64\ && cp py4pd-help.pd py4pd_WIN64\ && cp C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll py4pd_WIN64\
 
     
     
