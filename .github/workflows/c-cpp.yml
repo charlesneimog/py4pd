@@ -96,7 +96,8 @@ jobs:
       run: cp test/test.pd py4pd_WIN64/test.pd
 
     - name: Run Test
-      run: python -c "import os; os.system('C:\\Program Files\\Pure Data\\bin\\pd.exe -nogui py4pd_WIN64\\test.pd')"
+      # C:\\Program Files\\Pure Data\\bin\\pd.exe must be inside double quotes
+      run: python -c "import os; os.system('\"C:\\Program Files\\Pure Data\\bin\\pd.exe\" -nogui py4pd_WIN64/test.pd')"
 
     - name: Upload Object ZIP
       uses: actions/upload-artifact@v3
