@@ -88,15 +88,20 @@ jobs:
           cp python311._pth py4pd_WIN64\ 
           cp py4pd-help.pd py4pd_WIN64\ 
           cp C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll py4pd_WIN64\
+          cp test/test.pd py4pd_WIN64\
 
     - name: zip py4pd_WIN64
       run: 7z a py4pd_WIN64.zip py4pd_WIN64
+
+    - name: run Simple Test
+      run: "C:/Program Files/Pd/bin/pd.exe" -nogui test/test.pd
 
     - name: Upload Object ZIP
       uses: actions/upload-artifact@v3
       with:
         name: py4pd_WIN64
         path: py4pd_WIN64.zip
+        days-to-keep: 1
 
 
 
