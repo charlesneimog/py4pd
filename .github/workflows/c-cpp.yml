@@ -75,11 +75,17 @@ jobs:
     - name: Copy Dlls Files
       run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\DLLs py4pd_WIN64\Python\DLLs\
 
+
+    # run each file for line by line output
     - name: Move files to py4pd_WIN64
-      run: xcopy /s py4pd.m_amd64 py4pd.cfg py.py python311._pth py4pd-help.pd py4pd_WIN64\
-     
-    - name: Copy DLL to py4pd_WIN64
-      run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll py4pd_WIN64\python311.dll
+      run:  
+          xcopy /s py4pd.m_amd64 py4pd_WIN64\ 
+          xcopy /s py4pd.cfg py4pd_WIN64\
+          xcopy /s py.py py4pd_WIN64\
+          xcopy /s python311._pth py4pd_WIN64\
+          xcopy /s py4pd-help.pd py4pd_WIN64\
+          xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll py4pd_WIN64\python311.dll
+
 
     - name: zip py4pd_WIN64
       run: 7z a py4pd_WIN64.zip py4pd_WIN64
