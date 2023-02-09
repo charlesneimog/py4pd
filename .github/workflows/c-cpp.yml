@@ -50,7 +50,7 @@ jobs:
         python-version: '3.11'
 
     - name: check where python is
-      run: where python
+      run: python -c "from sysconfig import get_paths as gp; print(gp()['include'])"
 
     # - if: runner.os == 'Windows'
     #   name: "Install mingw deps"
