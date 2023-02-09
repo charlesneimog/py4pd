@@ -93,7 +93,6 @@ jobs:
     - name: zip py4pd_WIN64
       run: 7z a py4pd_WIN64.zip py4pd_WIN64
 
-
     - name: Run Puredata Test
       run: 'C:/Program Files/Pd/bin/pd.exe' -nogui py4pd_WIN64/test.pd
 
