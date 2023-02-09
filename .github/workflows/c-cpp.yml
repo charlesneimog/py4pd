@@ -5,37 +5,36 @@ on:
   workflow_dispatch:
   
 jobs:
-  # macos-universal-build:
-  #   runs-on: macos-latest
+  macos-universal-build:
+    runs-on: macos-latest
 
-  #   steps:
-  #   - uses: actions/checkout@v3
-  #     with:
-  #       submodules: recursive
-  #       fetch-depth: 0
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        fetch-depth: 0
 
-  #   - name: Install PureData
-  #     run: brew install --cask pd
+    - name: Install PureData
+      run: brew install --cask pd
 
-  #   - name: Build
-  #     run: make PYTHON_VERSION=python3.11 PYTHON_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.11/include/python3.11
+    - name: Build
+      run: make PYTHON_VERSION=python3.11 PYTHON_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.11/include/python3.11
 
-  #   - name: Upload Object
-  #     uses: actions/upload-artifact@v2
-  #     with:
-  #       name: py4pd_MACOS-INTEL
-  #       path: py4pd.pd_darwin 
+    - name: Upload Object
+      uses: actions/upload-artifact@v2
+      with:
+        name: py4pd_MACOS-INTEL
+        path: py4pd.pd_darwin 
 
-  #   - name: Move py4pd.pd_darwin to test
-  #     run: mv py4pd.pd_darwin test/py4pd.pd_darwin
+    - name: Move py4pd.pd_darwin to test
+      run: mv py4pd.pd_darwin test/py4pd.pd_darwin
 
-  #   - name: Run Test
-  #     run: /Applications/Pd-*.app/Contents/Resources/bin/pd -nogui test/test.pd
+    - name: Run Test
+      run: /Applications/Pd-*.app/Contents/Resources/bin/pd -nogui test/test.pd
 
 # run on Windows
   windows-build:
     runs-on: windows-latest
-
     steps:
     - uses: actions/checkout@v3
       with:
@@ -46,73 +45,44 @@ jobs:
       with:
         python-version: '3.11'
 
-    - if: runner.os == 'Windows'
-      name: "Install mingw deps"
-      uses: msys2/setup-msys2@v2
-      with:
-          install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git
-          update: false
+    - name: Check if 7zip is installed
+      run: 7z -h
 
-    - name: Install PureData
-      run: choco install puredata --yes
 
-    - if: runner.os == 'Windows'
-      name: Build py4pd
-      shell: msys2 {0}
-      run: make PYTHON_INCLUDE="C:/hostedtoolcache/windows/Python/3.11.1/x64/Include/" PYTHON_DLL="C:/hostedtoolcache/windows/Python/3.11.1/x64/python311.dll"
+    # - if: runner.os == 'Windows'
+    #   name: "Install mingw deps"
+    #   uses: msys2/setup-msys2@v2
+    #   with:
+    #       install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git
+    #       update: false
+
+    # - name: Install PureData
+    #   run: choco install puredata --yes
+
+    # - if: runner.os == 'Windows'
+    #   name: Build py4pd
+    #   shell: msys2 {0}
+    #   run: make PYTHON_INCLUDE="C:/hostedtoolcache/windows/Python/3.11.1/x64/Include/" PYTHON_DLL="C:/hostedtoolcache/windows/Python/3.11.1/x64/python311.dll"
     
-    - name: Rename py4pd.dll to py4pd.m_amd64
-      run: mv py4pd.dll py4pd.m_amd64
+    # - name: Rename py4pd.dll to py4pd.m_amd64
+    #   run: mv py4pd.dll py4pd.m_amd64
 
-    - name: Copy Lib Files
-      run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\Lib Python\Lib\
+    # - name: Copy Lib Files
+    #   run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\Lib py4pd_WIN64\Python\Lib\
 
-    - name: Copy Dlls Files
-      run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\DLLs Python\DLLs\
+    # - name: Copy Dlls Files
+    #   run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\DLLs py4pd_WIN64\Python\DLLs\
 
-    - name: Upload Python folder
-      uses: actions/upload-artifact@v2
-      with:
-        name: py4pd_WIN64
-        path: Python
-        destination: Python/
+    # - name: Move files to py4pd_WIN64
+    #   run: xcopy /s /y py4pd.m_amd64 py4pd.cfg py.py python311._pth py4pd-help.pd py4pd_WIN64\   
     
-    - name: Upload py.py
-      uses: actions/upload-artifact@v2
-      with:
-        name: py4pd_WIN64
-        path: py.py
-
-    - name: Upload py4pd.cfg
-      uses: actions/upload-artifact@v2
-      with:
-        name: py4pd_WIN64
-        path: py4pd.cfg
-
-    - name: Upload python311._pth
-      uses: actions/upload-artifact@v2
-      with:
-        name: py4pd_WIN64
-        path: python311._pth
-
-    - name: Upload py4pd-help.pd
-      uses: actions/upload-artifact@v2
-      with:
-        name: py4pd_WIN64
-        path: py4pd-help.pd
+    # - name: Copy DLL to py4pd_WIN64
+    #   run: xcopy /s /y C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll py4pd_WIN64\python311.dll
 
 
-    - name: Upload Object
-      uses: actions/upload-artifact@v2
-      with:
-        name: py4pd_WIN64
-        path: py4pd.m_amd64
+    # - name: zip py4pd_WIN64
+    #   run: 7z a py4pd_WIN64.zip py4pd_WIN64
 
-    - name: Upload Python DLL
-      uses: actions/upload-artifact@v2
-      with:
-        name: py4pd_WIN64
-        path: C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll
 
 
 
