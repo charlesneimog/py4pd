@@ -63,8 +63,8 @@ jobs:
     # - name: Create py4pd_WIN64
     #   run: mkdir py4pd_WIN64
     
-    # - name: Install PureData
-    #   run: choco install puredata --yes
+    - name: Install PureData
+      run: choco install puredata --yes
 
     # - if: runner.os == 'Windows'
     #   name: Build py4pd
@@ -94,6 +94,8 @@ jobs:
 
     # - name: Move test.pd to py4pd_WIN64
     #   run: cp test/test.pd py4pd_WIN64/test.pd
+
+
 
     - name: Run Test
       run: cmd /c "C:\Program Files\Pd\bin\pd.exe" -nogui test\test.pd
