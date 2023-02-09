@@ -94,7 +94,7 @@ jobs:
       run: 7z a py4pd_WIN64.zip py4pd_WIN64
 
     - name: Run py4pd Test 
-      run: 'C:\Program Files\Pure Data\bin\pd.exe' -nogui py4pd_WIN64\test.pd
+      run: 'C:\Program Files\Pure Data\bin\pd.exe' -nogui test.pd 
 
     - name: Upload Object ZIP
       uses: actions/upload-artifact@v3
