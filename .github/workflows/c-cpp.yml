@@ -90,7 +90,7 @@ jobs:
           cp C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll py4pd_WIN64\
           cp test/test.pd py4pd_WIN64\
         
-    - name: Run py4pd Test 
+    - name: Run Test 
       run: 'C:\Program Files\Pure Data\bin\pd.exe' -nogui test.pd 
 
     - name: zip py4pd_WIN64
