@@ -78,8 +78,8 @@ jobs:
 
     # run each file for line by line output
     - name: Move files to py4pd_WIN64
-      run:  
-          xcopy /s py4pd.m_amd64 py4pd_WIN64\ 
+      run: |
+          xcopy /s py4pd.m_amd64 py4pd_WIN64\ |
           xcopy /s py4pd.cfg py4pd_WIN64\
           xcopy /s py.py py4pd_WIN64\
           xcopy /s python311._pth py4pd_WIN64\
