@@ -45,6 +45,9 @@ jobs:
         submodules: recursive
         fetch-depth: 0
 
+    - name: Winget version
+      run: winget --version
+    
     - name: Install Mingw64
       run: winget install msys2.msys2 --accept-source-agreements --accept-package-agreements
     
