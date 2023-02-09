@@ -55,7 +55,7 @@ jobs:
       run: C:/msys64/msys2_shell.cmd -defterm -here -no-start -mingw64
 
     - name: Install Dependencies for Mingw64
-      run: pacman -S make autoconf automake libtool mingw-w64-x86_64-libwinpthread-git mingw64/mingw-w64-x86_64-gcc --noconfirm
+      run: pacman -S make --noconfirm #autoconf automake libtool mingw-w64-x86_64-libwinpthread-git mingw64/mingw-w64-x86_64-gcc --noconfirm
 
     # - name: Build
     #   run: make PYTHON_INCLUDE="~/AppData/Local/Programs/Python/Python311/include" PYTHON_DLL="~/AppData/Local/Programs/Python/Python311/python311.dll"
