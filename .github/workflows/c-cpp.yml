@@ -48,10 +48,6 @@ jobs:
 # ===============================================================================================
 # ===============================================================================================
 
-  # just run on macos-arm64
-  
-
-
   macos-arm64-build:
     runs-on: macos-latest
     steps:
@@ -60,33 +56,26 @@ jobs:
         submodules: recursive
         fetch-depth: 0
    
-    
-    - name: Change to arm64
-      run: arch -arm64 zsh
+    - name: Install PureData
+      run: brew install --cask pd
 
-    - name: check arch
-      run: arch
+    - name: Build
+      run: make PYTHON_VERSION=python3.11 PYTHON_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.11/include/python3.11
 
-    # - name: Install PureData
-    #   run: brew install --cask pd
+    - name: Create py4pd_macOS-ARM
+      run: mkdir py4pd_macOS-ARM
 
-    # - name: Build
-    #   run: make PYTHON_VERSION=python3.11 PYTHON_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.11/include/python3.11
+    - name: Copy files to py4pd_macOS-ARM
+      run: cp py4pd.pd_darwin py4pd.cfg py.py py4pd-help.pd py4pd_macOS-ARM
 
-    # - name: Create py4pd_macOS-ARM
-    #   run: mkdir py4pd_macOS-ARM
+    - name: Zip py4pd_macOS-ARM
+      run: zip -r py4pd_macOS-ARM.zip py4pd_macOS-ARM
 
-    # - name: Copy files to py4pd_macOS-ARM
-    #   run: cp py4pd.pd_darwin py4pd.cfg py.py py4pd-help.pd py4pd_macOS-ARM
-
-    # - name: Zip py4pd_macOS-ARM
-    #   run: zip -r py4pd_macOS-ARM.zip py4pd_macOS-ARM
-
-    # - name: Upload Object
-    #   uses: actions/upload-artifact@v3
-    #   with:
-    #     name: py4pd_macOS-ARM
-    #     path: py4pd_macOS-ARM.zip
+    - name: Upload Object
+      uses: actions/upload-artifact@v3
+      with:
+        name: py4pd_macOS-ARM
+        path: py4pd_macOS-ARM.zip
 
 # ===============================================================================================
 # ===============================================================================================
