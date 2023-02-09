@@ -175,7 +175,7 @@ jobs:
       run: mkdir py4pd_Linux
 
     - name: Copy files to py4pd_Linux
-      run: cp py4pd.pd_linux py4pd.cfg py.py py4pd-help.pd py4pd_Linux
+      run: cp py4pd.pd_linux test/test.pd py4pd.cfg py.py py4pd-help.pd py4pd_Linux
 
     - name: Zip py4pd_Linux
       run: zip -r py4pd_Linux.zip py4pd_Linux
