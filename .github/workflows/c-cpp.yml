@@ -96,7 +96,7 @@ jobs:
     #   run: cp test/test.pd py4pd_WIN64/test.pd
 
     - name: Run Test
-      run: python test/test.py
+      run: "C:\Program Files\Pd\bin\pd.exe" -nogui test\test.pd
 
     - name: Upload Object ZIP
       uses: actions/upload-artifact@v3
