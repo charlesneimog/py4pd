@@ -75,6 +75,7 @@ jobs:
       with:
         name: py4pd_WIN64
         path: Python
+        destination: Python/
     
     - name: Upload py.py
       uses: actions/upload-artifact@v2
