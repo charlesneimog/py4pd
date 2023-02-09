@@ -49,10 +49,11 @@ jobs:
       with:
         python-version: '3.11'
 
-    - uses: ls to C:\hostedtoolcache\windows\Python\3.11.1\x64\
+    - name: ls to C:\hostedtoolcache\windows\Python\3.11.1\x64\
       run: cd C:\hostedtoolcache\windows\Python\3.11.1\x64\ && ls
 
-    - uses: ls to C:\hostedtoolcache\windows\Python\3.11.1\x64\Include
+
+    - name: ls to C:\hostedtoolcache\windows\Python\3.11.1\x64\Include
       run: cd C:\hostedtoolcache\windows\Python\3.11.1\x64\Include && ls
 
     # - if: runner.os == 'Windows'
