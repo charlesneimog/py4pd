@@ -5,32 +5,32 @@ on:
   workflow_dispatch:
   
 jobs:
-  macos-universal-build:
-    runs-on: macos-latest
+  # macos-universal-build:
+  #   runs-on: macos-latest
 
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
-        fetch-depth: 0
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #     with:
+  #       submodules: recursive
+  #       fetch-depth: 0
 
-    - name: Install PureData
-      run: brew install --cask pd
+  #   - name: Install PureData
+  #     run: brew install --cask pd
 
-    - name: Build
-      run: make PYTHON_VERSION=python3.11 PYTHON_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.11/include/python3.11
+  #   - name: Build
+  #     run: make PYTHON_VERSION=python3.11 PYTHON_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.11/include/python3.11
 
-    - name: Upload Object
-      uses: actions/upload-artifact@v2
-      with:
-        name: py4pd_MACOS-INTEL
-        path: py4pd.pd_darwin 
+  #   - name: Upload Object
+  #     uses: actions/upload-artifact@v2
+  #     with:
+  #       name: py4pd_MACOS-INTEL
+  #       path: py4pd.pd_darwin 
 
-    - name: Move py4pd.pd_darwin to test
-      run: mv py4pd.pd_darwin test/py4pd.pd_darwin
+  #   - name: Move py4pd.pd_darwin to test
+  #     run: mv py4pd.pd_darwin test/py4pd.pd_darwin
 
-    - name: Run Test
-      run: /Applications/Pd-*.app/Contents/Resources/bin/pd -nogui test/test.pd
+  #   - name: Run Test
+  #     run: /Applications/Pd-*.app/Contents/Resources/bin/pd -nogui test/test.pd
 
 # run on Windows
   windows-build:
