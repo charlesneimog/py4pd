@@ -49,30 +49,21 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: check where python is
-      run: python -c "from sysconfig import get_paths as gp; print(gp()['include'])"
+    - if: runner.os == 'Windows'
+      name: "Install mingw deps"
+      uses: msys2/setup-msys2@v2
+      with:
+          install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git
+          update: false
 
-    # - if: runner.os == 'Windows'
-    #   name: "Install mingw deps"
-    #   uses: msys2/setup-msys2@v2
-    #   with:
-    #       install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git
-    #       update: false
+    - name: Install PureData
+      run: choco install puredata --yes
 
+    - if: runner.os == 'Windows'
+      shell: msys2 {0}
+      run: make PYTHON_INCLUDE="C:\hostedtoolcache\windows\Python\3.11.1\x64\Include" PYTHON_DLL="C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll"
     
-    # - if: runner.os == 'Windows'
-    #   shell: msys2 {0}
-    #   run: make PYTHON_INCLUDE="~/AppData/Local/Programs/Python/Python311/include" PYTHON_DLL="~/AppData/Local/Programs/Python/Python311/python311.dll"
-    
-    
-    # - name: Install PureData
-    #   run: choco install puredata --yes
 
-    # - name: Install Python 3.11
-    #   run: choco install python --version 3.11.0 --yes
-
-    # - name: Build
-    #   run: make PYTHON_INCLUDE="~/AppData/Local/Programs/Python/Python311/include" PYTHON_DLL="~/AppData/Local/Programs/Python/Python311/python311.dll"
 
     # - name: Rename py4pd.dll to py4pd.m_amd64
     #   run: mv py4pd.dll py4pd.m_amd64
