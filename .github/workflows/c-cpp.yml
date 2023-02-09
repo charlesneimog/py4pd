@@ -64,9 +64,6 @@ jobs:
     - name: Rename py4pd.dll to py4pd.m_amd64
       run: mv py4pd.dll py4pd.m_amd64
 
-    - name: Make Directories
-      run: mkdir Python\Lib\; mkdir Python\DLLs\
-
     - name: Copy Lib Files
       run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\Lib Python\Lib\
 
