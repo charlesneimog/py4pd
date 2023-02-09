@@ -65,10 +65,12 @@ jobs:
 
         # run each file for line by line output
     - name: Move files to py4pd_WIN64
-      run: 
-          # xcopy /s py4pd.cfg py4pd_WIN64\ 
-          # xcopy /s py.py py4pd_WIN64\ && xcopy /s python311._pth py4pd_WIN64\ && xcopy /s py4pd-help.pd py4pd_WIN64\ && xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll py4pd_WIN64\
-          cp py4pd.cfg py4pd_WIN64\ && cp py.py py4pd_WIN64\ && cp python311._pth py4pd_WIN64\ && cp py4pd-help.pd py4pd_WIN64\ && cp C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll py4pd_WIN64\
+      run: |
+          cp py4pd.cfg py4pd_WIN64\ && \
+          cp py.py py4pd_WIN64\ && \
+          cp python311._pth py4pd_WIN64\ && \
+          cp py4pd-help.pd py4pd_WIN64\ && \
+          cp C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll py4pd_WIN64\
 
     
     - name: ls print
