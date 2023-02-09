@@ -101,7 +101,6 @@ jobs:
       with:
         name: py4pd_WIN64
         path: py4pd_WIN64.zip
-        days-to-keep: 1
 
 
 
