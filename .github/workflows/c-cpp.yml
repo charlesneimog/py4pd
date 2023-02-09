@@ -65,14 +65,11 @@ jobs:
       run: mv py4pd.dll py4pd.m_amd64
 
 
-    - name: Create Python folder
-      run: mkdir Python
+    - name: Copy Lib Files
+      run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\Include\Lib Python\Lib\
 
-    - name: Copy all files inside C:/hostedtoolcache/windows/Python/3.11.1/x64/Include/Lib to Python folder
-      run: cp -r C:/hostedtoolcache/windows/Python/3.11.1/x64/Include/Lib/* Python
-
-    - name: Copy all files inside C:/hostedtoolcache/windows/Python/3.11.1/x64/Include/DLLs to Python folder
-      run: cp -r C:/hostedtoolcache/windows/Python/3.11.1/x64/Include/DLLs/* Python
+    - name: Copy Dlls Files
+      run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\Include\DLLs Python\DLLs\
 
     - name: Upload Python folder
       uses: actions/upload-artifact@v2
