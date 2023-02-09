@@ -49,39 +49,45 @@ jobs:
       run: 7z -h
 
 
-    # - if: runner.os == 'Windows'
-    #   name: "Install mingw deps"
-    #   uses: msys2/setup-msys2@v2
-    #   with:
-    #       install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git
-    #       update: false
+    - if: runner.os == 'Windows'
+      name: "Install mingw deps"
+      uses: msys2/setup-msys2@v2
+      with:
+          install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git
+          update: false
 
-    # - name: Install PureData
-    #   run: choco install puredata --yes
+    - name: Install PureData
+      run: choco install puredata --yes
 
-    # - if: runner.os == 'Windows'
-    #   name: Build py4pd
-    #   shell: msys2 {0}
-    #   run: make PYTHON_INCLUDE="C:/hostedtoolcache/windows/Python/3.11.1/x64/Include/" PYTHON_DLL="C:/hostedtoolcache/windows/Python/3.11.1/x64/python311.dll"
+    - if: runner.os == 'Windows'
+      name: Build py4pd
+      shell: msys2 {0}
+      run: make PYTHON_INCLUDE="C:/hostedtoolcache/windows/Python/3.11.1/x64/Include/" PYTHON_DLL="C:/hostedtoolcache/windows/Python/3.11.1/x64/python311.dll"
     
-    # - name: Rename py4pd.dll to py4pd.m_amd64
-    #   run: mv py4pd.dll py4pd.m_amd64
+    - name: Rename py4pd.dll to py4pd.m_amd64
+      run: mv py4pd.dll py4pd.m_amd64
 
-    # - name: Copy Lib Files
-    #   run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\Lib py4pd_WIN64\Python\Lib\
+    - name: Copy Lib Files
+      run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\Lib py4pd_WIN64\Python\Lib\
 
-    # - name: Copy Dlls Files
-    #   run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\DLLs py4pd_WIN64\Python\DLLs\
+    - name: Copy Dlls Files
+      run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\DLLs py4pd_WIN64\Python\DLLs\
 
-    # - name: Move files to py4pd_WIN64
-    #   run: xcopy /s /y py4pd.m_amd64 py4pd.cfg py.py python311._pth py4pd-help.pd py4pd_WIN64\   
+    - name: Move files to py4pd_WIN64
+      run: xcopy /s /y py4pd.m_amd64 py4pd.cfg py.py python311._pth py4pd-help.pd py4pd_WIN64\   
     
-    # - name: Copy DLL to py4pd_WIN64
-    #   run: xcopy /s /y C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll py4pd_WIN64\python311.dll
+    - name: Copy DLL to py4pd_WIN64
+      run: xcopy /s /y C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll py4pd_WIN64\python311.dll
 
 
-    # - name: zip py4pd_WIN64
-    #   run: 7z a py4pd_WIN64.zip py4pd_WIN64
+    - name: zip py4pd_WIN64
+      run: 7z a py4pd_WIN64.zip py4pd_WIN64
+
+    - name: Upload Object ZIP
+      uses: actions/upload-artifact@v3
+      with:
+        name: py4pd_WIN64
+        path: py4pd_WIN64.zip
 
 
 
