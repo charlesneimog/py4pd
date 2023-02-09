@@ -81,25 +81,26 @@ jobs:
       run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\DLLs py4pd_WIN64\Python\DLLs\
 
     - name: Move files to py4pd_WIN64
-      steps:
-        - run: cp py4pd.m_amd64 py4pd_WIN64\
-        - run: cp py4pd.cfg py4pd_WIN64\
-        - run: cp py.py py4pd_WIN64\
-        - run: cp python311._pth py4pd_WIN64\
-        - run: cp py4pd-help.pd py4pd_WIN64\
-        - run: cp C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll py4pd_WIN64\
-        - run: cp test/test.pd py4pd_WIN64\
+      run: |
+          cp py4pd.m_amd64 py4pd_WIN64\
+          cp py4pd.cfg py4pd_WIN64\
+          cp py.py py4pd_WIN64\ 
+          cp python311._pth py4pd_WIN64\ 
+          cp py4pd-help.pd py4pd_WIN64\ 
+          cp C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll py4pd_WIN64\
+          cp test/test.pd py4pd_WIN64\
         
     - name: zip py4pd_WIN64
       run: 7z a py4pd_WIN64.zip py4pd_WIN64
 
-
+    - name: Run Puredata Test
+      run: 'C:/Program Files/Pd/bin/pd.exe' -nogui py4pd_WIN64/test.pd
 
     - name: Upload Object ZIP
       uses: actions/upload-artifact@v3
-      with:
-        name: py4pd_WIN64
-        path: py4pd_WIN64.zip
+        with:
+          name: py4pd_WIN64
+          path: py4pd_WIN64.zip
 
 
 
