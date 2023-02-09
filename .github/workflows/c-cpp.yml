@@ -49,43 +49,35 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: ls to C:\hostedtoolcache\windows\Python\3.11.1\x64\
-      run: cd C:\hostedtoolcache\windows\Python\3.11.1\x64\ && ls
+    - if: runner.os == 'Windows'
+      name: "Install mingw deps"
+      uses: msys2/setup-msys2@v2
+      with:
+          install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git
+          update: false
 
+    - name: Install PureData
+      run: choco install puredata --yes
 
-    - name: ls to C:\hostedtoolcache\windows\Python\3.11.1\x64\Include
-      run: cd C:\hostedtoolcache\windows\Python\3.11.1\x64\Include && ls
-
-    # - if: runner.os == 'Windows'
-    #   name: "Install mingw deps"
-    #   uses: msys2/setup-msys2@v2
-    #   with:
-    #       install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git
-    #       update: false
-
-    # - name: Install PureData
-    #   run: choco install puredata --yes
-
-    # - if: runner.os == 'Windows'
-    #   shell: msys2 {0}
-    #   run: make PYTHON_INCLUDE="C:\hostedtoolcache\windows\Python\3.11.1\x64\Include" PYTHON_DLL="C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll"
+    - if: runner.os == 'Windows'
+      shell: msys2 {0}
+      run: make PYTHON_INCLUDE="C:/hostedtoolcache/windows/Python/3.11.1/x64/Include/" PYTHON_DLL="C:/hostedtoolcache/windows/Python/3.11.1/x64/python311.dll"
     
 
+    - name: Rename py4pd.dll to py4pd.m_amd64
+      run: mv py4pd.dll py4pd.m_amd64
 
-    # - name: Rename py4pd.dll to py4pd.m_amd64
-    #   run: mv py4pd.dll py4pd.m_amd64
+    - name: Upload Object
+      uses: actions/upload-artifact@v2
+      with:
+        name: py4pd
+        path: py4pd.m_amd64
 
-    # - name: Upload Object
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     name: py4pd
-    #     path: py4pd.m_amd64
-
-    # - name: Upload Python DLL
-    #   uses: actions/upload-artifact@v2
-    #   with:
-    #     name: py4pd
-    #     path: ~/AppData/Local/Programs/Python/Python311/python311.dll
+    - name: Upload Python DLL
+      uses: actions/upload-artifact@v2
+      with:
+        name: py4pd
+        path: C:\hostedtoolcache\windows\Python\3.11.1\x64\python311.dll
 
 
 
