@@ -1,6 +1,10 @@
 import os
 import sys
 
+# print where I am
+print(os.getcwd())
+
+
 if sys.platform == "win32":
     os.chdir("../py4pd_WIN64")
     os.system('"C:\\Program Files\\Pure Data\\bin\\pd.exe" -nogui test.pd')
