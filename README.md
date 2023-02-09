@@ -7,9 +7,9 @@ py4pd allows the use of Python inside PureData. It has the same objective as py/
 2. [C api from Python Docs](https://docs.python.org/3/extending/embedding.html);
 
 
-### Documentation
+### WARNING
 
-**[ !!! ]** On MacOS and Linux, for now, you need to install Python 3.10.
+**[ !!! ]** On MacOS and Linux, for now, you need to install Python 3.11.
 
 #### Using Python Modules
 
