@@ -35,7 +35,7 @@ jobs:
   #   - name: Run Test
   #     run: /Applications/Pd-*.app/Contents/Resources/bin/pd -nogui test/test.pd
 
-# run on WIndows
+# run on Windows
   windows-build:
     runs-on: windows-latest
 
@@ -45,17 +45,14 @@ jobs:
         submodules: recursive
         fetch-depth: 0
 
-    - name: Winget version
-      run: winget --version
-    
     - name: Install Mingw64
-      run: winget install msys2.msys2 --accept-source-agreements --accept-package-agreements
+      run: choco install msys2 --params "/InstallDir:C:\msys64" --yes
     
     - name: Install PureData
-      run: winget install --id "MillerPuckette.PureData" --accept-source-agreements --accept-package-agreements
+      run: choco install puredata --yes
 
     - name: Install Python 3.11
-      run: winget install python --version 3.11.0 --accept-source-agreements --accept-package-agreements
+      run: choco install python --version 3.11.0 --yes
 
     - name: Open Mingw64 Shell
       run: C:/msys64/msys2_shell.cmd -defterm -here -no-start -mingw64
