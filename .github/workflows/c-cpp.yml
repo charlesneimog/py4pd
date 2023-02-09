@@ -36,7 +36,6 @@ jobs:
   #     run: /Applications/Pd-*.app/Contents/Resources/bin/pd -nogui test/test.pd
 
   windows-build:
-    # need mingw64 for pd-lib-builder
     runs-on: windows-latest
 
     - name: Install MinGW
