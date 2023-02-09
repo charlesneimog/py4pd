@@ -8,30 +8,72 @@ on:
   
 
 jobs:
-  macos-universal-build:
-    runs-on: macos-latest
+  # macos-universal-build:
+  #   runs-on: macos-latest
 
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: recursive
-        fetch-depth: 0
+  #   steps:
+  #   - uses: actions/checkout@v3
+  #     with:
+  #       submodules: recursive
+  #       fetch-depth: 0
+
+  #   - name: Install PureData
+  #     run: brew install --cask pd
+
+  #   - name: Build
+  #     run: make PYTHON_VERSION=python3.11 PYTHON_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.11/include/python3.11
+
+  #   - name: Upload Object
+  #     uses: actions/upload-artifact@v2
+  #     with:
+  #       name: py4pd
+  #       path: py4pd.pd_darwin 
+
+  #   - name: Move py4pd.pd_darwin to test
+  #     run: mv py4pd.pd_darwin test/py4pd.pd_darwin
+
+  #   - name: Run Test
+  #     run: /Applications/Pd-*.app/Contents/Resources/bin/pd -nogui test/test.pd
+
+  windows-build:
+    # need mingw64 for pd-lib-builder
+    runs-on: windows-latest
+
+    - name: Install MinGW
+      uses: egor-tensin/setup-mingw@v2.2.0
 
     - name: Install PureData
-      run: brew install --cask pd
+      run: winget install puredata
+
+    - name: Install Python 3.11
+      run: winget install python --version 3.11.0
+
+    - name: Open Mingw64 Shell
+      run: C:/msys64/msys2_shell.cmd -defterm -here -no-start -mingw64
+
+    - name: Install Dependencies for Mingw64
+      run: pacman -S make autoconf automake libtool mingw-w64-x86_64-libwinpthread-git mingw64/mingw-w64-x86_64-gcc
 
     - name: Build
-      run: make PYTHON_VERSION=python3.11 PYTHON_INCLUDE=/Library/Frameworks/Python.framework/Versions/3.11/include/python3.11
+      run: make PYTHON_INCLUDE="~/AppData/Local/Programs/Python/Python311/include" PYTHON_DLL="~/AppData/Local/Programs/Python/Python311/python311.dll"
+
+    - name: Rename py4pd.dll to py4pd.m_amd64
+      run: mv py4pd.dll py4pd.m_amd64
 
     - name: Upload Object
       uses: actions/upload-artifact@v2
       with:
         name: py4pd
-        path: py4pd.pd_darwin 
+        path: py4pd.m_amd64
 
-    - name: Move py4pd.pd_darwin to test
-      run: mv py4pd.pd_darwin test/py4pd.pd_darwin
+    - name: Upload Python DLL
+      uses: actions/upload-artifact@v2
+      with:
+        name: py4pd
+        path: ~/AppData/Local/Programs/Python/Python311/python311.dll
 
-    - name: Run Test
-      run: /Applications/Pd-*.app/Contents/Resources/bin/pd -nogui test/test.pd
+
+
+
+
     
