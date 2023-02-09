@@ -66,12 +66,12 @@ jobs:
 
     - name: Make Directories
       run: mkdir Python\Lib\; mkdir Python\DLLs\
-      
+
     - name: Copy Lib Files
-      run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\Include\Lib Python\Lib\
+      run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\Lib Python\Lib\
 
     - name: Copy Dlls Files
-      run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\Include\DLLs Python\DLLs\
+      run: xcopy /s C:\hostedtoolcache\windows\Python\3.11.1\x64\DLLs Python\DLLs\
 
     - name: Upload Python folder
       uses: actions/upload-artifact@v2
