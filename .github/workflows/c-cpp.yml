@@ -37,9 +37,6 @@ jobs:
         name: py4pd_macOS-Intel
         path: py4pd_macOS-Intel.zip
 
-    - name: Move py4pd.pd_darwin to test
-      run: mv py4pd.pd_darwin test/py4pd.pd_darwin
-
     - name: Run Test
       run: mv py4pd.pd_darwin test/py4pd.pd_darwin && /Applications/Pd-*.app/Contents/Resources/bin/pd -nogui test/test.pd
 
