@@ -12,10 +12,6 @@ py4pd allows the use of Python inside PureData. It has the same objective as py/
 2. [C api from Python Docs](https://docs.python.org/3/extending/embedding.html);
 
 
-### WARNING
-
-**[ !!! ]** On MacOS and Linux, for now, you need to install Python 3.11.
-
 #### Using Python Modules
 
 The py4pd is built to work with site packages from `venv` (on Windows venv/Lib/site-packages), but it will work with conda too. For example, if my environment is installed in `C:/Users/Neimog/Git/py4pd/py4pd/`, you can send a message `packages  C:/Users/Neimog/Git/py4pd/py4pd/Lib/site-packages` that you will be able to use all modules installed in the environment.
