@@ -822,7 +822,7 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0); // set packages path
     class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0); // set function to be called
     class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
-    class_addmethod(py4pd_class, (t_method)runList_function, gensym("runlist"), A_GIMME, 0);  // run function
+    // class_addmethod(py4pd_class, (t_method)runList_function, gensym("runlist"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class, (t_method)thread, gensym("thread"), A_FLOAT, 0); // on/off threading
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open vscode
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script
