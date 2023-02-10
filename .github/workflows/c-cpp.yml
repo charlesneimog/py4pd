@@ -42,7 +42,7 @@ jobs:
         path: py4pd_macOS-Intel.zip
 
     - name: Install Modules for Test
-      run: python3.11 -m pip install neoscore -t ./py4pd_macOS-Intel/py-modules
+      run: python3 -m pip install neoscore -t ./py4pd_macOS-Intel/py-modules
 
     - name: Run Test
       run: /Applications/Pd-*.app/Contents/Resources/bin/pd -nogui py4pd_macOS-Intel/test.pd
