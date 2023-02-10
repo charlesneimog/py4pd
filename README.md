@@ -2,6 +2,11 @@
 
 # py4pd - [Download](https://github.com/charlesneimog/py4pd/releases)
 
+#### Linux and Mac users must install Python.
+
+* Linux: `sudo dnf install python3.11` or `sudo apt install python3.11`;
+* MacOS: Go to https://www.python.org/downloads/release/python-3112/ and install normally.
+
 py4pd allows the use of Python inside PureData. It has the same objective as py/pyext being much simpler to keep compile, mainly for Windows OS. It was, in first place, a trying to compile py/pyext for Windows OS, but I couldn't. Then I did the object. It is based in samples of code from Internet and how py-pyext works, mainly in the fork of SOPI research group.
 1. [How to call Python from C](https://stackoverflow.com/questions/1056051/how-do-you-call-python-code-from-c-code);
 2. [C api from Python Docs](https://docs.python.org/3/extending/embedding.html);
