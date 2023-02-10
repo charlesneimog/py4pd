@@ -34,10 +34,8 @@ def thread_test():
 def pd_output():
     "It sends some output to the py4pd output."
     import pd # import the py4pd module (embedded in the python interpreter)
-    import time
     for x in range(10):
         pd.out(x)
-        time.sleep(0.5)
     
 def pd_message():
     "It sends a message to the py4pd message box."

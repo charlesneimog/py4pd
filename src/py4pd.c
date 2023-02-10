@@ -449,30 +449,15 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     Py_DECREF(pName); // DOC: Delete the name of the script file
     if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable   
         
-        // if minor version is 11 or higher
-        if (PY_MINOR_VERSION >= 11){
-            PyObject *inspect=NULL, *getfullargspec=NULL, *argspec=NULL, *args=NULL;
-            inspect = PyImport_ImportModule("inspect");
-            getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
-            argspec = PyObject_CallFunctionObjArgs(getfullargspec, pFunc, NULL);
-            args = PyTuple_GetItem(argspec, 0);
-            int py_args = PyObject_Size(args);
-            post("[py4pd] The function '%s' has %i arguments!", function_name->s_name, py_args);
-            post(" ");
-            x->py_arg_numbers = py_args;
-        } else {
-            PyObject *inspect=NULL, *getargspec=NULL, *argspec=NULL, *args=NULL;
-            inspect = PyImport_ImportModule("inspect");
-            getargspec = PyObject_GetAttrString(inspect, "getargspec");
-            argspec = PyObject_CallFunctionObjArgs(getargspec, pFunc, NULL);
-            args = PyTuple_GetItem(argspec, 0);
-            int py_args = PyObject_Size(args);
-            post("[py4pd] The '%s' function has %i arguments!", function_name->s_name, py_args);
-            post(" ");
-            x->py_arg_numbers = py_args;
-        }
-             
-        // =====================
+        PyObject *inspect=NULL, *getfullargspec=NULL, *argspec=NULL, *args=NULL;
+        inspect = PyImport_ImportModule("inspect");
+        getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
+        argspec = PyObject_CallFunctionObjArgs(getfullargspec, pFunc, NULL);
+        args = PyTuple_GetItem(argspec, 0);
+        int py_args = PyObject_Size(args);
+        post("[py4pd] The '%s'  function has %i arguments!", function_name->s_name, py_args);
+        post(" ");
+        x->py_arg_numbers = py_args;
         x->function = pFunc;
         x->module = pModule;
         x->script_name = script_file_name;
@@ -488,9 +473,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Call failed:\n %s", PyUnicode_AsUTF8(pstr));
-
-        // DOC: Delete unnecessary objects
+        pd_error(x, "[py4pd] Set function had failed:\n %s", PyUnicode_AsUTF8(pstr));
         Py_DECREF(pstr);
         Py_XDECREF(pModule);
         Py_XDECREF(pFunc);
@@ -499,13 +482,9 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);
     }
-    
     return;
 }
 
-
-// ============================================
-// ============================================
 // ============================================
 
 static void runList_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
@@ -599,28 +578,18 @@ static void runList_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     // call the function
     post("Size: %d", PyTuple_GET_SIZE(pArgs));
-    
-
-
-
-
-
-
     post("ok");
     return;
 }
 
-
-
-// ============================================
-// ============================================
 // ============================================
 
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
+
     if (argc != x->py_arg_numbers) {
         // check if some t_atom is an Symbol
-        pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %f arguments!", x->function_name->s_name, x->py_arg_numbers);
+        pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %i arguments, received %i!", x->function_name->s_name, x->py_arg_numbers, argc);
         return;
     }
     
@@ -660,9 +629,6 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     return;
 }
 
-
-// ============================================
-// ============================================
 // ============================================
 
 static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
@@ -705,11 +671,6 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
 
     pValue = PyObject_CallObject(pFunc, pArgs); // DOC: Call and execute the function
-
-
-
-
-    // DOC: Convert Python object to Pd object
     if (pValue != NULL) {                                // DOC: if the function returns a value   
         // convert the python object to a t_atom
         py4pd_convert_to_pd(x, pValue);
@@ -725,10 +686,6 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
         Py_DECREF(ptype);
         Py_DECREF(ptraceback);
     }
-    // Py_DECREF(pArgs);
-    // Remove the Python interpreter from the current thread
-    // Acquire the GIL
-   
     return;
 }
 
@@ -745,7 +702,6 @@ struct thread_arg_struct {
 // ============================================
 
 static void *ThreadFunc(void *lpParameter) {
-        
     struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParameter;
     t_py *x = &arg->x; 
     t_symbol *s = &arg->s;
@@ -755,18 +711,13 @@ static void *ThreadFunc(void *lpParameter) {
     int object_number = x->object_number;
     thread_status[object_number] = 1;
     PyGILState_STATE gstate;
-    // gstate = PyGILState_Ensure();
     running_some_thread = 1;
     run_function_thread(x, s, argc, argv);  
-    // PyGILState_Release(gstate);
     thread_status[object_number] = 0;
     running_some_thread = 0;
-    
     return 0;
 }
 
-// ============================================
-// ============================================
 // ============================================
 
 static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
@@ -775,7 +726,6 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     arg->x = *x;
     arg->argc = argc;
     arg->argv = argv;
-
     int object_number = x->object_number;
     if (x->function_called == 0) {
         // Pd is crashing when I try to create a thread.
@@ -828,20 +778,6 @@ static void inside_thread(){
 }
 
 
-
-// ============================================
-// static void debug_threaded_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
-//     // declare state
-//     Py_BEGIN_ALLOW_THREADS
-//     pthread_t thread;
-//     pthread_create(&thread, NULL, inside_thread, NULL);
-//     pthread_join(thread, NULL);
-//     Py_END_ALLOW_THREADS
-//     post("[DEBUG] After create the thread!");
-//     return;   
-//     
-// }
-
 // ============================================
 // ============================================
 // ============================================
@@ -849,7 +785,7 @@ static void inside_thread(){
 static void thread(t_py *x, t_floatarg f){
     int thread = (int)f;
     if (thread == 1) {
-        post("[py4pd] Threading enabled");
+        post("[py4pd] Threading enabled, but not working yet!");
         x->thread = 1;
         // create a new python subinterpreter
         // PyThreadState* object_thread = Py_NewInterpreter();
@@ -945,7 +881,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         // Credits
         post("");
         post("[py4pd] by Charles K. Neimog");
-        post("[py4pd] Version 0.0.4       ");
+        post("[py4pd] Version 0.0.5       ");
         post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
         post("[py4pd] Inspired by the work of Thomas Grill and SOPI research group.");
         post("");
@@ -1009,11 +945,7 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
     // class_addmethod(py4pd_class, (t_method)globalVariables, gensym("global"), A_GIMME, 0); // create file or open it
-    // Documentation
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
-
-    // Debug
-    // class_addmethod(py4pd_class, (t_method)debug_threaded_function, gensym("debug"), A_FLOAT, 0); // on/off debug
 
 }
 

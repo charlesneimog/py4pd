@@ -85,7 +85,6 @@ static PyObject *pdprint(PyObject *self, PyObject *args)
 {
     (void)self;
     char *string;
-    // post string
     if (PyArg_ParseTuple(args, "s", &string))
     {
         post("[py4pd - script]: %s", string);
