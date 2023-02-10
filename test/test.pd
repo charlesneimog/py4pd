@@ -115,7 +115,7 @@
 #X obj 153 321 sel 1010;
 #X msg 228 368 sums ok;
 #X obj 61 27 inlet;
-#X obj 152 417 outlet;
+#X obj 153 417 outlet;
 #X obj 61 78 t b b b b, f 21;
 #X msg 398 170 Test error message for incorrect number of args;
 #X msg 397 141 -----------------------------------------------;
@@ -150,7 +150,10 @@
 #X obj 72 194 tgl 20 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000 0 1;
 #X obj 33 262 t b b;
 #X msg 65 294 :( TIMEOUT: Test Failed;
-#X obj 65 319 print;
+#X obj 65 319 print ERROR;
+#X obj 173 202 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
+#X obj 173 253 print PASS;
+#X msg 173 228 :) ALL Test Pass;
 #X connect 0 0 2 0;
 #X connect 2 0 9 0;
 #X connect 3 0 7 0;
@@ -159,6 +162,7 @@
 #X connect 6 0 8 0;
 #X connect 7 0 0 0;
 #X connect 7 1 4 0;
+#X connect 8 0 16 0;
 #X connect 9 0 13 0;
 #X connect 10 0 11 0;
 #X connect 11 0 12 0;
@@ -166,3 +170,5 @@
 #X connect 13 0 1 0;
 #X connect 13 1 14 0;
 #X connect 14 0 15 0;
+#X connect 16 0 18 0;
+#X connect 18 0 17 0;
