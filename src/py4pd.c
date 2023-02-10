@@ -5,12 +5,6 @@
 // ========================= Utilities ===============================
 // ===================================================================
 
-
-/* \brief Convert the pd object to python object
- * \param pd_value Pointer to the value from pd
- * \return Pointer to the python object
- */
-
 static PyObject *py4pd_convert_to_python(t_atom *pd_value) {
     PyObject *pValue;
     if (pd_value->a_type == A_FLOAT){ 
@@ -32,11 +26,6 @@ static PyObject *py4pd_convert_to_python(t_atom *pd_value) {
 }
 
 // =====================================================================
-/* \brief Convert the python object to pd object
- * \param x Pointer to the py4pd object
- * \param pValue Pointer to the python object
- * \return void (output the result to the pd object)
- */
 
 static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
     
@@ -75,15 +64,12 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
         if (PyLong_Check(pValue)) {
             long result = PyLong_AsLong(pValue); // DOC: If the function return a integer
             outlet_float(x->out_A, result);
-            //PyGILState_Release(gstate);
             return 0;
         } else if (PyFloat_Check(pValue)) {
             double result = PyFloat_AsDouble(pValue); // DOC: If the function return a float
             float result_float = (float)result;
             outlet_float(x->out_A, result_float);
-            //PyGILState_Release(gstate);
             return 0;
-            // outlet_float(x->out_A, result);
         } else if (PyUnicode_Check(pValue)) {
             const char *result = PyUnicode_AsUTF8(pValue); // DOC: If the function return a string
             outlet_symbol(x->out_A, gensym(result)); 
@@ -103,13 +89,6 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
 // ========================= Pd Object ===============================
 // ===================================================================
 
-/* \brief Define the home path of python
- * \param s Pointer to the symbol
- * \param argc Number of arguments
- * \param argv Pointer to the arguments
- * \return void
- */
-
 static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; // unused but required by pd
     if (argc < 1) {
@@ -122,12 +101,7 @@ static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // // ============================================
-// /* \brief Define the packages path of python
-//  * \param s Pointer to the symbol
-//  * \param argc Number of arguments
-//  * \param argv Pointer to the arguments
-//  * \return void
-//  */
+
 static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; 
     if (argc < 1) {
@@ -138,12 +112,9 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         if (argc < 2 && argc > 0){
             if (argv[0].a_type == A_SYMBOL) {
                 t_symbol *path = atom_getsymbol(argv);
-
                 // DOC: check relative path
-
                 if (path->s_name[0] == '.' && path->s_name[1] == '/') {
                     // if it does, then prepend the current path
-                    
                     char *new_path = malloc(strlen(x->home_path->s_name) + strlen(path->s_name) + 1);
                     strcpy(new_path, x->home_path->s_name);
                     strcat(new_path, path->s_name + 1);
@@ -151,22 +122,17 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                     x->packages_path = gensym(new_path);
                     free(new_path);
                 } 
-
                 // DOC: check relative path
-
                 else {
                     x->packages_path = atom_getsymbol(argv);
                     post("[py4pd] The packages path set to: %s", x->packages_path->s_name);
                 }
-            
             } else{
                 pd_error(x, "[py4pd] The packages path must be a string");
                 return;
             }
-
             // DOC: check if path exists and is valid
-
-            if (access(x->packages_path->s_name, F_OK) != -1) {
+            if (access(x->packages_path->s_name, F_OK) != -1) { // TODO: Fix this
                 // do nothing
             } else {
                     pd_error(x, "The packages path is not valid");
@@ -190,7 +156,6 @@ static void documentation(t_py *x){
         pd_error(x, "[py4pd] To see the documentaion you need to set the function first!");
         return;
     }
-
     pFunc = x->function;
     if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable
         PyObject *pDoc = PyObject_GetAttrString(pFunc, "__doc__"); // Get the documentation of the function
@@ -204,7 +169,6 @@ static void documentation(t_py *x){
                 post("");
             }
             else{
-
                 post("");
                 pd_error(x, "[py4pd] No documentation found!");
                 post("");
@@ -253,7 +217,6 @@ static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     CloseHandle(sei.hProcess);
     free(command);
     return;
-
     // DOC: Open VsCode in Linux and Mac
 
     #else // if not windows 64bits
@@ -293,7 +256,6 @@ static void vscode(t_py *x){
     return;
 
     // Not Windows OS
-
     #else // if not windows 64bits
     char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
     sprintf(command, "code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
@@ -499,118 +461,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);
     }
-    
     return;
 }
-
-
-// ============================================
-// ============================================
-// ============================================
-
-static void runList_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    (void)s;
-    int listStarted = 0;
-    int start = 0;
-    int end = 0;
-    t_atom startSymbol;
-    t_atom endSymbol;
-    PyObject *pFunc, *pArgs, *pValue;
-    pArgs = PyTuple_New(2);
-    // create array for the arguments
-    t_atom *argsInsideList = (t_atom *)getbytes(argc * sizeof(t_atom));
-    int argsInsideListCounter = 0;
-    int j;
-    int pyArgs = 0;
-    pFunc = x->function;
-    for (j = 0; j < argc; ++j){
-        if (argv[j].a_type == A_SYMBOL || listStarted == 1){ // loop for argc
-            int k;
-            if (argv[j].a_type == A_SYMBOL && argv[j].a_w.w_symbol->s_name[0] == '['){
-                char *str = argv[j].a_w.w_symbol->s_name;
-                str++;
-                start = j;
-                t_atom strAtom;
-                SETSYMBOL(&strAtom, gensym(str));
-                argsInsideList[argsInsideListCounter] = strAtom;
-                argsInsideListCounter++;
-                listStarted = 1;
-            }
-            else if (argv[j].a_type == A_FLOAT && listStarted == 1){
-                argsInsideList[argsInsideListCounter] = argv[j];
-                argsInsideListCounter++;
-
-            }
-            else if (argv[j].a_type == A_SYMBOL && argv[j].a_w.w_symbol->s_name[0] != '['){
-                int lenSymbol = 0;
-                for (k = 0; k < strlen(argv[j].a_w.w_symbol->s_name); ++k){
-                    if (argv[j].a_w.w_symbol->s_name[k] == ']'){
-                        lenSymbol = k;
-                        char *str = argv[j].a_w.w_symbol->s_name;
-                        str[lenSymbol] = '\0';
-                        end = j;
-                        // convert str to atom
-                        t_atom strAtom;
-                        SETSYMBOL(&strAtom, gensym(str));
-                        argsInsideList[argsInsideListCounter] = strAtom;
-                        argsInsideListCounter++;
-                        listStarted = 0;
-                        PyObject *C2Python = PyList_New(0);
-                        for (k = start; k <= end; ++k){
-                            if (argsInsideList[k].a_type == A_SYMBOL){
-                                PyObject *pValue = PyUnicode_FromString(argsInsideList[k].a_w.w_symbol->s_name);
-                                PyList_Append(C2Python, pValue);
-                            }
-                            else{
-                                PyObject *pValue = PyFloat_FromDouble(argsInsideList[k].a_w.w_float);
-                                PyList_Append(C2Python, pValue);
-                            }
-                        }
-                        // add the list to the args
-                        PyTuple_SetItem(pArgs, pyArgs, C2Python);
-                        pyArgs++;
-                        argsInsideListCounter = 0;
-                        break;
-                    }
-                }
-                if (end == 0 && argv[j].a_type == A_SYMBOL){
-                    argsInsideList[argsInsideListCounter] = argv[j];
-                    argsInsideListCounter++;
-                }
-            }
-            else{
-                argsInsideList[argsInsideListCounter] = argv[j];
-                argsInsideListCounter++;
-            }
-        }
-        else {
-            t_atom *argv_i = malloc(sizeof(t_atom)); // TODO: Check if this is necessary
-            *argv_i = argv[j];
-            pValue = py4pd_convert_to_python(argv_i);
-            if (!pValue) {
-                pd_error(x, "[py4pd] Cannot convert argument\n"); 
-                return;
-            }
-            PyTuple_SetItem(pArgs, pyArgs, pValue);
-            pyArgs++;
-            // post('here');
-        }
-    }
-
-    // call the function
-    post("Size: %d", PyTuple_GET_SIZE(pArgs));
-    
-
-
-
-
-
-
-    post("ok");
-    return;
-}
-
-
 
 // ============================================
 // ============================================
@@ -623,12 +475,10 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %f arguments!", x->function_name->s_name, x->py_arg_numbers);
         return;
     }
-    
     if (x->function_called == 0) {
         pd_error(x, "[py4pd] The function %s was not called!", x->function_name->s_name);
         return;
     }
-
     PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
     pFunc = x->function; // this makes the function callable 
     pArgs = PyTuple_New(argc);
@@ -644,7 +494,6 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         }
         PyTuple_SetItem(pArgs, i, pValue); // DOC: Set the argument in the tuple
     }
-
     pValue = PyObject_CallObject(pFunc, pArgs);
     if (pValue != NULL) {                                // DOC: if the function returns a value   
         py4pd_convert_to_pd(x, pValue); // DOC: convert the value to pd        
@@ -724,11 +573,7 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
         Py_DECREF(pvalue);
         Py_DECREF(ptype);
         Py_DECREF(ptraceback);
-    }
-    // Py_DECREF(pArgs);
-    // Remove the Python interpreter from the current thread
-    // Acquire the GIL
-   
+    }  
     return;
 }
 
@@ -827,21 +672,6 @@ static void inside_thread(){
     return ;
 }
 
-
-
-// ============================================
-// static void debug_threaded_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
-//     // declare state
-//     Py_BEGIN_ALLOW_THREADS
-//     pthread_t thread;
-//     pthread_create(&thread, NULL, inside_thread, NULL);
-//     pthread_join(thread, NULL);
-//     Py_END_ALLOW_THREADS
-//     post("[DEBUG] After create the thread!");
-//     return;   
-//     
-// }
-
 // ============================================
 // ============================================
 // ============================================
@@ -851,10 +681,6 @@ static void thread(t_py *x, t_floatarg f){
     if (thread == 1) {
         post("[py4pd] Threading enabled");
         x->thread = 1;
-        // create a new python subinterpreter
-        // PyThreadState* object_thread = Py_NewInterpreter();
-        // x->py_thread_interpreter = object_thread;
-        // PyThreadState_Swap(x->py_main_interpreter);
         return;
     } else if (thread == 0) {
         x->thread = 2; // 
@@ -933,13 +759,8 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     if (argc > 1) { // check if there are two arguments
         set_function(x, s, argc, argv); // this not work with python submodules
     }
-    // Create a pointer to x object and save it in the global variable py4pd_object
-    // make pointer for x
     t_py **py4pd_object_ptr = malloc(sizeof(t_py*)); // create a pointer to t_py
     *py4pd_object_ptr = x;
-    // py4pd_object = py4pd_object_ptr;
-
-    // check if python is initialized, if not, initialize it
     if (!Py_IsInitialized()) {
         
         // Credits
@@ -978,8 +799,6 @@ void py4pd_free(t_py *x){
         Py_Finalize();
         post("[py4pd] Python interpreter finalized");
     }
-
-
 }
 
 // ====================================================
@@ -1008,13 +827,7 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open vscode
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
-    // class_addmethod(py4pd_class, (t_method)globalVariables, gensym("global"), A_GIMME, 0); // create file or open it
-    // Documentation
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
-
-    // Debug
-    // class_addmethod(py4pd_class, (t_method)debug_threaded_function, gensym("debug"), A_FLOAT, 0); // on/off debug
-
 }
 
 
