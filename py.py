@@ -66,9 +66,10 @@ def whereFiles():
 
 def neoscoreTest():
     import os
-    # if linux run export QT_QPA_PLATFORM=offscreen
     if os.name == 'posix':
         os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+        
+    script_dir = os.path.dirname(__file__)
         
     from neoscore.core.units import ZERO, Mm
     from neoscore.core import neoscore
@@ -112,7 +113,7 @@ def neoscoreTest():
     Chordrest(Mm(5), staff, pitch_info, (int(1), int(1)))
     neoscore.render_image(
         rect=None,
-        dest=f'./neoscoretest.png',
+        dest=f'{script_dir}/neoscoretest.png',
         wait=True,
         dpi=600)
     neoscore.shutdown()
