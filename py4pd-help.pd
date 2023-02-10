@@ -642,7 +642,7 @@
 #X text 0 0 plugdatainfo <?xml version="1.0" encoding="UTF-8"?> <PlugDataInfo/>;
 #X coords 0 1 100 -1 1 1 1;
 #X restore 0 0 graph;
-#N canvas 881 301 934 596 debug 1;
+#N canvas 881 301 934 596 debug 0;
 #X msg 17 87 thread \$1, f 10;
 #X obj 17 62 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000 #000000 0 1;
 #X text 32 59 on/off;
@@ -687,6 +687,10 @@
 #X connect 21 0 19 0;
 #X restore 334 146 pd debug thread;
 #X msg 91 95 dll;
+#X obj 533 420 py4pd;
+#X obj 533 445 print;
+#X msg 552 370 run;
+#X msg 511 338 set py whereFiles;
 #X connect 0 0 11 0;
 #X connect 1 0 3 0;
 #X connect 2 0 20 0;
@@ -702,3 +706,6 @@
 #X connect 26 0 8 0;
 #X connect 27 0 13 0;
 #X connect 31 0 8 0;
+#X connect 32 0 33 0;
+#X connect 34 0 32 0;
+#X connect 35 0 32 0;

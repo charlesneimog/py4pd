@@ -29,6 +29,9 @@ jobs:
     - name: Create py4pd_macOS-Intel
       run: mkdir py4pd_macOS-Intel
 
+    - name: Install Modules for Test
+      run: python3.11 -m pip install neoscore -t ./py4pd_macOS-Intel/py-modules
+
     - name: Copy files to py4pd_macOS-Intel
       run: cp py4pd.pd_darwin test/test.pd py4pd.cfg py.py py4pd-help.pd py4pd_macOS-Intel
 
