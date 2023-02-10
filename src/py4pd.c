@@ -881,7 +881,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         // Credits
         post("");
         post("[py4pd] by Charles K. Neimog");
-        post("[py4pd] Version 0.0.5       ");
+        post("[py4pd] Version 0.5.0       ");
         post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
         post("[py4pd] Inspired by the work of Thomas Grill and SOPI research group.");
         post("");
@@ -893,8 +893,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     return(x);
 }
 
-// ============================================
-// =========== REMOVE OBJECT ==================
 // ============================================
 
 void py4pd_free(t_py *x){
@@ -909,16 +907,14 @@ void py4pd_free(t_py *x){
     if (pFunc != NULL) {
         Py_DECREF(pFunc);
     }
-
     if (object_count == 1) {
         Py_Finalize();
         post("[py4pd] Python interpreter finalized");
     }
-
-
 }
 
 // ====================================================
+
 void py4pd_setup(void){
     py4pd_class =       class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
                         (t_newmethod)py4pd_new, // metodo de criação do objeto             

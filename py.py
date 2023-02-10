@@ -66,6 +66,14 @@ def neoscoreTest():
     import os
     if os.name == 'posix':
         os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+
+    elif os.name == 'nt':
+        os.environ['QT_QPA_PLATFORM'] = 'windows:offscreen'
+
+    elif os.name == 'mac':
+        os.environ['QT_QPA_PLATFORM'] = 'cocoa:offscreen'
+
+
         
     script_dir = os.path.dirname(__file__)
         
