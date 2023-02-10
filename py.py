@@ -65,11 +65,17 @@ def whereFiles():
 
 
 def neoscoreTest():
+    import os
+    # if linux run export QT_QPA_PLATFORM=offscreen
+    if os.name == 'posix':
+        os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+        
     from neoscore.core.units import ZERO, Mm
     from neoscore.core import neoscore
     from neoscore.common import Staff, Clef, Barline, Chordrest, MusicText, Path, Font, Brush, Unit, Pen, barline_style
     from neoscore.core.text import Text
     from neoscore.western.chordrest import NoteheadTable
+     
     neoscore.setup()
     pitch = 'c'
     alterations = ''
