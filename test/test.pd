@@ -155,7 +155,7 @@
 #X obj 336 315 print PASS;
 #X msg 336 290 :) ALL Test Pass;
 #X obj 173 233 t b b;
-#N canvas 470 98 1440 718 TEST5 1;
+#N canvas 470 98 1440 718 TEST5 0;
 #X obj 153 330 py4pd;
 #X obj 24 164 loadbang;
 #X msg 24 190 set py sum;
@@ -275,6 +275,7 @@
 #X connect 5 0 6 0;
 #X connect 6 0 8 0;
 #X connect 7 0 0 0;
+#X connect 7 1 4 0;
 #X connect 8 0 20 0;
 #X connect 9 0 13 0;
 #X connect 10 0 11 0;
