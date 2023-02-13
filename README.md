@@ -1,6 +1,6 @@
 
 
-# py4pd - [Download](https://github.com/charlesneimog/py4pd/releases)
+# py4pd 
 
 #### Linux and Mac users must install Python, if you will work with PyQt5 you will need python on Windows too.
 To download the object: Open PureData, `Help->Find Externals->` search for `py4pd`.
