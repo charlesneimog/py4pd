@@ -822,7 +822,7 @@ static void thread(t_py *x, t_floatarg f){
 
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
     object_count++; // count the number of objects
-    post("[py4pd] Object number %d", object_count);
+    // post("[py4pd] Object number %d", object_count);
     t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
         
     // Object count

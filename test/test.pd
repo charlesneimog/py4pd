@@ -174,6 +174,7 @@
 #X msg 109 279 run 1 1;
 #X obj 153 355 sel 2;
 #X obj 153 380 t b b;
+#X obj 177 32 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X connect 0 0 16 0;
 #X connect 1 0 2 0;
 #X connect 2 0 0 0;
@@ -195,6 +196,7 @@
 #X connect 16 0 17 0;
 #X connect 17 0 4 0;
 #X connect 17 1 13 0;
+#X connect 18 0 5 0;
 #X restore 173 166 pd TEST5;
 #N canvas 470 98 1440 718 TEST6 0;
 #X obj 18 289 py4pd;
