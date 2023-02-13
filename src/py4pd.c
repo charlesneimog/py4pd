@@ -362,30 +362,19 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
-    // Check if the already was set
-    if (x->function_name != NULL){
-        int function_is_equal = strcmp(function_name->s_name, x->function_name->s_name);
-        if (function_is_equal == 0){    // If the user wants to call the same function again! This is not necessary at first glance. 
-            Py_XDECREF(x->function);
-            Py_XDECREF(x->module);
-            x->function = NULL;
-            x->module = NULL;
-            x->function_name = NULL;
-        }
-        else{ // DOC: If the function is different, then we need to delete the old function and create a new one.
-            Py_XDECREF(x->function);
-            Py_XDECREF(x->module);
 
-            x->function = NULL;
-            x->module = NULL;
-            x->function_name = NULL;
-        }      
-    }
-
-    // DOC: Check if function was already called
+    // DOC: Check if function was already called and if the name is the same
     if (x->function_called == 1){
-        pd_error(x, "The function was already called!");
-        return;
+        int function_is_equal = strcmp(function_name->s_name, x->function_name->s_name); // if string is equal strcmp returns 0
+        if (function_is_equal == 0){
+            pd_error(x, "[py4pd] The function was already set!");
+            return;
+        }
+        else{
+            Py_XDECREF(x->function);
+            Py_XDECREF(x->module);
+            x->function_called = 0;
+        }
     }
     
     // DOC: Check if there is extension (not to use it)
@@ -770,6 +759,32 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 }
 
 // ============================================
+static void restartPython(t_py *x){
+    Py_Finalize();
+    post("[py4pd] Python interpreter was restarted!");
+    x->function_called = 0;
+    x->function_name = NULL;
+    x->script_name = NULL;
+    x->py_main_interpreter = NULL;
+    x->module = NULL;
+    x->function = NULL;
+    int i;
+    for (i = 0; i < 100; i++) {
+        t_py *x = py4pd_object_array[i];
+        if (x != NULL) {
+            x->function_called = 0;
+            x->function_name = NULL;
+            x->script_name = NULL;
+            x->py_main_interpreter = NULL;
+            x->module = NULL;
+            x->function = NULL;
+        }
+    }
+    Py_Initialize();
+    return;
+}
+
+// ============================================
 static void inside_thread(){
     PyGILState_STATE gstate = PyGILState_Ensure();
     PyRun_SimpleString("print('Hello from inside the thread!')");
@@ -807,6 +822,7 @@ static void thread(t_py *x, t_floatarg f){
 
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
     object_count++; // count the number of objects
+    post("[py4pd] Object number %d", object_count);
     t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
         
     // Object count
@@ -818,7 +834,9 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     x->home_path = patch_dir;     // set name of the home path
     x->packages_path = patch_dir; // set name of the packages path
     x->thread = 2; // default is 2 (no threading)
-    
+
+    py4pd_object_array[object_count] = x;
+        
     // check if in x->home_path there is a file py4pd.config
     char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1)); // 
     strcpy(config_path, x->home_path->s_name); // copy string one into the result.
@@ -940,6 +958,7 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open vscode
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
+    class_addmethod(py4pd_class, (t_method)restartPython, gensym("panic"), 0, 0); // open documentation
     // class_addmethod(py4pd_class, (t_method)globalVariables, gensym("global"), A_GIMME, 0); // create file or open it
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
 
