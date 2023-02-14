@@ -83,8 +83,8 @@ static t_class *py4pd_class;
 static int object_count = 1;
 static int thread_status[100];
 static int running_some_thread = 0;
-static int pyReinit = 0; // flag to check if the python interpreter was reinitialized
-static PyInterpreterState *pymain = NULL; // main interpreter state
+// static int pyReinit = 0; // flag to check if the python interpreter was reinitialized
+// static PyInterpreterState *pymain = NULL; // main interpreter state
 
 // create and array of pointers for the t_py class
 static t_py *py4pd_object_array[100];

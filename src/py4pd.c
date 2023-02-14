@@ -96,6 +96,8 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
             return 0;
         }
     }
+    return 0;
+
 }
 
 
@@ -288,7 +290,6 @@ static void vscode(t_py *x){
     return;
 
     // Not Windows OS
-
     #else // if not windows 64bits
     char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
     sprintf(command, "code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
@@ -475,21 +476,19 @@ static void runList_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     int listStarted = 0;
     int start = 0;
     int end = 0;
-    t_atom startSymbol;
-    t_atom endSymbol;
-    PyObject *pFunc, *pArgs, *pValue;
+
+    PyObject *pArgs, *pValue;
     pArgs = PyTuple_New(2);
     // create array for the arguments
     t_atom *argsInsideList = (t_atom *)getbytes(argc * sizeof(t_atom));
     int argsInsideListCounter = 0;
-    int j;
     int pyArgs = 0;
-    pFunc = x->function;
-    for (j = 0; j < argc; ++j){
+    // pFunc = x->function;
+    for (int j = 0; j < argc; ++j){
         if (argv[j].a_type == A_SYMBOL || listStarted == 1){ // loop for argc
             int k;
             if (argv[j].a_type == A_SYMBOL && argv[j].a_w.w_symbol->s_name[0] == '['){
-                char *str = argv[j].a_w.w_symbol->s_name;
+                char *str = (char *)argv[j].a_w.w_symbol->s_name;
                 str++;
                 start = j;
                 t_atom strAtom;
@@ -505,10 +504,12 @@ static void runList_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
             }
             else if (argv[j].a_type == A_SYMBOL && argv[j].a_w.w_symbol->s_name[0] != '['){
                 int lenSymbol = 0;
-                for (k = 0; k < strlen(argv[j].a_w.w_symbol->s_name); ++k){
+                // for (k = 0; k < strlen(argv[j].a_w.w_symbol->s_name); ++k){ // WARNING: for (k = 0; k < strlen(argv[j].a_w.w_symbol->s_name); ++k){
+                // solve the warning
+                for (k = 0; k < (int)strlen(argv[j].a_w.w_symbol->s_name); ++k){
                     if (argv[j].a_w.w_symbol->s_name[k] == ']'){
                         lenSymbol = k;
-                        char *str = argv[j].a_w.w_symbol->s_name;
+                        char *str = (char *)argv[j].a_w.w_symbol->s_name;
                         str[lenSymbol] = '\0';
                         end = j;
                         // convert str to atom
@@ -520,11 +521,11 @@ static void runList_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
                         PyObject *C2Python = PyList_New(0);
                         for (k = start; k <= end; ++k){
                             if (argsInsideList[k].a_type == A_SYMBOL){
-                                PyObject *pValue = PyUnicode_FromString(argsInsideList[k].a_w.w_symbol->s_name);
+                                pValue = PyUnicode_FromString(argsInsideList[k].a_w.w_symbol->s_name);
                                 PyList_Append(C2Python, pValue);
                             }
                             else{
-                                PyObject *pValue = PyFloat_FromDouble(argsInsideList[k].a_w.w_float);
+                                pValue = PyFloat_FromDouble(argsInsideList[k].a_w.w_float);
                                 PyList_Append(C2Python, pValue);
                             }
                         }
@@ -572,7 +573,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     if (argc != x->py_arg_numbers) {
         // check if some t_atom is an Symbol
-        pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %i arguments, received %i!", x->function_name->s_name, x->py_arg_numbers, argc);
+        pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %i arguments, received %i!", x->function_name->s_name, (int)x->py_arg_numbers, argc);
         return;
     }
     
@@ -628,10 +629,10 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
         if(pFunc != NULL){
             // create t_atom *argv from x->script_name and x->function_name
-            t_atom *argv = malloc(sizeof(t_atom) * 2);
-            SETSYMBOL(argv, x->script_name);
-            SETSYMBOL(argv+1, x->function_name);
-            set_function(x, NULL, 2, argv);
+            t_atom *newargv = malloc(sizeof(t_atom) * 2);
+            SETSYMBOL(newargv, x->script_name);
+            SETSYMBOL(newargv+1, x->function_name);
+            set_function(x, NULL, 2, newargv);
         } else{
             pd_error(x, "[py4pd] The message need to be formatted like 'set {script_name} {function_name}'!");
             return;
@@ -639,9 +640,8 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
     
     // DOC: CONVERTION TO PYTHON OBJECTS
-    int j;
     // create an array of t_atom to store the list
-    t_atom *list = malloc(sizeof(t_atom) * argc);
+    // t_atom *list = malloc(sizeof(t_atom) * argc);
     for (i = 0; i < argc; ++i) {
         t_atom *argv_i = malloc(sizeof(t_atom));
         *argv_i = argv[i];
@@ -690,10 +690,9 @@ static void *ThreadFunc(void *lpParameter) {
     t_symbol *s = &arg->s;
     int argc = arg->argc;
     t_atom *argv = arg->argv;
-    PyInterpreterState *interp = arg->interp;
     int object_number = x->object_number;
     thread_status[object_number] = 1;
-    PyGILState_STATE gstate;
+    // PyGILState_STATE gstate;
     running_some_thread = 1;
     run_function_thread(x, s, argc, argv);  
     thread_status[object_number] = 0;
@@ -764,27 +763,27 @@ static void restartPython(t_py *x){
     x->function = NULL;
     int i;
     for (i = 0; i < 100; i++) {
-        t_py *x = py4pd_object_array[i];
-        if (x != NULL) {
-            x->function_called = 0;
-            x->function_name = NULL;
-            x->script_name = NULL;
-            x->py_main_interpreter = NULL;
-            x->module = NULL;
-            x->function = NULL;
+        t_py *y = py4pd_object_array[i];
+        if (y != NULL) {
+            y->function_called = 0;
+            y->function_name = NULL;
+            y->script_name = NULL;
+            y->py_main_interpreter = NULL;
+            y->module = NULL;
+            y->function = NULL;
         }
     }
     Py_Initialize();
     return;
 }
 
-// ============================================
-static void inside_thread(){
-    PyGILState_STATE gstate = PyGILState_Ensure();
-    PyRun_SimpleString("print('Hello from inside the thread!')");
-    PyGILState_Release(gstate);
-    return ;
-}
+// // ============================================
+// static void inside_thread(){
+//     PyGILState_STATE gstate = PyGILState_Ensure();
+//     PyRun_SimpleString("print('Hello from inside the thread!')");
+//     PyGILState_Release(gstate);
+//     return ;
+// }
 
 
 // ============================================
