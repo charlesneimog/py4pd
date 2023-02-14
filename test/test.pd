@@ -195,7 +195,7 @@
 #X connect 17 0 5 0;
 #X connect 18 0 0 0;
 #X restore 173 176 pd TEST5;
-#N canvas 470 98 1440 718 TEST6 1;
+#N canvas 470 98 1440 718 TEST6 0;
 #X obj 18 289 py4pd;
 #X msg 18 172 set py sum;
 #X msg 36 200 run 1 1;

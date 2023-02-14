@@ -1,4 +1,9 @@
 from random import *
+try:
+    import pd
+    pd_print = pd_print
+except:
+    pd_print = print
 
 
 def sum(x, y):
@@ -27,9 +32,9 @@ def thread_test():
     "It tests the threading module. Just return the hour after 5 seconds."
     import time
     import pd # import the py4pd module (embedded in the python interpreter)
-    pd.print("Starting thread...")
+    pd_print("Starting thread...")
     time.sleep(5)
-    pd.print("Thread finished.")
+    pd_print("Thread finished.")
     return time.strftime("%H:%M:%S")
 
 def pd_output():
@@ -41,7 +46,7 @@ def pd_output():
 def pd_message():
     "It sends a message to the py4pd message box."
     import pd # import the py4pd module (embedded in the python interpreter)
-    pd.print("Hello from python!")
+    pd_print("Hello from python!")
     return None
 
 def pd_error():
@@ -131,7 +136,7 @@ def runTest():
     import subprocess
     import sys
     if os.name == 'posix':
-        cmd = 'pd -nogui -send "start-test bang"  py4pd_Linux/test.pd'
+        cmd = 'pd -nogui -send "start-test bang"  test/test.pd'
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]
@@ -147,9 +152,21 @@ def runTest():
         lastLine = outputLines[-2]
     # if lastLine contains "PASS" then the test passed
     if "PASS" in lastLine:
+        # print in green
+        print("\033[92m" + ' ALL TESTS PASSED ' + "\033[0m")
         return "ok"
     else:
-        # exit with error
+        # split all the lines
+        for line in outputLines:
+            # if the line contains "FAIL" then print in red
+            if "FAIL" in line:
+                print("\033[91m" + line + "\033[0m")
+            # if the line contains "PASS" then print in green
+            elif "PASS" in line:
+                print("\033[92m" + line + "\033[0m")
+            # otherwise print normally
+            else:
+                print(line)
         sys.exit(1)
     
     
