@@ -47,7 +47,7 @@ jobs:
           python3.11 -m pip install neoscore -t ./py4pd_macOS-Intel/py-modules
 
     - name: Run Test
-      run: python -c 'import test; test.runTest()' 
+      run: python3.11 -c 'import test; test.runTest()' 
 
     - name: Upload Test Image
       uses: actions/upload-artifact@v3
@@ -157,7 +157,7 @@ jobs:
           python3 -m pip install neoscore -t ./py4pd_WIN64/py-modules
     
     - name: Run Test
-      run: python -c 'import test; test.runTest()' 
+      run: python3 -c 'import test; test.runTest()' 
       
     - name: Upload Test Image
       uses: actions/upload-artifact@v3
@@ -218,7 +218,7 @@ jobs:
           python3.11 -m pip install neoscore -t ./py4pd_Linux/py-modules
     
     - name: Run Test
-      run: python -c 'import test; test.runTest()'
+      run: python3.11 -c 'import test; test.runTest()'
 
     - name: Upload Test Image
       uses: actions/upload-artifact@v3
