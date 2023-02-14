@@ -197,7 +197,6 @@ static void documentation(t_py *x){
         if (pDoc != NULL){
             const char *Doc = PyUnicode_AsUTF8(pDoc); 
             if (Doc != NULL){
-                post("");
                 post("-------- %s --------", x->function_name->s_name);
                 post("");
                 post("%s", Doc);
@@ -205,15 +204,11 @@ static void documentation(t_py *x){
             }
             else{
 
-                post("");
                 pd_error(x, "[py4pd] No documentation found!");
-                post("");
             }
         }
         else{
-            post("");
             pd_error(x, "[py4pd] No documentation found!");
-            post("");
         }
     }
 }
@@ -445,7 +440,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         args = PyTuple_GetItem(argspec, 0);
         int py_args = PyObject_Size(args);
         post("[py4pd] The '%s'  function has %i arguments!", function_name->s_name, py_args);
-        post(" ");
         x->py_arg_numbers = py_args;
         x->function = pFunc;
         x->module = pModule;
