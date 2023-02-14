@@ -22,9 +22,8 @@ def runTest():
         lastLine = outputLines[-2]
     elif platform.system() == 'Windows':
         # run cmd /c "C:/Program Files/Pd/bin/pd.exe" the pd path must be inside nested quotes
-        cmd = "cmd /c \"C:/Program Files/Pd/bin/pd.exe\" -send \"start-test bang\" -nogui py4pd_WIN64/test.pd"
-        # cmd = 'cmd /c "C:/Program Files/Pd/bin/pd.exe" -send "start-test bang" -nogui py4pd_WIN64/test.pd'
-        output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+        # execute this using powershell, the space between 'Program' and 'Files' is important for the path to be recognized
+        output = subprocess.run(["powershell", "cmd /c \"C:/Program Files/Pd/bin/pd.exe\" -nogui -send start-test bang test.pd"], capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]
     elif platform.system() == 'Darwin':

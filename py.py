@@ -1,10 +1,4 @@
 from random import *
-try:
-    import pd
-    pd_print = pd_print
-except:
-    pd_print = print
-
 
 def sum(x, y):
     "It sums two numbers."
@@ -32,9 +26,9 @@ def thread_test():
     "It tests the threading module. Just return the hour after 5 seconds."
     import time
     import pd # import the py4pd module (embedded in the python interpreter)
-    pd_print("Starting thread...")
+    pd.print("Starting thread...")
     time.sleep(5)
-    pd_print("Thread finished.")
+    pd.print("Thread finished.")
     return time.strftime("%H:%M:%S")
 
 def pd_output():
@@ -46,7 +40,7 @@ def pd_output():
 def pd_message():
     "It sends a message to the py4pd message box."
     import pd # import the py4pd module (embedded in the python interpreter)
-    pd_print("Hello from python!")
+    pd.print("Hello from python!")
     return None
 
 def pd_error():
@@ -73,10 +67,14 @@ def neoscoreTest():
     if os.name == 'posix':
         os.environ['QT_QPA_PLATFORM'] = 'offscreen'
     elif os.name == 'nt':
+        # ME: Best Windows support to svg drawing is: 'windows:offscreen'
         os.environ['QT_QPA_PLATFORM'] = 'windows:offscreen'
+
     elif os.name == 'mac':
         os.environ['QT_QPA_PLATFORM'] = 'cocoa:offscreen'
-    script_dir = os.path.dirname(__file__)        
+
+    script_dir = os.path.dirname(__file__)
+        
     from neoscore.core.units import ZERO, Mm
     from neoscore.core import neoscore
     from neoscore.common import Staff, Clef, Barline, Chordrest, MusicText, Path, Font, Brush, Unit, Pen, barline_style
@@ -117,17 +115,15 @@ def neoscoreTest():
     note = [('c', '', 5)]
     Chordrest(Mm(76.5), staff, note, (int(1), int(1)), table=noteheads)
     Chordrest(Mm(5), staff, pitch_info, (int(1), int(1)))
+    if os.name == 'nt':
+        filename = f'{script_dir}/neoscoretest.png'
+    else:
+        filename = f'{script_dir}/neoscoretest.png'
+    
     neoscore.render_image(
         rect=None,
-        dest=f'{script_dir}/neoscoretest.png',
+        dest=filename,
         wait=True,
         dpi=600)
     neoscore.shutdown()
-    return "ok"
-
-
-        
-        
-        
-    
-    
+    return 1

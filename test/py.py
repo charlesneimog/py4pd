@@ -66,15 +66,13 @@ def neoscoreTest():
     import os
     if os.name == 'posix':
         os.environ['QT_QPA_PLATFORM'] = 'offscreen'
-
     elif os.name == 'nt':
+        # ME: Best Windows support to svg drawing is: 'windows:offscreen'
         os.environ['QT_QPA_PLATFORM'] = 'windows:offscreen'
 
     elif os.name == 'mac':
         os.environ['QT_QPA_PLATFORM'] = 'cocoa:offscreen'
 
-
-        
     script_dir = os.path.dirname(__file__)
         
     from neoscore.core.units import ZERO, Mm
@@ -117,10 +115,15 @@ def neoscoreTest():
     note = [('c', '', 5)]
     Chordrest(Mm(76.5), staff, note, (int(1), int(1)), table=noteheads)
     Chordrest(Mm(5), staff, pitch_info, (int(1), int(1)))
+    if os.name == 'nt':
+        filename = f'{script_dir}/neoscoretest.png'
+    else:
+        filename = f'{script_dir}/neoscoretest.png'
+    
     neoscore.render_image(
         rect=None,
-        dest=f'{script_dir}/neoscoretest.png',
+        dest=filename,
         wait=True,
         dpi=600)
     neoscore.shutdown()
-    return "ok"
+    return 1
