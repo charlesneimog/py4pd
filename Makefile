@@ -18,7 +18,7 @@ else ifeq (Linux,$(findstring Linux,$(uname)))
   ldlibs = -l $(PYTHON_VERSION) 
 
 else ifeq (Darwin,$(findstring Darwin,$(uname)))
-  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wno-unused-variable
+  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wno-unused-variable -mmacosx-version-min=10.9
   ldlibs = -L "/Library/Frameworks/Python.framework/Versions/3.11/lib/" -l python3.11
 
 else
