@@ -1,10 +1,11 @@
 from random import *
 try:
     import pd
-    pd_print = pd_print
+    def pd_print(x):
+        pd.print(x)
 except:
-    pd_print = print
-
+    def pd_prtint(x):
+        print(x)
 
 def sum(x, y):
     "It sums two numbers."
@@ -72,17 +73,11 @@ def neoscoreTest():
     import os
     if os.name == 'posix':
         os.environ['QT_QPA_PLATFORM'] = 'offscreen'
-
     elif os.name == 'nt':
         os.environ['QT_QPA_PLATFORM'] = 'windows:offscreen'
-
     elif os.name == 'mac':
         os.environ['QT_QPA_PLATFORM'] = 'cocoa:offscreen'
-
-
-        
-    script_dir = os.path.dirname(__file__)
-        
+    script_dir = os.path.dirname(__file__)        
     from neoscore.core.units import ZERO, Mm
     from neoscore.core import neoscore
     from neoscore.common import Staff, Clef, Barline, Chordrest, MusicText, Path, Font, Brush, Unit, Pen, barline_style
@@ -136,12 +131,12 @@ def runTest():
     import subprocess
     import sys
     if os.name == 'posix':
-        cmd = 'pd -nogui -send "start-test bang"  test/test.pd'
+        cmd = 'pd -nogui -send "start-test bang"  py4pd_Linux/test.pd'
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]
     elif os.name == 'nt':
-        cmd = 'C:\Program Files\Pd\bin\pd.exe -send "start-test bang" -nogui py4pd_WIN64\test.pd'
+        cmd = 'cmd /c "C:\Program Files\Pd\bin\pd.exe" -send start-test bang -nogui py4pd_WIN64\test.pd'
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]
