@@ -33,7 +33,7 @@
 #X connect 13 1 10 0;
 #X connect 13 2 11 0;
 #X connect 14 0 1 0;
-#X restore 173 70 pd TEST1;
+#X restore 275 71 pd TEST1;
 #N canvas -1 31 1920 980 TEST2 0;
 #X obj 82 106 int;
 #X obj 82 131 + 1;
@@ -75,8 +75,8 @@
 #X connect 17 0 15 0;
 #X connect 18 0 7 0;
 #X connect 18 0 9 0;
-#X restore 173 96 pd TEST2;
-#N canvas 496 136 1399 657 TEST3 1;
+#X restore 275 97 pd TEST2;
+#N canvas 496 136 1399 657 TEST3 0;
 #X obj 18 176 py4pd;
 #X obj 118 42 loadbang;
 #X msg 118 122 set py neoscoreTest;
@@ -108,7 +108,7 @@
 #X connect 13 0 0 0;
 #X connect 14 0 7 0;
 #X connect 14 1 6 0;
-#X restore 173 124 pd TEST3;
+#X restore 275 125 pd TEST3;
 #X obj 33 38 t b b;
 #N canvas -1 31 1920 980 TEST4 0;
 #X obj 153 290 py4pd;
@@ -145,10 +145,10 @@
 #X connect 11 0 0 0;
 #X connect 12 0 0 0;
 #X connect 13 0 0 0;
-#X restore 173 150 pd TEST4;
-#X obj 33 237 spigot;
+#X restore 275 151 pd TEST4;
+#X obj 33 212 spigot;
 #X msg 72 161 1;
-#X obj 72 194 tgl 20 0 empty empty empty 0 -10 0 12 -262144 -1 -1 0
+#X obj 72 184 tgl 20 0 empty empty empty 0 -10 0 12 -262144 -1 -1 0
 1;
 #X obj 33 262 t b b;
 #X msg 65 294 :( TIMEOUT: Test Failed;
@@ -157,7 +157,7 @@
 -1 -1;
 #X obj 239 345 print PASS;
 #X msg 239 320 :) ALL Test Pass;
-#X obj 173 233 t b b;
+#X obj 275 234 t b b;
 #N canvas 470 98 1440 718 TEST5 0;
 #X obj 153 330 py4pd;
 #X obj 24 164 loadbang;
@@ -201,7 +201,7 @@
 #X connect 16 1 12 0;
 #X connect 17 0 5 0;
 #X connect 18 0 0 0;
-#X restore 173 176 pd TEST5;
+#X restore 275 177 pd TEST5;
 #N canvas 470 98 1440 718 TEST6 0;
 #X obj 18 289 py4pd;
 #X msg 18 172 set py sum;
@@ -271,14 +271,14 @@
 #X connect 28 0 27 0;
 #X connect 29 0 22 0;
 #X connect 30 0 3 0;
-#X restore 173 202 pd TEST6;
+#X restore 275 203 pd TEST6;
 #X obj 33 100 delay 15000 1 msec;
 #X obj 33 9 r start-test;
 #X obj 72 130 r start-test;
-#X obj 173 37 bng 20 250 50 0 empty empty empty 0 -10 0 12 -262144
+#X obj 275 38 bng 20 250 50 0 empty empty empty 0 -10 0 12 -262144
 -1 -1;
-#X obj 368 159 loadbang;
-#X obj 368 183 delay 20000 1 msec;
+#X obj 94 212 loadbang;
+#X obj 94 236 delay 60000 1 msec;
 #X connect 0 0 19 0;
 #X connect 2 0 3 0;
 #X connect 3 0 4 0;
@@ -303,3 +303,4 @@
 #X connect 21 0 8 0;
 #X connect 22 0 2 0;
 #X connect 23 0 24 0;
+#X connect 24 0 10 0;
