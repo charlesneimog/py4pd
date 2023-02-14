@@ -21,7 +21,7 @@ def runTest():
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]
     elif platform.system() == 'Windows':
-        cmd = 'cmd /c "C:/Program Files/Pd/bin/pd.exe" -send start-test bang -nogui py4pd_WIN64/test.pd'
+        cmd = 'cmd /c "C:/Program Files/Pd/bin/pd.exe" -send "start-test bang" -nogui py4pd_WIN64/test.pd'
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]
