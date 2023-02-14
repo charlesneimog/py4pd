@@ -41,8 +41,10 @@ jobs:
         name: py4pd_macOS-Intel
         path: py4pd_macOS-Intel.zip
 
-    - name: Install Modules for Test
-      run: python3.11 -m pip install neoscore -t ./py4pd_macOS-Intel/py-modules
+    - name: Set Test Config
+      run: |
+          cp test/test.py test.py
+          python3.11 -m pip install neoscore -t ./py4pd_macOS-Intel/py-modules
 
     - name: Run Test
       run: python -c 'import py; py.runTest()' 
@@ -148,9 +150,12 @@ jobs:
     - name: Move test.pd to py4pd_WIN64
       run: cp test/test.pd py4pd_WIN64/test.pd
 
-    - name: Install Modules for Test
-      run: python3 -m pip install neoscore -t ./py4pd_WIN64/py-modules
-
+    
+    - name: Set Test Config
+      run: |
+          cp test/test.py test.py
+          python3 -m pip install neoscore -t ./py4pd_WIN64/py-modules
+    
     - name: Run Test
       run: python -c 'import py; py.runTest()' 
       
@@ -207,8 +212,10 @@ jobs:
         name: py4pd_Linux
         path: py4pd_Linux.zip
 
-    - name: Install Modules for Test
-      run: python3.11 -m pip install neoscore -t ./py4pd_Linux/py-modules
+    - name: Set Test Config
+      run: |
+          cp test/test.py test.py
+          python3.11 -m pip install neoscore -t ./py4pd_Linux/py-modules
     
     - name: Run Test
       run: python -c 'import py; py.runTest()'
