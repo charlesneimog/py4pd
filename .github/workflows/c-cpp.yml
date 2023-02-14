@@ -45,7 +45,7 @@ jobs:
       run: python3.11 -m pip install neoscore -t ./py4pd_macOS-Intel/py-modules
 
     - name: Run Test
-      run: /Applications/Pd-*.app/Contents/Resources/bin/pd -nogui py4pd_macOS-Intel/test.pd
+      run: python -c 'import py; py.runTest()' 
 
     - name: Upload Test Image
       uses: actions/upload-artifact@v3
@@ -152,8 +152,8 @@ jobs:
       run: python3 -m pip install neoscore -t ./py4pd_WIN64/py-modules
 
     - name: Run Test
-      run: cmd /c "C:\Program Files\Pd\bin\pd.exe" -nogui py4pd_WIN64\test.pd
-
+      run: python -c 'import py; py.runTest()' 
+      
     - name: Upload Test Image
       uses: actions/upload-artifact@v3
       with:
@@ -211,7 +211,7 @@ jobs:
       run: python3.11 -m pip install neoscore -t ./py4pd_Linux/py-modules
     
     - name: Run Test
-      run: pd -nogui py4pd_Linux/test.pd
+      run: python -c 'import py; py.runTest()'
 
     - name: Upload Test Image
       uses: actions/upload-artifact@v3

@@ -31,9 +31,6 @@
 
 TODO: Way to set global variables, I think that will be important for things like general path (lilypond, etc)
 
-TODO: Reset the function (like panic for sfont~).
-    TODO: Add a way all functions to be reseted.
-
 TODO: Add some way to run list how arguments
     FORMULA I: Work with [1 2 3 4 5] and transform this to a list for Python
     FORMULA II: MAKE SOME SPECIAL OBJECT TO WORK WITH LISTS 

@@ -958,7 +958,7 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open vscode
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
-    class_addmethod(py4pd_class, (t_method)restartPython, gensym("panic"), 0, 0); // open documentation
+    class_addmethod(py4pd_class, (t_method)restartPython, gensym("restart"), 0, 0); // open documentation
     // class_addmethod(py4pd_class, (t_method)globalVariables, gensym("global"), A_GIMME, 0); // create file or open it
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
 
