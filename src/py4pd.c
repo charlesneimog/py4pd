@@ -433,15 +433,24 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     pFunc = PyObject_GetAttrString(pModule, function_name->s_name); // Function name inside the script file
     Py_DECREF(pName); // DOC: Delete the name of the script file
     if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable   
-        
         PyObject *inspect=NULL, *getfullargspec=NULL, *argspec=NULL, *args=NULL;
         inspect = PyImport_ImportModule("inspect");
         getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
         argspec = PyObject_CallFunctionObjArgs(getfullargspec, pFunc, NULL);
         args = PyTuple_GetItem(argspec, 0);
+        int isArgs = PyObject_RichCompareBool(args, Py_None, Py_EQ);
+        post("isArgs: %d", isArgs);
+
         int py_args = PyObject_Size(args);
-        post("[py4pd] The '%s'  function has %i arguments!", function_name->s_name, py_args);
-        x->py_arg_numbers = py_args;
+        // check if function if not *args or **kwargs
+        if (args == Py_None){
+            x->py_arg_numbers = -1; 
+            post("[py4pd] The '%s' function has *args or **kwargs!", function_name->s_name);        
+        }
+        else {
+            x->py_arg_numbers = py_args;
+            post("[py4pd] The '%s' function has %d arguments!", function_name->s_name, py_args);
+        }        
         x->function = pFunc;
         x->module = pModule;
         x->script_name = script_file_name;
@@ -479,7 +488,6 @@ static void runList_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     PyObject *pArgs, *pValue;
     pArgs = PyTuple_New(2);
-    // create array for the arguments
     t_atom *argsInsideList = (t_atom *)getbytes(argc * sizeof(t_atom));
     int argsInsideListCounter = 0;
     int pyArgs = 0;
