@@ -1,0 +1,8 @@
+#N canvas 579 82 1265 723 12;
+#X obj 9 147 py4pd;
+#X msg 9 38 set loris lorisAnalisys;
+#X obj 9 180 print odd;
+#X msg 34 68 run ./Vn-ord-A4-ff-2c-N.wav 60;
+#X connect 0 0 2 0;
+#X connect 1 0 0 0;
+#X connect 3 0 0 0;
