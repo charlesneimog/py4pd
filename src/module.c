@@ -87,7 +87,7 @@ static PyObject *pdprint(PyObject *self, PyObject *args)
     char *string;
     if (PyArg_ParseTuple(args, "s", &string))
     {
-        post("[py4pd - script]: %s", string);
+        post("[py4pd]: %s", string);
         PyErr_Clear();
     }
     else
@@ -107,7 +107,6 @@ static PyObject *pderror(PyObject *self, PyObject *args)
     {
         post("Not working yet");
         pd_error(py4pd_object, "Ocorreu um erro");
-        PyErr_Clear();
     }
     else
     {

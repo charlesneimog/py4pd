@@ -22,12 +22,7 @@
 #define PY_SSIZE_T_CLEAN // Good practice to use this
 #include <Python.h>
 
-// Pd Module for Python
-// #include "module.h"
-
-
 /* 
-
 
 TODO: Way to set global variables, I think that will be important for things like general path (lilypond, etc)
 
@@ -75,7 +70,6 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 // PD GLOBAL OBJECT
 // // ============================================
 
-static t_py *py4pd_object;
 
 // create a pointer for the t_py class
 
@@ -89,9 +83,7 @@ static int running_some_thread = 0;
 // create and array of pointers for the t_py class
 static t_py *py4pd_object_array[100];
 
-
 // Set Debug mode
 #define DEBUG 1
-
 
 #endif

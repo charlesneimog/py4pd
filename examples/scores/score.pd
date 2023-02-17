@@ -1,9 +1,9 @@
-#N canvas 647 82 1265 723 12;
+#N canvas 671 221 1095 421 12;
 #X obj 9 73 py4pd;
 #X msg 9 11 set score note;
 #X obj 9 101 cyclone/fromsymbol;
-#X obj 9 125 else/pic 0 note_f72.ppm empty empty 0 0;
-#X msg 25 36 run 43;
+#X obj 9 125 else/pic 0 ./__pycache__/note_b75.ppm empty empty 0 0;
+#X msg 25 36 run c;
 #X connect 0 0 2 0;
 #X connect 1 0 0 0;
 #X connect 2 0 3 0;

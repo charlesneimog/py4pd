@@ -6,10 +6,11 @@ import pd
 
 def note(pitch):
     scriptPath = os.path.dirname(os.path.abspath(__file__))
-    for file in os.listdir(scriptPath):
+    # make this in 
+    for file in os.listdir(scriptPath + "/__pycache__"):
         if file.endswith(".ppm"):
             try:
-                os.remove(os.path.join(scriptPath, file))
+                os.remove(os.path.join(scriptPath + "/__pycache__", file))
             except:
                 pass
                 
@@ -23,10 +24,10 @@ def note(pitch):
         note = [(pitch, '', 4)]
         Chordrest(Mm(5), staff, note, (int(1), int(1)))
         scriptPath = os.path.dirname(os.path.abspath(__file__))
-        notePathName = scriptPath + "/note_" + pitch + f"{randomNumber}.ppm"
-        neoscore.render_image(rect=None, dest=notePathName, dpi=150, wait=True)
+        notePathName = scriptPath + "/__pycache__/note_" + pitch + f"{randomNumber}.ppm"
+        neoscore.show(display_page_geometry=False)
         neoscore.shutdown()
-        return f"open note_{pitch}{randomNumber}.ppm"
+        return f"open  ./__pycache__/note_{pitch}{randomNumber}.ppm"
     except:
         pd.print("Error generating score")
         neoscore.shutdown()

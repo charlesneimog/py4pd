@@ -62,7 +62,6 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
                 list_array[i].a_type = A_SYMBOL;
                 list_array[i].a_w.w_symbol = gensym(result);
             } else if (Py_IsNone(pValue_i)) {        // DOC: If the function return a list of None
-                post("None");
             } else {
                 pd_error(x, "[py4pd] py4pd just convert int, float and string! Received: %s", Py_TYPE(pValue_i)->tp_name);
                 Py_DECREF(pValue_i);
@@ -90,7 +89,6 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
             return 0;
             
         } else if (Py_IsNone(pValue)) {
-            post("None");
         } else {
             pd_error(x, "[py4pd] py4pd just convert int, float and string or list of this atoms! Received: %s", Py_TYPE(pValue)->tp_name);
             return 0;
@@ -892,7 +890,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     // make pointer for x
     t_py **py4pd_object_ptr = malloc(sizeof(t_py*)); // create a pointer to t_py
     *py4pd_object_ptr = x;
-    // py4pd_object = py4pd_object_ptr;
 
     // check if python is initialized, if not, initialize it
     if (!Py_IsInitialized()) {
