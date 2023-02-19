@@ -98,6 +98,61 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
 
 }
 
+// =====================================================================
+// ========================= py4pd object =============================
+
+static int *set_py4pd_config(t_py *x) {
+    
+    // check if in x->home_path there is a file py4pd.config
+    char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1)); // 
+    strcpy(config_path, x->home_path->s_name); // copy string one into the result.
+    strcat(config_path, "/py4pd.cfg"); // append string two to the result.
+    if (access(config_path, F_OK) != -1) { // check if file exists
+        post("[py4pd] py4pd.cfg file found");
+        FILE* file = fopen(config_path, "r"); /* should check the result */
+        char line[256]; // line buffer
+        while (fgets(line, sizeof(line), file)) { // read a line
+            if (strstr(line, "packages =") != NULL) { // check if line contains "packages ="
+                char *packages_path = (char *)malloc(sizeof(char) * (strlen(line) - strlen("packages = ") + 1)); // 
+                strcpy(packages_path, line + strlen("packages = ")); // copy string one into the result.
+                
+                if (strlen(packages_path) > 0) { // check if path is not empty
+                    // from packages_path remove the two last character
+                    packages_path[strlen(packages_path) - 1] = '\0'; // remove the last character
+                    packages_path[strlen(packages_path) - 1] = '\0'; // remove the last character
+
+                    // remove all spaces from packages_path
+                    char *i = packages_path;
+                    char *j = packages_path;
+                    while(*j != 0) {
+                        *i = *j++;
+                        if(*i != ' ')
+                            i++;
+                    }
+                    *i = 0;
+                    // if packages_path start with . add the home_path
+                    if (packages_path[0] == '.') {
+                        char *new_packages_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen(packages_path) + 1)); // 
+                        strcpy(new_packages_path, x->home_path->s_name); // copy string one into the result.
+                        strcat(new_packages_path, packages_path + 1); // append string two to the result.
+                        x->packages_path = gensym(new_packages_path);
+                        free(new_packages_path);
+                    } else {
+                        x->packages_path = gensym(packages_path);
+                    }
+
+                }
+                free(packages_path); // free memory
+            }
+        }
+        fclose(file); // close file
+    } else {
+        x->packages_path = gensym("./py-modules");
+    }
+    free(config_path); // free memory
+    return 0;
+
+}
 
 // ===================================================================
 // ========================= Pd Object ===============================
@@ -357,7 +412,10 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
 
-    // DOC: Check if function was already called and if the name is the same
+    // 
+    //   
+    // 
+
     if (x->function_called == 1){
         int function_is_equal = strcmp(function_name->s_name, x->function_name->s_name); // if string is equal strcmp returns 0
         if (function_is_equal == 0){
@@ -408,8 +466,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     PyList_Insert(sys_path, 0, site_package);
     Py_DECREF(home_path);
     Py_DECREF(site_package);
-    
-    //post("[py4pd] The packages are in: %s", x->packages_path->s_name);
 
     // =====================
     pName = PyUnicode_DecodeFSDefault(script_file_name->s_name); // Name of script file
@@ -510,8 +566,6 @@ static void runList_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
             }
             else if (argv[j].a_type == A_SYMBOL && argv[j].a_w.w_symbol->s_name[0] != '['){
                 int lenSymbol = 0;
-                // for (k = 0; k < strlen(argv[j].a_w.w_symbol->s_name); ++k){ // WARNING: for (k = 0; k < strlen(argv[j].a_w.w_symbol->s_name); ++k){
-                // solve the warning
                 for (k = 0; k < (int)strlen(argv[j].a_w.w_symbol->s_name); ++k){
                     if (argv[j].a_w.w_symbol->s_name[k] == ']'){
                         lenSymbol = k;
@@ -745,8 +799,8 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
     int thread = x->thread;
     if (thread == 1) {
-        create_thread(x, s, argc, argv);
-        pd_error(x, "[py4pd] NOT WORKING YET!");
+        run_function(x, s, argc, argv);
+        pd_error(x, "[py4pd] Not implemenented! Wait for approval of PEP 684");
     } else if (thread == 2) {
         // declare state
         run_function(x, s, argc, argv);
@@ -783,15 +837,6 @@ static void restartPython(t_py *x){
     return;
 }
 
-// // ============================================
-// static void inside_thread(){
-//     PyGILState_STATE gstate = PyGILState_Ensure();
-//     PyRun_SimpleString("print('Hello from inside the thread!')");
-//     PyGILState_Release(gstate);
-//     return ;
-// }
-
-
 // ============================================
 // ============================================
 // ============================================
@@ -801,10 +846,6 @@ static void thread(t_py *x, t_floatarg f){
     if (thread == 1) {
         post("[py4pd] Threading enabled, but not working yet!");
         x->thread = 1;
-        // create a new python subinterpreter
-        // PyThreadState* object_thread = Py_NewInterpreter();
-        // x->py_thread_interpreter = object_thread;
-        // PyThreadState_Swap(x->py_main_interpreter);
         return;
     } else if (thread == 0) {
         x->thread = 2; // 
@@ -820,80 +861,7 @@ static void thread(t_py *x, t_floatarg f){
 // ============================================
 
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
-    object_count++; // count the number of objects
-    // post("[py4pd] Object number %d", object_count);
-    t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
-        
-    // Object count
-    x->object_number = object_count;
-    x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
-    x->x_canvas = canvas_getcurrent(); // pega o canvas atual
-    t_canvas *c = x->x_canvas;  // p
-    t_symbol *patch_dir = canvas_getdir(c); // directory of opened patch
-    x->home_path = patch_dir;     // set name of the home path
-    x->packages_path = patch_dir; // set name of the packages path
-    x->thread = 2; // default is 2 (no threading)
-
-    py4pd_object_array[object_count] = x;
-        
-    // check if in x->home_path there is a file py4pd.config
-    char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1)); // 
-    strcpy(config_path, x->home_path->s_name); // copy string one into the result.
-    strcat(config_path, "/py4pd.cfg"); // append string two to the result.
-    if (access(config_path, F_OK) != -1) { // check if file exists
-        FILE* file = fopen(config_path, "r"); /* should check the result */
-        char line[256]; // line buffer
-        while (fgets(line, sizeof(line), file)) { // read a line
-            if (strstr(line, "packages =") != NULL) { // check if line contains "packages ="
-                char *packages_path = (char *)malloc(sizeof(char) * (strlen(line) - strlen("packages = ") + 1)); // 
-                strcpy(packages_path, line + strlen("packages = ")); // copy string one into the result.
-                
-                if (strlen(packages_path) > 0) { // check if path is not empty
-                    // from packages_path remove the two last character
-                    packages_path[strlen(packages_path) - 1] = '\0'; // remove the last character
-                    packages_path[strlen(packages_path) - 1] = '\0'; // remove the last character
-
-                    // remove all spaces from packages_path
-                    char *i = packages_path;
-                    char *j = packages_path;
-                    while(*j != 0) {
-                        *i = *j++;
-                        if(*i != ' ')
-                            i++;
-                    }
-                    *i = 0;
-                    // if packages_path start with . add the home_path
-                    if (packages_path[0] == '.') {
-                        char *new_packages_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen(packages_path) + 1)); // 
-                        strcpy(new_packages_path, x->home_path->s_name); // copy string one into the result.
-                        strcat(new_packages_path, packages_path + 1); // append string two to the result.
-                        x->packages_path = gensym(new_packages_path);
-                        free(new_packages_path);
-                    } else {
-                        x->packages_path = gensym(packages_path);
-                    }
-
-                }
-                free(packages_path); // free memory
-            }
-        }
-        fclose(file); // close file
-    } else {
-        post("[py4pd] Could not find py4pd.cfg in home directory"); // print path
-    }
-
-    free(config_path); // free memory
-    if (argc > 1) { // check if there are two arguments
-        set_function(x, s, argc, argv); // this not work with python submodules
-    }
-    // Create a pointer to x object and save it in the global variable py4pd_object
-    // make pointer for x
-    t_py **py4pd_object_ptr = malloc(sizeof(t_py*)); // create a pointer to t_py
-    *py4pd_object_ptr = x;
-
-    // check if python is initialized, if not, initialize it
     if (!Py_IsInitialized()) {
-        
         // Credits
         post("");
         post("[py4pd] by Charles K. Neimog");
@@ -901,10 +869,23 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
         post("[py4pd] Inspired by the work of Thomas Grill and SOPI research group.");
         post("");
-        
         PyImport_AppendInittab("pd", PyInit_pd); // DOC: Add the pd module to the python interpreter
         Py_InitializeEx(1); // DOC: Initialize the Python interpreter. If 1, the signal handler is installed.
-        
+    }
+    object_count++; // count the number of objects
+    t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
+    x->object_number = object_count; // save object number
+    x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
+    x->x_canvas = canvas_getcurrent(); // pega o canvas atual
+    t_canvas *c = x->x_canvas;  // get the current canvas
+    t_symbol *patch_dir = canvas_getdir(c); // directory of opened patch
+    x->home_path = patch_dir;     // set name of the home path
+    x->packages_path = patch_dir; // set name of the packages path
+    x->thread = 2; // default is 2 (no threading)
+    py4pd_object_array[object_count] = x; // save the object in the array
+    set_py4pd_config(x); // set the config file
+    if (argc > 1) { // check if there are two arguments
+        set_function(x, s, argc, argv); // this not work with python submodules
     }
     return(x);
 }
@@ -940,9 +921,6 @@ void py4pd_setup(void){
                         A_GIMME, // o argumento é um símbolo
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
     
-    // add method for bang
-    class_addbang(py4pd_class, run);
-
     // Iterate with object
     class_addmethod(py4pd_class, (t_method)vscode, gensym("click"), 0, 0); // when click open vscode
 
@@ -957,7 +935,6 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
     class_addmethod(py4pd_class, (t_method)restartPython, gensym("restart"), 0, 0); // open documentation
-    // class_addmethod(py4pd_class, (t_method)globalVariables, gensym("global"), A_GIMME, 0); // create file or open it
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
 
 }
