@@ -14,6 +14,8 @@ ifeq (MINGW,$(findstring MINGW,$(uname)))
   $(shell cp $(PYTHON_DLL) $(pythondll_name))
 
 else ifeq (Linux,$(findstring Linux,$(uname)))
+  # create python_include using PYTHON_VERSION
+  PYTHON_INCLUDE = shell python$(PYTHON_VERSION) -c "import sysconfig; print(sysconfig.get_paths()['include'])"
   cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wno-unused-variable
   ldlibs = -l $(PYTHON_VERSION) 
 
