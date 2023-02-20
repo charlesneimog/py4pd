@@ -124,7 +124,7 @@ jobs:
     - if: runner.os == 'Windows'
       name: Build py4pd
       shell: msys2 {0}
-      run: make PYTHON_INCLUDE="C:/hostedtoolcache/windows/Python/3.11.1/x64/Include/" PYTHON_DLL="C:/hostedtoolcache/windows/Python/3.11.1/x64/python311.dll"
+      run: make PYTHON_DLL="C:/hostedtoolcache/windows/Python/3.11.1/x64/python311.dll"
     
     - name: Rename py4pd.dll to py4pd.m_amd64
       run: mv py4pd.dll py4pd.m_amd64

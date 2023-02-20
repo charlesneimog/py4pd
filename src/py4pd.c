@@ -1,6 +1,8 @@
 #include "py4pd.h"
 #include "m_pd.h"
 #include "module.h"
+#include <regex.h> // for regex 
+
 
 // ===================================================================
 // ========================= Utilities ===============================
@@ -535,94 +537,44 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 
 static void runList_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    (void)s;
-    int listStarted = 0;
-    int start = 0;
-    int end = 0;
 
-    PyObject *pArgs, *pValue;
-    pArgs = PyTuple_New(2);
-    t_atom *argsInsideList = (t_atom *)getbytes(argc * sizeof(t_atom));
-    int argsInsideListCounter = 0;
-    int pyArgs = 0;
-    // pFunc = x->function;
-    for (int j = 0; j < argc; ++j){
-        if (argv[j].a_type == A_SYMBOL || listStarted == 1){ // loop for argc
-            int k;
-            if (argv[j].a_type == A_SYMBOL && argv[j].a_w.w_symbol->s_name[0] == '['){
-                char *str = (char *)argv[j].a_w.w_symbol->s_name;
-                str++;
-                start = j;
-                t_atom strAtom;
-                SETSYMBOL(&strAtom, gensym(str));
-                argsInsideList[argsInsideListCounter] = strAtom;
-                argsInsideListCounter++;
-                listStarted = 1;
-            }
-            else if (argv[j].a_type == A_FLOAT && listStarted == 1){
-                argsInsideList[argsInsideListCounter] = argv[j];
-                argsInsideListCounter++;
-
-            }
-            else if (argv[j].a_type == A_SYMBOL && argv[j].a_w.w_symbol->s_name[0] != '['){
-                int lenSymbol = 0;
-                for (k = 0; k < (int)strlen(argv[j].a_w.w_symbol->s_name); ++k){
-                    if (argv[j].a_w.w_symbol->s_name[k] == ']'){
-                        lenSymbol = k;
-                        char *str = (char *)argv[j].a_w.w_symbol->s_name;
-                        str[lenSymbol] = '\0';
-                        end = j;
-                        // convert str to atom
-                        t_atom strAtom;
-                        SETSYMBOL(&strAtom, gensym(str));
-                        argsInsideList[argsInsideListCounter] = strAtom;
-                        argsInsideListCounter++;
-                        listStarted = 0;
-                        PyObject *C2Python = PyList_New(0);
-                        for (k = start; k <= end; ++k){
-                            if (argsInsideList[k].a_type == A_SYMBOL){
-                                pValue = PyUnicode_FromString(argsInsideList[k].a_w.w_symbol->s_name);
-                                PyList_Append(C2Python, pValue);
-                            }
-                            else{
-                                pValue = PyFloat_FromDouble(argsInsideList[k].a_w.w_float);
-                                PyList_Append(C2Python, pValue);
-                            }
-                        }
-                        // add the list to the args
-                        PyTuple_SetItem(pArgs, pyArgs, C2Python);
-                        pyArgs++;
-                        argsInsideListCounter = 0;
-                        break;
-                    }
-                }
-                if (end == 0 && argv[j].a_type == A_SYMBOL){
-                    argsInsideList[argsInsideListCounter] = argv[j];
-                    argsInsideListCounter++;
-                }
-            }
-            else{
-                argsInsideList[argsInsideListCounter] = argv[j];
-                argsInsideListCounter++;
-            }
-        }
-        else {
-            t_atom *argv_i = malloc(sizeof(t_atom)); // TODO: Check if this is necessary
-            *argv_i = argv[j];
-            pValue = py4pd_convert_to_python(argv_i);
-            if (!pValue) {
-                pd_error(x, "[py4pd] Cannot convert argument\n"); 
-                return;
-            }
-            PyTuple_SetItem(pArgs, pyArgs, pValue);
-            pyArgs++;
-            // post('here');
-        }
+    char* pattern = "(\\[[^\\]]*\\])|(\\d+)";
+    regex_t re;
+    int status = regcomp(&re, pattern, REG_EXTENDED);
+    if (status != 0) {
+        // Handle error
+        pd_error(x, "Error: Could not compile regular expression.");
     }
 
-    // call the function
-    post("Size: %d", PyTuple_GET_SIZE(pArgs));
+    // Define the input string
+    char* input_str = "[ 1 2 3 4 5 ] [test casa] 4";
+
+    // Match the regular expression against the input string
+    regmatch_t matches[3];
+    int start = 0;
+    while (regexec(&re, input_str + start, 3, matches, 0) == 0) {
+        // Determine which group matched
+        if (matches[1].rm_so != -1) {
+            // Extract the matched substring as a list
+            char* list_str = strndup(input_str + start + matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
+            post("list = %s", list_str);
+            free(list_str);
+        } else if (matches[2].rm_so != -1) {
+            // Extract the matched substring as an integer
+            char* int_str = strndup(input_str + start + matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
+            post("int = %s", int_str);
+            free(int_str);
+        }
+
+        // Update the starting position for the next match
+        start += matches[0].rm_eo;
+    }
+
+    // Free the regular expression
+    regfree(&re);
+
     post("ok");
+
     return;
 }
 

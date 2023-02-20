@@ -6,6 +6,13 @@ def sum(x, y):
     y = int(y)
     return x + y
 
+def sumlist(listOfNumbers, limit):
+    sum = 0
+    for i in listOfNumbers:
+        if i < limit:
+            sum += i
+    return 1
+
 def arithm_ser(begin, end, step):
     "It calculates the arithmetic series."
     list = []
