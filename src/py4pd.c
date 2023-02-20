@@ -1,4 +1,5 @@
 #include "py4pd.h"
+#include "m_pd.h"
 #include "module.h"
 
 // ===================================================================
@@ -144,6 +145,39 @@ static int *set_py4pd_config(t_py *x) {
                 }
                 free(packages_path); // free memory
             }
+            else if (strstr(line, "thread =") != NULL){
+                post("thread");
+                char *thread = (char *)malloc(sizeof(char) * (strlen(line) - strlen("thread = ") + 1)); //
+                strcpy(thread, line + strlen("thread = ")); // copy string one into the result. TODO: implement thread
+                // print thread value
+                if (strlen(thread) > 0) { // check if path is not empty
+                    // from thread remove the two last character
+                    thread[strlen(thread) - 1] = '\0'; // remove the last character
+                    thread[strlen(thread) - 1] = '\0'; // remove the last character
+
+                    // remove all spaces from thread
+                    char *i = thread;
+                    char *j = thread;
+                    while(*j != 0) {
+                        *i = *j++;
+                        if(*i != ' ')
+                            i++;
+                    }
+                    *i = 0;
+                    // if thread start with . add the home_path
+                    if (thread[0] == '1') {
+                        post("value is 1");
+                    } else {
+                        post("value not 1");
+                    }
+
+                }
+            }
+            else if (strstr(line, "editor =") != NULL){
+                pd_error(x, "[py4pd] editor not implemented yet"); // TODO: implement choice for editor (nvim, emacs, code, etc.)
+            }
+
+
         }
         fclose(file); // close file
     } else {
@@ -158,13 +192,6 @@ static int *set_py4pd_config(t_py *x) {
 // ========================= Pd Object ===============================
 // ===================================================================
 
-/* \brief Define the home path of python
- * \param s Pointer to the symbol
- * \param argc Number of arguments
- * \param argv Pointer to the arguments
- * \return void
- */
-
 static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; // unused but required by pd
     if (argc < 1) {
@@ -177,12 +204,7 @@ static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // // ============================================
-// /* \brief Define the packages path of python
-//  * \param s Pointer to the symbol
-//  * \param argc Number of arguments
-//  * \param argv Pointer to the arguments
-//  * \return void
-//  */
+
 static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; 
     if (argc < 1) {
@@ -194,11 +216,9 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
             if (argv[0].a_type == A_SYMBOL) {
                 t_symbol *path = atom_getsymbol(argv);
 
-                // DOC: check relative path
+                // It checks relative path
 
                 if (path->s_name[0] == '.' && path->s_name[1] == '/') {
-                    // if it does, then prepend the current path
-                    
                     char *new_path = malloc(strlen(x->home_path->s_name) + strlen(path->s_name) + 1);
                     strcpy(new_path, x->home_path->s_name);
                     strcat(new_path, path->s_name + 1);
@@ -206,9 +226,6 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                     x->packages_path = gensym(new_path);
                     free(new_path);
                 } 
-
-                // DOC: check relative path
-
                 else {
                     x->packages_path = atom_getsymbol(argv);
                     post("[py4pd] The packages path set to: %s", x->packages_path->s_name);
@@ -218,15 +235,11 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                 pd_error(x, "[py4pd] The packages path must be a string");
                 return;
             }
-
-            // DOC: check if path exists and is valid
-
-            if (access(x->packages_path->s_name, F_OK) != -1) {
-                // do nothing
-            } else {
-                    pd_error(x, "The packages path is not valid");
-                    return;
-                }
+            // check if path exists and is valid
+            if (access(x->packages_path->s_name, F_OK) == -1) {
+                pd_error(x, "[py4pd] The packages path is not valid");
+                return;
+            }
         } else{
             pd_error(x, "It seems that your package folder has |spaces|.");
             return;
@@ -245,7 +258,6 @@ static void documentation(t_py *x){
         pd_error(x, "[py4pd] To see the documentaion you need to set the function first!");
         return;
     }
-
     pFunc = x->function;
     if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable
         PyObject *pDoc = PyObject_GetAttrString(pFunc, "__doc__"); // Get the documentation of the function
@@ -256,14 +268,16 @@ static void documentation(t_py *x){
                 post("");
                 post("%s", Doc);
                 post("");
+                return;
             }
             else{
-
                 pd_error(x, "[py4pd] No documentation found!");
+                return;
             }
         }
         else{
             pd_error(x, "[py4pd] No documentation found!");
+            return;
         }
     }
 }
@@ -411,10 +425,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
-
-    // 
-    //   
-    // 
 
     if (x->function_called == 1){
         int function_is_equal = strcmp(function_name->s_name, x->function_name->s_name); // if string is equal strcmp returns 0
@@ -732,62 +742,62 @@ static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     return;
 }
 
-// ============================================
-
-struct thread_arg_struct {
-    t_py x;
-    t_symbol s;
-    int argc;
-    t_atom *argv;
-    PyThreadState *interp;
-} thread_arg;
-
-// ============================================
-
-static void *ThreadFunc(void *lpParameter) {
-    struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParameter;
-    t_py *x = &arg->x; 
-    t_symbol *s = &arg->s;
-    int argc = arg->argc;
-    t_atom *argv = arg->argv;
-    int object_number = x->object_number;
-    thread_status[object_number] = 1;
-    // PyGILState_STATE gstate;
-    running_some_thread = 1;
-    run_function_thread(x, s, argc, argv);  
-    thread_status[object_number] = 0;
-    running_some_thread = 0;
-    return 0;
-}
-
-// ============================================
-
-static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    (void)s;
-    struct thread_arg_struct *arg = (struct thread_arg_struct *)malloc(sizeof(struct thread_arg_struct));
-    arg->x = *x;
-    arg->argc = argc;
-    arg->argv = argv;
-    int object_number = x->object_number;
-    if (x->function_called == 0) {
-        // Pd is crashing when I try to create a thread.
-        pd_error(x, "[py4pd] You need to call a function before run!");
-        free(arg);
-        return;
-    } else {
-        if (thread_status[object_number] == 0){
-            // PyThread is not thread safe, so we need to lock the GIL
-            pthread_t thread;
-            pthread_create(&thread, NULL, ThreadFunc, arg);
-            x->state = 1;
-            // check the Thread was created
-        } else {
-            pd_error(x, "[py4pd] There is a thread running in this Object!");
-            free(arg);
-        }
-    }
-    return;
-}
+// // ============================================
+//
+// struct thread_arg_struct {
+//     t_py x;
+//     t_symbol s;
+//     int argc;
+//     t_atom *argv;
+//     PyThreadState *interp;
+// } thread_arg;
+//
+// // ============================================
+//
+// static void *ThreadFunc(void *lpParameter) {
+//     struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParameter;
+//     t_py *x = &arg->x; 
+//     t_symbol *s = &arg->s;
+//     int argc = arg->argc;
+//     t_atom *argv = arg->argv;
+//     int object_number = x->object_number;
+//     thread_status[object_number] = 1;
+//     // PyGILState_STATE gstate;
+//     running_some_thread = 1;
+//     run_function_thread(x, s, argc, argv);  
+//     thread_status[object_number] = 0;
+//     running_some_thread = 0;
+//     return 0;
+// }
+//
+// // ============================================
+//
+// static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
+//     (void)s;
+//     struct thread_arg_struct *arg = (struct thread_arg_struct *)malloc(sizeof(struct thread_arg_struct));
+//     arg->x = *x;
+//     arg->argc = argc;
+//     arg->argv = argv;
+//     int object_number = x->object_number;
+//     if (x->function_called == 0) {
+//         // Pd is crashing when I try to create a thread.
+//         pd_error(x, "[py4pd] You need to call a function before run!");
+//         free(arg);
+//         return;
+//     } else {
+//         if (thread_status[object_number] == 0){
+//             // PyThread is not thread safe, so we need to lock the GIL
+//             pthread_t thread;
+//             pthread_create(&thread, NULL, ThreadFunc, arg);
+//             x->state = 1;
+//             // check the Thread was created
+//         } else {
+//             pd_error(x, "[py4pd] There is a thread running in this Object!");
+//             free(arg);
+//         }
+//     }
+//     return;
+// }
 
 // ============================================
 static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
@@ -869,7 +879,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
         post("[py4pd] Inspired by the work of Thomas Grill and SOPI research group.");
         post("");
-        PyImport_AppendInittab("pd", PyInit_pd); // DOC: Add the pd module to the python interpreter
+        PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
         Py_InitializeEx(1); // DOC: Initialize the Python interpreter. If 1, the signal handler is installed.
     }
     object_count++; // count the number of objects
@@ -906,6 +916,7 @@ void py4pd_free(t_py *x){
     }
     if (object_count == 1) {
         Py_Finalize();
+        object_count = 0;
         post("[py4pd] Python interpreter finalized");
     }
 }
@@ -921,21 +932,26 @@ void py4pd_setup(void){
                         A_GIMME, // o argumento é um símbolo
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
     
-    // Iterate with object
-    class_addmethod(py4pd_class, (t_method)vscode, gensym("click"), 0, 0); // when click open vscode
-
     // Config
     class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0); // set home path
     class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0); // set packages path
-    class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0); // set function to be called
-    class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
-    class_addmethod(py4pd_class, (t_method)runList_function, gensym("runlist"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class, (t_method)thread, gensym("thread"), A_FLOAT, 0); // on/off threading
-    class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open vscode
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script
+    class_addmethod(py4pd_class, (t_method)restartPython, gensym("restart"), 0, 0); // it restart python interpreter
+
+    // Edit py code
+    class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open vscode
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
-    class_addmethod(py4pd_class, (t_method)restartPython, gensym("restart"), 0, 0); // open documentation
+    class_addmethod(py4pd_class, (t_method)vscode, gensym("click"), 0, 0); // when click open vscode
+    
+    // User use
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
+    class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
+    class_addmethod(py4pd_class, (t_method)runList_function, gensym("runlist"), A_GIMME, 0);  // run function TODO:
+    class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0); // set function to be called
+
+
+
 
 }
 
