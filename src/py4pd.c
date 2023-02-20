@@ -6,17 +6,6 @@
 // ========================= Utilities ===============================
 // ===================================================================
 
-
-/* \brief Convert the pd object to python object
- * \param pd_value Pointer to the value from pd
- * \return Pointer to the python object
- in neovim, how to use regex to replace to '' 
- :%s///g
-
- */
-
-
-
 static PyObject *py4pd_convert_to_python(t_atom *pd_value) {
     PyObject *pValue;
     if (pd_value->a_type == A_FLOAT){ 
@@ -38,11 +27,6 @@ static PyObject *py4pd_convert_to_python(t_atom *pd_value) {
 }
 
 // =====================================================================
-/* \brief Convert the python object to pd object
- * \param x Pointer to the py4pd object
- * \param pValue Pointer to the python object
- * \return void (output the result to the pd object)
- */
 
 static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
     
@@ -187,6 +171,7 @@ static int *set_py4pd_config(t_py *x) {
         fclose(file); // close file
     } else {
         x->packages_path = gensym("./py-modules");
+        x->thread = 0;
     }
     free(config_path); // free memory
     return 0;
@@ -952,6 +937,7 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class, (t_method)runList_function, gensym("runlist"), A_GIMME, 0);  // run function TODO:
     class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0); // set function to be called
+
 }
 
 // // dll export function
