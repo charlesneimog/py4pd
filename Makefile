@@ -8,6 +8,7 @@ uname := $(shell uname -s)
 # remove -Wunused-variable warnings
 
 ifeq (MINGW,$(findstring MINGW,$(uname)))
+  PYTHON_INCLUDE := $(shell python3 -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
   cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wno-unused-variable 
   ldlibs =  $(PYTHON_DLL) -lwinpthread
   pythondll_name = $(shell basename $(PYTHON_DLL))
@@ -16,11 +17,12 @@ ifeq (MINGW,$(findstring MINGW,$(uname)))
 else ifeq (Linux,$(findstring Linux,$(uname)))
   # create python_include using PYTHON_VERSION
   # execute python3.11 -c "import sysconfig; print(sysconfig.get_paths()['include'])" to get INCLUDE path
-  PYTHON_INCLUDE := $(shell python -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
+  PYTHON_INCLUDE := $(shell python3 -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
   cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wno-unused-variable
   ldlibs = -l $(PYTHON_VERSION) 
 
 else ifeq (Darwin,$(findstring Darwin,$(uname)))
+  PYTHON_INCLUDE := $(shell python3 -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
   cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wno-unused-variable -mmacosx-version-min=10.9
   ldlibs = -L "/Library/Frameworks/Python.framework/Versions/3.11/lib/" -l python3.11
 
