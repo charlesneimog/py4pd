@@ -829,11 +829,9 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 static void restartPython(t_py *x){
     Py_Finalize();
-    post("[py4pd] Python interpreter was restarted!");
     x->function_called = 0;
     x->function_name = NULL;
     x->script_name = NULL;
-    x->py_main_interpreter = NULL;
     x->module = NULL;
     x->function = NULL;
     int i;
@@ -843,12 +841,12 @@ static void restartPython(t_py *x){
             y->function_called = 0;
             y->function_name = NULL;
             y->script_name = NULL;
-            y->py_main_interpreter = NULL;
             y->module = NULL;
             y->function = NULL;
         }
     }
     Py_Initialize();
+    post("[py4pd] Python interpreter was restarted!");
     return;
 }
 
@@ -859,7 +857,7 @@ static void restartPython(t_py *x){
 static void thread(t_py *x, t_floatarg f){
     int thread = (int)f;
     if (thread == 1) {
-        post("[py4pd] Threading enabled, but not working yet!");
+        post("[py4pd] Threading enabled, wait for approval of PEP 684");
         x->thread = 1;
         return;
     } else if (thread == 0) {
@@ -955,7 +953,6 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)runList_function, gensym("runlist"), A_GIMME, 0);  // run function TODO:
     class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0); // set function to be called
 }
-
 
 // // dll export function
 #ifdef _WIN64

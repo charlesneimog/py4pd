@@ -41,44 +41,26 @@ TODO: The set function need to run after the load of the object, but before the 
 typedef struct _py { // It seems that all the objects are some kind of class.
     t_object            x_obj; // convensao no puredata source code
     t_canvas            *x_canvas; // pointer to the canvas
- 
-    t_int                 state; // thread state
     t_int                 object_number; // object number
     t_inlet             *in1;
-
-    // set global for variables
-    PyObject            *globals;
-
-    // define py_interpreter
     PyObject            *module; // python object
     PyObject            *function; // function name 
-    PyInterpreterState  *py_main_interpreter;
-    PyInterpreterState  *py_thread_interpreter;
     t_int               thread; // arguments
     t_int               function_called; // flag to check if the set function was called
     t_int               py_arg_numbers; // number of arguments
     t_symbol            *packages_path; // packages path 
     t_symbol            *home_path; // home path this always is the path folder (?)
-    t_symbol            *object_path;
+    t_symbol            *object_path; // save object path TODO: want to save scripts inside this folder and make all accessible
     t_symbol            *function_name; // function name
     t_symbol            *script_name; // script name
     t_outlet            *out_A; // outlet 1.
 }t_py;
 
-
-// PD GLOBAL OBJECT
-// // ============================================
-
-
 // create a pointer for the t_py class
 
 static t_class *py4pd_class;
 static int object_count = 1;
-static int thread_status[100];
-static int running_some_thread = 0;
 static t_py *py4pd_object;
-// static int pyReinit = 0; // flag to check if the python interpreter was reinitialized
-// static PyInterpreterState *pymain = NULL; // main interpreter state
 
 // create and array of pointers for the t_py class
 static t_py *py4pd_object_array[100];
