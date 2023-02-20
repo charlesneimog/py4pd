@@ -10,13 +10,18 @@
 /* \brief Convert the pd object to python object
  * \param pd_value Pointer to the value from pd
  * \return Pointer to the python object
+ in neovim, how to use regex to replace to '' 
+ :%s///g
+
  */
+
+
 
 static PyObject *py4pd_convert_to_python(t_atom *pd_value) {
     PyObject *pValue;
     if (pd_value->a_type == A_FLOAT){ 
             float arg_float = atom_getfloat(pd_value);
-            if (arg_float == (int)arg_float){ // DOC: If the float is an integer, then convert to int
+            if (arg_float == (int)arg_float){ // If the float is an integer, then convert to int
                 int arg_int = (int)arg_float;
                 pValue = PyLong_FromLong(arg_int);
             }
@@ -41,28 +46,28 @@ static PyObject *py4pd_convert_to_python(t_atom *pd_value) {
 
 static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
     
-    if (PyList_Check(pValue)){                       // DOC: If the function return a list list
+    if (PyList_Check(pValue)){                       // If the function return a list list
         int list_size = PyList_Size(pValue);
         t_atom *list_array = (t_atom *) malloc(list_size * sizeof(t_atom));     
         int i;       
         for (i = 0; i < list_size; ++i) {
             PyObject *pValue_i = PyList_GetItem(pValue, i);
-            if (PyLong_Check(pValue_i)) {            // DOC: If the function return a list of integers
+            if (PyLong_Check(pValue_i)) {            // If the function return a list of integers
                 long result = PyLong_AsLong(pValue_i);
                 float result_float = (float)result;
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
 
-            } else if (PyFloat_Check(pValue_i)) {    // DOC: If the function return a list of floats
+            } else if (PyFloat_Check(pValue_i)) {    // If the function return a list of floats
                 double result = PyFloat_AsDouble(pValue_i);
                 float result_float = (float)result;
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
-            } else if (PyUnicode_Check(pValue_i)) {  // DOC: If the function return a list of strings
+            } else if (PyUnicode_Check(pValue_i)) {  // If the function return a list of strings
                 const char *result = PyUnicode_AsUTF8(pValue_i); 
                 list_array[i].a_type = A_SYMBOL;
                 list_array[i].a_w.w_symbol = gensym(result);
-            } else if (Py_IsNone(pValue_i)) {        // DOC: If the function return a list of None
+            } else if (Py_IsNone(pValue_i)) {        // If the function return a list of None
             } else {
                 pd_error(x, "[py4pd] py4pd just convert int, float and string! Received: %s", Py_TYPE(pValue_i)->tp_name);
                 Py_DECREF(pValue_i);
@@ -73,19 +78,19 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
         return 0;
     } else {
         if (PyLong_Check(pValue)) {
-            long result = PyLong_AsLong(pValue); // DOC: If the function return a integer
+            long result = PyLong_AsLong(pValue); // If the function return a integer
             outlet_float(x->out_A, result);
             //PyGILState_Release(gstate);
             return 0;
         } else if (PyFloat_Check(pValue)) {
-            double result = PyFloat_AsDouble(pValue); // DOC: If the function return a float
+            double result = PyFloat_AsDouble(pValue); // If the function return a float
             float result_float = (float)result;
             outlet_float(x->out_A, result_float);
             //PyGILState_Release(gstate);
             return 0;
             // outlet_float(x->out_A, result);
         } else if (PyUnicode_Check(pValue)) {
-            const char *result = PyUnicode_AsUTF8(pValue); // DOC: If the function return a string
+            const char *result = PyUnicode_AsUTF8(pValue); // If the function return a string
             outlet_symbol(x->out_A, gensym(result)); 
             return 0;
             
@@ -303,7 +308,7 @@ static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     const char *script_name = argv[0].a_w.w_symbol->s_name;
     post("[py4pd] Opening vscode...");
 
-    // DOC: Open VsCode in Windows 
+    // Open VsCode in Windows 
     #ifdef _WIN64 
     char *command = malloc(strlen(x->home_path->s_name) + strlen(script_name) + 20);
     sprintf(command, "/c code %s/%s.py", x->home_path->s_name, script_name);
@@ -318,7 +323,7 @@ static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     free(command);
     return;
 
-    // DOC: Open VsCode in Linux and Mac
+    // Open VsCode in Linux and Mac
 
     #else // if not windows 64bits
     char *command = malloc(strlen(x->home_path->s_name) + strlen(script_name) + 20);
@@ -341,7 +346,7 @@ static void vscode(t_py *x){
     }
     post("[py4pd] Opening vscode...");
 
-    // DOC: Open VsCode in Windows
+    // Open VsCode in Windows
     #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
     char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
     sprintf(command, "/c code %s/%s.py", x->home_path->s_name, x->script_name->s_name);
@@ -439,7 +444,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         }
     }
     
-    // DOC: Check if there is extension (not to use it)
+    // Check if there is extension (not to use it)
     char *extension = strrchr(script_file_name->s_name, '.');
     if (extension != NULL) {
         pd_error(x, "[py4pd] Don't use extensions in the script file name!");
@@ -459,7 +464,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
     
     // =====================
-    // DOC: check number of arguments
+    // check number of arguments
     if (argc < 2) { // check is the number of arguments is correct | set "function_script" "function_name"
         pd_error(x,"[py4pd] 'set' message needs two arguments! The 'Script Name' and the 'Function Name'!");
         return;
@@ -469,8 +474,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     
     // =====================
     // Add aditional path to python to work with Pure Data
-    PyObject *home_path = PyUnicode_FromString(x->home_path->s_name); // DOC: Place where script file will probably be
-    PyObject *site_package = PyUnicode_FromString(x->packages_path->s_name); // DOC: Place where the packages will be
+    PyObject *home_path = PyUnicode_FromString(x->home_path->s_name); // Place where script file will probably be
+    PyObject *site_package = PyUnicode_FromString(x->packages_path->s_name); // Place where the packages will be
     PyObject *sys_path = PySys_GetObject("path");
     PyList_Insert(sys_path, 0, home_path);
     PyList_Insert(sys_path, 0, site_package);
@@ -495,7 +500,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
  
     pFunc = PyObject_GetAttrString(pModule, function_name->s_name); // Function name inside the script file
-    Py_DECREF(pName); // DOC: Delete the name of the script file
+    Py_DECREF(pName); // Delete the name of the script file
     if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable   
         PyObject *inspect=NULL, *getfullargspec=NULL, *argspec=NULL, *args=NULL;
         inspect = PyImport_ImportModule("inspect");
@@ -655,7 +660,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
     pFunc = x->function; // this makes the function callable 
     pArgs = PyTuple_New(argc);
-    // DOC: CONVERTION TO PYTHON OBJECTS
+    // CONVERTION TO PYTHON OBJECTS
     int i;
     for (i = 0; i < argc; ++i) {
         t_atom *argv_i = malloc(sizeof(t_atom)); // TODO: Check if this is necessary
@@ -665,14 +670,14 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
             pd_error(x, "[py4pd] Cannot convert argument\n"); 
             return;
         }
-        PyTuple_SetItem(pArgs, i, pValue); // DOC: Set the argument in the tuple
+        PyTuple_SetItem(pArgs, i, pValue); // Set the argument in the tuple
     }
 
     pValue = PyObject_CallObject(pFunc, pArgs);
-    if (pValue != NULL) {                                // DOC: if the function returns a value   
-        py4pd_convert_to_pd(x, pValue); // DOC: convert the value to pd        
+    if (pValue != NULL) {                                // if the function returns a value   
+        py4pd_convert_to_pd(x, pValue); // convert the value to pd        
     }
-    else { // DOC: if the function returns a error
+    else { // if the function returns a error
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
@@ -685,63 +690,63 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
 // ============================================
 
-static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    (void)s;
-    
-    if (argc != x->py_arg_numbers) {
-        pd_error(x, "[py4pd] Wrong number of arguments!");
-        return;
-    }
-    PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
-    pFunc = x->function;
-    pArgs = PyTuple_New(argc);
-    int i;
-    if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
-        if(pFunc != NULL){
-            // create t_atom *argv from x->script_name and x->function_name
-            t_atom *newargv = malloc(sizeof(t_atom) * 2);
-            SETSYMBOL(newargv, x->script_name);
-            SETSYMBOL(newargv+1, x->function_name);
-            set_function(x, NULL, 2, newargv);
-        } else{
-            pd_error(x, "[py4pd] The message need to be formatted like 'set {script_name} {function_name}'!");
-            return;
-        }
-    }
-    
-    // DOC: CONVERTION TO PYTHON OBJECTS
-    // create an array of t_atom to store the list
-    // t_atom *list = malloc(sizeof(t_atom) * argc);
-    for (i = 0; i < argc; ++i) {
-        t_atom *argv_i = malloc(sizeof(t_atom));
-        *argv_i = argv[i];
-        pValue = py4pd_convert_to_python(argv_i);
-        if (!pValue) {
-            pd_error(x, "[py4pd] Cannot convert argument\n");
-            return;
-        }
-        PyTuple_SetItem(pArgs, i, pValue); // DOC: Set the argument in the tuple
-    }
-
-    pValue = PyObject_CallObject(pFunc, pArgs); // DOC: Call and execute the function
-    if (pValue != NULL) {                                // DOC: if the function returns a value   
-        // convert the python object to a t_atom
-        py4pd_convert_to_pd(x, pValue);
-    }
-    else { // DOC: if the function returns a error
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_DECREF(pvalue);
-        Py_DECREF(ptype);
-        Py_DECREF(ptraceback);
-    }
-    return;
-}
-
+// static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
+//     (void)s;
+//     
+//     if (argc != x->py_arg_numbers) {
+//         pd_error(x, "[py4pd] Wrong number of arguments!");
+//         return;
+//     }
+//     PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
+//     pFunc = x->function;
+//     pArgs = PyTuple_New(argc);
+//     int i;
+//     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
+//         if(pFunc != NULL){
+//             // create t_atom *argv from x->script_name and x->function_name
+//             t_atom *newargv = malloc(sizeof(t_atom) * 2);
+//             SETSYMBOL(newargv, x->script_name);
+//             SETSYMBOL(newargv+1, x->function_name);
+//             set_function(x, NULL, 2, newargv);
+//         } else{
+//             pd_error(x, "[py4pd] The message need to be formatted like 'set {script_name} {function_name}'!");
+//             return;
+//         }
+//     }
+//     
+//     // CONVERTION TO PYTHON OBJECTS
+//     // create an array of t_atom to store the list
+//     // t_atom *list = malloc(sizeof(t_atom) * argc);
+//     for (i = 0; i < argc; ++i) {
+//         t_atom *argv_i = malloc(sizeof(t_atom));
+//         *argv_i = argv[i];
+//         pValue = py4pd_convert_to_python(argv_i);
+//         if (!pValue) {
+//             pd_error(x, "[py4pd] Cannot convert argument\n");
+//             return;
+//         }
+//         PyTuple_SetItem(pArgs, i, pValue); // Set the argument in the tuple
+//     }
+//
+//     pValue = PyObject_CallObject(pFunc, pArgs); // Call and execute the function
+//     if (pValue != NULL) {                                // if the function returns a value   
+//         // convert the python object to a t_atom
+//         py4pd_convert_to_pd(x, pValue);
+//     }
+//     else { // if the function returns a error
+//         PyObject *ptype, *pvalue, *ptraceback;
+//         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+//         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+//         PyObject *pstr = PyObject_Str(pvalue);
+//         pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+//         Py_DECREF(pstr);
+//         Py_DECREF(pvalue);
+//         Py_DECREF(ptype);
+//         Py_DECREF(ptraceback);
+//     }
+//     return;
+// }
+//
 // // ============================================
 //
 // struct thread_arg_struct {
@@ -880,7 +885,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         post("[py4pd] Inspired by the work of Thomas Grill and SOPI research group.");
         post("");
         PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
-        Py_InitializeEx(1); // DOC: Initialize the Python interpreter. If 1, the signal handler is installed.
+        Py_InitializeEx(1); // Initialize the Python interpreter. If 1, the signal handler is installed.
     }
     object_count++; // count the number of objects
     t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
@@ -949,17 +954,11 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class, (t_method)runList_function, gensym("runlist"), A_GIMME, 0);  // run function TODO:
     class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0); // set function to be called
-
-
-
-
 }
 
 
 // // dll export function
 #ifdef _WIN64
-
 __declspec(dllexport) void py4pd_setup(void); // when I add python module, for some reson, pd not see py4pd_setup
-
 #endif
 
