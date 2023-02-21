@@ -1,14 +1,10 @@
 # library name
 lib.name = py4pd
 
-# python libs
-
 uname := $(shell uname -s)
 
-# remove -Wunused-variable warnings
-
 ifeq (MINGW,$(findstring MINGW,$(uname)))
-  PYTHON_INCLUDE := $(shell python3 -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
+  PYTHON_INCLUDE := $(shell cat pythonpath.txt)/include
   cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wno-unused-variable 
   ldlibs =  $(PYTHON_DLL) -lwinpthread
   pythondll_name = $(shell basename $(PYTHON_DLL))
