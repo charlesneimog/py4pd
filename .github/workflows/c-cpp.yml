@@ -87,7 +87,7 @@ jobs:
     - name: Get Python Paths
       # python -c "import os; import sys; print(os.path.dirname(sys.executable))" > 'pythonpath.txt'
       run: |
-        python -c "import sysconfig; f = open('pythonincludes.txt', 'w'); print(sysconfig.get_paths()['include'], file=f); f.close()"
+        python -c "import sysconfig; f = open('pythonincludes.txt', 'w'); print(sysconfig.get_paths()['include'].replace('\\', '/'), file=f); f.close()"
         python -c "import os; import sys; f = open('pythonpath.txt', 'w'); print(os.path.dirname(sys.executable).replace('\\', '/'), file=f); f.close()"
     
     - if: runner.os == 'Windows'
