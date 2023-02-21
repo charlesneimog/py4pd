@@ -90,8 +90,43 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
 
 }
 
+// ============================================
+int isNumericOrDot(const char *str) {
+    regex_t regex;
+    int ret;
+
+    ret = regcomp(&regex, "^[0-9.]+$", REG_EXTENDED);
+    if (ret != 0) {
+        // regex compilation failed
+        return 0;
+    }
+
+    ret = regexec(&regex, str, 0, NULL, 0);
+    regfree(&regex);
+
+    if (ret == 0) {
+        // input string contains only numeric characters or the character '.'
+        return 1;
+    } else {
+        // input string contains non-numeric and non-dot characters
+        return 0;
+    }
+}
+
 // =====================================================================
-// ========================= py4pd object =============================
+
+char *removeChar(char *str, char garbage) {
+    char *src, *dst;
+    for (src = dst = str; *src != '\0'; src++) {
+        *dst = *src;
+        if (*dst != garbage) dst++;
+    }
+    *dst = '\0';
+    return str;
+}
+
+// =====================================================================
+// ========================= py4pd object ==============================    
 
 static int *set_py4pd_config(t_py *x) {
     
@@ -535,47 +570,67 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 }
 
 // ============================================
-
 static void runList_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
-
-    char* pattern = "(\\[[^\\]]*\\])|(\\d+)";
-    regex_t re;
-    int status = regcomp(&re, pattern, REG_EXTENDED);
-    if (status != 0) {
-        // Handle error
-        pd_error(x, "Error: Could not compile regular expression.");
-    }
-
-    // Define the input string
-    char* input_str = "[ 1 2 3 4 5 ] [test casa] 4";
-
-    // Match the regular expression against the input string
-    regmatch_t matches[3];
-    int start = 0;
-    while (regexec(&re, input_str + start, 3, matches, 0) == 0) {
-        // Determine which group matched
-        if (matches[1].rm_so != -1) {
-            // Extract the matched substring as a list
-            char* list_str = strndup(input_str + start + matches[1].rm_so, matches[1].rm_eo - matches[1].rm_so);
-            post("list = %s", list_str);
-            free(list_str);
-        } else if (matches[2].rm_so != -1) {
-            // Extract the matched substring as an integer
-            char* int_str = strndup(input_str + start + matches[2].rm_so, matches[2].rm_eo - matches[2].rm_so);
-            post("int = %s", int_str);
-            free(int_str);
+    (void)s;
+    (void)x;
+    int i;
+    int listStarted = 0;
+    for (i = 0; i < argc; i++) {
+        if (argv[i].a_type == A_SYMBOL) {
+            if (strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL){ 
+                post("-------------------------");
+                char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
+                strcpy(str, argv[i].a_w.w_symbol->s_name);
+                removeChar(str, '[');
+                //  TODO: check if the list is empty 
+                int isNumeric = isNumericOrDot(str);
+                if (isNumeric == 1){
+                    float f = atof(str);
+                    post("start list %f", f);
+                }
+                else {
+                    post("start list %s", str);
+                }
+                listStarted = 1;
+            }
+            else if (strchr(argv[i].a_w.w_symbol->s_name, ']') != NULL){
+                // copy the argv[i].a_w.w_symbol->s_name to str
+                char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
+                strcpy(str, argv[i].a_w.w_symbol->s_name);
+                removeChar(str, ']');
+                int isNumeric = isNumericOrDot(str);
+                if (isNumeric == 1){
+                    float f = atof(str);
+                    post("end list %f", f);
+                }
+                else {
+                    post("end list %s", str);
+                }
+                listStarted = 0;
+                post("-------------------------");
+            }
+            else {
+                if (listStarted == 1){
+                    post("list item %s", argv[i].a_w.w_symbol->s_name);
+                }
+                else {
+                    post("value that is not a list %s", argv[i].a_w.w_symbol->s_name);
+                }
+            }
+        }
+        else{
+            if (listStarted == 1){
+                post("list item %f", argv[i].a_w.w_float);
+            }
+            else {
+                post("value that is not a list %f", argv[i].a_w.w_float);
+            }
         }
 
-        // Update the starting position for the next match
-        start += matches[0].rm_eo;
     }
 
-    // Free the regular expression
-    regfree(&re);
-
-    post("ok");
-
     return;
+
 }
 
 // ============================================
