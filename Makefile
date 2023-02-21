@@ -24,7 +24,8 @@ else ifeq (Linux,$(findstring Linux,$(uname)))
 else ifeq (Darwin,$(findstring Darwin,$(uname)))
   PYTHON_INCLUDE := $(shell python3 -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
   cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wno-unused-variable -mmacosx-version-min=10.9
-  ldlibs = -L "/Library/Frameworks/Python.framework/Versions/3.11/lib/" -l python3.11
+  PYTHON_LIB := $(shell python3 -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
+  ldlibs = -L $(PYTHON_LIB) -l $(PYTHON_VERSION) 
 
 else
   $(error "Unknown system type: $(uname)")
