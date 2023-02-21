@@ -4,7 +4,7 @@ lib.name = py4pd
 uname := $(shell uname -s)
 
 ifeq (MINGW,$(findstring MINGW,$(uname)))
-  PYTHON_INCLUDE := $(shell cat pythonpath.txt)/include
+  PYTHON_INCLUDE := $(shell cat pythoninclude.txt)
   cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wno-unused-variable 
   ldlibs =  $(PYTHON_DLL) -lwinpthread
   pythondll_name = $(shell basename $(PYTHON_DLL))

@@ -84,8 +84,10 @@ jobs:
     - name: Install PureData
       run: choco install puredata --yes
 
-    - name: Save where is Python
-      run: python -c "import os; import sys; print(os.path.dirname(sys.executable))" > pythonpath.txt
+    - name: Get Python Paths
+      run: |
+        python -c "import os; import sys; print(os.path.dirname(sys.executable))" > pythonpath.txt
+        python -c "import sysconfig; print(sysconfig.get_paths()['include'])" > pythoninclude.txt
     
     - if: runner.os == 'Windows'
       name: Build py4pd
