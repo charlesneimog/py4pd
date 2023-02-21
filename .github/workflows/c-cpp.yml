@@ -101,10 +101,10 @@ jobs:
     - name: Copy Files
       run: | 
         mv py4pd.dll py4pd.m_amd64
-        pythonpath=$(cat pythonpath.txt)
-        xcopy /s $pythonpath\Lib py4pd_WIN64\Python\Lib\
-        xcopy /s $pythonpath\DLLs py4pd_WIN64\Python\DLLs\
-        xcopy /s $pythonpath\python311.dll py4pd_WIN64\python311.dll\
+        $pythonpath = Get-Content pythonpath.txt
+        xcopy /s $pythonpath/Lib py4pd_WIN64/Python/Lib/
+        xcopy /s $pythonpath/DLLs py4pd_WIN64/Python/DLLs/
+        xcopy /s $pythonpath/python311.dll py4pd_WIN64/python311.dll/
 
     - name: Move files to py4pd_WIN64
       run: |
