@@ -20,8 +20,9 @@ To download the object: Open PureData, `Help->Find Externals->` search for `py4p
 * If you want to use, read the wiki page: https://github.com/charlesneimog/py4pd/wiki
 
 
-## Building
+## Building from Source
 
+* To build from source you can follow the steps in:
 
 
 
