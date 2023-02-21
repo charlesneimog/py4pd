@@ -22,7 +22,7 @@ To download the object: Open PureData, `Help->Find Externals->` search for `py4p
 
 ## Building from Source
 
-* To build from source you can follow the steps in:
+* To build from source you can follow the steps in [Building from Source](https://github.com/charlesneimog/py4pd/blob/master/BUILD.md)
 
 
 
