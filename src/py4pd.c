@@ -575,6 +575,9 @@ static void runList_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)x;
     int i;
     int listStarted = 0;
+    PyObject *pList;
+    PyObject *pArgs = PyTuple_New(argc);
+    int argCount = 0;
     for (i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
             if (strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL){ 
@@ -587,9 +590,16 @@ static void runList_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
                 if (isNumeric == 1){
                     float f = atof(str);
                     post("start list %f", f);
+                    // TODO: Create python list
+                    pList = PyList_New(0);
+                    // save value in list
+                    PyList_Append(pList, PyFloat_FromDouble(f));
                 }
                 else {
+                    // TODO: start python list
                     post("start list %s", str);
+                    pList = PyList_New(0);
+                    PyList_Append(pList, PyUnicode_FromString(str));
                 }
                 listStarted = 1;
             }
@@ -602,32 +612,48 @@ static void runList_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
                 if (isNumeric == 1){
                     float f = atof(str);
                     post("end list %f", f);
+                    // TODO: add list to args
+                    PyList_Append(pList, PyFloat_FromDouble(f));
+                    PyTuple_SetItem(pArgs, argCount, pList);
+                    argCount++;
                 }
                 else {
+                    // TODO: add list to args
                     post("end list %s", str);
+                    PyList_Append(pList, PyUnicode_FromString(str));
+                    PyTuple_SetItem(pArgs, argCount, pList);
+                    argCount++;
                 }
                 listStarted = 0;
+                Py_DECREF(pList);
                 post("-------------------------");
             }
             else {
                 if (listStarted == 1){
                     post("list item %s", argv[i].a_w.w_symbol->s_name);
+                    PyList_Append(pList, PyUnicode_FromString(argv[i].a_w.w_symbol->s_name));
                 }
                 else {
                     post("value that is not a list %s", argv[i].a_w.w_symbol->s_name);
+                    PyTuple_SetItem(pArgs, argCount, PyUnicode_FromString(argv[i].a_w.w_symbol->s_name));
+                    argCount++;
                 }
             }
         }
         else{
             if (listStarted == 1){
                 post("list item %f", argv[i].a_w.w_float);
+                PyList_Append(pList, PyFloat_FromDouble(argv[i].a_w.w_float));
             }
             else {
                 post("value that is not a list %f", argv[i].a_w.w_float);
+                PyTuple_SetItem(pArgs, argCount, PyFloat_FromDouble(argv[i].a_w.w_float));
+                argCount++;
             }
         }
 
     }
+
 
     return;
 
