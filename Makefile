@@ -4,7 +4,7 @@ lib.name = py4pd
 uname := $(shell uname -s)
 
 ifeq (MINGW,$(findstring MINGW,$(uname)))
-  PYTHON_INCLUDE := $(shell cat pythoninclude.txt)
+  PYTHON_INCLUDE := $(shell cat pythonincludes.txt)
   PYTHON_PATH := $(shell cat pythonpath.txt)
   PYTHON_DLL := $(PYTHON_PATH)/python311.dll
   # PYTHON_DLL = $PYTHON_PATH/python311.dll
