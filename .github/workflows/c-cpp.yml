@@ -91,7 +91,7 @@ jobs:
     
     - name: Debug Python Paths
       run: |
-        pythoninclude=$(cat pythoninclude.txt)
+        $pythoninclude = Get-Content pythoninclude.txt
         ls $pythoninclude
     
     
