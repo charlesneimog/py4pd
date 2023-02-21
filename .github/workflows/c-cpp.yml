@@ -99,12 +99,13 @@ jobs:
         cp $dll_path .
     
     - name: Copy Files
+      ## copy Python Lib, DLLs and python311.dll to py4pd_WIN64
       run: | 
         mv py4pd.dll py4pd.m_amd64
         $pythonpath = Get-Content pythonpath.txt
-        xcopy /s $pythonpath/Lib py4pd_WIN64/Python/Lib/
-        xcopy /s $pythonpath/DLLs py4pd_WIN64/Python/DLLs/
-        xcopy /s $pythonpath/python311.dll py4pd_WIN64/python311.dll/
+        Copy-Item -Path "$pythonpath\Lib" -Destination py4pd_WIN64\ -Recurse
+        Copy-Item -Path "$pythonpath\DLLs" -Destination py4pd_WIN64\ -Recurse
+        Copy-Item -Path "$pythonpath\python311.dll" -Destination py4pd_WIN64\ -Recurse
 
     - name: Move files to py4pd_WIN64
       run: |
