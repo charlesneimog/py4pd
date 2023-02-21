@@ -86,23 +86,16 @@ jobs:
 
     - name: Get Python Paths
       run: |
-        python -c "import os; import sys; print(os.path.dirname(sys.executable))" | Out-File -Encoding utf8 pythonpath.txt
-        python -c "import sysconfig; print(sysconfig.get_paths()['include'])" | Out-File -Encoding utf8 pythoninclude.txt
-    
-    - name: Debug Python Paths
-      run: |
-        $pythoninclude = Get-Content pythoninclude.txt
-        ls $pythoninclude
+        python -c "import os; import sys; print(os.path.dirname(sys.executable))" | | ForEach-Object { $_ -replace '[^\u0020-\u007E]+','' } | Out-File -Encoding utf8 -FilePath 'pythonpath.txt'
+        python -c "import sysconfig; print(sysconfig.get_paths()['include'])" | ForEach-Object { $_ -replace '[^\u0020-\u007E]+','' } | Out-File -Encoding utf8 -FilePath 'pythoninclude.txt'
     
     
     - if: runner.os == 'Windows'
       name: Build py4pd
       shell: msys2 {0}
-      # read pythnpath.txt and set PYTHON_DLL
       run: |
-        pythonpath=$(cat pythonpath.txt)
-        echo $pythonpath
-        make PYTHON_VERSION=python3.11 PYTHON_DLL="$pythonpath/python311.dll"
+        pythonpath=$(cat pythonpath.txt)/python311.dll
+        make PYTHON_VERSION=python3.11 PYTHON_DLL= $pythonpath
     
     - name: Copy Files
       run: | 
