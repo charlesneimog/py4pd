@@ -71,23 +71,23 @@ jobs:
       with:
         python-version: '3.11'
 
-    # - if: runner.os == 'Windows'
-    #   name: "Install mingw deps"
-    #   uses: msys2/setup-msys2@v2
-    #   with:
-    #       install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git
-    #       update: false
+    - if: runner.os == 'Windows'
+      name: "Install mingw deps"
+      uses: msys2/setup-msys2@v2
+      with:
+          install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git
+          update: false
 
-    # - name: Create py4pd_WIN64
-    #   run: mkdir py4pd_WIN64
+    - name: Create py4pd_WIN64
+      run: mkdir py4pd_WIN64
     
-    # - name: Install PureData
-    #   run: choco install puredata --yes
+    - name: Install PureData
+      run: choco install puredata --yes
 
     - name: Get Python Paths
       run: |
-        python -c "import os; import sys; print(os.path.dirname(sys.executable))" > pythonpath.txt
-        python -c "import sysconfig; print(sysconfig.get_paths()['include'])" > pythoninclude.txt
+        python -c "import os; import sys; print(os.path.dirname(sys.executable))" | Out-File -Encoding utf8 pythonpath.txt
+        python -c "import sysconfig; print(sysconfig.get_paths()['include'])" | Out-File -Encoding utf8 pythoninclude.txt
     
     - name: Debug Python Paths
       run: |
