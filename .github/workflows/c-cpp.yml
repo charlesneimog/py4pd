@@ -97,7 +97,6 @@ jobs:
         make PYTHON_VERSION=python3.11 PYTHON_DLL="$pythonpath/python311.dll"
     
     - name: Copy Files
-    // copy python dll to py4pd_WIN64
       run: | 
         mv py4pd.dll py4pd.m_amd64
         pythonpath=$(cat pythonpath.txt)
