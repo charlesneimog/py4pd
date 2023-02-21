@@ -10,7 +10,7 @@ ifeq (MINGW,$(findstring MINGW,$(uname)))
   # PYTHON_DLL = $PYTHON_PATH/python311.dll
   EXTRA_INCLUDES = -I $(PYTHON_INCLUDE) 
   cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wno-unused-variable 
-  ldlibs =  $(PYTHON_DLL) -lwinpthread
+  ldlibs =  $(PYTHON_DLL) -lwinpthread -lregex
   # pythondll_name = $(shell basename $(PYTHON_DLL))
   # $(shell cp $(PYTHON_DLL) $(pythondll_name))
 

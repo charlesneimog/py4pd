@@ -75,7 +75,7 @@ jobs:
       name: "Install mingw deps"
       uses: msys2/setup-msys2@v2
       with:
-          install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git
+          install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git mingw-w64-x86_64-libsystre
           update: false
 
     - name: Create py4pd_WIN64
@@ -88,13 +88,15 @@ jobs:
       # python -c "import os; import sys; print(os.path.dirname(sys.executable))" > 'pythonpath.txt'
       run: |
         python -c "import sysconfig; f = open('pythonincludes.txt', 'w'); print(sysconfig.get_paths()['include'], file=f); f.close()"
-        python -c "import os; import sys; f = open('pythonpath.txt', 'w'); print(os.path.dirname(sys.executable), file=f); f.close()"
+        python -c "import os; import sys; f = open('pythonpath.txt', 'w'); print(os.path.dirname(sys.executable).replace('\\', '/'), file=f); f.close()"
     
     - if: runner.os == 'Windows'
       name: Build py4pd
       shell: msys2 {0}
       run: |
         make PYTHON_VERSION=python3.11
+        dll_path=$(where libsystre-0.dll)
+        cp $dll_path .
     
     - name: Copy Files
       run: | 
@@ -111,6 +113,7 @@ jobs:
           cp py.py py4pd_WIN64\ 
           cp python311._pth py4pd_WIN64\ 
           cp py4pd-help.pd py4pd_WIN64\ 
+          cp libsystre-0.dll py4pd_WIN64\
         
     - name: zip py4pd_WIN64
       run: 7z a py4pd_WIN64.zip py4pd_WIN64
