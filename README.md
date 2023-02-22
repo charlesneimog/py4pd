@@ -1,7 +1,7 @@
 # py4pd 
 
 <div>
-py4pd allows the use of Python within PureData. It has the same goal as py/pyext, being simpler to keep up to date, to use modules, use lists, and other things. 
+`py4pd` allows the use of Python within PureData. It has the same goal as `py/pyext`, being simpler to keep up to date, to use modules, use lists, and other things. 
 
 <div>
 
