@@ -1,6 +1,6 @@
 ## Building from Source
 
-This readme use version `python 3.11` as example, replace all pathnames using the python version you want. It is possible to build it using Github Actions. For that, fork the py4pd repo, go to actions and run it.
+⚠️ This readme use version `python 3.11` as example, replace all pathnames using the python version you want. It is possible to build it using Github Actions. For that, fork the py4pd repo, go to actions and run it ⚠️.
 
 #### Windows OS 
 * replace `<username>` for your username.
