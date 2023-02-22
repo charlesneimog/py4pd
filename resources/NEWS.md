@@ -15,13 +15,13 @@
 * Remove thread for now;
 
 #### py4pd version 0.2.0
-
+* ⚠️`Incompatible versions`, now the functions are always in memory;
 * Add support to Linux;
 * Set functions;
 * Try to add support to threads;
 * First build for MacOS;
 * Format the code;
-* `Incompatible versions`, now the functions are always in memory;
+
 
 #### py4pd version 0.1.0
 
