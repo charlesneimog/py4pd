@@ -47,6 +47,6 @@ $(PYTHON_DLL)
 
 # =================================== Pd Lib Builder =============================
 
-PDLIBBUILDER_DIR=./pd-lib-builder/
+PDLIBBUILDER_DIR=./resources/pd-lib-builder/
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 
