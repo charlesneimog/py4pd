@@ -23,3 +23,4 @@ __pycache__/py.cpython-310.pyc
 *.m_amd64
 *.txt
 py-modules
+*./cache/
