@@ -127,3 +127,25 @@ def neoscoreTest():
         dpi=600)
     neoscore.shutdown()
     return 1
+
+def neoscoreTest():
+    import os
+    pitch = 'c'
+    neoscore.setup()
+    randomNumber = random.randint(1, 100)
+    POSITION = (Mm(0), Mm(0))
+    staff = Staff(POSITION, None, Mm(30))
+    saxClef = 'treble'
+    Clef(ZERO, staff, saxClef) # .ppm
+    note = [(pitch, '', 4)]
+    Chordrest(Mm(5), staff, note, (int(1), int(1)))
+    scriptPath = os.path.dirname(os.path.abspath(__file__))
+    if os.name == 'nt':
+        filename = f'{script_dir}/neoscoretest.png'
+    else:
+        filename = f'{script_dir}/neoscoretest.png'
+
+    neoscore.render_image(rect=None, dest=filename, dpi=150, wait=True)
+    neoscore.shutdown()
+    return f"open note_{pitch}{randomNumber}.ppm"
+
