@@ -1,6 +1,5 @@
 #N canvas 480 31 1440 959 12;
-#X obj 33 71 bng 20 250 50 0 empty empty empty 0 -10 0 12 -262144 -1
--1;
+#X obj 33 71 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X msg 33 346 \; pd quit;
 #N canvas 0 0 1330 745 TEST1 0;
 #X obj 41 188 py4pd;
@@ -81,8 +80,7 @@
 #X obj 118 42 loadbang;
 #X msg 118 122 set py neoscoreTest;
 #X msg 18 123 run;
-#X obj 18 93 bng 20 250 50 0 empty empty empty 0 -10 0 12 -262144 -1
--1;
+#X obj 18 93 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X obj 50 263 print test3;
 #X msg 50 233 neoscore ok;
 #X obj 18 294 outlet;
@@ -148,16 +146,14 @@
 #X restore 275 151 pd TEST4;
 #X obj 33 212 spigot;
 #X msg 72 161 1;
-#X obj 72 184 tgl 20 0 empty empty empty 0 -10 0 12 -262144 -1 -1 0
-1;
+#X obj 72 184 tgl 20 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000 0 1;
 #X obj 33 262 t b b;
 #X msg 65 294 :( TIMEOUT: Test Failed;
 #X obj 65 319 print ERROR;
-#X obj 239 294 bng 20 250 50 0 empty empty empty 0 -10 0 12 -262144
--1 -1;
+#X obj 239 294 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X obj 239 345 print PASS;
 #X msg 239 320 :) ALL Test Pass;
-#X obj 275 234 t b b;
+#X obj 275 254 t b b;
 #N canvas 470 98 1440 718 TEST5 0;
 #X obj 153 330 py4pd;
 #X obj 24 164 loadbang;
@@ -176,8 +172,7 @@
 #X msg 109 279 run 1 1;
 #X obj 153 355 sel 2;
 #X obj 153 380 t b b;
-#X obj 177 32 bng 20 250 50 0 empty empty empty 0 -10 0 12 -262144
--1 -1;
+#X obj 177 32 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X msg 129 248 set py sum;
 #X connect 0 0 15 0;
 #X connect 1 0 2 0;
@@ -275,10 +270,18 @@
 #X obj 33 100 delay 15000 1 msec;
 #X obj 33 9 r start-test;
 #X obj 72 130 r start-test;
-#X obj 275 38 bng 20 250 50 0 empty empty empty 0 -10 0 12 -262144
--1 -1;
+#X obj 275 38 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X obj 94 212 loadbang;
 #X obj 94 236 delay 60000 1 msec;
+#N canvas 92 192 450 300 TEST7 0;
+#X obj 54 18 inlet;
+#X obj 54 43 py4pd py noArgs;
+#X obj 54 68 t b;
+#X obj 54 93 outlet;
+#X connect 0 0 1 0;
+#X connect 1 0 2 0;
+#X connect 2 0 3 0;
+#X restore 275 227 pd TEST7;
 #X connect 0 0 19 0;
 #X connect 2 0 3 0;
 #X connect 3 0 4 0;
@@ -297,10 +300,11 @@
 #X connect 16 0 1 0;
 #X connect 16 1 13 0;
 #X connect 17 0 18 0;
-#X connect 18 0 16 0;
+#X connect 18 0 25 0;
 #X connect 19 0 7 0;
 #X connect 20 0 5 0;
 #X connect 21 0 8 0;
 #X connect 22 0 2 0;
 #X connect 23 0 24 0;
 #X connect 24 0 10 0;
+#X connect 25 0 16 0;

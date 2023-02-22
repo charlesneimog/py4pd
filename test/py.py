@@ -61,6 +61,10 @@ def whereFiles():
     import os
     return os.__file__
 
+def noArgs():
+    "It returns the path of the files."
+    return "ok"
+
 
 def neoscoreTest():
     import os
