@@ -1,32 +1,22 @@
 #include "py4pd.h"
+#include "floatobject.h"
 #include "m_pd.h"
 #include "module.h"
 #include <regex.h> // for regex 
+#include <strings.h>
+#include "object.h"
+#include "uthash.h"
+
 
 
 // ===================================================================
-// ========================= Utilities ===============================
+// ======================== Work with lists in PureData ==============
 // ===================================================================
 
-static PyObject *py4pd_convert_to_python(t_atom *pd_value) {
-    PyObject *pValue;
-    if (pd_value->a_type == A_FLOAT){ 
-            float arg_float = atom_getfloat(pd_value);
-            if (arg_float == (int)arg_float){ // If the float is an integer, then convert to int
-                int arg_int = (int)arg_float;
-                pValue = PyLong_FromLong(arg_int);
-            }
-            else{ // If the int is an integer, then convert to int
-                pValue = PyFloat_FromDouble(arg_float);
-            }
-    } else if (pd_value->a_type == A_SYMBOL) {
-        pValue = PyUnicode_DecodeFSDefault(pd_value->a_w.w_symbol->s_name);
-    } else {
-        pValue = Py_None;
-        Py_INCREF(Py_None);
-    }
-    return pValue;
-}
+// create a hash table of PyObjects lists, where the key is the name of the list and when I add a new value,
+// I just append to the list. When I want to get the list, I just get the list from the hash table
+// This hash table will be responsable to create a new list if the list does not exist
+// and to append a new value to the list if the list already exists
 
 // =====================================================================
 
@@ -66,13 +56,11 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
         if (PyLong_Check(pValue)) {
             long result = PyLong_AsLong(pValue); // If the function return a integer
             outlet_float(x->out_A, result);
-            //PyGILState_Release(gstate);
             return 0;
         } else if (PyFloat_Check(pValue)) {
             double result = PyFloat_AsDouble(pValue); // If the function return a float
             float result_float = (float)result;
             outlet_float(x->out_A, result_float);
-            //PyGILState_Release(gstate);
             return 0;
             // outlet_float(x->out_A, result);
         } else if (PyUnicode_Check(pValue)) {
@@ -202,8 +190,6 @@ static int *set_py4pd_config(t_py *x) {
             else if (strstr(line, "editor =") != NULL){
                 pd_error(x, "[py4pd] editor not implemented yet"); // TODO: implement choice for editor (nvim, emacs, code, etc.)
             }
-
-
         }
         fclose(file); // close file
     } else {
@@ -346,7 +332,6 @@ static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     return;
 
     // Open VsCode in Linux and Mac
-
     #else // if not windows 64bits
     char *command = malloc(strlen(x->home_path->s_name) + strlen(script_name) + 20);
     sprintf(command, "code %s/%s.py", x->home_path->s_name, script_name);
@@ -573,125 +558,257 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 static void runList_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     (void)x;
+
+    int OpenList_count = 0;
+    int CloseList_count = 0;
+    for (int i = 0; i < argc; i++) {
+        if (argv[i].a_type == A_SYMBOL){
+            if (strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL){
+                CloseList_count++;
+            }
+            if (strchr(argv[i].a_w.w_symbol->s_name, ']') != NULL){
+                OpenList_count++;
+            }
+        }
+    }
+    if (OpenList_count != CloseList_count){
+        pd_error(x, "[py4pd] The number of '[' and ']' is not the same!");
+        return;
+    }
+
+    PyObject *lists[OpenList_count]; // create a py4pd_ht
+
+    // create a py4pd_ht
+
     int i;
     int listStarted = 0;
-    PyObject *pList;
-    PyObject *pArgs = PyTuple_New(argc);
+    int listSize = 0;
     int argCount = 0;
+    int listCount = 0;
+    PyObject *ArgsTuple = PyTuple_New(1);
+
     for (i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
+            // TODO: Create way to work with things like [1], [a], [casa] | One thing in list
+            
+            // ========================================
             if (strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL){ 
-                post("-------------------------");
                 char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
                 strcpy(str, argv[i].a_w.w_symbol->s_name);
                 removeChar(str, '[');
-                //  TODO: check if the list is empty 
+                lists[listCount] = PyList_New(0);
                 int isNumeric = isNumericOrDot(str);
                 if (isNumeric == 1){
-                    float f = atof(str);
-                    post("start list %f", f);
-                    // TODO: Create python list
-                    pList = PyList_New(0);
-                    // save value in list
-                    PyList_Append(pList, PyFloat_FromDouble(f));
+                    PyList_Append(lists[listCount], PyFloat_FromDouble(atof(str)));
+                    listSize++;
                 }
                 else {
-                    // TODO: start python list
-                    post("start list %s", str);
-                    pList = PyList_New(0);
-                    PyList_Append(pList, PyUnicode_FromString(str));
+                    PyList_Append(lists[listCount], PyUnicode_FromString(str));
+                    listSize++;
                 }
                 listStarted = 1;
             }
+            // ========================================
             else if (strchr(argv[i].a_w.w_symbol->s_name, ']') != NULL){
-                // copy the argv[i].a_w.w_symbol->s_name to str
                 char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
                 strcpy(str, argv[i].a_w.w_symbol->s_name);
                 removeChar(str, ']');
                 int isNumeric = isNumericOrDot(str);
                 if (isNumeric == 1){
-                    float f = atof(str);
-                    post("end list %f", f);
-                    // TODO: add list to args
-                    PyList_Append(pList, PyFloat_FromDouble(f));
-                    PyTuple_SetItem(pArgs, argCount, pList);
-                    argCount++;
+                    PyList_Append(lists[listCount], PyFloat_FromDouble(atof(str)));
+                    PyTuple_SetItem(ArgsTuple, argCount, lists[listCount]);
+                    listSize++;
+                    listSize = 0;
                 }
                 else {
-                    // TODO: add list to args
-                    post("end list %s", str);
-                    PyList_Append(pList, PyUnicode_FromString(str));
-                    PyTuple_SetItem(pArgs, argCount, pList);
-                    argCount++;
+                    PyList_Append(lists[listCount], PyUnicode_FromString(str));
+                    PyTuple_SetItem(ArgsTuple, argCount, lists[listCount]);
+                    listSize = 0;
                 }
                 listStarted = 0;
-                Py_DECREF(pList);
-                post("-------------------------");
+                listCount++;
+                argCount++;
             }
+            // ========================================
             else {
                 if (listStarted == 1){
-                    post("list item %s", argv[i].a_w.w_symbol->s_name);
-                    PyList_Append(pList, PyUnicode_FromString(argv[i].a_w.w_symbol->s_name));
+                    char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
+                    strcpy(str, argv[i].a_w.w_symbol->s_name);
+                    int isNumeric = isNumericOrDot(str);
+                    if (isNumeric == 1){
+                        PyList_Append(lists[listCount], PyFloat_FromDouble(atof(str)));
+                    }
+                    else {
+                        PyList_Append(lists[listCount], PyUnicode_FromString(str));
+                    }
+                    listSize++;
                 }
                 else {
-                    post("value that is not a list %s", argv[i].a_w.w_symbol->s_name);
-                    PyTuple_SetItem(pArgs, argCount, PyUnicode_FromString(argv[i].a_w.w_symbol->s_name));
+                    _PyTuple_Resize(&ArgsTuple, argCount + 1);
+                    PyTuple_SetItem(ArgsTuple, argCount, PyUnicode_FromString(argv[i].a_w.w_symbol->s_name));
                     argCount++;
                 }
             }
         }
         else{
             if (listStarted == 1){
-                post("list item %f", argv[i].a_w.w_float);
-                PyList_Append(pList, PyFloat_FromDouble(argv[i].a_w.w_float));
+                listSize++;
+                PyList_Append(lists[listCount], PyFloat_FromDouble(argv[i].a_w.w_float));
             }
             else {
-                post("value that is not a list %f", argv[i].a_w.w_float);
-                PyTuple_SetItem(pArgs, argCount, PyFloat_FromDouble(argv[i].a_w.w_float));
+                _PyTuple_Resize(&ArgsTuple, argCount + 1);
+                PyTuple_SetItem(ArgsTuple, argCount, PyFloat_FromDouble(argv[i].a_w.w_float));
                 argCount++;
+                
             }
         }
+    }
+    PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
+    pFunc = x->function; // this makes the function callable
+    pArgs = ArgsTuple; // this makes the function callable
 
+    pValue = PyObject_CallObject(pFunc, pArgs);
+
+    if (pValue != NULL) {                          
+        py4pd_convert_to_pd(x, pValue); // convert the value to pd        
+    }
+    else { // if the function returns a error
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[py4pd] Call failed: %s\n", PyUnicode_AsUTF8(pstr));
     }
 
-
     return;
-
 }
 
 // ============================================
 
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
-
-    if (argc != x->py_arg_numbers) {
-        // check if some t_atom is an Symbol
-        pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %i arguments, received %i!", x->function_name->s_name, (int)x->py_arg_numbers, argc);
-        return;
-    }
-    
+    // if (argc != x->py_arg_numbers) {
+    //     // check if some t_atom is an Symbol
+    //     pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %i arguments, received %i!", x->function_name->s_name, (int)x->py_arg_numbers, argc);
+    //     return;
+    // }
     if (x->function_called == 0) {
         pd_error(x, "[py4pd] The function %s was not called!", x->function_name->s_name);
         return;
     }
-
     PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
-    pFunc = x->function; // this makes the function callable 
-    pArgs = PyTuple_New(argc);
-    // CONVERTION TO PYTHON OBJECTS
-    int i;
-    for (i = 0; i < argc; ++i) {
-        t_atom *argv_i = malloc(sizeof(t_atom)); // TODO: Check if this is necessary
-        *argv_i = argv[i];
-        pValue = py4pd_convert_to_python(argv_i);
-        if (!pValue) {
-            pd_error(x, "[py4pd] Cannot convert argument\n"); 
-            return;
+    int OpenList_count = 0;
+    int CloseList_count = 0;
+    for (int i = 0; i < argc; i++) {
+        if (argv[i].a_type == A_SYMBOL){
+            if (strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL){
+                CloseList_count++;
+            }
+            if (strchr(argv[i].a_w.w_symbol->s_name, ']') != NULL){
+                OpenList_count++;
+            }
         }
-        PyTuple_SetItem(pArgs, i, pValue); // Set the argument in the tuple
+    }
+    if (OpenList_count != CloseList_count){
+        pd_error(x, "[py4pd] The number of '[' and ']' is not the same!");
+        return;
     }
 
-    pValue = PyObject_CallObject(pFunc, pArgs);
+    PyObject *lists[OpenList_count]; // create a py4pd_ht
+
+    int i;
+    int listStarted = 0;
+    int listSize = 0;
+    int argCount = 0;
+    int listCount = 0;
+    PyObject *ArgsTuple = PyTuple_New(1);
+
+    for (i = 0; i < argc; i++) {
+        if (argv[i].a_type == A_SYMBOL) {
+            // TODO: Create way to work with things like [1], [a], [casa] | One thing in list
+            
+            // ========================================
+            if (strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL){ 
+                char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
+                strcpy(str, argv[i].a_w.w_symbol->s_name);
+                removeChar(str, '[');
+                lists[listCount] = PyList_New(0);
+                int isNumeric = isNumericOrDot(str);
+                if (isNumeric == 1){
+                    PyList_Append(lists[listCount], PyFloat_FromDouble(atof(str)));
+                    listSize++;
+                }
+                else {
+                    PyList_Append(lists[listCount], PyUnicode_FromString(str));
+                    listSize++;
+                }
+                listStarted = 1;
+            }
+            // ========================================
+            else if (strchr(argv[i].a_w.w_symbol->s_name, ']') != NULL){
+                char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
+                strcpy(str, argv[i].a_w.w_symbol->s_name);
+                removeChar(str, ']');
+                int isNumeric = isNumericOrDot(str);
+                if (isNumeric == 1){
+                    PyList_Append(lists[listCount], PyFloat_FromDouble(atof(str)));
+                    PyTuple_SetItem(ArgsTuple, argCount, lists[listCount]);
+                    listSize++;
+                    listSize = 0;
+                }
+                else {
+                    PyList_Append(lists[listCount], PyUnicode_FromString(str));
+                    PyTuple_SetItem(ArgsTuple, argCount, lists[listCount]);
+                    listSize = 0;
+                }
+                listStarted = 0;
+                listCount++;
+                argCount++;
+            }
+            // ========================================
+            else {
+                if (listStarted == 1){
+                    char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
+                    strcpy(str, argv[i].a_w.w_symbol->s_name);
+                    int isNumeric = isNumericOrDot(str);
+                    if (isNumeric == 1){
+                        PyList_Append(lists[listCount], PyFloat_FromDouble(atof(str)));
+                    }
+                    else {
+                        PyList_Append(lists[listCount], PyUnicode_FromString(str));
+                    }
+                    listSize++;
+                }
+                else {
+                    _PyTuple_Resize(&ArgsTuple, argCount + 1);
+                    PyTuple_SetItem(ArgsTuple, argCount, PyUnicode_FromString(argv[i].a_w.w_symbol->s_name));
+                    argCount++;
+                }
+            }
+        }
+        else{
+            if (listStarted == 1){
+                listSize++;
+                PyList_Append(lists[listCount], PyFloat_FromDouble(argv[i].a_w.w_float));
+            }
+            else {
+                _PyTuple_Resize(&ArgsTuple, argCount + 1);
+                PyTuple_SetItem(ArgsTuple, argCount, PyFloat_FromDouble(argv[i].a_w.w_float));
+                argCount++;
+                
+            }
+        }
+    }
+
+    // check if ArgsTuple is equal to x->py_arg_numbers
+    if (argCount != x->py_arg_numbers) {
+        pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %i arguments, received %i!", x->function_name->s_name, (int)x->py_arg_numbers, argCount);
+        return;
+    }
+
+
+    pFunc = x->function;
+    pValue = PyObject_CallObject(pFunc, ArgsTuple);
     if (pValue != NULL) {                                // if the function returns a value   
         py4pd_convert_to_pd(x, pValue); // convert the value to pd        
     }
@@ -702,7 +819,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         PyObject *pstr = PyObject_Str(pvalue);
         pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
     }
-    Py_DECREF(pArgs);
+    Py_DECREF(ArgsTuple);
     return;
 }
 
@@ -961,7 +1078,7 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)restartPython, gensym("restart"), 0, 0); // it restart python interpreter
 
     // Edit py code
-    class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open vscode
+    class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open code  TODO: Change to editor (nvim) 
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
     class_addmethod(py4pd_class, (t_method)vscode, gensym("click"), 0, 0); // when click open vscode
     
@@ -969,8 +1086,7 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
     class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class, (t_method)runList_function, gensym("runlist"), A_GIMME, 0);  // run function TODO:
-    class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0); // set function to be called
-
+    class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME,  0); // set function to be called
 }
 
 // // dll export function
