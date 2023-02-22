@@ -1,10 +1,11 @@
-#### py4pd version 0.5.0
-* Add support to list inside PureData using [];
+#### py4pd version 0.5.0.
+* Add support to list inside PureData using brackts 
+  * 💡 `run [1 2 3 4 5]` from `pd`message is equivalent to run `my_function([1, 2, 3, 4, 5])` in `Python`.
 * Add better README and Wiki.
 
 #### py4pd version 0.4.0
-* Add Github Actions for Windows, Linux, MacOS (Intel);
-* Format the code;
+* 🤖 Add Github Actions for Windows, Linux, MacOS (Intel);
+* 🛠️ Format the code;
 
 #### py4pd version 0.3.0
 * add list support (Python to PureData);
@@ -20,7 +21,7 @@
 * Set functions;
 * Try to add support to threads;
 * First build for MacOS;
-* Format the code;
+* 🛠️ Format the code;
 
 
 #### py4pd version 0.1.0
