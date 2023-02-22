@@ -7,21 +7,28 @@
 * Format the code;
 
 #### py4pd version 0.3.0
+* add list support (Python to PureData);
+* add reload support;
+* add better error messages;
 * Add embedded module `pd` (just print module work);
 * Open vscode from puredata;
 * Remove thread for now;
 
 #### py4pd version 0.2.0
 
+* Add support to Linux;
+* Set functions;
 * Try to add support to threads;
 * First build for MacOS;
 * Format the code;
+* `Incompatible versions`, now the functions are always in memory;
 
 #### py4pd version 0.1.0
 
-* Add support to Linux;
+* Possible to run code (without libraries);
 * Save Function in Memory;
 * Create scripts from PureData;
+* Two ways to run Python (Clearing memory or making compiled code ready);
 
 #### py4pd version 0.0.0
 
