@@ -10,7 +10,7 @@
 * add list support (Python to PureData);
 * add reload support;
 * add better error messages;
-* Add embedded module `pd` (just print module work);
+* Add embedded module `pd` (just print module work for now);
 * Open vscode from puredata;
 * Remove thread for now;
 
