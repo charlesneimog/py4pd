@@ -1,4 +1,7 @@
 from random import *
+from neoscore.common import *
+import os
+
 
 def sum(x, y):
     "It sums two numbers."
@@ -53,7 +56,6 @@ def pd_error():
 def pd_send():
     "It sends a message to the py4pd message box."
     import pd
-    import random
     pd.send()
 
 def whereFiles():
@@ -65,78 +67,10 @@ def noArgs():
     "It returns the path of the files."
     return "ok"
 
-
 def neoscoreTest():
-    import os
-    if os.name == 'posix':
-        os.environ['QT_QPA_PLATFORM'] = 'offscreen'
-    elif os.name == 'nt':
-        # ME: Best Windows support to svg drawing is: 'windows:offscreen'
-        os.environ['QT_QPA_PLATFORM'] = 'windows:offscreen'
-
-    elif os.name == 'mac':
-        os.environ['QT_QPA_PLATFORM'] = 'cocoa:offscreen'
-
-    script_dir = os.path.dirname(__file__)
-        
-    from neoscore.core.units import ZERO, Mm
-    from neoscore.core import neoscore
-    from neoscore.common import Staff, Clef, Barline, Chordrest, MusicText, Path, Font, Brush, Unit, Pen, barline_style
-    from neoscore.core.text import Text
-    from neoscore.western.chordrest import NoteheadTable
-     
-    neoscore.setup()
     pitch = 'c'
-    alterations = ''
-    octave = 4
-    pitch_info = [(pitch, alterations, octave)]
-    POSITION = (Mm(0), Mm(0))
-    staff = Staff(POSITION, None, Mm(80))
-    Clef(ZERO, staff, 'treble')
-    # Articulações
-    font = Font("Arial", Unit(9), italic=True)
-    Path.rect((Mm(5), Mm(-14)), None, Mm(12), Mm(5),
-              Brush.no_brush(), Pen(thickness=Mm(0.25)))  # rects
-    Path.rect((Mm(18), Mm(-14)), None, Mm(12), Mm(5),
-              Brush.no_brush(), Pen(thickness=Mm(0.25)))  # rects
-
-    Text((Unit(20), staff.unit(-6)), staff, "ord.", font)
-    MusicText((Unit(40), staff.unit(-6.5)), staff, "tremolo3", scale=0.8)
-
-    MusicText((Unit(55), staff.unit(-6.3)), staff, "dynamicPP", scale=0.8)
-    MusicText((Unit(70), staff.unit(-6.3)), staff,
-              "dynamicFortePiano", scale=0.8)
-
-    # Chave de repetição
-    Barline(Mm(80), staff.group, barline_style.END)
-    noteheads = NoteheadTable(
-        "repeatDot",
-        "repeatDot",
-        "repeatDot",
-        "repeatDot")
-    note = [('a', '', 4)]
-    Chordrest(Mm(76.5), staff, note, (int(1), int(1)), table=noteheads)
-    note = [('c', '', 5)]
-    Chordrest(Mm(76.5), staff, note, (int(1), int(1)), table=noteheads)
-    Chordrest(Mm(5), staff, pitch_info, (int(1), int(1)))
-    if os.name == 'nt':
-        filename = f'{script_dir}/neoscoretest.png'
-    else:
-        filename = f'{script_dir}/neoscoretest.png'
-    
-    neoscore.render_image(
-        rect=None,
-        dest=filename,
-        wait=True,
-        dpi=600)
-    neoscore.shutdown()
-    return 1
-
-def neoscoreTest():
-    import os
-    pitch = 'c'
+    script_dir = os.path.dirname(os.path.abspath(__file__))
     neoscore.setup()
-    randomNumber = random.randint(1, 100)
     POSITION = (Mm(0), Mm(0))
     staff = Staff(POSITION, None, Mm(30))
     saxClef = 'treble'
@@ -148,8 +82,7 @@ def neoscoreTest():
         filename = f'{script_dir}/neoscoretest.png'
     else:
         filename = f'{script_dir}/neoscoretest.png'
-
     neoscore.render_image(rect=None, dest=filename, dpi=150, wait=True)
     neoscore.shutdown()
-    return f"open note_{pitch}{randomNumber}.ppm"
+    return 1
 
