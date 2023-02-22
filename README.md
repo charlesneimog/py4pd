@@ -1,9 +1,7 @@
-# py4pd 
+# py4pd - Python inside PureData
 
-<div>
-`py4pd` allows the use of Python within PureData. It has the same goal as `py/pyext`, being simpler to keep up to date, to use modules, use lists, and other things. 
+`py4pd` allows the use of Python within PureData. It has the same goal as `py/pyext`, being simpler to keep up to date, use modules, use lists, and other things.
 
-<div>
 
 ### Download py4pd
 1. Open PureData, `Help->Find Externals->` search for `py4pd` then select py4pd and click on `Install`: 
