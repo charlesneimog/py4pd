@@ -1,11 +1,8 @@
 #include "py4pd.h"
-#include "floatobject.h"
 #include "m_pd.h"
 #include "module.h"
 #include <regex.h> // for regex 
 #include <strings.h>
-#include "object.h"
-#include "uthash.h"
 
 
 
