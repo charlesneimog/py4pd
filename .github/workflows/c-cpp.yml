@@ -7,11 +7,10 @@ on:
     branches: [ "master" ]
   
 jobs:
-
-# # # # ===============================================================================================
-# # # # ===============================================================================================
-# # # # ===============================================================================================
+  # just run on macOS if is master branch
+  
   macos-intel-build:
+    if: github.ref == 'refs/heads/master'
     runs-on: macos-latest
 
     steps:
@@ -60,6 +59,7 @@ jobs:
 # # # # ===============================================================================================
 # run on Windows
   windows-build:
+    if: github.ref == 'refs/heads/master'
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
