@@ -68,6 +68,9 @@ def noArgs():
     return "ok"
 
 def neoscoreTest():
+    if os.name == 'posix':
+        os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+
     pitch = 'c'
     script_dir = os.path.dirname(os.path.abspath(__file__))
     neoscore.setup()
