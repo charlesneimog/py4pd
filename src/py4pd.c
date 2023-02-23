@@ -451,7 +451,7 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     // Open VsCode in Windows
     #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
-    char *command = get_editor_command(x, x->editorName->s_name, x->script_name->s_name);
+    char *command = get_editor_command(x);
     command = get_editor_command(x);
     // use get_editor_command
     SHELLEXECUTEINFO sei = {0};
