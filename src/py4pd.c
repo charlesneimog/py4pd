@@ -10,6 +10,28 @@
 // This hash table will be responsable to create a new list if the list does not exist
 // and to append a new value to the list if the list already exists
 
+// ===================================================================
+char* get_editor_command(t_py *x) {
+    const char* editor = x->editorName->s_name;
+    const char* home = x->home_path->s_name;
+    const char* filename = x->script_name->s_name;
+    char* command = (char*)malloc(256 * sizeof(char));
+    memset(command, 0, 256);
+    if (strcmp(editor, "vscode") == 0) {
+        sprintf(command, "code %s/%s.py", home, filename);
+    } else if (strcmp(editor, "nvim") == 0) {
+        // gnome-terminal -e 'nvim %s'
+        sprintf(command, "gnome-terminal -e 'nvim %s/%s.py'", home, filename);
+    } else if (strcmp(editor, "sublime") == 0) {
+        sprintf(command, "subl %s/%s.py", home, filename);
+    } else if (strcmp(editor, "emacs") == 0) {
+        sprintf(command, "emacs %s/%s.py", home, filename);
+    } else {
+        pd_error(x, "[py4pd] editor %s not supported.", editor);
+    }
+    return command;
+}
+
 
 // ============================================
 int isNumericOrDot(const char *str) {
@@ -183,7 +205,7 @@ static void *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv
 // ========================= py4pd object ==============================    
 
 static int *set_py4pd_config(t_py *x) {
-    x->packages_path = gensym("./py-modules");
+    x->packages_path = gensym("./py-modules/");
     x->thread = 2;
     x->editorName = gensym("code");
     char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1)); // 
@@ -254,8 +276,14 @@ static int *set_py4pd_config(t_py *x) {
                 }
             }
             else if (strstr(line, "editor =") != NULL){
-                
-                pd_error(x, "[py4pd] editor not implemented yet"); // TODO: implement choice for editor (nvim, emacs, code, etc.)
+                // get editor name
+                char *editor = (char *)malloc(sizeof(char) * (strlen(line) - strlen("editor = ") + 1)); //
+                strcpy(editor, line + strlen("editor = ")); 
+                removeChar(editor, '\n');
+                removeChar(editor, '\r');
+                removeChar(editor, ' ');
+                x->editorName = gensym(editor);
+                post("[py4pd] Editor set to %s", x->editorName->s_name);
             }
         }
         fclose(file); // close file
@@ -423,8 +451,9 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     // Open VsCode in Windows
     #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
-    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->editorName->s_name) + strlen(x->script_name->s_name) + 20);
-    sprintf(command, "/c %s %s/%s.py", x->editorName->s_name, x->home_path->s_name, x->script_name->s_name);
+    char *command = get_editor_command(x, x->editorName->s_name, x->script_name->s_name);
+    command = get_editor_command(x);
+    // use get_editor_command
     SHELLEXECUTEINFO sei = {0};
     sei.cbSize = sizeof(sei);
     sei.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -438,8 +467,8 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
     // Not Windows OS
     #else // if not windows 64bits
-    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->editorName->s_name) + strlen(x->script_name->s_name) + 20);
-    sprintf(command, "%s %s/%s.py", x->editorName->s_name, x->home_path->s_name, x->script_name->s_name);
+    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
+    command = get_editor_command(x);
     post("[py4pd] %s", command);
     pd4py_system_func(command);
     #endif
@@ -593,11 +622,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
         argspec = PyObject_CallFunctionObjArgs(getfullargspec, pFunc, NULL);
         args = PyTuple_GetItem(argspec, 0);
-        int isArgs = PyObject_RichCompareBool(args, Py_None, Py_EQ);
-        post("isArgs: %d", isArgs);
-
+        // int isArgs = PyObject_RichCompareBool(args, Py_None, Py_EQ); // TODO: way to check if function has *args or **kwargs
         int py_args = PyObject_Size(args);
-        // check if function if not *args or **kwargs
         if (args == Py_None){
             x->py_arg_numbers = -1; 
             post("[py4pd] The '%s' function has *args or **kwargs!", function_name->s_name);        
@@ -849,8 +875,12 @@ static void restartPython(t_py *x){
             y->script_name = NULL;
             y->module = NULL;
             y->function = NULL;
+            y->packages_path = gensym("./py-modules");
+            y->thread = 2;
+            y->editorName = gensym("code");
         }
     }
+    PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
     Py_Initialize();
     post("[py4pd] Python interpreter was restarted!");
     return;
@@ -886,10 +916,10 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         post("[py4pd] by Charles K. Neimog");
         post("[py4pd] Version 0.5.0       ");
         post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
-        post("[py4pd] Inspired by the work of Thomas Grill and SOPI research group.");
         post("");
         PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
-        Py_InitializeEx(1); // Initialize the Python interpreter. If 1, the signal handler is installed.
+        Py_Initialize(); // Initialize the Python interpreter. If 1, the signal handler is installed.
+        // Py_InitializeEx(1); // Initialize the Python interpreter. If 1, the signal handler is installed.
     }
     object_count++; // count the number of objects
     t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
@@ -904,7 +934,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     py4pd_object_array[object_count] = x; // save the object in the array
     set_py4pd_config(x); // set the config file
     if (argc > 1) { // check if there are two arguments
-        set_function(x, s, argc, argv); // this not work with python submodules
+        set_function(x, s, argc, argv); 
     }
     return(x);
 }
