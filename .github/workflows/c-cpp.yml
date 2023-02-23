@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ "master" ]
   
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
 jobs:
   # just run on macOS if is master branch
   
