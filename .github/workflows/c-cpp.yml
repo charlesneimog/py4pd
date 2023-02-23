@@ -5,8 +5,6 @@ on:
     branches: [ "master" , "v-0.5.0" ]
   pull_request:
     branches: [ "master" ]
-  
-on:
   workflow_dispatch:
   push:
     branches:
