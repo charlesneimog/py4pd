@@ -1,9 +1,7 @@
 #include "py4pd.h"
 #include "m_pd.h"
 #include "module.h"
-#include <regex.h> // for regex 
-#include <stdlib.h>
-#include <strings.h>
+
 
 
 // ===================================================================
@@ -190,7 +188,6 @@ static void *py4pd_convert_to_py(PyObject *ArgsTuple, PyObject *listsArrays[], i
     return ArgsTuple;
 }
 
-// =====================================================================
 // ========================= py4pd object ==============================    
 
 static int *set_py4pd_config(t_py *x) {

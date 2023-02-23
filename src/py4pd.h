@@ -2,9 +2,9 @@
 #define PY4PD_H
 #include <m_pd.h>
 #include <g_canvas.h>
-#include <stdio.h>
-#include <string.h>
 #include <pthread.h>
+#include <regex.h> // for regex 
+
 
 #ifdef _WIN64 // If windows 64bits include 
     #include <windows.h>
