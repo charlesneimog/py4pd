@@ -15,21 +15,15 @@
 int isNumericOrDot(const char *str) {
     regex_t regex;
     int ret;
-
     ret = regcomp(&regex, "^[0-9.]+$", REG_EXTENDED);
     if (ret != 0) {
-        // regex compilation failed
         return 0;
     }
-
     ret = regexec(&regex, str, 0, NULL, 0);
     regfree(&regex);
-
     if (ret == 0) {
-        // input string contains only numeric characters or the character '.'
         return 1;
     } else {
-        // input string contains non-numeric and non-dot characters
         return 0;
     }
 }
@@ -650,6 +644,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     PyObject *pValue, *ArgsTuple; 
     if (argc != 0){
         for (int i = 0; i < argc; i++) {
+        // BUG: Function without lists are not working
             if (argv[i].a_type == A_SYMBOL){
                 if (strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL){
                     CloseList_count++;
