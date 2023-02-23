@@ -99,8 +99,8 @@ static void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
 // ============================================
 // create an function that with input ArgsTuple, listsArrays, argc, argv, x
 
-static void *py4pd_convert_to_py(PyObject *ArgsTuple, PyObject *listsArrays[], int argc, t_atom *argv) {
-
+static void *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
+    PyObject *ArgsTuple = PyTuple_New(0); // start new tuple with 1 element
     int listStarted = 0;
     int argCount = 0;
     int listCount = 0;
@@ -131,6 +131,7 @@ static void *py4pd_convert_to_py(PyObject *ArgsTuple, PyObject *listsArrays[], i
                 strcpy(str, argv[i].a_w.w_symbol->s_name);
                 removeChar(str, ']');
                 int isNumeric = isNumericOrDot(str);
+                _PyTuple_Resize(&ArgsTuple, argCount + 1);
                 if (isNumeric == 1){
                     PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atof(str)));
                     PyTuple_SetItem(ArgsTuple, argCount, listsArrays[listCount]);
@@ -644,7 +645,6 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     PyObject *pValue, *ArgsTuple; 
     if (argc != 0){
         for (int i = 0; i < argc; i++) {
-        // BUG: Function without lists are not working
             if (argv[i].a_type == A_SYMBOL){
                 if (strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL){
                     CloseList_count++;
@@ -659,11 +659,13 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
             return;
         }
         PyObject *lists[OpenList_count]; // create a list of lists 
-        ArgsTuple = PyTuple_New(1); // start new tuple with 1 element
-        py4pd_convert_to_py(ArgsTuple, lists, argc, argv); // convert the arguments to python
+        
+        ArgsTuple = py4pd_convert_to_py(lists, argc, argv); // convert the arguments to python
         int argCount = PyTuple_Size(ArgsTuple); // get the number of arguments
         if (argCount != x->py_arg_numbers) {
             pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %i arguments, received %i!", x->function_name->s_name, (int)x->py_arg_numbers, argCount);
+            post("Length of tuple: %i", argCount);
+            post("Length of args: %i", x->py_arg_numbers);
             return;
         }
     }

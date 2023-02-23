@@ -1,6 +1,8 @@
 #N canvas 677 420 648 424 12;
-#X msg 80 16 run;
-#X obj 80 84 print;
-#X obj 80 59 py4pd;
-#X connect 0 0 2 0;
+#X obj 80 140 print;
+#X obj 80 89 py4pd;
+#X msg 80 55 set py sum;
+#X msg 17 24 run 2 2;
+#X connect 1 0 0 0;
 #X connect 2 0 1 0;
+#X connect 3 0 1 0;
