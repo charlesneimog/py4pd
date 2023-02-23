@@ -6,29 +6,21 @@
 // ======== PD Module for Python ========
 // ======================================
 
-static PyObject *pdout(PyObject *self, PyObject *args)
-{
-    // self is void
+static PyObject *pdout(PyObject *self, PyObject *args){
     (void)self;
-
     float f;
     char *string;
-
-    if (PyArg_ParseTuple(args, "f", &f))
-    {
+    if (PyArg_ParseTuple(args, "f", &f)){
         outlet_float(py4pd_object->out_A, f);
         PyErr_Clear();
     }
-    else if (PyArg_ParseTuple(args, "s", &string))
-    {
-        // pd string
+    else if (PyArg_ParseTuple(args, "s", &string)){
         char *pd_string = string;
         t_symbol *pd_symbol = gensym(pd_string);
         outlet_symbol(py4pd_object->out_A, pd_symbol);
         PyErr_Clear();
     }
-    else if (PyArg_ParseTuple(args, "O", &args))
-    {
+    else if (PyArg_ParseTuple(args, "O", &args)){
         int list_size = PyList_Size(args);
         t_atom *list_array = (t_atom *)malloc(list_size * sizeof(t_atom));
         int i;
@@ -42,27 +34,24 @@ static PyObject *pdout(PyObject *self, PyObject *args)
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
             }
-            else if (PyFloat_Check(pValue_i))
-            { // DOC: If the function return a list of floats
+            else if (PyFloat_Check(pValue_i)){ // DOC: If the function return a list of floats
                 double result = PyFloat_AsDouble(pValue_i);
                 float result_float = (float)result;
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
             }
-            else if (PyUnicode_Check(pValue_i))
-            { // DOC: If the function return a list of strings
+            else if (PyUnicode_Check(pValue_i)){ // DOC: If the function return a list of strings
                 const char *result = PyUnicode_AsUTF8(pValue_i);
                 list_array[i].a_type = A_SYMBOL;
                 list_array[i].a_w.w_symbol = gensym(result);
             }
-            else if (Py_IsNone(pValue_i))
-            {   // DOC: If the function return a list of None
+            else if (Py_IsNone(pValue_i)){   
+                // DOC: If the function return a list of None
                 // post("None");
             }
-            else
-            {
+            else{
                 pd_error(py4pd_object, "[py4pd] py4pd just convert int, float and string!\n");
-                pd_error(py4pd_object, "INFO  [!] The value received is of type %s", Py_TYPE(pValue_i)->tp_name);
+                pd_error(py4pd_object, "[py4pd] The value received is of type %s", Py_TYPE(pValue_i)->tp_name);
                 Py_DECREF(pValue_i);
                 Py_DECREF(args);
                 return NULL;
@@ -71,27 +60,24 @@ static PyObject *pdout(PyObject *self, PyObject *args)
         outlet_list(py4pd_object->out_A, 0, list_size, list_array);
         PyErr_Clear();
     }
-    else
-    {
+    else{
         PyErr_SetString(PyExc_TypeError, "pdout: argument must be a float or a string"); // Colocar melhor descrição do erro
         return NULL;
     }
+    // WARNING: This function is not working yet.
     return PyLong_FromLong(0);
 }
 
 
 // =================================
-static PyObject *pdprint(PyObject *self, PyObject *args)
-{
+static PyObject *pdprint(PyObject *self, PyObject *args){
     (void)self;
     char *string;
-    if (PyArg_ParseTuple(args, "s", &string))
-    {
+    if (PyArg_ParseTuple(args, "s", &string)){
         post("[py4pd]: %s", string);
         PyErr_Clear();
     }
-    else
-    {
+    else{
         PyErr_SetString(PyExc_TypeError, "print: argument must be a string"); // Colocar melhor descrição do erro
         return NULL;
     }
@@ -99,29 +85,28 @@ static PyObject *pdprint(PyObject *self, PyObject *args)
 }
 
 // =================================
-static PyObject *pderror(PyObject *self, PyObject *args)
-{
+static PyObject *pderror(PyObject *self, PyObject *args){
     (void)self;
     char *string;
-    if (PyArg_ParseTuple(args, "s", &string))
-    {
+    if (PyArg_ParseTuple(args, "s", &string)){
         post("Not working yet");
         pd_error(py4pd_object, "Ocorreu um erro");
     }
-    else
-    {
+    else{
         PyErr_SetString(PyExc_TypeError, "message: argument must be a string"); // Colocar melhor descrição do erro
         return NULL;
     }
     return PyLong_FromLong(0);
-} // WARNING: This function is not working yet.
+    // WARNING: This function is not working yet.
+} 
 
 // =================================
 static PyMethodDef PdMethods[] = {                                                          // here we define the function spam_system
     {"out", pdout, METH_VARARGS, "Output in out0 from PureData"},                           // one function for now
     {"print", pdprint, METH_VARARGS, "Print informations in PureData Console"},             // one function for now
     {"error", pderror, METH_VARARGS, "Print error in PureData"},                            // one function for now
-    {NULL, NULL, 0, NULL}};
+    {NULL, NULL, 0, NULL}
+};
 
 // =================================
 
@@ -144,16 +129,14 @@ static PyObject *pdmoduleError;
 
 // =================================
 
-PyMODINIT_FUNC PyInit_pd(void)
-{
+PyMODINIT_FUNC PyInit_pd(void){
     PyObject *m;
     m = PyModule_Create(&pdmodule);
     if (m == NULL)
         return NULL;
     pdmoduleError = PyErr_NewException("spam.error", NULL, NULL);
     Py_XINCREF(pdmoduleError);
-    if (PyModule_AddObject(m, "error", pdmoduleError) < 0)
-    {
+    if (PyModule_AddObject(m, "error", pdmoduleError) < 0){
         Py_XDECREF(pdmoduleError);
         Py_CLEAR(pdmoduleError);
         Py_DECREF(m);

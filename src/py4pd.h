@@ -1,14 +1,13 @@
 #ifndef PY4PD_H
 #define PY4PD_H
 #include <m_pd.h>
-#include <g_canvas.h>
 #include <pthread.h>
 #include <regex.h> // for regex 
-
 
 #ifdef _WIN64 // If windows 64bits include 
     #include <windows.h>
 #endif
+
 #ifdef HAVE_UNISTD_H // from Pure Data source code
     #include <unistd.h>
 #endif
@@ -17,7 +16,7 @@
 #define PY_SSIZE_T_CLEAN // Good practice to use this
 #include <Python.h>
 
-/* ========= TODO MAIN LIST ========= 
+/* ========= MAIN LIST ========= 
 
     TODO: Way to set global variables, I think that will be important for things like general path (lilypond, etc)
         

@@ -1,8 +1,5 @@
 #include "py4pd.h"
-#include "m_pd.h"
 #include "module.h"
-
-
 
 // ===================================================================
 // ======================== Work with lists in PureData ==============
