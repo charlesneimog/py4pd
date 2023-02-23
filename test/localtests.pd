@@ -1,6 +1,6 @@
 #N canvas 677 420 648 424 12;
-#X obj 80 59 py4pd py noArgs;
-#X msg 75 16 run;
+#X msg 80 16 run;
 #X obj 80 84 print;
+#X obj 80 59 py4pd;
 #X connect 0 0 2 0;
-#X connect 1 0 0 0;
+#X connect 2 0 1 0;
