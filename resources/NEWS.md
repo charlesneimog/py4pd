@@ -2,6 +2,7 @@
 * Add support to list inside PureData using brackts 
   * 💡 `run [1 2 3 4 5]` from `pd`message is equivalent to run `my_function([1, 2, 3, 4, 5])` in `Python`.
 * Add better README and Wiki.
+* Add support to new Editor [sublime, nvim, code, vim]
 
 #### py4pd version 0.4.0
 * 🤖 Add Github Actions for Windows, Linux, MacOS (Intel);
