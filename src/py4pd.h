@@ -8,12 +8,8 @@
     #include <windows.h>
 #endif
 
-#ifdef HAVE_UNISTD_H // from Pure Data source code
-    #include <unistd.h>
-#endif
-
 // Python include
-#define PY_SSIZE_T_CLEAN // Good practice to use this
+#define PY_SSIZE_T_CLEAN // Good practice to use this before include Python.h because it will remove some deprecated function
 #include <Python.h>
 
 /* ========= MAIN LIST ========= 
@@ -54,12 +50,10 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 
 // create a pointer for the t_py class
 
-static t_class *py4pd_class;
-static int object_count = 1;
-static t_py *py4pd_object;
-
-// create and array of pointers for the t_py class
-static t_py *py4pd_object_array[100];
+t_class *py4pd_class;
+int object_count = 1;
+t_py *py4pd_object;
+t_py *py4pd_object_array[100];
 
 // Set Debug mode
 #define DEBUG 1

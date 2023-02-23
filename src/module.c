@@ -1,12 +1,12 @@
 #include "py4pd.h"
+#include "module.h"
 
-// command for Fedora: make PYTHON_INCLUDE=/usr/include/python3.10/ PYTHON_VERSION=python3.10 pdincludepath=../pure-data-0.53-0/src/ pdlibpath=/usr/local/lib/ pdlibname=libpd.so
 
 // ======================================
-// ======== PD Module for Python ========
+// ======== py4pd embbeded module =======
 // ======================================
 
-static PyObject *pdout(PyObject *self, PyObject *args){
+PyObject *pdout(PyObject *self, PyObject *args){
     (void)self;
     float f;
     char *string;
@@ -70,7 +70,7 @@ static PyObject *pdout(PyObject *self, PyObject *args){
 
 
 // =================================
-static PyObject *pdprint(PyObject *self, PyObject *args){
+PyObject *pdprint(PyObject *self, PyObject *args){
     (void)self;
     char *string;
     if (PyArg_ParseTuple(args, "s", &string)){
@@ -85,7 +85,7 @@ static PyObject *pdprint(PyObject *self, PyObject *args){
 }
 
 // =================================
-static PyObject *pderror(PyObject *self, PyObject *args){
+PyObject *pderror(PyObject *self, PyObject *args){
     (void)self;
     char *string;
     if (PyArg_ParseTuple(args, "s", &string)){
@@ -99,48 +99,3 @@ static PyObject *pderror(PyObject *self, PyObject *args){
     return PyLong_FromLong(0);
     // WARNING: This function is not working yet.
 } 
-
-// =================================
-static PyMethodDef PdMethods[] = {                                                          // here we define the function spam_system
-    {"out", pdout, METH_VARARGS, "Output in out0 from PureData"},                           // one function for now
-    {"print", pdprint, METH_VARARGS, "Print informations in PureData Console"},             // one function for now
-    {"error", pderror, METH_VARARGS, "Print error in PureData"},                            // one function for now
-    {NULL, NULL, 0, NULL}
-};
-
-// =================================
-
-static struct PyModuleDef pdmodule = {
-    PyModuleDef_HEAD_INIT,
-    "pd", /* name of module */
-    NULL, /* module documentation, may be NULL */
-    -1,   /* size of per-interpreter state of the module,
-             or -1 if the module keeps state in global variables. */
-    PdMethods,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-};
-
-// =================================
-
-static PyObject *pdmoduleError;
-
-// =================================
-
-PyMODINIT_FUNC PyInit_pd(void){
-    PyObject *m;
-    m = PyModule_Create(&pdmodule);
-    if (m == NULL)
-        return NULL;
-    pdmoduleError = PyErr_NewException("spam.error", NULL, NULL);
-    Py_XINCREF(pdmoduleError);
-    if (PyModule_AddObject(m, "error", pdmoduleError) < 0){
-        Py_XDECREF(pdmoduleError);
-        Py_CLEAR(pdmoduleError);
-        Py_DECREF(m);
-        return NULL;
-    }
-    return m;
-}
