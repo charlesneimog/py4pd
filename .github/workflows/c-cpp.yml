@@ -6,12 +6,8 @@ on:
   pull_request:
     branches: [ "master" ]
   workflow_dispatch:
-  push:
-    branches:
-      - main
-jobs:
-  # just run on macOS if is master branch
   
+jobs:  
   macos-intel-build:
     if: github.ref == 'refs/heads/master'
     runs-on: macos-latest
