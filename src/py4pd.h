@@ -34,6 +34,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject            *module; // python object
     PyObject            *function; // function name 
     t_int               thread; // arguments
+    t_int               pictureMode; // picture mode
     t_int               function_called; // flag to check if the set function was called
     t_int               py_arg_numbers; // number of arguments
     t_symbol            *editorName; // editor name

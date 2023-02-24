@@ -625,6 +625,33 @@ static void thread(t_py *x, t_floatarg f){
 
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
     t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
+
+    // TODO: version 0.6.0 - add score/picture 
+    // int i;
+    // for (i = 0; i < argc; i++) {
+    //     if (argv[i].a_type == A_SYMBOL) {
+    //         t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
+    //         if (py4pdArgs == gensym("-picture")) {
+    //             post("[py4pd] Picture mode enabled");
+    //             x->pictureMode = 1;
+    //             int j;
+    //             for (j = i; j < argc; j++) {
+    //                 argv[j] = argv[j+1];
+    //             }
+    //             argc--;
+    //         }
+    //         if (py4pdArgs == gensym("-score")) {
+    //             post("[py4pd] Score mode enabled");
+    //             x->pictureMode = 1;
+    //             int j;
+    //             for (j = i; j < argc; j++) {
+    //                 argv[j] = argv[j+1];
+    //             }
+    //             argc--;
+    //         }
+    //     }
+    // }
+
     if (!Py_IsInitialized()) {
         object_count = 1;   
         post("");
@@ -644,7 +671,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     t_symbol *patch_dir = canvas_getdir(c); // directory of opened patch
     x->home_path = patch_dir;     // set name of the home path
     x->packages_path = patch_dir; // set name of the packages path
-    x->thread = 2; // default is 2 (no threading)
+    x->thread = 2; // default is 2 (no threading) FIX: fix this
     py4pd_object_array[object_count] = x; // save the object in the array
     set_py4pd_config(x); // set the config file
     if (argc > 1) { // check if there are two arguments

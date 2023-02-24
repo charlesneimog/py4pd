@@ -115,7 +115,7 @@ PyObject *pdsend(PyObject *self, PyObject *args){
             pd_symbol(symbol->s_thing, gensym(string));
         }
         else{
-            post("Object [r %s] not found", receiver);
+            post("[pd.script] object [r %s] not found", receiver);
         }
     }
     else if (PyArg_ParseTuple(args, "sf", &receiver, &floatNumber)){
@@ -125,7 +125,7 @@ PyObject *pdsend(PyObject *self, PyObject *args){
             pd_float(symbol->s_thing, floatNumber);
         }
         else{
-            post("Object [r %s] not found", receiver);
+            post("[pd.script] object [r %s] not found", receiver);
         }
     }
     else if (PyArg_ParseTuple(args, "si", &receiver, &intNumber)){
@@ -134,7 +134,7 @@ PyObject *pdsend(PyObject *self, PyObject *args){
             pd_float(symbol->s_thing, intNumber);
         }
         else{
-            post("Object [r %s] not found", receiver);
+            post("[pd.script] object [r %s] not found", receiver);
         }
     }
     else if (PyArg_ParseTuple(args, "sO", &receiver, &listargs)){
@@ -188,13 +188,16 @@ PyObject *pdsend(PyObject *self, PyObject *args){
             pd_list(gensym(receiver)->s_thing, &s_list, list_size, list_array);
         }
         else{
-            post("Object [r %s] not found", receiver);
+            post("[pd.script] object [r %s] not found", receiver);
         }
     }
     else{
-        post("error");
-        PyErr_Clear();
-        return PyLong_FromLong(0);
+        char error_message[100];
+        // get type of second argument
+        PyObject *pValue_i = PyTuple_GetItem(args, 1);
+        sprintf(error_message, "[pd.send] received a type '%s', it must be a string, int, or float.", pValue_i->ob_type->tp_name);
+        PyErr_SetString(PyExc_TypeError, error_message); // TODO: Check english
+        return NULL;
     }
 
     PyErr_Clear();
