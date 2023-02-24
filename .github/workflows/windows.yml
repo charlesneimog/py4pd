@@ -1,4 +1,4 @@
-# name: C/C++ CI
+# name: Windows
 
 on:
   push:
@@ -9,7 +9,6 @@ on:
   
 jobs:  
   windows-build:
-    #if: github.ref == 'refs/heads/master'
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
