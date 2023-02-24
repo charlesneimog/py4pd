@@ -7,69 +7,66 @@
 // ======================================
 
 PyObject *pdout(PyObject *self, PyObject *args){
-    
+    (void)self;
+    float f;
+    char *string;
+
+
     PyObject *pd_module = PyImport_ImportModule("__main__");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-    outlet_bang(py4pd->out_A);
 
-    // I have this: PyObject_SetAttrString(pd_module, "py4pd", py4pd);
-    // Get the py4pd object here
-
-    // py4pd is a pointer to t_py object, get it here
-
-   //
-    // if (PyArg_ParseTuple(args, "f", &f)){
-    //     PyErr_Clear();
-    // }
-    // else if (PyArg_ParseTuple(args, "s", &string)){
-    //     char *pd_string = string;
-    //     t_symbol *pd_symbol = gensym(pd_string);
-    //     post("pd_symbol: %s", pd_symbol->s_name);
-    //     PyErr_Clear();
-    // }
-    // else if (PyArg_ParseTuple(args, "O", &args)){
-    //     int list_size = PyList_Size(args);
-    //     t_atom *list_array = (t_atom *)malloc(list_size * sizeof(t_atom));
-    //     int i;
-    //     for (i = 0; i < list_size; ++i)
-    //     {
-    //         PyObject *pValue_i = PyList_GetItem(args, i);
-    //         if (PyLong_Check(pValue_i))
-    //         { // DOC: If the function return a list of integers
-    //             long result = PyLong_AsLong(pValue_i);
-    //             float result_float = (float)result;
-    //             list_array[i].a_type = A_FLOAT;
-    //             list_array[i].a_w.w_float = result_float;
-    //         }
-    //         else if (PyFloat_Check(pValue_i)){ // DOC: If the function return a list of floats
-    //             double result = PyFloat_AsDouble(pValue_i);
-    //             float result_float = (float)result;
-    //             list_array[i].a_type = A_FLOAT;
-    //             list_array[i].a_w.w_float = result_float;
-    //         }
-    //         else if (PyUnicode_Check(pValue_i)){ // DOC: If the function return a list of strings
-    //             const char *result = PyUnicode_AsUTF8(pValue_i);
-    //             list_array[i].a_type = A_SYMBOL;
-    //             list_array[i].a_w.w_symbol = gensym(result);
-    //         }
-    //         else if (Py_IsNone(pValue_i)){   
-    //             // DOC: If the function return a list of None
-    //             // post("None");
-    //         }
-    //         else{
-    //             Py_DECREF(pValue_i);
-    //             Py_DECREF(args);
-    //             return NULL;
-    //         }
-    //     }
-    //     PyErr_Clear();
-    // }
-    // else{
-    //     PyErr_SetString(PyExc_TypeError, "pdout: argument must be a float or a string"); // Colocar melhor descrição do erro
-    //     return NULL;
-    // }
-    // // WARNING: This function is not working yet.
+    if (PyArg_ParseTuple(args, "f", &f)){
+        PyErr_Clear();
+        outlet_float(py4pd->out_A, f);
+    }
+    else if (PyArg_ParseTuple(args, "s", &string)){
+        t_symbol *pd_symbol = gensym(string);
+        outlet_symbol(py4pd->out_A, pd_symbol);
+        PyErr_Clear();
+    }
+    else if (PyArg_ParseTuple(args, "O", &args)){
+        int list_size = PyList_Size(args);
+        t_atom *list_array = (t_atom *)malloc(list_size * sizeof(t_atom));
+        int i;
+        for (i = 0; i < list_size; ++i)
+        {
+            PyObject *pValue_i = PyList_GetItem(args, i);
+            if (PyLong_Check(pValue_i))
+            { // DOC: If the function return a list of integers
+                long result = PyLong_AsLong(pValue_i);
+                float result_float = (float)result;
+                list_array[i].a_type = A_FLOAT;
+                list_array[i].a_w.w_float = result_float;
+            }
+            else if (PyFloat_Check(pValue_i)){ // DOC: If the function return a list of floats
+                double result = PyFloat_AsDouble(pValue_i);
+                float result_float = (float)result;
+                list_array[i].a_type = A_FLOAT;
+                list_array[i].a_w.w_float = result_float;
+            }
+            else if (PyUnicode_Check(pValue_i)){ // DOC: If the function return a list of strings
+                const char *result = PyUnicode_AsUTF8(pValue_i);
+                list_array[i].a_type = A_SYMBOL;
+                list_array[i].a_w.w_symbol = gensym(result);
+            }
+            else if (Py_IsNone(pValue_i)){   
+                // DOC: If the function return a list of None
+                // post("None");
+            }
+            else{
+                Py_DECREF(pValue_i);
+                Py_DECREF(args);
+                return NULL;
+            }
+        }
+        outlet_list(py4pd->out_A, &s_list, list_size, list_array);
+        PyErr_Clear();
+    }
+    else{
+        PyErr_SetString(PyExc_TypeError, "pdout: argument must be a float or a string"); // Colocar melhor descrição do erro
+        return NULL;
+    }
     return PyLong_FromLong(0);
 }
 
