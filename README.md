@@ -4,7 +4,14 @@
 [![.github/workflows/mac.yml](https://github.com/charlesneimog/py4pd/actions/workflows/mac.yml/badge.svg?branch=v-0.5.0)](https://github.com/charlesneimog/py4pd/actions/workflows/mac.yml)
 
 
-`py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things.
+`py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things.  with Python you can:
+* Use scores inside PureData;
+* Use svg/draws as scores;
+* OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
+
+See examples in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Examples).
+
+
 
 ### Download py4pd
 1. Open PureData, `Help->Find Externals->` search for `py4pd` then select py4pd and click on `Install`: 
