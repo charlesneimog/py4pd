@@ -94,7 +94,7 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
                 return 0;
             }
         }
-        outlet_list(x->out_A, 0, list_size, list_array); // TODO: possible do in other way? Seems slow!
+        outlet_list(x->out_A, 0, list_size, list_array); 
         free(list_array);
     } else {
         if (PyLong_Check(pValue)) {

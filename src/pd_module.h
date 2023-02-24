@@ -9,7 +9,7 @@ extern PyObject *pdout(PyObject *self, PyObject *args);
 extern PyObject *pdprint(PyObject *self, PyObject *args);
 extern PyObject *pderror(PyObject *self, PyObject *args);
 
-extern PyMODINIT_FUNC PyInit_pd(void);
+PyMODINIT_FUNC PyInit_pd(void);
 
 
 

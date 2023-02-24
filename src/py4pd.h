@@ -21,11 +21,6 @@
     TODO: The set function need to run after the load of the object, but before the start of the thread???
         It does not load external modules in the pd_new.
 
-    TODO: system("nvim -c ':terminal' /path/to/file"); // open a terminal in the file -- NVIM
-       // system("code /path/to/file"); // open a terminal in the file -- VSCode 
-       // system("subl /path/to/file"); // open a terminal in the file -- Sublime Text
-    
-    TODO: Learn how to declare headers and functions in C.
         
 
 */

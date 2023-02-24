@@ -260,7 +260,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
-
     if (x->function_called == 1){
         int function_is_equal = strcmp(function_name->s_name, x->function_name->s_name); // if string is equal strcmp returns 0
         if (function_is_equal == 0){
@@ -329,6 +328,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         return;
     }
  
+    
     pFunc = PyObject_GetAttrString(pModule, function_name->s_name); // Function name inside the script file
     Py_DECREF(pName); // Delete the name of the script file
     if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable   
@@ -379,7 +379,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
-
     int OpenList_count = 0;
     int CloseList_count = 0;
 
@@ -625,20 +624,19 @@ static void thread(t_py *x, t_floatarg f){
 // ============================================
 
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
+    t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
     if (!Py_IsInitialized()) {
         object_count = 1;   
-        // Credits
         post("");
         post("[py4pd] by Charles K. Neimog");
         post("[py4pd] Version 0.5.0       ");
         post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
         post("");
-        // PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
+        PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
         Py_Initialize(); // Initialize the Python interpreter. If 1, the signal handler is installed.
-        // Py_InitializeEx(1); // Initialize the Python interpreter. If 1, the signal handler is installed.
     }
+    // add a global varible INSIDE_PY4PD == true
     object_count++; // count the number of objects
-    t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
     x->object_number = object_count; // save object number
     x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
@@ -695,10 +693,10 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)restartPython, gensym("restart"), 0, 0); // it restart python interpreter
 
     // Edit py code
-    class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open code  TODO: Change to editor (nvim) 
+    class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open editor  WARNING: WILL BE DEPRECATED 
     class_addmethod(py4pd_class, (t_method)editor, gensym("editor"), A_GIMME, 0); // open code
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
-    class_addmethod(py4pd_class, (t_method)editor, gensym("click"), 0, 0); // when click open vscode
+    class_addmethod(py4pd_class, (t_method)editor, gensym("click"), 0, 0); // when click open editor
     
     // User use
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
