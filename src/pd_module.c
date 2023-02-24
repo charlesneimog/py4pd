@@ -7,8 +7,12 @@
 // ======================================
 
 PyObject *pdout(PyObject *self, PyObject *args){
+    
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    outlet_bang(py4pd->out_A);
 
-    post("[pd.out] Not working yet");
     // I have this: PyObject_SetAttrString(pd_module, "py4pd", py4pd);
     // Get the py4pd object here
 

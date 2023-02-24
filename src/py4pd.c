@@ -413,6 +413,10 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         ArgsTuple = PyTuple_New(0);
     }
 
+    // WARNING: this can generate errors? How this will work on multithreading?
+
+    PyObject *capsule = PyCapsule_New(x, "py4pd", NULL); // create a capsule to pass the object to the python interpreter
+    PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule); // add the capsule to the python interpreter
     pValue = PyObject_CallObject(x->function, ArgsTuple);
     if (pValue != NULL) {                                // if the function returns a value   
         py4pd_convert_to_pd(x, pValue); // convert the value to pd        
@@ -662,8 +666,10 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
         Py_Initialize(); // Initialize the Python interpreter. If 1, the signal handler is installed.
     }
-    // add a global varible INSIDE_PY4PD == true
-    object_count++; // count the number of objects
+    // to acess this from py4pd module use: py4pd = PyCapsule_Import("py4pd", 0);
+    // py4pd will be declared as: t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd, "py4pd");
+
+    object_count++; // count the number of objects                                  WARNING: global variable
     x->object_number = object_count; // save object number
     x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
@@ -671,8 +677,8 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     t_symbol *patch_dir = canvas_getdir(c); // directory of opened patch
     x->home_path = patch_dir;     // set name of the home path
     x->packages_path = patch_dir; // set name of the packages path
-    x->thread = 2; // default is 2 (no threading) FIX: fix this
-    py4pd_object_array[object_count] = x; // save the object in the array
+    x->thread = 2; // default is 2 (no threading)                                   FIX: fix this
+    py4pd_object_array[object_count] = x; // save the object in the array           WARNING: global variable
     set_py4pd_config(x); // set the config file
     if (argc > 1) { // check if there are two arguments
         set_function(x, s, argc, argv); 
@@ -687,7 +693,6 @@ void py4pd_free(t_py *x){
     pFunc = x->function;
     pModule = x->module;
     object_count--;
-    // clear all struct
     if (pModule != NULL) {
         Py_DECREF(pModule);
     }
