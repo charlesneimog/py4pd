@@ -31,4 +31,4 @@ __pycache__/py.cpython-310.pyc
 *.txt
 py-modules
 ./compile_commands.json
-cache/
+.cache/

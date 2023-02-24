@@ -16,7 +16,8 @@ ifeq (MINGW,$(findstring MINGW,$(uname)))
 
 else ifeq (Linux,$(findstring Linux,$(uname)))
   PYTHON_INCLUDE := $(shell python3 -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
-  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wno-unused-variable
+  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type 
+  #-shared -Wno-cast-function-type -Wno-unused-variable
   ldlibs = -l $(PYTHON_VERSION) 
 
 else ifeq (Darwin,$(findstring Darwin,$(uname)))
@@ -33,7 +34,7 @@ endif
 
 # =================================== Sources ===================================
 
-py4pd.class.sources = src/py4pd.c 
+py4pd.class.sources = src/py4pd.c src/py4pd_utils.c src/pd_module.c
 
 # =================================== Data ======================================
 datafiles = \

@@ -24,6 +24,8 @@
     TODO: system("nvim -c ':terminal' /path/to/file"); // open a terminal in the file -- NVIM
        // system("code /path/to/file"); // open a terminal in the file -- VSCode 
        // system("subl /path/to/file"); // open a terminal in the file -- Sublime Text
+    
+    TODO: Learn how to declare headers and functions in C.
         
 
 */
@@ -47,13 +49,6 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_symbol            *script_name; // script name
     t_outlet            *out_A; // outlet 1.
 }t_py;
-
-// create a pointer for the t_py class
-
-t_class *py4pd_class;
-int object_count = 1;
-t_py *py4pd_object;
-t_py *py4pd_object_array[100];
 
 // Set Debug mode
 #define DEBUG 1

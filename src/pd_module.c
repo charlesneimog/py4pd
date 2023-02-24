@@ -1,5 +1,5 @@
 #include "py4pd.h"
-#include "module.h"
+#include "pd_module.h"
 
 
 // ======================================
@@ -11,13 +11,12 @@ PyObject *pdout(PyObject *self, PyObject *args){
     float f;
     char *string;
     if (PyArg_ParseTuple(args, "f", &f)){
-        outlet_float(py4pd_object->out_A, f);
         PyErr_Clear();
     }
     else if (PyArg_ParseTuple(args, "s", &string)){
         char *pd_string = string;
         t_symbol *pd_symbol = gensym(pd_string);
-        outlet_symbol(py4pd_object->out_A, pd_symbol);
+        post("pd_symbol: %s", pd_symbol->s_name);
         PyErr_Clear();
     }
     else if (PyArg_ParseTuple(args, "O", &args)){
@@ -50,14 +49,11 @@ PyObject *pdout(PyObject *self, PyObject *args){
                 // post("None");
             }
             else{
-                pd_error(py4pd_object, "[py4pd] py4pd just convert int, float and string!\n");
-                pd_error(py4pd_object, "[py4pd] The value received is of type %s", Py_TYPE(pValue_i)->tp_name);
                 Py_DECREF(pValue_i);
                 Py_DECREF(args);
                 return NULL;
             }
         }
-        outlet_list(py4pd_object->out_A, 0, list_size, list_array);
         PyErr_Clear();
     }
     else{
@@ -90,7 +86,6 @@ PyObject *pderror(PyObject *self, PyObject *args){
     char *string;
     if (PyArg_ParseTuple(args, "s", &string)){
         post("Not working yet");
-        pd_error(py4pd_object, "Ocorreu um erro");
     }
     else{
         PyErr_SetString(PyExc_TypeError, "message: argument must be a string"); // Colocar melhor descrição do erro
@@ -99,3 +94,49 @@ PyObject *pderror(PyObject *self, PyObject *args){
     return PyLong_FromLong(0);
     // WARNING: This function is not working yet.
 } 
+
+
+// =================================
+PyObject *pdmoduleError;
+
+// =================================
+PyMethodDef PdMethods[] = {                                                          // here we define the function spam_system
+    {"out", pdout, METH_VARARGS, "Output in out0 from PureData"},                           // one function for now
+    {"print", pdprint, METH_VARARGS, "Print informations in PureData Console"},             // one function for now
+    {"error", pderror, METH_VARARGS, "Print error in PureData"},                            // one function for now
+    {NULL, NULL, 0, NULL}
+};
+
+// =================================
+struct PyModuleDef pdmodule = {
+    PyModuleDef_HEAD_INIT,
+    "pd", /* name of module */
+    NULL, /* module documentation, may be NULL */
+    -1,   /* size of per-interpreter state of the module,
+             or -1 if the module keeps state in global variables. */
+    PdMethods,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+};
+
+// =================================
+
+PyMODINIT_FUNC PyInit_pd(void){
+    PyObject *m;
+    m = PyModule_Create(&pdmodule);
+    if (m == NULL)
+        return NULL;
+    pdmoduleError = PyErr_NewException("spam.error", NULL, NULL);
+    Py_XINCREF(pdmoduleError);
+    if (PyModule_AddObject(m, "error", pdmoduleError) < 0){
+        Py_XDECREF(pdmoduleError);
+        Py_CLEAR(pdmoduleError);
+        Py_DECREF(m);
+        return NULL;
+    }
+    return m;
+}
+
+

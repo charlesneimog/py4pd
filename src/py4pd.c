@@ -1,7 +1,10 @@
-#include "utilities.h"
-#include "module.h"
+#include "pd_module.h"
 #include "py4pd.h"
+#include "py4pd_utils.h"
 
+t_py *py4pd_object_array[100];
+t_class *py4pd_class;
+int object_count;
 
 // ===================================================================
 // ========================= Pd Object ===============================
@@ -623,6 +626,7 @@ static void thread(t_py *x, t_floatarg f){
 
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
     if (!Py_IsInitialized()) {
+        object_count = 1;   
         // Credits
         post("");
         post("[py4pd] by Charles K. Neimog");
