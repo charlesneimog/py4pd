@@ -1,0 +1,13 @@
+cff-version: 1.0.3
+message: If you use this software, please cite it using these metadata.
+title: 'py4pd, Python inside PureData'
+version: 0.5.0
+doi: 10.5281/zenodo.7677265
+authors:
+- given-names: Charles
+  family-names: K. Neimog
+  affiliation: Universidade de São Paulo
+version: 0.5.0
+date-released: 2023-02-25
+repository-code: https://github.com/charlesneimog/py4pd
+license: GPL3
