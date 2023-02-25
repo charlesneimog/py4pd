@@ -9,9 +9,9 @@
 </p>
     
 <p align="center">
-  <a href="https://github.com/plugdata-team/plugdata/blob/main/LICENSE"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/linux.yml/badge.svg" alt="Linux"></a>
-  <a href="https://github.com/plugdata-team/plugdata/blob/main/LICENSE"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/windows.yml/badge.svg" alt="Windows"></a>
-  <a href="https://github.com/plugdata-team/plugdata/blob/main/LICENSE"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/mac.yml/badge.svg" alt="Mac"></a>
+  <a href="https://github.com/plugdata-team/plugdata/blob/main/LICENSE"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/linux.yml/badge.svg?branch=v-0.6.0" alt="Linux"></a>
+  <a href="https://github.com/plugdata-team/plugdata/blob/main/LICENSE"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/windows.yml/badge.svg?branch=v-0.6.0" alt="Windows"></a>
+  <a href="https://github.com/plugdata-team/plugdata/blob/main/LICENSE"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/mac.yml/badge.svg?branch=v-0.6.0" alt="Mac"></a>
 </p>
 
 `py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things.  with Python you can:
