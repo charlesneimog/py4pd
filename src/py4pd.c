@@ -1,3 +1,4 @@
+#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd.h"
 #include "py4pd_utils.h"
@@ -28,7 +29,7 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     if (argc < 1) {
         post("[py4pd] The packages path is: %s", x->packages_path->s_name);
         return; // is this necessary?
-    }
+   }
     else {
         if (argc < 2 && argc > 0){
             if (argv[0].a_type == A_SYMBOL) {
@@ -576,30 +577,36 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
 // ============================================
 static void restartPython(t_py *x){
-    Py_Finalize();
-    x->function_called = 0;
-    x->function_name = NULL;
-    x->script_name = NULL;
-    x->module = NULL;
-    x->function = NULL;
+    t_py *y;
+
+    // Py_Finalize();
+    // x->function_called = 0;
+    // x->function_name = NULL;
+    // x->script_name = NULL;
+    // x->module = NULL;
+    // x->function = NULL;
     int i;
     for (i = 0; i < 100; i++) {
-        t_py *y = py4pd_object_array[i];
-        if (y != NULL) {
-            y->function_called = 0;
-            y->function_name = NULL;
-            y->script_name = NULL;
-            y->module = NULL;
-            y->function = NULL;
-            y->packages_path = gensym("./py-modules");
-            y->thread = 2;
-            y->editorName = gensym("code");
-        }
+        char object_name[20];
+        sprintf(object_name, "py4pd_%d", i);
+        post("object name: %s", object_name);
+        y = (t_py *)pd_findbyclass((x->object_name = gensym(object_name)), py4pd_class);
+        post("object pointer: %p", y); 
+
+        // if (y != NULL) {
+        //     y->function_called = 0;
+        //     y->function_name = NULL;
+        //     y->script_name = NULL;
+        //     y->module = NULL;
+        //     y->function = NULL;
+        //     y->packages_path = gensym("./py-modules");
+        //     y->thread = 2;
+        //     y->editorName = gensym("code");
+        // }
     }
-    PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
-    Py_Initialize();
-    post("[py4pd] Python interpreter was restarted!");
-    return;
+    // PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
+    // Py_Initialize();
+    // return;
 }
 
 // ============================================
@@ -668,6 +675,11 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
 
     object_count++; // count the number of objects                                  WARNING: global variable
     x->object_number = object_count; // save object number
+    // create object name
+    char object_name[20];
+    sprintf(object_name, "py4pd_%d", object_count);
+    x->object_name = gensym(object_name);
+    post("[py4pd] Object name: %s", object_name);
     x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     t_canvas *c = x->x_canvas;  // get the current canvas
