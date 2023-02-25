@@ -78,17 +78,21 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
 
-            } else if (PyFloat_Check(pValue_i)) {    // If the function return a list of floats
+            } 
+            else if (PyFloat_Check(pValue_i)) {    // If the function return a list of floats
                 double result = PyFloat_AsDouble(pValue_i);
                 float result_float = (float)result;
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
-            } else if (PyUnicode_Check(pValue_i)) {  // If the function return a list of strings
+            } 
+            else if (PyUnicode_Check(pValue_i)) {  // If the function return a list of strings
                 const char *result = PyUnicode_AsUTF8(pValue_i); 
                 list_array[i].a_type = A_SYMBOL;
                 list_array[i].a_w.w_symbol = gensym(result);
-            } else if (Py_IsNone(pValue_i)) {        // If the function return a list of None
-            } else {
+            } 
+            else if (Py_IsNone(pValue_i)) {        // If the function return a list of None
+            } 
+            else {
                 pd_error(x, "[py4pd] py4pd just convert int, float and string! Received: %s", Py_TYPE(pValue_i)->tp_name);
                 Py_DECREF(pValue_i);
                 return 0;
@@ -96,23 +100,44 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
         }
         outlet_list(x->out_A, 0, list_size, list_array); 
         free(list_array);
-    } else {
+    } 
+    else {
         if (PyLong_Check(pValue)) {
             long result = PyLong_AsLong(pValue); // If the function return a integer
             outlet_float(x->out_A, result);
-        } else if (PyFloat_Check(pValue)) {
+        } 
+        else if (PyFloat_Check(pValue)) {
             double result = PyFloat_AsDouble(pValue); // If the function return a float
             float result_float = (float)result;
             outlet_float(x->out_A, result_float);
-        } else if (PyUnicode_Check(pValue)) {
+        }
+        else if (PyUnicode_Check(pValue)) {
             const char *result = PyUnicode_AsUTF8(pValue); // If the function return a string
             outlet_symbol(x->out_A, gensym(result)); 
-            
-        } else if (Py_IsNone(pValue)) {
-            outlet_bang(x->out_A); // If the function return a None
-        } else {
+        } 
+        else if (Py_IsNone(pValue)) {
+            post("[py4pd] function %s return None", x->function_name->s_name); 
+        } 
+        // when function not use return    
+        else {
             pd_error(x, "[py4pd] py4pd just convert int, float and string or list of this atoms! Received: %s", Py_TYPE(pValue)->tp_name);
         }
+        
+
+
+
+
+
+    //     } else if (Py_IsNone(pValue)) {
+    //         outlet_bang(x->out_A); // If the function return a None
+    //     } else {
+    //         pd_error(x, "[py4pd] py4pd just convert int, float and string or list of this atoms! Received: %s", Py_TYPE(pValue)->tp_name);
+    //     }
+    //
+    // 
+
+
+
     }
     return 0;
 

@@ -11,10 +11,12 @@ PyObject *pdout(PyObject *self, PyObject *args){
     float f;
     char *string;
 
-
+    // get py4pd object pointer
+    // ================================
     PyObject *pd_module = PyImport_ImportModule("__main__");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    // ================================
 
     if (PyArg_ParseTuple(args, "f", &f)){
         PyErr_Clear();
@@ -87,18 +89,41 @@ PyObject *pdprint(PyObject *self, PyObject *args){
 }
 
 // =================================
-PyObject *pderror(PyObject *self, PyObject *args){
+PyObject *pdmodulerror(PyObject *self, PyObject *args){
     (void)self;
+    float f;
     char *string;
+
+    // get py4pd object pointer
+    // ================================
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    // ================================
+
+    post("py4pd python module pointer: %p", py4pd);
+
     if (PyArg_ParseTuple(args, "s", &string)){
-        post("[pd.error] Not working yet");
+        t_symbol *pd_symbol = gensym(string);
+        outlet_symbol(py4pd->out_A, pd_symbol);
+        post("ok");
+        PyErr_Clear();
     }
+
+
+    if (PyArg_ParseTuple(args, "s", &string)){
+        post("I am gere"); // BUG: Not working
+        pd_error(py4pd, "[pd.error]: %s", string);
+    }
+
+
+
+
     else{
-        PyErr_SetString(PyExc_TypeError, "message: argument must be a string"); // Colocar melhor descrição do erro
+        PyErr_SetString(PyExc_TypeError, "[pd.error] argument must be a string"); // Colocar melhor descrição do erro
         return NULL;
     }
     return PyLong_FromLong(0);
-    // WARNING: This function is not working yet.
 } 
 
 // =================================
@@ -213,7 +238,7 @@ PyMethodDef PdMethods[] = {
     {"out", pdout, METH_VARARGS, "Output in out0 from PureData"},   
     {"send", pdsend, METH_VARARGS, "Send message to PureData, it can be received with the object [receive]"},
     {"print", pdprint, METH_VARARGS, "Print informations in PureData Console"},            
-    {"error", pderror, METH_VARARGS, "Print error in PureData"},                          
+    {"error", pdmodulerror, METH_VARARGS, "Print error in PureData"},                          
     {NULL, NULL, 0, NULL}
 };
 
