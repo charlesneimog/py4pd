@@ -27,5 +27,5 @@ See examples in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Exa
 
 ## Building from Source
 
-* To build from source you can follow the steps in [Building from Source](https://github.com/charlesneimog/py4pd/blob/master/resources/BUGS.md).
+* To build from source you can follow the steps in [Building from Source](https://github.com/charlesneimog/py4pd/blob/master/resources/BUILD.md).
 
