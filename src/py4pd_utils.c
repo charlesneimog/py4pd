@@ -116,7 +116,7 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
             outlet_symbol(x->out_A, gensym(result)); 
         } 
         else if (Py_IsNone(pValue)) {
-            post("[py4pd] function %s return None", x->function_name->s_name); 
+            // post("[py4pd] function %s return None", x->function_name->s_name); // TODO: Thing about this
         } 
         // when function not use return    
         else {
@@ -232,7 +232,7 @@ void *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
 int *set_py4pd_config(t_py *x) {
     x->packages_path = gensym("./py-modules/");
     x->thread = 2;
-    x->editorName = gensym("code");
+    x->editorName = gensym("vscode");
     char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1)); // 
     strcpy(config_path, x->home_path->s_name); // copy string one into the result.
     strcat(config_path, "/py4pd.cfg"); // append string two to the result.
@@ -244,13 +244,9 @@ int *set_py4pd_config(t_py *x) {
             if (strstr(line, "packages =") != NULL) { // check if line contains "packages ="
                 char *packages_path = (char *)malloc(sizeof(char) * (strlen(line) - strlen("packages = ") + 1)); // 
                 strcpy(packages_path, line + strlen("packages = ")); // copy string one into the result.
-                
                 if (strlen(packages_path) > 0) { // check if path is not empty
-                    // from packages_path remove the two last character
                     packages_path[strlen(packages_path) - 1] = '\0'; // remove the last character
                     packages_path[strlen(packages_path) - 1] = '\0'; // remove the last character
-
-                    // remove all spaces from packages_path
                     char *i = packages_path;
                     char *j = packages_path;
                     while(*j != 0) {

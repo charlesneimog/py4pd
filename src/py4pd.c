@@ -184,7 +184,6 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv){
     #else // if not windows 64bits
     char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
     command = get_editor_command(x);
-    post("[py4pd] %s", command);
     pd4py_system_func(command);
     #endif
 
@@ -414,8 +413,6 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
 
     // WARNING: this can generate errors? How this will work on multithreading?
-
-    post("py4pd pointer C code: %p", x);
     PyObject *capsule = PyCapsule_New(x, "py4pd", NULL); // create a capsule to pass the object to the python interpreter
     PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule); // add the capsule to the python interpreter
     pValue = PyObject_CallObject(x->function, ArgsTuple);
@@ -631,7 +628,8 @@ static void thread(t_py *x, t_floatarg f){
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
     t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
 
-    // TODO: version 0.6.0 - add score/picture 
+    // ============================================                                  TODO: Add '-inlet' to create a new inlets
+    //                                                                               TODO: version 0.6.0 - add score/picture 
     // int i;
     // for (i = 0; i < argc; i++) {
     //     if (argv[i].a_type == A_SYMBOL) {
@@ -658,7 +656,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     // }
 
     if (!Py_IsInitialized()) {
-        object_count = 1;   
+        object_count = 1;  // To count the numbers of objects, and finalize the interpreter when the last object is deleted
         post("");
         post("[py4pd] by Charles K. Neimog");
         post("[py4pd] Version 0.5.0       ");
@@ -667,8 +665,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
         Py_Initialize(); // Initialize the Python interpreter. If 1, the signal handler is installed.
     }
-    // to acess this from py4pd module use: py4pd = PyCapsule_Import("py4pd", 0);
-    // py4pd will be declared as: t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd, "py4pd");
 
     object_count++; // count the number of objects                                  WARNING: global variable
     x->object_number = object_count; // save object number

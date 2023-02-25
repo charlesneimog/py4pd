@@ -24,7 +24,7 @@ PyObject *pdout(PyObject *self, PyObject *args){
     }
     else if (PyArg_ParseTuple(args, "s", &string)){
         t_symbol *pd_symbol = gensym(string);
-        outlet_symbol(py4pd->out_A, pd_symbol);
+        outlet_symbol(py4pd->out_A, pd_symbol); // TODO: make this output without the symbol.
         PyErr_Clear();
     }
     else if (PyArg_ParseTuple(args, "O", &args)){
@@ -66,7 +66,7 @@ PyObject *pdout(PyObject *self, PyObject *args){
         PyErr_Clear();
     }
     else{
-        PyErr_SetString(PyExc_TypeError, "pdout: argument must be a float or a string"); // Colocar melhor descrição do erro
+        PyErr_SetString(PyExc_TypeError, "[py.script] pd.out argument must be a list, float or a string"); // Colocar melhor descrição do erro
         return NULL;
     }
     return PyLong_FromLong(0);
@@ -82,18 +82,16 @@ PyObject *pdprint(PyObject *self, PyObject *args){
         PyErr_Clear();
     }
     else{
-        PyErr_SetString(PyExc_TypeError, "[pd.print] must receive a string"); // Colocar melhor descrição do erro
+        PyErr_SetString(PyExc_TypeError, "[py.print] must receive a string"); // Colocar melhor descrição do erro
         return NULL;
     }
     return PyLong_FromLong(0);
 }
 
 // =================================
-PyObject *pdmodulerror(PyObject *self, PyObject *args){
+PyObject *pderror(PyObject *self, PyObject *args){
     (void)self;
-    float f;
     char *string;
-
     // get py4pd object pointer
     // ================================
     PyObject *pd_module = PyImport_ImportModule("__main__");
@@ -101,26 +99,11 @@ PyObject *pdmodulerror(PyObject *self, PyObject *args){
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
     // ================================
 
-    post("py4pd python module pointer: %p", py4pd);
-
     if (PyArg_ParseTuple(args, "s", &string)){
-        t_symbol *pd_symbol = gensym(string);
-        outlet_symbol(py4pd->out_A, pd_symbol);
-        post("ok");
-        PyErr_Clear();
+        pd_error(py4pd, "[py.script]: %s", string);
     }
-
-
-    if (PyArg_ParseTuple(args, "s", &string)){
-        post("I am gere"); // BUG: Not working
-        pd_error(py4pd, "[pd.error]: %s", string);
-    }
-
-
-
-
     else{
-        PyErr_SetString(PyExc_TypeError, "[pd.error] argument must be a string"); // Colocar melhor descrição do erro
+    PyErr_SetString(PyExc_TypeError, "[py.script] argument of pd.error must be a string"); // Colocar melhor descrição do erro
         return NULL;
     }
     return PyLong_FromLong(0);
@@ -141,17 +124,16 @@ PyObject *pdsend(PyObject *self, PyObject *args){
             pd_symbol(symbol->s_thing, gensym(string));
         }
         else{
-            post("[pd.script] object [r %s] not found", receiver);
+            post("[py.script] pd.send not found object [r %s] in pd patch", receiver);
         }
     }
     else if (PyArg_ParseTuple(args, "sf", &receiver, &floatNumber)){
         t_symbol *symbol = gensym(receiver);
-        // convert number to t_float
         if (symbol->s_thing) {
             pd_float(symbol->s_thing, floatNumber);
         }
         else{
-            post("[pd.script] object [r %s] not found", receiver);
+            post("[py.script] pd.send not found object [r %s] in pd patch", receiver);
         }
     }
     else if (PyArg_ParseTuple(args, "si", &receiver, &intNumber)){
@@ -160,20 +142,19 @@ PyObject *pdsend(PyObject *self, PyObject *args){
             pd_float(symbol->s_thing, intNumber);
         }
         else{
-            post("[pd.script] object [r %s] not found", receiver);
+            post("[py.script] pd.send not found object [r %s] in pd patch", receiver);
         }
     }
     else if (PyArg_ParseTuple(args, "sO", &receiver, &listargs)){
         if (PyDict_Check(listargs)){
             char error_message[100];
-            sprintf(error_message, "[pd.send] received a type 'dict', it must be a list, string, int, or float."); 
+            sprintf(error_message, "[py.send] received a type 'dict', it must be a list, string, int, or float."); 
             PyErr_SetString(PyExc_TypeError, error_message); // TODO: Check english
             return NULL;
         }
         t_atom *list_array;
         int list_size = PyList_Size(listargs);
         list_array = (t_atom *)malloc(list_size * sizeof(t_atom));
-        // check type of args
         int i;
         for (i = 0; i < list_size; ++i)
         {
@@ -202,7 +183,7 @@ PyObject *pdsend(PyObject *self, PyObject *args){
             }
             else{
                 char error_message[100];
-                sprintf(error_message, "[pd.send] received a type '%s' in index %d of the list, it must be a string, int, or float.", pValue_i->ob_type->tp_name, i);
+                sprintf(error_message, "[py.send] received a type '%s' in index %d of the list, it must be a string, int, or float.", pValue_i->ob_type->tp_name, i);
                 PyErr_SetString(PyExc_TypeError, error_message); // TODO: Check english
                 Py_DECREF(pValue_i);
                 Py_DECREF(args);
@@ -219,17 +200,14 @@ PyObject *pdsend(PyObject *self, PyObject *args){
     }
     else{
         char error_message[100];
-        // get type of second argument
         PyObject *pValue_i = PyTuple_GetItem(args, 1);
-        sprintf(error_message, "[pd.send] received a type '%s', it must be a string, int, or float.", pValue_i->ob_type->tp_name);
-        PyErr_SetString(PyExc_TypeError, error_message); // TODO: Check english
+        sprintf(error_message, "[py.script] pd.send received a type '%s', it must be a string, int, or float.", pValue_i->ob_type->tp_name);
+        PyErr_SetString(PyExc_TypeError, error_message); 
         return NULL;
     }
-
     PyErr_Clear();
     return PyLong_FromLong(0);
 }
-
 // =================================
 PyObject *pdmoduleError;
 
@@ -238,7 +216,7 @@ PyMethodDef PdMethods[] = {
     {"out", pdout, METH_VARARGS, "Output in out0 from PureData"},   
     {"send", pdsend, METH_VARARGS, "Send message to PureData, it can be received with the object [receive]"},
     {"print", pdprint, METH_VARARGS, "Print informations in PureData Console"},            
-    {"error", pdmodulerror, METH_VARARGS, "Print error in PureData"},                          
+    {"error", pderror, METH_VARARGS, "Print error in PureData"},                          
     {NULL, NULL, 0, NULL}
 };
 
@@ -247,8 +225,7 @@ struct PyModuleDef pdmodule = {
     PyModuleDef_HEAD_INIT,
     "pd", /* name of module */
     NULL, /* module documentation, may be NULL */
-    -1,   /* size of per-interpreter state of the module,
-             or -1 if the module keeps state in global variables. */
+    -1,   /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
     PdMethods, // Methods
     NULL, 
     NULL, 
@@ -264,15 +241,14 @@ PyMODINIT_FUNC PyInit_pd(){
     if (m == NULL){
         return NULL;
     }
-    pdmoduleError = PyErr_NewException("spam.error", NULL, NULL);
+    pdmoduleError = PyErr_NewException("spam.error", NULL, NULL); 
     Py_XINCREF(pdmoduleError);
-    if (PyModule_AddObject(m, "error", pdmoduleError) < 0){
+    if (PyModule_AddObject(m, "moduleerror", pdmoduleError) < 0){
         Py_XDECREF(pdmoduleError);
         Py_CLEAR(pdmoduleError);
         Py_DECREF(m);
         return NULL;
     }
-    post("[py4pd] pd module loaded");
     return m;
 }
 

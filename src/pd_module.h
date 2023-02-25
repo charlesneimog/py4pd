@@ -5,9 +5,6 @@
 
 #include "py4pd.h"
 
-extern PyObject *pdout(PyObject *self, PyObject *args);
-extern PyObject *pdprint(PyObject *self, PyObject *args);
-extern PyObject *pderror(PyObject *self, PyObject *args);
 extern PyMethodDef PdMethods[];
 
 PyMODINIT_FUNC PyInit_pd(void);
