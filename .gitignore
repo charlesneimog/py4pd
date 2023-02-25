@@ -11,14 +11,25 @@ py4pd.zip
 DLLs/*
 Lib/*
 scripts/*
-__pycache__
-__pycache__/py.cpython-310.pyc
+
 *.bat
 *.eps
+# Python Binaries
+__pycache__
+__pycache__/py.cpython-310.pyc
+
+# PureData Binaries
 *.pd_linux
+*.m_amd64
+
+# Files for test
 *.tex
 *.texi
 *.count
 *.png
-*.m_amd64
+*.vscode
 *.txt
+py-modules
+./compile_commands.json
+.cache/
+compile_commands.json

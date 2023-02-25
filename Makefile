@@ -1,23 +1,30 @@
 # library name
 lib.name = py4pd
 
-# python libs
-
 uname := $(shell uname -s)
 
 ifeq (MINGW,$(findstring MINGW,$(uname)))
-  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wincompatible-pointer-types -Wint-conversion
-  ldlibs =  $(PYTHON_DLL) -lwinpthread
-  pythondll_name = $(shell basename $(PYTHON_DLL))
-  $(shell cp $(PYTHON_DLL) $(pythondll_name))
+  PYTHON_INCLUDE := $(shell cat pythonincludes.txt)
+  PYTHON_PATH := $(shell cat pythonpath.txt)
+  PYTHON_DLL := $(PYTHON_PATH)/python311.dll
+  # PYTHON_DLL = $PYTHON_PATH/python311.dll
+  EXTRA_INCLUDES = -I $(PYTHON_INCLUDE) 
+  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wno-unused-variable 
+  ldlibs =  $(PYTHON_DLL) -lwinpthread -lregex
+  # pythondll_name = $(shell basename $(PYTHON_DLL))
+  # $(shell cp $(PYTHON_DLL) $(pythondll_name))
 
 else ifeq (Linux,$(findstring Linux,$(uname)))
-  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wincompatible-pointer-types -Wint-conversion
+  PYTHON_INCLUDE := $(shell python3 -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
+  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type 
+  #-shared -Wno-cast-function-type -Wno-unused-variable
   ldlibs = -l $(PYTHON_VERSION) 
 
 else ifeq (Darwin,$(findstring Darwin,$(uname)))
-  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wincompatible-pointer-types -Wint-conversion
-  ldlibs = -L "/Library/Frameworks/Python.framework/Versions/3.11/lib/" -l python3.11
+  PYTHON_INCLUDE := $(shell python3 -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
+  cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wno-unused-variable -mmacosx-version-min=10.9
+  PYTHON_LIB := $(shell python3 -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
+  ldlibs = -L $(PYTHON_LIB) -l $(PYTHON_VERSION) 
 
 else
   $(error "Unknown system type: $(uname)")
@@ -27,8 +34,7 @@ endif
 
 # =================================== Sources ===================================
 
-py4pd.class.sources = src/py4pd.c src/module.c 
-# py4pd~.class.sources = src/py4pd_tilde.c
+py4pd.class.sources = src/py4pd.c src/py4pd_utils.c src/pd_module.c
 
 # =================================== Data ======================================
 datafiles = \
@@ -41,6 +47,6 @@ $(PYTHON_DLL)
 
 # =================================== Pd Lib Builder =============================
 
-PDLIBBUILDER_DIR=./pd-lib-builder/
+PDLIBBUILDER_DIR=./resources/pd-lib-builder/
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 

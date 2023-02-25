@@ -1,0 +1,37 @@
+[
+  {
+    "arguments": [
+      "/usr/lib64/ccache/cc",
+      "-DPD",
+      "-I",
+      "/home/neimog/Documents/Git/pd-includes/",
+      "-DUNIX",
+      "-fPIC",
+      "-I",
+      "/usr/include/python3.11/",
+      "-Wno-cast-function-type",
+      "-Wno-unused-variable",
+      "-Wall",
+      "-Wextra",
+      "-Wshadow",
+      "-Winline",
+      "-Wstrict-aliasing",
+      "-O3",
+      "-ffast-math",
+      "-funroll-loops",
+      "-fomit-frame-pointer",
+      "-march=core2",
+      "-mfpmath=sse",
+      "-msse",
+      "-msse2",
+      "-msse3",
+      "-c",
+      "-o",
+      "src/py4pd.o",
+      "src/py4pd.c"
+    ],
+    "directory": "/home/neimog/Documents/Git/py4pd",
+    "file": "/home/neimog/Documents/Git/py4pd/src/py4pd.c",
+    "output": "/home/neimog/Documents/Git/py4pd/src/py4pd.o"
+  }
+]

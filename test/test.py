@@ -1,20 +1,57 @@
-import os
-import sys
+# import os
+# import sys
+# import requests
 
-# print where I am
-print(os.getcwd())
+# version = '0.5.0'
+# response = requests.get("https://api.github.com/repos/charlesneimog/py4pd/releases/latest")
+# objectVersion = response.json()['tag_name']
+# repo = os.popen('git rev-parse --abbrev-ref HEAD').read().strip()
 
+# if version != objectVersion and repo == 'master':
+#     print('Version mismatch. Please update the object version in the uploadobject.py file.')
 
-if sys.platform == "win32":
-    os.chdir("../py4pd_WIN64")
-    os.system('"C:\\Program Files\\Pure Data\\bin\\pd.exe" -nogui test.pd')
+def runTest():
+    import os
+    import subprocess
+    import sys
+    import platform
+    if platform.system() == 'Linux':
+        cmd = 'pd -nogui -send "start-test bang"  py4pd_Linux/test.pd'
+        output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+        outputLines = str(output).split('\\n')
+        lastLine = outputLines[-2]
+    elif platform.system() == 'Windows':
+        os.system('copy "C:/Program Files/Pd/bin/pd.exe" .')
+        os.system('copy "C:/Program Files/Pd/bin/pd.dll" .')
+        output = subprocess.run("./pd.exe -nogui -send \"start-test bang\" py4pd_WIN64/test.pd", capture_output=True, text=True, shell=True)
+        outputLines = str(output).split('\\n')
+        lastLine = outputLines[-2]
+    elif platform.system() == 'Darwin':
+        cmd = '/Applications/Pd-*.app/Contents/Resources/bin/pd -nogui -send "start-test bang" py4pd_macOS-Intel/test.pd'
+        output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+        outputLines = str(output).split('\\n')
+        lastLine = outputLines[-2]
+    # if lastLine contains "PASS" then the test passed
+    if "PASS" in lastLine:
+        # print in green
+        print("\033[92m" + ' ALL TESTS PASSED ' + "\033[0m")
+        return "ok"
+    else:
+        # split all the lines
+        for line in outputLines:
+            # if the line contains "FAIL" then print in red
+            if "FAIL" in line:
+                print("\033[91m" + line + "\033[0m")
+            # if the line contains "PASS" then print in green
+            elif "PASS" in line:
+                print("\033[92m" + line + "\033[0m")
+            # otherwise print normally
+            else:
+                print(line)
+        sys.exit(1)
     
-elif sys.platform == "darwin":
-    os.chdir("../py4pd_MACIntel")
-    os.system("/Applications/Pd-*.app/Contents/Resources/bin/pd -nogui test.pd")
     
-elif sys.platform == "linux2":
-    os.chdir("../py4pd_LINUX")
-    os.system("pd -nogui test.pd")
+    
+         
               
 
