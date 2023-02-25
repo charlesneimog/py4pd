@@ -217,7 +217,7 @@ PyMethodDef PdMethods[] = {
     {"send", pdsend, METH_VARARGS, "Send message to PureData, it can be received with the object [receive]"},
     {"print", pdprint, METH_VARARGS, "Print informations in PureData Console"},            
     {"error", pderror, METH_VARARGS, "Print error in PureData"},                          
-    {NULL, NULL, 0, NULL}
+    {NULL, NULL, 0, NULL} // 
 };
 
 // =================================

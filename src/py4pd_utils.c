@@ -18,14 +18,13 @@ char* get_editor_command(t_py *x) {
     char* command = (char*)malloc(256 * sizeof(char));
     memset(command, 0, 256);
     if (strcmp(editor, "vscode") == 0) {
-        sprintf(command, "code %s/%s.py", home, filename);
+        sprintf(command, "code '%s/%s.py'", home, filename);
     } else if (strcmp(editor, "nvim") == 0) {
-        // gnome-terminal -e 'nvim %s'
-        sprintf(command, "gnome-terminal -e 'nvim %s/%s.py'", home, filename);
+        sprintf(command, "gnome-terminal -e \"nvim '%s/%s.py'\"", home, filename);
     } else if (strcmp(editor, "sublime") == 0) {
-        sprintf(command, "subl %s/%s.py", home, filename);
+        sprintf(command, "subl '%s/%s.py'", home, filename);
     } else if (strcmp(editor, "emacs") == 0) {
-        sprintf(command, "emacs %s/%s.py", home, filename);
+        sprintf(command, "emacs '%s/%s.py'", home, filename);
     } else {
         pd_error(x, "[py4pd] editor %s not supported.", editor);
     }

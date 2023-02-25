@@ -3,8 +3,12 @@
 on:
   push:
     branches: [ "master" , "v-0.5.0" ]
+    paths:
+      - 'src/**'
   pull_request:
     branches: [ "master" ]
+    paths:
+      - 'src/**'
   workflow_dispatch:
  
 
