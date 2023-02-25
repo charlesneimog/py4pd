@@ -1,10 +1,15 @@
 <p align="center">
   <h1 align="center">py4pd</h1>
   <h4 align="center">Python in Visual Enviroment of PureData.</h4>
+  <h5 align="center">If using py4pd, consider citing this repository use the DOI: <i>10.5281/zenodo.7677265 </i> </h5>
 </p>
 <p align="center">
     <a href="https://github.com/charlesneimog/py4pd/releases/latest"><img src="https://img.shields.io/github/release/charlesneimog/py4pd.svg?include_prereleases" alt="Release"></a>
     <a href="https://github.com/plugdata-team/plugdata/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--v3-blue.svg" alt="License"></a>
+    <a href="https://zenodo.org/record/7677265"><img src="https://zenodo.org/badge/doi/10.5281/zenodo.7677265.svg" alt="DOI"></a>
+    
+    
+    
   </p>
     
   <p align="center">
