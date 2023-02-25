@@ -40,4 +40,16 @@ See examples in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Exa
 ## Citing this work
 
 Consider citing this repository, in the right side of page, below of about.
+``` bibtex
+@software{Neimog_py4pd_Python_inside_2023,
+author = {Neimog, Charles K.},
+doi = {10.5281/zenodo.7677265},
+license = {GPL3},
+month = {2},
+title = {{py4pd, Python inside PureData}},
+url = {https://github.com/charlesneimog/py4pd},
+version = {0.5.0},
+year = {2023}
+}
+```
 
