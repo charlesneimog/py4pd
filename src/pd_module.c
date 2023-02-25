@@ -251,5 +251,3 @@ PyMODINIT_FUNC PyInit_pd(){
     }
     return m;
 }
-
-
