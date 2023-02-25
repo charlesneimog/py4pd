@@ -1,7 +1,7 @@
 # py4pd - Python inside PureData
-[![.github/workflows/linux.yml](https://github.com/charlesneimog/py4pd/actions/workflows/linux.yml/badge.svg?branch=v-0.5.0)](https://github.com/charlesneimog/py4pd/actions/workflows/linux.yml)
-[![.github/workflows/windows.yml](https://github.com/charlesneimog/py4pd/actions/workflows/windows.yml/badge.svg?branch=v-0.5.0)](https://github.com/charlesneimog/py4pd/actions/workflows/windows.yml)
-[![.github/workflows/mac.yml](https://github.com/charlesneimog/py4pd/actions/workflows/mac.yml/badge.svg?branch=v-0.5.0)](https://github.com/charlesneimog/py4pd/actions/workflows/mac.yml)
+[![.github/workflows/linux.yml](https://github.com/charlesneimog/py4pd/actions/workflows/linux.yml/badge.svg)](https://github.com/charlesneimog/py4pd/actions/workflows/linux.yml)
+[![.github/workflows/windows.yml](https://github.com/charlesneimog/py4pd/actions/workflows/windows.yml/badge.svg)](https://github.com/charlesneimog/py4pd/actions/workflows/windows.yml)
+[![.github/workflows/mac.yml](https://github.com/charlesneimog/py4pd/actions/workflows/mac.yml/badge.svg)](https://github.com/charlesneimog/py4pd/actions/workflows/mac.yml)
 
 
 `py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things.  with Python you can:
