@@ -576,30 +576,36 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
 // ============================================
 static void restartPython(t_py *x){
-    Py_Finalize();
-    x->function_called = 0;
-    x->function_name = NULL;
-    x->script_name = NULL;
-    x->module = NULL;
-    x->function = NULL;
+    t_py *y;
+
+    // Py_Finalize();
+    // x->function_called = 0;
+    // x->function_name = NULL;
+    // x->script_name = NULL;
+    // x->module = NULL;
+    // x->function = NULL;
     int i;
     for (i = 0; i < 100; i++) {
-        t_py *y = py4pd_object_array[i];
-        if (y != NULL) {
-            y->function_called = 0;
-            y->function_name = NULL;
-            y->script_name = NULL;
-            y->module = NULL;
-            y->function = NULL;
-            y->packages_path = gensym("./py-modules");
-            y->thread = 2;
-            y->editorName = gensym("code");
-        }
+        t_int object_number = i;
+        // pd_findbyclass((x->x_sym = s), sigsend_class);
+        y = (t_py *)pd_findbyclass((x->object_number = object_number), py4pd_class);
+
+        post("object pointer: %p", y);
+
+        // if (y != NULL) {
+        //     y->function_called = 0;
+        //     y->function_name = NULL;
+        //     y->script_name = NULL;
+        //     y->module = NULL;
+        //     y->function = NULL;
+        //     y->packages_path = gensym("./py-modules");
+        //     y->thread = 2;
+        //     y->editorName = gensym("code");
+        // }
     }
-    PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
-    Py_Initialize();
-    post("[py4pd] Python interpreter was restarted!");
-    return;
+    // PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
+    // Py_Initialize();
+    // return;
 }
 
 // ============================================
