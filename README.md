@@ -7,16 +7,13 @@
     <a href="https://github.com/charlesneimog/py4pd/releases/latest"><img src="https://img.shields.io/github/release/charlesneimog/py4pd.svg?include_prereleases" alt="Release"></a>
     <a href="https://github.com/plugdata-team/plugdata/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--v3-blue.svg" alt="License"></a>
     <a href="https://zenodo.org/record/7677265"><img src="https://zenodo.org/badge/doi/10.5281/zenodo.7677265.svg" alt="DOI"></a>
+</p>
     
-    
-    
-  </p>
-    
-  <p align="center">
+<p align="center">
   <a href="https://github.com/plugdata-team/plugdata/blob/main/LICENSE"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/linux.yml/badge.svg" alt="Linux"></a>
   <a href="https://github.com/plugdata-team/plugdata/blob/main/LICENSE"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/windows.yml/badge.svg" alt="Windows"></a>
   <a href="https://github.com/plugdata-team/plugdata/blob/main/LICENSE"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/mac.yml/badge.svg" alt="Mac"></a>
-  </p>
+</p>
 
 `py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things.  with Python you can:
 * Use scores inside PureData;
@@ -24,8 +21,6 @@
 * OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
 
 See examples in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Examples).
-
-
 
 ### Download py4pd
 1. Open PureData, `Help->Find Externals->` search for `py4pd` then select py4pd and click on `Install`: 
@@ -42,4 +37,8 @@ See examples in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Exa
 ## Building from Source
 
 * To build from source you can follow the steps in [Building from Source](https://github.com/charlesneimog/py4pd/blob/master/resources/BUILD.md).
+
+## Citing this work
+
+Consider citing this repository, in the right side of page, below of about.
 
