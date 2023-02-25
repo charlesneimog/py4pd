@@ -30,7 +30,6 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_object            x_obj; // convensao no puredata source code
     t_canvas            *x_canvas; // pointer to the canvas
     t_int               object_number; // object number
-    t_symbol            *object_name; // object name
     t_inlet             *in1;
     PyObject            *module; // python object
     PyObject            *function; // function name 
