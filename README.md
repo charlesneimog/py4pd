@@ -1,6 +1,6 @@
 <p align="center">
   <h1 align="center">py4pd</h1>
-  <h4 align="center">Python in Visual Enviroment of PureData.</h4>
+  <h4 align="center">All Python in the PureData environment.</h4>
 </p>
 <p align="center">
     <a href="https://github.com/charlesneimog/py4pd/releases/latest"><img src="https://img.shields.io/github/release/charlesneimog/py4pd.svg?include_prereleases" alt="Release"></a>
@@ -40,4 +40,3 @@ See examples in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Exa
 ## Citing this work
 
 Consider citing this repository, in the right side of page, below of about.
-
