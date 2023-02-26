@@ -9,18 +9,15 @@ ifeq (MINGW,$(findstring MINGW,$(uname)))
   EXTRA_INCLUDES = -I $(PYTHON_INCLUDE) 
   cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wno-unused-variable 
   ldlibs =  $(PYTHON_DLL) -lwinpthread 
-
 else ifeq (Linux,$(findstring Linux,$(uname)))
   PYTHON_INCLUDE := $(shell python3 -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
   cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type 
   ldlibs = -l $(PYTHON_VERSION) 
-
 else ifeq (Darwin,$(findstring Darwin,$(uname)))
   PYTHON_INCLUDE := $(shell python3 -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
   cflags = -I $(PYTHON_INCLUDE) -Wno-cast-function-type -Wno-unused-variable -mmacosx-version-min=10.9
   PYTHON_LIB := $(shell python3 -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
   ldlibs = -L $(PYTHON_LIB) -l $(PYTHON_VERSION) 
-
 else
   $(error "Unknown system type: $(uname)")
   $(shell exit 1)

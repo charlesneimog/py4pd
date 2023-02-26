@@ -7,7 +7,6 @@
     #include <windows.h>
 #endif
 
-// Python include
 #define PY_SSIZE_T_CLEAN // Good practice to use this before include Python.h because it will remove some deprecated function
 #include <Python.h>
 
