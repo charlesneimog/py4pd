@@ -590,8 +590,8 @@ static void restartPython(t_py *x){
         char object_name[20];
         sprintf(object_name, "py4pd_%d", i);
         post("object name: %s", object_name);
-        y = (t_py *)pd_findbyclass((x->object_name = gensym(object_name)), py4pd_class);
-        post("object pointer: %p", y); 
+        // y = (t_py *)pd_findbyclass((x->object_name = gensym(object_name)), py4pd_class);
+        // post("object pointer: %p", y); 
 
         // if (y != NULL) {
         //     y->function_called = 0;
@@ -666,20 +666,14 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         object_count = 1;  // To count the numbers of objects, and finalize the interpreter when the last object is deleted
         post("");
         post("[py4pd] by Charles K. Neimog");
-        post("[py4pd] Version 0.5.0       ");
+        post("[py4pd] Version 0.6.0       ");
         post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
         post("");
         PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
         Py_Initialize(); // Initialize the Python interpreter. If 1, the signal handler is installed.
     }
-
     object_count++; // count the number of objects                                  WARNING: global variable
     x->object_number = object_count; // save object number
-    // create object name
-    char object_name[20];
-    sprintf(object_name, "py4pd_%d", object_count);
-    x->object_name = gensym(object_name);
-    post("[py4pd] Object name: %s", object_name);
     x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     t_canvas *c = x->x_canvas;  // get the current canvas

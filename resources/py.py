@@ -1,6 +1,7 @@
 from random import *
 from neoscore.common import *
 import os
+import pd
 
 
 def sum(x, y):
@@ -55,8 +56,15 @@ def pd_error():
 
 def pd_send():
     "It sends a message to the py4pd message box."
-    import pd
     pd.send()
+
+def pd_tabwrite():
+    "It sends a message to the py4pd message box."
+    list = []
+    for i in range(100):
+        randomnumber = randint(-100, 100)
+        list.append(randomnumber * 0.01)
+    pd.tabwrite("test", list) 
 
 def whereFiles():
     "It returns the path of the files."

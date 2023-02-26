@@ -34,31 +34,33 @@ char* get_editor_command(t_py *x) {
 
 // ============================================
 int isNumericOrDot(const char *str) {
-    regex_t regex;
-    int ret;
-    ret = regcomp(&regex, "^[0-9.]+$", REG_EXTENDED);
-    if (ret != 0) {
-        return 0;
+    int hasDot = 0;
+    while (*str) {
+        if (isdigit(*str)) {
+            str++;
+        }
+        else if (*str == '.' && !hasDot) {
+            hasDot = 0;
+            str++;
+        }
+        else {
+            return 0;
+        }
     }
-    ret = regexec(&regex, str, 0, NULL, 0);
-    regfree(&regex);
-    if (ret == 0) {
-        return 1;
-    } else {
-        return 0;
-    }
+    return 1;
 }
 
 // =====================================================================
 
-char *removeChar(char *str, char garbage) {
-    char *src, *dst;
-    for (src = dst = str; *src != '\0'; src++) {
-        *dst = *src;
-        if (*dst != garbage) dst++;
+void removeChar(char* str, char c) {
+    int i, j;
+    for (i = 0, j = 0; str[i] != '\0'; i++) {
+        if (str[i] != c) {
+            str[j] = str[i];
+            j++;
+        }
     }
-    *dst = '\0';
-    return str;
+    str[j] = '\0';
 }
 
 // =====================================================================
