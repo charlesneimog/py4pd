@@ -67,6 +67,11 @@ def pd_tabwrite():
         list.append(randomnumber * 0.01)
     pd.tabwrite("test", list, resize=True)
 
+def pd_tabread():
+    "It sends a message to the py4pd message box."
+    myarray = pd.tabread("test2")
+    return myarray
+
 def whereFiles():
     "It returns the path of the files."
     import os

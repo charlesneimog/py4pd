@@ -109,74 +109,6 @@ PyObject *pderror(PyObject *self, PyObject *args){
     return PyLong_FromLong(0);
 } 
 
-// =================================
-PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords){
-    (void)self;
-    int resize = 0;
-    int vecsize;
-    t_garray *pdarray;
-    t_word *vec;
-    char *string;
-    PyObject *PYarray;
-    
-    if (keywords == NULL){
-        PyErr_SetString(PyExc_TypeError, "[py.script] pd.tabwrite: keywords must be a dictionary");
-        return NULL;
-    }
-    else{
-        resize = PyDict_Contains(keywords, PyUnicode_FromString("resize"));
-        if (resize == -1){
-            post("error");
-        }
-        else if (resize == 1){
-            PyObject *resize_value = PyDict_GetItemString(keywords, "resize");
-            if (resize_value == Py_True){
-                resize = 1;
-            }
-            else if (resize_value == Py_False){
-                resize = 0;
-            }
-            else{
-                resize = 0;
-            }
-        }
-        else{
-            resize = 0;
-        }
-    }
-
-    // ================================
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-    // ================================
-
-    if (PyArg_ParseTuple(args, "sO", &string, &PYarray)){
-        t_symbol *pd_symbol = gensym(string);
-        if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class)))
-            pd_error(py4pd, "[py.script] Array %s not found.", string);
-        else if (!garray_getfloatwords(pdarray, &vecsize, &vec))
-            pd_error(py4pd, "[py.script] Bad template for tabwrite '%s'.", string);
-        else{
-            int i;
-            if (resize == 1){
-                garray_resize_long(pdarray, PyList_Size(PYarray));
-                vecsize = PyList_Size(PYarray);
-                garray_getfloatwords(pdarray, &vecsize, &vec);
-            }
-            for (i = 0; i < vecsize; i++){
-                double result = PyFloat_AsDouble(PyList_GetItem(PYarray, i));
-                float result_float = (float)result;
-                vec[i].w_float = result_float;
-            }
-            garray_redraw(pdarray);
-            PyErr_Clear();
-        }
-    }
-    return PyLong_FromLong(0);
-} 
-
-
 
 // =================================
 PyObject *pdsend(PyObject *self, PyObject *args){
@@ -277,6 +209,114 @@ PyObject *pdsend(PyObject *self, PyObject *args){
     PyErr_Clear();
     return PyLong_FromLong(0);
 }
+
+// =================================
+PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords){
+    (void)self;
+    int resize = 0;
+    int vecsize;
+    t_garray *pdarray;
+    t_word *vec;
+    char *string;
+    PyObject *PYarray;
+    
+    if (keywords == NULL){
+        PyErr_SetString(PyExc_TypeError, "[py.script] pd.tabwrite: keywords must be a dictionary");
+        return NULL;
+    }
+    else{
+        resize = PyDict_Contains(keywords, PyUnicode_FromString("resize"));
+        if (resize == -1){
+            post("error");
+        }
+        else if (resize == 1){
+            PyObject *resize_value = PyDict_GetItemString(keywords, "resize");
+            if (resize_value == Py_True){
+                resize = 1;
+            }
+            else if (resize_value == Py_False){
+                resize = 0;
+            }
+            else{
+                resize = 0;
+            }
+        }
+        else{
+            resize = 0;
+        }
+    }
+
+    // ================================
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    // ================================
+
+    if (PyArg_ParseTuple(args, "sO", &string, &PYarray)){
+        t_symbol *pd_symbol = gensym(string);
+        if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class)))
+            pd_error(py4pd, "[py.script] Array %s not found.", string);
+        else if (!garray_getfloatwords(pdarray, &vecsize, &vec))
+            pd_error(py4pd, "[py.script] Bad template for tabwrite '%s'.", string);
+        else{
+            int i;
+            if (resize == 1){
+                garray_resize_long(pdarray, PyList_Size(PYarray));
+                vecsize = PyList_Size(PYarray);
+                garray_getfloatwords(pdarray, &vecsize, &vec);
+            }
+            for (i = 0; i < vecsize; i++){
+                double result = PyFloat_AsDouble(PyList_GetItem(PYarray, i));
+                float result_float = (float)result;
+                vec[i].w_float = result_float;
+            }
+            garray_redraw(pdarray);
+            PyErr_Clear();
+        }
+    }
+    return PyLong_FromLong(0);
+} 
+
+// =================================
+PyObject *pdtabread(PyObject *self, PyObject *args){
+    (void)self;
+    int vecsize;
+    t_garray *pdarray;
+    t_word *vec;
+    char *string;
+
+    // ================================
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    // ================================
+
+    if (PyArg_ParseTuple(args, "s", &string)){
+        t_symbol *pd_symbol = gensym(string);
+        if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class))){
+            pd_error(py4pd, "[py.script] Array %s not found.", string);
+            PyErr_SetString(PyExc_TypeError, "[py.script] pd.tabread: array not found");
+        }
+        else{
+            int i;
+            garray_getfloatwords(pdarray, &vecsize, &vec);
+            PyObject *list = PyList_New(vecsize);
+            for (i = 0; i < vecsize; i++){
+                PyList_SetItem(list, i, PyFloat_FromDouble(vec[i].w_float));
+            }
+            PyErr_Clear();
+            return list;
+
+        }
+    }
+    else{
+        PyErr_SetString(PyExc_TypeError, "[py.script] pd.tabread: wrong arguments");
+        return NULL;
+    }
+    return NULL;
+}
+
+
 // =================================
 PyObject *pdmoduleError;
 
@@ -286,6 +326,7 @@ PyMethodDef PdMethods[] = {
     {"send", pdsend, METH_VARARGS, "Send message to PureData, it can be received with the object [receive]"},
     {"print", pdprint, METH_VARARGS, "Print informations in PureData Console"},            
     {"tabwrite", (PyCFunction)pdtabwrite, METH_VARARGS | METH_KEYWORDS, "Write data to PureData tables/arrays"}, 
+    {"tabread", pdtabread, METH_VARARGS, "Read data from PureData tables/arrays"},
     // {"tabread", pdtabread, METH_VARARGS | METH_KEYWORDS, "Read data from PureData tables/arrays"}, 
     {NULL, NULL, 0, NULL} // 
 };
