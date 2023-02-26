@@ -61,15 +61,22 @@ def pd_send():
 def pd_tabwrite():
     "It sends a message to the py4pd message box."
     list = []
-    tablen = randint(20, 1000)
+    tablen = randint(10, 200)
     for i in range(tablen):
         randomnumber = randint(-100, 100)
         list.append(randomnumber * 0.01)
     pd.tabwrite("test", list, resize=True)
 
+def pd_audio(audio):
+    "It sends a message to the py4pd message box."
+    # get first 10 samples
+    audio = audio[0:10]
+    return audio
+
+
 def pd_tabread():
     "It sends a message to the py4pd message box."
-    myarray = pd.tabread("test2")
+    myarray = pd.tabread("test")
     return myarray
 
 def whereFiles():

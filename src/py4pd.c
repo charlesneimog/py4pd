@@ -2,10 +2,12 @@
 #include "pd_module.h"
 #include "py4pd.h"
 #include "py4pd_utils.h"
+#include "pytypedefs.h"
 
 t_py *py4pd_object_array[100];
 t_class *py4pd_class;
 int object_count;
+
 
 // ===================================================================
 // ========================= Pd Object ===============================
@@ -576,8 +578,62 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 }
 
 // ============================================
+// ============================================
+// ============================================
+t_int *py4pd_perform(t_int *w)
+{
+    t_py *x = (t_py *)(w[1]); // this is the object itself
+    t_sample *in = (t_sample *)(w[2]); // this is the input vector (the sound)
+    int n = (int)(w[3]); // this is the vector size (number of samples, for example 64)
+
+    PyObject *ArgsTuple, *pValue, *pAudio;
+    pAudio = PyList_New(n);
+    for (int i = 0; i < n; i++) {
+        PyObject *pSample = PyFloat_FromDouble(in[i]);
+        PyList_SetItem(pAudio, i, pSample);
+    }
+    ArgsTuple = PyTuple_New(1);
+    PyTuple_SetItem(ArgsTuple, 0, pAudio);
+
+    // WARNING: this can generate errors? How this will work on multithreading?
+    PyObject *capsule = PyCapsule_New(x, "py4pd", NULL); // create a capsule to pass the object to the python interpreter
+    PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule); // add the capsule to the python interpreter
+    
+    // call the function
+    pValue = PyObject_CallObject(x->function, ArgsTuple);
+    if (pValue != NULL) {                               
+        py4pd_convert_to_pd(x, pValue); // convert the value to pd        
+    }
+    else { // if the function returns a error
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+        PyErr_Clear();
+    }
+    // free lists
+    Py_XDECREF(pValue);
+    Py_DECREF(ArgsTuple);
+    return (w+4);
+}
+
+// ============================================
+// ============================================
+// ============================================
+
+static void py4pd_dspin(t_py *x, t_signal **sp){
+    dsp_add(py4pd_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
+}
+
+// ============================================
 static void restartPython(t_py *x){
-    t_py *y;
+    pd_error(x, "[py4pd] This function is not implemented yet!");
+    return;
 
     // Py_Finalize();
     // x->function_called = 0;
@@ -585,11 +641,11 @@ static void restartPython(t_py *x){
     // x->script_name = NULL;
     // x->module = NULL;
     // x->function = NULL;
-    int i;
-    for (i = 0; i < 100; i++) {
-        char object_name[20];
-        sprintf(object_name, "py4pd_%d", i);
-        post("object name: %s", object_name);
+    // int i;
+    // for (i = 0; i < 100; i++) {
+    //     char object_name[20];
+    //     sprintf(object_name, "py4pd_%d", i);
+    //     post("object name: %s", object_name);
         // y = (t_py *)pd_findbyclass((x->object_name = gensym(object_name)), py4pd_class);
         // post("object pointer: %p", y); 
 
@@ -603,7 +659,6 @@ static void restartPython(t_py *x){
         //     y->thread = 2;
         //     y->editorName = gensym("code");
         // }
-    }
     // PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
     // Py_Initialize();
     // return;
@@ -634,6 +689,11 @@ static void thread(t_py *x, t_floatarg f){
 
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
     t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
+
+    
+    // ============================================                                  TODO: Add '-audioin' to create a new audio inlets
+                                                                 
+    // ============================================                                  TODO: Add '-audioout' to create a new audio outlets
 
     // ============================================                                  TODO: Add '-inlet' to create a new inlets
     //                                                                               TODO: version 0.6.0 - add score/picture 
@@ -720,6 +780,10 @@ void py4pd_setup(void){
                         A_GIMME, // o argumento é um símbolo
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
     
+    // Sound in
+    class_addmethod(py4pd_class, (t_method)py4pd_dspin, gensym("dsp"), A_CANT, 0); // add a method to a class
+    CLASS_MAINSIGNALIN(py4pd_class, t_py, py4pd_audio); // define a signal inlet as the first inlet
+
     // Config
     class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0); // set home path
     class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0); // set packages path
