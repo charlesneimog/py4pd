@@ -18,9 +18,6 @@
 
     TODO: The set function need to run after the load of the object, but before the start of the thread???
         It does not load external modules in the pd_new.
-
-        
-
 */
 
 // =====================================

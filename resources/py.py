@@ -64,7 +64,8 @@ def pd_tabwrite():
     for i in range(100):
         randomnumber = randint(-100, 100)
         list.append(randomnumber * 0.01)
-    pd.tabwrite("test", list) 
+    pd.tabwrite("test", list, resize=True)
+    pd.tabwrite("test", list, resize=False)
 
 def whereFiles():
     "It returns the path of the files."

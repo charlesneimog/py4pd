@@ -110,12 +110,39 @@ PyObject *pderror(PyObject *self, PyObject *args){
 } 
 
 // =================================
-PyObject *pdtabwrite(PyObject *self, PyObject *args){
+PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords){
+    int resize = 0;
     int vecsize;
-    t_garray *a;
+    t_garray *pdarray;
     t_word *vec;
     char *string;
-    PyObject *pyarray;
+    PyObject *PYarray;
+    
+    if (keywords == NULL){
+        PyErr_SetString(PyExc_TypeError, "[py.script] pd.tabwrite: keywords must be a dictionary");
+        return NULL;
+    }
+    else{
+        resize = PyDict_Contains(keywords, PyUnicode_FromString("resize"));
+        if (resize == -1){
+            post("error");
+        }
+        else if (resize == 1){
+            PyObject *resize_value = PyDict_GetItemString(keywords, "resize");
+            if (resize_value == Py_True){
+                resize = 1;
+            }
+            else if (resize_value == Py_False){
+                resize = 0;
+            }
+            else{
+                resize = 0;
+            }
+        }
+        else{
+            resize = 0;
+        }
+    }
 
     // ================================
     PyObject *pd_module = PyImport_ImportModule("__main__");
@@ -123,26 +150,26 @@ PyObject *pdtabwrite(PyObject *self, PyObject *args){
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
     // ================================
 
-    if (PyArg_ParseTuple(args, "sO", &string, &pyarray)){
+    if (PyArg_ParseTuple(args, "sO", &string, &PYarray)){
         t_symbol *pd_symbol = gensym(string);
-        if (!(a = (t_garray *)pd_findbyclass(pd_symbol, garray_class)))
+        if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class)))
             pd_error(py4pd, "[py.script] Array %s not found.", string);
-        else if (!garray_getfloatwords(a, &vecsize, &vec))
+        else if (!garray_getfloatwords(pdarray, &vecsize, &vec))
             pd_error(py4pd, "[py.script] Bad template for tabwrite '%s'.", string);
         else{
             int i;
             for (i = 0; i < vecsize; i++){
-                vec[i].w_float = PyFloat_AsDouble(PyList_GetItem(pyarray, i));
+                vec[i].w_float = PyFloat_AsDouble(PyList_GetItem(PYarray, i));
             }
-            garray_redraw(a);
+            garray_redraw(pdarray);
             PyErr_Clear();
         }
     }
 
-
-
     return PyLong_FromLong(0);
 } 
+
+
 
 // =================================
 PyObject *pdsend(PyObject *self, PyObject *args){
@@ -251,8 +278,8 @@ PyMethodDef PdMethods[] = {
     {"out", pdout, METH_VARARGS, "Output in out0 from PureData"},   
     {"send", pdsend, METH_VARARGS, "Send message to PureData, it can be received with the object [receive]"},
     {"print", pdprint, METH_VARARGS, "Print informations in PureData Console"},            
-    {"error", pderror, METH_VARARGS, "Print error in PureData"},                          
-    {"tabwrite", pdtabwrite, METH_VARARGS, "Write list in a PureData array"}, 
+    {"tabwrite", (PyCFunction)pdtabwrite, METH_VARARGS | METH_KEYWORDS, "Write data to PureData tables/arrays"}, 
+    // {"tabread", pdtabread, METH_VARARGS | METH_KEYWORDS, "Read data from PureData tables/arrays"}, 
     {NULL, NULL, 0, NULL} // 
 };
 
