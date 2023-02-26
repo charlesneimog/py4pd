@@ -1,7 +1,7 @@
 name: Windows
 on:
   push:
-    branches: [ "master" , "v-0.5.0" ]
+    branches: [ "master" , "v-0.5.0", "develop" ]
     paths:
       - 'src/**'
   pull_request:
