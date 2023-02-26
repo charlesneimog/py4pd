@@ -111,6 +111,7 @@ PyObject *pderror(PyObject *self, PyObject *args){
 
 // =================================
 PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords){
+    (void)self;
     int resize = 0;
     int vecsize;
     t_garray *pdarray;
@@ -158,14 +159,20 @@ PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords){
             pd_error(py4pd, "[py.script] Bad template for tabwrite '%s'.", string);
         else{
             int i;
+            if (resize == 1){
+                garray_resize_long(pdarray, PyList_Size(PYarray));
+                vecsize = PyList_Size(PYarray);
+                garray_getfloatwords(pdarray, &vecsize, &vec);
+            }
             for (i = 0; i < vecsize; i++){
-                vec[i].w_float = PyFloat_AsDouble(PyList_GetItem(PYarray, i));
+                double result = PyFloat_AsDouble(PyList_GetItem(PYarray, i));
+                float result_float = (float)result;
+                vec[i].w_float = result_float;
             }
             garray_redraw(pdarray);
             PyErr_Clear();
         }
     }
-
     return PyLong_FromLong(0);
 } 
 

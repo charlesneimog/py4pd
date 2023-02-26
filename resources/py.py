@@ -61,11 +61,11 @@ def pd_send():
 def pd_tabwrite():
     "It sends a message to the py4pd message box."
     list = []
-    for i in range(100):
+    tablen = randint(20, 1000)
+    for i in range(tablen):
         randomnumber = randint(-100, 100)
         list.append(randomnumber * 0.01)
     pd.tabwrite("test", list, resize=True)
-    pd.tabwrite("test", list, resize=False)
 
 def whereFiles():
     "It returns the path of the files."
