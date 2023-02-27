@@ -9,7 +9,7 @@
 
 t_py *py4pd_object_array[100];
 t_class *py4pd_class, *edit_proxy_class;
-t_widgetbehavior pic_widgetbehavior;
+t_widgetbehavior py4pd_widgetbehavior;
 
 int object_count;
 
@@ -834,22 +834,33 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
                 post("[py4pd] Visualization mode enabled");
                 edit_proxy_class = class_new(0, 0, 0, sizeof(t_edit_proxy), CLASS_NOINLET | CLASS_PD, 0);
                 class_addanything(edit_proxy_class, edit_proxy_any);
-                pic_widgetbehavior.w_getrectfn  = pic_getrect;
-                pic_widgetbehavior.w_displacefn = pic_displace;
-                pic_widgetbehavior.w_selectfn   = pic_select;
-                pic_widgetbehavior.w_activatefn = NULL;
-                pic_widgetbehavior.w_deletefn   = pic_delete;
-                pic_widgetbehavior.w_visfn      = NULL; 
-                pic_widgetbehavior.w_clickfn    = NULL;
-
-                class_setwidget(py4pd_class, &pic_widgetbehavior);
+                py4pd_widgetbehavior.w_getrectfn  = pic_getrect;
+                py4pd_widgetbehavior.w_displacefn = pic_displace;
+                py4pd_widgetbehavior.w_selectfn   = pic_select;
+                py4pd_widgetbehavior.w_deletefn   = pic_delete;
+                py4pd_widgetbehavior.w_visfn      = pic_vis; 
+                py4pd_widgetbehavior.w_clickfn    = (t_clickfn)pic_click;
+                class_setwidget(py4pd_class, &py4pd_widgetbehavior);
                 py4pd_picDefintion();
-                // char buf[MAXPDSTRING];
-                // snprintf(buf, MAXPDSTRING-1, ".x%lx", (unsigned long)c);
-                // x->x_proxy = edit_proxy_new(x, gensym(buf));
-                x->pictureMode = 1;
-                x->x_width = x->x_height = 38;
-                x->x_def_img = 1;
+                t_canvas *cv = canvas_getcurrent();
+                x->x_glist = (t_glist*)cv;
+                x->x_zoom = x->x_glist->gl_zoom;
+                char buf[MAXPDSTRING];
+                snprintf(buf, MAXPDSTRING-1, ".x%lx", (unsigned long)cv);
+                buf[MAXPDSTRING-1] = 0;
+                x->x_proxy = edit_proxy_new(x, gensym(buf));
+                sprintf(buf, "#%lx", (long)x);
+                pd_bind(&x->x_obj.ob_pd, x->x_x = gensym(buf));
+                x->x_edit = cv->gl_edit;
+                x->x_send = x->x_snd_raw = x->x_receive = x->x_rcv_raw = x->x_filename = &s_;
+                int loaded = x->x_rcv_set = x->x_snd_set = x->x_def_img = x->x_init = x->x_latch = 0;
+                x->x_outline = x->x_size = 0;
+                x->x_fullname = NULL;
+                x->x_edit = c->gl_edit;
+                    if(!loaded){ // default image
+                        x->x_width = x->x_height = 38;
+                        x->x_def_img = 1;
+                }
                 int j;
                 for (j = i; j < argc; j++) {
                     argv[j] = argv[j+1];
@@ -858,7 +869,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
             }
         }
     }
-
     x->audioOutput = 0;
     // ============================================                                  TODO: Add '-audioout' to create a new audio outlets
     for (i = 0; i < argc; i++) {
