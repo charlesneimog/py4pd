@@ -2,24 +2,25 @@
 #define PY4PD_H
 #include <m_pd.h>
 #include <pthread.h>
-
-#define PY_SSIZE_T_CLEAN // Good practice to use this before include Python.h because it will remove some deprecated function
-#include <Python.h>
-
 #ifdef _WIN64 
     #include <windows.h>  // on Windows, system() open a console window and we don't want that
 #endif
+#define PY_SSIZE_T_CLEAN // Good practice to use this before include Python.h because it will remove some deprecated function
+#include <Python.h>
+
+// Include numpy
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <numpy/arrayobject.h>
 
 
 
 // =====================================
 typedef struct _py { // It seems that all the objects are some kind of class.
+    t_object            x_obj; // convensao no puredata source code
+    t_float             py4pd_audio; // audio
+
     PyObject            *module; // python object
     PyObject            *function; // function name
-    t_float             py4pd_audio; // audio
-    t_object            x_obj; // convensao no puredata source code
-
-    // ========================================
     t_int               object_number; // object number
     t_int               thread; // arguments
     t_int               pictureMode; // picture mode

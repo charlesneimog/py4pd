@@ -3,7 +3,6 @@ from neoscore.common import *
 import os
 import pd
 
-
 def sum(x, y):
     "It sums two numbers."
     x = int(x)
@@ -70,7 +69,6 @@ def pd_tabwrite():
 def pd_audio(audio):
     "It sends a message to the py4pd message box."
     # get first 10 samples
-    audio = audio[0:10]
     return audio
 
 

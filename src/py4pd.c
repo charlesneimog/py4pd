@@ -580,9 +580,8 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 t_int *py4pd_perform(t_int *w)
 {
-
     t_py *x = (t_py *)(w[1]); // this is the object itself
-    t_sample *in = (t_sample *)(w[2]); // this is the input vector (the sound)
+    t_sample *audioIn = (t_sample *)(w[2]); // this is the input vector (the sound)
     int n = (int)(w[3]); // this is the vector size (number of samples, for example 64)
 
     if (x->function_called == 0) {
@@ -590,22 +589,30 @@ t_int *py4pd_perform(t_int *w)
         return (w + 4);
     }
 
+
     PyObject *ArgsTuple, *pValue, *pAudio, *pSample;
     pAudio = PyList_New(n);
     for (int i = 0; i < n; i++) {
-        pSample = PyFloat_FromDouble(in[i]);
+        pSample = PyFloat_FromDouble(audioIn[i]);
         PyList_SetItem(pAudio, i, pSample);
     }
     ArgsTuple = PyTuple_New(1);
     PyTuple_SetItem(ArgsTuple, 0, pAudio);
 
+    // check number of arguments
+    if (PyTuple_Size(ArgsTuple) != x->py_arg_numbers) {
+        pd_error(x, "[py4pd] Wrong number of arguments!");
+        return (w + 4);
+    }
+    
+
     // WARNING: this can generate errors? How this will work on multithreading?
     PyObject *capsule = PyCapsule_New(x, "py4pd", NULL); // create a capsule to pass the object to the python interpreter
     PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule); // add the capsule to the python interpreter
-    
+
     // call the function
     pValue = PyObject_CallObject(x->function, ArgsTuple);
-    if (pValue != NULL) {                                // if the function returns a value   
+    if (pValue != NULL) {                               
         py4pd_convert_to_pd(x, pValue); // convert the value to pd        
     }
     else { // if the function returns a error
@@ -623,8 +630,9 @@ t_int *py4pd_perform(t_int *w)
     // free lists
     Py_XDECREF(pValue);
     Py_DECREF(ArgsTuple);
-    return (w+4);
+    return (w + 4);
 }
+
 
 // ============================================
 // ============================================
