@@ -2,6 +2,10 @@
 #include "py4pd.h"
 #include "py4pd_utils.h"
 
+// Include numpy
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include <numpy/arrayobject.h>
+
 t_py *py4pd_object_array[100];
 t_class *py4pd_class;
 int object_count;
@@ -679,7 +683,6 @@ t_int *py4pd_performAudioOutput(t_int *w){
     if (pValue != NULL) {                               
         // check if pValue is a list or a numpy array
         if (PyList_Check(pValue)){
-            // save pValue in output vector
             for (int i = 0; i < n; i++) {
                 audioOut[i] = PyFloat_AsDouble(PyList_GetItem(pValue, i));
             }          
@@ -808,12 +811,6 @@ static void thread(t_py *x, t_floatarg f){
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
     int i;
     t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
-
-
-
-    
-
-
 
 
     // ============================================                                  TODO: Add '-inlet' to create a new inlets

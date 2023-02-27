@@ -30,8 +30,10 @@ jobs:
     - name: Install Python-Devel
       run: sudo apt-get install python3.11-dev -y
 
+    - name: Install Numpy
+      run: python3.11 -m pip install numpy
+
     - name: Build
-      # get python includes
       run: |
         make PYTHON_VERSION=python3.11 
 

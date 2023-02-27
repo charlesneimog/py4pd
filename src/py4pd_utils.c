@@ -290,9 +290,9 @@ int *set_py4pd_config(t_py *x) {
                     *i = 0;
                     // if thread start with . add the home_path
                     if (thread[0] == '1') {
-                        post("value is 1");
+                        x->thread = 1;
                     } else {
-                        post("value not 1");
+                        x->thread = 2;
                     }
 
                 }
