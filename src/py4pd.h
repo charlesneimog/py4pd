@@ -12,8 +12,6 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-
-
 // =====================================
 typedef struct _py { // It seems that all the objects are some kind of class.
     t_object            x_obj; // convensao no puredata source code
@@ -26,6 +24,8 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int               pictureMode; // picture mode
     t_int               function_called; // flag to check if the set function was called
     t_int               py_arg_numbers; // number of arguments
+    t_int               use_NumpyArray; // flag to check if is to use numpy array in audioInput
+    t_int               audioOutput; // flag to check if is to use audio output
 
     
     t_canvas            *x_canvas; // pointer to the canvas

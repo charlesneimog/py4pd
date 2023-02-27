@@ -583,28 +583,30 @@ t_int *py4pd_perform(t_int *w)
     t_py *x = (t_py *)(w[1]); // this is the object itself
     t_sample *audioIn = (t_sample *)(w[2]); // this is the input vector (the sound)
     int n = (int)(w[3]); // this is the vector size (number of samples, for example 64)
+    const npy_intp dims = n;
+    PyObject *ArgsTuple, *pValue, *pAudio;
 
     if (x->function_called == 0) {
         pd_error(x, "[py4pd] You need to call a function before run!");
         return (w + 4);
     }
 
-
-    PyObject *ArgsTuple, *pValue, *pAudio, *pSample;
-    pAudio = PyList_New(n);
-    for (int i = 0; i < n; i++) {
-        pSample = PyFloat_FromDouble(audioIn[i]);
-        PyList_SetItem(pAudio, i, pSample);
+    if (x->use_NumpyArray == 1) {
+        pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
+        ArgsTuple = PyTuple_New(1);
+        PyTuple_SetItem(ArgsTuple, 0, pAudio);
     }
-    ArgsTuple = PyTuple_New(1);
-    PyTuple_SetItem(ArgsTuple, 0, pAudio);
-
-    // check number of arguments
-    if (PyTuple_Size(ArgsTuple) != x->py_arg_numbers) {
-        pd_error(x, "[py4pd] Wrong number of arguments!");
-        return (w + 4);
+    else {
+        PyObject *pSample;
+        pAudio = PyList_New(n);
+        for (int i = 0; i < n; i++) {
+            pSample = PyFloat_FromDouble(audioIn[i]);
+            PyList_SetItem(pAudio, i, pSample);
+        }
+        ArgsTuple = PyTuple_New(1);
+        PyTuple_SetItem(ArgsTuple, 0, pAudio);
     }
-    
+
 
     // WARNING: this can generate errors? How this will work on multithreading?
     PyObject *capsule = PyCapsule_New(x, "py4pd", NULL); // create a capsule to pass the object to the python interpreter
@@ -633,13 +635,94 @@ t_int *py4pd_perform(t_int *w)
     return (w + 4);
 }
 
-
 // ============================================
 // ============================================
 // ============================================
 
+// ============================================
+// ============================================
+// ============================================
+t_int *py4pd_performAudioOutput(t_int *w){
+    t_py *x = (t_py *)(w[1]); // this is the object itself
+    t_sample *audioIn = (t_sample *)(w[2]); // this is the input vector (the sound)
+    t_sample *audioOut = (t_sample *)(w[3]); // this is the output vector (the sound)
+    int n = (int)(w[4]); // this is the vector size (number of samples, for example 64)
+    const npy_intp dims = n;
+    PyObject *ArgsTuple, *pValue, *pAudio;
+
+    if (x->function_called == 0) {
+        pd_error(x, "[py4pd] You need to call a function before run!");
+        return (w + 5);
+    }
+
+    if (x->use_NumpyArray == 1) {
+        pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
+        ArgsTuple = PyTuple_New(1);
+        PyTuple_SetItem(ArgsTuple, 0, pAudio);
+    }
+    else {
+        PyObject *pSample;
+        pAudio = PyList_New(n);
+        for (int i = 0; i < n; i++) {
+            pSample = PyFloat_FromDouble(audioIn[i]);
+            PyList_SetItem(pAudio, i, pSample);
+        }
+        ArgsTuple = PyTuple_New(1);
+        PyTuple_SetItem(ArgsTuple, 0, pAudio);
+    }
+    // WARNING: this can generate errors? How this will work on multithreading?
+    PyObject *capsule = PyCapsule_New(x, "py4pd", NULL); // create a capsule to pass the object to the python interpreter
+    PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule); // add the capsule to the python interpreter
+
+    // call the function
+    pValue = PyObject_CallObject(x->function, ArgsTuple);
+    if (pValue != NULL) {                               
+        // check if pValue is a list or a numpy array
+        if (PyList_Check(pValue)){
+            // save pValue in output vector
+            for (int i = 0; i < n; i++) {
+                audioOut[i] = PyFloat_AsDouble(PyList_GetItem(pValue, i));
+            }          
+        }
+        else if (PyArray_Check(pValue)){
+            // save pValue in output vector
+            PyArrayObject *pArray = (PyArrayObject *)pValue;
+            // convert numpy array to pd vector
+            for (int i = 0; i < n; i++) { // TODO: try to add audio support without another loop
+                audioOut[i] = *(float *)PyArray_GETPTR1(pArray, i);
+            }
+        }
+        else{
+            pd_error(x, "[py4pd] The function must return a list or a numpy array, returned: %s", pValue->ob_type->tp_name);
+        }
+    }
+    else { // if the function returns a error
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+        PyErr_Clear();
+    }
+    // free lists
+    Py_DECREF(ArgsTuple);
+    return (w + 5);
+}
+
+// ============================================
+// ============================================
+// ============================================
 static void py4pd_dspin(t_py *x, t_signal **sp){
-    dsp_add(py4pd_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
+    if (x->audioOutput == 0){
+        dsp_add(py4pd_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
+    }
+    else { // python output is audio
+        dsp_add(py4pd_performAudioOutput, 4, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
+    }
 }
 
 // ============================================
@@ -680,6 +763,27 @@ static void restartPython(t_py *x){
 // ============================================
 // ============================================
 
+static void usenumpy(t_py *x, t_floatarg f){
+    //  TODO: If the run method set before the end of the thread, there is an error, that close all PureData.
+
+    int usenumpy = (int)f;
+    if (usenumpy == 1) {
+        post("[py4pd] Numpy Array enabled.");
+        x->use_NumpyArray = 1;
+        return;
+    } else if (usenumpy == 0) {
+        x->use_NumpyArray = 0; // 
+        post("[py4pd] Numpy Array disabled");
+        return;
+    } else {
+        pd_error(x, "[py4pd] Numpy status must be 0 (disable) or 1 (enable)");
+    }
+}
+
+// ============================================
+// ============================================
+// ============================================
+
 static void thread(t_py *x, t_floatarg f){
     //  TODO: If the run method set before the end of the thread, there is an error, that close all PureData.
 
@@ -702,12 +806,15 @@ static void thread(t_py *x, t_floatarg f){
 // ============================================
 
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
+    int i;
     t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
 
-    // ============================================                                  TODO: Add '-audioin' to create a new audio inlets
-                                                         
 
-    // ============================================                                  TODO: Add '-audioout' to create a new audio outlets
+
+    
+
+
+
 
     // ============================================                                  TODO: Add '-inlet' to create a new inlets
     //                                                                               TODO: version 0.6.0 - add score/picture 
@@ -745,17 +852,44 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         post("");
         PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
         Py_Initialize(); // Initialize the Python interpreter. If 1, the signal handler is installed.
+        import_array(); // init numpy
     }
-    object_count++; // count the number of objects                                  WARNING: global variable
+
+
+    x->audioOutput = 0;
+    // ============================================                                  TODO: Add '-audioout' to create a new audio outlets
+    for (i = 0; i < argc; i++) {
+        if (argv[i].a_type == A_SYMBOL) {
+            t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
+            if (py4pdArgs == gensym("-audioout")) {
+                post("[py4pd] Audio Outlets enabled");
+                x->audioOutput = 1;
+                x->out_A = outlet_new(&x->x_obj, gensym("signal")); // cria um outlet
+                int j;
+                for (j = i; j < argc; j++) {
+                    argv[j] = argv[j+1];
+                }
+                argc--;
+            }
+        }
+    }
+    if (x->audioOutput == 0){
+        x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
+    }
+
+
+    object_count++; // count the number of objects                                   WARNING: global variable
+    x->use_NumpyArray = 1; // 
+    x->thread = 2; // default is 2 (no threading)                                    FIX: fix this
     x->object_number = object_count; // save object number
-    x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
+    
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     t_canvas *c = x->x_canvas;  // get the current canvas
     t_symbol *patch_dir = canvas_getdir(c); // directory of opened patch
     x->home_path = patch_dir;     // set name of the home path
     x->packages_path = patch_dir; // set name of the packages path
-    x->thread = 2; // default is 2 (no threading)                                   FIX: fix this
-    py4pd_object_array[object_count] = x; // save the object in the array           WARNING: global variable
+                                      
+    py4pd_object_array[object_count] = x; // save the object in the array            WARNING: global variable
     set_py4pd_config(x); // set the config file
     if (argc > 1) { // check if there are two arguments
         set_function(x, s, argc, argv); 
@@ -799,6 +933,7 @@ void py4pd_setup(void){
     // Sound in
     class_addmethod(py4pd_class, (t_method)py4pd_dspin, gensym("dsp"), A_CANT, 0); // add a method to a class
     CLASS_MAINSIGNALIN(py4pd_class, t_py, py4pd_audio); // define a signal inlet as the first inlet
+    class_addmethod(py4pd_class, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0); // add a method to a class
 
     // Config
     class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0); // set home path

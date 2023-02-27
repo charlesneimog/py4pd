@@ -1,5 +1,6 @@
 from random import *
 from neoscore.common import *
+import numpy as np
 import os
 import pd
 
@@ -69,8 +70,16 @@ def pd_tabwrite():
 def pd_audio(audio):
     "It sends a message to the py4pd message box."
     # get first 10 samples
-    return audio
+    if type(audio) == np.ndarray:
+        pd.out("numpy")
+    else:
+        pd.out("list")
 
+def pd_audioout(audio):
+    "It sends a message to the py4pd message box."
+    # audio is a numpy array, multiply by 0.5
+    audio = np.multiply(audio, 0.3) 
+    return audio
 
 def pd_tabread():
     "It sends a message to the py4pd message box."
