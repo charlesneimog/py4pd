@@ -155,7 +155,7 @@ void *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
 
     for (int i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
-            // TODO: Create way to work with things like [1], [a], [casa] | One thing in list
+            //   TODO: Create way to work with things like [1], [a], [casa] | One thing in list
 
             // ========================================
             if (strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL){ 

@@ -1,8 +1,6 @@
-#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd.h"
 #include "py4pd_utils.h"
-#include "pytypedefs.h"
 
 t_py *py4pd_object_array[100];
 t_class *py4pd_class;
@@ -582,14 +580,20 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 t_int *py4pd_perform(t_int *w)
 {
+
     t_py *x = (t_py *)(w[1]); // this is the object itself
     t_sample *in = (t_sample *)(w[2]); // this is the input vector (the sound)
     int n = (int)(w[3]); // this is the vector size (number of samples, for example 64)
 
-    PyObject *ArgsTuple, *pValue, *pAudio;
+    if (x->function_called == 0) {
+        pd_error(x, "[py4pd] You need to call a function before run!");
+        return (w + 4);
+    }
+
+    PyObject *ArgsTuple, *pValue, *pAudio, *pSample;
     pAudio = PyList_New(n);
     for (int i = 0; i < n; i++) {
-        PyObject *pSample = PyFloat_FromDouble(in[i]);
+        pSample = PyFloat_FromDouble(in[i]);
         PyList_SetItem(pAudio, i, pSample);
     }
     ArgsTuple = PyTuple_New(1);
@@ -601,7 +605,7 @@ t_int *py4pd_perform(t_int *w)
     
     // call the function
     pValue = PyObject_CallObject(x->function, ArgsTuple);
-    if (pValue != NULL) {                               
+    if (pValue != NULL) {                                // if the function returns a value   
         py4pd_convert_to_pd(x, pValue); // convert the value to pd        
     }
     else { // if the function returns a error
@@ -669,6 +673,8 @@ static void restartPython(t_py *x){
 // ============================================
 
 static void thread(t_py *x, t_floatarg f){
+    //  TODO: If the run method set before the end of the thread, there is an error, that close all PureData.
+
     int thread = (int)f;
     if (thread == 1) {
         post("[py4pd] Threading enabled, wait for approval of PEP 684");
@@ -690,9 +696,9 @@ static void thread(t_py *x, t_floatarg f){
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
     t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
 
-    
     // ============================================                                  TODO: Add '-audioin' to create a new audio inlets
-                                                                 
+                                                         
+
     // ============================================                                  TODO: Add '-audioout' to create a new audio outlets
 
     // ============================================                                  TODO: Add '-inlet' to create a new inlets
@@ -769,6 +775,8 @@ void py4pd_free(t_py *x){
     }
 }
 
+
+
 // ====================================================
 
 void py4pd_setup(void){
@@ -801,6 +809,14 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
     class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME,  0); // set function to be called
+
+    //  TODO: Way to set global variables, I think that will be important for things like general path;
+    //  TODO: Set some audio parameters to work with py4pd_dspin, 'dspparams', 'dspparams'
+    //
+
+      
+
+
 }
 
 // // dll export function
