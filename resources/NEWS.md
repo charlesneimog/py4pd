@@ -1,3 +1,7 @@
+#### py4pd version 0.6.0
+* Add audio support
+  * For audioout you need to create the object with the `-audioout` flag. 
+
 #### py4pd version 0.5.0.
 * Add support to list inside PureData using brackts 
   * 💡 `run [1 2 3 4 5]` from `pd`message is equivalent to run `my_function([1, 2, 3, 4, 5])` in `Python`.

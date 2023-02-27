@@ -896,22 +896,21 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
 
 // ============================================
 
-void py4pd_free(t_py *x){
-    PyObject  *pModule, *pFunc; // pDict, *pName,
-    pFunc = x->function;
-    pModule = x->module;
+void *py4pd_free(t_py *x){
     object_count--;
-    if (pModule != NULL) {
-        Py_DECREF(pModule);
-    }
-    if (pFunc != NULL) {
-        Py_DECREF(pFunc);
-    }
+    outlet_free(x->out_A);
     if (object_count == 1) {
-        Py_Finalize();
-        object_count = 0;
-        post("[py4pd] Python interpreter finalized");
+        if (x->audioOutput == 1){
+            // outlet_free(x->out_A);
+        }
+        else{
+            Py_Finalize();
+            object_count = 0;
+            post("[py4pd] Python interpreter finalized");
+        }
+        
     }
+    return (void *)x;
 }
 
 
@@ -940,7 +939,7 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)restartPython, gensym("restart"), 0, 0); // it restart python interpreter
 
     // Edit py code
-    class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open editor  WARNING: WILL BE DEPRECATED 
+    class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open editor                   WARNING: WILL BE DEPRECATED 
     class_addmethod(py4pd_class, (t_method)editor, gensym("editor"), A_GIMME, 0); // open code
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
     class_addmethod(py4pd_class, (t_method)editor, gensym("click"), 0, 0); // when click open editor
