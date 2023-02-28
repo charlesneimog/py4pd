@@ -8,7 +8,7 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-t_py *py4pd_object_array[100];
+// t_py *py4pd_object_array[100];
 t_class *py4pd_class, *edit_proxy_class;
 
 
@@ -268,6 +268,11 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
+
+    x->script_name = script_file_name;
+    x->function_name = function_name;
+
+
     if (x->function_called == 1){
         int function_is_equal = strcmp(function_name->s_name, x->function_name->s_name); // if string is equal strcmp returns 0
         if (function_is_equal == 0){
@@ -648,10 +653,6 @@ t_int *py4pd_perform(t_int *w)
 // ============================================
 // ============================================
 // ============================================
-
-// ============================================
-// ============================================
-// ============================================
 t_int *py4pd_performAudioOutput(t_int *w){
     t_py *x = (t_py *)(w[1]); // this is the object itself
     if (x->audioInput == 0 && x->audioOutput == 0) {
@@ -826,8 +827,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     t_symbol *patch_dir = canvas_getdir(c); // directory of opened patch
     x->audioInput = 0;
     x->audioOutput = 0;
-    object_count++; // count the number of objects;                                  WARNING: global variable 
-    py4pd_object_array[object_count] = x; // save the object in the array            WARNING: global variable
 
     if (!Py_IsInitialized()) {
         object_count = 1;  // To count the numbers of objects, and finalize the interpreter when the last object is deleted
@@ -841,7 +840,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         import_array(); // init numpy
     }
 
-    // check arguments
+    object_count++; // count the number of objects;  
     for (i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
             t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
@@ -885,19 +884,12 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
 void *py4pd_free(t_py *x){
     object_count--;
     if (object_count == 1) {
-        if (x->audioOutput == 1){
-            // outlet_free(x->out_A);
-        }
-        else{
-            Py_Finalize();
-            object_count = 0;
-            post("[py4pd] Python interpreter finalized");
-        }
+        Py_Finalize();
+        object_count = 0;
+        post("[py4pd] Python interpreter finalized");
     }
     return (void *)x;
 }
-
-
 
 // ====================================================
 
@@ -912,7 +904,7 @@ void py4pd_setup(void){
     
     // Sound in
     class_addmethod(py4pd_class, (t_method)py4pd_dspin, gensym("dsp"), A_CANT, 0); // add a method to a class
-    CLASS_MAINSIGNALIN(py4pd_class, t_py, py4pd_audio); // TODO: Rethinki how to do this
+    CLASS_MAINSIGNALIN(py4pd_class, t_py, py4pd_audio); // TODO: Repensando como fazer isso quando o áudio não for usado.
     class_addmethod(py4pd_class, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0); // add a method to a class
 
     // Pic

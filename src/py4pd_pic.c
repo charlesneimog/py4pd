@@ -4,7 +4,7 @@
 
 t_widgetbehavior py4pd_widgetbehavior;
 
-// ------------------------ draw inlet --------------------------------------------------------------------
+// =====================================
 void pic_draw_io_let(t_py *x){
     t_canvas *cv = glist_getcanvas(x->x_glist);
     int xpos = text_xpix(&x->x_obj, x->x_glist), ypos = text_ypix(&x->x_obj, x->x_glist);
@@ -18,7 +18,7 @@ void pic_draw_io_let(t_py *x){
             cv, xpos, ypos+x->x_height, xpos+IOWIDTH*x->x_zoom, ypos+x->x_height-IHEIGHT*x->x_zoom, x);
 }
 
-// --------------------------------------------------------------------------------------
+// =====================================
 const char* pic_filepath(t_py *x, const char *filename){
     static char fn[MAXPDSTRING];
     char *bufptr;
@@ -33,13 +33,14 @@ const char* pic_filepath(t_py *x, const char *filename){
         return(0);
 }
 
+// =====================================
 void pic_mouserelease(t_py* x){
-    (void)x;
-    // pic_draw_io_let(x);
-    
+    (void)x;    
 }
-
+//
+// // =====================================
 void pic_get_snd_rcv(t_py* x){
+    
     t_binbuf *bb = x->x_obj.te_binbuf;
     int n_args = binbuf_getnatom(bb), i = 0; // number of arguments
     char buf[128];
@@ -97,28 +98,29 @@ void pic_get_snd_rcv(t_py* x){
         x->x_rcv_raw = gensym("empty");
 }
 
-// ------------------------ pic widgetbehaviour-------------------------------------------------------------------
+// =====================================
 int pic_click(t_py *x, struct _glist *glist, int xpos, int ypos, int shift, int alt, int dbl, int doit){
     (void)xpos;
     (void)glist;
     glist = NULL, xpos = ypos = shift = alt = dbl = 0;
     if(doit){
-        x->x_latch ? outlet_float(x->x_outlet, 1) : outlet_bang(x->x_outlet) ;
+        x->x_latch ? outlet_float(x->out_A, 1) : outlet_bang(x->out_A) ;
         if(x->x_send != &s_ && x->x_send->s_thing)
             x->x_latch ? pd_float(x->x_send->s_thing, 1) : pd_bang(x->x_send->s_thing);
     }
     return(1);
 }
 
+// =====================================
 void pic_getrect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2, int *yp2){
     t_py* x = (t_py*)z;
     int xpos = *xp1 = text_xpix(&x->x_obj, glist), ypos = *yp1 = text_ypix(&x->x_obj, glist);
     *xp2 = xpos + x->x_width, *yp2 = ypos + x->x_height;
 }
 
+// =====================================
 void pic_displace(t_gobj *z, t_glist *glist, int dx, int dy){
     t_py *py4pd = (t_py *)z;
-
     py4pd->x_obj.te_xpix += dx, py4pd->x_obj.te_ypix += dy;
     t_canvas *cv = glist_getcanvas(glist);
     sys_vgui(".x%lx.c move %lx_outline %d %d\n", cv, py4pd, dx*py4pd->x_zoom, dy*py4pd->x_zoom);
@@ -128,16 +130,17 @@ void pic_displace(t_gobj *z, t_glist *glist, int dx, int dy){
     if(py4pd->x_send == &s_)
         sys_vgui(".x%lx.c move %lx_out %d %d\n", cv, py4pd, dx*py4pd->x_zoom, dy*py4pd->x_zoom);
     canvas_fixlinesfor(glist, (t_text*)py4pd);
-    pic_erase(py4pd, py4pd->x_glist);
-            sys_vgui("if {[info exists %lx_picname] == 0} {image create photo %lx_picname -file \"%s\"\n set %lx_picname 1\n}\n",
-                        py4pd->x_fullname, py4pd->x_fullname, py4pd->file_name_open, py4pd->x_fullname);
-            pic_draw(py4pd, py4pd->x_glist, 1);
 
-
-    pic_draw_io_let(py4pd);
-
+    if (py4pd->x_fullname != NULL){
+        pic_erase(py4pd, py4pd->x_glist);
+        sys_vgui("if {[info exists %lx_picname] == 0} {image create photo %lx_picname -file \"%s\"\n set %lx_picname 1\n}\n",
+                    py4pd->x_fullname, py4pd->x_fullname, py4pd->file_name_open, py4pd->x_fullname);
+        pic_draw(py4pd, py4pd->x_glist, 1);
+        pic_draw_io_let(py4pd);
+    }
 }
 
+// =====================================
 void pic_select(t_gobj *z, t_glist *glist, int state){
     t_py *x = (t_py *)z;
     int xpos = text_xpix(&x->x_obj, glist);
@@ -158,10 +161,12 @@ void pic_select(t_gobj *z, t_glist *glist, int state){
     
 }
 
+// =====================================
 void pic_delete(t_gobj *z, t_glist *glist){
     canvas_deletelinesfor(glist, (t_text *)z);
 }
 
+// =====================================
 void pic_draw(t_py* x, struct _glist *glist, t_floatarg vis){
     t_canvas *cv = glist_getcanvas(glist);
     int xpos = text_xpix(&x->x_obj, x->x_glist), ypos = text_ypix(&x->x_obj, x->x_glist);
@@ -193,7 +198,7 @@ void pic_draw(t_py* x, struct _glist *glist, t_floatarg vis){
          
 }
 
-
+// =====================================
 void pic_erase(t_py* x, struct _glist *glist){
     t_canvas *cv = glist_getcanvas(glist);
     sys_vgui(".x%lx.c delete %lx_picture\n", cv, x); // ERASE
@@ -202,19 +207,54 @@ void pic_erase(t_py* x, struct _glist *glist){
     sys_vgui(".x%lx.c delete %lx_outline\n", cv, x); // if edit?
 }
 
+// =====================================
 void pic_save(t_gobj *z, t_binbuf *b){
     t_py *x = (t_py *)z;
+    char *picMode;
+    char *scriptName;
+    char *functionName;
+
     if(x->x_filename == &s_)
         x->x_filename = gensym("empty");
     pic_get_snd_rcv(x);
-    binbuf_addv(b, "ssiisisssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix,
-        atom_getsymbol(binbuf_getvec(x->x_obj.te_binbuf)), x->x_outline, x->x_filename, x->x_snd_raw,
-        x->x_rcv_raw, x->x_size, x->x_latch);
+
+    if(x->visMode == 1){
+        // set picMode as -score
+        picMode = "-score";
+    }
+    else{
+        picMode = " ";
+    }
+    
+    if(x->function_called == 1){
+        // convert x->script_name and x->function_name from const char * to char *
+        scriptName =    (char *)malloc(strlen(x->script_name->s_name) + 1);
+        functionName =  (char *)malloc(strlen(x->function_name->s_name) + 1);
+        strcpy(scriptName, x->script_name->s_name);
+        strcpy(functionName, x->function_name->s_name);
+    }
+    else{
+        scriptName = " ";
+        functionName = " ";
+    }
+
+    binbuf_addv(b, "ssiissss", gensym("#X"), 
+                gensym("obj"), 
+                x->x_obj.te_xpix, 
+                x->x_obj.te_ypix,
+                atom_getsymbol(binbuf_getvec(x->x_obj.te_binbuf)), 
+                scriptName, 
+                functionName,
+                gensym(picMode)
+                // x->x_snd_raw,
+                // x->x_rcv_raw, 
+                // x->x_size, 
+                // x->x_latch
+                );
     binbuf_addv(b, ";");
 }
 
-
-//------------------------------- METHODS --------------------------------------------
+// =====================================
 void pic_size_callback(t_py *x, t_float w, t_float h){ // callback
     x->x_width = w;
     x->x_height = h;
@@ -241,12 +281,17 @@ void pic_size_callback(t_py *x, t_float w, t_float h){ // callback
     }
 }
 
+// =====================================
 void pic_vis(t_gobj *z, t_glist *glist, int vis){
     t_py* x = (t_py*)z;
-    vis ? pic_draw(x, glist, 1) : pic_erase(x, glist);
+    if (vis)
+        pic_draw(x, glist, 1);
+    else
+        pic_erase(x, glist);
 }
 
 
+// =====================================
 void pic_open(t_py* x, t_symbol *filename){
     if(filename){
         if(filename == gensym("empty") && x->x_def_img)
@@ -273,6 +318,7 @@ void pic_open(t_py* x, t_symbol *filename){
         pd_error(x, "[pic]: open needs a file name");
 }
 
+// =====================================
 void pic_send(t_py *x, t_symbol *s){
     if(s != gensym("")){
         t_symbol *snd = (s == gensym("empty")) ? &s_ : canvas_realizedollar(x->x_glist, s);
@@ -290,6 +336,7 @@ void pic_send(t_py *x, t_symbol *s){
     }
 }
 
+// =====================================
 void pic_receive(t_py *x, t_symbol *s){
     if(s != gensym("")){
         t_symbol *rcv = s == gensym("empty") ? &s_ : canvas_realizedollar(x->x_glist, s);
@@ -312,6 +359,7 @@ void pic_receive(t_py *x, t_symbol *s){
     }
 }
 
+// =====================================
 void pic_outline(t_py *x, t_float f){
     int outline = (int)(f != 0);
     if(x->x_outline != outline){
@@ -332,12 +380,14 @@ void pic_outline(t_py *x, t_float f){
     }
 }
 
+// =====================================
 void pic_size(t_py *x, t_float f){
     int size = (int)(f != 0);
     if(x->x_size != size)
         x->x_size = size;
 }
 
+// =====================================
 void pic_latch(t_py *x, t_float f){
     int latch = (int)(f != 0);
     if(x->x_latch != latch){
@@ -345,11 +395,14 @@ void pic_latch(t_py *x, t_float f){
     }
 }
 
+
+// =====================================
 void edit_proxy_any(t_edit_proxy *p, t_symbol *s, int ac, t_atom *av){
     int edit = ac = 0;
     if(p->p_cnv){
-        if(s == gensym("editmode"))
+        if(s == gensym("editmode")){
             edit = (int)(av->a_w.w_float);
+        }
         else if(s == gensym("obj") || s == gensym("msg") || s == gensym("floatatom")
         || s == gensym("symbolatom") || s == gensym("text") || s == gensym("bng")
         || s == gensym("toggle") || s == gensym("numbox") || s == gensym("vslider")
@@ -381,11 +434,12 @@ void edit_proxy_any(t_edit_proxy *p, t_symbol *s, int ac, t_atom *av){
     }
 }
 
+// =====================================
 void pic_zoom(t_py *x, t_floatarg zoom){
     x->x_zoom = (int)zoom;
 }
 
-//------------------- Properties --------------------------------------------------------
+// =====================================
 void pic_properties(t_gobj *z, t_glist *gl){
     (void)gl;
     t_py *x = (t_py *)z;
@@ -403,6 +457,7 @@ void pic_properties(t_gobj *z, t_glist *gl){
     gfxstub_new(&x->x_obj.ob_pd, x, buffer);
 }
 
+// =====================================
 void pic_ok(t_py *x, t_symbol *s, int ac, t_atom *av){
     (void)s;
     t_atom undo[6];
@@ -422,13 +477,14 @@ void pic_ok(t_py *x, t_symbol *s, int ac, t_atom *av){
     canvas_dirty(x->x_glist, 1);
 }
 
-//-------------------------------------------------------------------------------------
+// =====================================
 void edit_proxy_free(t_edit_proxy *p){
     pd_unbind(&p->p_obj.ob_pd, p->p_sym);
     clock_free(p->p_clock);
     pd_free(&p->p_obj.ob_pd);
 }
 
+// =====================================
 t_edit_proxy * edit_proxy_new(t_py *x, t_symbol *s){
     t_edit_proxy *p = (t_edit_proxy*)pd_new(edit_proxy_class);
     p->p_cnv = x;
@@ -437,6 +493,7 @@ t_edit_proxy * edit_proxy_new(t_py *x, t_symbol *s){
     return(p);
 }
 
+// =====================================
 void pic_free(t_py *x){ // delete if variable is unset and image is unused
     sys_vgui("if { [info exists %lx_picname] == 1 && [image inuse %lx_picname] == 0} { image delete %lx_picname \n unset %lx_picname\n}\n",
         x->x_fullname, x->x_fullname, x->x_fullname, x->x_fullname);
@@ -448,10 +505,7 @@ void pic_free(t_py *x){ // delete if variable is unset and image is unused
     gfxstub_deleteforkey(x);
 }
 
-
-
 // =====================================
-
 void py4pd_picDefintion(char *imageData){
     sys_vgui("image create photo pic_def_img -data {%s} \n", imageData);
     sys_vgui("if {[catch {pd}]} {\n");
@@ -547,7 +601,7 @@ void py4pd_picDefintion(char *imageData){
     sys_vgui("}\n");
 }
 
-
+// ================================================
 void py4pd_InitVisMode(t_py *x, t_canvas *c , t_symbol *py4pdArgs, int index, int argc, t_atom *argv) {
     char *py4pdImageData;
     if (py4pdArgs == gensym("-picture")) {
@@ -567,6 +621,10 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c , t_symbol *py4pdArgs, int index, in
     py4pd_widgetbehavior.w_visfn      = pic_vis; 
     py4pd_widgetbehavior.w_clickfn    = (t_clickfn)pic_click;
     class_setwidget(py4pd_class, &py4pd_widgetbehavior);
+    // class_setsavefn(py4pd_class, &pic_save);
+    // class_setpropertiesfn(py4pd_class, &pic_properties);
+
+
     py4pd_picDefintion(py4pdImageData);
     t_canvas *cv = canvas_getcurrent();
     x->x_glist = (t_glist*)cv;
@@ -584,8 +642,8 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c , t_symbol *py4pdArgs, int index, in
     x->x_fullname = NULL;
     x->x_edit = c->gl_edit;
         if(!loaded){ // default image
-            x->x_width = 40;
-            x->x_height = 40;
+            x->x_width = 250;
+            x->x_height = 250;
             x->x_def_img = 1;
     }
 
