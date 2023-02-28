@@ -9,7 +9,7 @@
 #include <numpy/arrayobject.h>
 
 // t_py *py4pd_object_array[100];
-t_class *py4pd_class, *edit_proxy_class;
+t_class *py4pd_class, *py4pd_class_VIS, *edit_proxy_class;
 
 
 int object_count;
@@ -821,12 +821,33 @@ static void thread(t_py *x, t_floatarg f){
 
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
     int i;
-    t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
+    t_py *x;
+    int visMODE = 0;
+
+    for (i = 0; i < argc; i++) {
+        if (argv[i].a_type == A_SYMBOL) {
+            t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
+            if (py4pdArgs == gensym("-picture") || py4pdArgs == gensym("-score")){
+                visMODE = 1;
+             }
+        }
+    }
+
+    if (visMODE == 0){
+        x = (t_py *)pd_new(py4pd_class); // create a new object
+    }
+    else{
+        x = (t_py *)pd_new(py4pd_class_VIS); // create a new object
+    }
+
+
+
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     t_canvas *c = x->x_canvas;  // get the current canvas
     t_symbol *patch_dir = canvas_getdir(c); // directory of opened patch
     x->audioInput = 0;
     x->audioOutput = 0;
+    x->visMode = 0;
 
     if (!Py_IsInitialized()) {
         object_count = 1;  // To count the numbers of objects, and finalize the interpreter when the last object is deleted
@@ -846,6 +867,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
             t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
             if (py4pdArgs == gensym("-picture") || py4pdArgs == gensym("-score")){
                 py4pd_InitVisMode(x, c, py4pdArgs, i, argc, argv);
+                x->visMode = 1;
             }
             else if (py4pdArgs == gensym("-audioout")) {
                 post("[py4pd] Audio Outlets enabled");
@@ -863,6 +885,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
             }
         }
     }
+
 
     if (x->audioOutput == 0){
         x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
@@ -894,6 +917,8 @@ void *py4pd_free(t_py *x){
 // ====================================================
 
 void py4pd_setup(void){
+
+    // ============================================
     py4pd_class =       class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
                         (t_newmethod)py4pd_new, // metodo de criação do objeto             
                         (t_method)py4pd_free, // quando voce deleta o objeto
@@ -901,6 +926,17 @@ void py4pd_setup(void){
                         0, // nao há uma GUI especial para esse objeto???
                         A_GIMME, // o argumento é um símbolo
                         0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
+
+    
+    // ============================================
+    py4pd_class_VIS =   class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
+                        (t_newmethod)py4pd_new, // metodo de criação do objeto             
+                        (t_method)py4pd_free, // quando voce deleta o objeto
+                        sizeof(t_py), // quanta memoria precisamos para esse objeto
+                        0, // nao há uma GUI especial para esse objeto???
+                        A_GIMME, // o argumento é um símbolo
+                        0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
+
     
     // Sound in
     class_addmethod(py4pd_class, (t_method)py4pd_dspin, gensym("dsp"), A_CANT, 0); // add a method to a class
@@ -908,26 +944,39 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0); // add a method to a class
 
     // Pic
-    class_addmethod(py4pd_class, (t_method)pic_size_callback, gensym("_picsize"), A_DEFFLOAT, A_DEFFLOAT, 0);
-    class_addmethod(py4pd_class, (t_method)pic_mouserelease, gensym("_mouserelease"), 0);
+    class_addmethod(py4pd_class_VIS, (t_method)pic_size_callback, gensym("_picsize"), A_DEFFLOAT, A_DEFFLOAT, 0);
+    class_addmethod(py4pd_class_VIS, (t_method)pic_mouserelease, gensym("_mouserelease"), 0);
 
-    // Config
+    // all others methods must work for py4pd and py4pd_class_VIS
+    // for that add all same methods for  both classes
     class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0); // set home path
+    class_addmethod(py4pd_class_VIS, (t_method)home, gensym("home"), A_GIMME, 0); // set home path
+
     class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0); // set packages path
+    class_addmethod(py4pd_class_VIS, (t_method)packages, gensym("packages"), A_GIMME, 0); // set packages path
     class_addmethod(py4pd_class, (t_method)thread, gensym("thread"), A_FLOAT, 0); // on/off threading
+    class_addmethod(py4pd_class_VIS, (t_method)thread, gensym("thread"), A_FLOAT, 0); // on/off threading
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script
+    class_addmethod(py4pd_class_VIS, (t_method)reload, gensym("reload"), 0, 0); // reload python script
     class_addmethod(py4pd_class, (t_method)restartPython, gensym("restart"), 0, 0); // it restart python interpreter
+    class_addmethod(py4pd_class_VIS, (t_method)restartPython, gensym("restart"), 0, 0); // it restart python interpreter
 
     // Edit Python Code
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open editor                   WARNING: WILL BE DEPRECATED 
     class_addmethod(py4pd_class, (t_method)editor, gensym("editor"), A_GIMME, 0); // open code
+    class_addmethod(py4pd_class_VIS, (t_method)editor, gensym("editor"), A_GIMME, 0); // open code
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
+    class_addmethod(py4pd_class_VIS, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
     class_addmethod(py4pd_class, (t_method)editor, gensym("click"), 0, 0); // when click open editor
+    class_addmethod(py4pd_class_VIS, (t_method)editor, gensym("click"), 0, 0); // when click open editor
     
     // User Interface
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
+    class_addmethod(py4pd_class_VIS, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
     class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
+    class_addmethod(py4pd_class_VIS, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME,  0); // set function to be called
+    class_addmethod(py4pd_class_VIS, (t_method)set_function, gensym("set"), A_GIMME,  0); // set function to be called
 
     //  TODO: Way to set global variables, I think that will be important for things like general path;
     //  TODO: Set some audio parameters to work with py4pd_dspin, 'dspparams', 'dspparams'

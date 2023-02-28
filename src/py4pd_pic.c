@@ -620,7 +620,7 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c , t_symbol *py4pdArgs, int index, in
     py4pd_widgetbehavior.w_deletefn   = pic_delete;
     py4pd_widgetbehavior.w_visfn      = pic_vis; 
     py4pd_widgetbehavior.w_clickfn    = (t_clickfn)pic_click;
-    class_setwidget(py4pd_class, &py4pd_widgetbehavior);
+    class_setwidget(py4pd_class_VIS, &py4pd_widgetbehavior);
     // class_setsavefn(py4pd_class, &pic_save);
     // class_setpropertiesfn(py4pd_class, &pic_properties);
 

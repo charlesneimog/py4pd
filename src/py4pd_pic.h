@@ -1,6 +1,6 @@
 #include "py4pd.h"
 
-extern t_class *py4pd_class, *edit_proxy_class;
+extern t_class *py4pd_class, *py4pd_class_VIS, *edit_proxy_class;
 extern void pic_draw_io_let(t_py *x);
 extern const char* pic_filepath(t_py *x, const char *filename);
 extern void pic_mouserelease(t_py* x);
