@@ -40,62 +40,68 @@ void pic_mouserelease(t_py* x){
 //
 // // =====================================
 void pic_get_snd_rcv(t_py* x){
-    
-    t_binbuf *bb = x->x_obj.te_binbuf;
-    int n_args = binbuf_getnatom(bb), i = 0; // number of arguments
-    char buf[128];
-    if(!x->x_snd_set){ // no send set, search arguments/flags
-        if(n_args > 0){ // we have arguments, let's search them
-            if(x->x_flag){ // arguments are flags actually
-                if(x->x_s_flag){ // we got a search flag, let's get it
-                    for(i = 0;  i < n_args; i++){
-                        atom_string(binbuf_getvec(bb) + i, buf, 80);
-                        if(gensym(buf) == gensym("-send")){
-                            i++;
-                            atom_string(binbuf_getvec(bb) + i, buf, 80);
-                            x->x_snd_raw = gensym(buf);
-                            break;
-                        }
-                    }
-                }
-            }
-            else{ // we got no flags, let's search for argument
-                int arg_n = 3; // receive argument number
-                if(n_args >= arg_n){ // we have it, get it
-                    atom_string(binbuf_getvec(bb) + arg_n, buf, 80);
-                    x->x_snd_raw = gensym(buf);
-                }
-            }
-        }
-    }
-    if(x->x_snd_raw == &s_)
-        x->x_snd_raw = gensym("empty");
-    if(!x->x_rcv_set){ // no receive set, search arguments
-        if(n_args > 0){ // we have arguments, let's search them
-            if(x->x_flag){ // arguments are flags actually
-                if(x->x_r_flag){ // we got a receive flag, let's get it
-                    for(i = 0;  i < n_args; i++){
-                        atom_string(binbuf_getvec(bb) + i, buf, 80);
-                        if(gensym(buf) == gensym("-receive")){
-                            i++;
-                            atom_string(binbuf_getvec(bb) + i, buf, 80);
-                            x->x_rcv_raw = gensym(buf);
-                            break;
-                        }
-                    }
-                }
-            }
-            else{ // we got no flags, let's search for argument
-                int arg_n = 4; // receive argument number
-                if(n_args >= arg_n){ // we have it, get it
-                    atom_string(binbuf_getvec(bb) + arg_n, buf, 80);
-                    x->x_rcv_raw = gensym(buf);
-                }
-            }
-        }
-    }
-    if(x->x_rcv_raw == &s_)
-        x->x_rcv_raw = gensym("empty");
+    (void)x;
+    // 
+    // t_binbuf *bb = x->x_obj.te_binbuf;
+    // int n_args = binbuf_getnatom(bb), i = 0; // number of arguments
+    // char buf[128];
+    // if(!x->x_snd_set){ // no send set, search arguments/flags
+    //     if(n_args > 0){ // we have arguments, let's search them
+    //         if(x->x_flag){ // arguments are flags actually
+    //             if(x->x_s_flag){ // we got a search flag, let's get it
+    //                 for(i = 0;  i < n_args; i++){
+    //                     atom_string(binbuf_getvec(bb) + i, buf, 80);
+    //                     if(gensym(buf) == gensym("-send")){
+    //                         i++;
+    //                         atom_string(binbuf_getvec(bb) + i, buf, 80);
+    //                         x->x_snd_raw = gensym(buf);
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         else{ // we got no flags, let's search for argument
+    //             
+    //             int arg_n = 3; // receive argument number
+    //             if(n_args >= arg_n){ // we have it, get it
+    //                 atom_string(binbuf_getvec(bb) + arg_n, buf, 80);
+    //                 x->x_snd_raw = gensym(buf);
+    //             }
+    //         }
+    //     }
+    // }
+    // 
+    // if(x->x_snd_raw == &s_)
+    //     x->x_snd_raw = gensym("empty");
+    // if(!x->x_rcv_set){ // no receive set, search arguments
+    //     if(n_args > 0){ // we have arguments, let's search them
+    //         if(x->x_flag){ // arguments are flags actually
+    //             if(x->x_r_flag){ // we got a receive flag, let's get it
+    //                 for(i = 0;  i < n_args; i++){
+    //                     atom_string(binbuf_getvec(bb) + i, buf, 80);
+    //                     if(gensym(buf) == gensym("-receive")){
+    //                         i++;
+    //                         atom_string(binbuf_getvec(bb) + i, buf, 80);
+    //                         x->x_rcv_raw = gensym(buf);
+    //                         break;
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         else{ // we got no flags, let's search for argument
+    //             int arg_n = 4; // receive argument number
+    //             if(n_args >= arg_n){ // we have it, get it
+    //                 post("buf: %s", buf);
+    //                 atom_string(binbuf_getvec(bb) + arg_n, buf, 80);
+    //                 x->x_rcv_raw = gensym(buf);
+    //             }
+    //         }
+    //     }
+    // }
+    // 
+    // if(x->x_rcv_raw == &s_)
+    //     x->x_rcv_raw = gensym("empty");
+    // post("=================");
 }
 
 // =====================================
@@ -223,7 +229,7 @@ void pic_save(t_gobj *z, t_binbuf *b){
         picMode = "-score";
     }
     else{
-        picMode = " ";
+        picMode = "";
     }
     
     if(x->function_called == 1){
@@ -234,22 +240,25 @@ void pic_save(t_gobj *z, t_binbuf *b){
         strcpy(functionName, x->function_name->s_name);
     }
     else{
-        scriptName = " ";
-        functionName = " ";
+        scriptName = "";
+        functionName = "";
     }
 
+    if(x->visMode == 1){
+        // set picMode as -score
+        picMode = "-score";
+    }
+    else{
+        picMode = " ";
+    }
     binbuf_addv(b, "ssiissss", gensym("#X"), 
                 gensym("obj"), 
                 x->x_obj.te_xpix, 
                 x->x_obj.te_ypix,
                 atom_getsymbol(binbuf_getvec(x->x_obj.te_binbuf)), 
-                scriptName, 
-                functionName,
+                gensym(scriptName), 
+                gensym(functionName),
                 gensym(picMode)
-                // x->x_snd_raw,
-                // x->x_rcv_raw, 
-                // x->x_size, 
-                // x->x_latch
                 );
     binbuf_addv(b, ";");
 }
@@ -266,12 +275,14 @@ void pic_size_callback(t_py *x, t_float w, t_float h){ // callback
         canvas_fixlinesfor(x->x_glist, (t_text*)x);
         if(x->x_edit || x->x_outline){
             sys_vgui(".x%lx.c delete %lx_outline\n", cv, x);
-            if(x->x_sel)
+            if(x->x_sel){
                 sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline blue -width %d\n",
                 cv, xpos, ypos, xpos+x->x_width, ypos+x->x_height, x, x->x_zoom);
-            else
+            }
+            else{
                 sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline black -width %d\n",
                 cv, xpos, ypos, xpos+x->x_width, ypos+x->x_height, x, x->x_zoom);
+            }
             pic_draw_io_let(x);
 
         }
@@ -314,8 +325,10 @@ void pic_open(t_py* x, t_symbol *filename){
                 pd_error(x, "[pic]: error opening file '%s'", filename->s_name);
         }
     }
-    else
+    else{
         pd_error(x, "[pic]: open needs a file name");
+
+    }
 }
 
 // =====================================
@@ -375,7 +388,6 @@ void pic_outline(t_py *x, t_float f){
             }
             else if(!x->x_edit)
                 sys_vgui(".x%lx.c delete %lx_outline\n", cv, x);
-
         }
     }
 }
@@ -621,7 +633,7 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c , t_symbol *py4pdArgs, int index, in
     py4pd_widgetbehavior.w_visfn      = pic_vis; 
     py4pd_widgetbehavior.w_clickfn    = (t_clickfn)pic_click;
     class_setwidget(py4pd_class_VIS, &py4pd_widgetbehavior);
-    // class_setsavefn(py4pd_class, &pic_save);
+    class_setsavefn(py4pd_class_VIS, &pic_save);
     // class_setpropertiesfn(py4pd_class, &pic_properties);
 
 

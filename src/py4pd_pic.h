@@ -15,7 +15,7 @@ extern void pic_erase(t_py* x, struct _glist *glist);
 extern void pic_save(t_gobj *z, t_binbuf *b);
 extern void pic_size_callback(t_py *x, t_float w, t_float h);
 extern void pic_vis(t_gobj *z, t_glist *glist, int vis); 
-extern void pic_open(t_py* x, t_symbol *filename); 
+// extern void pic_open(t_py* x, t_symbol *filename); 
 extern void pic_send(t_py *x, t_symbol *s);
 extern void pic_receive(t_py *x, t_symbol *s);
 extern void pic_outline(t_py *x, t_floatarg f);
