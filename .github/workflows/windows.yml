@@ -50,7 +50,6 @@ jobs:
       shell: msys2 {0}
       run: |
         make PYTHON_VERSION=python3.11
-        cp $dll_path .
     
     - name: Copy Files
       ## copy Python Lib, DLLs and python311.dll to py4pd_WIN64

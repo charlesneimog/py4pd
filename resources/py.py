@@ -78,15 +78,13 @@ def pd_audio(audio):
 def pd_audioout(audio):
     "It sends a message to the py4pd message box."
     # audio is a numpy array, multiply by 0.5
-    audio = np.multiply(audio, 0.02) 
+    audio = np.multiply(audio, 0.3) 
     return audio
 
 def pd_audionoise(audio):
     "It sends a message to the py4pd message box."
-    audiolen = len(audio)
-    pd.print(str(audiolen))
-    # create a random noise
-    noise = np.random.normal(0, 0.1, audiolen)
+    audiolen = len(audio) + 1
+    noise = np.random.normal(0, 1, audiolen)
     return noise
 
 def pd_tabread():
