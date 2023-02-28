@@ -968,7 +968,7 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
     class_addmethod(py4pd_class_VIS, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
     class_addmethod(py4pd_class, (t_method)editor, gensym("click"), 0, 0); // when click open editor
-    class_addmethod(py4pd_class_VIS, (t_method)editor, gensym("click"), 0, 0); // when click open editor
+    // class_addmethod(py4pd_class_VIS, (t_method)editor, gensym("click"), 0, 0); // when click open editor
     
     // User Interface
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
