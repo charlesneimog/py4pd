@@ -831,6 +831,8 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         if (argv[i].a_type == A_SYMBOL) {
             t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
             if (py4pdArgs == gensym("-picture") || py4pdArgs == gensym("-score")) {
+
+                // this code from pd-else
                 post("[py4pd] Visualization mode enabled");
                 edit_proxy_class = class_new(0, 0, 0, sizeof(t_edit_proxy), CLASS_NOINLET | CLASS_PD, 0);
                 class_addanything(edit_proxy_class, edit_proxy_any);
@@ -858,9 +860,13 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
                 x->x_fullname = NULL;
                 x->x_edit = c->gl_edit;
                     if(!loaded){ // default image
-                        x->x_width = x->x_height = 38;
+                        x->x_width = 126;
+                        x->x_height = 196;
                         x->x_def_img = 1;
                 }
+
+                // pd-else
+
                 int j;
                 for (j = i; j < argc; j++) {
                     argv[j] = argv[j+1];
@@ -967,11 +973,6 @@ void py4pd_setup(void){
     //  TODO: Way to set global variables, I think that will be important for things like general path;
     //  TODO: Set some audio parameters to work with py4pd_dspin, 'dspparams', 'dspparams'
     //
-
-    
-      
-
-
 }
 
 // // dll export function

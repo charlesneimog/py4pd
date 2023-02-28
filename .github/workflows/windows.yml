@@ -43,7 +43,7 @@ jobs:
       run: |
         python -c "import sysconfig; f = open('pythonincludes.txt', 'w'); print(sysconfig.get_paths()['include'].replace('\\', '/'), file=f); f.close()"
         python -c "import os; import sys; f = open('pythonpath.txt', 'w'); print(os.path.dirname(sys.executable).replace('\\', '/'), file=f); f.close()"
-        python -c "import os; import sys; import numpy.distutils.misc_util as np_utils; f = open('numpyincludes.txt', 'w'); print(np_utils.get_numpy_include_dirs()[0]).replace('\\', '/'), file=f); f.close()"
+        python -c "import os; import sys; import numpy.distutils.misc_util as np_utils; f = open('numpyincludes.txt', 'w'); print(np_utils.get_numpy_include_dirs()[0].replace('\\', '/'), file=f); f.close()"
 
     - if: runner.os == 'Windows'
       name: Build py4pd
