@@ -67,7 +67,6 @@ jobs:
           cp resources/py.py py4pd_WIN64\ 
           cp resources/python311._pth py4pd_WIN64\ 
           cp resources/py4pd-help.pd py4pd_WIN64\ 
-          cp libsystre-0.dll py4pd_WIN64\
         
     - name: zip py4pd_WIN64
       run: 7z a py4pd_WIN64.zip py4pd_WIN64
