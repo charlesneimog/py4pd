@@ -298,6 +298,7 @@
 #X restore 346 240 pd TEST;
 #X text 402 241 Restart Function not work yet.;
 #X obj 346 202 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
+#X obj 488 321 py4pd -score;
 #X connect 0 0 13 0;
 #X connect 2 0 0 0;
 #X connect 2 1 25 0;
