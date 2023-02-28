@@ -1,4 +1,5 @@
 #include "py4pd.h"
+#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd_utils.h"
 #include "py4pd_pic.h"
@@ -9,7 +10,7 @@
 
 t_py *py4pd_object_array[100];
 t_class *py4pd_class, *edit_proxy_class;
-t_widgetbehavior py4pd_widgetbehavior;
+
 
 int object_count;
 
@@ -418,6 +419,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         ArgsTuple = PyTuple_New(0);
     }
 
+
     // WARNING: this can generate errors? How this will work on multithreading?
     PyObject *capsule = PyCapsule_New(x, "py4pd", NULL); // create a capsule to pass the object to the python interpreter
     PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule); // add the capsule to the python interpreter
@@ -586,6 +588,9 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 t_int *py4pd_perform(t_int *w)
 {
     t_py *x = (t_py *)(w[1]); // this is the object itself
+    if (x->audioInput == 0 && x->audioOutput == 0) {
+        return (w + 4);
+    }    
     t_sample *audioIn = (t_sample *)(w[2]); // this is the input vector (the sound)
     int n = (int)(w[3]); // this is the vector size (number of samples, for example 64)
     const npy_intp dims = n;
@@ -649,6 +654,10 @@ t_int *py4pd_perform(t_int *w)
 // ============================================
 t_int *py4pd_performAudioOutput(t_int *w){
     t_py *x = (t_py *)(w[1]); // this is the object itself
+    if (x->audioInput == 0 && x->audioOutput == 0) {
+        return (w + 4);
+    }
+    
     t_sample *audioIn = (t_sample *)(w[2]); // this is the input vector (the sound)
     t_sample *audioOut = (t_sample *)(w[3]); // this is the output vector (the sound)
     int n = (int)(w[4]); // this is the vector size (number of samples, for example 64)
@@ -814,6 +823,11 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     t_py *x = (t_py *)pd_new(py4pd_class); // create a new object
     x->x_canvas = canvas_getcurrent(); // pega o canvas atual
     t_canvas *c = x->x_canvas;  // get the current canvas
+    t_symbol *patch_dir = canvas_getdir(c); // directory of opened patch
+    x->audioInput = 0;
+    x->audioOutput = 0;
+    object_count++; // count the number of objects;                                  WARNING: global variable 
+    py4pd_object_array[object_count] = x; // save the object in the array            WARNING: global variable
 
     if (!Py_IsInitialized()) {
         object_count = 1;  // To count the numbers of objects, and finalize the interpreter when the last object is deleted
@@ -827,88 +841,39 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         import_array(); // init numpy
     }
 
+    // check arguments
     for (i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
             t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
-            if (py4pdArgs == gensym("-picture") || py4pdArgs == gensym("-score")) {
-
-                // this code from pd-else
-                post("[py4pd] Visualization mode enabled");
-                edit_proxy_class = class_new(0, 0, 0, sizeof(t_edit_proxy), CLASS_NOINLET | CLASS_PD, 0);
-                class_addanything(edit_proxy_class, edit_proxy_any);
-                py4pd_widgetbehavior.w_getrectfn  = pic_getrect;
-                py4pd_widgetbehavior.w_displacefn = pic_displace;
-                py4pd_widgetbehavior.w_selectfn   = pic_select;
-                py4pd_widgetbehavior.w_deletefn   = pic_delete;
-                py4pd_widgetbehavior.w_visfn      = pic_vis; 
-                py4pd_widgetbehavior.w_clickfn    = (t_clickfn)pic_click;
-                class_setwidget(py4pd_class, &py4pd_widgetbehavior);
-                py4pd_picDefintion();
-                t_canvas *cv = canvas_getcurrent();
-                x->x_glist = (t_glist*)cv;
-                x->x_zoom = x->x_glist->gl_zoom;
-                char buf[MAXPDSTRING];
-                snprintf(buf, MAXPDSTRING-1, ".x%lx", (unsigned long)cv);
-                buf[MAXPDSTRING-1] = 0;
-                x->x_proxy = edit_proxy_new(x, gensym(buf));
-                sprintf(buf, "#%lx", (long)x);
-                pd_bind(&x->x_obj.ob_pd, x->x_x = gensym(buf));
-                x->x_edit = cv->gl_edit;
-                x->x_send = x->x_snd_raw = x->x_receive = x->x_rcv_raw = x->x_filename = &s_;
-                int loaded = x->x_rcv_set = x->x_snd_set = x->x_def_img = x->x_init = x->x_latch = 0;
-                x->x_outline = x->x_size = 0;
-                x->x_fullname = NULL;
-                x->x_edit = c->gl_edit;
-                    if(!loaded){ // default image
-                        x->x_width = 126;
-                        x->x_height = 196;
-                        x->x_def_img = 1;
-                }
-                //
-                // pd-else
-
-                int j;
-                for (j = i; j < argc; j++) {
-                    argv[j] = argv[j+1];
-                }
-                argc--;
+            if (py4pdArgs == gensym("-picture") || py4pdArgs == gensym("-score")){
+                py4pd_InitVisMode(x, c, py4pdArgs, i, argc, argv);
             }
-        }
-    }
-    x->audioOutput = 0;
-    // ============================================                                  TODO: Add '-audioout' to create a new audio outlets
-    for (i = 0; i < argc; i++) {
-        if (argv[i].a_type == A_SYMBOL) {
-            t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
-            if (py4pdArgs == gensym("-audioout")) {
+            else if (py4pdArgs == gensym("-audioout")) {
                 post("[py4pd] Audio Outlets enabled");
                 x->audioOutput = 1;
-                x->out_A = outlet_new(&x->x_obj, gensym("signal")); // cria um outlet
+                x->out_A = outlet_new(&x->x_obj, gensym("signal")); // create a signal outlet
                 int j;
                 for (j = i; j < argc; j++) {
                     argv[j] = argv[j+1];
                 }
                 argc--;
             }
+            else if (py4pdArgs == gensym("-audioin")) {
+                post("[py4pd] Audio Inlets enabled");
+                x->audioInput = 1;
+            }
         }
     }
+
     if (x->audioOutput == 0){
         x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
     }
-
-
-    object_count++; // count the number of objects                                   WARNING: global variable
     x->use_NumpyArray = 1; // 
     x->thread = 2; // default is 2 (no threading)                                    FIX: fix this
     x->object_number = object_count; // save object number
-    
-    
-    t_symbol *patch_dir = canvas_getdir(c); // directory of opened patch
     x->home_path = patch_dir;     // set name of the home path
     x->packages_path = patch_dir; // set name of the packages path
-                                      
-    py4pd_object_array[object_count] = x; // save the object in the array            WARNING: global variable
-    set_py4pd_config(x); // set the config file
+    set_py4pd_config(x); // set the config file (in py4pd.cfg, make this be saved in the patch)
     if (argc > 1) { // check if there are two arguments
         set_function(x, s, argc, argv); 
     }
@@ -928,7 +893,6 @@ void *py4pd_free(t_py *x){
             object_count = 0;
             post("[py4pd] Python interpreter finalized");
         }
-        
     }
     return (void *)x;
 }
@@ -948,10 +912,13 @@ void py4pd_setup(void){
     
     // Sound in
     class_addmethod(py4pd_class, (t_method)py4pd_dspin, gensym("dsp"), A_CANT, 0); // add a method to a class
-    CLASS_MAINSIGNALIN(py4pd_class, t_py, py4pd_audio); // define a signal inlet as the first inlet
+    CLASS_MAINSIGNALIN(py4pd_class, t_py, py4pd_audio); // TODO: Rethinki how to do this
     class_addmethod(py4pd_class, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0); // add a method to a class
 
-    
+    // Pic
+    class_addmethod(py4pd_class, (t_method)pic_size_callback, gensym("_picsize"), A_DEFFLOAT, A_DEFFLOAT, 0);
+    class_addmethod(py4pd_class, (t_method)pic_mouserelease, gensym("_mouserelease"), 0);
+
     // Config
     class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0); // set home path
     class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0); // set packages path
@@ -959,13 +926,13 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0); // reload python script
     class_addmethod(py4pd_class, (t_method)restartPython, gensym("restart"), 0, 0); // it restart python interpreter
 
-    // Edit py code
+    // Edit Python Code
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0); // open editor                   WARNING: WILL BE DEPRECATED 
     class_addmethod(py4pd_class, (t_method)editor, gensym("editor"), A_GIMME, 0); // open code
     class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
     class_addmethod(py4pd_class, (t_method)editor, gensym("click"), 0, 0); // when click open editor
     
-    // User use
+    // User Interface
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0); // open documentation
     class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME,  0); // set function to be called

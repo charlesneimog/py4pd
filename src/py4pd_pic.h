@@ -1,16 +1,32 @@
 #include "py4pd.h"
 
-void py4pd_picDefintion(void);
-
 extern t_class *py4pd_class, *edit_proxy_class;
-
-extern t_edit_proxy *edit_proxy_new(t_py *x, t_symbol *s);
-extern void edit_proxy_any(t_edit_proxy *p, t_symbol *s, int ac, t_atom *av);
+extern void pic_draw_io_let(t_py *x);
+extern const char* pic_filepath(t_py *x, const char *filename);
+extern void pic_mouserelease(t_py* x);
+extern void pic_get_snd_rcv(t_py* x);
+extern int pic_click(t_py *x, struct _glist *glist, int xpos, int ypos, int shift, int alt, int dbl, int doit);
 extern void pic_getrect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2, int *yp2);
 extern void pic_displace(t_gobj *z, t_glist *glist, int dx, int dy);
 extern void pic_select(t_gobj *z, t_glist *glist, int state);
 extern void pic_delete(t_gobj *z, t_glist *glist);
-extern void pic_vis(t_gobj *z, t_glist *glist, int vis);
+extern void pic_draw(t_py* x, struct _glist *glist, t_floatarg vis);
+extern void pic_erase(t_py* x, struct _glist *glist); 
 extern void pic_save(t_gobj *z, t_binbuf *b);
-extern int pic_click(t_py *x, struct _glist *glist, int xpos, int ypos, int shift, int alt, int dbl, int doit);
 extern void pic_size_callback(t_py *x, t_float w, t_float h);
+extern void pic_vis(t_gobj *z, t_glist *glist, int vis); 
+extern void pic_open(t_py* x, t_symbol *filename); 
+extern void pic_send(t_py *x, t_symbol *s);
+extern void pic_receive(t_py *x, t_symbol *s);
+extern void pic_outline(t_py *x, t_floatarg f);
+extern void pic_size(t_py *x, t_float f);
+extern void pic_latch(t_py *x, t_float f);
+extern void edit_proxy_any(t_edit_proxy *p, t_symbol *s, int ac, t_atom *av);
+extern void pic_zoom(t_py *x, t_floatarg f);
+extern void pic_properties(t_gobj *z, t_glist *gl);
+extern void pic_ok(t_py *x, t_symbol *s, int ac, t_atom *av);
+extern void edit_proxy_free(t_edit_proxy *p);
+extern t_edit_proxy * edit_proxy_new(t_py *x, t_symbol *s);
+extern void pic_free(t_py *x);
+extern void py4pd_picDefintion(char *imageData);
+extern void py4pd_InitVisMode(t_py *x, t_canvas *c , t_symbol *py4pdArgs, int index, int argc, t_atom *argv);

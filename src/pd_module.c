@@ -1,5 +1,6 @@
 #include "m_pd.h"
 #include "py4pd.h"
+#include "py4pd_pic.h"
 #include "pd_module.h"
 
 // ======================================
@@ -316,6 +317,45 @@ PyObject *pdtabread(PyObject *self, PyObject *args){
     return NULL;
 }
 
+// =================================
+PyObject *pdshowimage(PyObject *self, PyObject *args){
+    (void)self;
+    char *string;
+
+    // ================================
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    // ================================
+
+    if (PyArg_ParseTuple(args, "s", &string)){
+        t_symbol *filename = gensym(string);
+        const char *file_name_open = string;
+        py4pd->file_name_open = gensym(file_name_open);
+        py4pd->x_filename = filename;
+        if(py4pd->x_def_img){
+                py4pd->x_def_img = 0;
+        }
+        if(glist_isvisible(py4pd->x_glist) && gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)){
+            const char *newfile_name_open = pic_filepath(py4pd, filename->s_name);
+            py4pd->x_fullname = gensym(newfile_name_open);
+            pic_erase(py4pd, py4pd->x_glist);
+            sys_vgui("if {[info exists %lx_picname] == 0} {image create photo %lx_picname -file \"%s\"\n set %lx_picname 1\n}\n",
+                        py4pd->x_fullname, py4pd->x_fullname, newfile_name_open, py4pd->x_fullname);
+            pic_draw(py4pd, py4pd->x_glist, 1);
+        }
+        else{
+            pd_error(py4pd, "[python]: Error displaying image");
+        }
+
+    }
+    else{
+        PyErr_SetString(PyExc_TypeError, "[py.script] pd.showimage: wrong arguments");
+        return NULL;
+    }
+    return PyLong_FromLong(0);
+}
+
 
 // =================================
 PyObject *pdmoduleError;
@@ -327,7 +367,7 @@ PyMethodDef PdMethods[] = {
     {"print", pdprint, METH_VARARGS, "Print informations in PureData Console"},            
     {"tabwrite", (PyCFunction)pdtabwrite, METH_VARARGS | METH_KEYWORDS, "Write data to PureData tables/arrays"}, 
     {"tabread", pdtabread, METH_VARARGS, "Read data from PureData tables/arrays"},
-    // {"tabread", pdtabread, METH_VARARGS | METH_KEYWORDS, "Read data from PureData tables/arrays"}, 
+    {"show", pdshowimage, METH_VARARGS, "Show image in PureData, it must be .gif, .bmp, .ppm"},
     {NULL, NULL, 0, NULL} // 
 };
 
