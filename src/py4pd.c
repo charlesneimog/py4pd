@@ -864,6 +864,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
                         x->x_height = 196;
                         x->x_def_img = 1;
                 }
+                //
                 // pd-else
 
                 int j;
