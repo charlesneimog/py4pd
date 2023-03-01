@@ -79,7 +79,7 @@ def pd_audioout(audio):
     "It sends a message to the py4pd message box."
     # audio is a numpy array, multiply by 0.5
     if type(audio) == np.ndarray:
-        audio = np.multiply(audio, 0.1) 
+        audio = np.multiply(audio, 0.2) 
     else:
         audio = [x * 0.05 for x in audio]
     return audio

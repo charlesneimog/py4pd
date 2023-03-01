@@ -706,7 +706,12 @@ t_int *py4pd_performAudioOutput(t_int *w){
             return (w + 5);
         }
         else if (PyArray_Check(pValue)){
-            post("returning numpy array");
+            // save pValue in output vector
+            PyArrayObject *pArray = (PyArrayObject *)pValue;
+            // convert numpy array to pd vector
+            for (int i = 0; i < n; i++) { // TODO: try to add audio support without another loop
+                audioOut[i] = *(float *)PyArray_GETPTR1(pArray, i);
+            }
             return (w + 5);
         }
         else{
@@ -780,6 +785,13 @@ static void restartPython(t_py *x){
 }
 
 // ============================================
+void start_Numpy(){
+    _import_array(); // Import the numpy array
+}
+
+
+
+// ============================================
 
 static void usenumpy(t_py *x, t_floatarg f){
     //  TODO: If the run method set before the end of the thread, there is an error, that close all PureData.
@@ -787,6 +799,7 @@ static void usenumpy(t_py *x, t_floatarg f){
     int usenumpy = (int)f;
     if (usenumpy == 1) {
         post("[py4pd] Numpy Array enabled.");
+        start_Numpy();
         x->use_NumpyArray = 1;
         return;
     } else if (usenumpy == 0) {
@@ -796,6 +809,7 @@ static void usenumpy(t_py *x, t_floatarg f){
     } else {
         pd_error(x, "[py4pd] Numpy status must be 0 (disable) or 1 (enable)");
     }
+    return;
 }
 
 // ============================================
@@ -885,11 +899,9 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
                 x->visMode = 1;
             }
             else if (py4pdArgs == gensym("-audioout")) {
-                post("numpy array enabled");
-                import_array(); // Import the numpy array
                 post("[py4pd] Audio Outlets enabled");
                 x->audioOutput = 1;
-                x->use_NumpyArray = 1;
+                x->use_NumpyArray = 0;
                 x->out_A = outlet_new(&x->x_obj, gensym("signal")); // create a signal outlet
                 int j;
                 for (j = i; j < argc; j++) {
@@ -898,20 +910,17 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
                 argc--;
             }
             else if (py4pdArgs == gensym("-audioin")) {
-                post("numpy array enabled");
                 import_array(); // Import the numpy array
                 post("[py4pd] Audio Inlets enabled");
                 x->audioInput = 1;
-                x->use_NumpyArray = 1;
+                x->use_NumpyArray = 0;
             }
             else if (py4pdArgs == gensym("-audio")){
-                post("numpy array enabled");
-                import_array(); // Import the numpy array
                 post("[py4pd] Audio Inlet and Outlet enabled");
                 x->audioInput = 1;
                 x->audioOutput = 1;
                 x->out_A = outlet_new(&x->x_obj, gensym("signal")); // create a signal outlet
-                x->use_NumpyArray = 1;
+                x->use_NumpyArray = 0;
                 int j;
                 for (j = i; j < argc; j++) {
                     argv[j] = argv[j+1];
