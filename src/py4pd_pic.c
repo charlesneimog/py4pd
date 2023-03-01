@@ -1,11 +1,14 @@
 #include "py4pd_pic.h"
 #include "m_pd.h"
+#include "py4pd.h"
+#include <stdlib.h>
 
 
 t_widgetbehavior py4pd_widgetbehavior;
 
-// =====================================
-void pic_draw_io_let(t_py *x){
+
+// ------------------------ draw inlet --------------------------------------------------------------------
+ void pic_draw_io_let(t_py *x){
     t_canvas *cv = glist_getcanvas(x->x_glist);
     int xpos = text_xpix(&x->x_obj, x->x_glist), ypos = text_ypix(&x->x_obj, x->x_glist);
     sys_vgui(".x%lx.c delete %lx_in\n", cv, x);
@@ -18,7 +21,8 @@ void pic_draw_io_let(t_py *x){
             cv, xpos, ypos+x->x_height, xpos+IOWIDTH*x->x_zoom, ypos+x->x_height-IHEIGHT*x->x_zoom, x);
 }
 
-// =====================================
+// --------------------------------------------------------------------------------------
+// helper functions
 const char* pic_filepath(t_py *x, const char *filename){
     static char fn[MAXPDSTRING];
     char *bufptr;
@@ -33,81 +37,70 @@ const char* pic_filepath(t_py *x, const char *filename){
         return(0);
 }
 
-// =====================================
-void pic_mouserelease(t_py* x){
-    (void)x;    
-}
-//
-// // =====================================
-void pic_get_snd_rcv(t_py* x){
-    (void)x;
-    // 
-    // t_binbuf *bb = x->x_obj.te_binbuf;
-    // int n_args = binbuf_getnatom(bb), i = 0; // number of arguments
-    // char buf[128];
-    // if(!x->x_snd_set){ // no send set, search arguments/flags
-    //     if(n_args > 0){ // we have arguments, let's search them
-    //         if(x->x_flag){ // arguments are flags actually
-    //             if(x->x_s_flag){ // we got a search flag, let's get it
-    //                 for(i = 0;  i < n_args; i++){
-    //                     atom_string(binbuf_getvec(bb) + i, buf, 80);
-    //                     if(gensym(buf) == gensym("-send")){
-    //                         i++;
-    //                         atom_string(binbuf_getvec(bb) + i, buf, 80);
-    //                         x->x_snd_raw = gensym(buf);
-    //                         break;
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //         else{ // we got no flags, let's search for argument
-    //             
-    //             int arg_n = 3; // receive argument number
-    //             if(n_args >= arg_n){ // we have it, get it
-    //                 atom_string(binbuf_getvec(bb) + arg_n, buf, 80);
-    //                 x->x_snd_raw = gensym(buf);
-    //             }
-    //         }
-    //     }
-    // }
-    // 
-    // if(x->x_snd_raw == &s_)
-    //     x->x_snd_raw = gensym("empty");
-    // if(!x->x_rcv_set){ // no receive set, search arguments
-    //     if(n_args > 0){ // we have arguments, let's search them
-    //         if(x->x_flag){ // arguments are flags actually
-    //             if(x->x_r_flag){ // we got a receive flag, let's get it
-    //                 for(i = 0;  i < n_args; i++){
-    //                     atom_string(binbuf_getvec(bb) + i, buf, 80);
-    //                     if(gensym(buf) == gensym("-receive")){
-    //                         i++;
-    //                         atom_string(binbuf_getvec(bb) + i, buf, 80);
-    //                         x->x_rcv_raw = gensym(buf);
-    //                         break;
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //         else{ // we got no flags, let's search for argument
-    //             int arg_n = 4; // receive argument number
-    //             if(n_args >= arg_n){ // we have it, get it
-    //                 post("buf: %s", buf);
-    //                 atom_string(binbuf_getvec(bb) + arg_n, buf, 80);
-    //                 x->x_rcv_raw = gensym(buf);
-    //             }
-    //         }
-    //     }
-    // }
-    // 
-    // if(x->x_rcv_raw == &s_)
-    //     x->x_rcv_raw = gensym("empty");
-    // post("=================");
+ void pic_mouserelease(t_py* x){
+
 }
 
-// =====================================
-int pic_click(t_py *x, struct _glist *glist, int xpos, int ypos, int shift, int alt, int dbl, int doit){
-    (void)xpos;
-    (void)glist;
+ void pic_get_snd_rcv(t_py* x){
+    t_binbuf *bb = x->x_obj.te_binbuf;
+    int n_args = binbuf_getnatom(bb), i = 0; // number of arguments
+    char buf[128];
+    if(!x->x_snd_set){ // no send set, search arguments/flags
+        if(n_args > 0){ // we have arguments, let's search them
+            if(x->x_flag){ // arguments are flags actually
+                if(x->x_s_flag){ // we got a search flag, let's get it
+                    for(i = 0;  i < n_args; i++){
+                        atom_string(binbuf_getvec(bb) + i, buf, 80);
+                        if(gensym(buf) == gensym("-send")){
+                            i++;
+                            atom_string(binbuf_getvec(bb) + i, buf, 80);
+                            x->x_snd_raw = gensym(buf);
+                            break;
+                        }
+                    }
+                }
+            }
+            else{ // we got no flags, let's search for argument
+                int arg_n = 3; // receive argument number
+                if(n_args >= arg_n){ // we have it, get it
+                    atom_string(binbuf_getvec(bb) + arg_n, buf, 80);
+                    x->x_snd_raw = gensym(buf);
+                }
+            }
+        }
+    }
+    if(x->x_snd_raw == &s_)
+        x->x_snd_raw = gensym("empty");
+    if(!x->x_rcv_set){ // no receive set, search arguments
+        if(n_args > 0){ // we have arguments, let's search them
+            if(x->x_flag){ // arguments are flags actually
+                if(x->x_r_flag){ // we got a receive flag, let's get it
+                    for(i = 0;  i < n_args; i++){
+                        atom_string(binbuf_getvec(bb) + i, buf, 80);
+                        if(gensym(buf) == gensym("-receive")){
+                            i++;
+                            atom_string(binbuf_getvec(bb) + i, buf, 80);
+                            x->x_rcv_raw = gensym(buf);
+                            break;
+                        }
+                    }
+                }
+            }
+            else{ // we got no flags, let's search for argument
+                int arg_n = 4; // receive argument number
+                if(n_args >= arg_n){ // we have it, get it
+                    atom_string(binbuf_getvec(bb) + arg_n, buf, 80);
+                    x->x_rcv_raw = gensym(buf);
+                }
+            }
+        }
+    }
+    if(x->x_rcv_raw == &s_)
+        x->x_rcv_raw = gensym("empty");
+}
+
+// ------------------------ pic widgetbehaviour-------------------------------------------------------------------
+ int pic_click(t_py *x, struct _glist *glist, int xpos, int ypos, int shift, int alt, int dbl, int doit){
     glist = NULL, xpos = ypos = shift = alt = dbl = 0;
     if(doit){
         x->x_latch ? outlet_float(x->out_A, 1) : outlet_bang(x->out_A) ;
@@ -117,36 +110,28 @@ int pic_click(t_py *x, struct _glist *glist, int xpos, int ypos, int shift, int 
     return(1);
 }
 
-// =====================================
+// ====================================
 void pic_getrect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2, int *yp2){
     t_py* x = (t_py*)z;
     int xpos = *xp1 = text_xpix(&x->x_obj, glist), ypos = *yp1 = text_ypix(&x->x_obj, glist);
     *xp2 = xpos + x->x_width, *yp2 = ypos + x->x_height;
 }
 
-// =====================================
+// ====================================
 void pic_displace(t_gobj *z, t_glist *glist, int dx, int dy){
-    t_py *py4pd = (t_py *)z;
-    py4pd->x_obj.te_xpix += dx, py4pd->x_obj.te_ypix += dy;
+    t_py *obj = (t_py *)z;
+    obj->x_obj.te_xpix += dx, obj->x_obj.te_ypix += dy;
     t_canvas *cv = glist_getcanvas(glist);
-    sys_vgui(".x%lx.c move %lx_outline %d %d\n", cv, py4pd, dx*py4pd->x_zoom, dy*py4pd->x_zoom);
-    sys_vgui(".x%lx.c move %lx_picture %d %d\n", cv, py4pd, dx*py4pd->x_zoom, dy*py4pd->x_zoom);
-    if(py4pd->x_receive == &s_) // this mea
-        sys_vgui(".x%lx.c move %lx_in %d %d\n", cv, py4pd, dx*py4pd->x_zoom, dy*py4pd->x_zoom);
-    if(py4pd->x_send == &s_)
-        sys_vgui(".x%lx.c move %lx_out %d %d\n", cv, py4pd, dx*py4pd->x_zoom, dy*py4pd->x_zoom);
-    canvas_fixlinesfor(glist, (t_text*)py4pd);
-
-    if (py4pd->x_fullname != NULL){
-        pic_erase(py4pd, py4pd->x_glist);
-        sys_vgui("if {[info exists %lx_picname] == 0} {image create photo %lx_picname -file \"%s\"\n set %lx_picname 1\n}\n",
-                    py4pd->x_fullname, py4pd->x_fullname, py4pd->file_name_open, py4pd->x_fullname);
-        pic_draw(py4pd, py4pd->x_glist, 1);
-        pic_draw_io_let(py4pd);
-    }
+    sys_vgui(".x%lx.c move %lx_outline %d %d\n", cv, obj, dx*obj->x_zoom, dy*obj->x_zoom);
+    sys_vgui(".x%lx.c move %lx_picture %d %d\n", cv, obj, dx*obj->x_zoom, dy*obj->x_zoom);
+    if(obj->x_receive == &s_)
+        sys_vgui(".x%lx.c move %lx_in %d %d\n", cv, obj, dx*obj->x_zoom, dy*obj->x_zoom);
+    if(obj->x_send == &s_)
+        sys_vgui(".x%lx.c move %lx_out %d %d\n", cv, obj, dx*obj->x_zoom, dy*obj->x_zoom);
+    canvas_fixlinesfor(glist, (t_text*)obj);
 }
 
-// =====================================
+// ================================================
 void pic_select(t_gobj *z, t_glist *glist, int state){
     t_py *x = (t_py *)z;
     int xpos = text_xpix(&x->x_obj, glist);
@@ -164,15 +149,14 @@ void pic_select(t_gobj *z, t_glist *glist, int state){
             sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline black -width %d\n",
                 cv, xpos, ypos, xpos+x->x_width, ypos+x->x_height, x, x->x_zoom);
     }
-    
 }
 
-// =====================================
+// ==================================================================
 void pic_delete(t_gobj *z, t_glist *glist){
     canvas_deletelinesfor(glist, (t_text *)z);
 }
 
-// =====================================
+// ==================================================================
 void pic_draw(t_py* x, struct _glist *glist, t_floatarg vis){
     t_canvas *cv = glist_getcanvas(glist);
     int xpos = text_xpix(&x->x_obj, x->x_glist), ypos = text_ypix(&x->x_obj, x->x_glist);
@@ -204,7 +188,7 @@ void pic_draw(t_py* x, struct _glist *glist, t_floatarg vis){
          
 }
 
-// =====================================
+// ==================================================================
 void pic_erase(t_py* x, struct _glist *glist){
     t_canvas *cv = glist_getcanvas(glist);
     sys_vgui(".x%lx.c delete %lx_picture\n", cv, x); // ERASE
@@ -213,6 +197,20 @@ void pic_erase(t_py* x, struct _glist *glist){
     sys_vgui(".x%lx.c delete %lx_outline\n", cv, x); // if edit?
 }
 
+// ==================================================================
+void pic_vis(t_gobj *z, t_glist *glist, int vis){
+    t_py* x = (t_py*)z;
+    if (vis){
+        pic_erase(x, glist); //  DOC: ADD THIS LINE
+        pic_draw(x, glist, 1);
+    }
+    else{
+        pic_erase(x, glist);
+    }
+
+}
+
+// ==================================================================
 // =====================================
 void pic_save(t_gobj *z, t_binbuf *b){
     t_py *x = (t_py *)z;
@@ -249,7 +247,7 @@ void pic_save(t_gobj *z, t_binbuf *b){
         picMode = "-score";
     }
     else{
-        picMode = " ";
+        picMode = "";
     }
     binbuf_addv(b, "ssiissss", gensym("#X"), 
                 gensym("obj"), 
@@ -263,7 +261,7 @@ void pic_save(t_gobj *z, t_binbuf *b){
     binbuf_addv(b, ";");
 }
 
-// =====================================
+// ==================================================================
 void pic_size_callback(t_py *x, t_float w, t_float h){ // callback
     x->x_width = w;
     x->x_height = h;
@@ -275,34 +273,26 @@ void pic_size_callback(t_py *x, t_float w, t_float h){ // callback
         canvas_fixlinesfor(x->x_glist, (t_text*)x);
         if(x->x_edit || x->x_outline){
             sys_vgui(".x%lx.c delete %lx_outline\n", cv, x);
-            if(x->x_sel){
+            if(x->x_sel)
                 sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline blue -width %d\n",
                 cv, xpos, ypos, xpos+x->x_width, ypos+x->x_height, x, x->x_zoom);
-            }
-            else{
+            else
                 sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline black -width %d\n",
                 cv, xpos, ypos, xpos+x->x_width, ypos+x->x_height, x, x->x_zoom);
-            }
             pic_draw_io_let(x);
-
         }
     }
-    else{
+    else
         pic_erase(x, x->x_glist);
+    if(x->x_size){
+        t_atom at[2];
+        SETFLOAT(at, w);
+        SETFLOAT(at+1, h);
+        outlet_list(x->x_obj.ob_outlet, &s_list, 2, at);
     }
 }
 
-// =====================================
-void pic_vis(t_gobj *z, t_glist *glist, int vis){
-    t_py* x = (t_py*)z;
-    if (vis)
-        pic_draw(x, glist, 1);
-    else
-        pic_erase(x, glist);
-}
-
-
-// =====================================
+// ==================================================================
 void pic_open(t_py* x, t_symbol *filename){
     if(filename){
         if(filename == gensym("empty") && x->x_def_img)
@@ -325,13 +315,11 @@ void pic_open(t_py* x, t_symbol *filename){
                 pd_error(x, "[pic]: error opening file '%s'", filename->s_name);
         }
     }
-    else{
+    else
         pd_error(x, "[pic]: open needs a file name");
-
-    }
 }
 
-// =====================================
+// ==================================================================
 void pic_send(t_py *x, t_symbol *s){
     if(s != gensym("")){
         t_symbol *snd = (s == gensym("empty")) ? &s_ : canvas_realizedollar(x->x_glist, s);
@@ -349,7 +337,7 @@ void pic_send(t_py *x, t_symbol *s){
     }
 }
 
-// =====================================
+// ==================================================================
 void pic_receive(t_py *x, t_symbol *s){
     if(s != gensym("")){
         t_symbol *rcv = s == gensym("empty") ? &s_ : canvas_realizedollar(x->x_glist, s);
@@ -372,7 +360,7 @@ void pic_receive(t_py *x, t_symbol *s){
     }
 }
 
-// =====================================
+// ==================================================================
 void pic_outline(t_py *x, t_float f){
     int outline = (int)(f != 0);
     if(x->x_outline != outline){
@@ -388,18 +376,19 @@ void pic_outline(t_py *x, t_float f){
             }
             else if(!x->x_edit)
                 sys_vgui(".x%lx.c delete %lx_outline\n", cv, x);
+
         }
     }
 }
 
-// =====================================
+// ==================================================================
 void pic_size(t_py *x, t_float f){
     int size = (int)(f != 0);
     if(x->x_size != size)
         x->x_size = size;
 }
 
-// =====================================
+// ==================================================================
 void pic_latch(t_py *x, t_float f){
     int latch = (int)(f != 0);
     if(x->x_latch != latch){
@@ -407,15 +396,13 @@ void pic_latch(t_py *x, t_float f){
     }
 }
 
-
-// =====================================
+// ==================================================================
 void edit_proxy_any(t_edit_proxy *p, t_symbol *s, int ac, t_atom *av){
     int edit = ac = 0;
     if(p->p_cnv){
-        if(s == gensym("editmode")){
+        if(s == gensym("editmode"))
             edit = (int)(av->a_w.w_float);
-        }
-        else if(s == gensym("obj") || s == gensym("msg") || s == gensym("floatatom")
+         else if(s == gensym("obj") || s == gensym("msg") || s == gensym("floatatom")
         || s == gensym("symbolatom") || s == gensym("text") || s == gensym("bng")
         || s == gensym("toggle") || s == gensym("numbox") || s == gensym("vslider")
         || s == gensym("hslider") || s == gensym("vradio") || s == gensym("hradio")
@@ -445,15 +432,14 @@ void edit_proxy_any(t_edit_proxy *p, t_symbol *s, int ac, t_atom *av){
         }
     }
 }
-
-// =====================================
+// ==================================================================
 void pic_zoom(t_py *x, t_floatarg zoom){
     x->x_zoom = (int)zoom;
 }
 
-// =====================================
+// ================== Properties ==================================== 
 void pic_properties(t_gobj *z, t_glist *gl){
-    (void)gl;
+    gl = NULL;
     t_py *x = (t_py *)z;
     if(x->x_filename ==  &s_)
         x->x_filename = gensym("empty");
@@ -469,9 +455,9 @@ void pic_properties(t_gobj *z, t_glist *gl){
     gfxstub_new(&x->x_obj.ob_pd, x, buffer);
 }
 
-// =====================================
+// ==================================================================
 void pic_ok(t_py *x, t_symbol *s, int ac, t_atom *av){
-    (void)s;
+    s = NULL;
     t_atom undo[6];
     SETSYMBOL(undo+0, x->x_filename);
     SETFLOAT(undo+1, x->x_outline);
@@ -616,13 +602,20 @@ void py4pd_picDefintion(char *imageData){
 // ================================================
 void py4pd_InitVisMode(t_py *x, t_canvas *c , t_symbol *py4pdArgs, int index, int argc, t_atom *argv) {
     char *py4pdImageData;
+    
+
+
     if (py4pdArgs == gensym("-picture")) {
         post("[py4pd] Picture mode enabled");
-        py4pdImageData = PICIMAGE;
+        // malloc memory
+        py4pdImageData = malloc(strlen(PICIMAGE) + 1);
+        strcpy(py4pdImageData, PICIMAGE);
     } 
     else {
         post("[py4pd] Score mode enabled");    
-        py4pdImageData = SCOREIMAGE;
+        // malloc memory
+        py4pdImageData = malloc(strlen(PICIMAGE) + 1);
+        strcpy(py4pdImageData, PICIMAGE);
     }
     edit_proxy_class = class_new(0, 0, 0, sizeof(t_edit_proxy), CLASS_NOINLET | CLASS_PD, 0);
     class_addanything(edit_proxy_class, edit_proxy_any);
@@ -634,8 +627,7 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c , t_symbol *py4pdArgs, int index, in
     py4pd_widgetbehavior.w_clickfn    = (t_clickfn)pic_click;
     class_setwidget(py4pd_class_VIS, &py4pd_widgetbehavior);
     class_setsavefn(py4pd_class_VIS, &pic_save);
-    // class_setpropertiesfn(py4pd_class, &pic_properties);
-
+    // class_setpropertiesfn(py4pd_class_VIS, &pic_properties);
 
     py4pd_picDefintion(py4pdImageData);
     t_canvas *cv = canvas_getcurrent();
@@ -658,11 +650,18 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c , t_symbol *py4pdArgs, int index, in
             x->x_height = 250;
             x->x_def_img = 1;
     }
+    x->x_flag = 0;
+    x->x_s_flag = 0;
+    x->x_r_flag = 0;
+    if(x->x_receive != &s_){
+        pd_bind(&x->x_obj.ob_pd, x->x_receive);
+    }
 
     int j;
     for (j = index; j < argc; j++) {
         argv[j] = argv[j+1];
     }
     argc--;
+    freebytes(py4pdImageData, strlen(py4pdImageData) + 1);
 }
 

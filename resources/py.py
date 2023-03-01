@@ -81,7 +81,7 @@ def pd_audioout(audio):
     if type(audio) == np.ndarray:
         audio = np.multiply(audio, 0.1) 
     else:
-        audio = [x * 0.1 for x in audio]
+        audio = [x * 0.05 for x in audio]
     return audio
 
 def pd_audionoise(audio):

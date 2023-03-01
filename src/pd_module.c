@@ -102,6 +102,7 @@ PyObject *pderror(PyObject *self, PyObject *args){
 
     if (PyArg_ParseTuple(args, "s", &string)){
         pd_error(py4pd, "[py.script]: %s", string);
+        PyErr_Clear();
     }
     else{
     PyErr_SetString(PyExc_TypeError, "[py.script] argument of pd.error must be a string"); // Colocar melhor descrição do erro
@@ -279,6 +280,23 @@ PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords){
 } 
 
 // =================================
+PyObject *pdhome(PyObject *self, PyObject *args){
+    (void)self;
+
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+
+    // check if there is no argument
+    if (!PyArg_ParseTuple(args, "")){
+        PyErr_SetString(PyExc_TypeError, "[py.script] pd.home: no argument expected");
+        return NULL;
+    }
+    return PyUnicode_FromString(py4pd->home_path->s_name);
+
+}
+
+// =================================
 PyObject *pdtabread(PyObject *self, PyObject *args){
     (void)self;
     int vecsize;
@@ -365,9 +383,11 @@ PyMethodDef PdMethods[] = {
     {"out", pdout, METH_VARARGS, "Output in out0 from PureData"},   
     {"send", pdsend, METH_VARARGS, "Send message to PureData, it can be received with the object [receive]"},
     {"print", pdprint, METH_VARARGS, "Print informations in PureData Console"},            
+    {"error", pderror, METH_VARARGS, "Print informations in error format (red) in PureData Console"},
     {"tabwrite", (PyCFunction)pdtabwrite, METH_VARARGS | METH_KEYWORDS, "Write data to PureData tables/arrays"}, 
     {"tabread", pdtabread, METH_VARARGS, "Read data from PureData tables/arrays"},
     {"show", pdshowimage, METH_VARARGS, "Show image in PureData, it must be .gif, .bmp, .ppm"},
+    {"home", pdhome, METH_VARARGS, "Get PureData Patch Path Folder"},
     {NULL, NULL, 0, NULL} // 
 };
 

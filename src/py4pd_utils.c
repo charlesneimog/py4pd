@@ -238,7 +238,7 @@ int *set_py4pd_config(t_py *x) {
     strcpy(config_path, x->home_path->s_name); // copy string one into the result.
     strcat(config_path, "/py4pd.cfg"); // append string two to the result.
     if (access(config_path, F_OK) != -1) { // check if file exists
-        post("[py4pd] py4pd.cfg file found");
+        // post("[py4pd] py4pd.cfg file found");
         FILE* file = fopen(config_path, "r"); /* should check the result */
         char line[256]; // line buffer
         while (fgets(line, sizeof(line), file)) { // read a line
@@ -314,4 +314,6 @@ int *set_py4pd_config(t_py *x) {
     return 0;
 }
 
+
+// ========================= py4pd object ==============================
 

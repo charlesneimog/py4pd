@@ -12,8 +12,8 @@ ifeq (MINGW,$(findstring MINGW,$(uname)))
 else ifeq (Linux,$(findstring Linux,$(uname)))
   PYTHON_INCLUDE := $(shell python3.11 -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
   NUMPY_INCLUDE := $(shell python3.11 -c 'import numpy.distutils.misc_util as np_utils; print(np_utils.get_numpy_include_dirs()[0])')
-  cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type 
-  ldlibs = -l $(PYTHON_VERSION) 
+  cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -Wl,-export-dynamic 
+  ldlibs = -l $(PYTHON_VERSION) -Wl,-export-dynamic
 else ifeq (Darwin,$(findstring Darwin,$(uname)))
   PYTHON_INCLUDE := $(shell python3.11 -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
   NUMPY_INCLUDE := $(shell python3.11 -c 'import numpy.distutils.misc_util as np_utils; print(np_utils.get_numpy_include_dirs()[0])')
