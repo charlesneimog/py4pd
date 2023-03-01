@@ -7,8 +7,8 @@
 t_widgetbehavior py4pd_widgetbehavior;
 
 
-// ------------------------ draw inlet --------------------------------------------------------------------
- void PY4PD_draw_io_let(t_py *x){
+// =================================================
+void PY4PD_draw_io_let(t_py *x){
     t_canvas *cv = glist_getcanvas(x->x_glist);
     int xpos = text_xpix(&x->x_obj, x->x_glist), ypos = text_ypix(&x->x_obj, x->x_glist);
     sys_vgui(".x%lx.c delete %lx_in\n", cv, x);
@@ -21,8 +21,7 @@ t_widgetbehavior py4pd_widgetbehavior;
             cv, xpos, ypos+x->x_height, xpos+IOWIDTH*x->x_zoom, ypos+x->x_height-IHEIGHT*x->x_zoom, x);
 }
 
-// --------------------------------------------------------------------------------------
-// helper functions
+// =================================================
 const char* PY4PD_filepath(t_py *x, const char *filename){
     static char fn[MAXPDSTRING];
     char *bufptr;
@@ -37,10 +36,13 @@ const char* PY4PD_filepath(t_py *x, const char *filename){
         return(0);
 }
 
- void PY4PD_mouserelease(t_py* x){
+// =================================================
+void PY4PD_mouserelease(t_py* x){
     (void)x;
 
 }
+
+// ==================================================
 
  void PY4PD_get_snd_rcv(t_py* x){
     t_binbuf *bb = x->x_obj.te_binbuf;
@@ -55,7 +57,7 @@ const char* PY4PD_filepath(t_py *x, const char *filename){
                         if(gensym(buf) == gensym("-send")){
                             i++;
                             atom_string(binbuf_getvec(bb) + i, buf, 80);
-                            // x->x_snd_raw = gensym(buf);
+                            x->x_snd_raw = gensym(buf);
                             break;
                         }
                     }
@@ -65,7 +67,7 @@ const char* PY4PD_filepath(t_py *x, const char *filename){
                 int arg_n = 3; // receive argument number
                 if(n_args >= arg_n){ // we have it, get it
                     atom_string(binbuf_getvec(bb) + arg_n, buf, 80);
-                    // x->x_snd_raw = gensym(buf);
+                    x->x_snd_raw = gensym(buf);
                 }
             }
         }
@@ -81,7 +83,7 @@ const char* PY4PD_filepath(t_py *x, const char *filename){
                         if(gensym(buf) == gensym("-receive")){
                             i++;
                             atom_string(binbuf_getvec(bb) + i, buf, 80);
-                            // x->x_rcv_raw = gensym(buf);
+                            x->x_rcv_raw = gensym(buf);
                             break;
                         }
                     }
@@ -90,8 +92,9 @@ const char* PY4PD_filepath(t_py *x, const char *filename){
             else{ // we got no flags, let's search for argument
                 int arg_n = 4; // receive argument number
                 if(n_args >= arg_n){ // we have it, get it
-                    atom_string(binbuf_getvec(bb) + arg_n, buf, 80);
-                    // x->x_rcv_raw = gensym(buf);
+                    // atom_string(binbuf_getvec(bb) + arg_n, buf, 80);
+                    // x->x_rcv_raw = gensym(buf); // BUG: This cause a bug when loading/saving the patch
+
                 }
             }
         }
@@ -102,14 +105,19 @@ const char* PY4PD_filepath(t_py *x, const char *filename){
 
 // ------------------------ pic widgetbehaviour-------------------------------------------------------------------
  int PY4PD_click(t_py *x, struct _glist *glist, int xpos, int ypos, int shift, int alt, int dbl, int doit){
+    // TODO: make a personalized Python function to handle clicks
+
     (void)glist;
     (void)xpos;
+    (void)doit;
+    (void)x;
     xpos = ypos = shift = alt = dbl = 0;
-    if(doit){
-        x->x_latch ? outlet_float(x->out_A, 1) : outlet_bang(x->out_A) ;
-        if(x->x_send != &s_ && x->x_send->s_thing)
-            x->x_latch ? pd_float(x->x_send->s_thing, 1) : pd_bang(x->x_send->s_thing);
-    }
+
+    // if(doit){
+    //     x->x_latch ? outlet_float(x->out_A, 1) : outlet_bang(x->out_A) ;
+    //     if(x->x_send != &s_ && x->x_send->s_thing)
+    //         x->x_latch ? pd_float(x->x_send->s_thing, 1) : pd_bang(x->x_send->s_thing);
+    // }
     return(1);
 }
 
@@ -455,27 +463,25 @@ void PY4PD_properties(t_gobj *z, t_glist *gl){
     gfxstub_new(&x->x_obj.ob_pd, x, buffer);
 }
 
-// ==================================================================
-void PY4PD_ok(t_py *x, t_symbol *s, int ac, t_atom *av){
-    (void)s;
-    t_atom undo[6];
-    SETSYMBOL(undo+0, x->x_filename);
-    SETFLOAT(undo+1, x->x_outline);
-    SETFLOAT(undo+2, x->x_size);
-    SETFLOAT(undo+3, x->x_latch);
-    SETSYMBOL(undo+4, x->x_snd_raw);
-    SETSYMBOL(undo+5, x->x_rcv_raw);
-    pd_undo_set_objectstate(x->x_glist, (t_pd*)x, gensym("ok"), 6, undo, ac, av);
-    PY4PD_open(x, atom_getsymbolarg(0, ac, av));
-    PY4PD_outline(x, atom_getfloatarg(1, ac, av));
-    PY4PD_size(x, atom_getfloatarg(2, ac, av));
-    PY4PD_latch(x, atom_getfloatarg(3, ac, av));
-    PY4PD_send(x, atom_getsymbolarg(4, ac, av));
-    PY4PD_receive(x, atom_getsymbolarg(5, ac, av));
-    canvas_dirty(x->x_glist, 1);
-    t_canvas *x2 = canvas_getrootfor(x->x_glist);
-    post("PY4PD: %s", x2->gl_name->s_name);
-}
+// // ==================================================================
+// void PY4PD_ok(t_py *x, t_symbol *s, int ac, t_atom *av){
+//     (void)s;
+//     t_atom undo[6];
+//     SETSYMBOL(undo+0, x->x_filename);
+//     SETFLOAT(undo+1, x->x_outline);
+//     SETFLOAT(undo+2, x->x_size);
+//     SETFLOAT(undo+3, x->x_latch);
+//     SETSYMBOL(undo+4, x->x_snd_raw);
+//     SETSYMBOL(undo+5, x->x_rcv_raw);
+//     pd_undo_set_objectstate(x->x_glist, (t_pd*)x, gensym("ok"), 6, undo, ac, av);
+//     PY4PD_open(x, atom_getsymbolarg(0, ac, av));
+//     PY4PD_outline(x, atom_getfloatarg(1, ac, av));
+//     PY4PD_size(x, atom_getfloatarg(2, ac, av));
+//     PY4PD_latch(x, atom_getfloatarg(3, ac, av));
+//     PY4PD_send(x, atom_getsymbolarg(4, ac, av));
+//     PY4PD_receive(x, atom_getsymbolarg(5, ac, av));
+//     canvas_dirty(x->x_glist, 1);
+// }
 
 // =====================================
 void PY4PD_edit_proxy_free(t_edit_proxy *p){
