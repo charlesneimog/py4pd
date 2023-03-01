@@ -124,21 +124,33 @@ void PY4PD_mouserelease(t_py* x){
 // ====================================
 void PY4PD_getrect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2, int *yp2){
     t_py* x = (t_py*)z;
-    int xpos = *xp1 = text_xpix(&x->x_obj, glist), ypos = *yp1 = text_ypix(&x->x_obj, glist);
-    *xp2 = xpos + x->x_width, *yp2 = ypos + x->x_height;
+    *xp1 = text_xpix(&x->x_obj, glist);
+    *yp1 = text_ypix(&x->x_obj, glist);
+    *xp2 = *xp1 + x->x_width * x->x_zoom;
+    *yp2 = *yp1 + x->x_height * x->x_zoom;
+
+
+
+    // int xpos = *xp1 = text_xpix(&x->x_obj, glist), ypos = *yp1 = text_ypix(&x->x_obj, glist);
+    // *xp2 = xpos + x->x_width, *yp2 = ypos + x->x_height;
 }
 
 // ====================================
 void PY4PD_displace(t_gobj *z, t_glist *glist, int dx, int dy){
     t_py *obj = (t_py *)z;
     obj->x_obj.te_xpix += dx, obj->x_obj.te_ypix += dy;
+
+    post("width: %d, height: %d, zoom: %d", obj->x_width, obj->x_height, obj->x_zoom);
+
+
     t_canvas *cv = glist_getcanvas(glist);
-    sys_vgui(".x%lx.c move %lx_outline %d %d\n", cv, obj, dx*obj->x_zoom, dy*obj->x_zoom);
-    sys_vgui(".x%lx.c move %lx_picture %d %d\n", cv, obj, dx*obj->x_zoom, dy*obj->x_zoom);
+    sys_vgui(".x%lx.c move %lx_outline %d %d\n", cv, obj, dx* obj->x_zoom, dy* obj->x_zoom);
+    sys_vgui(".x%lx.c move %lx_picture %d %d\n", cv, obj, dx* obj->x_zoom, dy* obj->x_zoom);
+    
     if(obj->x_receive == &s_)
-        sys_vgui(".x%lx.c move %lx_in %d %d\n", cv, obj, dx*obj->x_zoom, dy*obj->x_zoom);
+        sys_vgui(".x%lx.c move %lx_in %d %d\n", cv, obj, dx * obj->x_zoom, dy * obj->x_zoom);
     if(obj->x_send == &s_)
-        sys_vgui(".x%lx.c move %lx_out %d %d\n", cv, obj, dx*obj->x_zoom, dy*obj->x_zoom);
+        sys_vgui(".x%lx.c move %lx_out %d %d\n", cv, obj, dx * obj->x_zoom, dy * obj->x_zoom);
     canvas_fixlinesfor(glist, (t_text*)obj);
 }
 
@@ -172,8 +184,8 @@ void PY4PD_draw(t_py* x, struct _glist *glist, t_floatarg vis){
     t_canvas *cv = glist_getcanvas(glist);
     int xpos = text_xpix(&x->x_obj, x->x_glist), ypos = text_ypix(&x->x_obj, x->x_glist);
     int visible = (glist_isvisible(x->x_glist) && gobj_shouldvis((t_gobj *)x, x->x_glist));
-    // clear x_glist
     PY4PD_erase(x, x->x_glist);
+
     if(x->x_def_img && (visible || vis)){ // DEFAULT PIC
         sys_vgui(".x%lx.c create image %d %d -anchor nw -tags %lx_picture\n",
             cv, xpos, ypos, x);
