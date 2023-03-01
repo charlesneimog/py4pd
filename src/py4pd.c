@@ -894,6 +894,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
             if (py4pdArgs == gensym("-picture") || py4pdArgs == gensym("-score") ||  py4pdArgs == gensym("-canvas")){
                 py4pd_InitVisMode(x, c, py4pdArgs, i, argc, argv);
                 x->visMode = 1;
+                x->x_outline = 1;
             }
             else if (py4pdArgs == gensym("-audioout")) {
                 post("[py4pd] Audio Outlets enabled");

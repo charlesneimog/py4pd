@@ -140,7 +140,7 @@ void PY4PD_displace(t_gobj *z, t_glist *glist, int dx, int dy){
     t_py *obj = (t_py *)z;
     obj->x_obj.te_xpix += dx, obj->x_obj.te_ypix += dy;
 
-    post("width: %d, height: %d, zoom: %d", obj->x_width, obj->x_height, obj->x_zoom);
+    // post("width: %d, height: %d, zoom: %d", obj->x_width, obj->x_height, obj->x_zoom);
 
 
     t_canvas *cv = glist_getcanvas(glist);
