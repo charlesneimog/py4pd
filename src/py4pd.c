@@ -694,8 +694,6 @@ t_int *py4pd_performAudioOutput(t_int *w){
     // WARNING: this can generate errors? How this will work on multithreading? || In PEP 684 this will be per interpreter or global?
     PyObject *capsule = PyCapsule_New(x, "py4pd", NULL); // create a capsule to pass the object to the python interpreter
     PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule); // add the capsule to the python interpreter
-
-    // call the function
     pValue = PyObject_CallObject(x->function, ArgsTuple);
 
     if (pValue != NULL) {                               
@@ -710,7 +708,7 @@ t_int *py4pd_performAudioOutput(t_int *w){
             PyArrayObject *pArray = (PyArrayObject *)pValue;
             // convert numpy array to pd vector
             for (int i = 0; i < n; i++) { // TODO: try to add audio support without another loop
-                audioOut[i] = *(float *)PyArray_GETPTR1(pArray, i);
+                audioOut[i] = *(t_sample *)PyArray_GETPTR1(pArray, i);
             }
             return (w + 5);
         }
