@@ -739,11 +739,9 @@ t_int *py4pd_performAudioOutput(t_int *w){
 // ============================================
 static void py4pd_dspin(t_py *x, t_signal **sp){
     if (x->audioOutput == 0){
-        post("No audio output");
         dsp_add(py4pd_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
     }
     else { // python output is audio
-        post("Audio output");
         dsp_add(py4pd_performAudioOutput, 4, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
     }
 }
@@ -782,12 +780,12 @@ static void restartPython(t_py *x){
     // return;
 }
 
+
 // ============================================
-void start_Numpy(){
-    _import_array(); // Import the numpy array
+static void startNumpy(){
+    _import_array();
+    return;
 }
-
-
 
 // ============================================
 
@@ -797,7 +795,7 @@ static void usenumpy(t_py *x, t_floatarg f){
     int usenumpy = (int)f;
     if (usenumpy == 1) {
         post("[py4pd] Numpy Array enabled.");
-        start_Numpy();
+        startNumpy();
         x->use_NumpyArray = 1;
         return;
     } else if (usenumpy == 0) {
@@ -886,6 +884,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         post("");
         PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
         Py_Initialize(); // Initialize the Python interpreter. If 1, the signal handler is installed.    
+        // import_array(); // Import the numpy array
     }
 
     object_count++; // count the number of objects;  
@@ -908,7 +907,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
                 argc--;
             }
             else if (py4pdArgs == gensym("-audioin")) {
-                import_array(); // Import the numpy array
                 post("[py4pd] Audio Inlets enabled");
                 x->audioInput = 1;
                 x->use_NumpyArray = 0;
@@ -948,7 +946,7 @@ void *py4pd_free(t_py *x){
     object_count--;
 
     if (x->visMode == 1){
-        pic_free(x);
+        PY4PD_free(x);
     }
 
     if (object_count == 1) {
@@ -1001,8 +999,10 @@ void py4pd_setup(void){
     class_addmethod(py4pd_classAudioOut, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0); // add a method to a class
     
     // Pic
-    class_addmethod(py4pd_class_VIS, (t_method)pic_size_callback, gensym("_picsize"), A_DEFFLOAT, A_DEFFLOAT, 0);
-    class_addmethod(py4pd_class_VIS, (t_method)pic_mouserelease, gensym("_mouserelease"), 0);
+    class_addmethod(py4pd_class_VIS, (t_method)PY4PD_size_callback, gensym("_picsize"), A_DEFFLOAT, A_DEFFLOAT, 0);
+    class_addmethod(py4pd_class_VIS, (t_method)PY4PD_mouserelease, gensym("_mouserelease"), 0);
+    // class_addmethod(py4pd_class_VIS, (t_method)PY4PD_ok, gensym("ok"), A_GIMME, 0);
+    class_addmethod(py4pd_class_VIS, (t_method)PY4PD_outline, gensym("outline"), A_DEFFLOAT, 0);
 
     // this is like have lot of objects with the same name, add all methods for py4pd_class, py4pd_class_AudioOut and py4pd_class_VIS
     class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0); // set home path
