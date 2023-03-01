@@ -3,7 +3,7 @@
 #include <m_pd.h>
 #include <g_canvas.h>
 #include <pthread.h>
-#include <dlfcn.h>
+// #include <dlfcn.h>
 #ifdef _WIN64 
     #include <windows.h>  // on Windows, system() open a console window and we don't want that
 #endif
