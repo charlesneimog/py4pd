@@ -22,7 +22,10 @@ jobs:
 
     - name: Install PureData
       run: brew install --cask pd
-
+      
+    - name: Shared flags to Mac
+      run: python3.11 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
+	
     - name: Install numpy
       run: python3.11 -m pip install numpy
 

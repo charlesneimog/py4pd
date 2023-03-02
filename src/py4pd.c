@@ -763,8 +763,6 @@ t_int *py4pd_performAudioOutput(t_int *w){
     else{
         x->arrayofint[x->interation] = cpu_time_used * 1000000;
     }
-        
-
 
     return (w + 5);
 }
