@@ -22,13 +22,21 @@
 #### Examples
 
 <details>
-<summary>Scores and Chords (OpenMusic chord/note)</summary>
-
+  <summary><h4>Scores and Chords (OpenMusic chord/note)</h4></summary>
 I WILL PUT HERE ONE GIF
-
 </details>
 
-See examples in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Examples).
+<details>
+  <summary><h4>Microtonality Theories</h4></summary>
+I WILL PUT HERE ONE GIF
+</details>
+
+<details>
+<summary><h4>Svg to Scores</h4></summary>
+I WILL PUT HERE ONE GIF
+</details>
+
+See more in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Examples).
 
 
 ### Download py4pd
