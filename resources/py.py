@@ -13,7 +13,7 @@ except:
     pd.print("Install the libraries running the command: 'pip install neoscore numpy matplotlib -t ./py-modules'")
     pd.print("Some functions of the help patch will not work")
 
-def sum(x, y):
+def pdsum(x, y):
     "It sums two numbers."
     x = int(x)
     y = int(y)
@@ -153,14 +153,14 @@ def dft(freq_hz):
         imag.append(float(graph[i].imag))
         real.append(float(graph[i].real))
 
-    CenterOfMass = sum(graph) / len(graph)
+    # CenterOfMass = sum(graph) / len(graph)
     imag = np.array(imag)
     real = np.array(real)
     plt.switch_backend('agg') # Change backend to avoid error in PureData
 
     # define draw, circle and point to add to the graph
     plt.plot(imag, real, color='black', linewidth=0.4)
-    plt.plot(CenterOfMass.real, CenterOfMass.imag, 'ro')
+    # plt.plot(CenterOfMass.real, CenterOfMass.imag, 'ro')
 
     # plot names of axis
     plt.xlabel('Imaginary')
@@ -168,23 +168,23 @@ def dft(freq_hz):
 
     # plt.plot(imag_centroid, real_centroid, 'ro', color='blue')
     # add a new circle that are in the center of max and min of real and imaginary
-    center = (max(imag) + min(imag)) / 2, (max(real) + min(real)) / 2
-    radius = max(imag) - center[0] if (max(imag) > max(real)) else max(real) - center[1]
-    plt.gca().add_patch(plt.Circle(center, radius=radius, fill=False, color='blue', linewidth=2))
+    # center = (max(imag) + min(imag)) / 2, (max(real) + min(real)) / 2
+    # radius = max(imag) - center[0] if (max(imag) > max(real)) else max(real) - center[1]
+    # plt.gca().add_patch(plt.Circle(center, radius=radius, fill=False, color='blue', linewidth=2))
 
     # with circle draw a cross
-    plt.plot([center[0], center[0]], [center[1] - radius, center[1] + radius], color='blue', linewidth=2)
-    plt.plot([center[0] - radius, center[0] + radius], [center[1], center[1]], color='blue', linewidth=2)
+    # plt.plot([center[0], center[0]], [center[1] - radius, center[1] + radius], color='blue', linewidth=2)
+    # plt.plot([center[0] - radius, center[0] + radius], [center[1], center[1]], color='blue', linewidth=2)
 
     # add triangle retangle 
-    plt.plot([center[0], CenterOfMass.real], [center[1], CenterOfMass.imag], color='green', linewidth=2)
-    plt.plot([CenterOfMass.real, CenterOfMass.imag], [CenterOfMass.imag, center[1]], color='green', linewidth=2)
+    # plt.plot([center[0], CenterOfMass.real], [center[1], CenterOfMass.imag], color='green', linewidth=2)
+    # plt.plot([CenterOfMass.real, CenterOfMass.imag], [CenterOfMass.imag, center[1]], color='green', linewidth=2)
 
     # Save image, convert to gif and remove png
     freq_hz = int(round(freq_hz, 0))
-    random_number = random.randint(10, 99)
+    random_number = randint(10, 99)
     # save the plt using mpimg
-    plt.savefig(f'{home_path}/canvas{freq_hz}{random_number}.jpg')
+    plt.savefig(f'{home_path}/canvas{freq_hz}{random_number}.jpg', dpi=85)
     # convert to gif
     im = Image.open(f'{home_path}/canvas{freq_hz}{random_number}.jpg')
     im.save(f'{home_path}/canvas{freq_hz}{random_number}.gif')

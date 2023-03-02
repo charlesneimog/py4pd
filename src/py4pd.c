@@ -216,18 +216,22 @@ static void reload(t_py *x){
     if (pReload == NULL) {
         pd_error(x, "Error reloading the module!");
         x->function_called = 0;
-        Py_DECREF(x->function);
-        Py_DECREF(x->module);
+        Py_DECREF(pFunc);
+        Py_DECREF(pModule);
         return;
-    } else{
+    } 
+    else{
         Py_XDECREF(x->module);
         pFunc = PyObject_GetAttrString(pModule, x->function_name->s_name); // Function name inside the script file
-        Py_DECREF(pName); // 
+        Py_ssize_t refcount = Py_REFCNT(pName);
+        post("Reference cont pName: %i", refcount);
+        refcount = Py_REFCNT(pReload);
+        post("Reference cont pReload: %i", refcount);
+        Py_DECREF(pName);
+        Py_DECREF(pReload);
         if (pFunc && PyCallable_Check(pFunc)){ // Check if the function exists and is callable 
             x->function = pFunc;
             x->module = pModule;
-            x->script_name = x->script_name;
-            x->function_name = x->function_name; // why 
             x->function_called = 1; 
             post("The module was reloaded!");
             return; 

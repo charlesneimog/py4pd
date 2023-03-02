@@ -39,6 +39,7 @@ const char* PY4PD_filepath(t_py *x, const char *filename){
 // =================================================
 void PY4PD_mouserelease(t_py* x){
     (void)x;
+
 }
 
 // ==================================================
@@ -112,11 +113,11 @@ void PY4PD_mouserelease(t_py* x){
     (void)x;
     xpos = ypos = shift = alt = dbl = 0;
 
-    // if(doit){
-    //     x->x_latch ? outlet_float(x->out_A, 1) : outlet_bang(x->out_A) ;
-    //     if(x->x_send != &s_ && x->x_send->s_thing)
-    //         x->x_latch ? pd_float(x->x_send->s_thing, 1) : pd_bang(x->x_send->s_thing);
-    // }
+    if(doit){
+        x->x_latch ? outlet_float(x->out_A, 1) : outlet_bang(x->out_A) ;
+        if(x->x_send != &s_ && x->x_send->s_thing)
+            x->x_latch ? pd_float(x->x_send->s_thing, 1) : pd_bang(x->x_send->s_thing);
+    }
     return(1);
 }
 
@@ -127,6 +128,11 @@ void PY4PD_getrect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2, int 
     *yp1 = text_ypix(&x->x_obj, glist);
     *xp2 = *xp1 + x->x_width * x->x_zoom;
     *yp2 = *yp1 + x->x_height * x->x_zoom;
+
+
+
+    // int xpos = *xp1 = text_xpix(&x->x_obj, glist), ypos = *yp1 = text_ypix(&x->x_obj, glist);
+    // *xp2 = xpos + x->x_width, *yp2 = ypos + x->x_height;
 }
 
 // ====================================
@@ -214,6 +220,7 @@ void PY4PD_erase(t_py* x, struct _glist *glist){
 // ==================================================================
 void PY4PD_vis(t_gobj *z, t_glist *glist, int vis){
     t_py* x = (t_py*)z;
+    post("vis = %d", vis);
     vis ? PY4PD_draw(x, glist, 1) : PY4PD_erase(x, glist);
 
 }
@@ -225,12 +232,13 @@ void PY4PD_save(t_gobj *z, t_binbuf *b){
     char *picMode;
     char *scriptName;
     char *functionName;
+    post("I am using the save function");
 
     if(x->x_filename == &s_){
         x->x_filename = gensym("empty");
     }
-
     PY4PD_get_snd_rcv(x);
+
     if(x->visMode == 1){
         picMode = "-score";
     }
@@ -239,6 +247,7 @@ void PY4PD_save(t_gobj *z, t_binbuf *b){
     }
     
     if(x->function_called == 1){
+        // convert x->script_name and x->function_name from const char * to char *
         scriptName =    (char *)malloc(strlen(x->script_name->s_name) + 1);
         functionName =  (char *)malloc(strlen(x->function_name->s_name) + 1);
         strcpy(scriptName, x->script_name->s_name);
@@ -249,26 +258,16 @@ void PY4PD_save(t_gobj *z, t_binbuf *b){
         functionName = "";
     }
 
-    // transform editor name in a flag put and '-' before
-    char *editorName = (char *)malloc(strlen(x->editorName->s_name) + 1);
-    strcpy(editorName, x->editorName->s_name);
-    char *editorNameFlag = (char *)malloc(strlen(x->editorName->s_name) + 2);
-    editorNameFlag[0] = '-';
-    strcpy(editorNameFlag+1, editorName);
-
-    binbuf_addv(b, "ssiisssss", gensym("#X"), 
+    binbuf_addv(b, "ssiissss", gensym("#X"), 
                 gensym("obj"), 
                 x->x_obj.te_xpix, 
                 x->x_obj.te_ypix,
                 atom_getsymbol(binbuf_getvec(x->x_obj.te_binbuf)), 
                 gensym(scriptName), 
                 gensym(functionName),
-                gensym(picMode), 
-                gensym(editorNameFlag));
+                gensym(picMode)
+                );
     binbuf_addv(b, ";");
-    free(scriptName);
-    free(functionName);
-    free(editorName);
 }
 
 // ==================================================================
