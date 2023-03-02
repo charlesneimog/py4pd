@@ -1,8 +1,8 @@
 #include "py4pd.h"
-#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd_utils.h"
 #include "py4pd_pic.h"
+#include <math.h>
 
 // Include numpy
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -12,13 +12,10 @@
 t_class *py4pd_class; // DOC: For audio in and without audio
 t_class *py4pd_class_VIS; // DOC: For visualisation | pic object by pd-else
 t_class *py4pd_classAudioOut; // DOC: For audio out
-
-
 t_class *edit_proxy_class;
 
-
-
 int object_count;
+static int numpyArrayStarted = 0;
 
 
 // ===================================================================
@@ -48,9 +45,7 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         if (argc < 2 && argc > 0){
             if (argv[0].a_type == A_SYMBOL) {
                 t_symbol *path = atom_getsymbol(argv);
-
                 // It checks relative path
-
                 if (path->s_name[0] == '.' && path->s_name[1] == '/') {
                     char *new_path = malloc(strlen(x->home_path->s_name) + strlen(path->s_name) + 1);
                     strcpy(new_path, x->home_path->s_name);
@@ -63,7 +58,6 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                     x->packages_path = atom_getsymbol(argv);
                     post("[py4pd] The packages path set to: %s", x->packages_path->s_name);
                 }
-            
             } else{
                 pd_error(x, "[py4pd] The packages path must be a string");
                 return;
@@ -82,9 +76,6 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // ====================================
-// ====================================
-// ====================================
-
 static void documentation(t_py *x){
     PyObject *pFunc;
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
@@ -117,9 +108,6 @@ static void documentation(t_py *x){
 }
 
 // ====================================
-// ====================================
-// ====================================
-
 void pd4py_system_func (const char *command){
     int result = system(command);
     if (result == -1){
@@ -129,8 +117,6 @@ void pd4py_system_func (const char *command){
 }
 
 // ============================================
-// ============================================
-
 static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     (void)argc;
@@ -162,9 +148,6 @@ static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
 }
 
 // ====================================
-// ====================================
-// ====================================
-
 static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     if (argc != 0){
@@ -211,19 +194,12 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv){
 }
 
 // ====================================
-// ====================================
-// ====================================
 static void vscode(t_py *x){
     pd_error(x, "This method is deprecated, please use the editor method instead!");
     editor(x, NULL, 0, NULL);
 }
 
-
-
 // ====================================
-// ====================================
-// ====================================
-
 static void reload(t_py *x){
     PyObject *pName, *pFunc, *pModule, *pReload;
     if (x->function_called == 0) { // if the set method was not called, then we can not run the function :)
@@ -267,9 +243,6 @@ static void reload(t_py *x){
 }
 
 // ====================================
-// ====================================
-// ====================================
-
 static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     t_symbol *script_file_name = atom_gensym(argv+0);
@@ -393,7 +366,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
 }
 
 // ============================================
-
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     //  TODO: Check for memory leaks 
     (void)s;
@@ -578,7 +550,6 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
 static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
 
-    // check if function was called
     if (x->function_called == 0) {
         pd_error(x, "[py4pd] You need to call a function before run!");
         return;
@@ -607,20 +578,22 @@ t_int *py4pd_perform(t_int *w){
     t_sample *audioIn = (t_sample *)(w[2]); // this is the input vector (the sound)
     int n = (int)(w[3]); // this is the vector size (number of samples, for example 64)
     const npy_intp dims = n;
-    PyObject *ArgsTuple, *pValue, *pAudio;
+    PyObject *ArgsTuple, *pValue, *pAudio, *pSample;
 
     if (x->function_called == 0) {
         pd_error(x, "[py4pd] You need to call a function before run!");
         return (w + 4);
     }
 
+    pSample = NULL;
     if (x->use_NumpyArray == 1) {
         pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
         ArgsTuple = PyTuple_New(1);
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
+        // delete the reference to the numpy array
     }
     else {
-        PyObject *pSample;
+        // pSample = NULL;  NOTE: this change the sound.
         pAudio = PyList_New(n);
         for (int i = 0; i < n; i++) {
             pSample = PyFloat_FromDouble(audioIn[i]);
@@ -628,6 +601,9 @@ t_int *py4pd_perform(t_int *w){
         }
         ArgsTuple = PyTuple_New(1);
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
+        // if (pSample != NULL) {
+        //     Py_DECREF(pSample);
+        // }
     }
 
     // WARNING: this can generate errors? How this will work on multithreading?
@@ -651,9 +627,12 @@ t_int *py4pd_perform(t_int *w){
         Py_XDECREF(ptraceback);
         PyErr_Clear();
     }
-    Py_XDECREF(pAudio);
+
     Py_XDECREF(pValue);
     Py_DECREF(ArgsTuple);
+    if (pSample != NULL) {
+        Py_DECREF(pSample);
+    }
     return (w + 4);
 }
 
@@ -664,16 +643,19 @@ t_int *py4pd_performAudioOutput(t_int *w){
     if (x->audioInput == 0 && x->audioOutput == 0) {
         return (w + 5);
     }
-    t_sample *audioIn = (t_sample *)(w[2]); // this is the input vector (the sound)
-    t_sample *audioOut = (t_sample *)(w[3]); // this is the output vector (the sound)
-    int n = (int)(w[4]); // this is the vector size (number of samples, for example 64)
-    const npy_intp dims = n;
-    PyObject *ArgsTuple, *pValue, *pAudio;
 
     if (x->function_called == 0) {
         pd_error(x, "[py4pd] You need to call a function before run!");
         return (w + 5);
     }
+
+    t_sample *audioIn = (t_sample *)(w[2]); // this is the input vector (the sound)
+    t_sample *audioOut = (t_sample *)(w[3]); // this is the output vector (the sound)
+    int n = (int)(w[4]); // this is the vector size (number of samples, for example 64)
+    const npy_intp dims = n;
+    PyObject *ArgsTuple, *pValue, *pAudio, *pSample;
+
+    pSample = NULL;   // NOTE: This is the way to not distorce the audio output
 
     if (x->use_NumpyArray == 1) {
         pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
@@ -681,7 +663,7 @@ t_int *py4pd_performAudioOutput(t_int *w){
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
     }
     else {
-        PyObject *pSample;
+        // pSample = NULL;
         pAudio = PyList_New(n);
         for (int i = 0; i < n; i++) {
             pSample = PyFloat_FromDouble(audioIn[i]);
@@ -689,8 +671,10 @@ t_int *py4pd_performAudioOutput(t_int *w){
         }
         ArgsTuple = PyTuple_New(1);
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
+        // if (pSample != NULL) {
+        //     Py_DECREF(pSample);
+        // }
     }
-
     // WARNING: this can generate errors? How this will work on multithreading? || In PEP 684 this will be per interpreter or global?
     PyObject *capsule = PyCapsule_New(x, "py4pd", NULL); // create a capsule to pass the object to the python interpreter
     PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule); // add the capsule to the python interpreter
@@ -701,7 +685,6 @@ t_int *py4pd_performAudioOutput(t_int *w){
             for (int i = 0; i < n; i++) {
                 audioOut[i] = PyFloat_AsDouble(PyList_GetItem(pValue, i));
             }          
-            return (w + 5);
         }
         else if (PyArray_Check(pValue)){
             // save pValue in output vector
@@ -710,11 +693,10 @@ t_int *py4pd_performAudioOutput(t_int *w){
             for (int i = 0; i < n; i++) { // TODO: try to add audio support without another loop
                 audioOut[i] = *(t_sample *)PyArray_GETPTR1(pArray, i);
             }
-            return (w + 5);
+           Py_DECREF(pArray);
         }
         else{
             pd_error(x, "[py4pd] The function must return a list or a numpy array, returned: %s", pValue->ob_type->tp_name);
-            return (w + 5);
         }
     }
     else { // if the function returns a error
@@ -728,11 +710,12 @@ t_int *py4pd_performAudioOutput(t_int *w){
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);
         PyErr_Clear();
-        return (w + 5);
     }
-    Py_XDECREF(pAudio);
     Py_XDECREF(pValue);
     Py_DECREF(ArgsTuple);
+    if (pSample != NULL) {
+        Py_DECREF(pSample);
+    }
     return (w + 5);
 }
 
@@ -742,10 +725,9 @@ static void py4pd_dspin(t_py *x, t_signal **sp){
         dsp_add(py4pd_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
     }
     else { // python output is audio
-        dsp_add(py4pd_performAudioOutput, 4, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
+       dsp_add(py4pd_performAudioOutput, 4, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
     }
 }
-
 // ============================================
 static void restartPython(t_py *x){
     pd_error(x, "[py4pd] This function is not implemented yet!");
@@ -782,35 +764,38 @@ static void restartPython(t_py *x){
 
 
 // ============================================
-static void startNumpy(){
-    _import_array();
-    return;
+// function to start numpy
+static void *startNumpy(){
+    import_array();
+    return NULL;
 }
+
+
+
 
 // ============================================
 
 static void usenumpy(t_py *x, t_floatarg f){
     //  TODO: If the run method set before the end of the thread, there is an error, that close all PureData.
-
     int usenumpy = (int)f;
     if (usenumpy == 1) {
         post("[py4pd] Numpy Array enabled.");
-        startNumpy();
+        if (numpyArrayStarted == 0){
+            post("[py4pd] Starting Numpy Array.");
+            startNumpy();
+            numpyArrayStarted = 1;
+        }
         x->use_NumpyArray = 1;
-        return;
     } else if (usenumpy == 0) {
-        x->use_NumpyArray = 0; // 
+        x->use_NumpyArray = 0; 
         post("[py4pd] Numpy Array disabled");
-        return;
     } else {
         pd_error(x, "[py4pd] Numpy status must be 0 (disable) or 1 (enable)");
     }
     return;
 }
 
-// ============================================
-// ============================================
-// ============================================
+// ===========================================
 
 static void thread(t_py *x, t_floatarg f){
     //  TODO: If the run method set before the end of the thread, there is an error, that close all PureData.
@@ -832,7 +817,6 @@ static void thread(t_py *x, t_floatarg f){
 // ============================================
 // =========== SETUP OF OBJECT ================
 // ============================================
-
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv){ 
     int i;
     t_py *x;
@@ -853,15 +837,15 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     }
     if (visMODE == 1 && audioOUT == 0){
         x = (t_py *)pd_new(py4pd_class_VIS); // create a new object
-        post("py4pd: visual mode");
+        // post("py4pd: visual mode");
     }
     else if (audioOUT == 1 && visMODE == 0){
         x = (t_py *)pd_new(py4pd_classAudioOut); // create a new object
-        post("py4pd: audio mode");
+        // post("py4pd: audio mode");
     }
     else if (normalMODE == 1){
         x = (t_py *)pd_new(py4pd_class); // create a new object
-        post("py4pd: normal/analisys mode");
+        // post("py4pd: normal/analisys mode");
     }
     else {
         post("Error in py4pd_new, please report this error to the developer, this message should not appear.");
@@ -897,7 +881,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
                 x->x_outline = 1;
             }
             else if (py4pdArgs == gensym("-audioout")) {
-                post("[py4pd] Audio Outlets enabled");
+                // post("[py4pd] Audio Outlets enabled");
                 x->audioOutput = 1;
                 x->use_NumpyArray = 0;
                 x->out_A = outlet_new(&x->x_obj, gensym("signal")); // create a signal outlet
@@ -916,14 +900,14 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
                 argc--;
             }
             else if (py4pdArgs == gensym("-audioin")) {
-                post("[py4pd] Audio Inlets enabled");
+                // post("[py4pd] Audio Inlets enabled");
                 x->audioInput = 1;
                 x->use_NumpyArray = 0;
             }
             else if (py4pdArgs == gensym("-audio")){
                 post("[py4pd] Audio Inlet and Outlet enabled");
                 x->audioInput = 1;
-                x->audioOutput = 1;
+               x->audioOutput = 1;
                 x->out_A = outlet_new(&x->x_obj, gensym("signal")); // create a signal outlet
                 x->use_NumpyArray = 0;
                 int j;
@@ -946,11 +930,11 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     if (argc > 1) { // check if there are two arguments
         set_function(x, s, argc, argv); 
     }
+    // print the size memory of the x
     return(x);
 }
 
 // ============================================
-
 void *py4pd_free(t_py *x){
     object_count--;
 
@@ -959,44 +943,34 @@ void *py4pd_free(t_py *x){
     }
 
     if (object_count == 1) {
-        // Py_Finalize(); // BUG: Not possible because it crash if another py4pd be created in same PD session
-
-        // post("[py4pd] Python interpreter finalized");
+        // Py_Finalize(); // BUG: Not possible because it crash if another py4pd be created in same PureData session
     }
     return (void *)x;
 }
 
 // ====================================================
-
 void py4pd_setup(void){
-
-    // ============================================
     py4pd_class =       class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
                         (t_newmethod)py4pd_new, // metodo de criação do objeto             
                         (t_method)py4pd_free, // quando voce deleta o objeto
                         sizeof(t_py), // quanta memoria precisamos para esse objeto
                         0, // nao há uma GUI especial para esse objeto???
                         A_GIMME, // o argumento é um símbolo
-                        0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
-
-    
-    // ============================================
-    py4pd_class_VIS =   class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
-                        (t_newmethod)py4pd_new, // metodo de criação do objeto             
-                        (t_method)py4pd_free, // quando voce deleta o objeto
-                        sizeof(t_py), // quanta memoria precisamos para esse objeto
-                        0, // nao há uma GUI especial para esse objeto???
-                        A_GIMME, // o argumento é um símbolo
-                        0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
-
-    
-    py4pd_classAudioOut =   class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
-                        (t_newmethod)py4pd_new, // metodo de criação do objeto             
-                        (t_method)py4pd_free, // quando voce deleta o objeto
-                        sizeof(t_py), // quanta memoria precisamos para esse objeto
-                        0, // nao há uma GUI especial para esse objeto???
-                        A_GIMME, // o argumento é um símbolo
-                        0); // todos os outros argumentos por exemplo um numero seria A_DEFFLOAT
+                        0); 
+    py4pd_class_VIS =   class_new(gensym("py4pd"), 
+                        (t_newmethod)py4pd_new, 
+                        (t_method)py4pd_free, 
+                        sizeof(t_py), 
+                        0, 
+                        A_GIMME, 
+                        0); 
+    py4pd_classAudioOut =   class_new(gensym("py4pd"), 
+                        (t_newmethod)py4pd_new, 
+                        (t_method)py4pd_free, 
+                        sizeof(t_py), 
+                        0, 
+                        A_GIMME, 
+                        0); 
 
 
     // Sound in
@@ -1007,7 +981,7 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0); // add a method to a class
     class_addmethod(py4pd_classAudioOut, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0); // add a method to a class
     
-    // Pic
+    // Pic related
     class_addmethod(py4pd_class_VIS, (t_method)PY4PD_size_callback, gensym("_picsize"), A_DEFFLOAT, A_DEFFLOAT, 0);
     class_addmethod(py4pd_class_VIS, (t_method)PY4PD_mouserelease, gensym("_mouserelease"), 0);
     class_addmethod(py4pd_class_VIS, (t_method)PY4PD_outline, gensym("outline"), A_DEFFLOAT, 0);
@@ -1016,13 +990,11 @@ void py4pd_setup(void){
     // this is like have lot of objects with the same name, add all methods for py4pd_class, py4pd_class_AudioOut and py4pd_class_VIS
     class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0); // set home path
     class_addmethod(py4pd_class_VIS, (t_method)home, gensym("home"), A_GIMME, 0); // set home path
-    class_addmethod(py4pd_classAudioOut, (t_method)packages, gensym("packages"), A_GIMME, 0); // set packages path
+    class_addmethod(py4pd_classAudioOut, (t_method)packages, gensym("home"), A_GIMME, 0); // set packages path
 
     class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0); // set packages path
     class_addmethod(py4pd_class_VIS, (t_method)packages, gensym("packages"), A_GIMME, 0); // set packages path
     class_addmethod(py4pd_classAudioOut, (t_method)packages, gensym("packages"), A_GIMME, 0); // set packages path
-
-
 
     class_addmethod(py4pd_class, (t_method)thread, gensym("thread"), A_FLOAT, 0); // on/off threading
     class_addmethod(py4pd_class_VIS, (t_method)thread, gensym("thread"), A_FLOAT, 0); // on/off threading

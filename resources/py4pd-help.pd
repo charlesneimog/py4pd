@@ -9,7 +9,7 @@
 #X restore 231 200 pd modules;
 #X msg 13 17 set py sum, f 12;
 #X msg 25 46 doc, f 6;
-#N canvas 224 138 1541 723 embedded 1;
+#N canvas 224 138 1541 723 embedded 0;
 #X obj 9 142 py4pd;
 #X msg 9 8 set py pd_output;
 #X msg 67 80 run;
@@ -24,7 +24,7 @@
 #X msg 368 68 run;
 #N canvas 0 50 450 250 (subpatch) 0;
 #X array test 13 float 3;
-#A 0 0,49 0,62 -0,11 0,13 -0,19 -0,11 0,52 -0,23 -0,89 -0,46 -0,28 0,61 0,03;
+#A 0 0 0 0 0 0 0 0 0 0 0 0 0 0;
 #X coords 0 1 13 -1 200 140 1;
 #X restore 553 17 graph;
 #X obj 368 19 tgl 20 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000 0 1;
@@ -110,7 +110,7 @@
 #X connect 23 0 6 0;
 #X connect 24 0 23 1;
 #X restore 13 290 pd audioin;
-#N canvas 593 118 1118 636 audioout 0;
+#N canvas 593 118 1118 636 audioout 1;
 #X msg 44 41 editor nvim;
 #X obj 30 230 dac~;
 #X obj 30 11 osc~ 330;
@@ -172,7 +172,7 @@
 #X msg 47 68 run [eb2 c3 c#5 g2 c6];
 #X text 147 102 py4pd -canvas score note;
 #X msg 33 271 See the matplotlib too!!!;
-#X obj 13 121 py4pd py note -score;
+#X obj 13 121 py4pd py note -score -vscode;
 #X connect 1 0 6 0;
 #X connect 2 0 6 0;
 #X connect 3 0 6 0;
