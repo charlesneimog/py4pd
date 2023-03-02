@@ -3,7 +3,7 @@ from neoscore.common import *
 import os
 
 
-def sum(x, y):
+def pdsum(x, y):
     "It sums two numbers."
     x = int(x)
     y = int(y)
