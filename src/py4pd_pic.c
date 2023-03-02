@@ -39,7 +39,6 @@ const char* PY4PD_filepath(t_py *x, const char *filename){
 // =================================================
 void PY4PD_mouserelease(t_py* x){
     (void)x;
-
 }
 
 // ==================================================
@@ -128,25 +127,15 @@ void PY4PD_getrect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2, int 
     *yp1 = text_ypix(&x->x_obj, glist);
     *xp2 = *xp1 + x->x_width * x->x_zoom;
     *yp2 = *yp1 + x->x_height * x->x_zoom;
-
-
-
-    // int xpos = *xp1 = text_xpix(&x->x_obj, glist), ypos = *yp1 = text_ypix(&x->x_obj, glist);
-    // *xp2 = xpos + x->x_width, *yp2 = ypos + x->x_height;
 }
 
 // ====================================
 void PY4PD_displace(t_gobj *z, t_glist *glist, int dx, int dy){
     t_py *obj = (t_py *)z;
     obj->x_obj.te_xpix += dx, obj->x_obj.te_ypix += dy;
-
-    // post("width: %d, height: %d, zoom: %d", obj->x_width, obj->x_height, obj->x_zoom);
-
-
     t_canvas *cv = glist_getcanvas(glist);
     sys_vgui(".x%lx.c move %lx_outline %d %d\n", cv, obj, dx* obj->x_zoom, dy* obj->x_zoom);
     sys_vgui(".x%lx.c move %lx_picture %d %d\n", cv, obj, dx* obj->x_zoom, dy* obj->x_zoom);
-    
     if(obj->x_receive == &s_)
         sys_vgui(".x%lx.c move %lx_in %d %d\n", cv, obj, dx * obj->x_zoom, dy * obj->x_zoom);
     if(obj->x_send == &s_)
@@ -225,7 +214,6 @@ void PY4PD_erase(t_py* x, struct _glist *glist){
 // ==================================================================
 void PY4PD_vis(t_gobj *z, t_glist *glist, int vis){
     t_py* x = (t_py*)z;
-    post("vis = %d", vis);
     vis ? PY4PD_draw(x, glist, 1) : PY4PD_erase(x, glist);
 
 }
@@ -238,12 +226,12 @@ void PY4PD_save(t_gobj *z, t_binbuf *b){
     char *scriptName;
     char *functionName;
 
-    if(x->x_filename == &s_)
+    if(x->x_filename == &s_){
         x->x_filename = gensym("empty");
-    PY4PD_get_snd_rcv(x);
+    }
 
+    PY4PD_get_snd_rcv(x);
     if(x->visMode == 1){
-        // set picMode as -score
         picMode = "-score";
     }
     else{
@@ -251,7 +239,6 @@ void PY4PD_save(t_gobj *z, t_binbuf *b){
     }
     
     if(x->function_called == 1){
-        // convert x->script_name and x->function_name from const char * to char *
         scriptName =    (char *)malloc(strlen(x->script_name->s_name) + 1);
         functionName =  (char *)malloc(strlen(x->function_name->s_name) + 1);
         strcpy(scriptName, x->script_name->s_name);
@@ -262,23 +249,26 @@ void PY4PD_save(t_gobj *z, t_binbuf *b){
         functionName = "";
     }
 
-    if(x->visMode == 1){
-        // set picMode as -score
-        picMode = "-score";
-    }
-    else{
-        picMode = "";
-    }
-    binbuf_addv(b, "ssiissss", gensym("#X"), 
+    // transform editor name in a flag put and '-' before
+    char *editorName = (char *)malloc(strlen(x->editorName->s_name) + 1);
+    strcpy(editorName, x->editorName->s_name);
+    char *editorNameFlag = (char *)malloc(strlen(x->editorName->s_name) + 2);
+    editorNameFlag[0] = '-';
+    strcpy(editorNameFlag+1, editorName);
+
+    binbuf_addv(b, "ssiisssss", gensym("#X"), 
                 gensym("obj"), 
                 x->x_obj.te_xpix, 
                 x->x_obj.te_ypix,
                 atom_getsymbol(binbuf_getvec(x->x_obj.te_binbuf)), 
                 gensym(scriptName), 
                 gensym(functionName),
-                gensym(picMode)
-                );
+                gensym(picMode), 
+                gensym(editorNameFlag));
     binbuf_addv(b, ";");
+    free(scriptName);
+    free(functionName);
+    free(editorName);
 }
 
 // ==================================================================
@@ -647,8 +637,7 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c , t_symbol *py4pdArgs, int index, in
     py4pd_widgetbehavior.w_clickfn    = (t_clickfn)PY4PD_click;
     class_setwidget(py4pd_class_VIS, &py4pd_widgetbehavior);
     class_setsavefn(py4pd_class_VIS, &PY4PD_save);
-    class_setpropertiesfn(py4pd_class_VIS, &PY4PD_properties);
-
+    // class_setpropertiesfn(py4pd_class_VIS, &PY4PD_properties);
     py4pd_picDefintion(py4pdImageData);
     t_canvas *cv = canvas_getcurrent();
     x->x_glist = (t_glist*)cv;

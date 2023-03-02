@@ -907,6 +907,14 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
                 }
                 argc--;
             }
+            else if (py4pdArgs == gensym("-nvim") || py4pdArgs == gensym("-vscode") || py4pdArgs == gensym("-emacs")) {
+                x->editorName = gensym(py4pdArgs->s_name + 1);
+                int j;
+                for (j = i; j < argc; j++) {
+                    argv[j] = argv[j+1];
+                }
+                argc--;
+            }
             else if (py4pdArgs == gensym("-audioin")) {
                 post("[py4pd] Audio Inlets enabled");
                 x->audioInput = 1;
