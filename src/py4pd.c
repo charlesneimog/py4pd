@@ -920,8 +920,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
         post("");
         PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the python interpreter
         Py_Initialize(); // Initialize the Python interpreter. If 1, the signal handler is installed.    
-        //
-        // import_array(); // Import the numpy array
     }
 
     object_count++; // count the number of objects;  
@@ -996,7 +994,7 @@ void *py4pd_free(t_py *x){
     }
 
     if (object_count == 1) {
-        // Py_Finalize(); // BUG: Not possible because it crash if another py4pd be created in same PureData session
+        // Py_Finalize(); // BUG: Not possible because it crashes if another py4pd is created in the same PureData session
     }
     return (void *)x;
 }
