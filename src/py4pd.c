@@ -574,9 +574,9 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 t_int *py4pd_perform(t_int *w){
     // check time of process
-    clock_t start_time, end_time;
-    double cpu_time_used;
-    start_time = clock();
+    // clock_t start_time, end_time;
+    // double cpu_time_used;
+    // start_time = clock();
     //  TODO: Check for memory leaks in this function
     t_py *x = (t_py *)(w[1]); // this is the object itself
     if (x->audioInput == 0 && x->audioOutput == 0) {
@@ -640,12 +640,12 @@ t_int *py4pd_perform(t_int *w){
     if (pSample != NULL) {
         Py_DECREF(pSample);
     }
-    // check time of process
-    end_time = clock();
-    cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
-    // post time processing in microseconds
-    post("Time of process: %f", cpu_time_used * 1000000);
-
+    // // check time of process
+    // end_time = clock();
+    // cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+    // // post time processing in microseconds
+    // post("Time of process: %f", cpu_time_used * 1000000);
+    //
     return (w + 4);
 }
 
@@ -661,7 +661,7 @@ t_int *py4pd_performAudioOutput(t_int *w){
     t_py *x = (t_py *)(w[1]); // this is the object itself
     
     x->interation = x->interation + 1;
-    
+    // 
 
     if (x->audioInput == 0 && x->audioOutput == 0) {
         return (w + 5);
@@ -716,7 +716,6 @@ t_int *py4pd_performAudioOutput(t_int *w){
             }          
         }
 
-
         else if (PyArray_Check(pValue)){
             // save pValue in output vector
             PyArrayObject *pArray = (PyArrayObject *)pValue;
@@ -724,7 +723,6 @@ t_int *py4pd_performAudioOutput(t_int *w){
             for (int i = 0; i < n; i++) { // TODO: try to add audio support without another loop
                 audioOut[i] = *(t_sample *)PyArray_GETPTR1(pArray, i);
             }
-           Py_DECREF(pArray);
         }
         else{
             pd_error(x, "[py4pd] The function must return a list or a numpy array, returned: %s", pValue->ob_type->tp_name);
@@ -747,6 +745,7 @@ t_int *py4pd_performAudioOutput(t_int *w){
     if (pSample != NULL) {
         Py_DECREF(pSample);
     }
+
     // check time of process
     end_time = clock();
     cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
