@@ -58,3 +58,19 @@ See more in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Example
 ## Citing this work
 
 Consider citing this repository, in the right side of page, below of about.
+```APA
+Neimog, C. K. (2023). py4pd, Python inside PureData (Version 0.5.0) [Computer software]. https://doi.org/10.5281/zenodo.7677265
+```
+``` bibtex
+@software{Neimog_py4pd_Python_inside_2023,
+author = {Neimog, Charles K.},
+doi = {10.5281/zenodo.7677265},
+license = {GPL3},
+month = {2},
+title = {{py4pd, Python inside PureData}},
+url = {https://github.com/charlesneimog/py4pd},
+version = {0.5.0},
+year = {2023}
+}
+```
+
