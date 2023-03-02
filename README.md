@@ -19,7 +19,17 @@
 * Use svg/draws as scores;
 * OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
 
+#### Examples
+
+<details>
+<summary>Scores and Chords (OpenMusic chord/note)</summary>
+
+I WILL PUT HERE ONE GIF
+
+</details>
+
 See examples in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Examples).
+
 
 ### Download py4pd
 1. Open PureData, `Help->Find Externals->` search for `py4pd` then select py4pd and click on `Install`: 
