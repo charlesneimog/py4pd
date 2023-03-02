@@ -573,7 +573,10 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
 // ============================================
 t_int *py4pd_perform(t_int *w){
-
+    // check time of process
+    clock_t start_time, end_time;
+    double cpu_time_used;
+    start_time = clock();
     //  TODO: Check for memory leaks in this function
     t_py *x = (t_py *)(w[1]); // this is the object itself
     if (x->audioInput == 0 && x->audioOutput == 0) {
@@ -637,13 +640,29 @@ t_int *py4pd_perform(t_int *w){
     if (pSample != NULL) {
         Py_DECREF(pSample);
     }
+    // check time of process
+    end_time = clock();
+    cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+    // post time processing in microseconds
+    post("Time of process: %f", cpu_time_used * 1000000);
+
     return (w + 4);
 }
 
 // ============================================
 t_int *py4pd_performAudioOutput(t_int *w){
     //  TODO: Check for memory leaks
+
+
+    clock_t start_time, end_time;
+    double cpu_time_used;
+    start_time = clock();
+
     t_py *x = (t_py *)(w[1]); // this is the object itself
+    
+    x->interation = x->interation + 1;
+    
+
     if (x->audioInput == 0 && x->audioOutput == 0) {
         return (w + 5);
     }
@@ -668,10 +687,11 @@ t_int *py4pd_performAudioOutput(t_int *w){
     }
     else {
         // pSample = NULL;
-        pAudio = PyList_New(n);
+        // pAudio = PyList_New(n); cconvert audioIn in tuple
+        pAudio = PyTuple_New(n);
         for (int i = 0; i < n; i++) {
             pSample = PyFloat_FromDouble(audioIn[i]);
-            PyList_SetItem(pAudio, i, pSample);
+            PyTuple_SetItem(pAudio, i, pSample);
         }
         ArgsTuple = PyTuple_New(1);
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
@@ -690,6 +710,13 @@ t_int *py4pd_performAudioOutput(t_int *w){
                 audioOut[i] = PyFloat_AsDouble(PyList_GetItem(pValue, i));
             }          
         }
+        else if (PyTuple_Check(pValue)){
+            for (int i = 0; i < n; i++) {
+                audioOut[i] = PyFloat_AsDouble(PyTuple_GetItem(pValue, i));
+            }          
+        }
+
+
         else if (PyArray_Check(pValue)){
             // save pValue in output vector
             PyArrayObject *pArray = (PyArrayObject *)pValue;
@@ -720,6 +747,26 @@ t_int *py4pd_performAudioOutput(t_int *w){
     if (pSample != NULL) {
         Py_DECREF(pSample);
     }
+    // check time of process
+    end_time = clock();
+    cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
+    // post time processing in microseconds
+
+    if (x->interation == 1000) {
+        // sum all numbers inside x->arrayin
+        float sum = 0;
+        for (int i = 0; i < 1000; i++) {
+            sum += x->arrayofint[i];
+        }
+        post("Average time of process in microseconds: %f", sum / 1000);
+        x->interation = 0;
+    }
+    else{
+        x->arrayofint[x->interation] = cpu_time_used * 1000000;
+    }
+        
+
+
     return (w + 5);
 }
 
@@ -862,6 +909,10 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     x->audioInput = 0;
     x->audioOutput = 0;
     x->visMode = 0;
+
+    // int arrayofin save 1000 int    
+
+
 
     if (!Py_IsInitialized()) {
         object_count = 1;  // To count the numbers of objects, and finalize the interpreter when the last object is deleted

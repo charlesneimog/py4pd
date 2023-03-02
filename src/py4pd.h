@@ -68,6 +68,10 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_symbol        *x_send;
     t_symbol        *x_snd_raw;
 
+    t_int           interation;
+    // array of integer
+    float           arrayofint[1000];
+
     
     t_canvas        *x_canvas; // pointer to the canvas
     t_inlet         *in1; // intlet 1
