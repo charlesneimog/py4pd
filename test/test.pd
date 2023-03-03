@@ -181,7 +181,7 @@
 #X connect 12 0 0 0;
 #X connect 15 0 0 0;
 #X restore 275 132 pd TEST;
-#N canvas 470 98 1440 718 TEST 1;
+#N canvas 470 98 1440 718 TEST 0;
 #X obj 153 330 py4pd;
 #X obj 24 164 loadbang;
 #X obj 61 27 inlet;
