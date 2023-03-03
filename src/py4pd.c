@@ -9,7 +9,6 @@
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-// t_py *py4pd_object_array[100];
 t_class *py4pd_class; // DOC: For audio in and without audio
 t_class *py4pd_class_VIS; // DOC: For visualisation | pic object by pd-else
 t_class *py4pd_classAudioOut; // DOC: For audio out
@@ -118,7 +117,7 @@ void pd4py_system_func (const char *command){
 }
 
 // ============================================
-static void open(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void openscript(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     (void)argc;
 
@@ -131,13 +130,12 @@ static void open(t_py *x, t_symbol *s, int argc, t_atom *argv){
     
     // Open VsCode in Windows
     #ifdef _WIN64 
-    char *command = get_editor_command(x);
+    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20); 
     command = get_editor_command(x);
     // use get_editor_command
     SHELLEXECUTEINFO sei = {0};
     sei.cbSize = sizeof(sei);
     sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-    // sei.lpVerb = "open";
     sei.lpFile = "cmd.exe ";
     sei.lpParameters = command;
     sei.nShow = SW_HIDE;
@@ -183,7 +181,6 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv){
     SHELLEXECUTEINFO sei = {0};
     sei.cbSize = sizeof(sei);
     sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-    // sei.lpVerb = "open";
     sei.lpFile = "cmd.exe ";
     sei.lpParameters = command;
     sei.nShow = SW_HIDE;
@@ -1016,9 +1013,9 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class_VIS, (t_method)editor, gensym("editor"), A_GIMME, 0); // open code
     class_addmethod(py4pd_classAudioOut, (t_method)editor, gensym("editor"), A_GIMME, 0); // open code
 
-    class_addmethod(py4pd_class, (t_method)open, gensym("open"), A_GIMME, 0); // create file or open it TODO: fix this
-    class_addmethod(py4pd_class_VIS, (t_method)open, gensym("open"), A_GIMME, 0); // create file or open it
-    class_addmethod(py4pd_classAudioOut, (t_method)open, gensym("open"), A_GIMME, 0); // create file or open it
+    class_addmethod(py4pd_class, (t_method)openscript, gensym("open"), A_GIMME, 0); // create file or open it TODO: fix this
+    class_addmethod(py4pd_class_VIS, (t_method)openscript, gensym("open"), A_GIMME, 0); // create file or open it
+    class_addmethod(py4pd_classAudioOut, (t_method)openscript, gensym("open"), A_GIMME, 0); // create file or open it
 
     class_addmethod(py4pd_class, (t_method)editor, gensym("click"), 0, 0); // when click open editor
     class_addmethod(py4pd_classAudioOut, (t_method)editor, gensym("click"), 0, 0); // when click open editor
