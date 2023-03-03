@@ -127,7 +127,6 @@ void PY4PD_getrect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2, int 
     *xp2 = xpos + x->x_width, *yp2 = ypos + x->x_height;
 }
 
-
 // ====================================
 void PY4PD_displace(t_gobj *z, t_glist *glist, int dx, int dy){
     t_py *obj = (t_py *)z;
