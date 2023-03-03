@@ -12,7 +12,6 @@ PyObject *pdout(PyObject *self, PyObject *args){
     float f;
     char *string;
 
-    // get py4pd object pointer
     // ================================
     PyObject *pd_module = PyImport_ImportModule("__main__");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
@@ -412,7 +411,10 @@ PyMethodDef PdMethods[] = {
     {"tabread", pdtabread, METH_VARARGS, "Read data from PureData tables/arrays"},
     {"show", pdshowimage, METH_VARARGS, "Show image in PureData, it must be .gif, .bmp, .ppm"},
     {"home", pdhome, METH_VARARGS, "Get PureData Patch Path Folder"},
-    {"samplerate", pdsamplerate, METH_VARARGS, "Get PureData Sample Rate"},
+    
+    // audio
+    {"samplerate", pdsamplerate, METH_VARARGS, "Get PureData SampleRate"},
+    // {"vectorsize", pdvectorsize, METH_VARARGS, "Get PureData Vector Size"},
     {NULL, NULL, 0, NULL} // 
 };
 
