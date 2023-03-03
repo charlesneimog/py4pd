@@ -232,7 +232,7 @@ void *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
 
 int *set_py4pd_config(t_py *x) {
     x->packages_path = gensym("./py-modules/");
-    x->thread = 2;
+    x->thread = 0;
     x->editorName = gensym("vscode");
     char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1)); // 
     strcpy(config_path, x->home_path->s_name); // copy string one into the result.
@@ -292,7 +292,7 @@ int *set_py4pd_config(t_py *x) {
                     if (thread[0] == '1') {
                         x->thread = 1;
                     } else {
-                        x->thread = 2;
+                        x->thread = 0;
                     }
 
                 }

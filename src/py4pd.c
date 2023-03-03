@@ -88,7 +88,9 @@ static void documentation(t_py *x){
             if (Doc != NULL){
                 post("");
                 post("==== %s documentation ====", x->function_name->s_name);
+                post("");
                 post("%s", Doc);
+                post("");
                 post("==== %s documentation ====", x->function_name->s_name);
                 post("");
                 return;
@@ -563,16 +565,14 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
 // ============================================
 static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
-
     if (x->function_called == 0) {
         pd_error(x, "[py4pd] You need to call a function before run!");
         return;
     }
-    int thread = x->thread;
-    if (thread == 1) {
+    if (x->thread == 1) {
         run_function(x, s, argc, argv);
         pd_error(x, "[py4pd] Not implemenented! Wait for approval of PEP 684");
-    } else if (thread == 2) {
+    } else if (x->thread == 0) {
         run_function(x, s, argc, argv);
         
     } else {
@@ -598,14 +598,13 @@ t_int *py4pd_perform(t_int *w){
         return (w + 4);
     }
 
-    pSample = NULL;
+    pSample = NULL; //  
     if (x->use_NumpyArray == 1) {
         pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
         ArgsTuple = PyTuple_New(1);
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
     }
     else {
-        // pSample = NULL;  NOTE: this change the sound.
         pAudio = PyList_New(n);
         for (int i = 0; i < n; i++) {
             pSample = PyFloat_FromDouble(audioIn[i]);
@@ -613,9 +612,6 @@ t_int *py4pd_perform(t_int *w){
         }
         ArgsTuple = PyTuple_New(1);
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
-        // if (pSample != NULL) {
-        //     Py_DECREF(pSample);   NOTE: this change the sound.
-        // }
     }
 
     // WARNING: this can generate errors? How this will work on multithreading?
@@ -642,15 +638,9 @@ t_int *py4pd_perform(t_int *w){
 
     Py_XDECREF(pValue);
     Py_DECREF(ArgsTuple);
-    if (pSample != NULL) {
+    if (pSample != NULL) { 
         Py_DECREF(pSample);
     }
-    // // check time of process
-    // end_time = clock();
-    // cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
-    // // post time processing in microseconds
-    // post("Time of process: %f", cpu_time_used * 1000000);
-    //
     return (w + 4);
 }
 
@@ -659,31 +649,26 @@ t_int *py4pd_performAudioOutput(t_int *w){
     //  TODO: Check for memory leaks
 
     t_py *x = (t_py *)(w[1]); // this is the object itself
-    
     if (x->audioInput == 0 && x->audioOutput == 0) {
         return (w + 5);
     }
-
     if (x->function_called == 0) {
         pd_error(x, "[py4pd] You need to call a function before run!");
         return (w + 5);
     }
-
     t_sample *audioIn = (t_sample *)(w[2]); // this is the input vector (the sound)
     t_sample *audioOut = (t_sample *)(w[3]); // this is the output vector (the sound)
     int n = (int)(w[4]); // this is the vector size (number of samples, for example 64)
     const npy_intp dims = n;
     PyObject *ArgsTuple, *pValue, *pAudio, *pSample;
-
     pSample = NULL;   // NOTE: This is the way to not distorce the audio output
-
     if (x->use_NumpyArray == 1) {
         pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
         ArgsTuple = PyTuple_New(1);
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
     }
     else {
-        // pSample = NULL;
+        // pSample = NULL;  NOTE: this change the sound.
         // pAudio = PyList_New(n); cconvert audioIn in tuple
         pAudio = PyTuple_New(n);
         for (int i = 0; i < n; i++) {
@@ -692,7 +677,7 @@ t_int *py4pd_performAudioOutput(t_int *w){
         }
         ArgsTuple = PyTuple_New(1);
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
-        // if (pSample != NULL) {
+        // if (pSample != NULL) { NOTE: this change the sound.
         //     Py_DECREF(pSample);
         // }
     }
@@ -712,14 +697,12 @@ t_int *py4pd_performAudioOutput(t_int *w){
                 audioOut[i] = PyFloat_AsDouble(PyTuple_GetItem(pValue, i));
             }          
         }
-
         else if (x->numpyImported == 1) {
             if (PyArray_Check(pValue)) {
                 PyArrayObject *pArray = (PyArrayObject *)pValue;
                 for (int i = 0; i < n; i++) { // TODO: try to add audio support without another loop
                     audioOut[i] = PyFloat_AsDouble(PyArray_GETITEM(pArray, PyArray_GETPTR1(pArray, i)));
                 }
-
             }
             else{
                 pd_error(x, "[py4pd] The function must return a list, a tuple or a numpy array, returned: %s", pValue->ob_type->tp_name);
@@ -823,14 +806,13 @@ static void usenumpy(t_py *x, t_floatarg f){
 static void thread(t_py *x, t_floatarg f){
 
     //  TODO: If the run method set before the end of the thread, there is an error, that close all PureData.
-
     int thread = (int)f;
     if (thread == 1) {
         post("[py4pd] Threading enabled, wait for approval of PEP 684");
         x->thread = 1;
         return;
     } else if (thread == 0) {
-        x->thread = 2; // 
+        x->thread = 0; 
         post("[py4pd] Threading disabled");
         return;
     } else {
@@ -927,7 +909,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
                 x->use_NumpyArray = 0;
             }
             else if (py4pdArgs == gensym("-audio")){
-                post("[py4pd] Audio Inlet and Outlet enabled");
                 x->audioInput = 1;
                 x->audioOutput = 1;
                 x->out_A = outlet_new(&x->x_obj, gensym("signal")); // create a signal outlet
@@ -944,7 +925,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     if (x->audioOutput == 0){
         x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
     }
-    x->thread = 2; // default is 2 (no threading)   FIX: fix this
+    x->thread = 0; 
     x->object_number = object_count; // save object number
     x->home_path = patch_dir;     // set name of the home path
     x->packages_path = patch_dir; // set name of the packages path

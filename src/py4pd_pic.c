@@ -55,8 +55,8 @@ void PY4PD_mouserelease(t_py* x){
                         atom_string(binbuf_getvec(bb) + i, buf, 80);
                         if(gensym(buf) == gensym("-send")){
                             i++;
-                            atom_string(binbuf_getvec(bb) + i, buf, 80);
-                            x->x_snd_raw = gensym(buf);
+                            // atom_string(binbuf_getvec(bb) + i, buf, 80);
+                            // x->x_snd_raw = gensym(buf);
                             break;
                         }
                     }
@@ -65,8 +65,8 @@ void PY4PD_mouserelease(t_py* x){
             else{ // we got no flags, let's search for argument
                 int arg_n = 3; // receive argument number
                 if(n_args >= arg_n){ // we have it, get it
-                    atom_string(binbuf_getvec(bb) + arg_n, buf, 80);
-                    x->x_snd_raw = gensym(buf);
+                    // atom_string(binbuf_getvec(bb) + arg_n, buf, 80);
+                    // x->x_snd_raw = gensym(buf);
                 }
             }
         }
@@ -81,8 +81,8 @@ void PY4PD_mouserelease(t_py* x){
                         atom_string(binbuf_getvec(bb) + i, buf, 80);
                         if(gensym(buf) == gensym("-receive")){
                             i++;
-                            atom_string(binbuf_getvec(bb) + i, buf, 80);
-                            x->x_rcv_raw = gensym(buf);
+                            // atom_string(binbuf_getvec(bb) + i, buf, 80);
+                            // x->x_rcv_raw = gensym(buf);
                             break;
                         }
                     }
@@ -222,7 +222,6 @@ void PY4PD_save(t_gobj *z, t_binbuf *b){
     char *picMode;
     char *scriptName;
     char *functionName;
-    post("I am using the save function");
 
     if(x->x_filename == &s_){
         x->x_filename = gensym("empty");
@@ -601,18 +600,13 @@ void py4pd_picDefintion(char *imageData){
 // ================================================
 void py4pd_InitVisMode(t_py *x, t_canvas *c , t_symbol *py4pdArgs, int index, int argc, t_atom *argv) {
     char *py4pdImageData;
-    
-
-
     if (py4pdArgs == gensym("-picture")) {
         post("[py4pd] Picture mode enabled");
-        // malloc memory
         py4pdImageData = malloc(strlen(PICIMAGE) + 1);
         strcpy(py4pdImageData, PICIMAGE);
     } 
     else {
         post("[py4pd] Score mode enabled");    
-        // malloc memory
         py4pdImageData = malloc(strlen(PICIMAGE) + 1);
         strcpy(py4pdImageData, PICIMAGE);
     }
