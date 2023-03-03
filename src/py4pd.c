@@ -15,8 +15,6 @@ t_class *py4pd_classAudioOut; // DOC: For audio out
 t_class *edit_proxy_class;
 
 int object_count;
-static int numpyArrayStarted = 0;
-
 
 // ===================================================================
 // ========================= Pd Object ===============================
@@ -716,7 +714,10 @@ t_int *py4pd_performAudioOutput(t_int *w){
         }
 
         else if (PyArray_Check(pValue)){
-            // save pValue in output vector
+            if (x->numpyImported == 0) {
+                pd_error(x, "[py4pd] Received a numpy array but numpy on, use 'numpy 1' to enable it");
+                return (w + 5);
+            }
             PyArrayObject *pArray = (PyArrayObject *)pValue;
             // convert numpy array to pd vector
             for (int i = 0; i < n; i++) { // TODO: try to add audio support without another loop
@@ -792,7 +793,7 @@ static void restartPython(t_py *x){
 }
 
 // ============================================
-static void *startNumpy(){
+static void *py4pdImportNumpy(){
     import_array();
     return NULL;
 }
@@ -803,12 +804,11 @@ static void usenumpy(t_py *x, t_floatarg f){
     int usenumpy = (int)f;
     if (usenumpy == 1) {
         post("[py4pd] Numpy Array enabled.");
-        if (numpyArrayStarted == 0){
-            post("[py4pd] Starting Numpy Array.");
-            startNumpy();
-            numpyArrayStarted = 1;
-        }
         x->use_NumpyArray = 1;
+        if (x->numpyImported == 0) {
+            py4pdImportNumpy();
+            x->numpyImported = 1;
+        }
     } else if (usenumpy == 0) {
         x->use_NumpyArray = 0; 
         post("[py4pd] Numpy Array disabled");
@@ -951,6 +951,8 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     set_py4pd_config(x); // set the config file (in py4pd.cfg, make this be saved in the patch)
     if (argc > 1) { // check if there are two arguments
         set_function(x, s, argc, argv); 
+        import_array(); // import numpy
+        x->numpyImported = 1;
     }
     return(x);
 }

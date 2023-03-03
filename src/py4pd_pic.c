@@ -6,7 +6,6 @@
 
 t_widgetbehavior py4pd_widgetbehavior;
 
-
 // =================================================
 void PY4PD_draw_io_let(t_py *x){
     t_canvas *cv = glist_getcanvas(x->x_glist);
@@ -124,16 +123,10 @@ void PY4PD_mouserelease(t_py* x){
 // ====================================
 void PY4PD_getrect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2, int *yp2){
     t_py* x = (t_py*)z;
-    *xp1 = text_xpix(&x->x_obj, glist);
-    *yp1 = text_ypix(&x->x_obj, glist);
-    *xp2 = *xp1 + x->x_width * x->x_zoom;
-    *yp2 = *yp1 + x->x_height * x->x_zoom;
-
-
-
-    // int xpos = *xp1 = text_xpix(&x->x_obj, glist), ypos = *yp1 = text_ypix(&x->x_obj, glist);
-    // *xp2 = xpos + x->x_width, *yp2 = ypos + x->x_height;
+    int xpos = *xp1 = text_xpix(&x->x_obj, glist), ypos = *yp1 = text_ypix(&x->x_obj, glist);
+    *xp2 = xpos + x->x_width, *yp2 = ypos + x->x_height;
 }
+
 
 // ====================================
 void PY4PD_displace(t_gobj *z, t_glist *glist, int dx, int dy){

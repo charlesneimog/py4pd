@@ -39,9 +39,12 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int               visMode; // picture mode
     t_int               function_called; // flag to check if the set function was called
     t_int               py_arg_numbers; // number of arguments
-    t_int               use_NumpyArray; // flag to check if is to use numpy array in audioInput
+    
+    // == AUDIO AND NUMPY
     t_int               audioOutput; // flag to check if is to use audio output
     t_int               audioInput; // flag to check if is to use audio input
+    t_int               use_NumpyArray; // flag to check if is to use numpy array in audioInput
+    t_int               numpyImported; // flag to check if numpy was imported
 
     // == PICTURE AND SCORE
     int             x_zoom;

@@ -3,15 +3,10 @@ import os
 import pd
 import time
 import math
-try:
-    from neoscore.common import *
-    import numpy as np
-    from matplotlib import pyplot as plt
-    from PIL import Image
-except:
-    pd.error("Error importing neoscore, numpy or matplotlib")
-    pd.print("Install the libraries running the command: 'pip install neoscore numpy matplotlib -t ./py-modules'")
-    pd.print("Some functions of the help patch will not work")
+from neoscore.common import *
+import numpy as np
+from matplotlib import pyplot as plt
+from PIL import Image
 
 def pdsum(x, y):
     "It sums two numbers."
