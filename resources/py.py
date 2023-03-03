@@ -4,10 +4,31 @@ import pd
 import time
 import math
 from neoscore.common import *
-import numpy as np
-from matplotlib import pyplot as plt
-from PIL import Image
 
+# Just to avoid misundertanding!
+try:
+    from neoscore.common import *
+except:
+    pd.error("Error importing neoscore")
+    pd.print("Please, run 'pip install neoscore -t ./py-modules' in the terminal from current folder")
+try: 
+    import numpy as np
+except:
+    pd.error("Error importing numpy")
+    pd.print("Please, run 'pip install numpy -t ./py-modules' in the terminal from current folder")
+
+try:
+    from matplotlib import pyplot as plt
+except:
+    pd.error("Error importing matplotlib")
+    pd.print("Please, run 'pip install matplotlib -t ./py-modules' in the terminal from current folder")
+
+try:
+    from PIL import Image
+except:
+    pd.error("Error importing PIL")
+    pd.print("Please, run 'pip install PIL -t ./py-modules' in the terminal from current folder")
+    
 def pdsum(x, y):
     "It sums two numbers."
     x = int(x)

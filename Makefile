@@ -8,7 +8,7 @@ ifeq (MINGW,$(findstring MINGW,$(uname)))
   NUMPY_INCLUDE := $(shell cat numpyincludes.txt)
   PYTHON_DLL := $(PYTHON_PATH)/python311.dll
   cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -Wno-unused-variable 
-  ldlibs =  $(PYTHON_DLL) -lwinpthread -Xlinker -export-dynamic  
+  ldlibs =  $(PYTHON_DLL) -lwinpthread -Xlinker --export-all-symbols
 else ifeq (Linux,$(findstring Linux,$(uname)))
   PYTHON_INCLUDE := $(shell python3.11 -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
   NUMPY_INCLUDE := $(shell python3.11 -c 'import numpy.distutils.misc_util as np_utils; print(np_utils.get_numpy_include_dirs()[0])')

@@ -2,13 +2,31 @@
 #define PY4PD_H
 #include <m_pd.h>
 #include <g_canvas.h>
-#include <pthread.h>
-// #include <dlfcn.h>
+
+// in _WIN64 include windows.h, if not, include <pthread.h>
+#define PY_SSIZE_T_CLEAN // Good practice to use this before include Python.h because it will remove some deprecated function
+
+
 #ifdef _WIN64 
     #include <windows.h>  // on Windows, system() open a console window and we don't want that
+    #include <io.h> // for _access() function
+    #ifndef F_OK
+        #define F_OK 0
+    #endif
+    #ifdef _DEBUG
+        #undef _DEBUG
+        #include <Python.h>
+        #define _DEBUG
+    #else
+        #include <Python.h>
+    #endif
+
+#else
+    #include <pthread.h>
+    #include <Python.h>
 #endif
-#define PY_SSIZE_T_CLEAN // Good practice to use this before include Python.h because it will remove some deprecated function
-#include <Python.h>
+
+
 
 
 #ifndef IHEIGHT

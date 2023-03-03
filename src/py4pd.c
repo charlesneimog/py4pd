@@ -61,7 +61,7 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                 return;
             }
             // check if path exists and is valid
-            if (access(x->packages_path->s_name, F_OK) == -1) {
+            if (_access(x->packages_path->s_name, F_OK) == -1) {
                 pd_error(x, "[py4pd] The packages path is not valid");
                 return;
             }
@@ -286,7 +286,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // check if script file exists
     char script_file_path[MAXPDSTRING];
     snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name, script_file_name->s_name);
-    if (access(script_file_path, F_OK) == -1) {
+    if (_access(script_file_path, F_OK) == -1) {
         pd_error(x, "[py4pd] The script file %s does not exist!", script_file_path);
         Py_XDECREF(x->function);
         Py_XDECREF(x->module);
@@ -398,8 +398,8 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
             pd_error(x, "[py4pd] The number of '[' and ']' is not the same!");
             return;
         }
-        PyObject *lists[OpenList_count]; // create a list of lists 
-        
+        PyObject **lists = (PyObject **) malloc(OpenList_count * sizeof(PyObject *));
+
         ArgsTuple = py4pd_convert_to_py(lists, argc, argv); // convert the arguments to python
         int argCount = PyTuple_Size(ArgsTuple); // get the number of arguments
         if (argCount != x->py_arg_numbers) {
@@ -1038,7 +1038,7 @@ void py4pd_setup(void){
     //
 }
 
-#ifdef _WIN64
-__declspec(dllexport) void py4pd_setup(void); // when I add python module, for some reson, pd not see py4pd_setup
-#endif
+// #ifdef _WIN64
+//     __declspec(dllexport) void py4pd_setup(void); // when I add python module, for some reson, pd not see py4pd_setup
+// #endif
 

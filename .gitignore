@@ -11,6 +11,7 @@ py4pd.zip
 DLLs/*
 Lib/*
 scripts/*
+build
 
 *.bat
 *.eps
