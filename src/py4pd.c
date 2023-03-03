@@ -653,16 +653,8 @@ t_int *py4pd_perform(t_int *w){
 t_int *py4pd_performAudioOutput(t_int *w){
     //  TODO: Check for memory leaks
 
-
-    clock_t start_time, end_time;
-    double cpu_time_used;
-    start_time = clock();
-
     t_py *x = (t_py *)(w[1]); // this is the object itself
     
-    x->interation = x->interation + 1;
-    // 
-
     if (x->audioInput == 0 && x->audioOutput == 0) {
         return (w + 5);
     }
@@ -746,24 +738,6 @@ t_int *py4pd_performAudioOutput(t_int *w){
         Py_DECREF(pSample);
     }
 
-    // check time of process
-    end_time = clock();
-    cpu_time_used = ((double) (end_time - start_time)) / CLOCKS_PER_SEC;
-    // post time processing in microseconds
-
-    if (x->interation == 1000) {
-        // sum all numbers inside x->arrayin
-        float sum = 0;
-        for (int i = 0; i < 1000; i++) {
-            sum += x->arrayofint[i];
-        }
-        post("Average time of process in microseconds: %f", sum / 1000);
-        x->interation = 0;
-    }
-    else{
-        x->arrayofint[x->interation] = cpu_time_used * 1000000;
-    }
-
     return (w + 5);
 }
 
@@ -810,19 +784,13 @@ static void restartPython(t_py *x){
     // return;
 }
 
-
 // ============================================
-// function to start numpy
 static void *startNumpy(){
     import_array();
     return NULL;
 }
 
-
-
-
 // ============================================
-
 static void usenumpy(t_py *x, t_floatarg f){
     //  TODO: If the run method set before the end of the thread, there is an error, that close all PureData.
     int usenumpy = (int)f;
@@ -846,6 +814,7 @@ static void usenumpy(t_py *x, t_floatarg f){
 // ===========================================
 
 static void thread(t_py *x, t_floatarg f){
+
     //  TODO: If the run method set before the end of the thread, there is an error, that close all PureData.
 
     int thread = (int)f;
@@ -907,10 +876,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     x->audioOutput = 0;
     x->visMode = 0;
 
-    // int arrayofin save 1000 int    
-
-
-
     if (!Py_IsInitialized()) {
         object_count = 1;  // To count the numbers of objects, and finalize the interpreter when the last object is deleted
         post("");
@@ -951,14 +916,13 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
                 argc--;
             }
             else if (py4pdArgs == gensym("-audioin")) {
-                // post("[py4pd] Audio Inlets enabled");
                 x->audioInput = 1;
                 x->use_NumpyArray = 0;
             }
             else if (py4pdArgs == gensym("-audio")){
                 post("[py4pd] Audio Inlet and Outlet enabled");
                 x->audioInput = 1;
-               x->audioOutput = 1;
+                x->audioOutput = 1;
                 x->out_A = outlet_new(&x->x_obj, gensym("signal")); // create a signal outlet
                 x->use_NumpyArray = 0;
                 int j;
@@ -973,7 +937,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     if (x->audioOutput == 0){
         x->out_A = outlet_new(&x->x_obj, 0); // cria um outlet 
     }
-    x->thread = 2; // default is 2 (no threading)                                    FIX: fix this
+    x->thread = 2; // default is 2 (no threading)   FIX: fix this
     x->object_number = object_count; // save object number
     x->home_path = patch_dir;     // set name of the home path
     x->packages_path = patch_dir; // set name of the packages path
@@ -981,7 +945,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv){
     if (argc > 1) { // check if there are two arguments
         set_function(x, s, argc, argv); 
     }
-    // print the size memory of the x
     return(x);
 }
 
@@ -1066,12 +1029,11 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class_VIS, (t_method)editor, gensym("editor"), A_GIMME, 0); // open code
     class_addmethod(py4pd_classAudioOut, (t_method)editor, gensym("editor"), A_GIMME, 0); // open code
 
-    class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
+    class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it TODO: fix this
     class_addmethod(py4pd_class_VIS, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
     class_addmethod(py4pd_classAudioOut, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
 
     class_addmethod(py4pd_class, (t_method)editor, gensym("click"), 0, 0); // when click open editor
-    // class_addmethod(py4pd_class_VIS, (t_method)editor, gensym("click"), 0, 0); // when click open editor
     class_addmethod(py4pd_classAudioOut, (t_method)editor, gensym("click"), 0, 0); // when click open editor
     
     // User Interface

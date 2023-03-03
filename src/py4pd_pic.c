@@ -220,13 +220,11 @@ void PY4PD_erase(t_py* x, struct _glist *glist){
 // ==================================================================
 void PY4PD_vis(t_gobj *z, t_glist *glist, int vis){
     t_py* x = (t_py*)z;
-    post("vis = %d", vis);
     vis ? PY4PD_draw(x, glist, 1) : PY4PD_erase(x, glist);
 
 }
 
 // ==================================================================
-// =====================================
 void PY4PD_save(t_gobj *z, t_binbuf *b){
     t_py *x = (t_py *)z;
     char *picMode;
