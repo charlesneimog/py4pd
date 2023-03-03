@@ -614,7 +614,7 @@ t_int *py4pd_perform(t_int *w){
         ArgsTuple = PyTuple_New(1);
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
         // if (pSample != NULL) {
-        //     Py_DECREF(pSample);
+        //     Py_DECREF(pSample);   NOTE: this change the sound.
         // }
     }
 
@@ -713,19 +713,20 @@ t_int *py4pd_performAudioOutput(t_int *w){
             }          
         }
 
-        else if (PyArray_Check(pValue)){
-            if (x->numpyImported == 0) {
-                pd_error(x, "[py4pd] Received a numpy array but numpy on, use 'numpy 1' to enable it");
-                return (w + 5);
+        else if (x->numpyImported == 1) {
+            if (PyArray_Check(pValue)) {
+                PyArrayObject *pArray = (PyArrayObject *)pValue;
+                for (int i = 0; i < n; i++) { // TODO: try to add audio support without another loop
+                    audioOut[i] = PyFloat_AsDouble(PyArray_GETITEM(pArray, PyArray_GETPTR1(pArray, i)));
+                }
+
             }
-            PyArrayObject *pArray = (PyArrayObject *)pValue;
-            // convert numpy array to pd vector
-            for (int i = 0; i < n; i++) { // TODO: try to add audio support without another loop
-                audioOut[i] = *(t_sample *)PyArray_GETPTR1(pArray, i);
+            else{
+                pd_error(x, "[py4pd] The function must return a list, a tuple or a numpy array, returned: %s", pValue->ob_type->tp_name);
             }
         }
         else{
-            pd_error(x, "[py4pd] The function must return a list or a numpy array, returned: %s", pValue->ob_type->tp_name);
+            pd_error(x, "[py4pd] The function must return a list, since numpy array is disabled, returned: %s", pValue->ob_type->tp_name);
         }
     }
     else { // if the function returns a error
@@ -745,7 +746,6 @@ t_int *py4pd_performAudioOutput(t_int *w){
     if (pSample != NULL) {
         Py_DECREF(pSample);
     }
-
     return (w + 5);
 }
 
