@@ -386,6 +386,18 @@ PyObject *pdshowimage(PyObject *self, PyObject *args){
     return PyLong_FromLong(0);
 }
 
+// =================================
+PyObject *pdsamplerate(PyObject *self, PyObject *args)
+{
+    (void)self;
+    if (!PyArg_ParseTuple(args, "")){
+        PyErr_SetString(PyExc_TypeError, "[py.script] pd.samplerate: no argument expected");
+        return NULL;
+    }
+    t_sample sr = sys_getsr();
+    return PyLong_FromLong(sr);
+}
+
 
 // =================================
 PyObject *pdmoduleError;
@@ -400,6 +412,7 @@ PyMethodDef PdMethods[] = {
     {"tabread", pdtabread, METH_VARARGS, "Read data from PureData tables/arrays"},
     {"show", pdshowimage, METH_VARARGS, "Show image in PureData, it must be .gif, .bmp, .ppm"},
     {"home", pdhome, METH_VARARGS, "Get PureData Patch Path Folder"},
+    {"samplerate", pdsamplerate, METH_VARARGS, "Get PureData Sample Rate"},
     {NULL, NULL, 0, NULL} // 
 };
 

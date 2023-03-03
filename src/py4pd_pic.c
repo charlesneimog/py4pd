@@ -113,6 +113,7 @@ void PY4PD_mouserelease(t_py* x){
     xpos = ypos = shift = alt = dbl = 0;
 
     if(doit){
+        post("doit");
         x->x_latch ? outlet_float(x->out_A, 1) : outlet_bang(x->out_A) ;
         if(x->x_send != &s_ && x->x_send->s_thing)
             x->x_latch ? pd_float(x->x_send->s_thing, 1) : pd_bang(x->x_send->s_thing);
@@ -601,12 +602,10 @@ void py4pd_picDefintion(char *imageData){
 void py4pd_InitVisMode(t_py *x, t_canvas *c , t_symbol *py4pdArgs, int index, int argc, t_atom *argv) {
     char *py4pdImageData;
     if (py4pdArgs == gensym("-picture")) {
-        post("[py4pd] Picture mode enabled");
         py4pdImageData = malloc(strlen(PICIMAGE) + 1);
         strcpy(py4pdImageData, PICIMAGE);
     } 
     else {
-        post("[py4pd] Score mode enabled");    
         py4pdImageData = malloc(strlen(PICIMAGE) + 1);
         strcpy(py4pdImageData, PICIMAGE);
     }

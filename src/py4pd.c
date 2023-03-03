@@ -1,4 +1,5 @@
 #include "py4pd.h"
+#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd_utils.h"
 #include "py4pd_pic.h"
@@ -264,10 +265,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     t_symbol *script_file_name = atom_gensym(argv+0);
     t_symbol *function_name = atom_gensym(argv+1);
 
-    x->script_name = script_file_name;
-    x->function_name = function_name;
-
-
     if (x->function_called == 1){
         int function_is_equal = strcmp(function_name->s_name, x->function_name->s_name); // if string is equal strcmp returns 0
         if (function_is_equal == 0){
@@ -276,7 +273,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
         }
         else{
             Py_XDECREF(x->function);
-            Py_XDECREF(x->module);
             x->function_called = 0;
         }
     }
@@ -353,25 +349,26 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
             x->py_arg_numbers = py_args;
             post("[py4pd] The '%s' function has %d arguments!", function_name->s_name, py_args);
         }        
+        Py_DECREF(inspect);
+        Py_DECREF(getfullargspec);
+        Py_DECREF(argspec);
+        Py_DECREF(args);
+        Py_DECREF(pModule);
+
         x->function = pFunc;
-        x->module = pModule;
         x->script_name = script_file_name;
         x->function_name = function_name; 
         x->function_called = 1;
 
     } else {
         pd_error(x, "[py4pd] Function %s not loaded!", function_name->s_name);
-        x->function_called = 0; // set the flag to 0 because it crash Pd if user try to use args method
-        x->function_name = NULL;
+        x->function_called = 1; // set the flag to 0 because it crash Pd if user try to use args method
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Set function had failed:\n %s", PyUnicode_AsUTF8(pstr));
+        pd_error(x, "[py4pd] Set function had failed: %s", PyUnicode_AsUTF8(pstr));
         Py_DECREF(pstr);
-        Py_XDECREF(pModule);
-        Py_XDECREF(pFunc);
-        Py_XDECREF(pName);
         Py_XDECREF(ptype);
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);

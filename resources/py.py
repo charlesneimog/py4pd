@@ -42,20 +42,19 @@ def pd_output():
     for x in range(10):
         pd.out(x)
     
-def pd_message():
+def pd_print():
     "It sends a message to the py4pd message box."
     pd.print("Hello from python!")
     return None
 
 def pd_error():
     "It sends a message to the py4pd message box."
-    # NOT WORKING
-    pd.error("Python error!")
+    pd.error("pd error from Python, check the script.")
     return None
 
 def pd_send():
     "It sends a message to the py4pd message box."
-    pd.send()
+    pd.send("py4pdreceiver", "hello from python!")
 
 def pd_tabwrite():
     "It sends a message to the py4pd message box."
@@ -133,7 +132,7 @@ def dft(freq_hz):
         if file.endswith(".gif") or file.endswith(".png"):
             os.remove(home_path + "/" + file)
     round_index = freq_hz 
-    k = float(round_index / (44100 / 4096) / 4096)
+    k = float(round_index / (pd.samplerate() / len(NUMPY_DATA) / len(NUMPY_DATA)))
     all_index = []
     for i in range(len(NUMPY_DATA)):
         formula = math.e ** (math.pi * 2 * 1j * k * i)
@@ -179,7 +178,7 @@ def dft(freq_hz):
     freq_hz = int(round(freq_hz, 0))
     random_number = randint(10, 99)
     # save the plt using mpimg
-    plt.savefig(f'{home_path}/canvas{freq_hz}{random_number}.jpg', dpi=85)
+    plt.savefig(f'{home_path}/canvas{freq_hz}{random_number}.jpg', dpi=60)
     # convert to gif
     im = Image.open(f'{home_path}/canvas{freq_hz}{random_number}.jpg')
     im.save(f'{home_path}/canvas{freq_hz}{random_number}.gif')
