@@ -117,34 +117,46 @@ void pd4py_system_func (const char *command){
 }
 
 // ============================================
-static void create(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void open(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     (void)argc;
-    const char *script_name = argv[0].a_w.w_symbol->s_name;
-    post("[py4pd] Opening vscode...");
 
-    // Open VsCode in Windows 
+    if (argv[0].a_type != A_SYMBOL) {
+        pd_error(x, "[py4pd] The script name must be a symbol");
+        return;
+    }
+
+    x->script_name = argv[0].a_w.w_symbol;
+    
+    // Open VsCode in Windows
     #ifdef _WIN64 
-    char *command = malloc(strlen(x->home_path->s_name) + strlen(script_name) + 20);
-    sprintf(command, "/c code %s/%s.py", x->home_path->s_name, script_name);
+    char *command = get_editor_command(x);
+    command = get_editor_command(x);
+    // use get_editor_command
     SHELLEXECUTEINFO sei = {0};
     sei.cbSize = sizeof(sei);
     sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+    // sei.lpVerb = "open";
     sei.lpFile = "cmd.exe ";
     sei.lpParameters = command;
     sei.nShow = SW_HIDE;
     ShellExecuteEx(&sei);
     CloseHandle(sei.hProcess);
-    free(command);
     return;
 
-    // Open VsCode in Linux and Mac
+    // Not Windows OS
     #else // if not windows 64bits
-    char *command = malloc(strlen(x->home_path->s_name) + strlen(script_name) + 20);
-    sprintf(command, "code %s/%s.py", x->home_path->s_name, script_name);
+    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
+    command = get_editor_command(x);
     pd4py_system_func(command);
-    return;
     #endif
+
+    // If macOS
+    #ifdef __APPLE__
+    pd_error(x, "Not tested in your Platform, please send me a report!");
+    #endif
+    return ;
+
 }
 
 // ====================================
@@ -163,7 +175,7 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv){
     post("[py4pd] Opening editor...");
 
     // Open VsCode in Windows
-    #ifdef _WIN64 // ERROR: the endif is missing directive _WIN64
+    #ifdef _WIN64 
     char *command = get_editor_command(x);
     command = get_editor_command(x);
     // use get_editor_command
@@ -573,11 +585,7 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
 // ============================================
 t_int *py4pd_perform(t_int *w){
-    // check time of process
-    // clock_t start_time, end_time;
-    // double cpu_time_used;
-    // start_time = clock();
-    //  TODO: Check for memory leaks in this function
+
     t_py *x = (t_py *)(w[1]); // this is the object itself
     if (x->audioInput == 0 && x->audioOutput == 0) {
         return (w + 4);
@@ -597,7 +605,6 @@ t_int *py4pd_perform(t_int *w){
         pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
         ArgsTuple = PyTuple_New(1);
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
-        // delete the reference to the numpy array
     }
     else {
         // pSample = NULL;  NOTE: this change the sound.
@@ -1029,9 +1036,9 @@ void py4pd_setup(void){
     class_addmethod(py4pd_class_VIS, (t_method)editor, gensym("editor"), A_GIMME, 0); // open code
     class_addmethod(py4pd_classAudioOut, (t_method)editor, gensym("editor"), A_GIMME, 0); // open code
 
-    class_addmethod(py4pd_class, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it TODO: fix this
-    class_addmethod(py4pd_class_VIS, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
-    class_addmethod(py4pd_classAudioOut, (t_method)create, gensym("create"), A_GIMME, 0); // create file or open it
+    class_addmethod(py4pd_class, (t_method)open, gensym("open"), A_GIMME, 0); // create file or open it TODO: fix this
+    class_addmethod(py4pd_class_VIS, (t_method)open, gensym("open"), A_GIMME, 0); // create file or open it
+    class_addmethod(py4pd_classAudioOut, (t_method)open, gensym("open"), A_GIMME, 0); // create file or open it
 
     class_addmethod(py4pd_class, (t_method)editor, gensym("click"), 0, 0); // when click open editor
     class_addmethod(py4pd_classAudioOut, (t_method)editor, gensym("click"), 0, 0); // when click open editor
