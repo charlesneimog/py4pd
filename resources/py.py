@@ -7,9 +7,9 @@ import math
 # Just to avoid misundertanding!
 try:
     from neoscore.common import *
-except:
-    pd.error("Error importing neoscore")
-    pd.print("Please, run 'pip install neoscore -t ./py-modules' in the terminal from current folder")
+except Exception as e: 
+    pd.error(str(e))
+    pd.error("Please, run 'pip install neoscore -t ./py-modules' in the terminal from current folder")
 try: 
     import numpy as np
 except:
@@ -18,7 +18,7 @@ except:
 
 try:
     import matplotlib
-    matplotlib.use('agg')
+    matplotlib.use('agg') # NOTE: This is very import in Windows.
     from matplotlib import pyplot as plt
 except:
     pd.error("Error importing matplotlib")
@@ -208,6 +208,7 @@ def dft(freq_hz):
     os.remove(f'{home_path}/canvas{freq_hz}{random_number}.jpg')
     # show the image
     output = f'{home_path}/canvas{freq_hz}{random_number}.gif'
+    # in lisp, do namestring equivalent in python
     pd.show(output)
     
     #pd.show(output)
@@ -278,6 +279,8 @@ def note(pitches):
     notePathName = scriptPath + "/__pycache__/note_" + pitch + f"{randomNumber}.ppm"
     neoscore.render_image(rect=None, dest=notePathName, dpi=150, wait=True)
     neoscore.shutdown()
+    notePathName = notePathName.replace("\\", "/")
+    pd.print(notePathName)
     pd.show(notePathName)
     return None
 

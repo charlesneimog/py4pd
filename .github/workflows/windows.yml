@@ -59,6 +59,7 @@ jobs:
         Copy-Item -Path "$pythonpath\Lib" -Destination py4pd_WIN64\ -Recurse
         Copy-Item -Path "$pythonpath\DLLs" -Destination py4pd_WIN64\ -Recurse
         Copy-Item -Path "$pythonpath\python311.dll" -Destination py4pd_WIN64\ -Recurse
+	  Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd_WIN64\ -Recurse
 
     - name: Move files to py4pd_WIN64
       run: |
