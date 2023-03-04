@@ -26,16 +26,17 @@ def runTest():
     # if lastLine contains "PASS" then the test passed
     if "PASS" in lastLine:
         # print in green
-        print('ALL TESTS PASSED')
+        print("\033[92m" + ' ALL TESTS PASSED ' + "\033[0m")
         return "ok"
     else:
+        # split all the lines
         for line in outputLines:
             # if the line contains "FAIL" then print in red
             if "FAIL" in line:
-                print(line)
+                print("\033[91m" + line + "\033[0m")
             # if the line contains "PASS" then print in green
             elif "PASS" in line:
-                print(line)
+                print("\033[92m" + line + "\033[0m")
             # otherwise print normally
             else:
                 print(line)

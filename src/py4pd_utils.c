@@ -231,7 +231,10 @@ void *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
 // ========================= py4pd object ==============================    
 
 int *set_py4pd_config(t_py *x) {
-    x->packages_path = gensym("./py-modules/");
+    char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py-modules/") + 1)); //
+    strcpy(PADRAO_packages_path, x->home_path->s_name); // copy string one into the result.
+    strcat(PADRAO_packages_path, "/py-modules/"); // append string two to the result.
+    x->packages_path = gensym(PADRAO_packages_path);
     x->thread = 0;
     x->editorName = gensym("vscode");
     char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1)); // 

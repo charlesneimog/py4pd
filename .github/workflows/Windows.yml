@@ -48,11 +48,13 @@ jobs:
         make PYTHON_VERSION=python3.11
     
     - name: Copy Files and Set for Tests
+      # not running with echo cp resources\\python311._pth py4pd_WIN64\ 
       run: | 
         mv py4pd.dll py4pd.m_amd64
+        mkdir py4pd_WIN64\Python
         $pythonpath = Get-Content pythonpath.txt
-        Copy-Item -Path "$pythonpath\Lib" -Destination py4pd_WIN64\ -Recurse
-        Copy-Item -Path "$pythonpath\DLLs" -Destination py4pd_WIN64\ -Recurse
+        Copy-Item -Path "$pythonpath\Lib" -Destination py4pd_WIN64\Python\ -Recurse
+        Copy-Item -Path "$pythonpath\DLLs" -Destination py4pd_WIN64\Python\ -Recurse
         Copy-Item -Path "$pythonpath\python311.dll" -Destination py4pd_WIN64\ -Recurse
         Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd_WIN64\ -Recurse
         Copy-Item -Path "$pythonpath\Lib" -Destination test\ -Recurse
@@ -63,14 +65,14 @@ jobs:
         cp py4pd.m_amd64 py4pd_WIN64\
         cp resources\\py4pd.cfg py4pd_WIN64\
         cp resources\\py.py py4pd_WIN64\ 
-        cp resources\\python311._pth py4pd_WIN64\ 
         cp resources\\py4pd-help.pd py4pd_WIN64\ 
         xcopy src\*.h py4pd_WIN64\src\
         xcopy src\*.c py4pd_WIN64\src\
+        cp resources\\python311._pth py4pd_WIN64\ 
         7z a py4pd_WIN64.zip py4pd_WIN64
         cp test\\test.pd py4pd_WIN64\\test.pd
         cp test/test.py test.py
-        python3 -m pip install neoscore -t ./py4pd_WIN64/py-modules
+        python3 -m pip install neoscore matplotlib -t ./py4pd_WIN64/py-modules
     
     - name: See Where I am
       run: ls 
