@@ -6,7 +6,6 @@
 // ======================================
 // ======== py4pd embbeded module =======
 // ======================================
-
 PyObject *pdout(PyObject *self, PyObject *args){
     (void)self;
     float f;
