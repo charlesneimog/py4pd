@@ -5,7 +5,7 @@ def runTest():
     import platform
     
     if platform.system() == 'Linux':
-        os.system('pd -send "start-test bang" py4pd_Linux/test.pd')
+        # os.system('pd -send "start-test bang" py4pd_Linux/test.pd')
         cmd = 'pd -nogui -send "start-test bang"  py4pd_Linux/test.pd'
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
