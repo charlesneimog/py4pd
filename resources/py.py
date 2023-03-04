@@ -1,40 +1,53 @@
+import pd
 from random import *
 import os
-import pd
 import time
 import math
 
-# Just to avoid misundertanding!
 try:
     from neoscore.common import *
-except Exception as e: 
+except Exception as e:
     pd.error(str(e))
-    pd.error("Please, run 'pip install neoscore -t ./py-modules' in the terminal from current folder")
-try: 
+    pd.error(
+        "Please, run 'pip install neoscore -t ./py-modules' in the terminal from current folder")
+
+try:
     import numpy as np
-except:
-    pd.error("Error importing numpy")
-    pd.print("Please, run 'pip install numpy -t ./py-modules' in the terminal from current folder")
+except Exception as e:
+    pd.error(str(e))
+    pd.print(
+        "Please, run 'pip install numpy -t ./py-modules' in the terminal from current folder")
 
 try:
     import matplotlib
-    matplotlib.use('agg') # NOTE: This is very import in Windows.
+    # NOTE:  Always use 'agg' backend or other than Tkinter. Tkinket will
+    # conflict with Pd
+    matplotlib.use('agg')
     from matplotlib import pyplot as plt
-except:
+except Exception as e:
+    pd.error(str(e))
     pd.error("Error importing matplotlib")
-    pd.print("Please, run 'pip install matplotlib -t ./py-modules' in the terminal from current folder")
+    pd.print(
+        "Please, run 'pip install matplotlib -t ./py-modules' in the terminal from current folder")
 
 try:
     from PIL import Image
-except:
-    pd.error("Error importing PIL")
-    pd.print("Please, run 'pip install PIL -t ./py-modules' in the terminal from current folder")
-    
+except Exception as e:
+    pd.error(str(e))
+    pd.print(
+        "Please, run 'pip install PIL -t ./py-modules' in the terminal from current folder")
+
+# ================================================
+# ==============  Functions  =====================
+# ================================================
+
+
 def pdsum(x, y):
     "It sums two numbers."
     x = int(x)
     y = int(y)
     return x + y
+
 
 def arithm_ser(begin, end, step):
     "It calculates the arithmetic series."
@@ -43,6 +56,7 @@ def arithm_ser(begin, end, step):
         list.append(x)
     return list
 
+
 def fibonacci(n):
     "Calculate the nth fibonacci number."
     if n == 0:
@@ -50,7 +64,8 @@ def fibonacci(n):
     elif n == 1:
         return 1
     else:
-        return fibonacci(n-1) + fibonacci(n-2)
+        return fibonacci(n - 1) + fibonacci(n - 2)
+
 
 def thread_test():
     "It tests the threading module. Just return the hour after 5 seconds."
@@ -59,24 +74,29 @@ def thread_test():
     pd.print("Thread finished.")
     return time.strftime("%H:%M:%S")
 
+
 def pd_output():
     "It sends some output to the py4pd output."
     for x in range(10):
         pd.out(x)
-    
+
+
 def pd_print():
     "It sends a message to the py4pd message box."
     pd.print("Hello from python!")
     return None
+
 
 def pd_error():
     "It sends a message to the py4pd message box."
     pd.error("pd error from Python, check the script.")
     return None
 
+
 def pd_send():
     "It sends a message to the py4pd message box."
     pd.send("py4pdreceiver", "hello from python!")
+
 
 def pd_tabwrite():
     "It sends a message to the py4pd message box."
@@ -87,6 +107,7 @@ def pd_tabwrite():
         list.append(randomnumber * 0.01)
     pd.tabwrite("test", list, resize=True)
 
+
 def pd_audio(audio):
     "It sends a message to the py4pd message box."
     # get first 10 samples
@@ -95,14 +116,16 @@ def pd_audio(audio):
     else:
         pd.out("list")
 
+
 def pd_audioout(audio):
     "It sends a message to the py4pd message box."
     # audio is a numpy array, multiply by 0.5
     if type(audio) == np.ndarray:
-        audio = np.multiply(audio, 0.2) 
+        audio = np.multiply(audio, 0.2)
     else:
         audio = [x * 0.05 for x in audio]
     return audio
+
 
 def pd_audionoise(audio):
     "It sends a message to the py4pd message box."
@@ -110,19 +133,23 @@ def pd_audionoise(audio):
     noise = np.random.normal(0, 1, audiolen)
     return noise
 
+
 def pd_tabread():
     "It sends a message to the py4pd message box."
     myarray = pd.tabread("test")
     return myarray
+
 
 def whereFiles():
     "It returns the path of the files."
     import os
     return os.__file__
 
+
 def noArgs():
     "It returns the path of the files."
     return "ok"
+
 
 def neoscoreTest():
     if os.name == 'posix':
@@ -133,7 +160,7 @@ def neoscoreTest():
     POSITION = (Mm(0), Mm(0))
     staff = Staff(POSITION, None, Mm(30))
     saxClef = 'treble'
-    Clef(ZERO, staff, saxClef) # .ppm
+    Clef(ZERO, staff, saxClef)  # .ppm
     note = [(pitch, '', 4)]
     Chordrest(Mm(5), staff, note, (int(1), int(1)))
     scriptPath = os.path.dirname(os.path.abspath(__file__))
@@ -145,6 +172,7 @@ def neoscoreTest():
     neoscore.shutdown()
     return 1
 
+
 def dft(freq_hz):
     plt.clf()
     home_path = pd.home()
@@ -153,8 +181,9 @@ def dft(freq_hz):
     for file in os.listdir(home_path):
         if file.endswith(".gif") or file.endswith(".png"):
             os.remove(home_path + "/" + file)
-    round_index = freq_hz 
-    k = float(round_index / (pd.samplerate() / len(NUMPY_DATA) / len(NUMPY_DATA)))
+    round_index = freq_hz
+    k = float(round_index / (pd.samplerate() /
+              len(NUMPY_DATA) / len(NUMPY_DATA)))
     all_index = []
     for i in range(len(NUMPY_DATA)):
         formula = math.e ** (math.pi * 2 * 1j * k * i)
@@ -172,7 +201,7 @@ def dft(freq_hz):
     # CenterOfMass = sum(graph) / len(graph)
     imag = np.array(imag)
     real = np.array(real)
-    plt.switch_backend('agg') # Change backend to avoid error in PureData
+    plt.switch_backend('agg')  # Change backend to avoid error in PureData
 
     # define draw, circle and point to add to the graph
     plt.plot(imag, real, color='black', linewidth=0.4)
@@ -192,7 +221,7 @@ def dft(freq_hz):
     # plt.plot([center[0], center[0]], [center[1] - radius, center[1] + radius], color='blue', linewidth=2)
     # plt.plot([center[0] - radius, center[0] + radius], [center[1], center[1]], color='blue', linewidth=2)
 
-    # add triangle retangle 
+    # add triangle retangle
     # plt.plot([center[0], CenterOfMass.real], [center[1], CenterOfMass.imag], color='green', linewidth=2)
     # plt.plot([CenterOfMass.real, CenterOfMass.imag], [CenterOfMass.imag, center[1]], color='green', linewidth=2)
 
@@ -210,8 +239,9 @@ def dft(freq_hz):
     output = f'{home_path}/canvas{freq_hz}{random_number}.gif'
     # in lisp, do namestring equivalent in python
     pd.show(output)
-    
-    #pd.show(output)
+
+    # pd.show(output)
+
 
 def getpitchKey(pitch):
     note = {
@@ -246,7 +276,7 @@ def getpitchKey(pitch):
 def note(pitches):
     try:
         neoscore.shutdown()
-    except:
+    except BaseException:
         pass
     neoscore.setup()
     scriptPath = os.path.dirname(os.path.abspath(__file__))
@@ -255,15 +285,16 @@ def note(pitches):
         if file.endswith(".ppm"):
             try:
                 os.remove(scriptPath + "/__pycache__/" + file)
-            except:
+            except BaseException:
                 pass
     staffSoprano = Staff((Mm(0), Mm(0)), None, Mm(30))
     trebleClef = 'treble'
     Clef(ZERO, staffSoprano, trebleClef)
     staffBaixo = Staff((ZERO, Mm(15)), None, Mm(30))
     bassClef = 'bass'
-    Clef(ZERO, staffBaixo, bassClef)   
-    Path.rect((Mm(-10), Mm(-10)), None, Mm(42), Mm(42), Brush(Color(0, 0, 0, 0)), Pen(thickness=Mm(0.5)))
+    Clef(ZERO, staffBaixo, bassClef)
+    Path.rect((Mm(-10), Mm(-10)), None, Mm(42), Mm(42),
+              Brush(Color(0, 0, 0, 0)), Pen(thickness=Mm(0.5)))
     for pitch in pitches:
         # in pitch remove not number
         pitchWithoutNumber = pitch.replace(pitch[-1], '')
@@ -274,13 +305,12 @@ def note(pitches):
             Chordrest(Mm(5), staffBaixo, note, (int(1), int(1)))
         else:
             Chordrest(Mm(5), staffSoprano, note, (int(1), int(1)))
-    randomNumber = randint(1, 100) 
-    notePathName = scriptPath + "/__pycache__/note_" + pitch + f"{randomNumber}.ppm"
+    randomNumber = randint(1, 100)
+    notePathName = scriptPath + "/__pycache__/note_" + \
+        pitch + f"{randomNumber}.ppm"
     neoscore.render_image(rect=None, dest=notePathName, dpi=150, wait=True)
     neoscore.shutdown()
     if os.name == 'nt':
         notePathName = notePathName.replace("\\", "/")
     pd.show(notePathName)
     return None
-
-
