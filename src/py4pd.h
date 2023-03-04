@@ -4,6 +4,7 @@
 #include <g_canvas.h>
 
 // in _WIN64 include windows.h, if not, include <pthread.h>
+
 #define PY_SSIZE_T_CLEAN // Good practice to use this before include Python.h because it will remove some deprecated function
 
 #ifdef _WIN64 
