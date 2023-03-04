@@ -7,6 +7,7 @@
 
 // Include numpy
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+
 #include <numpy/arrayobject.h>
 
 t_class *py4pd_class; // DOC: For audio in and without audio

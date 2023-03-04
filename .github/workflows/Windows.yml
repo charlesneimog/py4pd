@@ -41,14 +41,13 @@ jobs:
       run: |
         python -c "import sysconfig; f = open('pythonincludes.txt', 'w'); print(sysconfig.get_paths()['include'].replace('\\', '/'), file=f); f.close()"
         python -c "import os; import sys; f = open('pythonpath.txt', 'w'); print(os.path.dirname(sys.executable).replace('\\', '/'), file=f); f.close()"
+        python -c "import os; import sys; import numpy.distutils.misc_util as np_utils; f = open('numpyincludes.txt', 'w'); print(np_utils.get_numpy_include_dirs()[0].replace('\\', '/'), file=f); f.close()"
     
     - if: runner.os == 'Windows'
       name: Build py4pd
       shell: msys2 {0}
       run: |
         make PYTHON_VERSION=python3.11
-        dll_path=$(where libsystre-0.dll)
-        cp $dll_path .
     
     - name: Copy Files
       ## copy Python Lib, DLLs and python311.dll to py4pd_WIN64
@@ -68,7 +67,6 @@ jobs:
           cp resources/py.py py4pd_WIN64\ 
           cp resources/python311._pth py4pd_WIN64\ 
           cp resources/py4pd-help.pd py4pd_WIN64\ 
-          cp libsystre-0.dll py4pd_WIN64\
         
     - name: zip py4pd_WIN64
       run: 7z a py4pd_WIN64.zip py4pd_WIN64

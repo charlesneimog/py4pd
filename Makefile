@@ -19,7 +19,7 @@ else ifeq (Darwin,$(findstring Darwin,$(uname)))
   NUMPY_INCLUDE := $(shell python3.11 -c 'import numpy.distutils.misc_util as np_utils; print(np_utils.get_numpy_include_dirs()[0])')
   cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -mmacosx-version-min=10.9
   PYTHON_LIB := $(shell python3.11 -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
-  ldlibs = -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wl,-stack_size,1000000  
+  ldlibs = -L $(PYTHON_LIB) -l $(PYTHON_VERSION) 
   # BUG: -Xlinker -export-dynamic is not working on MacOS
 else
   $(error "Unknown system type: $(uname)")
