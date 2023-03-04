@@ -938,7 +938,6 @@ void *py4pd_free(t_py *x){
     if (x->visMode == 1){
         PY4PD_free(x);
     }
-
     if (object_count == 1) {
         // Py_Finalize(); // BUG: Not possible because it crashes if another py4pd is created in the same PureData session
     }

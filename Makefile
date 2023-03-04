@@ -24,7 +24,6 @@ else ifeq (Darwin,$(findstring Darwin,$(uname)))
 else
   $(error "Unknown system type: $(uname)")
   $(shell exit 1)
-
 endif
 
 # =================================== Sources ===================================
