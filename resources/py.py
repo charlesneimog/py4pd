@@ -75,6 +75,17 @@ def thread_test():
     return time.strftime("%H:%M:%S")
 
 
+# ================================================
+# ==================  Pd  ========================
+# ================================================
+
+def pd_tempfolder():
+    "It returns the temp folder path."
+    tempfolder = pd.tempfolder()
+    pd.print(str(tempfolder))
+
+
+
 def pd_output():
     "It sends some output to the py4pd output."
     for x in range(10):

@@ -17,7 +17,7 @@ int createHiddenFolder(t_py *x) {
         char *user_folder = getenv("USERPROFILE");
         LPSTR home = (LPSTR)malloc(256 * sizeof(char));
         memset(home, 0, 256);
-        sprintf(home, "%s\\.py4pd", user_folder);
+        sprintf(home, "%s\\.py4pd\\", user_folder);
         x->temp_folder = gensym(home);
         if (!CreateDirectory(home, NULL))
         {
@@ -36,7 +36,7 @@ int createHiddenFolder(t_py *x) {
         const char *home = getenv("HOME");
         char *temp_folder = (char *)malloc(256 * sizeof(char));
         memset(temp_folder, 0, 256);
-        sprintf(temp_folder, "%s/.py4pd", home);
+        sprintf(temp_folder, "%s/.py4pd/", home);
         x->temp_folder = gensym(temp_folder);
         // create hidden folder
         char *command = (char *)malloc(256 * sizeof(char));

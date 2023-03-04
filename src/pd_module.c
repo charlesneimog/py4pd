@@ -403,18 +403,20 @@ PyObject *pdsamplerate(PyObject *self, PyObject *args) {
 }
 
 // =================================
-PyObject *pdtempfile(PyObject *self, PyObject *args) {
+PyObject *pdtempfolder(PyObject *self, PyObject *args) {
     (void)self;
     if (!PyArg_ParseTuple(args, "")) {
         PyErr_SetString(PyExc_TypeError,
                         "[py.script] pd.samplerate: no argument expected");
         return NULL;
     }
-
-    
-
-
-    return PyLong_FromLong(0);
+    // ================================
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    // ================================
+    createHiddenFolder(py4pd);
+    return PyUnicode_FromString(py4pd->temp_folder->s_name);
 }
 
 // =================================
@@ -430,6 +432,7 @@ PyMethodDef PdMethods[] = {
     {"tabread", pdtabread, METH_VARARGS, "Read data from PureData tables/arrays"},
     {"show", pdshowimage, METH_VARARGS, "Show image in PureData, it must be .gif, .bmp, .ppm"},
     {"home", pdhome, METH_VARARGS, "Get PureData Patch Path Folder"},
+    {"tempfolder", pdtempfolder, METH_VARARGS, "Get PureData Temp Folder"},
 
     // audio
     {"samplerate", pdsamplerate, METH_VARARGS, "Get PureData SampleRate"},
