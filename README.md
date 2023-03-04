@@ -19,21 +19,15 @@
 * Use svg/draws as scores;
 * OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
 
-#### Examples
-
 <details>
-  <summary><h4>Scores and Chords (OpenMusic chord/note)</h4></summary>
-I WILL PUT HERE ONE GIF
-</details>
+  <summary><h3>Examples</h3></summary>
 
-<details>
   <summary><h4>Microtonality Theories</h4></summary>
 I WILL PUT HERE ONE GIF
-</details>
 
-<details>
 <summary><h4>Svg to Scores</h4></summary>
 I WILL PUT HERE ONE GIF
+
 </details>
 
 See more in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Examples).
