@@ -32,7 +32,6 @@ static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // // ============================================
-
 static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s; 
     if (argc < 1) {

@@ -85,7 +85,7 @@ jobs:
           python3 -m pip install neoscore -t ./py4pd_WIN64/py-modules
     
     - name: Run Test
-      run: python3 -c 'import test; test.runTest()' 
+      run: python3 ./py4pd_WIN64/test.py 
       continue-on-error: true
       
     - name: Upload Test Image
