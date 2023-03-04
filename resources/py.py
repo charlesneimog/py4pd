@@ -3,7 +3,6 @@ import os
 import pd
 import time
 import math
-from neoscore.common import *
 
 # Just to avoid misundertanding!
 try:
@@ -18,6 +17,8 @@ except:
     pd.print("Please, run 'pip install numpy -t ./py-modules' in the terminal from current folder")
 
 try:
+    import matplotlib
+    matplotlib.use('agg')
     from matplotlib import pyplot as plt
 except:
     pd.error("Error importing matplotlib")
@@ -208,6 +209,8 @@ def dft(freq_hz):
     # show the image
     output = f'{home_path}/canvas{freq_hz}{random_number}.gif'
     pd.show(output)
+    
+    #pd.show(output)
 
 def getpitchKey(pitch):
     note = {
