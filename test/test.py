@@ -1,29 +1,20 @@
-# import os
-# import sys
-# import requests
-
-# version = '0.5.0'
-# response = requests.get("https://api.github.com/repos/charlesneimog/py4pd/releases/latest")
-# objectVersion = response.json()['tag_name']
-# repo = os.popen('git rev-parse --abbrev-ref HEAD').read().strip()
-
-# if version != objectVersion and repo == 'master':
-#     print('Version mismatch. Please update the object version in the uploadobject.py file.')
-
 def runTest():
     import os
     import subprocess
     import sys
     import platform
+    
     if platform.system() == 'Linux':
         cmd = 'pd -nogui -send "start-test bang"  py4pd_Linux/test.pd'
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]
+        
     elif platform.system() == 'Windows':
-        os.system('copy "C:/Program Files/Pd/bin/pd.exe" .')
-        os.system('copy "C:/Program Files/Pd/bin/pd.dll" .')
-        output = subprocess.run("./pd.exe -nogui -send \"start-test bang\" py4pd_WIN64/test.pd", capture_output=True, text=True, shell=True)
+        scriptfile = os.path.abspath(__file__)
+        scriptfolder = os.path.dirname(scriptfile)
+        pathfile = scriptfolder + '\\test.pd'
+        output = subprocess.run(f'"C:\\Program Files\\Pd\\bin\\pd.exe" -nogui -send "start-test bang" "{pathfile}"', capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]
     elif platform.system() == 'Darwin':
@@ -50,7 +41,8 @@ def runTest():
                 print(line)
         sys.exit(1)
     
-    
+if __name__ == "__main__":
+    runTest()
     
          
               
