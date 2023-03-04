@@ -263,8 +263,7 @@ def note(pitches):
     staffBaixo = Staff((ZERO, Mm(15)), None, Mm(30))
     bassClef = 'bass'
     Clef(ZERO, staffBaixo, bassClef)   
-    Path.rect((Mm(-10), Mm(-10)), None, Mm(42), Mm(42), Brush(Color(0, 0, 0, 0)), Pen(thickness=Mm(0.5)),
-)
+    Path.rect((Mm(-10), Mm(-10)), None, Mm(42), Mm(42), Brush(Color(0, 0, 0, 0)), Pen(thickness=Mm(0.5)))
     for pitch in pitches:
         # in pitch remove not number
         pitchWithoutNumber = pitch.replace(pitch[-1], '')
@@ -279,8 +278,8 @@ def note(pitches):
     notePathName = scriptPath + "/__pycache__/note_" + pitch + f"{randomNumber}.ppm"
     neoscore.render_image(rect=None, dest=notePathName, dpi=150, wait=True)
     neoscore.shutdown()
-    notePathName = notePathName.replace("\\", "/")
-    pd.print(notePathName)
+    if os.name == 'nt':
+        notePathName = notePathName.replace("\\", "/")
     pd.show(notePathName)
     return None
 

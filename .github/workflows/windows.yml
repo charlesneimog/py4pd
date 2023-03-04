@@ -59,7 +59,7 @@ jobs:
         Copy-Item -Path "$pythonpath\Lib" -Destination py4pd_WIN64\ -Recurse
         Copy-Item -Path "$pythonpath\DLLs" -Destination py4pd_WIN64\ -Recurse
         Copy-Item -Path "$pythonpath\python311.dll" -Destination py4pd_WIN64\ -Recurse
-	Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd_WIN64\ -Recurse
+	      Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd_WIN64\ -Recurse
 
     - name: Move files to py4pd_WIN64
       run: |
@@ -75,11 +75,11 @@ jobs:
     - name: Move test.pd to py4pd_WIN64
       run: cp test/test.pd py4pd_WIN64/test.pd
 
-    
     - name: Set Test Config
       run: |
           cp test/test.py test.py
           python3 -m pip install neoscore matplotlib -t ./py4pd_WIN64/py-modules
+      continue-on-error: true
     
     - name: Run Test
       run: python3 -c 'import test; test.runTest()' 
