@@ -5,10 +5,12 @@ on:
     branches: [ "master" , "v-0.5.0", "develop" ]
     paths:
       - 'src/**'
+      - '.github/workflows/Mac.yml'
   pull_request:
     branches: [ "master" ]
     paths:
       - 'src/**'
+      - '.github/workflows/Mac.yml'
   workflow_dispatch:
 
 jobs:  

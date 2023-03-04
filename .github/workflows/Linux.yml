@@ -4,11 +4,13 @@ on:
   push:
     branches: [ "master" , "v-0.5.0", "develop" ]
     paths:
-      - 'src/**'
+      - 'src/**' 
+      - '.github/workflows/Linux.yml'
   pull_request:
     branches: [ "master" ]
     paths:
       - 'src/**'
+      - '.github/workflows/Linux.yml'
   workflow_dispatch:
  
 
