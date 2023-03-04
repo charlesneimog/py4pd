@@ -11,7 +11,7 @@ on:
       - 'src/**'
       - '.github/workflows/Windows.yml'
   workflow_dispatch:
-  
+
 jobs:  
   windows-build:
     runs-on: windows-latest
@@ -47,7 +47,7 @@ jobs:
       run: |
         make PYTHON_VERSION=python3.11
     
-    - name: Copy Files
+    - name: Copy Files and Set for Tests
       run: | 
         mv py4pd.dll py4pd.m_amd64
         $pythonpath = Get-Content pythonpath.txt
