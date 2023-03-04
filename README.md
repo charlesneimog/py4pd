@@ -21,13 +21,14 @@
 
 <details>
   <summary><h3>Examples</h3></summary>
-
-  <summary><h4>Microtonality Theories</h4></summary>
-I WILL PUT HERE ONE GIF
-
-<summary><h4>Svg to Scores</h4></summary>
-I WILL PUT HERE ONE GIF
-
+  <details>
+    <summary><h4>Scores</h4></summary>
+      <img src=https://raw.githubusercontent.com/charlesneimog/py4pd/develop/resources/examples/scores/score.gif </img>
+  </details>
+  <details>
+    <summary><h4>Data graphs</h4></summary>
+      <img src=https://raw.githubusercontent.com/charlesneimog/py4pd/develop/resources/examples/scores/score.gif </img>
+  </details>
 </details>
 
 See more in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Examples).
