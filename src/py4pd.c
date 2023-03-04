@@ -61,7 +61,7 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                 return;
             }
             // check if path exists and is valid
-            if (_access(x->packages_path->s_name, F_OK) == -1) {
+            if (access(x->packages_path->s_name, F_OK) == -1) {
                 pd_error(x, "[py4pd] The packages path is not valid");
                 return;
             }
@@ -286,7 +286,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv){
     // check if script file exists
     char script_file_path[MAXPDSTRING];
     snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name, script_file_name->s_name);
-    if (_access(script_file_path, F_OK) == -1) {
+    if (access(script_file_path, F_OK) == -1) {
         pd_error(x, "[py4pd] The script file %s does not exist!", script_file_path);
         Py_XDECREF(x->function);
         Py_XDECREF(x->module);

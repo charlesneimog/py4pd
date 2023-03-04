@@ -9,18 +9,7 @@
 
 #ifdef _WIN64 
     #include <windows.h>  // on Windows, system() open a console window and we don't want that
-    #include <io.h> // for _access() function
-    #ifndef F_OK
-        #define F_OK 0
-    #endif
-    #ifdef _DEBUG
-        #undef _DEBUG
-        #include <Python.h>
-        #define _DEBUG
-    #else
-        #include <Python.h>
-    #endif
-
+    #include <Python.h>
 #else
     #include <pthread.h>
     #include <Python.h>
