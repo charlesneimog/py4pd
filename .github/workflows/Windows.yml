@@ -73,11 +73,8 @@ jobs:
         cp test\\test.pd py4pd_WIN64\\test.pd
         cp test/test.py test.py
         python3 -m pip install neoscore matplotlib -t ./py4pd_WIN64/py-modules
-    
-    - name: See Where I am
-      run: ls 
-
-    - name: Run Test
+  
+    - name: Run PureData Tests
       run: python3 ./test.py 
       
     - name: Upload Test Image

@@ -5,6 +5,7 @@ def runTest():
     import platform
     
     if platform.system() == 'Linux':
+        os.system('pd -send "start-test bang" py4pd_Linux/test.pd')
         cmd = 'pd -nogui -send "start-test bang"  py4pd_Linux/test.pd'
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
@@ -14,11 +15,14 @@ def runTest():
         scriptfile = os.path.abspath(__file__)
         scriptfolder = os.path.dirname(scriptfile)
         pathfile = scriptfolder + '\\py4pd_WIN64\\test.pd'
-        print(f'"C:\\Program Files\\Pd\\bin\\pd.exe" -nogui -send "start-test bang" "{pathfile}"')
+        print(f'"C:\\Program Files\\Pd\\bin\\pd.exe" -send "start-test bang" "{pathfile}"')
+        os.system(f'cmd /c "\"C://Program Files//Pd//bin//pd.exe\" -send \"start-test bang\" \"{pathfile}\""')
         output = subprocess.run(f'"C:\\Program Files\\Pd\\bin\\pd.exe" -nogui -send "start-test bang" "{pathfile}"', capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]
     elif platform.system() == 'Darwin':
+        cmdGUI = '/Applications/Pd-*.app/Contents/Resources/bin/pd -send "start-test bang" py4pd_macOS-Intel/test.pd'
+        os.system(cmdGUI)
         cmd = '/Applications/Pd-*.app/Contents/Resources/bin/pd -nogui -send "start-test bang" py4pd_macOS-Intel/test.pd'
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
