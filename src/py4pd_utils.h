@@ -4,6 +4,8 @@
 #include "py4pd.h"
 
 // declare function of utilities.c
+
+int createHiddenFolder();
 int *set_py4pd_config(t_py *x);
 char *get_editor_command(t_py *x);
 int isNumericOrDot(const char *str);

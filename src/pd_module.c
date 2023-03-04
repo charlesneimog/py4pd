@@ -1,8 +1,7 @@
 #include "pd_module.h"
-
-#include "m_pd.h"
 #include "py4pd.h"
 #include "py4pd_pic.h"
+#include "py4pd_utils.h"
 
 // ======================================
 // ======== py4pd embbeded module =======
@@ -401,6 +400,21 @@ PyObject *pdsamplerate(PyObject *self, PyObject *args) {
     }
     t_sample sr = sys_getsr();
     return PyLong_FromLong(sr);
+}
+
+// =================================
+PyObject *pdtempfile(PyObject *self, PyObject *args) {
+    (void)self;
+    if (!PyArg_ParseTuple(args, "")) {
+        PyErr_SetString(PyExc_TypeError,
+                        "[py.script] pd.samplerate: no argument expected");
+        return NULL;
+    }
+
+    
+
+
+    return PyLong_FromLong(0);
 }
 
 // =================================

@@ -11,6 +11,43 @@
 // new value to the list if the list already exists
 
 // ===================================================================
+int createHiddenFolder(t_py *x) {
+    #ifdef _WIN32
+        // get user folder
+        char *user_folder = getenv("USERPROFILE");
+        LPSTR home = (LPSTR)malloc(256 * sizeof(char));
+        memset(home, 0, 256);
+        sprintf(home, "%s\\.py4pd", user_folder);
+        x->temp_folder = gensym(home);
+        if (!CreateDirectory(home, NULL))
+        {
+            // printf("Failed to create directory: %d\n", GetLastError());
+            return 1;
+        }
+        if (!SetFileAttributes(home, FILE_ATTRIBUTE_HIDDEN))
+        {
+            // printf("Failed to set hidden attribute: %d\n", GetLastError());
+            return 1;
+        }
+        // printf("Directory created and hidden.\n");
+        return 0;
+    #else
+        // get  user folder
+        const char *home = getenv("HOME");
+        char *temp_folder = (char *)malloc(256 * sizeof(char));
+        memset(temp_folder, 0, 256);
+        sprintf(temp_folder, "%s/.py4pd", home);
+        x->temp_folder = gensym(temp_folder);
+        // create hidden folder
+        char *command = (char *)malloc(256 * sizeof(char));
+        memset(command, 0, 256);
+        sprintf(command, "mkdir %s", temp_folder);
+        system(command);
+return 0;
+    #endif
+}
+
+// ===================================================================
 char *get_editor_command(t_py *x) {
     const char *editor = x->editorName->s_name;
     const char *home = x->home_path->s_name;

@@ -77,9 +77,14 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_canvas        *x_canvas; // pointer to the canvas
     t_inlet         *in1; // intlet 1
     t_symbol        *editorName; // editor name
+
+    // == PATHS
     t_symbol        *packages_path; // packages path
     t_symbol        *home_path; // home path this always is the path folder (?)
     t_symbol        *object_path; // save object path   TODO: want to save scripts inside this folder and make all accessible
+    t_symbol        *temp_folder;
+
+
     t_symbol        *function_name; // function name
     t_symbol        *script_name; // script name
     t_outlet        *out_A; // outlet 1.
