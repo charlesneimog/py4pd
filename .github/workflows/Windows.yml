@@ -70,6 +70,9 @@ jobs:
         cp test/test.py test.py
         python3 -m pip install neoscore -t ./py4pd_WIN64/py-modules
     
+    - name: See Where I am
+      run: ls -la
+
     - name: Run Test
       run: python3 ./test.py 
       
@@ -79,7 +82,6 @@ jobs:
         name: neoscore-Test-Windows
         path: py4pd_WIN64/neoscoretest.png
       
-
     - name: Upload Object ZIP
       uses: actions/upload-artifact@v3
       with:
