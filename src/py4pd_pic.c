@@ -689,10 +689,12 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     x->x_glist = (t_glist *)cv;
     x->x_zoom = x->x_glist->gl_zoom;
     char buf[MAXPDSTRING];
-    snprintf(buf, MAXPDSTRING - 1, ".x%lx", (unsigned long)cv);
+    uintptr_t cv_ptr = (uintptr_t)cv;
+    snprintf(buf, MAXPDSTRING - 1, ".x%lx", cv_ptr);
     buf[MAXPDSTRING - 1] = 0;
     x->x_proxy = PY4PD_edit_proxy_new(x, gensym(buf));
-    sprintf(buf, "#%lx", (long)x);
+    uintptr_t x_ptr = (uintptr_t)x;
+    sprintf(buf, "#%lx", x_ptr);
     pd_bind(&x->x_obj.ob_pd, x->x_x = gensym(buf));
     x->x_edit = cv->gl_edit;
     x->x_send = x->x_snd_raw = x->x_receive = x->x_rcv_raw = x->x_filename =
