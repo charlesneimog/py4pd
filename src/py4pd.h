@@ -3,6 +3,9 @@
 #include <m_pd.h>
 #include <g_canvas.h>
 
+#include <dlfcn.h>
+#include <stdio.h>
+
 // in _WIN64 include windows.h, if not, include <pthread.h>
 #define PY_SSIZE_T_CLEAN // Good practice to use this before include Python.h because it will remove some deprecated function
 
@@ -21,7 +24,7 @@
 #endif
 
 // =====================================
-typedef struct _edit_proxy{
+typedef struct _edit_proxy{ //  TODO:  Edit the name for version 0.6.0
     t_object    p_obj;
     t_symbol   *p_sym;
     t_clock    *p_clock;
@@ -35,7 +38,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_glist             *x_glist;
     t_edit_proxy        *x_proxy;
     t_float             py4pd_audio; // audio
-    PyObject            *module; // python object
+    PyObject            *module; // python object TODO: remove this for 0.6.0
     PyObject            *function; // function name
     t_int               object_number; // object number
     t_int               thread; // arguments
