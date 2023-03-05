@@ -988,29 +988,6 @@ void *py4pd_free(t_py *x) {
 }
 
 // ====================================================
-static void *debug(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    (void)x;
-    (void)s;
-    (void)argc;
-    (void)argv;
-
-    void* handle = dlopen(NULL, RTLD_LAZY);
-    if (!handle) {
-        post("dlopen() error: %s", dlerror());
-        return NULL;
-    }
-
-    // get the folder where the function py4pd_setup is located
-    Dl_info info;
-    if (dladdr((void*)py4pd_new, &info) == 0) {
-        post("dladdr() error: %s", dlerror());
-        return NULL;
-    }
-
-    return NULL;
-}
-
-// ====================================================
 void py4pd_setup(void) {
     py4pd_class =
         class_new(gensym("py4pd"),  // cria o objeto quando escrevemos py4pd
@@ -1090,7 +1067,7 @@ void py4pd_setup(void) {
     //  TODO: Set some audio parameters to work with py4pd_dspin, 'dspparams', 'dspparams'
 
     
-    class_addmethod(py4pd_class, (t_method)debug, gensym("debug"), A_GIMME, 0); 
+    class_addmethod(py4pd_class, (t_method)findpy4pd_folder, gensym("debug"), A_GIMME, 0); 
 }
 
 
