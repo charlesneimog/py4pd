@@ -23,9 +23,14 @@ void *findpy4pd_folder(t_py *x){
         post("Not possible to locate the folder of the py4pd object");
         return NULL;
     }
-    post("py4pd is located in %s", info.dli_fname);
 
-    x->object_path = gensym(info.dli_fname);
+    // remove filename from path
+    char *path = strdup(info.dli_fname);
+    char *last_slash = strrchr(path, '/');
+    if (last_slash != NULL) {
+        *last_slash = '\0';
+    }
+    x->py4pd_folder = gensym(path);
 
     return NULL;
 }

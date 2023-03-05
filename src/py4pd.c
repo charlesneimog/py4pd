@@ -264,6 +264,10 @@ static void reload(t_py *x) {
     }
 }
 
+
+
+
+
 // ====================================
 static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
@@ -294,11 +298,13 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     // check if script file exists
     char script_file_path[MAXPDSTRING];
-    snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name,
-             script_file_name->s_name);
-    if (access(script_file_path, F_OK) == -1) {
-        pd_error(x, "[py4pd] The script file %s does not exist!",
-                 script_file_path);
+    char script_inside_py4pd_path[MAXPDSTRING];
+    snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name, script_file_name->s_name);
+    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/pyScripts/%s.py", x->py4pd_folder->s_name, script_file_name->s_name);
+
+
+    if (access(script_file_path, F_OK) == -1 && access(script_inside_py4pd_path, F_OK) == -1) {
+        pd_error(x, "[py4pd] The script file %s was not found!", script_file_name->s_name);
         Py_XDECREF(x->function);
         Py_XDECREF(x->module);
         return;
@@ -311,22 +317,32 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         return;
     }
     // =====================
-    PyObject *pName, *pModule,
-        *pFunc;  // Create the variables of the python objects
+    PyObject *pModule, *pFunc;  // Create the variables of the python objects
+
+    // =====================
+    // create one folder using x->py4pd_folder->s_name + "/pyScripts"
+    char *pyScripts_folder = malloc(strlen(x->py4pd_folder->s_name) + 12);
+    strcpy(pyScripts_folder, x->py4pd_folder->s_name);
+    strcat(pyScripts_folder, "/pyScripts");
+
+    
+    post("pyScripts_folder: %s", pyScripts_folder);
 
     // =====================
     // Add aditional path to python to work with Pure Data
     PyObject *home_path = PyUnicode_FromString(x->home_path->s_name);  // Place where script file will probably be
     PyObject *site_package = PyUnicode_FromString(x->packages_path->s_name);  // Place where the packages will be
+    PyObject *py4pdScripts = PyUnicode_FromString(pyScripts_folder);  // Place where the py4pd scripts will be
     PyObject *sys_path = PySys_GetObject("path");
     PyList_Insert(sys_path, 0, home_path);
     PyList_Insert(sys_path, 0, site_package);
+    PyList_Insert(sys_path, 0, py4pdScripts);
     Py_DECREF(home_path);
     Py_DECREF(site_package);
+    Py_DECREF(py4pdScripts);
 
     // =====================
-    pName = PyUnicode_DecodeFSDefault(script_file_name->s_name);  // Name of script file
-    pModule = PyImport_Import(pName);
+    pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file
     // =====================
     // check if the module was loaded
     if (pModule == NULL) {
@@ -337,11 +353,9 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
         Py_XDECREF(pstr);
         Py_XDECREF(pModule);
-        Py_XDECREF(pName);
         return;
     }
     pFunc = PyObject_GetAttrString(pModule, function_name->s_name);  // Function name inside the script file
-    Py_DECREF(pName);           
     if (pFunc && PyCallable_Check(pFunc)) {  // Check if the function exists and is callable
         PyObject *inspect = NULL, *getfullargspec = NULL;
         PyObject *argspec = NULL, *args = NULL;
@@ -391,6 +405,134 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
     return;
 }
+//
+// // ====================================
+// static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+//     (void)s;
+//     t_symbol *script_file_name = atom_gensym(argv + 0);
+//     t_symbol *function_name = atom_gensym(argv + 1);
+//
+//     if (x->function_called == 1) {
+//         int function_is_equal = strcmp(
+//             function_name->s_name,
+//             x->function_name->s_name);  // if string is equal strcmp returns 0
+//         if (function_is_equal == 0) {
+//             pd_error(x, "[py4pd] The function was already set!");
+//             return;
+//         } else {
+//             Py_XDECREF(x->function);
+//             x->function_called = 0;
+//         }
+//     }
+//
+//     // Check if there is extension (not to use it)
+//     char *extension = strrchr(script_file_name->s_name, '.');
+//     if (extension != NULL) {
+//         pd_error(x, "[py4pd] Don't use extensions in the script file name!");
+//         Py_XDECREF(x->function);
+//         Py_XDECREF(x->module);
+//         return;
+//     }
+//
+//     // check if script file exists
+//     char script_file_path[MAXPDSTRING];
+//     snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name,
+//              script_file_name->s_name);
+//     if (access(script_file_path, F_OK) == -1) {
+//         pd_error(x, "[py4pd] The script file %s does not exist!",
+//                  script_file_path);
+//         Py_XDECREF(x->function);
+//         Py_XDECREF(x->module);
+//         return;
+//     }
+//
+//     // =====================
+//     // check number of arguments
+//     if (argc < 2) {  // check is the number of arguments is correct | set
+//         pd_error(x, "[py4pd] 'set' message needs two arguments! The 'Script Name' and the 'Function Name'!");
+//         return;
+//     }
+//     // =====================
+//     PyObject *pName, *pModule,
+//         *pFunc;  // Create the variables of the python objects
+//
+//     // =====================
+//     // Add aditional path to python to work with Pure Data
+//     PyObject *home_path = PyUnicode_FromString(x->home_path->s_name);  // Place where script file will probably be
+//     PyObject *site_package = PyUnicode_FromString(x->packages_path->s_name);  // Place where the packages will be
+//     PyObject *sys_path = PySys_GetObject("path");
+//     PyList_Insert(sys_path, 0, home_path);
+//     PyList_Insert(sys_path, 0, site_package);
+//     Py_DECREF(home_path);
+//     Py_DECREF(site_package);
+//
+//     // =====================
+//     pName = PyUnicode_DecodeFSDefault(script_file_name->s_name);  // Name of script file
+//     pModule = PyImport_Import(pName);
+//     // =====================
+//     // check if the module was loaded
+//     if (pModule == NULL) {
+//         PyObject *ptype, *pvalue, *ptraceback;
+//         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+//         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+//         PyObject *pstr = PyObject_Str(pvalue);
+//         pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+//         Py_XDECREF(pstr);
+//         Py_XDECREF(pModule);
+//         Py_XDECREF(pName);
+//         return;
+//     }
+//     pFunc = PyObject_GetAttrString(pModule, function_name->s_name);  // Function name inside the script file
+//     Py_DECREF(pName);           
+//     if (pFunc && PyCallable_Check(pFunc)) {  // Check if the function exists and is callable
+//         PyObject *inspect = NULL, *getfullargspec = NULL;
+//         PyObject *argspec = NULL, *args = NULL;
+//         inspect = PyImport_ImportModule("inspect");
+//         getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
+//         argspec = PyObject_CallFunctionObjArgs(getfullargspec, pFunc, NULL);
+//
+//         args = PyTuple_GetItem(argspec, 0);
+//         
+//         //  TODO: way to check if function has *args or **kwargs
+//
+//         int py_args = PyObject_Size(args);
+//         if (args == Py_None) {
+//             x->py_arg_numbers = -1;
+//             post("[py4pd] The '%s' function has *args or **kwargs!",
+//                  function_name->s_name);
+//         } else {
+//             x->py_arg_numbers = py_args;
+//             post("[py4pd] The '%s' function has %d arguments!",
+//                  function_name->s_name, py_args);
+//         }
+//         Py_DECREF(inspect);
+//         Py_DECREF(getfullargspec);
+//         Py_DECREF(argspec);
+//         Py_DECREF(args);
+//         Py_DECREF(pModule);
+//
+//         x->function = pFunc;
+//         x->script_name = script_file_name;
+//         x->function_name = function_name;
+//         x->function_called = 1;
+//
+//     } else {
+//         pd_error(x, "[py4pd] Function %s not loaded!", function_name->s_name);
+//         x->function_called = 1;  // set the flag to 0 because it crash Pd if
+//         PyObject *ptype, *pvalue, *ptraceback;
+//         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+//         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+//         PyObject *pstr = PyObject_Str(pvalue);
+//         pd_error(x, "[py4pd] Set function had failed: %s", PyUnicode_AsUTF8(pstr));
+//         Py_DECREF(pstr);
+//         Py_XDECREF(ptype);
+//         Py_XDECREF(pvalue);
+//         Py_XDECREF(ptraceback);
+//         Py_XDECREF(pModule);
+//         PyErr_Clear();
+//     }
+//     return;
+// }
 
 // ============================================
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {

@@ -82,7 +82,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     // == PATHS
     t_symbol        *packages_path; // packages path
     t_symbol        *home_path; // home path this always is the path folder (?)
-    t_symbol        *object_path; // save object path   TODO: want to save scripts inside this folder and make all accessible
+    t_symbol        *py4pd_folder; // save object path   TODO: want to save scripts inside this folder and make all accessible
     t_symbol        *temp_folder;
 
 
