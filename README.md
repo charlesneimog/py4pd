@@ -51,7 +51,7 @@ See more in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Example
 
 ## Building from Source
 
-* To build from source, you can follow the steps: [Compiling from Source Code.](https://github.com/charlesneimog/py4pd/blob/master/resources/BUILD.md).
+* To build from the source code, you can follow the steps: [Compiling from Source Code.](https://github.com/charlesneimog/py4pd/blob/master/resources/BUILD.md).
 
 ## Citing this work
 
