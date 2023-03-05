@@ -683,7 +683,6 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     py4pd_widgetbehavior.w_clickfn = (t_clickfn)PY4PD_click;
     class_setwidget(py4pd_class_VIS, &py4pd_widgetbehavior);
     class_setsavefn(py4pd_class_VIS, &PY4PD_save);
-    // class_setpropertiesfn(py4pd_class_VIS, &PY4PD_properties);
     py4pd_picDefintion(py4pdImageData);
     t_canvas *cv = canvas_getcurrent();
     x->x_glist = (t_glist *)cv;
