@@ -1,6 +1,6 @@
 <p align="center">
   <h1 align="center">py4pd</h1>
-  <h4 align="center">All Python in the PureData environment.</h4>
+  <h4 align="center">Python in the PureData environment.</h4>
 </p>
 <p align="center">
     <a href="https://github.com/charlesneimog/py4pd/releases/latest"><img src="https://img.shields.io/github/release/charlesneimog/py4pd.svg?include_prereleases" alt="Release"></a>
@@ -18,6 +18,9 @@
 * Use scores inside PureData;
 * Use svg/draws as scores;
 * OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
+* Sound analisys with `magenta`, `librosa`, and `pyAudioAnalaysis`;
+
+Click on `Examples` to see more...
 
 <details>
   <summary><h3>Examples</h3></summary>
