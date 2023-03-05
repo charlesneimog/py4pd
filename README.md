@@ -51,11 +51,12 @@ See more in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Example
 
 ## Building from Source
 
-* To build from source you can follow the steps in [Building from Source](https://github.com/charlesneimog/py4pd/blob/master/resources/BUILD.md).
+* To build from source, you can follow the steps: [Compiling from Source Code.](https://github.com/charlesneimog/py4pd/blob/master/resources/BUILD.md).
 
 ## Citing this work
 
-Consider citing this repository, in the right side of page, below of about.
+Consider citing this repository, on the right side of the page, below of about.
+
 ```APA
 Neimog, C. K. (2023). py4pd, Python inside PureData (Version 0.5.0) [Computer software]. https://doi.org/10.5281/zenodo.7677265
 ```
