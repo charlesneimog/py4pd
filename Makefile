@@ -9,7 +9,7 @@ ifeq (MINGW,$(findstring MINGW,$(uname)))
   NUMPY_INCLUDE := $(shell cat numpyincludes.txt)
   PYTHON_DLL := $(PYTHON_PATH)/python311.dll
   cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -Wno-unused-variable 
-  ldlibs =  $(PYTHON_DLL) -lwinpthread -Xlinker --export-all-symbols
+  ldlibs =  $(PYTHON_DLL) -l dl -lwinpthread -Xlinker --export-all-symbols
 
 # =================================== Linux =====================================
 else ifeq (Linux,$(findstring Linux,$(uname)))
