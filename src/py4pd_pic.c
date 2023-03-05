@@ -438,7 +438,7 @@ void PY4PD_latch(t_py *x, t_float f) {
 }
 
 // ==================================================================
-void PY4PD_edit_proxy_any(t_edit_proxy *p, t_symbol *s, int ac, t_atom *av) {
+void PY4PD_edit_proxy_any(t_py4pd_edit_proxy *p, t_symbol *s, int ac, t_atom *av) {
     int edit = ac = 0;
     if (p->p_cnv) {
         if (s == gensym("editmode"))
@@ -512,15 +512,15 @@ void PY4PD_properties(t_gobj *z, t_glist *gl) {
 // }
 
 // =====================================
-void PY4PD_edit_proxy_free(t_edit_proxy *p) {
+void PY4PD_edit_proxy_free(t_py4pd_edit_proxy *p) {
     pd_unbind(&p->p_obj.ob_pd, p->p_sym);
     clock_free(p->p_clock);
     pd_free(&p->p_obj.ob_pd);
 }
 
 // =====================================
-t_edit_proxy *PY4PD_edit_proxy_new(t_py *x, t_symbol *s) {
-    t_edit_proxy *p = (t_edit_proxy *)pd_new(edit_proxy_class);
+t_py4pd_edit_proxy *PY4PD_edit_proxy_new(t_py *x, t_symbol *s) {
+    t_py4pd_edit_proxy *p = (t_py4pd_edit_proxy *)pd_new(edit_proxy_class);
     p->p_cnv = x;
     pd_bind(&p->p_obj.ob_pd, p->p_sym = s);
     p->p_clock = clock_new(p, (t_method)PY4PD_edit_proxy_free);
@@ -673,7 +673,7 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
         strcpy(py4pdImageData, PICIMAGE);
     }
     edit_proxy_class =
-        class_new(0, 0, 0, sizeof(t_edit_proxy), CLASS_NOINLET | CLASS_PD, 0);
+        class_new(0, 0, 0, sizeof(t_py4pd_edit_proxy), CLASS_NOINLET | CLASS_PD, 0);
     class_addanything(edit_proxy_class, PY4PD_edit_proxy_any);
     py4pd_widgetbehavior.w_getrectfn = PY4PD_getrect;
     py4pd_widgetbehavior.w_displacefn = PY4PD_displace;

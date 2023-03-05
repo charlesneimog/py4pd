@@ -1,10 +1,8 @@
 #ifndef PY4PD_H
 #define PY4PD_H
+
 #include <m_pd.h>
 #include <g_canvas.h>
-
-#include <dlfcn.h>
-#include <stdio.h>
 
 // in _WIN64 include windows.h, if not, include <pthread.h>
 #define PY_SSIZE_T_CLEAN // Good practice to use this before include Python.h because it will remove some deprecated function
@@ -24,19 +22,19 @@
 #endif
 
 // =====================================
-typedef struct _edit_proxy{ //  TODO:  Edit the name for version 0.6.0
+typedef struct _py4pd_edit_proxy{ //  TODO:  Edit the name for version 0.6.0
     t_object    p_obj;
     t_symbol   *p_sym;
     t_clock    *p_clock;
     struct      _py *p_cnv;
-}t_edit_proxy;
+}t_py4pd_edit_proxy;
 
 
 // =====================================
 typedef struct _py { // It seems that all the objects are some kind of class.
     t_object            x_obj; // convensao no puredata source code
     t_glist             *x_glist;
-    t_edit_proxy        *x_proxy;
+    t_py4pd_edit_proxy  *x_proxy;
     t_float             py4pd_audio; // audio
     PyObject            *module; // python object TODO: remove this for 0.6.0
     PyObject            *function; // function name

@@ -1,14 +1,34 @@
+#include "m_pd.h"
 #include "pd_module.h"
 
-// ===================================================================
-// ======================== Work with lists in PureData ==============
-// ===================================================================
 
-// create a hash table of PyObjects lists, where the key is the name of the list
-// and when I add a new value, I just append to the list. When I want to get the
-// list, I just get the list from the hash table This hash table will be
-// responsable to create a new list if the list does not exist and to append a
-// new value to the list if the list already exists
+#ifdef __linux__
+    #define __USE_GNU
+#endif
+
+#include <dlfcn.h>
+
+// ====================================================
+void *findpy4pd_folder(t_py *x){
+    (void)x;
+
+    void* handle = dlopen(NULL, RTLD_LAZY);
+    if (!handle) {
+        post("Not possible to locate the folder of the py4pd object");
+        return NULL;
+    }
+
+    Dl_info info;
+    if (dladdr((void*)findpy4pd_folder, &info) == 0) {
+        post("Not possible to locate the folder of the py4pd object");
+        return NULL;
+    }
+    post("py4pd is located in %s", info.dli_fname);
+
+    x->object_path = gensym(info.dli_fname);
+
+    return NULL;
+}
 
 // ===================================================================
 int createHiddenFolder(t_py *x) {
@@ -383,32 +403,5 @@ int *set_py4pd_config(t_py *x) {
 
     return 0;
 }
-
-
-// ====================================================
-void *findpy4pd_folder(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    (void)x;
-    (void)s;
-    (void)argc;
-    (void)argv;
-
-    void* handle = dlopen(NULL, RTLD_LAZY);
-    if (!handle) {
-        post("Not possible to locate the folder of the py4pd object");
-        return NULL;
-    }
-
-    Dl_info info;
-    if (dladdr((void*)findpy4pd_folder, &info) == 0) {
-        post("Not possible to locate the folder of the py4pd object");
-        return NULL;
-    }
-
-    // print where py4pd_new folder is
-    post("py4pd is located in %s", info.dli_fname);
-
-    return NULL;
-}
-
 
 

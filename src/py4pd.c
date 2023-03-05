@@ -964,7 +964,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     x->home_path = patch_dir;         // set name of the home path
     x->packages_path = patch_dir;     // set name of the packages path
     set_py4pd_config(x);  // set the config file (in py4pd.cfg, make this be
-                          // saved in the patch)
+    findpy4pd_folder(x);  // find the py4pd folder
     if (argc > 1) {       // check if there are two arguments
         set_function(x, s, argc, argv);
         import_array();  // import numpy
