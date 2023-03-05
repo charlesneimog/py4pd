@@ -208,8 +208,7 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
 // ====================================
 static void vscode(t_py *x) {
-    pd_error(
-        x, "This method is deprecated, please use the editor method instead!");
+    pd_error(x, "This method is deprecated, please use the editor method instead!");
     editor(x, NULL, 0, NULL);
 }
 
@@ -225,8 +224,7 @@ static void reload(t_py *x) {
     pModule = x->module;
 
     // reload the module
-    pName = PyUnicode_DecodeFSDefault(
-        x->script_name->s_name);  // Name of script file
+    pName = PyUnicode_DecodeFSDefault(x->script_name->s_name);  // Name of script file
     pModule = PyImport_Import(pName);
     pReload = PyImport_ReloadModule(pModule);
     if (pReload == NULL) {
@@ -235,15 +233,12 @@ static void reload(t_py *x) {
         Py_DECREF(pFunc);
         Py_DECREF(pModule);
         return;
-    } else {
+    } 
+    else {
         Py_XDECREF(x->module);
         pFunc = PyObject_GetAttrString(
             pModule,
             x->function_name->s_name);  // Function name inside the script file
-        Py_ssize_t refcount = Py_REFCNT(pName);
-        post("Reference cont pName: %i", refcount);
-        refcount = Py_REFCNT(pReload);
-        post("Reference cont pReload: %i", refcount);
         Py_DECREF(pName);
         Py_DECREF(pReload);
         if (pFunc &&
@@ -254,7 +249,8 @@ static void reload(t_py *x) {
             x->function_called = 1;
             post("The module was reloaded!");
             return;
-        } else {
+        } 
+        else {
             pd_error(x, "Error reloading the module!");
             x->function_called = 0;
             Py_DECREF(x->function);
@@ -300,7 +296,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     char script_file_path[MAXPDSTRING];
     char script_inside_py4pd_path[MAXPDSTRING];
     snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name, script_file_name->s_name);
-    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/pyScripts/%s.py", x->py4pd_folder->s_name, script_file_name->s_name);
+    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/scripts/%s.py", x->py4pd_folder->s_name, script_file_name->s_name);
 
 
     if (access(script_file_path, F_OK) == -1 && access(script_inside_py4pd_path, F_OK) == -1) {
@@ -323,11 +319,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     // create one folder using x->py4pd_folder->s_name + "/pyScripts"
     char *pyScripts_folder = malloc(strlen(x->py4pd_folder->s_name) + 12);
     strcpy(pyScripts_folder, x->py4pd_folder->s_name);
-    strcat(pyScripts_folder, "/pyScripts");
-
-    
-    post("pyScripts_folder: %s", pyScripts_folder);
-
+    strcat(pyScripts_folder, "/scripts");
     // =====================
     // Add aditional path to python to work with Pure Data
     PyObject *home_path = PyUnicode_FromString(x->home_path->s_name);  // Place where script file will probably be
@@ -388,7 +380,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         x->function_name = function_name;
         x->function_called = 1;
 
-    } else {
+    } 
+    else {
         pd_error(x, "[py4pd] Function %s not loaded!", function_name->s_name);
         x->function_called = 1;  // set the flag to 0 because it crash Pd if
         PyObject *ptype, *pvalue, *ptraceback;
