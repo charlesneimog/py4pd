@@ -16,6 +16,7 @@ on:
 jobs:  
   macos-intel-build:
     runs-on: macos-latest
+    timeout-minutes: 10
 
     steps:
     - uses: actions/checkout@v3

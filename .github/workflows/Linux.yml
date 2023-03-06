@@ -19,6 +19,7 @@ name: Linux
 jobs:
   linux-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 5 
     steps:
       - uses: actions/checkout@v3
         with:
@@ -42,6 +43,8 @@ jobs:
           resources/py4pd-help.pd py4pd_Linux
 
           zip -r py4pd_Linux.zip py4pd_Linux
+      
+      
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
