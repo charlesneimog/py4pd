@@ -1108,13 +1108,12 @@ void *py4pd_free(t_py *x) {
 
 
     if (object_count == 1) {
-        // Py_Finalize(); // BUG: Not possible because it crashes if another
-        // object_count = 0;
-        // py4pd is created in the same PureData session
+        Py_Finalize(); // BUG: Not possible because it crashes if another
+        post("[py4pd] Python interpreter finalized");
+        object_count = 0;
 
         //  TODO: Clear temporary files
         #ifdef _WIN64
-            // clear all files inside x->temp_folder->s_name
             char command[1000];
             sprintf(command, "del /q /s %s\\*", x->temp_folder->s_name);
             SHELLEXECUTEINFO sei = {0};
@@ -1125,10 +1124,6 @@ void *py4pd_free(t_py *x) {
             sei.nShow = SW_HIDE;
             ShellExecuteEx(&sei);
             CloseHandle(sei.hProcess);
-            
-            
-
-            
         #else
             char command[1000];
             sprintf(command, "rm -rf %s", x->temp_folder->s_name);
