@@ -689,7 +689,7 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     x->x_zoom = x->x_glist->gl_zoom;
     char buf[MAXPDSTRING];
     #ifdef _WIN64
-        snprintf(buf, MAXPDSTRING - 1, ".x%llx", (uintptr_t)cv_ptr);
+        snprintf(buf, MAXPDSTRING - 1, ".x%llx", (uintptr_t)cv);
     #else
         snprintf(buf, MAXPDSTRING - 1, ".x%lx", (unsigned long)cv);
     #endif
@@ -697,7 +697,7 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     x->x_proxy = PY4PD_edit_proxy_new(x, gensym(buf));
     
     #ifdef _WIN64
-        snprintf(buf, MAXPDSTRING - 1, ".x%llx.c", (uintptr_t)cv_ptr);
+        snprintf(buf, MAXPDSTRING - 1, ".x%llx.c", (uintptr_t)cv);
     #else
         snprintf(buf, MAXPDSTRING - 1, ".x%lx.c", (unsigned long)cv);   
     #endif
