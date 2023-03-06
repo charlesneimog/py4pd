@@ -1093,7 +1093,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     x->home_path = patch_dir;         // set name of the home path
     x->packages_path = patch_dir;     // set name of the packages path
     set_py4pd_config(x);  // set the config file (in py4pd.cfg, make this be
-    findpy4pd_folder(x);  // find the py4pd folder
+    py4pd_tempfolder(x);  // find the py4pd folder
     if (argc > 1) {       // check if there are two arguments
         set_function(x, s, argc, argv);
         import_array();  // import numpy
@@ -1114,10 +1114,25 @@ void *py4pd_free(t_py *x) {
 
         //  TODO: Clear temporary files
         #ifdef _WIN64
+            // clear all files inside x->temp_folder->s_name
+            char command[1000];
+            sprintf(command, "del /q /s %s\\*", x->temp_folder->s_name);
+            SHELLEXECUTEINFO sei = {0};
+            sei.cbSize = sizeof(SHELLEXECUTEINFO);
+            sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+            sei.lpFile = "cmd.exe";
+            sei.lpParameters = command;
+            sei.nShow = SW_HIDE;
+            ShellExecuteEx(&sei);
+            CloseHandle(sei.hProcess);
+            
+            
 
+            
         #else
-            post("py4pd: deleting temporary files from %s", x->temp_folder);
-        
+            char command[1000];
+            sprintf(command, "rm -rf %s", x->temp_folder->s_name);
+            system(command);
         #endif
 
     }

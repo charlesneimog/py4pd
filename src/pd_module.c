@@ -415,7 +415,7 @@ PyObject *pdtempfolder(PyObject *self, PyObject *args) {
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
     // ================================
-    createHiddenFolder(py4pd);
+    py4pd_tempfolder(py4pd);
     return PyUnicode_FromString(py4pd->temp_folder->s_name);
 }
 

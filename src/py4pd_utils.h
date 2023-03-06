@@ -11,8 +11,8 @@
 
 
 // declare function of utilities.c
-void *findpy4pd_folder(t_py *x);
-int createHiddenFolder(t_py *x); 
+void findpy4pd_folder(t_py *x);
+void py4pd_tempfolder(t_py *x);
 int *set_py4pd_config(t_py *x);
 char *get_editor_command(t_py *x);
 int isNumericOrDot(const char *str);

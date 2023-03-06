@@ -3,17 +3,15 @@
 
 
 // ====================================================
-void *findpy4pd_folder(t_py *x){
-    (void)x;
+void findpy4pd_folder(t_py *x){
+    
     void* handle = dlopen(NULL, RTLD_LAZY);
     if (!handle) {
         post("Not possible to locate the folder of the py4pd object");
-        return NULL;
     }
     Dl_info info;
     if (dladdr((void*)findpy4pd_folder, &info) == 0) {
         post("Not possible to locate the folder of the py4pd object");
-        return NULL;
     }
     // remove filename from path
     char *path = strdup(info.dli_fname);
@@ -22,12 +20,10 @@ void *findpy4pd_folder(t_py *x){
         *last_slash = '\0';
     }
     x->py4pd_folder = gensym(path);
-
-    return NULL;
 }
 
 // ===================================================================
-int createHiddenFolder(t_py *x) {
+void py4pd_tempfolder(t_py *x) {
     #ifdef _WIN32
         // get user folder
         char *user_folder = getenv("USERPROFILE");
@@ -35,18 +31,12 @@ int createHiddenFolder(t_py *x) {
         memset(home, 0, 256);
         sprintf(home, "%s\\.py4pd\\", user_folder);
         x->temp_folder = gensym(home);
-        if (!CreateDirectory(home, NULL))
-        {
-            // printf("Failed to create directory: %d\n", GetLastError());
-            return 1;
+        if (!CreateDirectory(home, NULL)){
+            post("Failed to create directory: %d\n", GetLastError());
         }
-        if (!SetFileAttributes(home, FILE_ATTRIBUTE_HIDDEN))
-        {
-            // printf("Failed to set hidden attribute: %d\n", GetLastError());
-            return 1;
+        if (!SetFileAttributes(home, FILE_ATTRIBUTE_HIDDEN)){
+            post("Failed to set hidden attribute: %d\n", GetLastError());
         }
-        // printf("Directory created and hidden.\n");
-        return 0;
     #else
         // get  user folder
         const char *home = getenv("HOME");
@@ -59,7 +49,6 @@ int createHiddenFolder(t_py *x) {
         memset(command, 0, 256);
         sprintf(command, "mkdir %s", temp_folder);
         system(command);
-return 0;
     #endif
 }
 
