@@ -14,12 +14,10 @@ def runTest():
         else:
             print('test.pd not found')
             sys.exit()
-        os.system(cmd)
-        # output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
-        # outputLines = str(output).split('\\n')
-        # lastLine = outputLines[-2]
-        # out without error
-        sys.exit(0)
+        # os.system(cmd)
+        output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+        outputLines = str(output).split('\\n')
+        lastLine = outputLines[-2]
         
     elif platform.system() == 'Windows':
         scriptfile = os.path.abspath(__file__)

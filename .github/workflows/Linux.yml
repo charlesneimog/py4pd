@@ -5,6 +5,7 @@ name: Linux
       - master
       - v-0.5.0
       - develop
+
     paths:
       - src/**
       - .github/workflows/Linux.yml
