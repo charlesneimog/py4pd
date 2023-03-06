@@ -15,6 +15,10 @@
     #include <Python.h>
 #endif
 
+#include <dirent.h> //  NOTE: For clear temp files
+
+
+
 #ifndef IHEIGHT
 // Purr Data doesn't have these, hopefully the vanilla values will work
 #define IHEIGHT 3       /* height of an inlet in pixels */

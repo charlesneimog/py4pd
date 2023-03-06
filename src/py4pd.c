@@ -1117,7 +1117,15 @@ void *py4pd_free(t_py *x) {
     if (object_count == 1) {
         // Py_Finalize(); // BUG: Not possible because it crashes if another
         // py4pd is created in the same PureData session
+
+        //  TODO: Clear temporary files
+
     }
+
+
+
+
+
     return (void *)x;
 }
 
