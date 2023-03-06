@@ -38,17 +38,18 @@ void py4pd_tempfolder(t_py *x) {
             post("Failed to set hidden attribute: %d\n", GetLastError());
         }
     #else
-        // get  user folder
         const char *home = getenv("HOME");
         char *temp_folder = (char *)malloc(256 * sizeof(char));
         memset(temp_folder, 0, 256);
         sprintf(temp_folder, "%s/.py4pd/", home);
         x->temp_folder = gensym(temp_folder);
-        // create hidden folder
-        char *command = (char *)malloc(256 * sizeof(char));
-        memset(command, 0, 256);
-        sprintf(command, "mkdir %s", temp_folder);
-        system(command);
+        if (access(temp_folder, F_OK) == -1) {
+            char *command = (char *)malloc(256 * sizeof(char));
+            memset(command, 0, 256);
+            sprintf(command, "mkdir %s", temp_folder);
+            system(command);
+        }
+
     #endif
 }
 
@@ -278,40 +279,25 @@ void *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
 // ========================= py4pd object ==============================
 
 int *set_py4pd_config(t_py *x) {
-    char *PADRAO_packages_path =
-        (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) +
-                                       strlen("/py-modules/") + 1));  //
-    strcpy(PADRAO_packages_path,
-           x->home_path->s_name);  // copy string one into the result.
-    strcat(PADRAO_packages_path,
-           "/py-modules/");  // append string two to the result.
+    char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py-modules/") + 1));  //
+    strcpy(PADRAO_packages_path, x->home_path->s_name);  // copy string one into the result.
+    strcat(PADRAO_packages_path, "/py-modules/");  // append string two to the result.
     x->packages_path = gensym(PADRAO_packages_path);
     x->thread = 0;
     x->editorName = gensym("vscode");
-    char *config_path =
-        (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) +
-                                       strlen("/py4pd.cfg") + 1));  //
-    strcpy(config_path,
-           x->home_path->s_name);           // copy string one into the result.
+    char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1));  //
+    strcpy(config_path, x->home_path->s_name);           // copy string one into the result.
     strcat(config_path, "/py4pd.cfg");      // append string two to the result.
     if (access(config_path, F_OK) != -1) {  // check if file exists
-        // post("[py4pd] py4pd.cfg file found");
         FILE *file = fopen(config_path, "r");      /* should check the result */
         char line[256];                            // line buffer
         while (fgets(line, sizeof(line), file)) {  // read a line
-            if (strstr(line, "packages =") !=
-                NULL) {  // check if line contains "packages ="
-                char *packages_path = (char *)malloc(
-                    sizeof(char) *
-                    (strlen(line) - strlen("packages = ") + 1));  //
-                strcpy(packages_path,
-                       line + strlen("packages = "));  // copy string one into
-                                                       // the result.
+            if (strstr(line, "packages =") != NULL) {  // check if line contains "packages ="
+                char *packages_path = (char *)malloc(sizeof(char) * (strlen(line) - strlen("packages = ") + 1));  //
+                strcpy(packages_path, line + strlen("packages = "));  // copy string one into the result.
                 if (strlen(packages_path) > 0) {  // check if path is not empty
-                    packages_path[strlen(packages_path) - 1] =
-                        '\0';  // remove the last character
-                    packages_path[strlen(packages_path) - 1] =
-                        '\0';  // remove the last character
+                    packages_path[strlen(packages_path) - 1] = '\0';  // remove the last character
+                    packages_path[strlen(packages_path) - 1] = '\0';  // remove the last character
                     char *i = packages_path;
                     char *j = packages_path;
                     while (*j != 0) {
@@ -321,16 +307,9 @@ int *set_py4pd_config(t_py *x) {
                     *i = 0;
                     // if packages_path start with . add the home_path
                     if (packages_path[0] == '.') {
-                        char *new_packages_path = (char *)malloc(
-                            sizeof(char) * (strlen(x->home_path->s_name) +
-                                            strlen(packages_path) + 1));  //
-                        strcpy(
-                            new_packages_path,
-                            x->home_path
-                                ->s_name);  // copy string one into the result.
-                        strcat(new_packages_path,
-                               packages_path +
-                                   1);  // append string two to the result.
+                        char *new_packages_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen(packages_path) + 1));  //
+                        strcpy(new_packages_path, x->home_path->s_name);  // copy string one into the result.
+                        strcat(new_packages_path, packages_path + 1);  // append string two to the result.
                         x->packages_path = gensym(new_packages_path);
                         free(new_packages_path);
                     } else {
@@ -350,12 +329,9 @@ int *set_py4pd_config(t_py *x) {
                 // print thread value
                 if (strlen(thread) > 0) {  // check if path is not empty
                     // from thread remove the two last character
-                    thread[strlen(thread) - 1] =
-                        '\0';  // remove the last character
-                    thread[strlen(thread) - 1] =
-                        '\0';  // remove the last character
+                    thread[strlen(thread) - 1] = '\0';  // remove the last character
+                    thread[strlen(thread) - 1] = '\0';  // remove the last character
 
-                    // remove all spaces from thread
                     char *i = thread;
                     char *j = thread;
                     while (*j != 0) {
