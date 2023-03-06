@@ -296,7 +296,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     char script_file_path[MAXPDSTRING];
     char script_inside_py4pd_path[MAXPDSTRING];
     snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name, script_file_name->s_name);
-    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/scripts/%s.py", x->py4pd_folder->s_name, script_file_name->s_name);
+    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/resources/scripts/%s.py", x->py4pd_folder->s_name, script_file_name->s_name);
 
 
     if (access(script_file_path, F_OK) == -1 && access(script_inside_py4pd_path, F_OK) == -1) {
@@ -319,7 +319,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     // create one folder using x->py4pd_folder->s_name + "/pyScripts"
     char *pyScripts_folder = malloc(strlen(x->py4pd_folder->s_name) + 12);
     strcpy(pyScripts_folder, x->py4pd_folder->s_name);
-    strcat(pyScripts_folder, "/scripts");
+    strcat(pyScripts_folder, "/resources/scripts");
     // =====================
     // Add aditional path to python to work with Pure Data
     PyObject *home_path = PyUnicode_FromString(x->home_path->s_name);  // Place where script file will probably be
@@ -374,7 +374,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         Py_DECREF(argspec);
         Py_DECREF(args);
         Py_DECREF(pModule);
-
         x->function = pFunc;
         x->script_name = script_file_name;
         x->function_name = function_name;
@@ -1200,7 +1199,6 @@ void py4pd_setup(void) {
 
     //  TODO: Way to set global variables, I think that will be important for things like general path;
     //  TODO: Set some audio parameters to work with py4pd_dspin, 'dspparams', 'dspparams'
-
     
     class_addmethod(py4pd_class, (t_method)findpy4pd_folder, gensym("debug"), A_GIMME, 0); 
 }
