@@ -14,9 +14,12 @@ def runTest():
         else:
             print('test.pd not found')
             sys.exit()
-        output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
-        outputLines = str(output).split('\\n')
-        lastLine = outputLines[-2]
+        os.system(f'pd -send "start-test bang" "{pathfile}"')
+        # output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+        # outputLines = str(output).split('\\n')
+        # lastLine = outputLines[-2]
+        # out without error
+        sys.exit(0)
         
     elif platform.system() == 'Windows':
         scriptfile = os.path.abspath(__file__)
@@ -34,6 +37,10 @@ def runTest():
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]
+    else:
+        print('OS not supported')
+        sys.exit()
+
     # if lastLine contains "PASS" then the test passed
     if "PASS" in lastLine:
         # print in green

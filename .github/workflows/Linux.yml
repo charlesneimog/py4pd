@@ -25,28 +25,24 @@ jobs:
     - uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-
-    - name: Install PureData
-      run: sudo apt-get install puredata -y
     
-    - name: Install Python-Devel
-      run: sudo apt-get install python3.11-dev -y
+    - name: Install Build Dependencies
+      run: | 
+      	sudo apt-get install puredata -y
+      	sudo apt-get install python3.11-dev -y
+      	python3.11 -m pip install numpy
 
-    - name: Install Numpy
-      run: python3.11 -m pip install numpy
 
     - name: Build
       run: |
         make PYTHON_VERSION=python3.11 
 
-    - name: Create py4pd_Linux
-      run: mkdir py4pd_Linux
 
     - name: Copy files to py4pd_Linux
-      run: cp py4pd.pd_linux test/test.pd resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd_Linux
-
-    - name: Zip py4pd_Linux
-      run: zip -r py4pd_Linux.zip py4pd_Linux
+      run: | 
+      	mkdir py4pd_Linux
+      	cp py4pd.pd_linux test/test.pd resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd_Linux
+      	zip -r py4pd_Linux.zip py4pd_Linux
 
     - name: Upload Object
       uses: actions/upload-artifact@v3
