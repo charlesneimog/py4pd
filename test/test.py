@@ -14,7 +14,7 @@ def runTest():
         else:
             print('test.pd not found')
             sys.exit()
-        os.system(f'pd -send "start-test bang" "{pathfile}"')
+        os.system(cmd)
         # output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         # outputLines = str(output).split('\\n')
         # lastLine = outputLines[-2]

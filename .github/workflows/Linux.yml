@@ -15,6 +15,7 @@ name: Linux
       - src/**
       - .github/workflows/Linux.yml
   workflow_dispatch: null
+
 jobs:
   linux-build:
     runs-on: ubuntu-latest
