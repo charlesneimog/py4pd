@@ -6,6 +6,7 @@
 #include "py4pd.h"
 
 t_widgetbehavior py4pd_widgetbehavior;
+static t_class *PY4PD_edit_proxy_class;
 
 // =================================================
 void PY4PD_draw_io_let(t_py *x) {
@@ -520,7 +521,7 @@ void PY4PD_edit_proxy_free(t_py4pd_edit_proxy *p) {
 
 // =====================================
 t_py4pd_edit_proxy *PY4PD_edit_proxy_new(t_py *x, t_symbol *s) {
-    t_py4pd_edit_proxy *p = (t_py4pd_edit_proxy *)pd_new(edit_proxy_class);
+    t_py4pd_edit_proxy *p = (t_py4pd_edit_proxy *)pd_new(PY4PD_edit_proxy_class);
     p->p_cnv = x;
     pd_bind(&p->p_obj.ob_pd, p->p_sym = s);
     p->p_clock = clock_new(p, (t_method)PY4PD_edit_proxy_free);
@@ -672,9 +673,8 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
         py4pdImageData = malloc(strlen(PICIMAGE) + 1);
         strcpy(py4pdImageData, PICIMAGE);
     }
-    edit_proxy_class =
-        class_new(0, 0, 0, sizeof(t_py4pd_edit_proxy), CLASS_NOINLET | CLASS_PD, 0);
-    class_addanything(edit_proxy_class, PY4PD_edit_proxy_any);
+    PY4PD_edit_proxy_class = class_new(0, 0, 0, sizeof(t_py4pd_edit_proxy), CLASS_NOINLET | CLASS_PD, 0);
+    class_addanything(PY4PD_edit_proxy_class, PY4PD_edit_proxy_any);
     py4pd_widgetbehavior.w_getrectfn = PY4PD_getrect;
     py4pd_widgetbehavior.w_displacefn = PY4PD_displace;
     py4pd_widgetbehavior.w_selectfn = PY4PD_select;
@@ -688,18 +688,23 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     x->x_glist = (t_glist *)cv;
     x->x_zoom = x->x_glist->gl_zoom;
     char buf[MAXPDSTRING];
-    uintptr_t cv_ptr = (uintptr_t)cv;
-    snprintf(buf, MAXPDSTRING - 1, ".x%llx", cv_ptr);
+    #ifdef _WIN64
+        snprintf(buf, MAXPDSTRING - 1, ".x%llx", (uintptr_t)cv_ptr);
+    #else
+        snprintf(buf, MAXPDSTRING - 1, ".x%lx", (unsigned long)cv);
+    #endif
     buf[MAXPDSTRING - 1] = 0;
     x->x_proxy = PY4PD_edit_proxy_new(x, gensym(buf));
-    uintptr_t x_ptr = (uintptr_t)x;
-    sprintf(buf, "#%llx", x_ptr);
+    
+    #ifdef _WIN64
+        snprintf(buf, MAXPDSTRING - 1, ".x%llx.c", (uintptr_t)cv_ptr);
+    #else
+        snprintf(buf, MAXPDSTRING - 1, ".x%lx.c", (unsigned long)cv);   
+    #endif
     pd_bind(&x->x_obj.ob_pd, x->x_x = gensym(buf));
     x->x_edit = cv->gl_edit;
-    x->x_send = x->x_snd_raw = x->x_receive = x->x_rcv_raw = x->x_filename =
-        &s_;
-    int loaded = x->x_rcv_set = x->x_snd_set = x->x_def_img = x->x_init =
-        x->x_latch = 0;
+    x->x_send = x->x_snd_raw = x->x_receive = x->x_rcv_raw = x->x_filename = &s_;
+    int loaded = x->x_rcv_set = x->x_snd_set = x->x_def_img = x->x_init = x->x_latch = 0;
     x->x_outline = x->x_size = 0;
     x->x_fullname = NULL;
     x->x_edit = c->gl_edit;

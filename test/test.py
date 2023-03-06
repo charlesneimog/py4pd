@@ -5,8 +5,15 @@ def runTest():
     import platform
     
     if platform.system() == 'Linux':
-        # os.system('pd -send "start-test bang" py4pd_Linux/test.pd')
-        cmd = 'pd -nogui -send "start-test bang"  py4pd_Linux/test.pd'
+        scriptfile = os.path.abspath(__file__)
+        scriptfolder = os.path.dirname(scriptfile)
+        pathfile = scriptfolder + '/py4pd_Linux/test.pd'
+        # check if file exists
+        if os.path.isfile(pathfile):
+            cmd = f'pd -nogui -send "start-test bang" "{pathfile}"' 
+        else:
+            print('test.pd not found')
+            sys.exit()
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]

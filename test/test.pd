@@ -299,6 +299,11 @@
 #X obj 65 71 print starting-test;
 #X obj 128 10 loadbang;
 #X obj 445 317 py4pd   -score;
+#X obj 204 311 spigot;
+#X obj 105 284 spigot;
+#X obj 144 206 loadbang;
+#X msg 144 231 1;
+#X obj 144 256 tgl 20 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000 0 1;
 #X connect 0 0 13 0;
 #X connect 2 0 0 0;
 #X connect 2 1 24 0;
@@ -311,7 +316,7 @@
 #X connect 7 0 8 0;
 #X connect 9 0 11 0;
 #X connect 11 0 10 0;
-#X connect 12 0 1 0;
+#X connect 12 0 37 0;
 #X connect 12 1 9 0;
 #X connect 13 0 3 0;
 #X connect 14 0 2 0;
@@ -325,4 +330,10 @@
 #X connect 28 0 29 0;
 #X connect 29 0 12 0;
 #X connect 32 0 30 0;
-#X connect 33 0 6 0;
+#X connect 33 0 38 0;
+#X connect 37 0 1 0;
+#X connect 38 0 6 0;
+#X connect 39 0 40 0;
+#X connect 40 0 41 0;
+#X connect 41 0 38 1;
+#X connect 41 0 37 1;

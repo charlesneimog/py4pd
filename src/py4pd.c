@@ -10,9 +10,8 @@
 t_class *py4pd_class;          //  DOC: For audioin and without audio
 t_class *py4pd_class_VIS;      //  DOC: For visualisation | pic object by pd-else
 t_class *py4pd_classAudioOut;  //  DOC: For audio out
-t_class *edit_proxy_class;
 
-int object_count;
+int object_count; // 
 
 // ===================================================================
 // ========================= Pd Object ===============================
@@ -146,8 +145,7 @@ static void openscript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
 // Not Windows OS
 #else  // if not windows 64bits
-    char *command = malloc(strlen(x->home_path->s_name) +
-                           strlen(x->script_name->s_name) + 20);
+    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
     command = get_editor_command(x);
     pd4py_system_func(command);
 #endif
@@ -167,11 +165,8 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         post("[py4pd] Editor set to: %s", x->editorName->s_name);
         return;
     }
-
     if (x->function_called == 0) {  // if the set method was not called, then we
-                                    // can not run the function :)
-        pd_error(x,
-                 "[py4pd] To open vscode you need to set the function first!");
+        pd_error(x, "[py4pd] To open vscode you need to set the function first!");
         return;
     }
     post("[py4pd] Opening editor...");
@@ -193,8 +188,7 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
 // Not Windows OS
 #else  // if not windows 64bits
-    char *command = malloc(strlen(x->home_path->s_name) +
-                           strlen(x->script_name->s_name) + 20);
+    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
     command = get_editor_command(x);
     pd4py_system_func(command);
 #endif
@@ -837,13 +831,9 @@ t_int *py4pd_performAudioOutput(t_int *w) {
         //     Py_DECREF(pSample);
         // }
     }
-    // WARNING: this can generate errors? How this will work on multithreading?
-    // || In PEP 684 this will be per interpreter or global?
-    PyObject *capsule = PyCapsule_New(
-        x, "py4pd",
-        NULL);  // create a capsule to pass the object to the python interpreter
-    PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd",
-                       capsule);  // add the capsule to the python interpreter
+    // WARNING: this can generate errors? How this will work on multithreading? || In PEP 684 this will be per interpreter or global?
+    PyObject *capsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
+    PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule);  // add the capsule to the python interpreter
     pValue = PyObject_CallObject(x->function, ArgsTuple);
 
     if (pValue != NULL) {
@@ -1016,9 +1006,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         x = (t_py *)pd_new(py4pd_class);  // create a new object
         // post("py4pd: normal/analisys mode");
     } else {
-        post(
-            "Error in py4pd_new, please report this error to the developer, "
-            "this message should not appear.");
+        post("Error in py4pd_new, please report this error to the developer, this message should not appear.");
         return NULL;
     }
 
@@ -1031,7 +1019,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
 
     if (!Py_IsInitialized()) {
         object_count = 1;  // To count the numbers of objects, and finalize the
-                           // interpreter when the last object is deleted
         post("");
         post("[py4pd] by Charles K. Neimog");
         post("[py4pd] Version 0.6.0       ");
@@ -1039,7 +1026,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         post("");
         PyImport_AppendInittab("pd", PyInit_pd);  // Add the pd module to the python interpreter
         Py_Initialize();  // Initialize the Python interpreter. If 1, the signal
-                          // handler is installed.
     }
 
     object_count++;  // count the number of objects;
@@ -1052,7 +1038,8 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                 py4pd_InitVisMode(x, c, py4pdArgs, i, argc, argv);
                 x->visMode = 1;
                 x->x_outline = 1;
-            } else if (py4pdArgs == gensym("-audioout")) {
+            } 
+            else if (py4pdArgs == gensym("-audioout")) {
                 // post("[py4pd] Audio Outlets enabled");
                 x->audioOutput = 1;
                 x->use_NumpyArray = 0;
@@ -1063,7 +1050,8 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                     argv[j] = argv[j + 1];
                 }
                 argc--;
-            } else if (py4pdArgs == gensym("-nvim") ||
+            } 
+            else if (py4pdArgs == gensym("-nvim") ||
                        py4pdArgs == gensym("-vscode") ||
                        py4pdArgs == gensym("-emacs")) {
                 x->editorName = gensym(py4pdArgs->s_name + 1);
@@ -1072,10 +1060,12 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                     argv[j] = argv[j + 1];
                 }
                 argc--;
-            } else if (py4pdArgs == gensym("-audioin")) {
+            } 
+            else if (py4pdArgs == gensym("-audioin")) {
                 x->audioInput = 1;
                 x->use_NumpyArray = 0;
-            } else if (py4pdArgs == gensym("-audio")) {
+            } 
+            else if (py4pdArgs == gensym("-audio")) {
                 x->audioInput = 1;
                 x->audioOutput = 1;
                 x->out_A = outlet_new(
@@ -1115,7 +1105,8 @@ void *py4pd_free(t_py *x) {
     }
 
     if (object_count == 1) {
-        // Py_Finalize(); // BUG: Not possible because it crashes if another
+        Py_Finalize(); // BUG: Not possible because it crashes if another
+        object_count = 0;
         // py4pd is created in the same PureData session
 
         //  TODO: Clear temporary files

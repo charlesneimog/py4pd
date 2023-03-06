@@ -33,7 +33,6 @@ typedef struct _py4pd_edit_proxy{ //  TODO:  Edit the name for version 0.6.0
     struct      _py *p_cnv;
 }t_py4pd_edit_proxy;
 
-
 // =====================================
 typedef struct _py { // It seems that all the objects are some kind of class.
     t_object            x_obj; // convensao no puredata source code

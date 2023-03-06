@@ -1,29 +1,20 @@
-#include "m_pd.h"
 #include "pd_module.h"
+#include "py4pd_utils.h"
 
-
-#ifdef __linux__
-    #define __USE_GNU
-#endif
-
-#include <dlfcn.h>
 
 // ====================================================
 void *findpy4pd_folder(t_py *x){
     (void)x;
-
     void* handle = dlopen(NULL, RTLD_LAZY);
     if (!handle) {
         post("Not possible to locate the folder of the py4pd object");
         return NULL;
     }
-
     Dl_info info;
     if (dladdr((void*)findpy4pd_folder, &info) == 0) {
         post("Not possible to locate the folder of the py4pd object");
         return NULL;
     }
-
     // remove filename from path
     char *path = strdup(info.dli_fname);
     char *last_slash = strrchr(path, '/');
