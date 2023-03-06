@@ -13,10 +13,8 @@
 #else
     #include <pthread.h>
     #include <Python.h>
+    #include <dirent.h>
 #endif
-
-#include <dirent.h> //  NOTE: For clear temp files
-
 
 
 #ifndef IHEIGHT

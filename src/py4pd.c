@@ -1,4 +1,5 @@
 #include "py4pd.h"
+#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
@@ -74,9 +75,7 @@ static void documentation(t_py *x) {
     PyObject *pFunc;
     if (x->function_called == 0) {  // if the set method was not called, then we
                                     // can not run the function :)
-        pd_error(x,
-                 "[py4pd] To see the documentaion you need to set the function "
-                 "first!");
+        pd_error(x, "[py4pd] To see the documentaion you need to set the function first!");
         return;
     }
     pFunc = x->function;
@@ -127,34 +126,26 @@ static void openscript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     x->script_name = argv[0].a_w.w_symbol;
 
-// Open VsCode in Windows
-#ifdef _WIN64
-    char *command = malloc(strlen(x->home_path->s_name) +
-                           strlen(x->script_name->s_name) + 20);
-    command = get_editor_command(x);
-    // use get_editor_command
-    SHELLEXECUTEINFO sei = {0};
-    sei.cbSize = sizeof(sei);
-    sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-    sei.lpFile = "cmd.exe ";
-    sei.lpParameters = command;
-    sei.nShow = SW_HIDE;
-    ShellExecuteEx(&sei);
-    CloseHandle(sei.hProcess);
-    return;
-
-// Not Windows OS
-#else  // if not windows 64bits
-    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
-    command = get_editor_command(x);
-    pd4py_system_func(command);
-#endif
-
-// If macOS
-#ifdef __APPLE__
-    pd_error(x, "Not tested in your Platform, please send me a report!");
-#endif
-    return;
+    // Open VsCode in Windows
+    #ifdef _WIN64
+        char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
+        command = get_editor_command(x);
+        SHELLEXECUTEINFO sei = {0};
+        sei.cbSize = sizeof(sei);
+        sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+        sei.lpFile = "cmd.exe ";
+        sei.lpParameters = command;
+        sei.nShow = SW_HIDE;
+        ShellExecuteEx(&sei);
+        CloseHandle(sei.hProcess);
+        return;
+    // Not Windows OS
+    #else  
+        char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
+        command = get_editor_command(x);
+        pd4py_system_func(command);
+        return;
+    #endif
 }
 
 // ====================================
@@ -171,33 +162,28 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
     post("[py4pd] Opening editor...");
 
-// Open VsCode in Windows
-#ifdef _WIN64
-    char *command = get_editor_command(x);
-    command = get_editor_command(x);
-    // use get_editor_command
-    SHELLEXECUTEINFO sei = {0};
-    sei.cbSize = sizeof(sei);
-    sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-    sei.lpFile = "cmd.exe ";
-    sei.lpParameters = command;
-    sei.nShow = SW_HIDE;
-    ShellExecuteEx(&sei);
-    CloseHandle(sei.hProcess);
-    return;
+    // Open VsCode in Windows
+    #ifdef _WIN64
+        char *command = get_editor_command(x);
+        command = get_editor_command(x);
+        // use get_editor_command
+        SHELLEXECUTEINFO sei = {0};
+        sei.cbSize = sizeof(sei);
+        sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+        sei.lpFile = "cmd.exe ";
+        sei.lpParameters = command;
+        sei.nShow = SW_HIDE;
+        ShellExecuteEx(&sei);
+        CloseHandle(sei.hProcess);
+        return;
 
-// Not Windows OS
-#else  // if not windows 64bits
-    char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
-    command = get_editor_command(x);
-    pd4py_system_func(command);
-#endif
-
-// If macOS
-#ifdef __APPLE__
-    pd_error(x, "Not tested in your Platform, please send me a report!");
-#endif
-    return;
+    // Not Windows OS
+    #else  // if not windows 64bits
+        char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
+        command = get_editor_command(x);
+        pd4py_system_func(command);
+        return;
+    #endif
 }
 
 // ====================================
@@ -271,7 +257,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         if (function_is_equal == 0) {
             pd_error(x, "[py4pd] The function was already set!");
             return;
-        } else {
+        } 
+        else {
             Py_XDECREF(x->function);
             x->function_called = 0;
         }
@@ -358,7 +345,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
             x->py_arg_numbers = -1;
             post("[py4pd] The '%s' function has *args or **kwargs!",
                  function_name->s_name);
-        } else {
+        } 
+        else {
             x->py_arg_numbers = py_args;
             post("[py4pd] The '%s' function has %d arguments!",
                  function_name->s_name, py_args);
@@ -559,7 +547,8 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
             post("Length of args: %i", x->py_arg_numbers);
             return;
         }
-    } else {
+    } 
+    else {
         ArgsTuple = PyTuple_New(0);
     }
 
@@ -574,7 +563,8 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     pValue = PyObject_CallObject(x->function, ArgsTuple);
     if (pValue != NULL) {                // if the function returns a value
         py4pd_convert_to_pd(x, pValue);  // convert the value to pd
-    } else {                             // if the function returns a error
+    } 
+    else {                             // if the function returns a error
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
@@ -719,9 +709,11 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     if (x->thread == 1) {
         run_function(x, s, argc, argv);
         pd_error(x, "[py4pd] Not implemenented! Wait for approval of PEP 684");
-    } else if (x->thread == 0) {
+    } 
+    else if (x->thread == 0) {
         run_function(x, s, argc, argv);
-    } else {
+    } 
+    else {
         pd_error(x, "[py4pd] Thread not created");
     }
     return;
@@ -750,7 +742,8 @@ t_int *py4pd_perform(t_int *w) {
         pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
         ArgsTuple = PyTuple_New(1);
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
-    } else {
+    } 
+    else {
         pAudio = PyList_New(n);
         for (int i = 0; i < n; i++) {
             pSample = PyFloat_FromDouble(audioIn[i]);
@@ -771,7 +764,8 @@ t_int *py4pd_perform(t_int *w) {
     pValue = PyObject_CallObject(x->function, ArgsTuple);
     if (pValue != NULL) {
         py4pd_convert_to_pd(x, pValue);  // convert the value to pd
-    } else {                             // if the function returns a error
+    } 
+    else {                             // if the function returns a error
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
@@ -804,15 +798,14 @@ t_int *py4pd_performAudioOutput(t_int *w) {
         pd_error(x, "[py4pd] You need to call a function before run!");
         return (w + 5);
     }
-    t_sample *audioIn =
-        (t_sample *)(w[2]);  // this is the input vector (the sound)
-    t_sample *audioOut =
-        (t_sample *)(w[3]);  // this is the output vector (the sound)
-    int n = (int)(w[4]);     // this is the vector size (number of samples, for
-                             // example 64)
+    t_sample *audioIn = (t_sample *)(w[2]);  // this is the input vector (the sound)
+    t_sample *audioOut = (t_sample *)(w[3]);  // this is the output vector (the sound)
+    int n = (int)(w[4]);     // this is the vector size (number of samples, for example 64)
     const npy_intp dims = n;
     PyObject *ArgsTuple, *pValue, *pAudio, *pSample;
+
     pSample = NULL;  // NOTE: This is the way to not distorce the audio output
+
     if (x->use_NumpyArray == 1) {
         pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
         ArgsTuple = PyTuple_New(1);
@@ -853,19 +846,22 @@ t_int *py4pd_performAudioOutput(t_int *w) {
                     audioOut[i] = PyFloat_AsDouble(
                         PyArray_GETITEM(pArray, PyArray_GETPTR1(pArray, i)));
                 }
-            } else {
+            } 
+            else {
                 pd_error(x,
                          "[py4pd] The function must return a list, a tuple or "
                          "a numpy array, returned: %s",
                          pValue->ob_type->tp_name);
             }
-        } else {
+        } 
+        else {
             pd_error(x,
                      "[py4pd] The function must return a list, since numpy "
                      "array is disabled, returned: %s",
                      pValue->ob_type->tp_name);
         }
-    } else {  // if the function returns a error
+    } 
+    else {  // if the function returns a error
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
@@ -889,7 +885,8 @@ t_int *py4pd_performAudioOutput(t_int *w) {
 static void py4pd_dspin(t_py *x, t_signal **sp) {
     if (x->audioOutput == 0) {
         dsp_add(py4pd_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
-    } else {  // python output is audio
+    } 
+    else {  // python output is audio
         dsp_add(py4pd_performAudioOutput, 4, x, sp[0]->s_vec, sp[1]->s_vec,
                 sp[0]->s_n);
     }
@@ -945,10 +942,12 @@ static void usenumpy(t_py *x, t_floatarg f) {
             py4pdImportNumpy();
             x->numpyImported = 1;
         }
-    } else if (usenumpy == 0) {
+    } 
+    else if (usenumpy == 0) {
         x->use_NumpyArray = 0;
         post("[py4pd] Numpy Array disabled");
-    } else {
+    } 
+    else {
         pd_error(x, "[py4pd] Numpy status must be 0 (disable) or 1 (enable)");
     }
     return;
@@ -964,11 +963,13 @@ static void thread(t_py *x, t_floatarg f) {
         post("[py4pd] Threading enabled, wait for approval of PEP 684");
         x->thread = 1;
         return;
-    } else if (thread == 0) {
+    } 
+    else if (thread == 0) {
         x->thread = 0;
         post("[py4pd] Threading disabled");
         return;
-    } else {
+    } 
+    else {
         pd_error(x, "[py4pd] Threading status must be 0 or 1");
     }
 }
@@ -990,7 +991,8 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                 py4pdArgs == gensym("-score") ||
                 py4pdArgs == gensym("-canvas")) {
                 visMODE = 1;
-            } else if (py4pdArgs == gensym("-audio") ||
+            } 
+            else if (py4pdArgs == gensym("-audio") ||
                        py4pdArgs == gensym("-audioout")) {
                 audioOUT = 1;
             }
@@ -999,13 +1001,16 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     if (visMODE == 1 && audioOUT == 0) {
         x = (t_py *)pd_new(py4pd_class_VIS);  // create a new object
         // post("py4pd: visual mode");
-    } else if (audioOUT == 1 && visMODE == 0) {
+    } 
+    else if (audioOUT == 1 && visMODE == 0) {
         x = (t_py *)pd_new(py4pd_classAudioOut);  // create a new object
         // post("py4pd: audio mode");
-    } else if (normalMODE == 1) {
+    } 
+    else if (normalMODE == 1) {
         x = (t_py *)pd_new(py4pd_class);  // create a new object
         // post("py4pd: normal/analisys mode");
-    } else {
+    } 
+    else {
         post("Error in py4pd_new, please report this error to the developer, this message should not appear.");
         return NULL;
     }
@@ -1081,7 +1086,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     }
 
     if (x->audioOutput == 0) {
-        x->out_A = outlet_new(&x->x_obj, 0);  // cria um outlet
+        x->out_A = outlet_new(&x->x_obj, 0);  // cria um outlet caso o objeto nao contenha audio
     }
     x->thread = 0;
     x->object_number = object_count;  // save object number
@@ -1100,24 +1105,28 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
 // ============================================
 void *py4pd_free(t_py *x) {
     object_count--;
-    if (x->visMode == 1) {
-        PY4PD_free(x);
-    }
+
 
     if (object_count == 1) {
-        Py_Finalize(); // BUG: Not possible because it crashes if another
-        object_count = 0;
+        // Py_Finalize(); // BUG: Not possible because it crashes if another
+        // object_count = 0;
         // py4pd is created in the same PureData session
 
         //  TODO: Clear temporary files
+        #ifdef _WIN64
+
+        #else
+            post("py4pd: deleting temporary files from %s", x->temp_folder);
+        
+        #endif
 
     }
 
-
-
-
-
+    if (x->visMode == 1) {
+        PY4PD_free(x);
+    }
     return (void *)x;
+
 }
 
 // ====================================================
