@@ -55,7 +55,7 @@ jobs:
         run: >
           cp test/test.py test.py
 
-          python3.11 -m pip install neoscore matplotlib -t
+          python3.11 -m pip install neoscore matplotlib Pillow -t
           ./py4pd_Linux/py-modules
       - name: Run Test
         run: python3.11 -c 'import test; test.runTest()'
