@@ -28,14 +28,14 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.11'
       - name: Install Build Dependencies
         run: |
           sudo apt-get install puredata -y
-          sudo apt-get install python3.10-dev -y
-          python3.10 -m pip install numpy
+          sudo apt-get install python3.11-dev -y
+          python3.11 -m pip install numpy
       - name: Build
-        run: make PYTHON_VERSION=python3.10
+        run: make PYTHON_VERSION=python3.11
       - name: Copy files to py4pd_Linux
         run: >
           mkdir py4pd_Linux
@@ -55,10 +55,10 @@ jobs:
         run: >
           cp test/test.py test.py
 
-          python3.10 -m pip install neoscore matplotlib -t
+          python3.11 -m pip install neoscore matplotlib -t
           ./py4pd_Linux/py-modules
       - name: Run Test
-        run: python3.10 -c 'import test; test.runTest()'
+        run: python3.11 -c 'import test; test.runTest()'
       - name: Upload Test Image
         uses: actions/upload-artifact@v3
         with:

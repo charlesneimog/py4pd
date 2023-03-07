@@ -28,13 +28,13 @@ jobs:
       run: brew install --cask pd
       
     - name: Shared flags to Mac
-      run: python3.10 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
+      run: python3.11 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
 
     - name: Install numpy
-      run: python3.10 -m pip install numpy
+      run: python3.11 -m pip install numpy
 
     - name: Build
-      run: make PYTHON_VERSION=python3.10 
+      run: make PYTHON_VERSION=python3.11 
 
     - name: Create py4pd_macOS-Intel
       run: mkdir py4pd_macOS-Intel
@@ -54,10 +54,10 @@ jobs:
     - name: Set Test Config
       run: |
           cp test/test.py test.py
-          python3.10 -m pip install neoscore matplotlib -t ./py4pd_macOS-Intel/py-modules
+          python3.11 -m pip install neoscore matplotlib -t ./py4pd_macOS-Intel/py-modules
 
     - name: Run Test
-      run: python3.10 -c 'import test; test.runTest()' 
+      run: python3.11 -c 'import test; test.runTest()' 
 
     - name: Upload Test Image
       uses: actions/upload-artifact@v3

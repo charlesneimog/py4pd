@@ -29,7 +29,7 @@ __pycache__/py.cpython-310.pyc
 *.count
 *.png
 *.vscode
-*.txt
+
 py-modules
 ./compile_commands.json
 .cache/
