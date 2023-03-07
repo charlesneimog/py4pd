@@ -68,7 +68,7 @@ jobs:
         7z a py4pd_WIN64.zip py4pd_WIN64
         cp test\\*.pd py4pd_WIN64\
         cp test/runTests.py runTests.py
-        python3 -m pip install neoscore matplotlib Pillow -t ./py4pd_WIN64/py-modules
+        python3 -m pip install neoscore matplotlib Pillow numpy -t ./py4pd_WIN64/py-modules
   
     - name: Run PureData Tests
       run: python3 ./runTests.py 

@@ -250,7 +250,5 @@ def dft(freq_hz):
     output = f'{home_path}/canvas{freq_hz}{random_number}.gif'
     # in lisp, do namestring equivalent in python
     pd.show(output)
-
-    # pd.show(output)
-
+    return 0
 
