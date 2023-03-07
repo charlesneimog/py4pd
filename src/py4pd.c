@@ -3,7 +3,6 @@
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
 
- 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
