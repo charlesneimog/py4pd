@@ -65,7 +65,6 @@ if __name__ == "__main__":
     for patch in patches:
         print("=============" + patch + "=============")
         runTest(patch)
-        print("======================================")
     
          
               

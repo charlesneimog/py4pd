@@ -57,10 +57,6 @@ jobs:
         Copy-Item -Path "$pythonpath\DLLs" -Destination py4pd_WIN64\Python\ -Recurse
         Copy-Item -Path "$pythonpath\python311.dll" -Destination py4pd_WIN64\ -Recurse
         Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd_WIN64\ -Recurse
-        Copy-Item -Path "$pythonpath\Lib" -Destination test\Python\ -Recurse
-        Copy-Item -Path "$pythonpath\DLLs" -Destination test\Python\ -Recurse
-        Copy-Item -Path "$pythonpath\python311.dll" -Destination test\ -Recurse
-        Copy-Item -Path "$pythonpath\python3.dll" -Destination test\ -Recurse
         mkdir py4pd_WIN64\\src\\
         cp py4pd.m_amd64 py4pd_WIN64\
         cp resources\\py4pd.cfg py4pd_WIN64\
@@ -70,12 +66,12 @@ jobs:
         xcopy src\*.c py4pd_WIN64\src\
         cp resources\\python311._pth py4pd_WIN64\ 
         7z a py4pd_WIN64.zip py4pd_WIN64
-        cp test\\test.pd py4pd_WIN64\\test.pd
-        cp test/test.py test.py
+        cp test\\*.pd py4pd_WIN64\
+        cp test/runTests.py runTests.py
         python3 -m pip install neoscore matplotlib Pillow -t ./py4pd_WIN64/py-modules
   
     - name: Run PureData Tests
-      run: python3 ./test.py 
+      run: python3 ./runTests.py 
       
     - name: Upload Test Image
       uses: actions/upload-artifact@v3
