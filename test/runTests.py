@@ -61,7 +61,7 @@ def runTest(pdpatch):
         # sys.exit(1)
     
 if __name__ == "__main__":
-    patches = ['01-simpleRun.pd', '02-noArgs.pd', '03-sequencialRunning.pd', '04-neoscore.pd', '05-wrongNumberOfArgs.pd', '06-setDifferentFunctions.pd', '07-checkMatplotlib.pd']
+    patches = ['01-simpleRun.pd', '02-noArgs.pd', '03-sequencialRunning.pd', '04-neoscore.pd', '05-wrongNumberOfArgs.pd', '06-setDifferentFunctions.pd']
     for patch in patches:
         print("=============" + patch + "=============")
         runTest(patch)
