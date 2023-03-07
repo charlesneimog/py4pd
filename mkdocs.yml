@@ -21,5 +21,6 @@ repo_url: https://github.com/charlesneimog/py4pd
 
 nav:
     - index.md 
-    - reference.md
+    - examples.md
     - developers.md
+
