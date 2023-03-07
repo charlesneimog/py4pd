@@ -128,9 +128,9 @@
 #X msg 210 183 1;
 #X obj 210 208 tgl 20 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000 0 1;
 #X obj 542 29 loadbang;
-#X obj 542 53 delay 120000 1 msec;
 #X obj 542 109 s start-test;
 #X obj 577 81 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
+#X obj 542 53 delay 5000 1 msec;
 #X connect 0 0 13 0;
 #X connect 2 0 0 0;
 #X connect 2 1 22 0;
@@ -154,6 +154,6 @@
 #X connect 25 0 26 0;
 #X connect 26 0 27 0;
 #X connect 27 0 24 1;
-#X connect 28 0 29 0;
-#X connect 29 0 30 0;
-#X connect 31 0 30 0;
+#X connect 28 0 31 0;
+#X connect 30 0 29 0;
+#X connect 31 0 29 0;
