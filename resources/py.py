@@ -1,5 +1,5 @@
 import pd
-from random import *
+from random import randint
 import os
 import time
 import math
@@ -105,18 +105,23 @@ def pd_error():
 
 
 def pd_send():
-    "It sends a message to the py4pd message box."
+    "It sends a message to the py4pdreceiver receive."	
     pd.send("py4pdreceiver", "hello from python!")
+    pd.send("py4pdreceiver", 1)
+    pd.send("py4pdreceiver", [1, 2, 3, 4, 5])
+    return 0
 
 
 def pd_tabwrite():
     "It sends a message to the py4pd message box."
     list = []
     tablen = randint(10, 200)
-    for i in range(tablen):
-        randomnumber = randint(-100, 100)
-        list.append(randomnumber * 0.01)
-    pd.tabwrite("test", list, resize=True)
+    i = 0
+    while i < tablen:
+        # gerar aleatoric number between -1 and 1
+        list.append(randint(-100, 100) / 100)
+        i += 1
+    pd.tabwrite("pd.tabwrite", list, resize=True)
 
 
 def pd_audio(audio):

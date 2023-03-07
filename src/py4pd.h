@@ -45,9 +45,9 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     
     // == PYTHON
 
-    PyObject            *module; // python object TODO: remove this for 0.6.0
+    // PyObject            *module; // python object TODO: remove this for 0.6.0
     PyObject            *function; // function name
-    PyObject            *params; // parameters
+    PyObject            *Dict; // parameters
 
     // == AUDIO AND NUMPY
     t_int               audioOutput; // flag to check if is to use audio output

@@ -1,24 +1,23 @@
 #include "py4pd.h"
-#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
-#include <string.h>
 
-// ============= Numpy =================
+ 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
-t_class *py4pd_class;          //  DOC: For audioin and without audio
-t_class *py4pd_class_VIS;      //  DOC: For visualisation | pic object by pd-else
-t_class *py4pd_classAudioOut;  //  DOC: For audio out
+
+// ============================================
+t_class *py4pd_class;          // For audioin and without audio
+t_class *py4pd_class_VIS;      // For visualisation | pic object by pd-else
+t_class *py4pd_classAudioOut;  // For audio out
 
 int object_count; // 
 
-// ===================================================================
-// ========================= Pd Object ===============================
-// ===================================================================
-
+// ============================================
+// ========= PY4PD METHODS FUNCTIONS ==========
+// ============================================
 /**
  * @brief set the home path to py4pd
  * @brief Get the config from py4pd.cfg file
@@ -223,7 +222,6 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 /**
  * @brief DEPRECATED: open the script  in the editor
 */
-
 static void vscode(t_py *x) {
     pd_error(x, "This method is deprecated, please use the editor method instead!");
 }
@@ -243,15 +241,12 @@ static void set_param(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         pd_error(x, "[py4pd] For now, just one parameter at a time!");
         return;
     }
-
-
-    if (x->params == NULL) {
-        x->params = PyDict_New();
+    if (x->Dict == NULL) {
+        x->Dict = PyDict_New();
     }
     // Add key and value to the dictionary
     PyObject *key = PyUnicode_FromString(argv[0].a_w.w_symbol->s_name);
     PyObject *value = NULL;
-    // check if the value is a symbol
     if (argv[1].a_type == A_SYMBOL) {
         value = PyUnicode_FromString(argv[1].a_w.w_symbol->s_name);
     }
@@ -259,15 +254,22 @@ static void set_param(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     else if (argv[1].a_type == A_FLOAT) {
         value = PyFloat_FromDouble(argv[1].a_w.w_float);
     }
+    else {
+        pd_error(x, "[py4pd] The value must be a symbol or a float!");
+        return;
+    }
     
-    PyDict_SetItem(x->params, key, value);
-    Py_DECREF(key);
-    Py_DECREF(value);
+    // try to set the value
+    if (PyDict_SetItem(x->Dict, key, value) == -1) {
+        pd_error(x, "[py4pd] Error setting the parameter!");
+        return;
+    }
+    else {
+        post("[py4pd] Parameter set!");
+    }
+
     return;
-
 }
-
-
 
 // ====================================
 /**
@@ -286,7 +288,6 @@ static void reload(t_py *x) {
         return;
     }
     pFunc = x->function;
-    pModule = x->module;
 
     // reload the module
     pName = PyUnicode_DecodeFSDefault(x->script_name->s_name);  // Name of script file
@@ -300,7 +301,6 @@ static void reload(t_py *x) {
         return;
     } 
     else {
-        Py_XDECREF(x->module);
         pFunc = PyObject_GetAttrString(
             pModule,
             x->function_name->s_name);  // Function name inside the script file
@@ -310,7 +310,6 @@ static void reload(t_py *x) {
             PyCallable_Check(
                 pFunc)) {  // Check if the function exists and is callable
             x->function = pFunc;
-            x->module = pModule;
             x->function_called = 1;
             post("The module was reloaded!");
             return;
@@ -319,7 +318,6 @@ static void reload(t_py *x) {
             pd_error(x, "Error reloading the module!");
             x->function_called = 0;
             Py_DECREF(x->function);
-            Py_DECREF(x->module);
             return;
         }
     }
@@ -356,7 +354,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     if (extension != NULL) {
         pd_error(x, "[py4pd] Don't use extensions in the script file name!");
         Py_XDECREF(x->function);
-        Py_XDECREF(x->module);
         return;
     }
 
@@ -370,7 +367,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     if (access(script_file_path, F_OK) == -1 && access(script_inside_py4pd_path, F_OK) == -1) {
         pd_error(x, "[py4pd] The script file %s was not found!", script_file_name->s_name);
         Py_XDECREF(x->function);
-        Py_XDECREF(x->module);
         return;
     }
 
@@ -467,8 +463,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
 // ============================================
 /**
- * @brief Run the function 
- * 
+ * @brief Run the function setted, it works with lists too.
  * @param x 
  * @param s 
  * @param argc 
@@ -502,11 +497,9 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         ArgsTuple = py4pd_convert_to_py(lists, argc, argv);  // convert the arguments to python
         int argCount = PyTuple_Size(ArgsTuple);  // get the number of arguments
         if (argCount != x->py_arg_numbers) {
-            pd_error(x,
-                     "[py4pd] Wrong number of arguments! The function %s needs "
-                     "%i arguments, received %i!",
-                     x->function_name->s_name, (int)x->py_arg_numbers,
-                     argCount);
+            pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %i arguments, received %i!", 
+                        x->function_name->s_name, (int)x->py_arg_numbers,
+                        argCount);
             post("Length of tuple: %i", argCount);
             post("Length of args: %i", x->py_arg_numbers);
             return;
@@ -523,6 +516,8 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     pValue = PyObject_CallObject(x->function, ArgsTuple);
     if (pValue != NULL) {                // if the function returns a value
+        //   TODO: add pointer output when x->Python is 1;
+
         py4pd_convert_to_pd(x, pValue);  // convert the value to pd
     } 
     else {                             // if the function returns a error
@@ -537,7 +532,6 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         Py_XDECREF(ptraceback);
         PyErr_Clear();
     }
-    // free lists
     Py_XDECREF(pValue);
     Py_DECREF(ArgsTuple);
     return;
@@ -661,6 +655,15 @@ static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
 */
 
 // ============================================
+/**
+ * @brief This function will control were the Python will run, wil PEP 684, I want to make possible using parallelism in Python
+ * @param x 
+ * @param s 
+ * @param argc 
+ * @param argv 
+ * @return It will return nothing but will run the Python function
+ */
+
 static void run(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     if (x->function_called == 0) {
@@ -680,7 +683,75 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     return;
 }
 
+
+// ===========================================
+
+static void thread(t_py *x, t_floatarg f) {
+    //  TODO: If the run method set before the end of the thread, there is an
+    //  error, that close all PureData.
+    int thread = (int)f;
+    if (thread == 1) {
+        post("[py4pd] Threading enabled, wait for approval of PEP 684");
+        x->thread = 1;
+        return;
+    } 
+    else if (thread == 0) {
+        x->thread = 0;
+        post("[py4pd] Threading disabled");
+        return;
+    } 
+    else {
+        pd_error(x, "[py4pd] Threading status must be 0 or 1");
+    }
+}
+
 // ============================================
+/**
+ * @brief This function Python for all py4pd object. I remove it because I had some weird errors and crasches with python3.11.
+ * @param x is the py4pd object
+ * @return It will void.
+ */
+static void restartPython(t_py *x) {
+    pd_error(x, "[py4pd] This function is not implemented yet!");
+    return;
+
+    // Py_Finalize();
+    // x->function_called = 0;
+    // x->function_name = NULL;
+    // x->script_name = NULL;
+    // x->module = NULL;
+    // x->function = NULL;
+    // int i;
+    // for (i = 0; i < 100; i++) {
+    //     char object_name[20];
+    //     sprintf(object_name, "py4pd_%d", i);
+    //     post("object name: %s", object_name);
+    // y = (t_py *)pd_findbyclass((x->object_name = gensym(object_name)),
+    // py4pd_class); post("object pointer: %p", y);
+
+    // if (y != NULL) {
+    //     y->function_called = 0;
+    //     y->function_name = NULL;
+    //     y->script_name = NULL;
+    //     y->module = NULL;
+    //     y->function = NULL;
+    //     y->packages_path = gensym("./py-modules");
+    //     y->thread = 2;
+    //     y->editorName = gensym("code");
+    // }
+    // PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the
+    // python interpreter Py_Initialize(); return;
+}
+
+// ============================================
+// =========== AUDIO FUNCTIONS ================
+// ============================================
+/**
+ * @brief This function run audio functions in Python. It send the input audio to Python and receive the output audio from Python
+ * @param w is the signal vector
+ * @return It will return the output, this is for audio analisys (like sigmund~). 
+ */
+
 t_int *py4pd_perform(t_int *w) {
     t_py *x = (t_py *)(w[1]);  // this is the object itself
     if (x->audioInput == 0 && x->audioOutput == 0) {
@@ -748,6 +819,11 @@ t_int *py4pd_perform(t_int *w) {
 }
 
 // ============================================
+/**
+ * @brief This function run audio functions in Python and return the audio output. 
+ * @param w is the signal vector
+ * @return It will return the output the audio output.
+ */
 t_int *py4pd_performAudioOutput(t_int *w) {
     //  TODO: Check for memory leaks
 
@@ -809,17 +885,13 @@ t_int *py4pd_performAudioOutput(t_int *w) {
                 }
             } 
             else {
-                pd_error(x,
-                         "[py4pd] The function must return a list, a tuple or "
-                         "a numpy array, returned: %s",
-                         pValue->ob_type->tp_name);
+                pd_error(x, "[py4pd] The function must return a list, a tuple or a numpy array, returned: %s", 
+                            pValue->ob_type->tp_name);
             }
         } 
         else {
-            pd_error(x,
-                     "[py4pd] The function must return a list, since numpy "
-                     "array is disabled, returned: %s",
-                     pValue->ob_type->tp_name);
+            pd_error(x, "[py4pd] The function must return a list, since numpy array is disabled, returned: %s", 
+                            pValue->ob_type->tp_name);
         }
     } 
     else {  // if the function returns a error
@@ -843,55 +915,38 @@ t_int *py4pd_performAudioOutput(t_int *w) {
 }
 
 // ============================================
+/**
+ * @brief This function add the py4pd_perform function to the signal chain. If audioOutput (-audioout or -audio) is set, it add an output channel.
+ * @param w is the signal vector
+ * @return It will return the output the audio output.
+ */
 static void py4pd_dspin(t_py *x, t_signal **sp) {
     if (x->audioOutput == 0) {
         dsp_add(py4pd_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
     } 
     else {  // python output is audio
-        dsp_add(py4pd_performAudioOutput, 4, x, sp[0]->s_vec, sp[1]->s_vec,
-                sp[0]->s_n);
+        dsp_add(py4pd_performAudioOutput, 4, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
     }
 }
-// ============================================
-static void restartPython(t_py *x) {
-    pd_error(x, "[py4pd] This function is not implemented yet!");
-    return;
-
-    // Py_Finalize();
-    // x->function_called = 0;
-    // x->function_name = NULL;
-    // x->script_name = NULL;
-    // x->module = NULL;
-    // x->function = NULL;
-    // int i;
-    // for (i = 0; i < 100; i++) {
-    //     char object_name[20];
-    //     sprintf(object_name, "py4pd_%d", i);
-    //     post("object name: %s", object_name);
-    // y = (t_py *)pd_findbyclass((x->object_name = gensym(object_name)),
-    // py4pd_class); post("object pointer: %p", y);
-
-    // if (y != NULL) {
-    //     y->function_called = 0;
-    //     y->function_name = NULL;
-    //     y->script_name = NULL;
-    //     y->module = NULL;
-    //     y->function = NULL;
-    //     y->packages_path = gensym("./py-modules");
-    //     y->thread = 2;
-    //     y->editorName = gensym("code");
-    // }
-    // PyImport_AppendInittab("pd", PyInit_pd); // Add the pd module to the
-    // python interpreter Py_Initialize(); return;
-}
 
 // ============================================
+/**
+ * @brief This function import the numpy module. We can not use import_array() directly, because it is a macro.
+ * @param NULL 
+ * @return It will return NULL.
+ */
 static void *py4pdImportNumpy() {
     import_array();
     return NULL;
 }
 
 // ============================================
+/**
+ * @brief This will enable or disable the numpy array support and start numpy import if it is not imported.
+ * @param x is the py4pd object
+ * @param f is the status of the numpy array support
+ * @return It will return void.
+ */
 static void usenumpy(t_py *x, t_floatarg f) {
     //  TODO: If the run method set before the end of the thread, there is an
     //  error, that close all PureData.
@@ -914,30 +969,17 @@ static void usenumpy(t_py *x, t_floatarg f) {
     return;
 }
 
-// ===========================================
-
-static void thread(t_py *x, t_floatarg f) {
-    //  TODO: If the run method set before the end of the thread, there is an
-    //  error, that close all PureData.
-    int thread = (int)f;
-    if (thread == 1) {
-        post("[py4pd] Threading enabled, wait for approval of PEP 684");
-        x->thread = 1;
-        return;
-    } 
-    else if (thread == 0) {
-        x->thread = 0;
-        post("[py4pd] Threading disabled");
-        return;
-    } 
-    else {
-        pd_error(x, "[py4pd] Threading status must be 0 or 1");
-    }
-}
-
 // ============================================
 // =========== SETUP OF OBJECT ================
 // ============================================
+/**
+ * @brief This function create the py4pd object.
+ * @param s is the name of the object
+ * @param argc is the number of arguments
+ * @param argv is the arguments
+ * @return It will return the py4pd object.
+ */
+
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     int i;
     t_py *x;
@@ -1062,6 +1104,12 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
 }
 
 // ============================================
+/**
+ * @brief Free the memory of the object
+ * 
+ * @param x 
+ * @return void* 
+ */
 void *py4pd_free(t_py *x) {
     object_count--;
 
@@ -1098,6 +1146,10 @@ void *py4pd_free(t_py *x) {
 }
 
 // ====================================================
+/**
+ * @brief Setup the class
+ * 
+ */
 void py4pd_setup(void) {
     py4pd_class =
         class_new(gensym("py4pd"),  // cria o objeto quando escrevemos py4pd
@@ -1174,7 +1226,9 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_classAudioOut, (t_method)set_function, gensym("set"), A_GIMME, 0);  // set function to be called
 
 
-    class_addmethod(py4pd_class, (t_method)set_param, gensym("param"), A_GIMME, 0);  // set function to be called
+    class_addmethod(py4pd_class, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
+    class_addmethod(py4pd_class_VIS, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
+    class_addmethod(py4pd_classAudioOut, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
 
 
     //  TODO: Way to set global variables, I think that will be important for things like general path;

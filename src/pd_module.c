@@ -434,12 +434,12 @@ PyObject *pdveczise(PyObject *self, PyObject *args) {
 }
 
 // =================================
-PyObject *pdparam(PyObject *self, PyObject *args) {
+PyObject *pdkey(PyObject *self, PyObject *args) {
     //get values from Dict salved in x->param
     (void)self;
     char *key;
     if (!PyArg_ParseTuple(args, "s", &key)) {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.param: no argument expected");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.key: no argument expected");
         return NULL;
     }
     // ================================
@@ -448,12 +448,12 @@ PyObject *pdparam(PyObject *self, PyObject *args) {
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
     // ================================
     // get value from dict
-    PyObject *value = PyDict_GetItemString(py4pd->params, key);
+    PyObject *value = PyDict_GetItemString(py4pd->Dict, key);
     if (value == NULL) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.param: key not found");
-        return NULL;
+        Py_RETURN_NONE;
     }
-    PyErr_Clear();
+    // PyErr_Clear();
     return value;
 }
 
@@ -479,7 +479,7 @@ PyMethodDef PdMethods[] = {
     {"tempfolder", pdtempfolder, METH_VARARGS, "Get PureData Temp Folder"},
 
     // User
-    {"getparam", pdparam, METH_VARARGS, "Get Object User Parameters"},
+    {"getkey", pdkey, METH_VARARGS, "Get Object User Parameters"},
 
     // audio
     {"samplerate", pdsamplerate, METH_VARARGS, "Get PureData SampleRate"},
