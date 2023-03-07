@@ -3,6 +3,7 @@
 #include "pd_module.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
+#include <string.h>
 
 // ============= Numpy =================
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -251,9 +252,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     t_symbol *function_name = atom_gensym(argv + 1);
 
     if (x->function_called == 1) {
-        int function_is_equal = strcmp(
-            function_name->s_name,
-            x->function_name->s_name);  // if string is equal strcmp returns 0
+        int function_is_equal = strcmp(function_name->s_name, x->function_name->s_name);  // if string is equal strcmp returns 0
         if (function_is_equal == 0) {
             pd_error(x, "[py4pd] The function was already set!");
             return;
@@ -275,10 +274,10 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     // check if script file exists
     char script_file_path[MAXPDSTRING];
-    char script_inside_py4pd_path[MAXPDSTRING];
     snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name, script_file_name->s_name);
-    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/resources/scripts/%s.py", x->py4pd_folder->s_name, script_file_name->s_name);
 
+    char script_inside_py4pd_path[MAXPDSTRING];
+    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/%s.py", x->py4pd_scripts->s_name, script_file_name->s_name);
 
     if (access(script_file_path, F_OK) == -1 && access(script_inside_py4pd_path, F_OK) == -1) {
         pd_error(x, "[py4pd] The script file %s was not found!", script_file_name->s_name);
@@ -381,132 +380,130 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 //
 // // ====================================
-// static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
-//     (void)s;
-//     t_symbol *script_file_name = atom_gensym(argv + 0);
-//     t_symbol *function_name = atom_gensym(argv + 1);
-//
-//     if (x->function_called == 1) {
-//         int function_is_equal = strcmp(
-//             function_name->s_name,
-//             x->function_name->s_name);  // if string is equal strcmp returns 0
-//         if (function_is_equal == 0) {
-//             pd_error(x, "[py4pd] The function was already set!");
-//             return;
-//         } else {
-//             Py_XDECREF(x->function);
-//             x->function_called = 0;
-//         }
-//     }
-//
-//     // Check if there is extension (not to use it)
-//     char *extension = strrchr(script_file_name->s_name, '.');
-//     if (extension != NULL) {
-//         pd_error(x, "[py4pd] Don't use extensions in the script file name!");
-//         Py_XDECREF(x->function);
-//         Py_XDECREF(x->module);
-//         return;
-//     }
-//
-//     // check if script file exists
-//     char script_file_path[MAXPDSTRING];
-//     snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name,
-//              script_file_name->s_name);
-//     if (access(script_file_path, F_OK) == -1) {
-//         pd_error(x, "[py4pd] The script file %s does not exist!",
-//                  script_file_path);
-//         Py_XDECREF(x->function);
-//         Py_XDECREF(x->module);
-//         return;
-//     }
-//
-//     // =====================
-//     // check number of arguments
-//     if (argc < 2) {  // check is the number of arguments is correct | set
-//         pd_error(x, "[py4pd] 'set' message needs two arguments! The 'Script Name' and the 'Function Name'!");
-//         return;
-//     }
-//     // =====================
-//     PyObject *pName, *pModule,
-//         *pFunc;  // Create the variables of the python objects
-//
-//     // =====================
-//     // Add aditional path to python to work with Pure Data
-//     PyObject *home_path = PyUnicode_FromString(x->home_path->s_name);  // Place where script file will probably be
-//     PyObject *site_package = PyUnicode_FromString(x->packages_path->s_name);  // Place where the packages will be
-//     PyObject *sys_path = PySys_GetObject("path");
-//     PyList_Insert(sys_path, 0, home_path);
-//     PyList_Insert(sys_path, 0, site_package);
-//     Py_DECREF(home_path);
-//     Py_DECREF(site_package);
-//
-//     // =====================
-//     pName = PyUnicode_DecodeFSDefault(script_file_name->s_name);  // Name of script file
-//     pModule = PyImport_Import(pName);
-//     // =====================
-//     // check if the module was loaded
-//     if (pModule == NULL) {
-//         PyObject *ptype, *pvalue, *ptraceback;
-//         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-//         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-//         PyObject *pstr = PyObject_Str(pvalue);
-//         pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
-//         Py_XDECREF(pstr);
-//         Py_XDECREF(pModule);
-//         Py_XDECREF(pName);
-//         return;
-//     }
-//     pFunc = PyObject_GetAttrString(pModule, function_name->s_name);  // Function name inside the script file
-//     Py_DECREF(pName);           
-//     if (pFunc && PyCallable_Check(pFunc)) {  // Check if the function exists and is callable
-//         PyObject *inspect = NULL, *getfullargspec = NULL;
-//         PyObject *argspec = NULL, *args = NULL;
-//         inspect = PyImport_ImportModule("inspect");
-//         getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
-//         argspec = PyObject_CallFunctionObjArgs(getfullargspec, pFunc, NULL);
-//
-//         args = PyTuple_GetItem(argspec, 0);
-//         
-//         //  TODO: way to check if function has *args or **kwargs
-//
-//         int py_args = PyObject_Size(args);
-//         if (args == Py_None) {
-//             x->py_arg_numbers = -1;
-//             post("[py4pd] The '%s' function has *args or **kwargs!",
-//                  function_name->s_name);
-//         } else {
-//             x->py_arg_numbers = py_args;
-//             post("[py4pd] The '%s' function has %d arguments!",
-//                  function_name->s_name, py_args);
-//         }
-//         Py_DECREF(inspect);
-//         Py_DECREF(getfullargspec);
-//         Py_DECREF(argspec);
-//         Py_DECREF(args);
-//         Py_DECREF(pModule);
-//
-//         x->function = pFunc;
-//         x->script_name = script_file_name;
-//         x->function_name = function_name;
-//         x->function_called = 1;
-//
-//     } else {
-//         pd_error(x, "[py4pd] Function %s not loaded!", function_name->s_name);
-//         x->function_called = 1;  // set the flag to 0 because it crash Pd if
-//         PyObject *ptype, *pvalue, *ptraceback;
-//         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-//         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-//         PyObject *pstr = PyObject_Str(pvalue);
-//         pd_error(x, "[py4pd] Set function had failed: %s", PyUnicode_AsUTF8(pstr));
-//         Py_DECREF(pstr);
-//         Py_XDECREF(ptype);
-//         Py_XDECREF(pvalue);
-//         Py_XDECREF(ptraceback);
-//         Py_XDECREF(pModule);
-//         PyErr_Clear();
-//     }
-//     return;
-// }
+static void set_function_OLD(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+    (void)s;
+    t_symbol *script_file_name = atom_gensym(argv + 0);
+    t_symbol *function_name = atom_gensym(argv + 1);
+
+    if (x->function_called == 1) {
+        int function_is_equal = strcmp(
+            function_name->s_name,
+            x->function_name->s_name);  // if string is equal strcmp returns 0
+        if (function_is_equal == 0) {
+            pd_error(x, "[py4pd] The function was already set!");
+            return;
+        } else {
+            Py_XDECREF(x->function);
+            x->function_called = 0;
+        }
+    }
+
+    // Check if there is extension (not to use it)
+    char *extension = strrchr(script_file_name->s_name, '.');
+    if (extension != NULL) {
+        pd_error(x, "[py4pd] Don't use extensions in the script file name!");
+        Py_XDECREF(x->function);
+        Py_XDECREF(x->module);
+        return;
+    }
+
+    // check if script file exists
+    char script_file_path[MAXPDSTRING];
+    snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name,
+             script_file_name->s_name);
+    if (access(script_file_path, F_OK) == -1) {
+        pd_error(x, "[py4pd] The script file %s does not exist!",
+                 script_file_path);
+        Py_XDECREF(x->function);
+        Py_XDECREF(x->module);
+        return;
+    }
+
+    // =====================
+    // check number of arguments
+    if (argc < 2) {  // check is the number of arguments is correct | set
+        pd_error(x, "[py4pd] 'set' message needs two arguments! The 'Script Name' and the 'Function Name'!");
+        return;
+    }
+    // =====================
+    PyObject *pName, *pModule, *pFunc;  // Create the variables of the python objects
+
+    // =====================
+    // Add aditional path to python to work with Pure Data
+    PyObject *home_path = PyUnicode_FromString(x->home_path->s_name);  // Place where script file will probably be
+    PyObject *site_package = PyUnicode_FromString(x->packages_path->s_name);  // Place where the packages will be
+    PyObject *sys_path = PySys_GetObject("path");
+    PyList_Insert(sys_path, 0, home_path);
+    PyList_Insert(sys_path, 0, site_package);
+    Py_DECREF(home_path);
+    Py_DECREF(site_package);
+
+    // =====================
+    pName = PyUnicode_DecodeFSDefault(script_file_name->s_name);  // Name of script file
+    pModule = PyImport_Import(pName);
+    // =====================
+    // check if the module was loaded
+    if (pModule == NULL) {
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_XDECREF(pstr);
+        Py_XDECREF(pModule);
+        Py_XDECREF(pName);
+        return;
+    }
+    pFunc = PyObject_GetAttrString(pModule, function_name->s_name);  // Function name inside the script file
+    Py_DECREF(pName);           
+    if (pFunc && PyCallable_Check(pFunc)) {  // Check if the function exists and is callable
+        PyObject *inspect = NULL, *getfullargspec = NULL;
+        PyObject *argspec = NULL, *args = NULL;
+        inspect = PyImport_ImportModule("inspect");
+        getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
+        argspec = PyObject_CallFunctionObjArgs(getfullargspec, pFunc, NULL);
+        args = PyTuple_GetItem(argspec, 0);
+        //  TODO: way to check if function has *args or **kwargs
+        int py_args = PyList_Size(args);
+
+
+        if (args == Py_None) {
+            x->py_arg_numbers = -1;
+            post("[py4pd] The '%s' function has *args or **kwargs!",
+                 function_name->s_name);
+        } else {
+            x->py_arg_numbers = py_args;
+            post("[py4pd] The '%s' function has %d arguments!",
+                 function_name->s_name, py_args);
+        }
+        Py_DECREF(inspect);
+        Py_DECREF(getfullargspec);
+        Py_DECREF(argspec);
+        Py_DECREF(args);
+        Py_DECREF(pModule);
+
+        x->function = pFunc;
+        x->script_name = script_file_name;
+        x->function_name = function_name;
+        x->function_called = 1;
+
+    } else {
+        pd_error(x, "[py4pd] Function %s not loaded!", function_name->s_name);
+        x->function_called = 1;  // set the flag to 0 because it crash Pd if
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[py4pd] Set function had failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+        Py_XDECREF(pModule);
+        PyErr_Clear();
+    }
+    return;
+}
 
 // ============================================
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
@@ -531,11 +528,9 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
             pd_error(x, "[py4pd] The number of '[' and ']' is not the same!");
             return;
         }
-        PyObject **lists =
-            (PyObject **)malloc(OpenList_count * sizeof(PyObject *));
+        PyObject **lists = (PyObject **)malloc(OpenList_count * sizeof(PyObject *));
 
-        ArgsTuple = py4pd_convert_to_py(
-            lists, argc, argv);  // convert the arguments to python
+        ArgsTuple = py4pd_convert_to_py(lists, argc, argv);  // convert the arguments to python
         int argCount = PyTuple_Size(ArgsTuple);  // get the number of arguments
         if (argCount != x->py_arg_numbers) {
             pd_error(x,
@@ -554,11 +549,8 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     // WARNING: If PEP 684 is accepted, check if object capsule will work.
 
-    PyObject *capsule = PyCapsule_New(
-        x, "py4pd",
-        NULL);  // create a capsule to pass the object to the python interpreter
-    PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd",
-                       capsule);  // add the capsule to the python interpreter
+    PyObject *capsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
+    PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule);  // add the capsule to the python interpreter
 
     pValue = PyObject_CallObject(x->function, ArgsTuple);
     if (pValue != NULL) {                // if the function returns a value
@@ -569,7 +561,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        pd_error(x, "[Python] Call failed: %s", PyUnicode_AsUTF8(pstr));
         Py_DECREF(pstr);
         Py_XDECREF(ptype);
         Py_XDECREF(pvalue);
@@ -1000,15 +992,12 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     }
     if (visMODE == 1 && audioOUT == 0) {
         x = (t_py *)pd_new(py4pd_class_VIS);  // create a new object
-        // post("py4pd: visual mode");
     } 
     else if (audioOUT == 1 && visMODE == 0) {
         x = (t_py *)pd_new(py4pd_classAudioOut);  // create a new object
-        // post("py4pd: audio mode");
     } 
     else if (normalMODE == 1) {
         x = (t_py *)pd_new(py4pd_class);  // create a new object
-        // post("py4pd: normal/analisys mode");
     } 
     else {
         post("Error in py4pd_new, please report this error to the developer, this message should not appear.");
@@ -1094,6 +1083,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     x->packages_path = patch_dir;     // set name of the packages path
     set_py4pd_config(x);  // set the config file (in py4pd.cfg, make this be
     py4pd_tempfolder(x);  // find the py4pd folder
+    findpy4pd_folder(x);  // find the py4pd object folder
     if (argc > 1) {       // check if there are two arguments
         set_function(x, s, argc, argv);
         import_array();  // import numpy
@@ -1106,9 +1096,8 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
 void *py4pd_free(t_py *x) {
     object_count--;
 
-
     if (object_count == 1) {
-        Py_Finalize(); // BUG: Not possible because it crashes if another
+        // Py_Finalize(); // BUG: Not possible because it crashes if another
         post("[py4pd] Python interpreter finalized");
         object_count = 0;
 

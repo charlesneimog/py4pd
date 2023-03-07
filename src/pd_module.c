@@ -61,7 +61,7 @@ PyObject *pdout(PyObject *self, PyObject *args) {
         PyErr_Clear();
     } else {
         PyErr_SetString(PyExc_TypeError,
-                        "[py.script] pd.out argument must be a list, float or "
+                        "[Python] pd.out argument must be a list, float or "
                         "a string");  // Colocar melhor descrição do erro
         return NULL;
     }
@@ -97,12 +97,12 @@ PyObject *pderror(PyObject *self, PyObject *args) {
     // ================================
 
     if (PyArg_ParseTuple(args, "s", &string)) {
-        pd_error(py4pd, "[py.script]: %s", string);
+        pd_error(py4pd, "[Python]: %s", string);
         PyErr_Clear();
     } else {
         PyErr_SetString(
             PyExc_TypeError,
-            "[py.script] argument of pd.error must be a string");  // Colocar
+            "[Python] argument of pd.error must be a string");  // Colocar
                                                                    // melhor
                                                                    // descrição
                                                                    // do erro
@@ -125,7 +125,7 @@ PyObject *pdsend(PyObject *self, PyObject *args) {
         if (symbol->s_thing) {
             pd_symbol(symbol->s_thing, gensym(string));
         } else {
-            post("[py.script] pd.send not found object [r %s] in pd patch",
+            post("[Python] pd.send not found object [r %s] in pd patch",
                  receiver);
         }
     } else if (PyArg_ParseTuple(args, "sf", &receiver, &floatNumber)) {
@@ -133,7 +133,7 @@ PyObject *pdsend(PyObject *self, PyObject *args) {
         if (symbol->s_thing) {
             pd_float(symbol->s_thing, floatNumber);
         } else {
-            post("[py.script] pd.send not found object [r %s] in pd patch",
+            post("[Python] pd.send not found object [r %s] in pd patch",
                  receiver);
         }
     } else if (PyArg_ParseTuple(args, "si", &receiver, &intNumber)) {
@@ -141,7 +141,7 @@ PyObject *pdsend(PyObject *self, PyObject *args) {
         if (symbol->s_thing) {
             pd_float(symbol->s_thing, intNumber);
         } else {
-            post("[py.script] pd.send not found object [r %s] in pd patch",
+            post("[Python] pd.send not found object [r %s] in pd patch",
                  receiver);
         }
     } else if (PyArg_ParseTuple(args, "sO", &receiver, &listargs)) {
@@ -203,7 +203,7 @@ PyObject *pdsend(PyObject *self, PyObject *args) {
         char error_message[100];
         PyObject *pValue_i = PyTuple_GetItem(args, 1);
         sprintf(error_message,
-                "[py.script] pd.send received a type '%s', it must be a "
+                "[Python] pd.send received a type '%s', it must be a "
                 "string, int, or float.",
                 pValue_i->ob_type->tp_name);
         PyErr_SetString(PyExc_TypeError, error_message);
@@ -226,7 +226,7 @@ PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords) {
     if (keywords == NULL) {
         PyErr_SetString(
             PyExc_TypeError,
-            "[py.script] pd.tabwrite: keywords must be a dictionary");
+            "[Python] pd.tabwrite: keywords must be a dictionary");
         return NULL;
     } else {
         resize = PyDict_Contains(keywords, PyUnicode_FromString("resize"));
@@ -255,9 +255,9 @@ PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords) {
     if (PyArg_ParseTuple(args, "sO", &string, &PYarray)) {
         t_symbol *pd_symbol = gensym(string);
         if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class)))
-            pd_error(py4pd, "[py.script] Array %s not found.", string);
+            pd_error(py4pd, "[Python] Array %s not found.", string);
         else if (!garray_getfloatwords(pdarray, &vecsize, &vec))
-            pd_error(py4pd, "[py.script] Bad template for tabwrite '%s'.",
+            pd_error(py4pd, "[Python] Bad template for tabwrite '%s'.",
                      string);
         else {
             int i;
@@ -295,9 +295,9 @@ PyObject *pdtabread(PyObject *self, PyObject *args) {
     if (PyArg_ParseTuple(args, "s", &string)) {
         t_symbol *pd_symbol = gensym(string);
         if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class))) {
-            pd_error(py4pd, "[py.script] Array %s not found.", string);
+            pd_error(py4pd, "[Python] Array %s not found.", string);
             PyErr_SetString(PyExc_TypeError,
-                            "[py.script] pd.tabread: array not found");
+                            "[Python] pd.tabread: array not found");
         } else {
             int i;
             garray_getfloatwords(pdarray, &vecsize, &vec);
@@ -310,7 +310,7 @@ PyObject *pdtabread(PyObject *self, PyObject *args) {
         }
     } else {
         PyErr_SetString(PyExc_TypeError,
-                        "[py.script] pd.tabread: wrong arguments");
+                        "[Python] pd.tabread: wrong arguments");
         return NULL;
     }
     return NULL;
@@ -327,7 +327,7 @@ PyObject *pdhome(PyObject *self, PyObject *args) {
     // check if there is no argument
     if (!PyArg_ParseTuple(args, "")) {
         PyErr_SetString(PyExc_TypeError,
-                        "[py.script] pd.home: no argument expected");
+                        "[Python] pd.home: no argument expected");
         return NULL;
     }
     return PyUnicode_FromString(py4pd->home_path->s_name);
@@ -358,9 +358,11 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
             if (file_name_open) {
                 py4pd->x_filename = filename;
                 py4pd->x_fullname = gensym(file_name_open);
+
                 if (py4pd->x_def_img) {
                     py4pd->x_def_img = 0;
                 }
+
                 if (glist_isvisible(py4pd->x_glist) &&
                     gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
                     PY4PD_erase(py4pd, py4pd->x_glist);
@@ -372,19 +374,19 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
                         py4pd->x_fullname);
                     PY4PD_draw(py4pd, py4pd->x_glist, 0);
                 }
-            } else {
-                PyErr_SetString(
-                    PyExc_TypeError,
-                    "[python]: Error displaying image, file not found");
+            } 
+            else {
+                PyErr_SetString(PyExc_TypeError, "[python]: Error displaying image, file not found");
                 return NULL;
             }
-        } else {
+        } 
+        else {
             pd_error(py4pd, "[python]: Error displaying image");
         }
 
-    } else {
-        PyErr_SetString(PyExc_TypeError,
-                        "[py.script] pd.showimage: wrong arguments");
+    } 
+    else {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.showimage: wrong arguments");
         return NULL;
     }
     return PyLong_FromLong(0);
@@ -394,8 +396,7 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
 PyObject *pdsamplerate(PyObject *self, PyObject *args) {
     (void)self;
     if (!PyArg_ParseTuple(args, "")) {
-        PyErr_SetString(PyExc_TypeError,
-                        "[py.script] pd.samplerate: no argument expected");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.samplerate: no argument expected");
         return NULL;
     }
     t_sample sr = sys_getsr();
@@ -406,8 +407,7 @@ PyObject *pdsamplerate(PyObject *self, PyObject *args) {
 PyObject *pdtempfolder(PyObject *self, PyObject *args) {
     (void)self;
     if (!PyArg_ParseTuple(args, "")) {
-        PyErr_SetString(PyExc_TypeError,
-                        "[py.script] pd.samplerate: no argument expected");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.samplerate: no argument expected");
         return NULL;
     }
     // ================================
