@@ -60,9 +60,7 @@ PyObject *pdout(PyObject *self, PyObject *args) {
         outlet_list(py4pd->out_A, &s_list, list_size, list_array);
         PyErr_Clear();
     } else {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.out argument must be a list, float or "
-                        "a string");  // Colocar melhor descrição do erro
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.out argument must be a list, float or a string");  // Colocar melhor descrição do erro
         return NULL;
     }
     return PyLong_FromLong(0);
@@ -333,6 +331,24 @@ PyObject *pdhome(PyObject *self, PyObject *args) {
     return PyUnicode_FromString(py4pd->home_path->s_name);
 }
 
+
+// =================================
+PyObject *pdtempfolder(PyObject *self, PyObject *args) {
+    (void)self;
+    if (!PyArg_ParseTuple(args, "")) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.samplerate: no argument expected");
+        return NULL;
+    }
+    // ================================
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    // ================================
+    py4pd_tempfolder(py4pd);
+    return PyUnicode_FromString(py4pd->temp_folder->s_name);
+}
+
+
 // =================================
 PyObject *pdshowimage(PyObject *self, PyObject *args) {
     (void)self;
@@ -393,6 +409,9 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
 }
 
 // =================================
+// ========== AUDIO CONFIG =========
+// =================================
+
 PyObject *pdsamplerate(PyObject *self, PyObject *args) {
     (void)self;
     if (!PyArg_ParseTuple(args, "")) {
@@ -404,10 +423,23 @@ PyObject *pdsamplerate(PyObject *self, PyObject *args) {
 }
 
 // =================================
-PyObject *pdtempfolder(PyObject *self, PyObject *args) {
+PyObject *pdveczise(PyObject *self, PyObject *args) {
     (void)self;
     if (!PyArg_ParseTuple(args, "")) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.samplerate: no argument expected");
+        return NULL;
+    }
+    t_sample vector = sys_getblksize();
+    return PyLong_FromLong(vector);
+}
+
+// =================================
+PyObject *pdparam(PyObject *self, PyObject *args) {
+    //get values from Dict salved in x->param
+    (void)self;
+    char *key;
+    if (!PyArg_ParseTuple(args, "s", &key)) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.param: no argument expected");
         return NULL;
     }
     // ================================
@@ -415,8 +447,14 @@ PyObject *pdtempfolder(PyObject *self, PyObject *args) {
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
     // ================================
-    py4pd_tempfolder(py4pd);
-    return PyUnicode_FromString(py4pd->temp_folder->s_name);
+    // get value from dict
+    PyObject *value = PyDict_GetItemString(py4pd->params, key);
+    if (value == NULL) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.param: key not found");
+        return NULL;
+    }
+    PyErr_Clear();
+    return value;
 }
 
 // =================================
@@ -424,19 +462,29 @@ PyObject *pdmoduleError;
 
 // =================================
 PyMethodDef PdMethods[] = {
+
+    // PureData inside Python
     {"out", pdout, METH_VARARGS, "Output in out0 from PureData"},
     {"send", pdsend, METH_VARARGS, "Send message to PureData, it can be received with the object [receive]"},
     {"print", pdprint, METH_VARARGS, "Print informations in PureData Console"},
     {"error", pderror, METH_VARARGS, "Print informations in error format (red) in PureData Console"},
     {"tabwrite", (PyCFunction)pdtabwrite, METH_VARARGS | METH_KEYWORDS, "Write data to PureData tables/arrays"},
     {"tabread", pdtabread, METH_VARARGS, "Read data from PureData tables/arrays"},
+    
+    // Pic
     {"show", pdshowimage, METH_VARARGS, "Show image in PureData, it must be .gif, .bmp, .ppm"},
+
+    // Files
     {"home", pdhome, METH_VARARGS, "Get PureData Patch Path Folder"},
     {"tempfolder", pdtempfolder, METH_VARARGS, "Get PureData Temp Folder"},
 
+    // User
+    {"getparam", pdparam, METH_VARARGS, "Get Object User Parameters"},
+
     // audio
     {"samplerate", pdsamplerate, METH_VARARGS, "Get PureData SampleRate"},
-    // {"vectorsize", pdvectorsize, METH_VARARGS, "Get PureData Vector Size"},
+    {"vecsize", pdveczise, METH_VARARGS, "Get PureData Vector Size"},
+
     {NULL, NULL, 0, NULL}  //
 };
 

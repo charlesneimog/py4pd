@@ -37,14 +37,18 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_glist             *x_glist;
     t_py4pd_edit_proxy  *x_proxy;
     t_float             py4pd_audio; // audio
-    PyObject            *module; // python object TODO: remove this for 0.6.0
-    PyObject            *function; // function name
     t_int               object_number; // object number
     t_int               thread; // arguments
     t_int               visMode; // picture mode
     t_int               function_called; // flag to check if the set function was called
     t_int               py_arg_numbers; // number of arguments
     
+    // == PYTHON
+
+    PyObject            *module; // python object TODO: remove this for 0.6.0
+    PyObject            *function; // function name
+    PyObject            *params; // parameters
+
     // == AUDIO AND NUMPY
     t_int               audioOutput; // flag to check if is to use audio output
     t_int               audioInput; // flag to check if is to use audio input

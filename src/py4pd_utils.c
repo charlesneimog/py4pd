@@ -3,8 +3,13 @@
 
 
 // ====================================================
+/**
+* @brief Get the py4pd folder object, it creates the folder for scripts inside resources
+ * @param x is the py4pd object
+ * @return save the py4pd folder in x->py4pd_folder
+ */
+
 void findpy4pd_folder(t_py *x){
-    
     void* handle = dlopen(NULL, RTLD_LAZY);
     if (!handle) {
         post("Not possible to locate the folder of the py4pd object");
@@ -47,6 +52,12 @@ void findpy4pd_folder(t_py *x){
 }
 
 // ===================================================================
+/**
+ * @brief Get the temp path object (inside Users/.py4pd), it creates the folder if it not exist
+ * * @param x is the py4pd object
+ * @return save the temp path in x->temp_folder
+ */
+
 void py4pd_tempfolder(t_py *x) {
     #ifdef _WIN64
         // get user folder
@@ -78,6 +89,11 @@ void py4pd_tempfolder(t_py *x) {
 }
 
 // ===================================================================
+/**
+ * @brief It creates the commandline to open the editor
+ * @param x is the py4pd object
+ * @return the commandline to open the editor
+ */
 char *get_editor_command(t_py *x) {
     const char *editor = x->editorName->s_name;
     const char *home = x->home_path->s_name;
@@ -99,7 +115,27 @@ char *get_editor_command(t_py *x) {
     return command;
 }
 
+// ====================================
+/**
+ * @brief Run command and check for errors
+ * @param command is the command to run
+ * @return void, but it prints the error if it fails
+ */
+
+void pd4py_system_func(const char *command) {
+    int result = system(command);
+    if (result == -1) {
+        post("[py4pd] %s", command);
+        return;
+    }
+}
+
 // ============================================
+/**
+ * @brief See if str is a number or a dot
+ * @param str is the string to check
+ * @return 1 if it is a number or a dot, 0 otherwise
+ */
 int isNumericOrDot(const char *str) {
     int hasDot = 0;
     while (*str) {
@@ -116,6 +152,12 @@ int isNumericOrDot(const char *str) {
 }
 
 // =====================================================================
+/**
+ * @brief Remove some char from a string
+ * @param str is the string to remove the char
+ * @param c is the char to remove
+ * @return the string without the char
+ */
 
 void removeChar(char *str, char c) {
     int i, j;
@@ -129,6 +171,12 @@ void removeChar(char *str, char c) {
 }
 
 // =====================================================================
+/**
+ * @brief Convert and output Python Values to PureData values
+ * @param x is the py4pd object
+ * @param pValue is the Python value to convert
+ * @return nothing, but output the value to the outlet
+ */
 
 void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
     if (PyList_Check(pValue)) {  // If the function return a list list
@@ -208,8 +256,13 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
 }
 
 // ============================================
-// create an function that with input ArgsTuple, listsArrays, argc, argv, x
-
+/**
+ * @brief Convert PureData Values to Python values
+ * @param listsArrays were the lists are stored
+ * @param argc is the number of arguments
+ * @param argv is the arguments
+ * @return the Python tuple with the values
+ */
 void *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
     PyObject *ArgsTuple = PyTuple_New(0);  // start new tuple with 1 element
     int listStarted = 0;
@@ -301,6 +354,11 @@ void *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
 }
 
 // ========================= py4pd object ==============================
+/**
+ * @brief Get the config from py4pd.cfg file
+ * @param x is the py4pd object
+ * @return the pointer to the py4pd object with the config
+ */
 
 int *set_py4pd_config(t_py *x) {
     char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py-modules/") + 1));  //

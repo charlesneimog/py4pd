@@ -19,6 +19,16 @@ int object_count; //
 // ========================= Pd Object ===============================
 // ===================================================================
 
+/**
+ * @brief set the home path to py4pd
+ * @brief Get the config from py4pd.cfg file
+ * @param x is the py4pd object
+ * @param s is the symbol (message) that was sent to the object
+ * @param argc is the number of arguments
+ * @param argv is the arguments
+ * @return void, but it sets the home path
+ */
+
 static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;  // unused but required by pd
     if (argc < 1) {
@@ -31,6 +41,15 @@ static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // ============================================
+/**
+ * @brief set the packages path to py4pd, if start with . then build the complete path
+ * @param x is the py4pd object
+ * @param s is the symbol (message) that was sent to the object
+ * @param argc is the number of arguments
+ * @param argv is the arguments
+ * @return void, but it sets the packages path
+ */
+
 static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     if (argc < 1) {
@@ -72,18 +91,24 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // ====================================
+// ALWAYS DESCRIPTION OF NEXT FUNCTION
+/**
+ * @brief print the documentation of the function
+ * @param x is the py4pd object
+ * @param s is the symbol (message) that was sent to the object
+ * @param argc is the number of arguments
+ * @param argv is the arguments
+ * @return void, but it prints the documentation
+ */
 static void documentation(t_py *x) {
     PyObject *pFunc;
-    if (x->function_called == 0) {  // if the set method was not called, then we
-                                    // can not run the function :)
+    if (x->function_called == 0) { 
         pd_error(x, "[py4pd] To see the documentaion you need to set the function first!");
         return;
     }
     pFunc = x->function;
-    if (pFunc && PyCallable_Check(
-                     pFunc)) {  // Check if the function exists and is callable
-        PyObject *pDoc = PyObject_GetAttrString(
-            pFunc, "__doc__");  // Get the documentation of the function
+    if (pFunc && PyCallable_Check(pFunc)) {  // Check if the function exists and is callable
+        PyObject *pDoc = PyObject_GetAttrString(pFunc, "__doc__");  // Get the documentation of the function
         if (pDoc != NULL) {
             const char *Doc = PyUnicode_AsUTF8(pDoc);
             if (Doc != NULL) {
@@ -106,16 +131,15 @@ static void documentation(t_py *x) {
     }
 }
 
-// ====================================
-void pd4py_system_func(const char *command) {
-    int result = system(command);
-    if (result == -1) {
-        post("[py4pd] %s", command);
-        return;
-    }
-}
-
 // ============================================
+/**
+ * @brief open the script  in the editor
+ * @param x is the py4pd object
+ * @param s is the symbol (message) that was sent to the object
+ * @param argc is the number of arguments
+ * @param argv is the arguments
+ * @return void, but it opens the script in the editor
+ */
 static void openscript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     (void)argc;
@@ -150,6 +174,14 @@ static void openscript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // ====================================
+/**
+ * @brief set the editor
+ * @param x is the py4pd object
+ * @param s is the symbol (message) that was sent to the object
+ * @param argc is the number of arguments
+ * @param argv is the arguments
+ * @return void, but it sets the editor
+ */
 static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     if (argc != 0) {
@@ -188,12 +220,64 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // ====================================
+/**
+ * @brief DEPRECATED: open the script  in the editor
+*/
+
 static void vscode(t_py *x) {
     pd_error(x, "This method is deprecated, please use the editor method instead!");
-    editor(x, NULL, 0, NULL);
 }
 
 // ====================================
+/**
+ * @brief set parameters to and PyDict from embedded module pd
+ * @param x is the py4pd object
+ * @param s is the symbol (message) that was sent to the object
+ * @param argc is the number of arguments
+ * @param argv is the arguments
+ * @return void, but it sets the editor
+ */
+static void set_param(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+    (void)s;
+    if (argc > 2) {
+        pd_error(x, "[py4pd] For now, just one parameter at a time!");
+        return;
+    }
+
+
+    if (x->params == NULL) {
+        x->params = PyDict_New();
+    }
+    // Add key and value to the dictionary
+    PyObject *key = PyUnicode_FromString(argv[0].a_w.w_symbol->s_name);
+    PyObject *value = NULL;
+    // check if the value is a symbol
+    if (argv[1].a_type == A_SYMBOL) {
+        value = PyUnicode_FromString(argv[1].a_w.w_symbol->s_name);
+    }
+    // check if the value is a float
+    else if (argv[1].a_type == A_FLOAT) {
+        value = PyFloat_FromDouble(argv[1].a_w.w_float);
+    }
+    
+    PyDict_SetItem(x->params, key, value);
+    Py_DECREF(key);
+    Py_DECREF(value);
+    return;
+
+}
+
+
+
+// ====================================
+/**
+ * @brief reload the Python Script
+ * @param x is the py4pd object
+ * @param s is the symbol (message) that was sent to the object
+ * @param argc is the number of arguments
+ * @param argv is the arguments
+ * @return void, but it reloads the script
+ */
 static void reload(t_py *x) {
     PyObject *pName, *pFunc, *pModule, *pReload;
     if (x->function_called == 0) {  // if the set method was not called, then we
@@ -241,11 +325,15 @@ static void reload(t_py *x) {
     }
 }
 
-
-
-
-
 // ====================================
+/**
+ * @brief set the function and save it on x->function
+ * @param x is the py4pd object
+ * @param s is the symbol (message) that was sent to the object
+ * @param argc is the number of arguments
+ * @param argv is the arguments
+ * @return void, but it sets the function
+ */
 static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     t_symbol *script_file_name = atom_gensym(argv + 0);
@@ -342,13 +430,11 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         int py_args = PyObject_Size(args);
         if (args == Py_None) {
             x->py_arg_numbers = -1;
-            post("[py4pd] The '%s' function has *args or **kwargs!",
-                 function_name->s_name);
+            post("[py4pd] The '%s' function has *args or **kwargs!", function_name->s_name);
         } 
         else {
             x->py_arg_numbers = py_args;
-            post("[py4pd] The '%s' function has %d arguments!",
-                 function_name->s_name, py_args);
+            post("[py4pd] The '%s' function has %d arguments!", function_name->s_name, py_args);
         }
         Py_DECREF(inspect);
         Py_DECREF(getfullargspec);
@@ -506,6 +592,15 @@ static void set_function_OLD(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // ============================================
+/**
+ * @brief Run the function 
+ * 
+ * @param x 
+ * @param s 
+ * @param argc 
+ * @param argv 
+ */
+
 static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     //  TODO: Check for memory leaks
     (void)s;
@@ -1203,6 +1298,10 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0);  // set function to be called
     class_addmethod(py4pd_class_VIS, (t_method)set_function, gensym("set"), A_GIMME, 0);  // set function to be called
     class_addmethod(py4pd_classAudioOut, (t_method)set_function, gensym("set"), A_GIMME, 0);  // set function to be called
+
+
+    class_addmethod(py4pd_class, (t_method)set_param, gensym("param"), A_GIMME, 0);  // set function to be called
+
 
     //  TODO: Way to set global variables, I think that will be important for things like general path;
     //  TODO: Set some audio parameters to work with py4pd_dspin, 'dspparams', 'dspparams'
