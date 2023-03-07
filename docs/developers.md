@@ -4,7 +4,7 @@ Python it is a great language for musicians, not just for audio manipulations ho
 
 In this documentation, I will point some of the ways that you can use the `py4pd` interface to build your App our your patch and make your research more accessible for musicians. 
 
-# Add py4pd your library in py4pd Download
+## Add py4pd your library in py4pd Download
 
-# Embedded Module
+## Embedded Module
 
