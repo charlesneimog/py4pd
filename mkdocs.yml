@@ -1,0 +1,25 @@
+site_name: py4pd
+theme:
+    name: material
+    features:
+        - navigation.tabs
+        - navigation.sections
+
+extra_css:
+  - stylesheets/extra.css
+      
+markdown_extensions:
+    - toc:
+        toc_depth: 2
+    - pymdownx.highlight
+    - pymdownx.superfences
+    - admonition
+
+use_directory_urls: false
+
+repo_url: https://github.com/charlesneimog/py4pd
+
+nav:
+    - index.md 
+    - reference.md
+    - developers.md
