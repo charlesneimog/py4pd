@@ -1,19 +1,19 @@
 site_name: py4pd
+   
 theme:
   logo: assets/py4pd.svg
   favicon: assets/favicon.png
   name: material
   features:
-    - announce.dismiss
-    - content.action.edit
-    - content.action.view
+    - navigation.top
     - content.code.annotate 
     - content.code.copy
-    - navigation.indexes
-    - navigation.sections
-    - navigation.top
+    - navigation.tabs
     - search.highlight
     - search.suggest
+    - toc.integrate
+    - toc.follow
+    - navigation.instant
   palette:
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
@@ -28,21 +28,24 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
-        
-        
+  
 markdown_extensions:
-    - toc:
-        toc_depth: 2
-    - pymdownx.highlight
     - pymdownx.superfences
-    - admonition
+    - pymdownx.extra
+    - pymdownx.details
+    - pymdownx.emoji
+    - pymdownx.tasklist
+    - pymdownx.magiclink
+    - pymdownx.highlight
+
+
 
 
 repo_url: https://github.com/charlesneimog/py4pd
 
 nav:
     - index.md 
-    - examples.md
+    - puredata-users.md
     - python-users.md
-    - developers.md
+    - examples.md
 

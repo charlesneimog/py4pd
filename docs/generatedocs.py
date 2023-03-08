@@ -16,18 +16,8 @@ except ImportError:
     sys.exit(0)
 
 
-def main(destfolder: str):
-    #utilFuncNames = util.__all__
-    #utilFuncs = [eval("util." + name) for name in utilFuncNames]
-    #docstr = doctools.generateDocsForFunctions(utilFuncs, title="loristrck.util", pretext=util.__doc__, startLevel=2)
-    docstr = doctools.generateDocsForModule(util)
-    utildocs = os.path.join(destfolder, "util.md")
-    open(utildocs, "w").write(docstr)
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--destfolder", default="docs", help="Destination forlder for documentation")
     args = parser.parse_args()
     assert os.path.exists(args.destfolder)
-    main(args.destfolder)
