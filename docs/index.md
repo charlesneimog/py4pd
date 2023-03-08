@@ -1,8 +1,8 @@
 # Home
 
-Welcome to the **py4pd** documentation!
+Welcome to the `py4pd` documentation! I am writing this yet, but some things are incomplete.
 
-`py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things.  with Python you can:
+`py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things. With Python you can:
 
 * Work with AI;
 * Audio analisys;
@@ -12,7 +12,7 @@ Welcome to the **py4pd** documentation!
 
 ## Quick Examples
 
-Here I will present some examples that I am using in my pieces. This is for music illustration. 
+Here I will present some examples that I am using in my pieces.  
 
 ### Draws as scores
 
