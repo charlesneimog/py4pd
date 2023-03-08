@@ -391,7 +391,9 @@ int *set_py4pd_config(t_py *x) {
     strcat(PADRAO_packages_path, "/py-modules/");  // append string two to the result.
     x->packages_path = gensym(PADRAO_packages_path);
     x->thread = 0;
-    x->editorName = gensym("vscode");
+    if (x->editorName == NULL){
+        x->editorName = gensym("vscode");
+    }
     char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1));  //
     strcpy(config_path, x->home_path->s_name);           // copy string one into the result.
     strcat(config_path, "/py4pd.cfg");      // append string two to the result.

@@ -1056,9 +1056,14 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                 argc--;
             } 
             else if (py4pdArgs == gensym("-nvim") ||
-                       py4pdArgs == gensym("-vscode") ||
-                       py4pdArgs == gensym("-emacs")) {
-                x->editorName = gensym(py4pdArgs->s_name + 1);
+                        py4pdArgs == gensym("-vscode") ||
+                        py4pdArgs == gensym("-sublime") || 
+                        py4pdArgs == gensym("-emacs")) {
+                // remove the '-' from the name of the editor
+                const char *editor = py4pdArgs->s_name;
+                editor++;
+                x->editorName = gensym(editor); 
+
                 int j;
                 for (j = i; j < argc; j++) {
                     argv[j] = argv[j + 1];
