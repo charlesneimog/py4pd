@@ -1,3 +1,4 @@
+#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd_utils.h"
 
@@ -183,26 +184,42 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
         int list_size = PyList_Size(pValue);
         t_atom *list_array = (t_atom *)malloc(list_size * sizeof(t_atom));
         int i;
+        int listIndex = 0;
         for (i = 0; i < list_size; ++i) {
             PyObject *pValue_i = PyList_GetItem(pValue, i);
             if (PyLong_Check(
                     pValue_i)) {  // If the function return a list of integers
                 long result = PyLong_AsLong(pValue_i);
                 float result_float = (float)result;
-                list_array[i].a_type = A_FLOAT;
-                list_array[i].a_w.w_float = result_float;
+                list_array[listIndex].a_type = A_FLOAT;
+                list_array[listIndex].a_w.w_float = result_float;
+                listIndex++;
 
             } else if (PyFloat_Check(pValue_i)) {  // If the function return a
                                                    // list of floats
                 double result = PyFloat_AsDouble(pValue_i);
                 float result_float = (float)result;
-                list_array[i].a_type = A_FLOAT;
-                list_array[i].a_w.w_float = result_float;
+                list_array[listIndex].a_type = A_FLOAT;
+                list_array[listIndex].a_w.w_float = result_float;
+                listIndex++;
             } else if (PyUnicode_Check(pValue_i)) {  // If the function return a
                                                      // list of strings
                 const char *result = PyUnicode_AsUTF8(pValue_i);
-                list_array[i].a_type = A_SYMBOL;
-                list_array[i].a_w.w_symbol = gensym(result);
+                if (strchr(result, ' ') != NULL) {
+                    char *result_copy = (char *)malloc(strlen(result) * sizeof(char));
+                    strcpy(result_copy, result);
+                    char *token = strtok(result_copy, " ");
+                    while (token != NULL) {
+                        list_array = (t_atom *)realloc(list_array, (list_size + 1) * sizeof(t_atom));
+                        list_array[listIndex].a_type = A_GIMME; // A_SYMBOL; 
+                        list_array[listIndex].a_w.w_symbol = gensym(token);
+                        listIndex++;
+                        list_size++;
+                        token = strtok(NULL, " ");
+                    }
+                    free(result_copy);
+                    continue;
+                }
             } else if (Py_IsNone(pValue_i)) {  // If the function return a list
                                                // of None
             } else {
@@ -222,16 +239,34 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
                 PyLong_AsLong(pValue);  // If the function return a integer
             outlet_float(x->out_A, result);
         } else if (PyFloat_Check(pValue)) {
-            double result =
-                PyFloat_AsDouble(pValue);  // If the function return a float
+            double result = PyFloat_AsDouble(pValue);  // If the function return a float
             float result_float = (float)result;
             outlet_float(x->out_A, result_float);
         } else if (PyUnicode_Check(pValue)) {
-            const char *result =
-                PyUnicode_AsUTF8(pValue);  // If the function return a string
-            outlet_symbol(x->out_A, gensym(result));
+            const char *result = PyUnicode_AsUTF8(pValue);  // If the function return a string
+            // check if there is a space
+            char *result_copy = (char *)malloc(strlen(result) * sizeof(char));   
+            strcpy(result_copy, result);
+            char *token = strtok(result_copy, " ");
+            if (token != NULL) {
+                t_atom *list_array = (t_atom *)malloc(sizeof(t_atom));
+                int list_size = 0;
+                int listIndex = 0;
+                while (token != NULL) {
+                    list_array = (t_atom *)realloc(list_array, (list_size + 1) * sizeof(t_atom));
+                    list_array[listIndex].a_type = A_GIMME; // A_SYMBOL; 
+                    list_array[listIndex].a_w.w_symbol = gensym(token);
+                    listIndex++;
+                    list_size++;
+                    token = strtok(NULL, " ");
+                }
+                outlet_list(x->out_A, 0, list_size, list_array);
+                free(list_array);
+                free(result_copy);
+                return 0;
+            }
+
         } else if (Py_IsNone(pValue)) {
-            // post("[py4pd] function %s return None",
             // x->function_name->s_name); // TODO: Thing about this
         }
         // when function not use return
@@ -241,16 +276,6 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
                      "of this atoms! Received: %s",
                      Py_TYPE(pValue)->tp_name);
         }
-
-        //     } else if (Py_IsNone(pValue)) {
-        //         outlet_bang(x->out_A); // If the function return a None
-        //     } else {
-        //         pd_error(x, "[py4pd] py4pd just convert int, float and string
-        //         or list of this atoms! Received: %s",
-        //         Py_TYPE(pValue)->tp_name);
-        //     }
-        //
-        //
     }
     return 0;
 }
