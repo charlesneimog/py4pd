@@ -23,11 +23,48 @@ def pd_tabwrite():
 
 This will write the list `randomNumbers` in the `pd.tabwrite` table in PureData. If the table not exist it will give an error, like happens in tabwrite object.
 
----------------------------
+--------------------------- 
 
-With this examples, the list of avaible function in `pd` module are
+## Table of Embedded Methods
 
-## `pd.out` 
+<div style="display:flex;"> 
+  <div style="flex:1;padding-right:10px; text-align:center;">
+  [pd.out](##pd.out)
+  </div>
+ <div style="flex:1;padding-right:10px; text-align:center;">
+  [pd.send](##pd.send)
+  </div>
+ <div style="flex:1;padding-right:10px;text-align:center;">
+  [pd.print](##pd.print)
+  </div>
+ <div style="flex:1;padding-right:10px;text-align:center;">
+  [pd.print](##pd.print)
+  </div>
+<div style="flex:1;padding-right:10px;text-align:center;">
+  [pd.print](##pd.print)
+  </div>
+</div>
+<div style="display:flex;"> 
+  <div style="flex:1;padding-right:10px; text-align:center;">
+  [pd.out](##pd.out)
+  </div>
+ <div style="flex:1;padding-right:10px; text-align:center;">
+  [pd.send](##pd.send)
+  </div>
+ <div style="flex:1;padding-right:10px;text-align:center;">
+  [pd.print](##pd.print)
+  </div>
+ <div style="flex:1;padding-right:10px;text-align:center;">
+  [pd.print](##pd.print)
+  </div>
+<div style="flex:1;padding-right:10px;text-align:center;">
+  [pd.print](##pd.print)
+  </div>
+</div>
+
+-------------------------
+
+### `pd.out` 
 
 With this object you can output things without the function finish your work. For example, given this function:
 
@@ -44,7 +81,7 @@ it will output 1, 2, 3, (...) like in `else/iterate`.
 
 ---------------------------
 
-## `pd.send` 
+### `pd.send` 
 
 With `pd.send` you can send data for `receive` object in PureData Patch. It accepts two arguments, the `receive` name and the value that will be sent. For example, 
 ``` python
@@ -60,34 +97,26 @@ def pd_send():
 
 ```
 
+### `pd.print` 
 
 
+### `pd.error` 
 
+### `pd.tabwrite` 
 
+### `pd.tabread`
+ 
+### `pd.show`
 
+### `pd.home`
 
-    {"send", pdsend, METH_VARARGS, "Send message to PureData, it can be received with the object [receive]"},
-    {"print", pdprint, METH_VARARGS, "Print informations in PureData Console"},
-    {"error", pderror, METH_VARARGS, "Print informations in error format (red) in PureData Console"},
-    {"tabwrite", (PyCFunction)pdtabwrite, METH_VARARGS | METH_KEYWORDS, "Write data to PureData tables/arrays"},
-    {"tabread", pdtabread, METH_VARARGS, "Read data from PureData tables/arrays"},
+### `pd.tempfolder`
+
+### `pd.getkey`
     
-    // Pic
-    {"show", pdshowimage, METH_VARARGS, "Show image in PureData, it must be .gif, .bmp, .ppm"},
+### `pd.samplerate`
 
-    // Files
-    {"home", pdhome, METH_VARARGS, "Get PureData Patch Path Folder"},
-    {"tempfolder", pdtempfolder, METH_VARARGS, "Get PureData Temp Folder"},
-
-    // User
-    {"getkey", pdkey, METH_VARARGS, "Get Object User Parameters"},
-
-    // audio
-    {"samplerate", pdsamplerate, METH_VARARGS, "Get PureData SampleRate"},
-    {"vecsize", pdveczise, METH_VARARGS, "Get PureData Vector Size"},
-
-    {NULL, NULL, 0, NULL}  //
-
+### `pd.vecsize`
 
 
 
