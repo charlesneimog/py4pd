@@ -1,6 +1,6 @@
 site_name: py4pd
 theme:
-    name: material
+    name: ivory
     features:
         - navigation.tabs
         - navigation.sections
