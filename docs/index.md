@@ -1,4 +1,4 @@
-# py4pd
+# Home
 
 Welcome to the **py4pd** documentation!
 

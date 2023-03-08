@@ -1,4 +1,4 @@
-# Pd Module
+# Embedded Module
 
 For those using Python, it is possible to communicate between Python and PureData using some of the functions in the Pd module. The Pd module is embedded in the py4pd code and accessible only in the PureData environment. It is similar to what is used inside Google Collab like `google.colab.drive`, `google.colab.widgets`, and others.
 
@@ -28,22 +28,22 @@ This will write the list `randomNumbers` in the `pd.tabwrite` table in PureData.
 ## Table of Embedded Method
 
 --------------------------- 
-* [pd.out](##pd.out) - Output in PureData from any place in Python Code 
-* [pd.send](##pd.send) - Send data to PureData, it is received with `receive` object.
-* [pd.print](##pd.print) - Print in PureData console.
-* [pd.tabwrite](##pd.tabwrite) - Write data in PureData arrays.
-* [pd.tabread](##pd.tabread) - Read PureData arrays.
-* [pd.show](##pd.to) ###ow images in PureData canvas.
-* [pd.home](##pd.home) - Get the current directory of the PureData Patch.
-* [pd.tempfolder](##pd.tempfolder) - Get the tempfolder directory of `py4pd`. It's always clean.
-* [pd.getkey](##pd.getkey) - Get keys saved with `key` message in `py4pd` object.
-* [pd.samplerate](##pd.samplerate) - Get the current Sample Rate of PureData
-* [pd.vecsize](##pd.vecsize) - Get current vector size of PureData.
+* [pd.out](###pd.out) - Output in PureData from any place in Python Code 
+* [pd.send](###pd.send) - Send data to PureData, it is received with `receive` object.
+* [pd.print](###pd.print) - Print in PureData console.
+* [pd.tabwrite](###pd.tabwrite) - Write data in PureData arrays.
+* [pd.tabread](###pd.tabread) - Read PureData arrays.
+* [pd.show](###pd.to) ###ow images in PureData canvas.
+* [pd.home](###pd.home) - Get the current directory of the PureData Patch.
+* [pd.tempfolder](###pd.tempfolder) - Get the tempfolder directory of `py4pd`. It's always clean.
+* [pd.getkey](###pd.getkey) - Get keys saved with `key` message in `py4pd` object.
+* [pd.samplerate](###pd.samplerate) - Get the current Sample Rate of PureData
+* [pd.vecsize](###pd.vecsize) - Get current vector size of PureData.
 -------------------------
 
 ## Methods description
 
-`pd.out` 
+### `pd.out` 
 
 With this object you can output things without the function finish your work. For example, given this function:
 
@@ -60,7 +60,7 @@ it will output 1, 2, 3, (...) like in `else/iterate`.
 
 ---------------------------
 
- `pd.send` 
+### `pd.send` 
 
 With `pd.send` you can send data for `receive` object in PureData Patch. It accepts two arguments, the `receive` name and the value that will be sent. For example, 
 ``` python
@@ -76,32 +76,25 @@ def pd_send():
 
 ```
 
- `pd.print` 
+### `pd.print` 
 
- `pd.error` 
+### `pd.error` 
 
- `pd.tabwrite` 
+### `pd.tabwrite` 
 
- `pd.tabread`
+### `pd.tabread`
  
- `pd.show`
+### `pd.show`
 
- `pd.home`
+### `pd.home`
 
- `pd.tempfolder`
+### `pd.tempfolder`
 
- `pd.getkey`
+### `pd.getkey`
     
- `pd.samplerate`
+### `pd.samplerate`
 
- `pd.vecsize`
-
-
+### `pd.vecsize`
 
 
-
-
-## Add py4pd your library in py4pd Download
-
-## Embedded Module
 
