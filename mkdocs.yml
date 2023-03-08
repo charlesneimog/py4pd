@@ -1,6 +1,7 @@
 site_name: py4pd
 theme:
-  logo: assets/py4pd.svg
+  logo: assets/py4pd.png
+  favicon: assets/favicon.png
   name: material
   features:
     - announce.dismiss
