@@ -1,6 +1,6 @@
 site_name: py4pd
 theme:
-    name: ivory
+    name: material
     features:
         - navigation.tabs
         - navigation.sections
@@ -14,9 +14,27 @@ markdown_extensions:
     - pymdownx.highlight
     - pymdownx.superfences
     - admonition
+    - search.highlight
+
+palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
 
 use_directory_urls: false
 
+plugins:
+    - search
+    
 repo_url: https://github.com/charlesneimog/py4pd
 
 nav:
