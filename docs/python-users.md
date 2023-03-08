@@ -2,7 +2,7 @@
 
 For those using Python, it is possible to communicate between Python and PureData using some of the functions in the Pd module. The Pd module is embedded in the py4pd code and accessible only in the PureData environment. It is similar to what is used inside Google Collab like `google.colab.drive`, `google.colab.widgets`, and others.
 
-For example, to write to a PureData array you can use the method called `pd.tabwrite`, which accepts the array name and one list or numpy array and a keyword where you resize or not the table. 
+For example, to write to a PureData array you can use the method called `pd.tabwrite`, which accepts the array name and one list or numpy array and a keyword (`resize=`) where you resize or not the table. 
 
 ``` Python
 import pd
@@ -23,10 +23,12 @@ def pd_tabwrite():
 
 This will write the list `randomNumbers` in the `pd.tabwrite` table in PureData. If the table not exist it will give an error, like happens in tabwrite object.
 
+
+
+## Table of Embedded Method
+
 --------------------------- 
-
-## Table of Embedded Methods
-
+ 
 <div style="display:flex;"> 
   <div style="flex:1;padding-right:10px; text-align:center;">
   [pd.out](##pd.out)
@@ -41,24 +43,44 @@ This will write the list `randomNumbers` in the `pd.tabwrite` table in PureData.
   [pd.print](##pd.print)
   </div>
 <div style="flex:1;padding-right:10px;text-align:center;">
-  [pd.print](##pd.print)
+  [pd.tabwrite](##pd.tabwrite)
   </div>
 </div>
+
+
 <div style="display:flex;"> 
   <div style="flex:1;padding-right:10px; text-align:center;">
-  [pd.out](##pd.out)
+  [pd.tabread](##pd.tabread)
   </div>
  <div style="flex:1;padding-right:10px; text-align:center;">
-  [pd.send](##pd.send)
+  [pd.show](##pd.show)
   </div>
  <div style="flex:1;padding-right:10px;text-align:center;">
-  [pd.print](##pd.print)
+  [pd.home](##pd.home)
   </div>
  <div style="flex:1;padding-right:10px;text-align:center;">
-  [pd.print](##pd.print)
+  [pd.tempfolder](##pd.tempfolder)
   </div>
 <div style="flex:1;padding-right:10px;text-align:center;">
-  [pd.print](##pd.print)
+  [pd.getkey](##pd.print)
+  </div>
+</div>
+
+<div style="display:flex;"> 
+  <div style="flex:1;padding-right:10px; text-align:center;">
+  [pd.samplerate](##pd.samplerate)
+  </div>
+ <div style="flex:1;padding-right:10px; text-align:center;">
+  [pd.vecsize](##pd.vecsize)
+  </div>
+ <div style="flex:1;padding-right:10px;text-align:center;">
+  
+  </div>
+ <div style="flex:1;padding-right:10px;text-align:center;">
+  
+  </div>
+<div style="flex:1;padding-right:10px;text-align:center;">
+  
   </div>
 </div>
 
