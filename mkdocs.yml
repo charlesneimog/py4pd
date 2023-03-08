@@ -5,7 +5,7 @@ theme:
     - announce.dismiss
     - content.action.edit
     - content.action.view
-    - content.code.annotate
+    - content.code.annotate 
     - content.code.copy
     - navigation.indexes
     - navigation.sections
@@ -26,6 +26,15 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
+        
+        
+markdown_extensions:
+    - toc:
+        toc_depth: 2
+    - pymdownx.highlight
+    - pymdownx.superfences
+    - admonition
+
 
 repo_url: https://github.com/charlesneimog/py4pd
 
