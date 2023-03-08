@@ -1,8 +1,8 @@
 site_name: py4pd
    
 theme:
-  logo: assets/py4pd.svg
-  favicon: assets/favicon.png
+  logo: assets/py4pd-logo.svg
+  favicon: assets/py4pd-favicon.png
   name: material
   features:
     - navigation.top
