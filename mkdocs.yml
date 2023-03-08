@@ -45,6 +45,7 @@ repo_url: https://github.com/charlesneimog/py4pd
 
 nav:
     - index.md 
+    - setup.md
     - puredata-users.md
     - python-users.md
     - examples.md
