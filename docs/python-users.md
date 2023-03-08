@@ -50,9 +50,9 @@ This will write the list `randomNumbers` in the `pd.tabwrite` table in PureData.
 
 ### `pd.out` 
 
-With this object you can output things without the function finish your work. For example, given this function:
+With this object you can output things without the Python function finish the work (normally we return data for PureData using `return`. For example, given this function:
 
-``` Python
+``` py
 import pd
 
 
@@ -61,7 +61,50 @@ def example_pdout():
     	pd.out(x)
     return x
 ```
-it will output 1, 2, 3, (...) like in `else/iterate`. 
+it will output 1, 2, 3 (...) as it loops. This can be used for `output` others information. For example, if I want to use the Partial Tracking provided by `loristrck`, it is possible use the `pd.out` to output the info about `frequency`, `amplitude` and `phrase` and route it using `route`.
+
+``` py
+
+import pd
+import loristrck
+
+
+def lorisAnalisys(audiofile, parcialnumber):
+    audiopathname = pd.home() + '/' + audiofile
+    samples, sr = loristrck.util.sndreadmono(audiopathname)
+    partials = loristrck.analyze(samples, sr, resolution=30, windowsize=40, 
+                      hoptime=1/120)
+    selected, noise = loristrck.util.select(partials, mindur=0.02, maxfreq=12000, 
+                            minamp=-60,)
+
+    parcialnumber = int(parcialnumber) # (1)!
+    pdPartial = []
+    for partial in selected:
+        sec2ms = int(partial[parcialnumber][0] * 1000)
+        try:
+            pdPartial.append(sec2ms)
+            pdPartial.append(partial[parcialnumber][1])
+            pdPartial.append(partial[parcialnumber][2])
+            pdPartial.append(partial[parcialnumber][3])
+            pd.out(pdPartial)
+            pdPartial = []
+        except:
+            pd.out([sec2ms, 0, 0, 0])
+    
+	pd.print("Done")
+
+```
+
+1.  PureData just have floats, in indices, we need to use `int` to convert the `float` received to an `int`.
+
+<p align="center">
+  <img src="./assets/EXAMPLE-pd.out.png" alt="pd.out Example" width="50%">
+
+<p align="center"><a href="./assets/EXAMPLE-pd.out.zip">Download</a></p>
+
+</p>
+
+
 
 ---------------------------
 

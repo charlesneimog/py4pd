@@ -1,7 +1,7 @@
 import pd
 from pip._internal.cli.main import main as pipmain
 
-def py4pdInstall(package):
+def install(package):
     pd.print('Installing ' + package + ' , please wait...')
     home = pd.home()
     try:    
