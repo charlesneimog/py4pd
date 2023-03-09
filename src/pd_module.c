@@ -496,18 +496,31 @@ struct PyModuleDef pdmodule = {
 // =================================
 
 PyMODINIT_FUNC PyInit_pd() {
-    PyObject *m;
-    m = PyModule_Create(&pdmodule);
-    if (m == NULL) {
+    PyObject *py4pdmodule;
+    
+    py4pdmodule = PyModule_Create(&pdmodule);
+    
+    if (py4pdmodule == NULL) {
         return NULL;
     }
+    
+    PyObject *puredata_samplerate, *puredata_vecsize;
+
+    puredata_samplerate = PyLong_FromLong(sys_getsr());
+    puredata_vecsize = PyLong_FromLong(sys_getblksize());
+
+    PyModule_AddObject(py4pdmodule, "SAMPLERATE", puredata_samplerate);
+    PyModule_AddObject(py4pdmodule, "VECSIZE", puredata_vecsize);
+
     pdmoduleError = PyErr_NewException("spam.error", NULL, NULL);
+    
     Py_XINCREF(pdmoduleError);
-    if (PyModule_AddObject(m, "moduleerror", pdmoduleError) < 0) {
+
+    if (PyModule_AddObject(py4pdmodule, "moduleerror", pdmoduleError) < 0) {
         Py_XDECREF(pdmoduleError);
         Py_CLEAR(pdmoduleError);
-        Py_DECREF(m);
+        Py_DECREF(py4pdmodule);
         return NULL;
     }
-    return m;
+    return py4pdmodule;
 }

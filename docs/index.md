@@ -1,6 +1,6 @@
 # Home
 
-Welcome to the `py4pd` documentation! I am writing this yet, but some things are incomplete.
+Welcome to the `py4pd` documentation! I am writing this yet, and some things are incomplete.
 
 `py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things. With Python you can:
 
