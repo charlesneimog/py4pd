@@ -323,17 +323,24 @@ static void reload(t_py *x) {
         return;
     } 
     else {
-        pFunc = PyObject_GetAttrString(
-            pModule,
-            x->function_name->s_name);  // Function name inside the script file
+        pFunc = PyObject_GetAttrString(pModule, x->function_name->s_name);  // Function name inside the script file
         Py_DECREF(pName);
         Py_DECREF(pReload);
-        if (pFunc &&
-            PyCallable_Check(
-                pFunc)) {  // Check if the function exists and is callable
+        if (pFunc && PyCallable_Check(pFunc)) {  // Check if the function exists and is callable
             x->function = pFunc;
             x->function_called = 1;
+            // get new number of python function
+            PyObject *inspect = NULL, *getfullargspec = NULL;
+            PyObject *argspec = NULL, *args = NULL;
+            inspect = PyImport_ImportModule("inspect");
+            getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
+            argspec = PyObject_CallFunctionObjArgs(getfullargspec, pFunc, NULL);
+            args = PyObject_GetAttrString(argspec, "args");
+            x->py_arg_numbers = PyList_Size(args);
             post("The module was reloaded!");
+            Py_DECREF(inspect);
+            Py_DECREF(getfullargspec);
+            Py_DECREF(argspec);
             return;
         } 
         else {
@@ -806,9 +813,7 @@ t_int *py4pd_perform(t_int *w) {
     }
 
     // WARNING: this can generate errors? How this will work on multithreading?
-    PyObject *capsule = PyCapsule_New(
-        x, "py4pd",
-        NULL);  // create a capsule to pass the object to the python interpreter
+    PyObject *capsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
     PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd",
                        capsule);  // add the capsule to the python interpreter
 
@@ -863,24 +868,40 @@ t_int *py4pd_performAudioOutput(t_int *w) {
 
     pSample = NULL;  // NOTE: This is the way to not distorce the audio output
 
-    if (x->use_NumpyArray == 1) {
-        pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
-        ArgsTuple = PyTuple_New(1);
-        PyTuple_SetItem(ArgsTuple, 0, pAudio);
-    } else {
-        // pSample = NULL;  NOTE: this change the sound.
-        // pAudio = PyList_New(n); cconvert audioIn in tuple
-        pAudio = PyTuple_New(n);
-        for (int i = 0; i < n; i++) {
-            pSample = PyFloat_FromDouble(audioIn[i]);
-            PyTuple_SetItem(pAudio, i, pSample);
-        }
-        ArgsTuple = PyTuple_New(1);
-        PyTuple_SetItem(ArgsTuple, 0, pAudio);
-        // if (pSample != NULL) { NOTE: this change the sound.
-        //     Py_DECREF(pSample);
-        // }
+
+    if (x->audioInput == 1 && x->audioOutput == 0 && x->py_arg_numbers != 1){
+        pd_error(x, "[py4pd] When -audioin is used, the function must just one argument!");
+        return (w + 5);
     }
+    if (x->audioOutput == 1 && x->audioInput == 0 &&  x->py_arg_numbers != 0){
+        pd_error(x, "[py4pd] When -audioout is used, the function must not have arguments!");
+        return (w + 5);
+    }
+
+    if (x->audioInput == 1){
+        if (x->use_NumpyArray == 1) {
+            pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
+            ArgsTuple = PyTuple_New(1);
+            PyTuple_SetItem(ArgsTuple, 0, pAudio);
+        } else {
+            // pSample = NULL;  NOTE: this change the sound.
+            // pAudio = PyList_New(n); cconvert audioIn in tuple
+            pAudio = PyTuple_New(n);
+            for (int i = 0; i < n; i++) {
+                pSample = PyFloat_FromDouble(audioIn[i]);
+                PyTuple_SetItem(pAudio, i, pSample);
+            }
+            ArgsTuple = PyTuple_New(1);
+            PyTuple_SetItem(ArgsTuple, 0, pAudio);
+            // if (pSample != NULL) { NOTE: this change the sound.
+            //     Py_DECREF(pSample);
+            // }
+        }
+    } 
+    else {
+        ArgsTuple = PyTuple_New(0);
+    }
+        
     // WARNING: this can generate errors? How this will work on multithreading? || In PEP 684 this will be per interpreter or global?
     PyObject *capsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
     PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule);  // add the capsule to the python interpreter
