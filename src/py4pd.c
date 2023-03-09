@@ -686,8 +686,6 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 // ===========================================
 
 static void thread(t_py *x, t_floatarg f) {
-    //  TODO: If the run method set before the end of the thread, there is an
-    //  error, that close all PureData.
     int thread = (int)f;
     if (thread == 1) {
         post("[py4pd] Threading enabled, wait for approval of PEP 684");
@@ -877,20 +875,16 @@ t_int *py4pd_performAudioOutput(t_int *w) {
         } else if (x->numpyImported == 1) {
             if (PyArray_Check(pValue)) {
                 PyArrayObject *pArray = (PyArrayObject *)pValue;
-                for (int i = 0; i < n; i++) {  // TODO: try to add audio support
-                                               // without another loop
-                    audioOut[i] = PyFloat_AsDouble(
-                        PyArray_GETITEM(pArray, PyArray_GETPTR1(pArray, i)));
+                for (int i = 0; i < n; i++) {
+                    audioOut[i] = PyFloat_AsDouble(PyArray_GETITEM(pArray, PyArray_GETPTR1(pArray, i)));
                 }
             } 
             else {
-                pd_error(x, "[py4pd] The function must return a list, a tuple or a numpy array, returned: %s", 
-                            pValue->ob_type->tp_name);
+                pd_error(x, "[py4pd] The function must return a list, a tuple or a numpy array, returned: %s", pValue->ob_type->tp_name);
             }
         } 
         else {
-            pd_error(x, "[py4pd] The function must return a list, since numpy array is disabled, returned: %s", 
-                            pValue->ob_type->tp_name);
+            pd_error(x, "[py4pd] The function must return a list, since numpy array is disabled, returned: %s", pValue->ob_type->tp_name);
         }
     } 
     else {  // if the function returns a error
@@ -947,8 +941,6 @@ static void *py4pdImportNumpy() {
  * @return It will return void.
  */
 static void usenumpy(t_py *x, t_floatarg f) {
-    //  TODO: If the run method set before the end of the thread, there is an
-    //  error, that close all PureData.
     int usenumpy = (int)f;
     if (usenumpy == 1) {
         post("[py4pd] Numpy Array enabled.");
@@ -1122,7 +1114,6 @@ void *py4pd_free(t_py *x) {
         post("[py4pd] Python interpreter finalized");
         object_count = 0;
 
-        //  TODO: Clear temporary files
         #ifdef _WIN64
             char command[1000];
             sprintf(command, "del /q /s %s\\*", x->temp_folder->s_name);
@@ -1169,8 +1160,8 @@ void py4pd_setup(void) {
     // Sound in
     class_addmethod(py4pd_class, (t_method)py4pd_dspin, gensym("dsp"), A_CANT, 0);  // add a method to a class
     class_addmethod(py4pd_classAudioOut, (t_method)py4pd_dspin, gensym("dsp"), A_CANT, 0);  // add a method to a class
-    CLASS_MAINSIGNALIN(py4pd_class, t_py, py4pd_audio);  // TODO: Repensando como fazer isso quando o áudio não for usado.
-    CLASS_MAINSIGNALIN(py4pd_classAudioOut, t_py, py4pd_audio);  // TODO: Repensando como fazer isso quando o áudio não for usado.
+    CLASS_MAINSIGNALIN(py4pd_class, t_py, py4pd_audio);  
+    CLASS_MAINSIGNALIN(py4pd_classAudioOut, t_py, py4pd_audio);  
     class_addmethod(py4pd_class, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0);  // add a method to a class
     class_addmethod(py4pd_classAudioOut, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0);  // add a method to a class
 
@@ -1209,9 +1200,9 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class_VIS, (t_method)editor, gensym("editor"), A_GIMME, 0);  // open code
     class_addmethod(py4pd_classAudioOut, (t_method)editor, gensym("editor"), A_GIMME, 0);  // open code
 
-    class_addmethod(py4pd_class, (t_method)openscript, gensym("open"), A_GIMME, 0);  // create file or open it TODO: fix this
-    class_addmethod(py4pd_class_VIS, (t_method)openscript, gensym("open"), A_GIMME, 0);  // create file or open it
-    class_addmethod(py4pd_classAudioOut, (t_method)openscript, gensym("open"), A_GIMME, 0);  // create file or open it
+    class_addmethod(py4pd_class, (t_method)openscript, gensym("open"), A_GIMME, 0); 
+    class_addmethod(py4pd_class_VIS, (t_method)openscript, gensym("open"), A_GIMME, 0);
+    class_addmethod(py4pd_classAudioOut, (t_method)openscript, gensym("open"), A_GIMME, 0); 
 
     class_addmethod(py4pd_class, (t_method)editor, gensym("click"), 0, 0);  // when click open editor
     class_addmethod(py4pd_classAudioOut, (t_method)editor, gensym("click"), 0, 0);  // when click open editor
@@ -1234,10 +1225,6 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class_VIS, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
     class_addmethod(py4pd_classAudioOut, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
 
-
-    //  TODO: Way to set global variables, I think that will be important for things like general path;
-    //  TODO: Set some audio parameters to work with py4pd_dspin, 'dspparams', 'dspparams'
-    
     class_addmethod(py4pd_class, (t_method)findpy4pd_folder, gensym("debug"), A_GIMME, 0); 
 }
 

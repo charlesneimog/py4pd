@@ -9,6 +9,12 @@ t_widgetbehavior py4pd_widgetbehavior;
 static t_class *PY4PD_edit_proxy_class;
 
 // =================================================
+/**
+ * @brief Draw the IO let of the object
+ * @param x is the py4pd object
+ * @return void. 
+ */
+
 void PY4PD_draw_io_let(t_py *x) {
     t_canvas *cv = glist_getcanvas(x->x_glist);
     int xpos = text_xpix(&x->x_obj, x->x_glist),
@@ -28,6 +34,12 @@ void PY4PD_draw_io_let(t_py *x) {
 }
 
 // =================================================
+/**
+ * @brief Get the file path of the object
+ * @param x is the py4pd object
+ * @param filename is the name of the file
+ * @return the file path
+ */
 const char *PY4PD_filepath(t_py *x, const char *filename) {
     static char fn[MAXPDSTRING];
     char *bufptr;
@@ -42,10 +54,24 @@ const char *PY4PD_filepath(t_py *x, const char *filename) {
 }
 
 // =================================================
-void PY4PD_mouserelease(t_py *x) { (void)x; }
+/**
+* @brief Function called when the mouse is released
+* @param x is the py4pd object
+* @return void
+*/
+void PY4PD_mouserelease(t_py *x) { 
+    
+    (void)x; 
+
+}
+
 
 // ==================================================
-
+/**
+ * @brief Function called when the mouse is clicked
+ * @param x is the py4pd object
+ * @return void
+ */
 void PY4PD_get_snd_rcv(t_py *x) {
     t_binbuf *bb = x->x_obj.te_binbuf;
     int n_args = binbuf_getnatom(bb), i = 0;  // number of arguments
@@ -92,7 +118,7 @@ void PY4PD_get_snd_rcv(t_py *x) {
                 int arg_n = 4;  // receive argument number
                 if (n_args >= arg_n) {  // we have it, get it
                     // atom_string(binbuf_getvec(bb) + arg_n, buf, 80);
-                    // x->x_rcv_raw = gensym(buf); // BUG: This cause a bug when
+                    // x->x_rcv_raw = gensym(buf); // BUG: This cause a bug with floats
                     // loading/saving the patch
                 }
             }
@@ -101,10 +127,18 @@ void PY4PD_get_snd_rcv(t_py *x) {
     if (x->x_rcv_raw == &s_) x->x_rcv_raw = gensym("empty");
 }
 
-// ------------------------ pic
-// widgetbehaviour-------------------------------------------------------------------
+// ==================================================
+/**
+ * @brief Function called when the mouse is clicked
+ * @param x is the py4pd object
+ * @return void
+ */
 int PY4PD_click(t_py *x, struct _glist *glist, int xpos, int ypos, int shift,
                 int alt, int dbl, int doit) {
+
+    // NOTE: HERE I WILL  ADD THE CODE TO HANDLE CLICKS WITH PYTHON FUNCTIONS
+
+
     // TODO: make a personalized Python function to handle clicks
 
     (void)glist;
@@ -418,8 +452,9 @@ void PY4PD_outline(t_py *x, t_float f) {
                         "%lx_outline -outline black -width %d\n",
                         cv, xpos, ypos, xpos + x->x_width, ypos + x->x_height,
                         x, x->x_zoom);
-            } else if (!x->x_edit)
-                sys_vgui(".x%lx.c delete %lx_outline\n", cv, x);
+            } else if (!x->x_edit){
+                // sys_vgui(".x%lx.c delete %lx_outline\n", cv, x);
+            }
         }
     }
 }
@@ -431,13 +466,13 @@ void PY4PD_size(t_py *x, t_float f) {
 }
 
 // ==================================================================
-void PY4PD_latch(t_py *x, t_float f) {
-    int latch = (int)(f != 0);
-    if (x->x_latch != latch) {
-        x->x_latch = latch;
-    }
-}
-
+// void PY4PD_latch(t_py *x, t_float f) {
+//     int latch = (int)(f != 0);
+//     if (x->x_latch != latch) {
+//         x->x_latch = latch;
+//     }
+// }
+//
 // ==================================================================
 void PY4PD_edit_proxy_any(t_py4pd_edit_proxy *p, t_symbol *s, int ac, t_atom *av) {
     int edit = ac = 0;
@@ -478,7 +513,9 @@ void PY4PD_edit_proxy_any(t_py4pd_edit_proxy *p, t_symbol *s, int ac, t_atom *av
     }
 }
 // ==================================================================
-void PY4PD_zoom(t_py *x, t_floatarg zoom) { x->x_zoom = (int)zoom; }
+void PY4PD_zoom(t_py *x, t_floatarg zoom) { 
+    x->x_zoom = (int)zoom; 
+}
 
 // ================== Properties ====================================
 void PY4PD_properties(t_gobj *z, t_glist *gl) {

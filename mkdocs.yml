@@ -14,6 +14,8 @@ theme:
     - toc.integrate
     - toc.follow
     - navigation.instant
+    - header.autohide
+  
   palette:
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
@@ -47,4 +49,5 @@ nav:
     - python-users.md
     - developers.md
     - examples.md
+
 

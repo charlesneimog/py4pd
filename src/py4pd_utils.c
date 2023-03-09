@@ -267,7 +267,7 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
             }
 
         } else if (Py_IsNone(pValue)) {
-            // x->function_name->s_name); // TODO: Thing about this
+            // x->function_name->s_name); 
         }
         // when function not use return
         else {
@@ -430,11 +430,7 @@ int *set_py4pd_config(t_py *x) {
                 char *thread = (char *)malloc(
                     sizeof(char) *
                     (strlen(line) - strlen("thread = ") + 1));  //
-                strcpy(
-                    thread,
-                    line +
-                        strlen("thread = "));  // copy string one into the
-                                               // result. TODO: implement thread
+                strcpy(thread, line + strlen("thread = "));  // copy string one into the result.
                 // print thread value
                 if (strlen(thread) > 0) {  // check if path is not empty
                     // from thread remove the two last character

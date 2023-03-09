@@ -191,7 +191,7 @@ def neoscoreTest():
 
 def dft(freq_hz):
     plt.clf()
-    home_path = pd.home()
+    home_path = pd.tempfolder()
     NUMPY_DATA = pd.tabread('audioArray')
     NUMPY_DATA = np.array(NUMPY_DATA)
     for file in os.listdir(home_path):

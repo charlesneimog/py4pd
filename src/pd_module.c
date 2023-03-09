@@ -22,8 +22,7 @@ PyObject *pdout(PyObject *self, PyObject *args) {
         outlet_float(py4pd->out_A, f);
     } else if (PyArg_ParseTuple(args, "s", &string)) {
         t_symbol *pd_symbol = gensym(string);
-        outlet_symbol(py4pd->out_A,
-                      pd_symbol);  // TODO: make this output without the symbol.
+        outlet_symbol(py4pd->out_A, pd_symbol);  // TODO: make this output without the symbol, just like fromsymbol.
         PyErr_Clear();
     } else if (PyArg_ParseTuple(args, "O", &args)) {
         int list_size = PyList_Size(args);
@@ -31,26 +30,22 @@ PyObject *pdout(PyObject *self, PyObject *args) {
         int i;
         for (i = 0; i < list_size; ++i) {
             PyObject *pValue_i = PyList_GetItem(args, i);
-            if (PyLong_Check(pValue_i)) {  // DOC: If the function return a list
-                                           // of integers
+            if (PyLong_Check(pValue_i)) {  // If the function return a list of integers
                 long result = PyLong_AsLong(pValue_i);
                 float result_float = (float)result;
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
-            } else if (PyFloat_Check(pValue_i)) {  // DOC: If the function
-                                                   // return a list of floats
+            } else if (PyFloat_Check(pValue_i)) {  // If the function return a list of floats
                 double result = PyFloat_AsDouble(pValue_i);
                 float result_float = (float)result;
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
-            } else if (PyUnicode_Check(pValue_i)) {  // DOC: If the function
-                                                     // return a list of strings
+            } else if (PyUnicode_Check(pValue_i)) {  // If the function return a list of strings
                 const char *result = PyUnicode_AsUTF8(pValue_i);
                 list_array[i].a_type = A_SYMBOL;
                 list_array[i].a_w.w_symbol = gensym(result);
             } else if (Py_IsNone(pValue_i)) {
-                // DOC: If the function return a list of None
-                // post("None");
+                // If the function return a list of None
             } else {
                 Py_DECREF(pValue_i);
                 Py_DECREF(args);
@@ -149,7 +144,7 @@ PyObject *pdsend(PyObject *self, PyObject *args) {
                     "[py.send] received a type 'dict', it must be a list, "
                     "string, int, or float.");
             PyErr_SetString(PyExc_TypeError,
-                            error_message);  // TODO: Check english
+                            error_message);  
             return NULL;
         }
         t_atom *list_array;
@@ -185,7 +180,7 @@ PyObject *pdsend(PyObject *self, PyObject *args) {
                         "list, it must be a string, int, or float.",
                         pValue_i->ob_type->tp_name, i);
                 PyErr_SetString(PyExc_TypeError,
-                                error_message);  // TODO: Check english
+                                error_message);  
                 Py_DECREF(pValue_i);
                 Py_DECREF(args);
                 free(list_array);
