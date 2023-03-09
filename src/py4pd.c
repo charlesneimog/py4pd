@@ -270,24 +270,29 @@ static void set_param(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     PyObject *key = PyUnicode_FromString(argv[0].a_w.w_symbol->s_name);
     PyObject *value = NULL;
     if (argv[1].a_type == A_SYMBOL) {
-        value = PyUnicode_FromString(argv[1].a_w.w_symbol->s_name);
+        const char *pyS = argv[1].a_w.w_symbol->s_name;
+        value = PyUnicode_FromString(pyS);
     }
     // check if the value is a float
     else if (argv[1].a_type == A_FLOAT) {
-        value = PyFloat_FromDouble(argv[1].a_w.w_float);
+        float f = argv[1].a_w.w_float;
+        value = PyFloat_FromDouble(f);
     }
     else {
         pd_error(x, "[py4pd] The value must be a symbol or a float!");
         return;
     }
     
-    // try to set the value
-    if (PyDict_SetItem(x->Dict, key, value) == -1) {
+    int result = PyDict_SetItem(x->Dict, key, value);
+
+    if (result == -1) {
         pd_error(x, "[py4pd] Error setting the parameter!");
         return;
     }
     else {
-        post("[py4pd] Parameter set!");
+        // get key from x->Dict
+        post("[py4pd] Parameter set in key %s", argv[0].a_w.w_symbol->s_name);
+
     }
 
     return;
@@ -784,9 +789,8 @@ t_int *py4pd_perform(t_int *w) {
     if (x->audioInput == 0 && x->audioOutput == 0) {
         return (w + 4);
     }
-    t_sample *audioIn =
-        (t_sample *)(w[2]);  // this is the input vector (the sound)
-    int n = (int)(w[3]);     // this is the vector size (number of samples, for
+    t_sample *audioIn = (t_sample *)(w[2]);  // this is the input vector (the sound)
+    int n = (int)(w[3]);     
                              // example 64)
     const npy_intp dims = n;
     PyObject *ArgsTuple, *pValue, *pAudio, *pSample;
@@ -812,10 +816,8 @@ t_int *py4pd_perform(t_int *w) {
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
     }
 
-    // WARNING: this can generate errors? How this will work on multithreading?
     PyObject *capsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
-    PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd",
-                       capsule);  // add the capsule to the python interpreter
+    PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule);  // add the capsule to the python interpreter
 
     // call the function
     pValue = PyObject_CallObject(x->function, ArgsTuple);
@@ -850,9 +852,10 @@ t_int *py4pd_perform(t_int *w) {
  * @return It will return the output the audio output.
  */
 t_int *py4pd_performAudioOutput(t_int *w) {
-    //  TODO: Check for memory leaks
 
     t_py *x = (t_py *)(w[1]);  // this is the object itself
+
+    // ======= TO AVOID CRASHES =======
     if (x->audioInput == 0 && x->audioOutput == 0) {
         return (w + 5);
     }
@@ -860,31 +863,35 @@ t_int *py4pd_performAudioOutput(t_int *w) {
         pd_error(x, "[py4pd] You need to call a function before run!");
         return (w + 5);
     }
-    t_sample *audioIn = (t_sample *)(w[2]);  // this is the input vector (the sound)
-    t_sample *audioOut = (t_sample *)(w[3]);  // this is the output vector (the sound)
-    int n = (int)(w[4]);     // this is the vector size (number of samples, for example 64)
-    const npy_intp dims = n;
-    PyObject *ArgsTuple, *pValue, *pAudio, *pSample;
-
-    pSample = NULL;  // NOTE: This is the way to not distorce the audio output
-
 
     if (x->audioInput == 1 && x->audioOutput == 0 && x->py_arg_numbers != 1){
         pd_error(x, "[py4pd] When -audioin is used, the function must just one argument!");
         return (w + 5);
     }
-    if (x->audioOutput == 1 && x->audioInput == 0 &&  x->py_arg_numbers != 0){
+    else if (x->audioOutput == 1 && x->audioInput == 0 &&  x->py_arg_numbers != 0){
         pd_error(x, "[py4pd] When -audioout is used, the function must not have arguments!");
         return (w + 5);
     }
+    // ======= TO AVOID CRASHES =======
 
-    if (x->audioInput == 1){
+    t_sample *audioIn = (t_sample *)(w[2]);  // this is the input vector (the sound)
+    t_sample *audioOut = (t_sample *)(w[3]);  // this is the output vector (the sound)
+    int n = (int)(w[4]);     // this is the vector size (number of samples, for example 64)
+   
+    PyObject *ArgsTuple, *pValue, *pAudio, *pSample;
+
+    pSample = NULL;  // NOTE: This is the way to not distorce the audio output
+    pAudio = NULL; 
+
+    if (x->audioInput == 1) {
         if (x->use_NumpyArray == 1) {
+            const npy_intp dims = n;
             pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
             ArgsTuple = PyTuple_New(1);
             PyTuple_SetItem(ArgsTuple, 0, pAudio);
-        } else {
-            // pSample = NULL;  NOTE: this change the sound.
+        } 
+        else {
+            // pSample = NULL;  NOTE: this distorce the sound.
             // pAudio = PyList_New(n); cconvert audioIn in tuple
             pAudio = PyTuple_New(n);
             for (int i = 0; i < n; i++) {
@@ -893,42 +900,51 @@ t_int *py4pd_performAudioOutput(t_int *w) {
             }
             ArgsTuple = PyTuple_New(1);
             PyTuple_SetItem(ArgsTuple, 0, pAudio);
-            // if (pSample != NULL) { NOTE: this change the sound.
+            // if (pSample != NULL) { NOTE: this distorce the sound.
             //     Py_DECREF(pSample);
             // }
         }
-    } 
+            
+    }
     else {
         ArgsTuple = PyTuple_New(0);
     }
-        
+
     // WARNING: this can generate errors? How this will work on multithreading? || In PEP 684 this will be per interpreter or global?
     PyObject *capsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
     PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule);  // add the capsule to the python interpreter
+
     pValue = PyObject_CallObject(x->function, ArgsTuple);
 
     if (pValue != NULL) {
+        // create array for audioout
         if (PyList_Check(pValue)) {
             for (int i = 0; i < n; i++) {
                 audioOut[i] = PyFloat_AsDouble(PyList_GetItem(pValue, i));
-            }
-        } else if (PyTuple_Check(pValue)) {
+            }        
+        } 
+        
+        if (PyTuple_Check(pValue)) {
             for (int i = 0; i < n; i++) {
                 audioOut[i] = PyFloat_AsDouble(PyTuple_GetItem(pValue, i));
             }
-        } else if (x->numpyImported == 1) {
+        } 
+        
+        if (x->numpyImported == 1) {
+            PyArrayObject *pArray = NULL;
             if (PyArray_Check(pValue)) {
-                PyArrayObject *pArray = (PyArrayObject *)pValue;
-                for (int i = 0; i < n; i++) {
-                    audioOut[i] = PyFloat_AsDouble(PyArray_GETITEM(pArray, PyArray_GETPTR1(pArray, i)));
-                }
+                pArray = (PyArrayObject *)pValue;
+                memcpy(audioOut, PyArray_DATA(pArray), n * sizeof(t_sample));
+                Py_DECREF(pArray);
             } 
             else {
                 pd_error(x, "[py4pd] The function must return a list, a tuple or a numpy array, returned: %s", pValue->ob_type->tp_name);
+                return (w + 5);
             }
         } 
         else {
-            pd_error(x, "[py4pd] The function must return a list, since numpy array is disabled, returned: %s", pValue->ob_type->tp_name);
+            pd_error(x, "[py4pd] The function must return a list or tuplet, since numpy array is disabled, returned: %s", pValue->ob_type->tp_name);
+            return (w + 5);
         }
     } 
     else {  // if the function returns a error
@@ -948,6 +964,7 @@ t_int *py4pd_performAudioOutput(t_int *w) {
     if (pSample != NULL) {
         Py_DECREF(pSample);
     }
+
     return (w + 5);
 }
 
@@ -957,7 +974,7 @@ t_int *py4pd_performAudioOutput(t_int *w) {
  * @param w is the signal vector
  * @return It will return the output the audio output.
  */
-static void py4pd_dspin(t_py *x, t_signal **sp) {
+static void py4pd_audio_dsp(t_py *x, t_signal **sp) {
     if (x->audioOutput == 0) {
         dsp_add(py4pd_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
     } 
@@ -1030,8 +1047,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                 py4pdArgs == gensym("-canvas")) {
                 visMODE = 1;
             } 
-            else if (py4pdArgs == gensym("-audio") ||
-                       py4pdArgs == gensym("-audioout")) {
+            else if (py4pdArgs == gensym("-audio") || py4pdArgs == gensym("-audioout")) {
                 audioOUT = 1;
             }
         }
@@ -1078,18 +1094,13 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                 py4pd_InitVisMode(x, c, py4pdArgs, i, argc, argv);
                 x->visMode = 1;
                 x->x_outline = 1;
-            } 
-            else if (py4pdArgs == gensym("-audioout")) {
-                // post("[py4pd] Audio Outlets enabled");
-                x->audioOutput = 1;
-                x->use_NumpyArray = 0;
-                x->out_A = outlet_new(
-                    &x->x_obj, gensym("signal"));  // create a signal outlet
+                // remove the '-picture' from the arguments
                 int j;
                 for (j = i; j < argc; j++) {
                     argv[j] = argv[j + 1];
                 }
                 argc--;
+
             } 
             else if (py4pdArgs == gensym("-nvim") ||
                         py4pdArgs == gensym("-vscode") ||
@@ -1108,8 +1119,28 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
             } 
             else if (py4pdArgs == gensym("-audioin")) {
                 x->audioInput = 1;
+                x->audioOutput = 0;
                 x->use_NumpyArray = 0;
+                int j;
+                for (j = i; j < argc; j++) {
+                    argv[j] = argv[j + 1];
+                }
+                argc--;
+
             } 
+            else if (py4pdArgs == gensym("-audioout")) {
+                // post("[py4pd] Audio Outlets enabled");
+                x->audioOutput = 1;
+                x->audioInput = 0;
+                x->use_NumpyArray = 0;
+                x->out_A = outlet_new(
+                    &x->x_obj, gensym("signal"));  // create a signal outlet
+                int j;
+                for (j = i; j < argc; j++) {
+                    argv[j] = argv[j + 1];
+                }
+                argc--;
+            }
             else if (py4pdArgs == gensym("-audio")) {
                 x->audioInput = 1;
                 x->audioOutput = 1;
@@ -1202,8 +1233,8 @@ void py4pd_setup(void) {
     py4pd_classAudioOut = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
 
     // Sound in
-    class_addmethod(py4pd_class, (t_method)py4pd_dspin, gensym("dsp"), A_CANT, 0);  // add a method to a class
-    class_addmethod(py4pd_classAudioOut, (t_method)py4pd_dspin, gensym("dsp"), A_CANT, 0);  // add a method to a class
+    class_addmethod(py4pd_class, (t_method)py4pd_audio_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
+    class_addmethod(py4pd_classAudioOut, (t_method)py4pd_audio_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
     CLASS_MAINSIGNALIN(py4pd_class, t_py, py4pd_audio);  
     CLASS_MAINSIGNALIN(py4pd_classAudioOut, t_py, py4pd_audio);  
     class_addmethod(py4pd_class, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0);  // add a method to a class

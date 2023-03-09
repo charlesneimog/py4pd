@@ -21,6 +21,16 @@
 #define PY4PD_MINOR_VERSION 6
 #define PY4PD_MICRO_VERSION 0
 
+// DEFINE STANDARD IDE EDITOR
+
+#ifndef PY4PD_EDITOR
+    #ifdef _WIN64
+        #define PY4PD_EDITOR "notepad"
+    #else
+        #define PY4PD_EDITOR "gedit"
+    #endif
+#endif
+
 
 // =====================================
 typedef struct _py4pd_edit_proxy{ 

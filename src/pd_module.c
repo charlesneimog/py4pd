@@ -2,6 +2,7 @@
 #include "py4pd.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
+#include "pyerrors.h"
 
 // ======================================
 // ======== py4pd embbeded module =======
@@ -440,11 +441,17 @@ PyObject *pdkey(PyObject *self, PyObject *args) {
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
     // ================================
     // get value from dict
-    PyObject *value = PyDict_GetItemString(py4pd->Dict, key);
-    if (value == NULL) {
-        post("[Python] pd.param: key not found");
+    if (py4pd->Dict == NULL) {
+        PyErr_Clear();
         Py_RETURN_NONE;
     }
+
+    PyObject *value = PyDict_GetItemString(py4pd->Dict, key);
+    if (value == NULL) {
+        PyErr_Clear();
+        Py_RETURN_NONE;
+    }
+    Py_INCREF(value);
     return value;
 }
 

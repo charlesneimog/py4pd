@@ -449,7 +449,7 @@ int *set_py4pd_config(t_py *x) {
     x->packages_path = gensym(PADRAO_packages_path);
     x->thread = 0;
     if (x->editorName == NULL){
-        x->editorName = gensym("vscode");
+        x->editorName = gensym(PY4PD_EDITOR);
     }
     char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1));  //
     strcpy(config_path, x->home_path->s_name);           // copy string one into the result.
