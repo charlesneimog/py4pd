@@ -172,6 +172,93 @@ void removeChar(char *str, char c) {
 }
 
 // =====================================================================
+char *py4pd_mtok(char *input, char *delimiter) {
+    // adapted from stack overflow - Derek Kwan
+    // designed to work like strtok
+    static char *string;
+    //mif not passed null, use static var
+    if(input != NULL)
+        string = input;
+    //if reached the end, just return the static var, i think
+    if(string == NULL)
+        return string;
+    //return pointer of first occurrence of delim
+    //added, keep going until first non delim
+    char *end = strstr(string, delimiter);
+    while(end == string){
+        *end = '\0';
+        string = end + strlen(delimiter);
+        end = strstr(string, delimiter);
+    };
+    //if not found, just return the string
+    if(end == NULL){
+        char *temp = string;
+        string = NULL;
+        return temp;
+    }
+    char *temp = string;
+    // set thing pointed to at end as null char, advance pointer to after delim
+    *end = '\0';
+    string = end + strlen(delimiter);
+    return(temp);
+}
+
+
+// =====================================================================
+/**
+ * @brief Convert and output Python Values to PureData values
+ * @param x is the py4pd object
+ * @param pValue is the Python value to convert
+ * @return nothing, but output the value to the outlet
+ */
+
+static void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){
+    //new and redone - Derek Kwan
+    long unsigned int seplen = strlen(" ");
+    seplen++;
+    char *sep = t_getbytes(seplen * sizeof(*sep));
+    memset(sep, '\0', seplen);
+    strcpy(sep, " "); 
+    if(s){
+        // get length of input string
+        long unsigned int iptlen = strlen(s->s_name);
+        // allocate t_atom [] on length of string
+        // hacky way of making sure there's enough space
+        t_atom* out = t_getbytes(iptlen * sizeof(*out));
+        iptlen++;
+        char *newstr = t_getbytes(iptlen * sizeof(*newstr));
+        memset(newstr, '\0', iptlen);
+        strcpy(newstr, s->s_name);
+        int atompos = 0; //position in atom
+        // parsing by token
+        char *ret = py4pd_mtok(newstr, sep);
+        char *err; // error pointer
+        while(ret != NULL){
+            if(strlen(ret) > 0){
+                int allnums = isNumericOrDot(ret); // flag if all nums
+                if(allnums){ // if errpointer is at beginning, that means we've got a float
+                    double f = strtod(ret, &err);
+                    SETFLOAT(&out[atompos], (t_float)f);
+                }
+                else{ // else we're dealing with a symbol
+                    t_symbol * cursym = gensym(ret);
+                    SETSYMBOL(&out[atompos], cursym);
+                };
+                atompos++; //increment position in atom
+            };
+            ret = py4pd_mtok(NULL, sep);
+        };
+        if(out->a_type == A_SYMBOL)
+            outlet_anything(((t_object *)x)->ob_outlet, out->a_w.w_symbol, atompos-1, out+1);
+        else if(out->a_type == A_FLOAT && atompos >= 1)
+            outlet_list(((t_object *)x)->ob_outlet, &s_list, atompos, out);
+        t_freebytes(out, iptlen * sizeof(*out));
+        t_freebytes(newstr, iptlen * sizeof(*newstr));
+    };
+    t_freebytes(sep, seplen * sizeof(*sep));
+}
+
+// =====================================================================
 /**
  * @brief Convert and output Python Values to PureData values
  * @param x is the py4pd object
@@ -203,23 +290,11 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
                 list_array[listIndex].a_w.w_float = result_float;
                 listIndex++;
             } else if (PyUnicode_Check(pValue_i)) {  // If the function return a
-                                                     // list of strings
-                const char *result = PyUnicode_AsUTF8(pValue_i);
-                if (strchr(result, ' ') != NULL) {
-                    char *result_copy = (char *)malloc(strlen(result) * sizeof(char));
-                    strcpy(result_copy, result);
-                    char *token = strtok(result_copy, " ");
-                    while (token != NULL) {
-                        list_array = (t_atom *)realloc(list_array, (list_size + 1) * sizeof(t_atom));
-                        list_array[listIndex].a_type = A_GIMME; // A_SYMBOL; 
-                        list_array[listIndex].a_w.w_symbol = gensym(token);
-                        listIndex++;
-                        list_size++;
-                        token = strtok(NULL, " ");
-                    }
-                    free(result_copy);
-                    continue;
-                }
+                const char *result = PyUnicode_AsUTF8(pValue_i); 
+                list_array[i].a_type = A_SYMBOL;
+                list_array[i].a_w.w_symbol = gensym(result);
+                listIndex++;
+
             } else if (Py_IsNone(pValue_i)) {  // If the function return a list
                                                // of None
             } else {
@@ -238,35 +313,17 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
             long result =
                 PyLong_AsLong(pValue);  // If the function return a integer
             outlet_float(x->out_A, result);
-        } else if (PyFloat_Check(pValue)) {
+        } 
+        else if (PyFloat_Check(pValue)) {
             double result = PyFloat_AsDouble(pValue);  // If the function return a float
             float result_float = (float)result;
             outlet_float(x->out_A, result_float);
-        } else if (PyUnicode_Check(pValue)) {
-            const char *result = PyUnicode_AsUTF8(pValue);  // If the function return a string
-            // check if there is a space
-            char *result_copy = (char *)malloc(strlen(result) * sizeof(char));   
-            strcpy(result_copy, result);
-            char *token = strtok(result_copy, " ");
-            if (token != NULL) {
-                t_atom *list_array = (t_atom *)malloc(sizeof(t_atom));
-                int list_size = 0;
-                int listIndex = 0;
-                while (token != NULL) {
-                    list_array = (t_atom *)realloc(list_array, (list_size + 1) * sizeof(t_atom));
-                    list_array[listIndex].a_type = A_GIMME; // A_SYMBOL; 
-                    list_array[listIndex].a_w.w_symbol = gensym(token);
-                    listIndex++;
-                    list_size++;
-                    token = strtok(NULL, " ");
-                }
-                outlet_list(x->out_A, 0, list_size, list_array);
-                free(list_array);
-                free(result_copy);
-                return 0;
-            }
-
-        } else if (Py_IsNone(pValue)) {
+        } 
+        else if (PyUnicode_Check(pValue)) {
+            const char *result = PyUnicode_AsUTF8(pValue); // If the function return a string
+            py4pd_fromsymbol_symbol(x, gensym(result));
+        } 
+        else if (Py_IsNone(pValue)) {
             // x->function_name->s_name); 
         }
         // when function not use return
