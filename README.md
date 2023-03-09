@@ -1,4 +1,10 @@
 <p align="center">
+  <a href="https://github.com/plugdata-team/plugdata/wiki">
+    <img src="https://raw.githubusercontent.com/charlesneimog/py4pd/develop/docs/assets/py4pd.svg" alt="Logo" width=130 height=130>
+  </a>
+ </p>
+
+<p align="center">
   <h1 align="center">py4pd</h1>
   <h4 align="center">Python in the PureData environment.</h4>
 </p>
@@ -20,21 +26,7 @@
 * OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
 * Sound analisys with `magenta`, `librosa`, and `pyAudioAnalaysis`;
 
-Click on `Examples` to see more...
-
-<details>
-  <summary><h3>Examples</h3></summary>
-  <details>
-    <summary><h4>Scores</h4></summary>
-      <img src=https://raw.githubusercontent.com/charlesneimog/py4pd/develop/resources/examples/scores/score.gif </img>
-  </details>
-  <details>
-    <summary><h4>Data graphs</h4></summary>
-      <img src=https://raw.githubusercontent.com/charlesneimog/py4pd/develop/resources/examples/scores/score.gif </img>
-  </details>
-</details>
-
-See more in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Examples).
+Go to ![Docs](https://py4pd.readthedocs.io/en/latest/) to see examples.
 
 
 ### Download py4pd
@@ -47,7 +39,7 @@ See more in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Example
 
 ## Wiki | Instructions for use
 
-* If you want to use, read the wiki page: https://github.com/charlesneimog/py4pd/wiki.
+* Go to ![Docs](https://py4pd.readthedocs.io/en/latest/).
 
 ## Building from Source
 
