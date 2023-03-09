@@ -1,4 +1,5 @@
 #include "py4pd.h"
+#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
@@ -17,6 +18,28 @@ int object_count; //
 // ============================================
 // ========= PY4PD METHODS FUNCTIONS ==========
 // ============================================
+static void version(t_py *x){
+    int major, minor, micro;
+    major = PY4PD_MAJOR_VERSION;
+    minor = PY4PD_MINOR_VERSION;
+    micro = PY4PD_MICRO_VERSION;
+    t_atom version[3];
+    SETFLOAT(&version[0], major);
+    SETFLOAT(&version[1], minor);
+    SETFLOAT(&version[2], micro);
+    outlet_anything(x->out_A, gensym("py4pd"), 3, version);
+    major = PY_MAJOR_VERSION;
+    minor = PY_MINOR_VERSION;
+    micro = PY_MICRO_VERSION;
+    SETFLOAT(&version[0], major);
+    SETFLOAT(&version[1], minor);
+    SETFLOAT(&version[2], micro);
+    outlet_anything(x->out_A, gensym("python"), 3, version);
+}
+
+
+
+
 /**
  * @brief set the home path to py4pd
  * @brief Get the config from py4pd.cfg file
@@ -1017,7 +1040,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         object_count = 1;  // To count the numbers of objects, and finalize the
         post("");
         post("[py4pd] by Charles K. Neimog");
-        post("[py4pd] Version 0.6.0       ");
+        post("[py4pd] Version %d.%d.%d", PY4PD_MAJOR_VERSION, PY4PD_MINOR_VERSION, PY4PD_MICRO_VERSION);
         post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
         post("");
         PyImport_AppendInittab("pd", PyInit_pd);  // Add the pd module to the python interpreter
@@ -1192,6 +1215,11 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class, (t_method)restartPython, gensym("restart"), 0, 0);  // it restart python interpreter
     class_addmethod(py4pd_class_VIS, (t_method)restartPython, gensym("restart"), 0, 0);  // it restart python interpreter
     class_addmethod(py4pd_classAudioOut, (t_method)restartPython, gensym("restart"), 0, 0);  // it restart python interpreter
+
+    // Object INFO
+    class_addmethod(py4pd_class, (t_method)version, gensym("version"), 0, 0);  // show version
+    class_addmethod(py4pd_class_VIS, (t_method)version, gensym("version"), 0, 0);  // show version
+    class_addmethod(py4pd_classAudioOut, (t_method)version, gensym("version"), 0, 0);  // show version
 
     // Edit Python Code
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0);  // open editor  WARNING: will be removed

@@ -13,15 +13,14 @@
 #else
     #include <pthread.h>
     #include <Python.h>
-    #include <dirent.h>
+    // #include <dirent.h>
 #endif
 
 
-#ifndef IHEIGHT
-// Purr Data doesn't have these, hopefully the vanilla values will work
-#define IHEIGHT 3       /* height of an inlet in pixels */
-#define OHEIGHT 3       /* height of an outlet in pixels */
-#endif
+#define PY4PD_MAJOR_VERSION 0
+#define PY4PD_MINOR_VERSION 6
+#define PY4PD_MICRO_VERSION 0
+
 
 // =====================================
 typedef struct _py4pd_edit_proxy{ 
