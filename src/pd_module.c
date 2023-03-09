@@ -153,25 +153,22 @@ PyObject *pdsend(PyObject *self, PyObject *args) {
         int i;
         for (i = 0; i < list_size; ++i) {
             PyObject *pValue_i = PyList_GetItem(listargs, i);
-            if (PyLong_Check(pValue_i)) {  // DOC: If the function return a list
-                                           // of integers
+            if (PyLong_Check(pValue_i)) {  
                 long result = PyLong_AsLong(pValue_i);
                 float result_float = (float)result;
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
-            } else if (PyFloat_Check(pValue_i)) {  // DOC: If the function
-                                                   // return a list of floats
+            } else if (PyFloat_Check(pValue_i)) {  
+                                                  
                 double result = PyFloat_AsDouble(pValue_i);
                 float result_float = (float)result;
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
-            } else if (PyUnicode_Check(pValue_i)) {  // DOC: If the function
-                                                     // return a list of strings
+            } else if (PyUnicode_Check(pValue_i)) { 
                 const char *result = PyUnicode_AsUTF8(pValue_i);
                 list_array[i].a_type = A_SYMBOL;
                 list_array[i].a_w.w_symbol = gensym(result);
             } else if (Py_IsNone(pValue_i)) {
-                // DOC: If the function return a list of None
                 // post("None");
             } else {
                 char error_message[100];
@@ -445,10 +442,9 @@ PyObject *pdkey(PyObject *self, PyObject *args) {
     // get value from dict
     PyObject *value = PyDict_GetItemString(py4pd->Dict, key);
     if (value == NULL) {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.param: key not found");
+        post("[Python] pd.param: key not found");
         Py_RETURN_NONE;
     }
-    // PyErr_Clear();
     return value;
 }
 
