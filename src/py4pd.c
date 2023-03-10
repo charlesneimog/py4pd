@@ -1,5 +1,6 @@
 #include "py4pd.h"
 #include "m_pd.h"
+#include "object.h"
 #include "pd_module.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
@@ -430,6 +431,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     Py_DECREF(home_path);
     Py_DECREF(site_package);
     Py_DECREF(py4pdScripts);
+    free(pyScripts_folder);
 
     // =====================
     pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file
@@ -534,8 +536,6 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
             pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %i arguments, received %i!", 
                         x->function_name->s_name, (int)x->py_arg_numbers,
                         argCount);
-            post("Length of tuple: %i", argCount);
-            post("Length of args: %i", x->py_arg_numbers);
             return;
         }
     } 
@@ -547,8 +547,8 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     PyObject *capsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
     PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule);  // add the capsule to the python interpreter
-
     pValue = PyObject_CallObject(x->function, ArgsTuple);
+    Py_DECREF(capsule);
     if (pValue != NULL) {                // if the function returns a value
         //   TODO: add pointer output when x->Python is 1;
 
@@ -818,9 +818,9 @@ t_int *py4pd_perform(t_int *w) {
 
     PyObject *capsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
     PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule);  // add the capsule to the python interpreter
-
-    // call the function
     pValue = PyObject_CallObject(x->function, ArgsTuple);
+    Py_DECREF(capsule);
+
     if (pValue != NULL) {
         py4pd_convert_to_pd(x, pValue);  // convert the value to pd
     } 
@@ -884,7 +884,7 @@ t_int *py4pd_performAudioOutput(t_int *w) {
     pAudio = NULL; 
 
     if (x->audioInput == 1) {
-        if (x->use_NumpyArray == 1) {
+        if (x->numpyImported == 1) {
             const npy_intp dims = n;
             pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
             ArgsTuple = PyTuple_New(1);
@@ -892,11 +892,10 @@ t_int *py4pd_performAudioOutput(t_int *w) {
         } 
         else {
             // pSample = NULL;  NOTE: this distorce the sound.
-            // pAudio = PyList_New(n); cconvert audioIn in tuple
-            pAudio = PyTuple_New(n);
+            pAudio = PyList_New(n);
             for (int i = 0; i < n; i++) {
                 pSample = PyFloat_FromDouble(audioIn[i]);
-                PyTuple_SetItem(pAudio, i, pSample);
+                PyList_SetItem(pAudio, i, pSample);
             }
             ArgsTuple = PyTuple_New(1);
             PyTuple_SetItem(ArgsTuple, 0, pAudio);
@@ -904,7 +903,6 @@ t_int *py4pd_performAudioOutput(t_int *w) {
             //     Py_DECREF(pSample);
             // }
         }
-            
     }
     else {
         ArgsTuple = PyTuple_New(0);
@@ -913,38 +911,42 @@ t_int *py4pd_performAudioOutput(t_int *w) {
     // WARNING: this can generate errors? How this will work on multithreading? || In PEP 684 this will be per interpreter or global?
     PyObject *capsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
     PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule);  // add the capsule to the python interpreter
-
     pValue = PyObject_CallObject(x->function, ArgsTuple);
-
+    Py_DECREF(capsule);  // remove the capsule from the python interpreter
+    
     if (pValue != NULL) {
-        // create array for audioout
         if (PyList_Check(pValue)) {
             for (int i = 0; i < n; i++) {
                 audioOut[i] = PyFloat_AsDouble(PyList_GetItem(pValue, i));
             }        
         } 
-        
-        if (PyTuple_Check(pValue)) {
+        else if (PyTuple_Check(pValue)) {
             for (int i = 0; i < n; i++) {
                 audioOut[i] = PyFloat_AsDouble(PyTuple_GetItem(pValue, i));
             }
         } 
-        
-        if (x->numpyImported == 1) {
-            PyArrayObject *pArray = NULL;
+        else if (x->numpyImported == 1 && x->use_NumpyArray == 1) {
             if (PyArray_Check(pValue)) {
-                pArray = (PyArrayObject *)pValue;
-                memcpy(audioOut, PyArray_DATA(pArray), n * sizeof(t_sample));
-                Py_DECREF(pArray);
+                PyArrayObject *pArray = PyArray_GETCONTIGUOUS((PyArrayObject *)pValue);
+                int arrayLength = PyArray_SIZE(pArray);
+                // check the dimensions of the array
+                if (arrayLength == n && PyArray_NDIM(pArray) == 1) {
+                    memcpy(audioOut, PyArray_DATA(pArray), n * sizeof(float));
+                    Py_DECREF(pArray);
+                }
+                else {
+                    pd_error(x, "[py4pd] The numpy array must have the same length of the vecsize and have 1 dim. Returned: %d samples and %d dims", arrayLength, PyArray_NDIM(pArray));
+                    // return (w + 5);
+                }
             } 
             else {
                 pd_error(x, "[py4pd] The function must return a list, a tuple or a numpy array, returned: %s", pValue->ob_type->tp_name);
-                return (w + 5);
+                // return (w + 5);
             }
         } 
         else {
             pd_error(x, "[py4pd] The function must return a list or tuplet, since numpy array is disabled, returned: %s", pValue->ob_type->tp_name);
-            return (w + 5);
+            // return (w + 5);
         }
     } 
     else {  // if the function returns a error
@@ -959,11 +961,16 @@ t_int *py4pd_performAudioOutput(t_int *w) {
         Py_XDECREF(ptraceback);
         PyErr_Clear();
     }
-    Py_XDECREF(pValue);
+
+
+
     Py_DECREF(ArgsTuple);
-    if (pSample != NULL) {
-        Py_DECREF(pSample);
-    }
+    Py_XDECREF(pValue);
+    Py_XDECREF(pSample); 
+    memset(pAudio, 0, n * sizeof(float));  
+
+
+
 
     return (w + 5);
 }
