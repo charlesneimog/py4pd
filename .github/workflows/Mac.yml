@@ -5,7 +5,9 @@ on:
     branches: [ "master" , "v-0.5.0", "develop" ]
     paths:
       - 'src/**'
+      - "Makefile"
       - '.github/workflows/Mac.yml'
+      	
   pull_request:
     branches: [ "master" ]
     paths:
