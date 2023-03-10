@@ -21,7 +21,7 @@ else ifeq (Linux,$(findstring Linux,$(uname)))
 # =================================== MacOS =====================================
 else ifeq (Darwin,$(findstring Darwin,$(uname)))
   PYTHON_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
-  NUMPY_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import numpy; print(np.get_include())')
+  NUMPY_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import numpy.distutils.misc_util as np_utils; print(np_utils.get_numpy_include_dirs()[0])')
   cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -mmacosx-version-min=10.9 -DPY4PD_EDITOR=\"nvim\"
   PYTHON_LIB := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
   ldlibs = -l dl -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wno-null-pointer-subtraction
