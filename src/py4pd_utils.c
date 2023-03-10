@@ -1,5 +1,6 @@
 #include "m_pd.h"
 #include "pd_module.h"
+#include "py4pd.h"
 #include "py4pd_utils.h"
 
 
@@ -26,6 +27,8 @@ void findpy4pd_folder(t_py *x){
         *last_slash = '\0';
     }
     x->py4pd_folder = gensym(path);
+    free(path);
+
     #ifdef _WIN64
         // get user folder
         char *py4pd_folder = x->py4pd_folder->s_name;
@@ -49,6 +52,7 @@ void findpy4pd_folder(t_py *x){
             sprintf(command, "mkdir %s", py4pdScripts);
             system(command);
         }
+        // free(py4pdScripts);
     #endif
 }
 
@@ -85,6 +89,7 @@ void py4pd_tempfolder(t_py *x) {
             sprintf(command, "mkdir %s", temp_folder);
             system(command);
         }
+        // free(temp_folder);
 
     #endif
 }
@@ -444,16 +449,15 @@ void *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
 
 int *set_py4pd_config(t_py *x) {
     char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py-modules/") + 1));  //
-    strcpy(PADRAO_packages_path, x->home_path->s_name);  // copy string one into the result.
-    strcat(PADRAO_packages_path, "/py-modules/");  // append string two to the result.
+    snprintf(PADRAO_packages_path, strlen(x->home_path->s_name) + strlen("/py-modules/") + 1, "%s/py-modules/", x->home_path->s_name);
     x->packages_path = gensym(PADRAO_packages_path);
     x->thread = 0;
     if (x->editorName == NULL){
-        x->editorName = gensym(PY4PD_EDITOR);
+        const char *editor = PY4PD_EDITOR;
+        x->editorName = gensym(editor);
     }
-    char *config_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py4pd.cfg") + 1));  //
-    strcpy(config_path, x->home_path->s_name);           // copy string one into the result.
-    strcat(config_path, "/py4pd.cfg");      // append string two to the result.
+    char config_path[PATH_MAX];
+    snprintf(config_path, sizeof(config_path), "%s/py4pd.cfg", x->home_path->s_name);
     if (access(config_path, F_OK) != -1) {  // check if file exists
         FILE *file = fopen(config_path, "r");      /* should check the result */
         char line[256];                            // line buffer
@@ -524,6 +528,7 @@ int *set_py4pd_config(t_py *x) {
         fclose(file);  // close file
     }
 
+    // free(PADRAO_packages_path);  // free memory
     return 0;
 }
 

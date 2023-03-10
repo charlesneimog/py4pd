@@ -412,10 +412,8 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     PyObject *pModule, *pFunc;  // Create the variables of the python objects
 
     // =====================
-    // create one folder using x->py4pd_folder->s_name + "/pyScripts"
-    char *pyScripts_folder = malloc(strlen(x->py4pd_folder->s_name) + 12);
-    strcpy(pyScripts_folder, x->py4pd_folder->s_name);
-    strcat(pyScripts_folder, "/resources/scripts");
+    char *pyScripts_folder = malloc(strlen(x->py4pd_folder->s_name) + 20); // allocate extra space
+    snprintf(pyScripts_folder, strlen(x->py4pd_folder->s_name) + 20, "%s/resources/scripts", x->py4pd_folder->s_name);
     // =====================
     // Add aditional path to python to work with Pure Data
     PyObject *home_path = PyUnicode_FromString(x->home_path->s_name);  // Place where script file will probably be
@@ -428,7 +426,10 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     Py_DECREF(home_path);
     Py_DECREF(site_package);
     Py_DECREF(py4pdScripts);
-    free(pyScripts_folder);
+    // free(pyScripts_folder);
+    post("py4pd scripts folder: %s", pyScripts_folder);
+    post("x->packages_path: %s", x->packages_path->s_name);
+    post("x->home_path: %s", x->home_path->s_name);
 
     // =====================
     pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file
@@ -489,6 +490,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);
         Py_XDECREF(pModule);
+        Py_XDECREF(pFunc);
         PyErr_Clear();
     }
     return;
@@ -964,9 +966,7 @@ t_int *py4pd_performAudioOutput(t_int *w) {
     Py_DECREF(ArgsTuple);
     Py_XDECREF(pValue);
     Py_XDECREF(pSample); 
-    memset(pAudio, 0, n * sizeof(float));  
-
-
+    // memset(pAudio, 0, n * sizeof(float));  
 
 
     return (w + 5);
@@ -1076,6 +1076,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     x->audioInput = 0;
     x->audioOutput = 0;
     x->visMode = 0;
+    x->editorName = NULL;
 
     if (!Py_IsInitialized()) {
         object_count = 1;  // To count the numbers of objects, and finalize the

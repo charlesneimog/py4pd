@@ -143,6 +143,22 @@ def pd_audioout(audio):
     return audio
 
 
+
+def senoide():
+    sample_rate = pd.SAMPLERATE
+    # duration of 64 samples
+    duration = pd.VECSIZE
+    freq = pd.getkey("freq")
+    if freq == None:
+        freq = 440
+    # create a sine wave
+    sine_wave = np.sin(2 * np.pi * np.arange(duration) * freq / sample_rate)
+    # convert to np.float32
+    sine_wave = sine_wave.astype(np.float32)
+    return sine_wave
+
+
+
 def pd_audionoise(audio):
     "It sends a message to the py4pd message box."
     audiolen = len(audio) + 1
@@ -165,6 +181,80 @@ def whereFiles():
 def noArgs():
     "It returns the path of the files."
     return "ok"
+
+
+
+
+def getpitchKey(pitch):
+    note = {
+        # natural
+        'c': ['c', ''],
+        'd': ['d', ''],
+        'e': ['e', ''],
+        'f': ['f', ''],
+        'g': ['g', ''],
+        'a': ['a', ''],
+        'b': ['b', ''],
+        # sharp
+        'c#': ['c', 'accidentalSharp'],
+        'd#': ['d', 'accidentalSharp'],
+        'e#': ['e', 'accidentalSharp'],
+        'f#': ['f', 'accidentalSharp'],
+        'g#': ['g', 'accidentalSharp'],
+        'a#': ['a', 'accidentalSharp'],
+        'b#': ['b', 'accidentalSharp'],
+        # flat
+        'cb': ['c', 'accidentalFlat'],
+        'db': ['d', 'accidentalFlat'],
+        'eb': ['e', 'accidentalFlat'],
+        'fb': ['f', 'accidentalFlat'],
+        'gb': ['g', 'accidentalFlat'],
+        'ab': ['a', 'accidentalFlat'],
+        'bb': ['b', 'accidentalFlat'],
+    }
+    return note[pitch]
+
+
+def note(pitches):
+    try:
+        neoscore.shutdown() # to avoid errors
+    except BaseException:
+        pass
+    neoscore.setup()
+    py4pdTMPfolder = pd.tempfolder()
+    for file in py4pdTMPfolder:
+        if file.endswith(".ppm"):
+            try:
+                os.remove(py4pdTMPfolder + "/" + file)
+            except BaseException:
+                pass
+    staffSoprano = Staff((Mm(0), Mm(0)), None, Mm(30))
+    trebleClef = 'treble'
+    Clef(ZERO, staffSoprano, trebleClef)
+    staffBaixo = Staff((ZERO, Mm(15)), None, Mm(30))
+    bassClef = 'bass'
+    Clef(ZERO, staffBaixo, bassClef)
+    Path.rect((Mm(-10), Mm(-10)), None, Mm(42), Mm(42),
+              Brush(Color(0, 0, 0, 0)), Pen(thickness=Mm(0.5)))
+    for pitch in pitches:
+        # in pitch remove not number
+        pitchWithoutNumber = pitch.replace(pitch[-1], '')
+        pitchOctave = int(pitch[-1])
+        pitchClass, accidental = getpitchKey(pitchWithoutNumber)
+        note = [(pitchClass, accidental, pitchOctave)]
+        if pitchOctave < 4:
+            Chordrest(Mm(5), staffBaixo, note, (int(1), int(1)))
+        else:
+            Chordrest(Mm(5), staffSoprano, note, (int(1), int(1)))
+    randomNumber = randint(1, 100)
+    notePathName = py4pdTMPfolder + "/" + pitch + f"{randomNumber}.ppm"
+    neoscore.render_image(rect=None, dest=notePathName, dpi=150, wait=True)
+    neoscore.shutdown()
+    if os.name == 'nt':
+        notePathName = notePathName.replace("\\", "/")
+    pd.print(str(notePathName))
+    pd.show(notePathName)
+    return None
 
 
 def neoscoreTest():
@@ -191,6 +281,7 @@ def neoscoreTest():
 
 def dft(freq_hz):
     plt.clf()
+    plt.switch_backend('agg')
     home_path = pd.tempfolder()
     NUMPY_DATA = pd.tabread('audioArray')
     NUMPY_DATA = np.array(NUMPY_DATA)
@@ -214,46 +305,20 @@ def dft(freq_hz):
         imag.append(float(graph[i].imag))
         real.append(float(graph[i].real))
 
-    # CenterOfMass = sum(graph) / len(graph)
     imag = np.array(imag)
     real = np.array(real)
-    plt.switch_backend('agg')  # Change backend to avoid error in PureData
 
-    # define draw, circle and point to add to the graph
     plt.plot(imag, real, color='black', linewidth=0.4)
-    # plt.plot(CenterOfMass.real, CenterOfMass.imag, 'ro')
-
-    # plot names of axis
     plt.xlabel('Imaginary')
     plt.ylabel('Real')
 
-    # plt.plot(imag_centroid, real_centroid, 'ro', color='blue')
-    # add a new circle that are in the center of max and min of real and imaginary
-    # center = (max(imag) + min(imag)) / 2, (max(real) + min(real)) / 2
-    # radius = max(imag) - center[0] if (max(imag) > max(real)) else max(real) - center[1]
-    # plt.gca().add_patch(plt.Circle(center, radius=radius, fill=False, color='blue', linewidth=2))
-
-    # with circle draw a cross
-    # plt.plot([center[0], center[0]], [center[1] - radius, center[1] + radius], color='blue', linewidth=2)
-    # plt.plot([center[0] - radius, center[0] + radius], [center[1], center[1]], color='blue', linewidth=2)
-
-    # add triangle retangle
-    # plt.plot([center[0], CenterOfMass.real], [center[1], CenterOfMass.imag], color='green', linewidth=2)
-    # plt.plot([CenterOfMass.real, CenterOfMass.imag], [CenterOfMass.imag, center[1]], color='green', linewidth=2)
-
-    # Save image, convert to gif and remove png
     freq_hz = int(round(freq_hz, 0))
     random_number = randint(10, 99)
-    # save the plt using mpimg
     plt.savefig(f'{home_path}/canvas{freq_hz}{random_number}.jpg', dpi=60)
-    # convert to gif
     im = Image.open(f'{home_path}/canvas{freq_hz}{random_number}.jpg')
     im.save(f'{home_path}/canvas{freq_hz}{random_number}.gif')
-    # remove png
     os.remove(f'{home_path}/canvas{freq_hz}{random_number}.jpg')
-    # show the image
     output = f'{home_path}/canvas{freq_hz}{random_number}.gif'
-    # in lisp, do namestring equivalent in python
     pd.show(output)
     return 0
 

@@ -34,9 +34,7 @@ def runTest(pdpatch):
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]
     elif platform.system() == 'Darwin':
-        cmdGUI = '/Applications/Pd-*.app/Contents/Resources/bin/pd -send "start-test bang" py4pd_macOS-Intel/' + pdpatch
-        os.system(cmdGUI)
-        cmd = '/Applications/Pd-*.app/Contents/Resources/bin/pd -nogui -send "start-test bang" py4pd_macOS-Intel/' + pdpatch
+        cmd = '/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -send "start-test bang" py4pd_macOS-Intel/' + pdpatch
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]
@@ -64,7 +62,7 @@ def runTest(pdpatch):
         # sys.exit(1)
     
 if __name__ == "__main__":
-    patches = ['01-simpleRun.pd', '02-noArgs.pd', '03-sequencialRunning.pd', '04-neoscore.pd', '05-wrongNumberOfArgs.pd', '06-setDifferentFunctions.pd']
+    patches = ['01-simpleRun.pd', '02-noArgs.pd', '03-sequencialRunning.pd', '04-neoscore.pd', '05-wrongNumberOfArgs.pd', '06-setDifferentFunctions.pd', '07-audioin-Neoscore.pd']
     for patch in patches:
         print("=============" + patch + "=============")
         runTest(patch)

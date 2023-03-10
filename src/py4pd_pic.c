@@ -1,8 +1,4 @@
 #include "py4pd_pic.h"
-
-#include <stdlib.h>
-
-#include "m_pd.h"
 #include "py4pd.h"
 
 t_widgetbehavior py4pd_widgetbehavior;
@@ -195,7 +191,7 @@ void PY4PD_select(t_gobj *z, t_glist *glist, int state) {
         sys_vgui(".x%lx.c delete %lx_outline\n", cv, x);
         sys_vgui(
             ".x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline "
-            "blue -width %d\n",
+            "red -width %d\n",
             cv, xpos, ypos, xpos + x->x_width, ypos + x->x_height, x,
             x->x_zoom);
     } else {
@@ -333,7 +329,7 @@ void PY4PD_size_callback(t_py *x, t_float w, t_float h) {  // callback
             if (x->x_sel)
                 sys_vgui(
                     ".x%lx.c create rectangle %d %d %d %d -tags %lx_outline "
-                    "-outline blue -width %d\n",
+                    "-outline red -width %d\n",
                     cv, xpos, ypos, xpos + x->x_width, ypos + x->x_height, x,
                     x->x_zoom);
             else
@@ -443,7 +439,7 @@ void PY4PD_outline(t_py *x, t_float f) {
                 if (x->x_sel)
                     sys_vgui(
                         ".x%lx.c create rectangle %d %d %d %d -tags "
-                        "%lx_outline -outline blue -width %d\n",
+                        "%lx_outline -outline red -width %d\n",
                         cv, xpos, ypos, xpos + x->x_width, ypos + x->x_height,
                         x, x->x_zoom);
                 else
@@ -453,7 +449,7 @@ void PY4PD_outline(t_py *x, t_float f) {
                         cv, xpos, ypos, xpos + x->x_width, ypos + x->x_height,
                         x, x->x_zoom);
             } else if (!x->x_edit){
-                // sys_vgui(".x%lx.c delete %lx_outline\n", cv, x);
+                sys_vgui(".x%lx.c delete %lx_outline\n", cv, x);
             }
         }
     }
@@ -504,8 +500,8 @@ void PY4PD_edit_proxy_any(t_py4pd_edit_proxy *p, t_symbol *s, int ac, t_atom *av
                         cv, x, y, x + w, y + h, p->p_cnv, p->p_cnv->x_zoom);
                 PY4PD_draw_io_let(p->p_cnv);
             } else {
-                // if(!p->p_cnv->x_outline)
-                sys_vgui(".x%lx.c delete %lx_outline\n", cv, p->p_cnv);
+                if(!p->p_cnv->x_outline)
+                    sys_vgui(".x%lx.c delete %lx_outline\n", cv, p->p_cnv);
                 sys_vgui(".x%lx.c delete %lx_in\n", cv, p->p_cnv);
                 sys_vgui(".x%lx.c delete %lx_out\n", cv, p->p_cnv);
             }
