@@ -784,7 +784,6 @@ static void restartPython(t_py *x) {
 
 t_int *py4pd_perform(t_int *w) {
     t_py *x = (t_py *)(w[1]);  // this is the object itself
-    post("audio in: %d", x->audioInput);
     if (x->audioInput == 0) {
         return (w + 4);
     }
@@ -1063,6 +1062,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     t_py *x;
     int visMODE = 0;
     int audioOUT = 0;
+    int audioIN = 0;
     int normalMODE = 1;
 
     for (i = 0; i < argc; i++) {
@@ -1076,16 +1076,26 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
             else if (py4pdArgs == gensym("-audio") || py4pdArgs == gensym("-audioout")) {
                 audioOUT = 1;
             }
+            else if (py4pdArgs == gensym("-audioin")) {
+                audioIN = 1;
+            }
         }
     }
-    if (visMODE == 1 && audioOUT == 0) {
+    if (visMODE == 1 && audioOUT == 0 && audioIN == 0) {
         x = (t_py *)pd_new(py4pd_class_VIS);  // create a new object
+        post("py4pd object created in VISUAL mode");
     } 
+    else if (audioIN == 1){
+        x = (t_py *)pd_new(py4pd_classAudioIn);  // create a new object
+        post("py4pd object created in AUDIO IN mode");
+    }
     else if (audioOUT == 1 && visMODE == 0) {
         x = (t_py *)pd_new(py4pd_classAudioOut);  // create a new object
+        post("py4pd object created in AUDIO OUT mode");
     } 
     else if (normalMODE == 1) {
         x = (t_py *)pd_new(py4pd_class);  // create a new object
+        post("py4pd object created in NORMAL mode");
     } 
     else {
         post("Error in py4pd_new, please report this error to the developer, this message should not appear.");
@@ -1182,7 +1192,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
             }
         }
     }
-
     if (x->audioOutput == 0) {
         x->out_A = outlet_new(&x->x_obj, 0);  // cria um outlet caso o objeto nao contenha audio
     }
@@ -1258,6 +1267,7 @@ void py4pd_setup(void) {
                   0);
     py4pd_class_VIS = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
     py4pd_classAudioOut = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
+    py4pd_classAudioIn = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
 
     // Sound in
     class_addmethod(py4pd_classAudioIn, (t_method)py4pd_audio_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
@@ -1278,27 +1288,32 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0);  // set home path
     class_addmethod(py4pd_class_VIS, (t_method)home, gensym("home"), A_GIMME, 0);  // set home path
     class_addmethod(py4pd_classAudioOut, (t_method)packages, gensym("home"), A_GIMME, 0);  // set packages path
+    class_addmethod(py4pd_classAudioIn, (t_method)packages, gensym("packages"), A_GIMME, 0);  // set packages path
 
     class_addmethod(py4pd_class, (t_method)packages, gensym("packages"), A_GIMME, 0);  // set packages path
     class_addmethod(py4pd_class_VIS, (t_method)packages, gensym("packages"), A_GIMME, 0);  // set packages path
     class_addmethod(py4pd_classAudioOut, (t_method)packages, gensym("packages"), A_GIMME, 0);  // set packages path
+    class_addmethod(py4pd_classAudioIn, (t_method)packages, gensym("packages"), A_GIMME, 0);  // set packages path
 
     class_addmethod(py4pd_class, (t_method)thread, gensym("thread"), A_FLOAT, 0);  // on/off threading
     class_addmethod(py4pd_class_VIS, (t_method)thread, gensym("thread"), A_FLOAT, 0);  // on/off threading
-    class_addmethod(py4pd_classAudioOut, (t_method)thread, gensym("thread"), A_FLOAT, 0);  // on/off threading
+    // class_addmethod(py4pd_classAudioOut, (t_method)thread, gensym("thread"), A_FLOAT, 0);  // on/off threading
 
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0);  // reload python script
     class_addmethod(py4pd_class_VIS, (t_method)reload, gensym("reload"), 0, 0);  // reload python script
     class_addmethod(py4pd_classAudioOut, (t_method)reload, gensym("reload"), 0, 0);  // reload python script
+    class_addmethod(py4pd_classAudioIn, (t_method)reload, gensym("reload"), 0, 0);  // run python script
 
     class_addmethod(py4pd_class, (t_method)restartPython, gensym("restart"), 0, 0);  // it restart python interpreter
     class_addmethod(py4pd_class_VIS, (t_method)restartPython, gensym("restart"), 0, 0);  // it restart python interpreter
     class_addmethod(py4pd_classAudioOut, (t_method)restartPython, gensym("restart"), 0, 0);  // it restart python interpreter
+    class_addmethod(py4pd_classAudioIn, (t_method)restartPython, gensym("restart"), 0, 0);  // it restart python interpreter
 
     // Object INFO
     class_addmethod(py4pd_class, (t_method)version, gensym("version"), 0, 0);  // show version
     class_addmethod(py4pd_class_VIS, (t_method)version, gensym("version"), 0, 0);  // show version
     class_addmethod(py4pd_classAudioOut, (t_method)version, gensym("version"), 0, 0);  // show version
+    class_addmethod(py4pd_classAudioIn, (t_method)version, gensym("version"), 0, 0);  // show version
 
     // Edit Python Code
     class_addmethod(py4pd_class, (t_method)vscode, gensym("vscode"), 0, 0);  // open editor  WARNING: will be removed
@@ -1306,22 +1321,26 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class, (t_method)editor, gensym("editor"), A_GIMME, 0);  // open code
     class_addmethod(py4pd_class_VIS, (t_method)editor, gensym("editor"), A_GIMME, 0);  // open code
     class_addmethod(py4pd_classAudioOut, (t_method)editor, gensym("editor"), A_GIMME, 0);  // open code
+    class_addmethod(py4pd_classAudioIn, (t_method)editor, gensym("editor"), A_GIMME, 0);  // open code
 
     class_addmethod(py4pd_class, (t_method)openscript, gensym("open"), A_GIMME, 0); 
     class_addmethod(py4pd_class_VIS, (t_method)openscript, gensym("open"), A_GIMME, 0);
     class_addmethod(py4pd_classAudioOut, (t_method)openscript, gensym("open"), A_GIMME, 0); 
+    class_addmethod(py4pd_classAudioIn, (t_method)openscript, gensym("open"), A_GIMME, 0);
 
     class_addmethod(py4pd_class, (t_method)editor, gensym("click"), 0, 0);  // when click open editor
     class_addmethod(py4pd_classAudioOut, (t_method)editor, gensym("click"), 0, 0);  // when click open editor
+    class_addmethod(py4pd_classAudioIn, (t_method)editor, gensym("click"), 0, 0);  // when click open editor
 
     // User Interface
     class_addmethod(py4pd_class, (t_method)documentation, gensym("doc"), 0, 0);  // open documentation
     class_addmethod(py4pd_class_VIS, (t_method)documentation, gensym("doc"), 0, 0);  // open documentation
     class_addmethod(py4pd_classAudioOut, (t_method)documentation, gensym("doc"), 0, 0);  // open documentation
+    class_addmethod(py4pd_classAudioIn, (t_method)documentation, gensym("doc"), 0, 0);  // open documentation
  
     class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class_VIS, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
-    // class_addmethod(py4pd_classAudioOut, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
+    // TODO: Put some error here
 
     class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0);  // set function to be called
     class_addmethod(py4pd_class_VIS, (t_method)set_function, gensym("set"), A_GIMME, 0);  // set function to be called
@@ -1332,6 +1351,7 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
     class_addmethod(py4pd_class_VIS, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
     class_addmethod(py4pd_classAudioOut, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
+    class_addmethod(py4pd_classAudioIn, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
 
     class_addmethod(py4pd_class, (t_method)findpy4pd_folder, gensym("debug"), A_GIMME, 0); 
 }
