@@ -1,4 +1,5 @@
 #include "py4pd.h"
+#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
@@ -10,6 +11,7 @@
 // ============================================
 t_class *py4pd_class;          // For audioin and without audio
 t_class *py4pd_class_VIS;      // For visualisation | pic object by pd-else
+t_class *py4pd_classAudioIn;   // For audio in
 t_class *py4pd_classAudioOut;  // For audio out
 int object_count; 
 
@@ -427,9 +429,6 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     Py_DECREF(site_package);
     Py_DECREF(py4pdScripts);
     // free(pyScripts_folder);
-    post("py4pd scripts folder: %s", pyScripts_folder);
-    post("x->packages_path: %s", x->packages_path->s_name);
-    post("x->home_path: %s", x->home_path->s_name);
 
     // =====================
     pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file
@@ -785,13 +784,29 @@ static void restartPython(t_py *x) {
 
 t_int *py4pd_perform(t_int *w) {
     t_py *x = (t_py *)(w[1]);  // this is the object itself
+    post("audio in: %d", x->audioInput);
+    if (x->audioInput == 0) {
+        return (w + 4);
+    }
+
+        // ======= TO AVOID CRASHES =======
     if (x->audioInput == 0 && x->audioOutput == 0) {
         return (w + 4);
     }
+    if (x->function_called == 0) {
+        pd_error(x, "[py4pd] You need to call a function before run!");
+        return (w + 4);
+    }
+
+    if (x->audioInput == 1 && x->audioOutput == 0 && x->py_arg_numbers != 1){
+        pd_error(x, "[py4pd] When -audioin is used, the function must just one argument, function have %d arguments", (int)x->py_arg_numbers);
+        return (w + 4);
+    }
+
+    // ======= TO AVOID CRASHES =======
+
     t_sample *audioIn = (t_sample *)(w[2]);  // this is the input vector (the sound)
     int n = (int)(w[3]);     
-                             // example 64)
-    const npy_intp dims = n;
     PyObject *ArgsTuple, *pValue, *pAudio, *pSample;
 
     if (x->function_called == 0) {
@@ -800,12 +815,15 @@ t_int *py4pd_perform(t_int *w) {
     }
 
     pSample = NULL;  //
-    if (x->use_NumpyArray == 1) {
+
+    if (x->numpyImported == 1 && x->audioInput == 1 && x->use_NumpyArray == 1) { // BUG: Mess up, fix this later.
+        const npy_intp dims = n;
         pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
         ArgsTuple = PyTuple_New(1);
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
     } 
     else {
+        // pSample = NULL;  NOTE: this distorce the sound.
         pAudio = PyList_New(n);
         for (int i = 0; i < n; i++) {
             pSample = PyFloat_FromDouble(audioIn[i]);
@@ -813,6 +831,9 @@ t_int *py4pd_perform(t_int *w) {
         }
         ArgsTuple = PyTuple_New(1);
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
+        // if (pSample != NULL) { NOTE: this distorce the sound.
+        //     Py_DECREF(pSample);
+        // }
     }
 
     PyObject *capsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
@@ -980,6 +1001,7 @@ t_int *py4pd_performAudioOutput(t_int *w) {
  */
 static void py4pd_audio_dsp(t_py *x, t_signal **sp) {
     if (x->audioOutput == 0) {
+        post("Added -audioin to the py4pd object");
         dsp_add(py4pd_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
     } 
     else {  // python output is audio
@@ -1238,11 +1260,11 @@ void py4pd_setup(void) {
     py4pd_classAudioOut = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
 
     // Sound in
-    class_addmethod(py4pd_class, (t_method)py4pd_audio_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
+    class_addmethod(py4pd_classAudioIn, (t_method)py4pd_audio_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
     class_addmethod(py4pd_classAudioOut, (t_method)py4pd_audio_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
-    CLASS_MAINSIGNALIN(py4pd_class, t_py, py4pd_audio);  
+    CLASS_MAINSIGNALIN(py4pd_classAudioIn, t_py, py4pd_audio);  
     CLASS_MAINSIGNALIN(py4pd_classAudioOut, t_py, py4pd_audio);  
-    class_addmethod(py4pd_class, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0);  // add a method to a class
+    class_addmethod(py4pd_classAudioIn, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0);  // add a method to a class
     class_addmethod(py4pd_classAudioOut, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0);  // add a method to a class
 
     // Pic related
@@ -1299,11 +1321,12 @@ void py4pd_setup(void) {
  
     class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class_VIS, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
-    class_addmethod(py4pd_classAudioOut, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
+    // class_addmethod(py4pd_classAudioOut, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
 
     class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0);  // set function to be called
     class_addmethod(py4pd_class_VIS, (t_method)set_function, gensym("set"), A_GIMME, 0);  // set function to be called
     class_addmethod(py4pd_classAudioOut, (t_method)set_function, gensym("set"), A_GIMME, 0);  // set function to be called
+    class_addmethod(py4pd_classAudioIn, (t_method)set_function, gensym("set"), A_GIMME, 0);  // unset function to be called
 
 
     class_addmethod(py4pd_class, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params

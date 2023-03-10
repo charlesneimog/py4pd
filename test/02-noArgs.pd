@@ -106,7 +106,7 @@
 #X obj 346 202 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X obj 65 71 print starting-test;
 #X obj 445 317 py4pd   -score;
-#X obj 171 291 spigot;
+#X obj 171 326 spigot;
 #X obj 210 158 loadbang;
 #X msg 210 183 1;
 #X obj 210 208 tgl 20 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000 0 1;
@@ -114,6 +114,8 @@
 #X obj 542 109 s start-test;
 #X obj 577 81 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X obj 542 53 delay 5000 1 msec;
+#X obj 91 273 delay 5000 1 msec;
+#X obj 129 204 r delay;
 #X connect 0 0 13 0;
 #X connect 2 0 0 0;
 #X connect 2 1 22 0;
@@ -126,7 +128,7 @@
 #X connect 7 0 8 0;
 #X connect 9 0 11 0;
 #X connect 11 0 10 0;
-#X connect 12 0 24 0;
+#X connect 12 0 32 0;
 #X connect 12 1 9 0;
 #X connect 13 0 3 0;
 #X connect 14 0 2 0;
@@ -140,3 +142,5 @@
 #X connect 28 0 31 0;
 #X connect 30 0 29 0;
 #X connect 31 0 29 0;
+#X connect 32 0 24 0;
+#X connect 33 0 32 1;

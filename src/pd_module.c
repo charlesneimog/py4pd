@@ -67,13 +67,16 @@ PyObject *pdprint(PyObject *self, PyObject *args) {
     (void)self;
     char *string;
     if (PyArg_ParseTuple(args, "s", &string)) {
-        post("[pd.print]: %s", string);
+        post("[Python]: %s", string);
         PyErr_Clear();
-    } else {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "[py.print] must receive a string");  // Colocar melhor descrição do
-                                                  // erro
+    } 
+    // print for number
+    else if (PyArg_ParseTuple(args, "f", &string)) {
+        post("[Python]: %f", string);
+        PyErr_Clear();
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.print work with string or number.");  // Colocar melhor descrição do
         return NULL;
     }
     return PyLong_FromLong(0);
@@ -142,7 +145,7 @@ PyObject *pdsend(PyObject *self, PyObject *args) {
         if (PyDict_Check(listargs)) {
             char error_message[100];
             sprintf(error_message,
-                    "[py.send] received a type 'dict', it must be a list, "
+                    "[Python] pd.send received a type 'dict', it must be a list, "
                     "string, int, or float.");
             PyErr_SetString(PyExc_TypeError,
                             error_message);  
@@ -174,7 +177,7 @@ PyObject *pdsend(PyObject *self, PyObject *args) {
             } else {
                 char error_message[100];
                 sprintf(error_message,
-                        "[py.send] received a type '%s' in index %d of the "
+                        "[Python] received a type '%s' in index %d of the "
                         "list, it must be a string, int, or float.",
                         pValue_i->ob_type->tp_name, i);
                 PyErr_SetString(PyExc_TypeError,
@@ -188,7 +191,7 @@ PyObject *pdsend(PyObject *self, PyObject *args) {
         if (gensym(receiver)->s_thing) {
             pd_list(gensym(receiver)->s_thing, &s_list, list_size, list_array);
         } else {
-            post("[pd.script] object [r %s] not found", receiver);
+            post("[Python] object [r %s] not found", receiver);
         }
     } else {
         char error_message[100];
@@ -332,11 +335,9 @@ PyObject *pdtempfolder(PyObject *self, PyObject *args) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.samplerate: no argument expected");
         return NULL;
     }
-    // ================================
     PyObject *pd_module = PyImport_ImportModule("__main__");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-    // ================================
     py4pd_tempfolder(py4pd);
     return PyUnicode_FromString(py4pd->temp_folder->s_name);
 }
@@ -347,23 +348,19 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
     (void)self;
     char *string;
 
-    // ================================
     PyObject *pd_module = PyImport_ImportModule("__main__");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-    // ================================
-
     PY4PD_erase(py4pd, py4pd->x_glist);
-
     if (PyArg_ParseTuple(args, "s", &string)) {
         t_symbol *filename = gensym(string);
         if (py4pd->x_def_img) {
             py4pd->x_def_img = 0;
         }
-        if (glist_isvisible(py4pd->x_glist) &&
-            gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
-            const char *file_name_open =
-                PY4PD_filepath(py4pd, filename->s_name);
+
+
+        if (glist_isvisible(py4pd->x_glist) && gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
+            const char *file_name_open =    PY4PD_filepath(py4pd, filename->s_name);
             if (file_name_open) {
                 py4pd->x_filename = filename;
                 py4pd->x_fullname = gensym(file_name_open);
@@ -385,20 +382,26 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
                 }
             } 
             else {
-                PyErr_SetString(PyExc_TypeError, "[python]: Error displaying image, file not found");
-                return NULL;
+                pd_error(py4pd, "[Python]: Error displaying image, file not found");
+                PyErr_Clear();
+                Py_RETURN_NONE;
             }
         } 
         else {
-            pd_error(py4pd, "[python]: Error displaying image");
+            pd_error(py4pd, "[Python]: Error displaying image");
+            PyErr_Clear();
+            Py_RETURN_NONE;
         }
 
     } 
     else {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.showimage: wrong arguments");
-        return NULL;
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.showimage received wrong arguments");
+         PyErr_Clear();
+        Py_RETURN_NONE;
     }
-    return PyLong_FromLong(0);
+    // python return True
+    PyErr_Clear();
+    Py_RETURN_TRUE;
 }
 
 // =================================

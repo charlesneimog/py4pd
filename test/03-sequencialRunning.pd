@@ -131,7 +131,7 @@
 #X text 402 241 Restart Function not work yet.;
 #X obj 346 202 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X obj 65 71 print starting-test;
-#X obj 171 291 spigot;
+#X obj 171 314 spigot;
 #X obj 210 158 loadbang;
 #X msg 210 183 1;
 #X obj 210 208 tgl 20 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000 0 1;
@@ -139,6 +139,8 @@
 #X obj 542 109 s start-test;
 #X obj 577 81 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X obj 542 53 delay 5000 1 msec;
+#X obj 94 273 delay 5000 1 msec;
+#X obj 126 217 r delay;
 #X connect 0 0 13 0;
 #X connect 2 0 0 0;
 #X connect 2 1 21 0;
@@ -151,7 +153,7 @@
 #X connect 7 0 8 0;
 #X connect 9 0 11 0;
 #X connect 11 0 10 0;
-#X connect 12 0 22 0;
+#X connect 12 0 30 0;
 #X connect 12 1 9 0;
 #X connect 13 0 3 0;
 #X connect 14 0 2 0;
@@ -159,9 +161,11 @@
 #X connect 17 0 12 0;
 #X connect 20 0 18 0;
 #X connect 22 0 1 0;
+#X connect 22 0 9 0;
 #X connect 23 0 24 0;
 #X connect 24 0 25 0;
 #X connect 25 0 22 1;
 #X connect 26 0 29 0;
 #X connect 28 0 27 0;
-#X connect 29 0 27 0;
+#X connect 30 0 22 0;
+#X connect 31 0 30 1;

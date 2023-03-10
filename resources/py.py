@@ -123,6 +123,28 @@ def pd_tabwrite():
         i += 1
     pd.tabwrite("pd.tabwrite", list, resize=True)
 
+# ================================================
+# ================ Audio =========================
+# ================================================
+
+
+
+def fft(audio):
+    fft = np.fft.fft(audio)
+    ifft = np.fft.ifft(fft)
+    # get real part of ifft
+    ifft = np.real(ifft)
+    ifft = ifft.astype(np.float32) # for now, we must use float32
+    # ifft to tuple
+    key = pd.getkey("output")
+    if key == "numpy" or key == None:
+        return ifft
+    elif key == "tuple":
+        iff = tuple(ifft)
+        return iff
+    else:
+        return ifft.tolist()
+
 
 def pd_audio(audio):
     "It sends a message to the py4pd message box."
@@ -132,16 +154,23 @@ def pd_audio(audio):
     else:
         pd.out("list")
 
+def audioin(audio):
+    "It sends a message to the py4pd message box."
+    # get first 10 samples
+    if type(audio) == np.ndarray:
+        pd.out("numpy")
+    else:
+        pd.out("list")
 
 def pd_audioout(audio):
     "It sends a message to the py4pd message box."
     # audio is a numpy array, multiply by 0.5
     if type(audio) == np.ndarray:
         audio = np.multiply(audio, 0.2)
+        audio = audio.tolist()
     else:
         audio = [x * 0.05 for x in audio]
     return audio
-
 
 
 def senoide():
@@ -155,8 +184,7 @@ def senoide():
     sine_wave = np.sin(2 * np.pi * np.arange(duration) * freq / sample_rate)
     # convert to np.float32
     sine_wave = sine_wave.astype(np.float32)
-    return sine_wave
-
+    return sine_wave.tolist()
 
 
 def pd_audionoise(audio):
