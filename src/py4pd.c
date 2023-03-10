@@ -1,6 +1,4 @@
 #include "py4pd.h"
-#include "m_pd.h"
-#include "object.h"
 #include "pd_module.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
