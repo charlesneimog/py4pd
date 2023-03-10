@@ -1,4 +1,4 @@
- name: macOS (Intel)
+name: macOS (Intel)
 
 on:
   push:
@@ -70,4 +70,3 @@ jobs:
 
 
     
-  
