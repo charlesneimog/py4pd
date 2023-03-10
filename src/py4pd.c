@@ -11,8 +11,7 @@
 t_class *py4pd_class;          // For audioin and without audio
 t_class *py4pd_class_VIS;      // For visualisation | pic object by pd-else
 t_class *py4pd_classAudioOut;  // For audio out
-
-int object_count; // 
+int object_count; 
 
 // ============================================
 // ========= PY4PD METHODS FUNCTIONS ==========
