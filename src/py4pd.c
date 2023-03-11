@@ -37,9 +37,7 @@ static void version(t_py *x){
     outlet_anything(x->out_A, gensym("python"), 3, version);
 }
 
-
-
-
+// ============================================
 /**
  * @brief set the home path to py4pd
  * @brief Get the config from py4pd.cfg file
@@ -110,6 +108,22 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         return;
     }
 }
+
+// ====================================
+static void getmoduleFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+    PyObject *module_dict = PyModule_GetDict(x->module);
+    Py_ssize_t pos = 0;
+    PyObject *key, *value;
+
+    while (PyDict_Next(module_dict, &pos, &key, &value)) {
+        if (PyCallable_Check(value)) {
+            post("Function: %s", PyUnicode_AsUTF8(key));
+        }
+    }
+}
+
+
+
 
 // ====================================
 // ALWAYS DESCRIPTION OF NEXT FUNCTION
@@ -469,7 +483,7 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         Py_DECREF(getfullargspec);
         Py_DECREF(argspec);
         Py_DECREF(args);
-        Py_DECREF(pModule);
+        x->module = pModule;
         x->function = pFunc;
         x->script_name = script_file_name;
         x->function_name = function_name;
@@ -545,11 +559,22 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     PyObject *capsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
     PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule);  // add the capsule to the python interpreter
-    pValue = PyObject_CallObject(x->function, ArgsTuple);
-    Py_DECREF(capsule);
-    if (pValue != NULL) {                // if the function returns a value
-        //   TODO: add pointer output when x->Python is 1;
+    // h
 
+    // check if PyCallable_Check x->function 
+    if (PyCallable_Check(x->function)) {
+        pValue = PyObject_CallObject(x->function, ArgsTuple);
+    } 
+    else {
+        pd_error(x, "[py4pd] Function %s not loaded!", x->function_name->s_name);
+        return;
+    }
+
+
+    // pValue = PyObject_CallObject(x->function, ArgsTuple);
+    Py_DECREF(capsule);
+
+    if (pValue != NULL) { // if the function returns a value  TODO: add pointer output when x->Python is 1;
         py4pd_convert_to_pd(x, pValue);  // convert the value to pd
     } 
     else {                             // if the function returns a error
@@ -981,14 +1006,10 @@ t_int *py4pd_performAudioOutput(t_int *w) {
         PyErr_Clear();
     }
 
-
-
     Py_DECREF(ArgsTuple);
     Py_XDECREF(pValue);
     Py_XDECREF(pSample); 
     // memset(pAudio, 0, n * sizeof(float));  
-
-
     return (w + 5);
 }
 
@@ -1241,9 +1262,7 @@ void *py4pd_free(t_py *x) {
             sprintf(command, "rm -rf %s", x->temp_folder->s_name);
             system(command);
         #endif
-
     }
-
     if (x->visMode == 1) {
         PY4PD_free(x);
     }
@@ -1353,7 +1372,7 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_classAudioOut, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
     class_addmethod(py4pd_classAudioIn, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
 
-    class_addmethod(py4pd_class, (t_method)findpy4pd_folder, gensym("debug"), A_GIMME, 0); 
+    class_addmethod(py4pd_class, (t_method)getmoduleFunction, gensym("debug"), A_GIMME, 0); 
 }
 
 

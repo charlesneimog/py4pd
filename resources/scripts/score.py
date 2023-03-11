@@ -1,6 +1,7 @@
 import pd
 from random import randint
 import os
+os.environ['QT_QPA_PLATFORM'] = "xcb" 
 try:
     from neoscore.common import *
 except Exception as e:
@@ -88,6 +89,11 @@ def note(pitch):
     except BaseException:
         pass
     neoscore.setup()
+    # change QT_QPA_PLATFORM to xcb
+    qt_qpa_platform = os.environ.get('QT_QPA_PLATFORM')
+    if qt_qpa_platform != "xcb":
+        os.environ['QT_QPA_PLATFORM'] = "xcb"
+        
     py4pdTMPfolder = pd.tempfolder()
     for file in py4pdTMPfolder:
         if file.endswith(".ppm"):

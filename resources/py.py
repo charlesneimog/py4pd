@@ -51,6 +51,9 @@ def pdsum(x, y):
 
 def arithm_ser(begin, end, step):
     "It calculates the arithmetic series."
+    begin = int(begin)
+    end = int(end)
+    step = int(step)
     list = []
     for x in range(begin, end, step):
         list.append(x)

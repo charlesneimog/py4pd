@@ -54,6 +54,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     
     // == PYTHON
 
+    PyObject            *module; // script name
     PyObject            *function; // function name
     PyObject            *Dict; // parameters
 

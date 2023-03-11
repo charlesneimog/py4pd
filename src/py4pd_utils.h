@@ -19,7 +19,8 @@ void pd4py_system_func(const char *command);
 int isNumericOrDot(const char *str);
 void removeChar(char *str, char c);
 void *py4pd_convert_to_pd(t_py *x, PyObject *pValue);
-void *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv);
+// void *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv);
+PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv);
 int *set_py4pd_config(t_py *x);
 
 

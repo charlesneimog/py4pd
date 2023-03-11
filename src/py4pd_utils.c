@@ -350,7 +350,7 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
  * @param argv is the arguments
  * @return the Python tuple with the values
  */
-void *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
+PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
     PyObject *ArgsTuple = PyTuple_New(0);  // start new tuple with 1 element
     int listStarted = 0;
     int argCount = 0;
