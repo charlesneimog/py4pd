@@ -9,17 +9,19 @@
 </p>
     
 <p align="center">
-  <a href="https://github.com/plugdata-team/plugdata/blob/main/LICENSE"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/linux.yml/badge.svg" alt="Linux"></a>
-  <a href="https://github.com/plugdata-team/plugdata/blob/main/LICENSE"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/windows.yml/badge.svg" alt="Windows"></a>
-  <a href="https://github.com/plugdata-team/plugdata/blob/main/LICENSE"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/mac.yml/badge.svg" alt="Mac"></a>
+  <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Linux.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Linux.yml/badge.svg?branch=develop" alt="Linux"></a>
+  <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Windows.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Windows.yml/badge.svg?branch=develop" alt="Windows"></a>
+  <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Mac.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Mac.yml/badge.svg?branch=develop" alt="Mac"></a>
 </p>
 
 `py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things.  with Python you can:
 * Use scores inside PureData;
 * Use svg/draws as scores;
 * OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
+* Sound analisys with `magenta`, `librosa`, and `pyAudioAnalaysis`;
 
-See examples in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Examples).
+Go to ![Docs](https://py4pd.readthedocs.io/en/latest/) to see examples.
+
 
 ### Download py4pd
 1. Open PureData, `Help->Find Externals->` search for `py4pd` then select py4pd and click on `Install`: 
@@ -31,15 +33,16 @@ See examples in the [Wiki](https://github.com/charlesneimog/py4pd/wiki/Music-Exa
 
 ## Wiki | Instructions for use
 
-* If you want to use, read the wiki page: https://github.com/charlesneimog/py4pd/wiki.
+* Go to ![Docs](https://py4pd.readthedocs.io/en/latest/).
 
 ## Building from Source
 
-* To build from source you can follow the steps in [Building from Source](https://github.com/charlesneimog/py4pd/blob/master/resources/BUILD.md).
+* To build from the source code, you can follow the steps: [Compiling from Source Code.](https://github.com/charlesneimog/py4pd/blob/master/resources/BUILD.md).
 
 ## Citing this work
 
-Consider citing this repository, in the right side of page, below of about.
+Consider citing this repository, on the right side of the page, below of about.
+
 ```APA
 Neimog, C. K. (2023). py4pd, Python inside PureData (Version 0.5.0) [Computer software]. https://doi.org/10.5281/zenodo.7677265
 ```
