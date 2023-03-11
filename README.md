@@ -1,7 +1,4 @@
 <p align="center">
-  <a href="https://github.com/plugdata-team/plugdata/wiki">
-    <img src="https://raw.githubusercontent.com/charlesneimog/py4pd/develop/docs/assets/py4pd-black.svg" alt="Logo" width=130 height=75>
-  </a>
   <h1 align="center">py4pd</h1>
   <h4 align="center">Python in the PureData environment.</h4>
 </p>
