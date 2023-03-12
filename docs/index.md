@@ -14,21 +14,34 @@ Welcome to the `py4pd` documentation! I am writing this yet, and some things are
 
 Here I will present some examples that I am using in my pieces.  
 
-### Draws as scores
-
-
-
-
-<audio controls>
-  <source src="https://github.com/charlesneimog/py4pd/raw/develop/docs/assets/examples/img2sound/img2sound.mp3" type="audio/mpeg">
-  Your browser does not support the audio element.
-</audio>
-
-### Spectral analysis
+### **Artificial Inteligence**
 
 I will write the doc soon.
 
-### Eco (2023)
+### **Score in PureData** 
+
+
+<p align="center">
+    <img src="assets/score.gif" width="50%"</img>
+</p>
+
+### **Draws as scores**
+
+<p align="center">
+	<img src="assets/examples/img2sound/img2sound.jpeg"></img>
+</p>
+<p align="center">
+	<audio controls>
+	  <source src="assets/examples/img2sound/img2sound.mp3" type="audio/mpeg">
+	  Your browser does not support the audio element.
+	</audio>
+</p>
+
+### **Spectral analysis**
+
+I will write the doc soon.
+
+### **Eco (2023)**
 
 I will write the doc soon.
 
