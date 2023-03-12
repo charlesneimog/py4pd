@@ -370,11 +370,9 @@ PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
                 listsArrays[listCount] = PyList_New(0);
                 int isNumeric = isNumericOrDot(str);
                 if (isNumeric == 1) {
-                    PyList_Append(listsArrays[listCount],
-                                  PyFloat_FromDouble(atof(str)));
+                    PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atof(str)));
                 } else {
-                    PyList_Append(listsArrays[listCount],
-                                  PyUnicode_FromString(str));
+                    PyList_Append(listsArrays[listCount], PyUnicode_FromString(str));
                 }
                 listStarted = 1;
             }

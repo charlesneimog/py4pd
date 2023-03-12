@@ -15,6 +15,45 @@ t_class *py4pd_classAudioIn;   // For audio in
 t_class *py4pd_classAudioOut;  // For audio out
 int object_count; 
 
+
+
+// ============================================
+// ========== PY4PD DEBUG FUNCTIONS ===========
+// ============================================
+void testwaytocallfunction(t_py *x){
+    PyObject* myFunc = x->function; 
+    PyObject* myList = PyList_New(0);
+    PyObject* arg1 = Py_BuildValue("s", "Hello");
+    PyObject* arg2 = Py_BuildValue("i", 42);
+    PyList_Append(myList, arg1);
+    PyList_Append(myList, arg2);
+    PyObject* result =  PyObject_CallObject(myFunc, myList); 
+    if (result == NULL) {
+        post("Error calling function");
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[Python] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
+        Py_DECREF(ptype);
+        Py_DECREF(pvalue);
+        Py_DECREF(ptraceback);
+    }
+    else{
+
+    }
+    Py_DECREF(myList);
+    Py_DECREF(arg1);
+    Py_DECREF(arg2);
+}
+
+
+
+
+
+
+
 // ============================================
 // ========= PY4PD METHODS FUNCTIONS ==========
 // ============================================
@@ -1266,6 +1305,16 @@ void *py4pd_free(t_py *x) {
     if (x->visMode == 1) {
         PY4PD_free(x);
     }
+
+    
+    if (x->function_called){
+        Py_DECREF(x->function);
+        Py_DECREF(x->module);
+        inlet_free(x->in1);
+        outlet_free(x->out_A);
+
+    }
+
     return (void *)x;
 
 }
@@ -1372,7 +1421,7 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_classAudioOut, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
     class_addmethod(py4pd_classAudioIn, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
 
-    class_addmethod(py4pd_class, (t_method)getmoduleFunction, gensym("debug"), A_GIMME, 0); 
+    class_addmethod(py4pd_class, (t_method)testwaytocallfunction, gensym("debug"), A_GIMME, 0); 
 }
 
 

@@ -126,11 +126,18 @@ def pd_tabwrite():
         i += 1
     pd.tabwrite("pd.tabwrite", list, resize=True)
 
+
+def printall(x, y):
+    "It sends a message to the py4pd message box."
+    pd.print(str(x + y))
+
+
+
+
+
 # ================================================
 # ================ Audio =========================
 # ================================================
-
-
 
 def fft(audio):
     fft = np.fft.fft(audio)
