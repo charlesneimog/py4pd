@@ -44,6 +44,9 @@ markdown_extensions:
 
 repo_url: https://github.com/charlesneimog/py4pd
 
+extra_css:
+  - extra/extra.css
+  
 nav:
     - index.md 
     - setup.md

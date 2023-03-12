@@ -10,41 +10,63 @@ Welcome to the `py4pd` documentation! I am writing this yet, and some things are
 * Use svg/draws as scores;
 * OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
 
+<hr>
+
 ## Quick Examples
 
-Here I will present some examples that I am using in my pieces.  
+In this section, I share examples of techniques and tools I use in my work as a composer. These examples are taken from my own pieces (sometimes pieces in developing) and represent different ways of approaching musical composition using `py4pd`. 
 
-### **Artificial Inteligence**
+Through the sharing of these examples, my intention is to showcase the significant benefits that can be achieved with the use of Python and `py4pd` in PureData. Despite being a challenging task, mainly for people not familiar with textual languages, Python provides a more accessible and user-friendly alternative to the programming languages of `C` and `C++`. Also, most musicians and researchers do/share their research work in Python, so copying and pasting code samples becomes a very common approach.
+
+<hr>
+
+### <h3 align="center"> **Artificial Inteligence** </h3>
 
 I will write the doc soon.
 
-### **Score in PureData** 
+<hr>
 
+### <h3 align="center"> **Score in PureData** </h3>
+
+For certain musicians that use PureData, they might find that the Score visualization is a missing feature. However, this issue can be resolved by utilizing py4pd. This script is delivered along with the `py4pd` library.
 
 <p align="center">
     <img src="assets/score.gif" width="50%"</img>
 </p>
 
-### **Draws as scores**
+<hr>
+
+### <h3 align="center"> **Draws as scores** </h3>
+
+In this example, I am using the `svg` file shown above to render sounds using the new `else/plaits~`. Besides `earplug~`, and `cyclone/coll`. The colors control the `plaits~` parameters.
 
 <p align="center">
 	<img src="assets/examples/img2sound/img2sound.jpeg"></img>
 </p>
+
 <p align="center">
-	<audio controls>
+	<audio controls style="width: 60%; border-radius: 10px;"
 	  <source src="assets/examples/img2sound/img2sound.mp3" type="audio/mpeg">
 	  Your browser does not support the audio element.
 	</audio>
 </p>
 
-### **Spectral analysis**
+<hr>
+
+### <h3 align="center"> **Spectral analysis** </h3>
+
+In Python, there is not just one Spectral Analysis package, but a lot. I like mainly `loristrck`. But there is `simpl`, `librosa`, [PyAudio_FFT](https://github.com/aiXander/Realtime_PyAudio_FFT), among others. For people that work with `.sdif` files there is `pysdif3` that is fast an amazing. Here an example using `loristrck` in PureData.
+
+_Here I will put I amazing print_ 
+
+
+<hr>
+
+### <h3 align="center"> **Eco (2023)** </h3>
 
 I will write the doc soon.
 
-### **Eco (2023)**
-
-I will write the doc soon.
-
+<hr>
 ### 
 
 
