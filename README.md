@@ -20,7 +20,7 @@
 * OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
 * Sound analisys with `magenta`, `librosa`, and `pyAudioAnalaysis`;
 
-Go to ![Docs](https://py4pd.readthedocs.io/en/latest/) to see examples.
+Go to [Docs](https://py4pd.readthedocs.io/en/latest/) to see examples.
 
 
 ### Download py4pd
