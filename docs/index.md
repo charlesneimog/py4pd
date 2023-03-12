@@ -16,7 +16,13 @@ Here I will present some examples that I am using in my pieces.
 
 ### Draws as scores
 
-I will write the doc soon.
+
+
+
+<audio controls>
+  <source src="https://github.com/charlesneimog/py4pd/raw/develop/docs/assets/examples/img2sound/img2sound.mp3" type="audio/mpeg">
+  Your browser does not support the audio element.
+</audio>
 
 ### Spectral analysis
 
