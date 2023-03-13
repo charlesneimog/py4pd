@@ -19,8 +19,11 @@ theme:
     - md_in_html
   
   palette:
+      
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
+      logo: material/lightbulb
+      primary: white
       scheme: default
       toggle:
         icon: material/lightbulb
@@ -28,6 +31,8 @@ theme:
 
     # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
+      primary: blue
+      logo: assets/py4pd-logo.svg
       scheme: slate
       toggle:
         icon: material/lightbulb-outline
@@ -37,10 +42,17 @@ markdown_extensions:
     - pymdownx.superfences
     - pymdownx.extra
     - pymdownx.details
+    - pymdownx.inlinehilite
     - pymdownx.emoji
     - pymdownx.tasklist
     - pymdownx.magiclink
     - pymdownx.highlight
+    - abbr
+    - attr_list
+    - md_in_html
+    - admonition
+    - pymdownx.details
+    - pymdownx.superfences
 
 repo_url: https://github.com/charlesneimog/py4pd
 

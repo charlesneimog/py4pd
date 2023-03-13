@@ -1,6 +1,11 @@
 # Home
 
-Welcome to the `py4pd` documentation! I am writing this yet, and some things are incomplete.
+Welcome to the `py4pd` documentation! 
+
+!!! warning "Incomplete Docs"
+
+	<h3 align="center">I am writing the documentation yet, if you see some mistake, let me know.</h3>
+
 
 `py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things. With Python you can:
 
@@ -45,28 +50,32 @@ It is easy use `AI` with `py4pd`. There already great objects, like `nn~` and `d
 	</audio>
 </p>
 
-To illustrate the statement "Python offers a more accessible and user-friendly alternative that C and C++", presented earlier, here is an example of Python code:
 
-``` py 
 
-import pd # py4pd library
-import torch # Library of AI
-import librosa # Library to load audios in Python
+??? example end "Python Code"
 
-def renderAudio_nn(audio, model):
-    model = pd.home() + '/' + model # get the pathname of model.ts, that is the result of the IA trained.
-    audio = pd.home() + '/' +  audio # The audio source
-    torch.set_grad_enabled(False) # config of the IA
-    model = torch.jit.load(model).eval() # Load model of IA
-    x = librosa.load(audio)[0] # take the audio samples of the sound (audio)
-    x_for = torch.from_numpy(x).reshape(1, 1, -1) # transform the audio to fit in the IA model
-    z = model.encode(x_for) # tranlate for the IA thing, I believe here is the black box.
-    z[:, 0] += torch.linspace(-2, 2, z.shape[-1]) # No ideia;
-    y = model.decode(z).numpy().reshape(-1) # Now we have sound again!
-    pd.tabwrite('iaAudio', y.tolist(), resize=True) # Here we write the sound in the table 'iaAudio'.
-    pd.print('Audio rendered')
+    To illustrate the statement "Python offers a more accessible and user-friendly alternative that C and C++", presented earlier, here is an example of Python code: 
+    
+	``` py 
 
-```
+	import pd # py4pd library
+	import torch # Library of AI
+	import librosa # Library to load audios in Python
+
+	def renderAudio_nn(audio, model):
+	    model = pd.home() + '/' + model # get the pathname of model.ts, that is the result of the IA trained.
+	    audio = pd.home() + '/' +  audio # The audio source
+	    torch.set_grad_enabled(False) # config of the IA
+	    model = torch.jit.load(model).eval() # Load model of IA
+	    x = librosa.load(audio)[0] # take the audio samples of the sound (audio)
+	    x_for = torch.from_numpy(x).reshape(1, 1, -1) # transform the audio to fit in the IA model
+	    z = model.encode(x_for) # tranlate for the IA thing, I believe here is the black box.
+	    z[:, 0] += torch.linspace(-2, 2, z.shape[-1]) # No ideia;
+	    y = model.decode(z).numpy().reshape(-1) # Now we have sound again!
+	    pd.tabwrite('iaAudio', y.tolist(), resize=True) # Here we write the sound in the table 'iaAudio'.
+	    pd.print('Audio rendered')
+
+	```
 
 <hr>
 ### <h3 align="center"> **Draws as scores** </h3>

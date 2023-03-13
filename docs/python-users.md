@@ -36,7 +36,7 @@ These are the methods used to send data from Python to PureData. The inverse pat
 
 #### `pd.out` 
 
-`pd.out` allows you to output data to PureData without needing to wait for the Python function to finish executing. This is different from returning data to PureData using the `return` statement, which requires the function to complete before sending data. For example, consider the following function:
+`#!python pd.out()` allows you to output data to PureData without needing to wait for the Python function to finish executing. This is different from returning data to PureData using the `return` statement, which requires the function to complete before sending data. For example, consider the following function:
 
 ``` py
 import pd
