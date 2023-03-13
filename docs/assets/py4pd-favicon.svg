@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="29"
+   height="29.000002"
+   version="1.1"
+   id="svg2"
+   sodipodi:docname="py4pd-favicon.svg"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <sodipodi:namedview
+     id="namedview15"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="17.212339"
+     inkscape:cx="20.33425"
+     inkscape:cy="17.981286"
+     inkscape:window-width="1920"
+     inkscape:window-height="1011"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <metadata
+     id="metadata17">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs15">
+    <linearGradient
+       id="a"
+       x1="-133.26801"
+       y1="-202.91"
+       x2="-133.198"
+       y2="-202.84"
+       gradientTransform="matrix(189.38002,0,0,189.81001,25243.061,38519.171)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="#387eb8"
+         id="stop1743" />
+      <stop
+         offset="1"
+         stop-color="#366994"
+         id="stop1745" />
+    </linearGradient>
+    <linearGradient
+       id="b"
+       x1="-133.575"
+       y1="-203.203"
+       x2="-133.495"
+       y2="-203.133"
+       gradientTransform="matrix(189.38,0,0,189.81,25309.062,38583.419)"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="#ffe052"
+         id="stop1748" />
+      <stop
+         offset="1"
+         stop-color="#ffc331"
+         id="stop1750" />
+    </linearGradient>
+  </defs>
+  <path
+     d="m 7.6254973,1.1816369 c -3.2101398,0 -3.007133,1.4000996 -3.007133,1.4000996 v 1.454827 H 7.6711638 V 4.4926223 H 3.4025802 c 0,0 -2.054942,-0.2553929 -2.054942,3.0305095 0,3.2859032 1.8144075,3.1522762 1.8144075,3.1522762 H 4.209637 V 9.1425943 c 0,0 -0.058775,-1.8301614 1.7633166,-1.8301614 h 3.0573205 c 0,0 1.7054429,0.02736 1.7054429,-1.6655266 V 2.8690535 c 0,0 0.25862,-1.6928895 -3.0934896,-1.6928895 v 0 z M 5.9381395,2.1562336 A 0.54888886,0.55365518 0 1 1 5.4032668,2.7235708 v -0.00912 A 0.54888886,0.55365518 0 0 1 5.952155,2.1607938 v 0 z"
+     style="fill:url(#a);stroke-width:0.999984"
+     id="path1757" />
+  <path
+     d="m 21.41581,27.798581 c 3.204588,0 3.001931,-1.4047 3.001931,-1.4047 v -1.450307 h -3.047065 v -0.456071 h 4.274286 c 0,0 2.051388,0.231684 2.051388,-3.035154 0,-3.26684 -1.81127,-3.152365 -1.81127,-3.152365 h -1.059318 v 1.512787 c 0,0 0.05868,1.830215 -1.760267,1.830215 h -3.053384 c 0,0 -1.703848,-0.026 -1.703848,1.666941 v 2.796629 c 0,0 -0.258172,1.692937 3.08814,1.692937 h 0.01804 z m 1.684438,-0.979185 a 0.54793927,0.5536706 0 1 1 0.53395,-0.567352 v 0.01368 a 0.54793927,0.5536706 0 0 1 -0.54794,0.553671 h 0.01354 z"
+     style="fill:url(#b);stroke-width:1"
+     id="path1759" />
+  <rect
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linejoin:round;stroke-miterlimit:0;paint-order:stroke fill markers"
+     id="rect9579"
+     width="28"
+     height="28"
+     x="0.5"
+     y="0.5" />
+  <rect
+     x="10.624278"
+     y="10.580858"
+     width="7.7514453"
+     height="7.8382826"
+     id="7fb48d028a00BASE"
+     style="fill:#00fc04;stroke:#000000;stroke-width:0.4;stroke-dasharray:none" />
+  <ellipse
+     cx="14.5"
+     cy="14.500001"
+     id="7fb48d028a00BUT"
+     style="fill:#00fc04;stroke:#000000;stroke-width:0.4;stroke-dasharray:none"
+     rx="3.3589599"
+     ry="3.3965893"
+     inkscape:export-filename="7fb48d028a00BUT.png"
+     inkscape:export-xdpi="317.79309"
+     inkscape:export-ydpi="317.79309" />
+</svg>
