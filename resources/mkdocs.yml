@@ -2,6 +2,9 @@ site_name: py4pd
    
 theme:
   logo: assets/py4pd-logo.svg
+  custom_dir: docs/overrides
+  logo_dark_mode: assets/py4pd-dark.svg
+  logo_light_mode: assets/py4pd-light.svg
   favicon: assets/py4pd-favicon.png
   name: material
   features:
@@ -19,21 +22,17 @@ theme:
     - md_in_html
   
   palette:
-      
-    # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
-      logo: material/lightbulb
-      primary: white
       scheme: default
+      primary: white
+      accent: light blue
       toggle:
         icon: material/lightbulb
         name: Switch to dark mode
-
-    # Palette toggle for dark mode
     - media: "(prefers-color-scheme: dark)"
-      primary: blue
-      logo: assets/py4pd-logo.svg
       scheme: slate
+      accent: light blue
+      primary: black
       toggle:
         icon: material/lightbulb-outline
         name: Switch to light mode
@@ -43,7 +42,6 @@ markdown_extensions:
     - pymdownx.extra
     - pymdownx.details
     - pymdownx.inlinehilite
-    - pymdownx.emoji
     - pymdownx.tasklist
     - pymdownx.magiclink
     - pymdownx.highlight
@@ -52,7 +50,7 @@ markdown_extensions:
     - md_in_html
     - admonition
     - pymdownx.details
-    - pymdownx.superfences
+
 
 repo_url: https://github.com/charlesneimog/py4pd
 

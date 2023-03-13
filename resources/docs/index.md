@@ -7,17 +7,11 @@ Welcome to the `py4pd` documentation!
 	<h3 align="center">I am writing the documentation yet, if you see some mistake, let me know.</h3>
 
 
-`py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things. With Python you can:
-
-* Use scores inside PureData;
-* Work with AI;
-* Audio analisys;
-* Use svg/draws as scores;
-* OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
+`py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things. With Python you can use scores inside PureData, work with AI,  Audio analisys, use svg/draws as scores, OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
 
 <hr>
 
-## Quick Examples
+## Examples
 
 In this section, I share examples of techniques and tools I use in my work as a composer. These examples are taken from my own pieces (sometimes pieces in developing) and represent different ways of approaching musical composition using `py4pd`, but it is *important* to emphasize that the Python code used here are basically copy and paste of Github Repositories under GPL and Common Creatives Licenses.
 
