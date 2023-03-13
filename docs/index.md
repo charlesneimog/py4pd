@@ -20,33 +20,44 @@ Through the sharing of these examples, my intention is to showcase the significa
 
 <hr>
 
-### <h3 align="center"> **Artificial Inteligence** </h3>
-
-I will write the doc soon.
-
-<hr>
-
 ### <h3 align="center"> **Score in PureData** </h3>
 
-For certain musicians that use PureData, they might find that the Score visualization is a missing feature. However, this issue can be resolved by utilizing py4pd. This script is delivered along with the `py4pd` library.
+For certain musicians that use PureData, they might find that the Score visualization is a missing feature. However, this issue can be resolved by utilizing `py4pd`. This script is delivered along with the `py4pd` library.
 
 <p align="center">
-    <img src="assets/score.gif" width="50%"</img>
+    <img src="examples/score/score.gif" width="40%"</img>
 </p>
 
 <hr>
 
+### <h3 align="center"> **Artificial Inteligence** </h3>
+
+It is easy use `AI` with `py4pd`. There already great objects, like `nn~` and `ddsp~`, but it requires some knowledge in how to compile it. For Windows, this can be problematic. Below we have an example using `py4pd` and the Python code used by `nn~`. 
+
+<p align="center">
+	<img src="examples/ia/ia.png" width="60%"></img>
+</p>
+
+<p align="center">
+	<audio controls style="width: 60%; border-radius: 10px;"
+	  <source src="examples/ia/turvo-wheel.wav" type="audio/mpeg">
+	  Your browser does not support the audio element.
+	</audio>
+</p>
+
+
+<hr>
 ### <h3 align="center"> **Draws as scores** </h3>
 
 In this example, I am using the `svg` file shown above to render sounds using the new `else/plaits~`. Besides `earplug~`, and `cyclone/coll`. The colors control the `plaits~` parameters.
 
 <p align="center">
-	<img src="assets/examples/img2sound/img2sound.jpeg"></img>
+	<img src="examples/img2sound/img2sound.jpeg"></img>
 </p>
 
 <p align="center">
 	<audio controls style="width: 60%; border-radius: 10px;"
-	  <source src="assets/examples/img2sound/img2sound.mp3" type="audio/mpeg">
+	  <source src="examples/img2sound/img2sound.mp3" type="audio/mpeg">
 	  Your browser does not support the audio element.
 	</audio>
 </p>
@@ -59,12 +70,11 @@ In Python, there is not just one Spectral Analysis package, but a lot. I like ma
 
 _Here I will put I amazing print_ 
 
-
 <hr>
 
 ### <h3 align="center"> **Eco (2023)** </h3>
 
-I will write the doc soon.
+Eco (2023) is the first version of one under developing piece that use some concepts of the composer Ricardo Thomasi in his PhD research. The idea here, is to use smartphones/tablets putted in the performance music stand, to make realtime `FFT` and `Partial Tracking` and then, generate scores that are played. The smartphones/tablets send data to PureData, and using `py4pd`, we generate realtime scores using `neoscore`.
 
 <hr>
 ### 
