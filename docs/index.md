@@ -45,7 +45,7 @@ It is easy use `AI` with `py4pd`. There already great objects, like `nn~` and `d
 	</audio>
 </p>
 
-To illustrate the statement "Python offers a more accessible and user-friendly alternative to programming languages such as `C` and `C++`", presented earlier, here is an example Python code:
+To illustrate the statement "Python offers a more accessible and user-friendly alternative that C and C++", presented earlier, here is an example of Python code:
 
 ``` py 
 
