@@ -216,7 +216,6 @@
 #X obj 284 118 dac~;
 #X obj 284 12 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X obj 393 118 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
-#X text 254 192 This example uses code from nn~. I am not an AI guy \, but it's cool.;
 #N canvas 0 0 1264 593 downloadModel 0;
 #X obj 58 156 pdcontrol;
 #X msg 58 109 browse https://nubo.ircam.fr/index.php/s/KdG9Gim46qLnZeL/download;
@@ -226,9 +225,10 @@
 #X restore 273 302 pd downloadModel;
 #X obj 273 271 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X text 300 270 Click to Download;
+#X text 254 192 This example uses Python Code from nn~.;
 #X connect 1 0 0 0;
 #X connect 3 0 4 0;
 #X connect 3 0 4 1;
 #X connect 3 1 6 0;
 #X connect 5 0 3 0;
-#X connect 9 0 8 0;
+#X connect 8 0 7 0;

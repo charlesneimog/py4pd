@@ -1,9 +1,10 @@
-import torch 
-import librosa
-import soundfile
 import pd
-
-
+for library in ['torch', 'librosa', 'soundfile']:
+    try:
+        exec('import ' + library)
+    except:
+        pd.error('Please install ' + library + ' library')
+        
 
 def renderAudio_nn(audio, model):
     model = pd.home() + '/' + model
