@@ -25,7 +25,10 @@ def pd_tabwrite():
 
 This will write the list `randomNumbers` in the `pd.tabwrite` table in PureData. If the table does not exist it will give an error, like what happens in the `tabwrite` object.
 
-## pd Methods
+-------------------------------------- 
+<br>
+
+## <h2 style="text-align:center"> **pd Methods** </h2>
 
 Next, I present all methods provide by `pd` in some categories. 
 
@@ -33,8 +36,8 @@ Next, I present all methods provide by `pd` in some categories.
 -------------------------------------- 
 These are the methods used to send data from Python to PureData. The inverse path is done mainly with `run` and `key` messages. 
 
-
-#### `pd.out` 
+-------------------------------------- 
+#### <h4 style="text-align:center"> `pd.out` </h4>
 
 `#!python pd.out()` allows you to output data to PureData without needing to wait for the Python function to finish executing. This is different from returning data to PureData using the `return` statement, which requires the function to complete before sending data. For example, consider the following function:
 
@@ -92,7 +95,7 @@ def lorisAnalisys(audiofile, parcialnumber):
 
 ---------------------------
 
-#### `pd.send`
+#### <h4 style="text-align:center"> `pd.send` </h4>
 
 You can use `pd.send` to send data to a receive object in your PureData patch. This method takes in two arguments: the name of the `receive` object and the value you want to send. For instance, suppose you have a receive object named "myReceiver" in your patch. To send the value 42 to this object, you could use `pd.send("myReceiver", 42)`.
 
@@ -114,7 +117,7 @@ In this example, it will send to `py4pdreceiver` the message `"hello from python
 Let's say that you are using a lot of synths and have some color way to organize some combination of sounds(...). 
 
 -------------------------------------- 
-#### `pd.tabwrite` 
+#### <h4 style="text-align:center"> `pd.tabwrite` </h4>
 
 `pd.tabwrite` is a method that is essentially a copy of the `tabwrite` object in PureData. With this method, you can write audio or any numerical data to a PureData array.
 
@@ -125,7 +128,7 @@ To use `pd.tabwrite`, you first need to specify the name of the array you want t
 Overall, `pd.tabwrite` provides a convenient way to write data to PureData arrays directly from your Python code.
 
 -------------------------------------- 
-#### `pd.tabread`
+#### <h4 style="text-align:center"> `pd.tabread` </h4>
 
 `pd.tabread` is a method that is essentially a copy of the `tabread` object in PureData. With this method, you can read data from a PureData array directly from within your Python code.
 
@@ -147,7 +150,7 @@ def readFromArray(arrayname):
 
 
 -------------------------------------- 
-#### `pd.getkey`
+#### <h4 style="text-align:center"> `pd.getkey` </h4>
 
 When working with audio in py4pd, I've designed the audio functions to accept only one argument: the audio itself. This makes things simpler in many ways. However, it also raises the question of how to specify different audio parameters, such as fft-size or bandwidth. To address this, py4pd includes a function called pd.getkey, which works in conjunction with the key message in PureData.
 
@@ -177,7 +180,8 @@ def someAudioFunction(audio): # (1)!
 
 There are two messages used to print info in the PureData console, they are `pd.print` and `pd.error`.
 
-#### `pd.print` 
+------------------
+#### <h4 style="text-align:center"> `pd.print` </h4>
 
 When you want to inform the user (or yourself) of important information in PureData, you should use the `pd.print` method. This is particularly useful when debugging your Python code from within PureData. It's important to note that regular print statements will not work in PureData, so you must use `pd.print` instead.
 
@@ -187,7 +191,7 @@ Overall, `pd.print` provides a reliable way to communicate important information
 
 -------------------------------------- 
 
-#### `pd.error` 
+#### <h4 style="text-align:center"> `pd.error` </h4>
 
 If you want to inform the user of errors in your Python code when working with PureData, you should use the `pd.error` method. 
 
@@ -199,7 +203,7 @@ Overall, using pd.error can help you effectively communicate errors to the user 
 
 ### Images
  
-####  `pd.show`
+#### <h4 style="text-align:center"> `pd.show` </h4>
 
 If you want to display images inside your PureData patches using Python, you can use the pd.show method. This method is essentially a copy of the else/pic object, but with an interface that allows you to easily show images from within your Python code.
 
@@ -299,21 +303,20 @@ def chord(pitches):
 To use this script, you can create a `py4pd` object environment with `py4pd -score score chord`. 
 
 -------------------------------------- 
-
-
 ### <h3 style="text-align:center"> File Management </h3>
+-------------------------------------- 
 
 Next is presented `pd.home` and `pd.tempfolder`. These functions can be useful for managing files in PureData and Python.
 
-
-#### `pd.home`
+-------------------------------------- 
+#### <h4 style="text-align:center"> `pd.home` </h4>
 
 In `py4pd`, `pd.home` is a function that returns the path to the directory where the currently-running PureData patch is located. This can be useful for accessing files and resources relative to the location of the patch. 
 
 -------------------------------------- 
 
 
-#### `pd.tempfolder`
+#### <h4 style="text-align:center"> `pd.tempfolder` </h4>
 
 `pd.tempfolder` is used get one tempfolder to save stuff that won't be used more than once. In `pd.show` I am using `pd.tempfolder`. All the data inside this folder will be deleted after you close PureData or delete all `py4pd` objects. The tempfolder is located in `~/.py4pd` for Windows, Linux and Mac and it is a hidden folder on Windows too.
 
@@ -323,13 +326,13 @@ In `py4pd`, `pd.home` is a function that returns the path to the directory where
 
 ### <h3 style="text-align:center"> Audio Info </h3>
     
-#### `pd.samplerate`
+#### <h4 style="text-align:center"> `pd.samplerate` </h4>
 
 This get the current samplerate of PureData. You can use the `pd.SAMPLERATE` variable too.
 
 -------------------------------------- 
 
-#### `pd.vecsize`
+#### <h4 style="text-align:center"> `pd.vecsize` </h4>
 
 This get the current vectorsize/blocksize of PureData. You can use the `pd.VECSIZE` variable too.
 
