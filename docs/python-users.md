@@ -158,7 +158,7 @@ By using `pd.getkey` in combination with the key message, you can easily specify
 ``` py
 import pd
 
-def someAudioFunction(audio):
+def someAudioFunction(audio): # (1)!
     fftvalue = pd.getkey("fft-size")
     if fftvalue == None:
         fftvalue = 2048 # default value for fft-size key.
@@ -168,6 +168,8 @@ def someAudioFunction(audio):
     return myGreatAudioManipulation
 
 ```
+
+1. Remember, audio functions receive just one `arg` that is the audio. The **standart** is to use python lists, but you can turn on `numpy` array input use the message `numpy 1`. [See numpy method.](puredata-users/#numpy)
 
 ------------------
 

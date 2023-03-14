@@ -2,26 +2,23 @@
 
 Welcome to the `py4pd` documentation! 
 
-!!! warning "Incomplete Docs"
+`py4pd` allows the use of [Python](https://www.python.org/) as an object in [PureData](https://puredata.info/). It is similar to [py/pyext](https://github.com/grrrr/py), but is simpler to keep up to date, use modules, use lists, and other things. 
 
-	<h3 align="center">I am writing the documentation yet, if you see some mistake, let me know.</h3>
-
-
-`py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things. With Python you can use scores inside PureData, work with AI,  Audio analisys, use svg/draws as scores, OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
-
+With Python as an object, you can see scores inside PureData, work with AI, lot of Audio Analysis tools, use svg/draws as scores, and OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
+	
 <hr>
 
-## Examples
+## <h2 align="center"> **Examples and Use Cases** </h2>
 
-In this section, I share examples of techniques and tools I use in my work as a composer. These examples are taken from my own pieces (sometimes pieces in developing) and represent different ways of approaching musical composition using `py4pd`, but it is *important* to emphasize that the Python code used here are basically copy and paste of Github Repositories under GPL and Common Creatives Licenses.
+In this section, I share examples of techniques and tools I use in my composition pieces/research. It represents different ways of approaching musical composition using `py4pd`. It is important to emphasize that the Python code uses copies of Github codes under GPL and Common Creatives Licenses.
 
-Through the sharing of these examples, my intention is to showcase the significant benefits that can be achieved with the use of Python and `py4pd` in PureData. Despite the creation of Python Scripts could be a challenging task, mainly for people not familiar with textual languages, Python provides a more accessible and user-friendly alternative to the programming languages of `C` and `C++`. Also, most musicians and researchers do/share their research work in Python, so copying and pasting code samples becomes a very common approach.
+By sharing these examples, I intend to showcase the significant benefits that can be achieved with the use of Python and `py4pd` in PureData. Although creating Python Scripts could be challenging, mainly for people unfamiliar with textual languages, Python provides a more accessible and user-friendly alternative to the programming languages of `C` and `C++`. Also, most music researchers do/share their research in Python, so copying and pasting code samples becomes a common approach.
 
 <hr>
 
 ### <h3 align="center"> **Score in PureData** </h3>
 
-For certain musicians that use PureData, they might find that the Score visualization is a missing feature. However, this issue can be resolved by utilizing `py4pd`. This script is delivered along with the `py4pd` library.
+Specific musicians using PureData might find that the Score visualization is missing. This issue can be resolved by utilizing `py4pd`. This script is delivered along with the `py4pd` library.
 
 <p align="center">
     <img src="examples/score/score.gif" width="40%"</img>
@@ -31,7 +28,7 @@ For certain musicians that use PureData, they might find that the Score visualiz
 
 ### <h3 align="center"> **Artificial Inteligence** </h3>
 
-It is easy use `AI` with `py4pd`. There already great objects, like `nn~` and `ddsp~`, but it requires some knowledge in how to compile it. For Windows, this can be problematic. Below we have an example using `py4pd` and the Python code used by `nn~`. 
+It is easy to use `AI` with `py4pd`. There are already powerful objects for realtime, like `nn~` and `ddsp~`, but it requires some knowledge of how to compile them. For Windows, this can be problematic. Below is an example using `py4pd` and the Python code used by `nn~` (offline processing).
 
 <p align="center">
 	<img src="examples/ia/ia.png" width="60%"></img>
@@ -74,7 +71,8 @@ It is easy use `AI` with `py4pd`. There already great objects, like `nn~` and `d
 <hr>
 ### <h3 align="center"> **Draws as scores** </h3>
 
-In this example, I am using the `svg` file shown above to render sounds using the new `else/plaits~`. Besides `earplug~`, and `cyclone/coll`. The colors control the `plaits~` parameters.
+In this example, I use the SVG file above to render sounds using the new `else/plaits~`. Besides `earplug~`, and `cyclone/coll`. The colors control the `plaits~` parameters.
+
 
 <p align="center">
 	<img src="examples/img2sound/img2sound.jpeg"></img>

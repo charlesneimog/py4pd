@@ -12,12 +12,13 @@ theme:
     - content.code.annotate 
     - content.code.copy
     - navigation.tabs
+    - navigation.tabs.sticky
     - search.highlight
     - search.suggest
     - toc.integrate
     - toc.follow
     - navigation.instant
-    # - header.autohide
+    - header.autohide
     - attr_list
     - md_in_html
   
@@ -63,6 +64,6 @@ nav:
     - puredata-users.md
     - python-users.md
     - developers.md
-    - examples.md
+    #- examples.md
 
 

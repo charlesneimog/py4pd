@@ -143,7 +143,7 @@ This turn on/off the threads of Python.
 -------------------------------------- 
 #### `numpy` 
 
-This turn on/off the numpy arrays in audio functions
+This turn on/off the numpy arrays in audio functions args. 
 
 * `arg1`: `1` for numpy `on` `0` for numpy `off`. 
 * `example`: `numpy 1`. 
@@ -167,6 +167,4 @@ Set the packages path for Python. `py4pd` will look for modules inside this fold
 * `example`: `packages /home/neimog/miniconda3/envs/composition/lib/python3.11/site-packages`. 
 _Obs.:_ Observe that you can use `conda` or `miniconda` environment. In this example, I am using my environment called `composition`.
 
-{ .annotate }
 
-1. Bla bla bla, blas  sdaoi asdoia sdoiasj
