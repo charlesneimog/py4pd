@@ -1,5 +1,4 @@
 #include "py4pd.h"
-#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
@@ -14,8 +13,6 @@ t_class *py4pd_class_VIS;      // For visualisation | pic object by pd-else
 t_class *py4pd_classAudioIn;   // For audio in
 t_class *py4pd_classAudioOut;  // For audio out
 int object_count; 
-
-
 
 // ============================================
 // ========== PY4PD DEBUG FUNCTIONS ===========
@@ -47,12 +44,6 @@ void testwaytocallfunction(t_py *x){
     Py_DECREF(arg1);
     Py_DECREF(arg2);
 }
-
-
-
-
-
-
 
 // ============================================
 // ========= PY4PD METHODS FUNCTIONS ==========
@@ -419,7 +410,7 @@ static void reload(t_py *x) {
  * @param argv is the arguments
  * @return void, but it sets the function
  */
-static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     t_symbol *script_file_name = atom_gensym(argv + 0);
     t_symbol *function_name = atom_gensym(argv + 1);
@@ -510,12 +501,12 @@ static void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         //  TODO: way to check if function has *args or **kwargs
 
         int py_args = PyObject_Size(args);
-        if (args == Py_None) {
+        x->py_arg_numbers = py_args;
+        if (args == Py_None && x->py4pd_lib == 0) {
             x->py_arg_numbers = -1;
             post("[py4pd] The '%s' function has *args or **kwargs!", function_name->s_name);
         } 
-        else {
-            x->py_arg_numbers = py_args;
+        else if (x->py4pd_lib == 0) {
             post("[py4pd] The '%s' function has %d arguments!", function_name->s_name, py_args);
         }
         Py_DECREF(inspect);
@@ -1179,6 +1170,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         post("");
         PyImport_AppendInittab("pd", PyInit_pd);  // Add the pd module to the python interpreter
         Py_Initialize();  // Initialize the Python interpreter. If 1, the signal
+
     }
 
     object_count++;  // count the number of objects;
@@ -1308,10 +1300,10 @@ void *py4pd_free(t_py *x) {
 
     
     if (x->function_called){
-        Py_DECREF(x->function);
-        Py_DECREF(x->module);
-        inlet_free(x->in1);
-        outlet_free(x->out_A);
+        // Py_DECREF(x->function);
+        // Py_DECREF(x->module);
+        // inlet_free(x->in1);
+        // outlet_free(x->out_A);
 
     }
 
@@ -1331,7 +1323,7 @@ void py4pd_setup(void) {
                   (t_method)py4pd_free,    // quando voce deleta o objeto
                   sizeof(t_py),  // quanta memoria precisamos para esse objeto
                   0,             // nao há uma GUI especial para esse objeto???
-                  A_GIMME,       // o argumento é um símbolo
+                  A_GIMME,       // os argumentos são um símbolo
                   0);
     py4pd_class_VIS = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
     py4pd_classAudioOut = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);

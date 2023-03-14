@@ -1,8 +1,7 @@
-#include "pd_module.h"
 #include "py4pd.h"
-#include "py4pd_pic.h"
 #include "py4pd_utils.h"
-#include "pyerrors.h"
+#include "py4pd_pic.h"  
+#include "pylibraries.h"
 
 // ======================================
 // ======== py4pd embbeded module =======
@@ -99,10 +98,7 @@ PyObject *pderror(PyObject *self, PyObject *args) {
     } else {
         PyErr_SetString(
             PyExc_TypeError,
-            "[Python] argument of pd.error must be a string");  // Colocar
-                                                                   // melhor
-                                                                   // descrição
-                                                                   // do erro
+            "[Python] argument of pd.error must be a string");  
         return NULL;
     }
     return PyLong_FromLong(0);
@@ -485,6 +481,11 @@ PyMethodDef PdMethods[] = {
     // audio
     {"samplerate", pdsamplerate, METH_VARARGS, "Get PureData SampleRate"},
     {"vecsize", pdveczise, METH_VARARGS, "Get PureData Vector Size"},
+
+
+    // library methods
+    {"addobject", pdAddPyObject, METH_VARARGS, "It add python functions as objects"},
+
 
     {NULL, NULL, 0, NULL}  //
 };

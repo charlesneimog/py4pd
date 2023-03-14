@@ -34,7 +34,7 @@ endif
 
 # =================================== Sources ===================================
 
-py4pd.class.sources = src/py4pd.c src/py4pd_utils.c src/pd_module.c src/py4pd_pic.c
+py4pd.class.sources = src/py4pd.c src/py4pd_utils.c src/pd_module.c src/py4pd_pic.c src/pylibraries.c
 
 # =================================== Data ======================================
 datafiles = \
