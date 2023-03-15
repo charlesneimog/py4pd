@@ -47,9 +47,10 @@ jobs:
           mkdir py4pd_Linux/src
           cp resources/* py4pd_Linux/resources -r
           cp src/* py4pd_Linux/resources -r
+          ./resources/localdeps/localdeps.linux.sh py4pd_Linux/py4pd.pd_linux
           zip -r py4pd_Linux.zip py4pd_Linux
           cp test/*.pd py4pd_Linux
-      
+          
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
