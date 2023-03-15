@@ -62,8 +62,11 @@ jobs:
         cp resources\\py4pd.cfg py4pd_WIN64\
         cp resources\\py.py py4pd_WIN64\ 
         cp resources\\py4pd-help.pd py4pd_WIN64\ 
+        mkdir py4pd_WIN64\src\
+        mkdir py4pd_WIN64\resources\
         xcopy src\*.h py4pd_WIN64\src\
         xcopy src\*.c py4pd_WIN64\src\
+        cp -r resources\* py4pd_WIN64\resources\
         cp resources\\python310._pth py4pd_WIN64\ 
         7z a py4pd_WIN64.zip py4pd_WIN64
         cp test\\*.pd py4pd_WIN64\

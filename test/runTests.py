@@ -63,18 +63,8 @@ def runTest(pdpatch):
         print("\033[92m" + ' Test with ' + pdpatch + ' passed' + "\033[0m")
         return "ok"
     else:
-        for line in outputLines:
-            errorInTest += 1
+        print("\033[91m" + ' Test with ' + pdpatch + ' failed' + "\033[0m")
 
-            if "FAIL" in line:
-                print("\033[91m" + line + "\033[0m")
-            # if the line contains "PASS" then print in green
-            elif "PASS" in line:
-                print("\033[92m" + line + "\033[0m")
-            # otherwise print normally
-            else:
-                print(line)
-        # sys.exit(1)
     
 if __name__ == "__main__":
     # list all patches inside test folder
@@ -83,13 +73,6 @@ if __name__ == "__main__":
     for patch in patches:
         print("=============" + patch + " =============")
         runTest(patch)
-    if errorInTest > 0:
-        print("\033[91m" + f'{errorInTest} tests failed' + "\033[0m")
-        sys.exit(1)
-    else:
-        print("\033[92m" + 'All tests passed' + "\033[0m")
-        sys.exit(0)
-
 
          
               

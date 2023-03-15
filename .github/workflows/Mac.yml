@@ -42,7 +42,7 @@ jobs:
         mkdir py4pd_macOS-Intel/resources
         mkdir py4pd_macOS-Intel/src
         cp -r resources/* py4pd_macOS-Intel/resources
-        cp -r src/* py4pd_macOS-Intel/resources
+        cp -r src/* py4pd_macOS-Intel/src
         zip -r py4pd_macOS-Intel.zip py4pd_macOS-Intel
 
     - name: Upload Object
