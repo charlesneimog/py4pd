@@ -44,7 +44,7 @@ jobs:
           mkdir py4pd_Linux
           cp py4pd.pd_linux resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd_Linux
           mkdir py4pd_Linux/resources
-          cp resources/* py4pd_Linux/resources
+          cp resources/* py4pd_Linux/resources -r
           zip -r py4pd_Linux.zip py4pd_Linux
           cp test/*.pd py4pd_Linux
       
