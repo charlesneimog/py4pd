@@ -50,3 +50,11 @@ $(PYTHON_DLL)
 PDLIBBUILDER_DIR=./resources/pd-lib-builder/
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 
+localdep_linux: install
+	resources/localdeps/localdeps.linux.sh "${installpath}/py4pd.${extension}"
+
+localdep_windows: install
+	resources/localdeps/localdeps.win.sh "${installpath}/py4pd.${extension}"
+
+localdep_macos: install
+	resources/localdeps/localdeps.macos.sh "${installpath}/py4pd.${extension}"

@@ -250,7 +250,11 @@ install_deps () {
             patchelf --set-rpath \$ORIGIN "${outfile}"
         fi
     done
-    patchelf --set-rpath \$ORIGIN/${arch} "${1}"
+    # remove ./ of ${arch}
+    local archdir
+    archdir=$(echo "${arch}" | sed -e 's|^\.*/||')
+    error "NEW ARCHDIR: ${archdir}"
+    patchelf --set-rpath \$ORIGIN/amd64 "${1}"
 }
 
 
