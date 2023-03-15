@@ -54,13 +54,14 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     // Library
     t_int                py4pd_lib; // flag to check if is to use python library
     t_atom               *inlets; // vector to store the arguments
+    PyObject            *argsDict; // parameters
+
     
     // == PYTHON
     PyObject            *module; // script name
     PyObject            *function; // function name
-    PyObject            *Dict; // parameters
-    struct _merge_inlet *x_ins;
-
+    PyObject            *Dict; // arguments
+    
     // == AUDIO AND NUMPY
     t_int               audioOutput; // flag to check if is to use audio output
     t_int               audioInput; // flag to check if is to use audio input
@@ -111,14 +112,14 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 }t_py;
 
 // =====================================
-typedef struct _merge_inlet{
-    t_class*    x_pd;
-    t_atom*     x_atoms;
-    int         x_numatoms;
-    int         x_trig;
-    int         x_id;
-    t_py*    x_owner;
-}t_merge_inlet;
+
+typedef struct _py4pdInlet_proxy{
+    t_object     p_ob;
+    t_py        *p_master;
+    int          inletIndex;
+}t_py4pdInlet_proxy;
+
+
 
 // =====================================
 

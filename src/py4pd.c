@@ -1,4 +1,5 @@
 #include "py4pd.h"
+#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
@@ -12,6 +13,7 @@ t_class *py4pd_class;          // For audioin and without audio
 t_class *py4pd_class_VIS;      // For visualisation | pic object by pd-else
 t_class *py4pd_classAudioIn;   // For audio in
 t_class *py4pd_classAudioOut;  // For audio out
+t_class *py4pd_classLibrary;   // For libraries
 int object_count; 
 
 // ============================================
@@ -44,6 +46,96 @@ void testwaytocallfunction(t_py *x){
     Py_DECREF(arg1);
     Py_DECREF(arg2);
 }
+
+// ============================================
+// =========== PY4PD LOAD LIBRARIES ===========
+// ============================================
+static void libraryLoad(t_py *x, int argc, t_atom *argv){
+    if (argc > 2) {
+        pd_error(x, "[py4pd] Too many arguments! Usage: py4pd -library <library_name>");
+        return;
+    }
+
+    t_symbol *script_file_name = atom_gensym(argv + 1);
+    t_symbol *function_name = gensym("py4pdLoadObjects");
+
+    // check if script file exists
+    char script_file_path[MAXPDSTRING];
+    snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name, script_file_name->s_name);
+
+    char script_inside_py4pd_path[MAXPDSTRING];
+    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/%s.py", x->py4pd_scripts->s_name, script_file_name->s_name);
+
+    if (access(script_file_path, F_OK) == -1 && access(script_inside_py4pd_path, F_OK) == -1) {
+        pd_error(x, "[py4pd] The Library file %s was not found!", script_file_name->s_name);
+        Py_XDECREF(x->function);
+        return;
+    }
+
+    PyObject *pModule, *pFunc;  // Create the variables of the python objects
+    char *pyScripts_folder = malloc(strlen(x->py4pd_folder->s_name) + 20); // allocate extra space
+    snprintf(pyScripts_folder, strlen(x->py4pd_folder->s_name) + 20, "%s/resources/scripts", x->py4pd_folder->s_name);
+    PyObject *home_path = PyUnicode_FromString(x->home_path->s_name);  // Place where script file will probably be
+    PyObject *site_package = PyUnicode_FromString(x->packages_path->s_name);  // Place where the packages will be
+    PyObject *py4pdScripts = PyUnicode_FromString(pyScripts_folder);  // Place where the py4pd scripts will be
+    PyObject *sys_path = PySys_GetObject("path");
+    PyList_Insert(sys_path, 0, home_path);
+    PyList_Insert(sys_path, 0, site_package);
+    PyList_Insert(sys_path, 0, py4pdScripts);
+    Py_DECREF(home_path);
+    Py_DECREF(site_package);
+    Py_DECREF(py4pdScripts);
+    pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file
+    if (pModule == NULL) {
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_XDECREF(pstr);
+        Py_XDECREF(pModule);
+        return;
+    }
+    pFunc = PyObject_GetAttrString(pModule, function_name->s_name);  // Function name inside the script file
+    if (pFunc && PyCallable_Check(pFunc)) {  // Check if the function exists and is callable
+        PyObject *pValue = PyObject_CallNoArgs(pFunc);  // Call the function
+        if (pValue == NULL) {
+            PyObject *ptype, *pvalue, *ptraceback;
+            PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+            PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+            PyObject *pstr = PyObject_Str(pvalue);
+            pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+            Py_XDECREF(pstr);
+            Py_XDECREF(pModule);
+            Py_XDECREF(pFunc);
+            return;
+        }
+        x->module = pModule;
+        x->function = pFunc;
+        x->script_name = script_file_name;
+        x->function_name = function_name;
+        x->function_called = 1;
+        post("Library loaded");
+    } 
+    else {
+        pd_error(x, "[py4pd] Library %s not loaded!", function_name->s_name);
+        x->function_called = 1;  // set the flag to 0 because it crash Pd if
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[py4pd] ERROR %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+        Py_XDECREF(pModule);
+        Py_XDECREF(pFunc);
+        PyErr_Clear();
+    }
+    return;
+}
+
 
 // ============================================
 // ========= PY4PD METHODS FUNCTIONS ==========
@@ -1114,6 +1206,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     int visMODE = 0;
     int audioOUT = 0;
     int audioIN = 0;
+    int libraryMODE = 0;
     int normalMODE = 1;
 
     for (i = 0; i < argc; i++) {
@@ -1130,37 +1223,14 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
             else if (py4pdArgs == gensym("-audioin")) {
                 audioIN = 1;
             }
+            else if (py4pdArgs == gensym("-library")) {
+                libraryMODE = 1;
+                normalMODE = 0;
+            }
         }
     }
-    if (visMODE == 1 && audioOUT == 0 && audioIN == 0) {
-        x = (t_py *)pd_new(py4pd_class_VIS);  // create a new object
-        post("py4pd object created in VISUAL mode");
-    } 
-    else if (audioIN == 1){
-        x = (t_py *)pd_new(py4pd_classAudioIn);  // create a new object
-        post("py4pd object created in AUDIO IN mode");
-    }
-    else if (audioOUT == 1 && visMODE == 0) {
-        x = (t_py *)pd_new(py4pd_classAudioOut);  // create a new object
-        post("py4pd object created in AUDIO OUT mode");
-    } 
-    else if (normalMODE == 1) {
-        x = (t_py *)pd_new(py4pd_class);  // create a new object
-        post("py4pd object created in NORMAL mode");
-    } 
-    else {
-        post("Error in py4pd_new, please report this error to the developer, this message should not appear.");
-        return NULL;
-    }
 
-    x->x_canvas = canvas_getcurrent();       // pega o canvas atual
-    t_canvas *c = x->x_canvas;               // get the current canvas
-    t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
-    x->audioInput = 0;
-    x->audioOutput = 0;
-    x->visMode = 0;
-    x->editorName = NULL;
-
+    // INIT PYTHON
     if (!Py_IsInitialized()) {
         object_count = 1;  // To count the numbers of objects, and finalize the
         post("");
@@ -1170,8 +1240,48 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         post("");
         PyImport_AppendInittab("pd", PyInit_pd);  // Add the pd module to the python interpreter
         Py_Initialize();  // Initialize the Python interpreter. If 1, the signal
-
     }
+
+    // INIT PY4PD
+    if (visMODE == 1 && audioOUT == 0 && audioIN == 0) {
+        x = (t_py *)pd_new(py4pd_class_VIS);  // create a new object
+    } 
+    else if (audioIN == 1){
+        x = (t_py *)pd_new(py4pd_classAudioIn);  // create a new object
+    }
+    else if (audioOUT == 1 && visMODE == 0) {
+        x = (t_py *)pd_new(py4pd_classAudioOut);  // create a new object
+    } 
+    else if (normalMODE == 1) {
+        x = (t_py *)pd_new(py4pd_class);  // create a new object
+    } 
+    else if (libraryMODE == 1) {
+        x = (t_py *)pd_new(py4pd_classLibrary);  
+        x->x_canvas = canvas_getcurrent();      
+        t_canvas *c = x->x_canvas;             
+        t_symbol *patch_dir = canvas_getdir(c);
+        x->thread = 0;
+        x->object_number = object_count; 
+        x->home_path = patch_dir;       
+        x->packages_path = patch_dir;  
+        set_py4pd_config(x); 
+        py4pd_tempfolder(x); 
+        findpy4pd_folder(x); 
+        libraryLoad(x, argc, argv);
+        return (x);
+    }
+    else {
+        pd_error(x, "Error in py4pd_new, please report this error on github.com/charlesneimog/py4pd/issues");
+        return NULL;
+    }
+
+    x->x_canvas = canvas_getcurrent();      
+    t_canvas *c = x->x_canvas;             
+    t_symbol *patch_dir = canvas_getdir(c);
+    x->audioInput = 0;
+    x->audioOutput = 0;
+    x->visMode = 0;
+    x->editorName = NULL;
 
     object_count++;  // count the number of objects;
     for (i = 0; i < argc; i++) {
@@ -1328,6 +1438,7 @@ void py4pd_setup(void) {
     py4pd_class_VIS = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
     py4pd_classAudioOut = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
     py4pd_classAudioIn = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
+    py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
 
     // Sound in
     class_addmethod(py4pd_classAudioIn, (t_method)py4pd_audio_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
@@ -1363,6 +1474,7 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class_VIS, (t_method)reload, gensym("reload"), 0, 0);  // reload python script
     class_addmethod(py4pd_classAudioOut, (t_method)reload, gensym("reload"), 0, 0);  // reload python script
     class_addmethod(py4pd_classAudioIn, (t_method)reload, gensym("reload"), 0, 0);  // run python script
+    class_addmethod(py4pd_classLibrary, (t_method)reload, gensym("reload"), 0, 0);  // run python script
 
     class_addmethod(py4pd_class, (t_method)restartPython, gensym("restart"), 0, 0);  // it restart python interpreter
     class_addmethod(py4pd_class_VIS, (t_method)restartPython, gensym("restart"), 0, 0);  // it restart python interpreter
@@ -1382,6 +1494,7 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class_VIS, (t_method)editor, gensym("editor"), A_GIMME, 0);  // open code
     class_addmethod(py4pd_classAudioOut, (t_method)editor, gensym("editor"), A_GIMME, 0);  // open code
     class_addmethod(py4pd_classAudioIn, (t_method)editor, gensym("editor"), A_GIMME, 0);  // open code
+    class_addmethod(py4pd_classLibrary, (t_method)editor, gensym("editor"), A_GIMME, 0);  // open code
 
     class_addmethod(py4pd_class, (t_method)openscript, gensym("open"), A_GIMME, 0); 
     class_addmethod(py4pd_class_VIS, (t_method)openscript, gensym("open"), A_GIMME, 0);

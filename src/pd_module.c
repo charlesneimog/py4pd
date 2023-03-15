@@ -62,17 +62,54 @@ PyObject *pdout(PyObject *self, PyObject *args) {
 }
 
 // =================================
-PyObject *pdprint(PyObject *self, PyObject *args) {
+PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     char *string;
+    int printPreffix = 1;
+
+    // get value of keyword add_prefix
+    if (keywords == NULL) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.tabwrite: keywords must be a dictionary");
+        return NULL;
+    } 
+    else {
+        printPreffix = PyDict_Contains(keywords, PyUnicode_FromString("show_prefix"));
+        if (printPreffix == -1) {
+            post("error");
+        } 
+        else if (printPreffix == 1) {
+            PyObject *resize_value = PyDict_GetItemString(keywords, "show_prefix");
+            if (resize_value == Py_True) {
+                printPreffix = 1;
+            } 
+            else if (resize_value == Py_False) {
+                printPreffix = 0;
+            } 
+            else {
+                printPreffix = 1;
+            }
+        } 
+        else {
+            printPreffix = 1;
+        }
+    }
+
     if (PyArg_ParseTuple(args, "s", &string)) {
-        post("[Python]: %s", string);
+        if (printPreffix == 1) {
+            post("[Python]: %s", string);
+        } 
+        else {
+            post("%s", string);
+        }
         PyErr_Clear();
     } 
-    // print for number
     else if (PyArg_ParseTuple(args, "f", &string)) {
-        post("[Python]: %f", string);
-        PyErr_Clear();
+        if (printPreffix == 1) {
+            post("[Python]: %f", string);
+        } 
+        else {
+            post("%f", string);
+        }
     }
     else {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.print work with string or number.");  // Colocar melhor descrição do
@@ -218,20 +255,26 @@ PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords) {
             PyExc_TypeError,
             "[Python] pd.tabwrite: keywords must be a dictionary");
         return NULL;
-    } else {
+    } 
+    else {
+
         resize = PyDict_Contains(keywords, PyUnicode_FromString("resize"));
         if (resize == -1) {
             post("error");
-        } else if (resize == 1) {
+        } 
+        else if (resize == 1) {
             PyObject *resize_value = PyDict_GetItemString(keywords, "resize");
             if (resize_value == Py_True) {
                 resize = 1;
-            } else if (resize_value == Py_False) {
+            } 
+            else if (resize_value == Py_False) {
                 resize = 0;
-            } else {
+            } 
+            else {
                 resize = 0;
             }
-        } else {
+        } 
+        else {
             resize = 0;
         }
     }
@@ -463,7 +506,7 @@ PyMethodDef PdMethods[] = {
     // PureData inside Python
     {"out", pdout, METH_VARARGS, "Output in out0 from PureData"},
     {"send", pdsend, METH_VARARGS, "Send message to PureData, it can be received with the object [receive]"},
-    {"print", pdprint, METH_VARARGS, "Print informations in PureData Console"},
+    {"print", (PyCFunction)pdprint, METH_VARARGS | METH_KEYWORDS,  "Print informations in PureData Console"},
     {"error", pderror, METH_VARARGS, "Print informations in error format (red) in PureData Console"},
     {"tabwrite", (PyCFunction)pdtabwrite, METH_VARARGS | METH_KEYWORDS, "Write data to PureData tables/arrays"},
     {"tabread", pdtabread, METH_VARARGS, "Read data from PureData tables/arrays"},
