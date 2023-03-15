@@ -6,11 +6,13 @@ on:
     paths:
       - 'src/**'
       - '.github/workflows/Mac.yml'
+      - test/runTests.py
   pull_request:
     branches: [ "master" ]
     paths:
       - 'src/**'
       - '.github/workflows/Mac.yml'
+      - test/runTests.py
   workflow_dispatch:
 
 jobs:  

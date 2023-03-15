@@ -8,6 +8,7 @@ name: Linux
     paths:
       - src/**
       - .github/workflows/Linux.yml
+      - test/runTests.py
 
   pull_request:
     branches:
