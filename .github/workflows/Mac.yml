@@ -39,10 +39,10 @@ jobs:
     - name: Copy files to py4pd_macOS-Intel
       run: |
         cp py4pd.pd_darwin resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd_macOS-Intel
-        mkdir py4pd_Linux/resources
-        mkdir py4pd_Linux/src
-        cp resources/* py4pd_Linux/resources -r
-        cp src/* py4pd_Linux/resources -r
+        mkdir py4pd_macOS-Intel/resources
+        mkdir py4pd_macOS-Intel/src
+        cp resources/* py4pd_macOS-Intel/resources -r
+        cp src/* py4pd_macOS-Intel/resources -r
         zip -r py4pd_macOS-Intel.zip py4pd_macOS-Intel
 
     - name: Upload Object
