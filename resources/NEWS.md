@@ -1,3 +1,11 @@
+#### py4pd version 0.6.0
+* Add audio support
+  * For audioout you need to create the object with the `-audioout` flag. 
+  * For audioint you need to create the object with the `-audioint` flag.
+* Add vis support
+  * Add support to score (using neoscore)
+  * Add support to anothers visualizations (anothers like matplotlib, vispy, and others)
+
 #### py4pd version 0.5.0.
 * Add support to list inside PureData using brackts 
   * 💡 `run [1 2 3 4 5]` from `pd`message is equivalent to run `my_function([1, 2, 3, 4, 5])` in `Python`.

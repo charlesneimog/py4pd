@@ -1,0 +1,90 @@
+name: Windows
+on:
+  push:
+    branches: [ "master" , "v-0.5.0", "develop" ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/Windows.yml'
+  pull_request:
+    branches: [ "master" ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/Windows.yml'
+  workflow_dispatch:
+
+jobs:  
+  windows-build:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - if: runner.os == 'Windows'
+      name: "Install mingw deps"
+      uses: msys2/setup-msys2@v2
+      with:
+          install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git mingw-w64-x86_64-libsystre mingw-w64-x86_64-dlfcn
+          update: false
+
+    - name: Configure Environment
+      run: |
+        mkdir py4pd_WIN64
+        choco install puredata --yes
+        python -m pip install numpy
+        python -c "import sysconfig; f = open('pythonincludes.txt', 'w'); print(sysconfig.get_paths()['include'].replace('\\', '/'), file=f); f.close()"
+        python -c "import os; import sys; f = open('pythonpath.txt', 'w'); print(os.path.dirname(sys.executable).replace('\\', '/'), file=f); f.close()"
+        python -c "import os; import sys; import numpy.distutils.misc_util as np_utils; f = open('numpyincludes.txt', 'w'); print(np_utils.get_numpy_include_dirs()[0].replace('\\', '/'), file=f); f.close()"
+    
+    - if: runner.os == 'Windows'
+      name: Build py4pd
+      shell: msys2 {0}
+      run: |
+        make PYTHON_VERSION=python3.10
+    
+    - name: Copy Files and Set for Tests
+      run: |
+        mv py4pd.dll py4pd.m_amd64
+        mkdir py4pd_WIN64\Python
+        $pythonpath = Get-Content pythonpath.txt
+        Copy-Item -Path "$pythonpath\python310.dll" -Destination py4pd_WIN64\ -Recurse
+        Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd_WIN64\ -Recurse
+        mkdir py4pd_WIN64\\src\\
+        mkdir py4pd_WIN64\\resources\\
+        cp py4pd.m_amd64 py4pd_WIN64\
+        cp resources\\py4pd.cfg py4pd_WIN64\
+        cp resources\\py.py py4pd_WIN64\ 
+        cp resources\\py4pd-help.pd py4pd_WIN64\         
+        xcopy src\*.h py4pd_WIN64\src\
+        xcopy src\*.c py4pd_WIN64\src\
+        cp -r resources\* py4pd_WIN64\resources\
+        7z a py4pd_WIN64.zip py4pd_WIN64
+        cp test\\*.pd py4pd_WIN64\
+        cp test/runTests.py runTests.py
+        python3 -m pip install neoscore matplotlib Pillow numpy -t ./py4pd_WIN64/py-modules
+  
+    - name: Run PureData Tests
+      run: python3 ./runTests.py 
+      
+    - name: Upload Test Image
+      uses: actions/upload-artifact@v3
+      with:
+        name: neoscore-Test-Windows
+        path: py4pd_WIN64/neoscoretest.png
+      
+    - name: Upload Object ZIP
+      uses: actions/upload-artifact@v3
+      with:
+        name: py4pd_WIN64
+        path: py4pd_WIN64.zip
+
+
+
+    
+

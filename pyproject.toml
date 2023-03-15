@@ -1,0 +1,8 @@
+[build-system]
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "py4pd"
+authors = [{name = "Charles K. Neimog", email = "charlesneimog@outlook.com"}]
+dynamic = ["version", "description"]

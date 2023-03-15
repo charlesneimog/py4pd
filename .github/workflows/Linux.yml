@@ -1,0 +1,74 @@
+name: Linux
+'on':
+  push:
+    branches:
+      - master
+      - develop
+
+    paths:
+      - src/**
+      - .github/workflows/Linux.yml
+      - test/runTests.py
+
+  pull_request:
+    branches:
+      - develop
+
+    paths:
+      - src/**
+      - .github/workflows/Linux.yml
+
+jobs:
+  linux-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5 
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get install puredata -y
+          sudo apt-get install python3.10-dev -y
+          python3.10 -m pip install numpy
+
+      - name: Build
+        run: make PYTHON_VERSION=python3.10
+      
+      - name: Copy files to py4pd_Linux
+        run: |
+          mkdir py4pd_Linux
+          cp py4pd.pd_linux resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd_Linux
+          mkdir py4pd_Linux/resources
+          mkdir py4pd_Linux/src
+          cp resources/* py4pd_Linux/resources -r
+          cp src/* py4pd_Linux/resources -r
+          ./resources/localdeps/localdeps.linux.sh py4pd_Linux/py4pd.pd_linux
+          zip -r py4pd_Linux.zip py4pd_Linux
+          cp test/*.pd py4pd_Linux
+          
+          
+      - name: Upload Object
+        uses: actions/upload-artifact@v3
+        with:
+          name: py4pd_Linux
+          path: py4pd_Linux.zip
+
+      - name: Set Test Config
+        run: |
+          cp test/runTests.py runTests.py
+          python3.10 -m pip install neoscore matplotlib Pillow -t ./py4pd_Linux/py-modules
+
+      - name: Run Test
+        run: python3.10 runTests.py
+
+      - name: Upload Test Image
+        uses: actions/upload-artifact@v3
+        with:
+          name: neoscore-Test-linux
+          path: py4pd_Linux/neoscoretest.png
+

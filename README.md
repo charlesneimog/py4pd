@@ -8,6 +8,7 @@
     <a href="https://zenodo.org/record/7677265"><img src="https://zenodo.org/badge/doi/10.5281/zenodo.7677265.svg" alt="DOI"></a>
 </p>
     
+    
 <p align="center">
   <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Linux.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Linux.yml/badge.svg?branch=develop" alt="Linux"></a>
   <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Windows.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Windows.yml/badge.svg?branch=develop" alt="Windows"></a>
@@ -20,8 +21,7 @@
 * OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
 * Sound analisys with `magenta`, `librosa`, and `pyAudioAnalaysis`;
 
-Go to [Docs](https://py4pd.readthedocs.io/en/latest/) to see examples.
-
+Go to ![Docs](https://py4pd.readthedocs.io/en/latest/) to see examples.
 
 ### Download py4pd
 1. Open PureData, `Help->Find Externals->` search for `py4pd` then select py4pd and click on `Install`: 

@@ -11,6 +11,7 @@ py4pd.zip
 DLLs/*
 Lib/*
 scripts/*
+build
 
 *.bat
 *.eps
@@ -28,7 +29,7 @@ __pycache__/py.cpython-310.pyc
 *.count
 *.png
 *.vscode
-*.txt
+
 py-modules
 ./compile_commands.json
 .cache/

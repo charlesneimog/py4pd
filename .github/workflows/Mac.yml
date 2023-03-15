@@ -1,0 +1,71 @@
+name: macOS (Intel)
+
+on:
+  push:
+    branches: [ "master" , "v-0.5.0", "develop" ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/Mac.yml'
+      - 'test/runTests.py'
+  pull_request:
+    branches: [ "master" ]
+    paths:
+      - 'src/**'
+      - '.github/workflows/Mac.yml'
+      - 'test/runTests.py'
+  workflow_dispatch:
+
+jobs:  
+  macos-intel-build:
+    runs-on: macos-latest
+    timeout-minutes: 10
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: set Enviroment
+      run: |
+        brew install --cask pd
+        python3.10 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
+        python3.10 -m pip install numpy
+        mkdir py4pd_macOS-Intel
+
+    - name: Build
+      run: make PYTHON_VERSION=python3.10 
+
+    - name: Copy files to py4pd_macOS-Intel
+      run: |
+        cp py4pd.pd_darwin resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd_macOS-Intel
+        mkdir py4pd_macOS-Intel/resources
+        mkdir py4pd_macOS-Intel/src
+        cp -r resources/* py4pd_macOS-Intel/resources
+        cp -r src/* py4pd_macOS-Intel/src
+        zip -r py4pd_macOS-Intel.zip py4pd_macOS-Intel
+
+    - name: Upload Object
+      uses: actions/upload-artifact@v3
+      with:
+        name: py4pd_macOS-Intel
+        path: py4pd_macOS-Intel.zip
+
+    - name: Set Test Config
+      run: |
+          cp test/*.pd py4pd_macOS-Intel
+          cp test/runTests.py runTests.py
+          python3.10 -m pip install matplotlib neoscore matplotlib Pillow -t ./py4pd_macOS-Intel/py-modules
+
+    - name: Run Test
+      run: python3.10 ./runTests.py
+
+    - name: Upload Test Image
+      uses: actions/upload-artifact@v3
+      with:
+        name: neoscore-Test-Mac
+        path: py4pd_macOS-Intel/neoscoretest.png
+
+
+
+    

@@ -1,0 +1,69 @@
+site_name: py4pd
+   
+theme:
+  logo: assets/py4pd-logo.svg
+  custom_dir: docs/overrides
+  logo_dark_mode: assets/py4pd-dark.svg
+  logo_light_mode: assets/py4pd-light.svg
+  favicon: assets/py4pd-favicon.png
+  name: material
+  features:
+    - navigation.top
+    - content.code.annotate 
+    - content.code.copy
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - search.highlight
+    - search.suggest
+    - toc.integrate
+    - toc.follow
+    - navigation.instant
+    - header.autohide
+    - attr_list
+    - md_in_html
+  
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      accent: light blue
+      toggle:
+        icon: material/lightbulb
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      accent: light blue
+      primary: black
+      toggle:
+        icon: material/lightbulb-outline
+        name: Switch to light mode
+  
+markdown_extensions:
+    - pymdownx.superfences
+    - pymdownx.extra
+    - pymdownx.details
+    - pymdownx.inlinehilite
+    - pymdownx.tasklist
+    - pymdownx.magiclink
+    - pymdownx.highlight
+    - abbr
+    - attr_list
+    - md_in_html
+    - admonition
+    - pymdownx.details
+
+
+repo_url: https://github.com/charlesneimog/py4pd
+
+extra_css:
+  - extra/extra.css
+  
+nav:
+    - index.md 
+    - setup.md
+    - puredata-users.md
+    - python-users.md
+    - researchers.md
+    #- examples.md
+
+
