@@ -23,7 +23,6 @@
 
 Go to ![Docs](https://py4pd.readthedocs.io/en/latest/) to see examples.
 
-
 ### Download py4pd
 1. Open PureData, `Help->Find Externals->` search for `py4pd` then select py4pd and click on `Install`: 
 2. ⚠️ For now, you must install Python ⚠️.
