@@ -77,9 +77,11 @@ def runTest(pdpatch):
         # sys.exit(1)
     
 if __name__ == "__main__":
-    patches = ['01-simpleRun.pd', '02-noArgs.pd', '03-sequencialRunning.pd', '04-neoscore.pd', '05-wrongNumberOfArgs.pd', '06-setDifferentFunctions.pd', '07-audioin-Neoscore.pd']
+    # list all patches inside test folder
+    patches = os.listdir('test')
+    patches = [patch for patch in patches if patch.endswith('.pd')]
     for patch in patches:
-        print("=============" + patch + "=============")
+        print("=============" + patch + " =============")
         runTest(patch)
     if errorInTest > 0:
         print("\033[91m" + f'{errorInTest} tests failed' + "\033[0m")
