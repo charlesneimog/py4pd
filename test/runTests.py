@@ -28,13 +28,28 @@ def runTest(pdpatch):
         scriptfile = os.path.abspath(__file__)
         scriptfolder = os.path.dirname(scriptfile)
         pathfile = scriptfolder + '\\py4pd_WIN64\\' + pdpatch
-        print(f'"C:\\Program Files\\Pd\\bin\\pd.exe" -send "start-test bang" "{pathfile}"')
+        # check if file exists
+        if os.path.isfile(pathfile):
+            pass
+        else:
+            print(f'Patch {pathfile} not found')
+            sys.exit()
         os.system(f'cmd /c "\"C://Program Files//Pd//bin//pd.exe\" -send \"start-test bang\" \"{pathfile}\""')
         output = subprocess.run(f'"C:\\Program Files\\Pd\\bin\\pd.exe" -nogui -send "start-test bang" "{pathfile}"', capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]
     elif platform.system() == 'Darwin':
-        cmd = '/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -send "start-test bang" py4pd_macOS-Intel/' + pdpatch
+        scriptfile = os.path.abspath(__file__)
+        scriptfolder = os.path.dirname(scriptfile)
+        pathfile = scriptfolder + '/py4pd_macOS-Intel/' + pdpatch
+        # check if file exists
+        if os.path.isfile(pathfile):
+            pass
+        else:
+            print(f'Patch {pathfile} not found')
+            sys.exit()
+
+        cmd = '/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -send "start-test bang" ' + pathfile
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]
