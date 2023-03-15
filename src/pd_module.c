@@ -67,10 +67,9 @@ PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
     char *string;
     int printPreffix = 1;
 
-    // get value of keyword add_prefix
     if (keywords == NULL) {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.tabwrite: keywords must be a dictionary");
-        return NULL;
+        printPreffix = 1;
+        PyErr_Clear();
     } 
     else {
         printPreffix = PyDict_Contains(keywords, PyUnicode_FromString("show_prefix"));
@@ -251,10 +250,8 @@ PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords) {
     PyObject *PYarray;
 
     if (keywords == NULL) {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "[Python] pd.tabwrite: keywords must be a dictionary");
-        return NULL;
+        resize = 0;
+        PyErr_Clear();
     } 
     else {
 
