@@ -2,12 +2,16 @@ import pd
 from random import randint
 import os
 os.environ['QT_QPA_PLATFORM'] = "xcb" 
+if os.name == 'nt':
+    os.environ['QT_QPA_PLATFORM'] = "windows"
+    
 try:
     from neoscore.common import *
 except Exception as e:
     pd.error(str(e))
     pd.error(
-        "Please, run 'pip install neoscore -t ./py-modules' in the terminal from current folder")
+        "Neoscore not found")
+    pd.print("Create a new object with 'py4pd pdpip install' and send 'run neoscore' to install neoscore")
 
 
 def getpitchKey(pitch):
@@ -77,7 +81,7 @@ def chord(pitches):
     neoscore.shutdown()
     if os.name == 'nt':
         notePathName = notePathName.replace("\\", "/")
-    pd.print(str(notePathName))
+    #pd.print(str(notePathName))
     pd.show(notePathName)
     return None
 
@@ -90,9 +94,7 @@ def note(pitch):
         pass
     neoscore.setup()
     # change QT_QPA_PLATFORM to xcb
-    qt_qpa_platform = os.environ.get('QT_QPA_PLATFORM')
-    if qt_qpa_platform != "xcb":
-        os.environ['QT_QPA_PLATFORM'] = "xcb"
+
         
     py4pdTMPfolder = pd.tempfolder()
     for file in py4pdTMPfolder:

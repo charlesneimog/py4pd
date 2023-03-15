@@ -20,26 +20,35 @@ void findpy4pd_folder(t_py *x){
         post("Not possible to locate the folder of the py4pd object");
     }
     // remove filename from path
-    char *path = strdup(info.dli_fname);
-    char *last_slash = strrchr(path, '/');
-    if (last_slash != NULL) {
-        *last_slash = '\0';
-    }
-    x->py4pd_folder = gensym(path);
-    free(path);
-
     #ifdef _WIN64
         // get user folder
-        char *py4pd_folder = x->py4pd_folder->s_name;
-        // create folder x->py4pd_folder/resources/scripts
+        char *path = strdup(info.dli_fname);
+        char *last_slash = strrchr(path, '\\');
+        if (last_slash != NULL) {
+            *last_slash = '\0';
+        }
+        x->py4pd_folder = gensym(path);
+        free(path);
+        const char *py4pd_folder = x->py4pd_folder->s_name;
         LPSTR py4pdScripts = (LPSTR)malloc(256 * sizeof(char));
         memset(py4pdScripts, 0, 256);
-        sprintf(py4pdScripts, "%s\\resources\\scripts\\", py4pd_folder);
+        sprintf(py4pdScripts, "%s\\resources\\scripts", py4pd_folder);
         x->py4pd_scripts = gensym(py4pdScripts);
-        if (!CreateDirectory(py4pdScripts, NULL)){
-            post("Failed to create directory, Report, this create instabilities: %d\n", GetLastError());
+        if (access(py4pdScripts, F_OK) == -1) {
+            char *command = (char *)malloc(256 * sizeof(char));
+            memset(command, 0, 256);
+            if (!CreateDirectory(py4pdScripts, NULL)){
+                post("Failed to create directory, Report, this create instabilities: %d\n", GetLastError());
+            }
         }
     #else
+        char *path = strdup(info.dli_fname);
+        char *last_slash = strrchr(path, '/');
+        if (last_slash != NULL) {
+            *last_slash = '\0';
+        }
+        x->py4pd_folder = gensym(path);
+        free(path);
         const char *py4pd_folder = x->py4pd_folder->s_name;
         char *py4pdScripts = (char *)malloc(256 * sizeof(char));
         memset(py4pdScripts, 0, 256);
@@ -70,11 +79,15 @@ void py4pd_tempfolder(t_py *x) {
         memset(home, 0, 256);
         sprintf(home, "%s\\.py4pd\\", user_folder);
         x->temp_folder = gensym(home);
-        if (!CreateDirectory(home, NULL)){
-            post("Failed to create directory: %d\n", GetLastError());
-        }
-        if (!SetFileAttributes(home, FILE_ATTRIBUTE_HIDDEN)){
-            post("Failed to set hidden attribute: %d\n", GetLastError());
+        if (access(home, F_OK) == -1) {
+            char *command = (char *)malloc(256 * sizeof(char));
+            memset(command, 0, 256);
+            if (!CreateDirectory(home, NULL)){
+                post("Failed to create directory, Report, this create instabilities: %d\n", GetLastError());
+            }
+            if (!SetFileAttributes(home, FILE_ATTRIBUTE_HIDDEN)){
+                post("Failed to set hidden attribute: %d\n", GetLastError());
+            }
         }
     #else
         const char *home = getenv("HOME");
