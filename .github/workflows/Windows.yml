@@ -49,9 +49,6 @@ jobs:
         make PYTHON_VERSION=python3.10
     
     - name: Copy Files and Set for Tests
-    	# Copy-Item -Path "$pythonpath\Lib" -Destination py4pd_WIN64\Python\ -Recurse
-        # Copy-Item -Path "$pythonpath\DLLs" -Destination py4pd_WIN64\Python\ -Recurse
-        #cp resources\\python310._pth py4pd_WIN64\
       run: |
         mv py4pd.dll py4pd.m_amd64
         mkdir py4pd_WIN64\Python
