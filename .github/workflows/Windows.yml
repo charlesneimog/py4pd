@@ -51,7 +51,6 @@ jobs:
     - name: Copy Files and Set for Tests
       run: |
         mv py4pd.dll py4pd.m_amd64
-        mkdir py4pd_WIN64\Python
         $pythonpath = Get-Content pythonpath.txt
         Copy-Item -Path "$pythonpath\python310.dll" -Destination py4pd_WIN64\ -Recurse
         Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd_WIN64\ -Recurse
