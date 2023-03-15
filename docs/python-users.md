@@ -89,7 +89,7 @@ def lorisAnalisys(audiofile, parcialnumber):
 <p align="center">
   <img src="../assets/EXAMPLE-pd.out.png" alt="pd.out Example" width="50%">
 
-<p align="center"><a href="https://github.com/charlesneimog/py4pd/raw/develop/docs/assets/EXAMPLE-pd.out.zip">Download</a></p>
+<p align="center"><a href="../assets/EXAMPLE-pd.out.zip">Download</a></p>
 
 </p>
 
@@ -297,7 +297,7 @@ def chord(pitches):
 ```
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/charlesneimog/py4pd/develop/resources/examples/scores/score.gif" alt="pd.out Example" width="50%">
+  <img src="../examples/score/score.gif" alt="pd.out Example" width="50%">
 </p>
 
 To use this script, you can create a `py4pd` object environment with `py4pd -score score chord`. 
