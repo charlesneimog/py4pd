@@ -87,7 +87,7 @@ def lorisAnalisys(audiofile, parcialnumber):
 1.  PureData just have floats, in indices, we need to use `int()` to convert the `float` received to an `int`.
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/charlesneimog/py4pd/develop/docs/assets/EXAMPLE-pd.out.png" alt="pd.out Example" width="50%">
+  <img src="../assets/EXAMPLE-pd.out.png" alt="pd.out Example" width="50%">
 
 <p align="center"><a href="https://github.com/charlesneimog/py4pd/raw/develop/docs/assets/EXAMPLE-pd.out.zip">Download</a></p>
 

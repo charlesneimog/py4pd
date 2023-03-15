@@ -8,6 +8,14 @@ For the creation of the object, there is some options. Here I will explain each 
 !!! note warning
 	This is a very important part of `py4pd`, as users, you need to understand the ideia of all arguments. **Not understandt it can generate problems and instabilities.**
     
+-------------------------------------- 
+### <h3 align="center"> **Load Python Libraries** </h3>
+
+It is possible to use `py4pd` to create PureData objects using Python. To load this Python objects in PureData you can use `py4pd` with the `-library` flag and then the name of the script. For example, if the script have the name `myPythonObjects.py`, you need to create an `py4pd` object with `py4pd -library myPythonObjects`. 
+
+!!! info "Info"
+	The order of the arguments is important, `py4pd myPythonObjects -library` will not work!
+    
     
 -------------------------------------- 
 ### <h3 align="center"> **Audio options** </h3>
