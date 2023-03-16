@@ -202,14 +202,14 @@ jobs:
 
       - name: Configure Deken  
         # read what is inside /home/runner/.deken/config
+        env:
+          DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
         run: |  
-          if [ "$DEKEN_USERNAME" -eq "charlesneimog" ]
+          if [ "$DEKEN_USERNAME" = "charlesneimog" ]
           then 
             echo "It is Charles"
           fi
-          
+  
 
-        env:
-          DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
 
          
