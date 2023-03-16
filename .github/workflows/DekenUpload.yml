@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 7
     steps:
-
       - uses: actions/checkout@v3
         with:
           submodules: recursive
@@ -71,6 +70,7 @@ jobs:
           echo username=${{ secrets.DEKEN_USERNAME }} > ~/.deken/config
           echo password=${{ secrets.DEKEN_PASSWORD }} >> ~/.deken/config
           ./deken upload *.dek
+        continue-on-error: true
 
       - name: Upload Deken
         env:
@@ -148,7 +148,6 @@ jobs:
         unzip deken_Windows64.zip
         echo username=${{ secrets.DEKEN_USERNAME }} > ~/.deken/config
         echo password=${{ secrets.DEKEN_PASSWORD }} >> ~/.deken/config
-        
         ./deken package py4pd_WIN64 -v ${{ github.event.inputs.py4pdVersion }} -n py4pd
         ./deken upload *.dek
 
