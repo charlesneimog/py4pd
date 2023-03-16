@@ -195,10 +195,6 @@ jobs:
           mkdir ~/.deken
           echo "username=${{ secrets.DEKEN_USERNAME }}" >> ~/.deken/config
           echo "password=${{ secrets.DEKEN_PASSWORD }}" >> ~/.deken/config
-        
-      - name: Create Object folder
-        run: |
-          mkdir py4pd
           mkdir py4pd/src
           mkdir py4pd/resources
           cp py4pd.pd_linux py4pd/py4pd.pd_linux
@@ -210,10 +206,6 @@ jobs:
           ./resources/localdeps/localdeps.linux.sh py4pd/py4pd.pd_linux
           ./deken package py4pd -v ${{ github.event.inputs.py4pdVersion }} -n py4pd 
           ./deken upload *.dek
-          
-          
+        
 
-# get version py4pdVersion with {{}}
-
-    
-
+         
