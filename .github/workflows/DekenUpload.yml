@@ -198,6 +198,7 @@ jobs:
           echo username = ${{ secrets.DEKEN_USERNAME }} > /home/runner/.deken/config
           
           ./deken upload *.dek
+        continue-on-error: true
 
       - name: Configure Deken  
         # read what is inside /home/runner/.deken/config
