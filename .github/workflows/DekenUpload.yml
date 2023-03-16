@@ -171,15 +171,19 @@ jobs:
       #    python3.10 -m pip install neoscore matplotlib Pillow -t ./py4pd_Linux/py-modules
 
 
-      #- name: Run Test
-      #  run: python3.10 runTests.py
+      # - name: Set DEKEN variables in Github ENV
+      #   run: |
+      #     echo "DEKEN_USERNAME=${{ secrets.DEKEN_USERNAME }}" >> $GITHUB_ENV
+      #     echo "DEKEN_PASSWORD=${{ secrets.DEKEN_PASSWORD }}" >> $GITHUB_ENV
       
       - name: Configure Deken
+        env:
+          DEKEN_PASSWORD: ${{ secrets.DEKEN_PASSWORD }}
+          DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
         run: |
           curl https://raw.githubusercontent.com/pure-data/deken/main/developer/deken > deken
           chmod 755 ./deken
           mkdir ~/.deken
-          export DEKEN_USERNAME=${{ secrets.DEKEN_USERNAME }}
           python3 -m pip install hy==0.19
           mkdir py4pd
           mkdir py4pd/src
@@ -196,8 +200,6 @@ jobs:
           python3 -m pip install hy==0.19
           ./deken upgrade --self
           ./deken package py4pd -v ${{ github.event.inputs.py4pdVersion }} -n py4pd 
-          export DEKEN_PASSWORD=${{ secrets.DEKEN_PASSWORD }}
-          export DEKEN_USERNAME=${{ secrets.DEKEN_USERNAME }} 
           ./deken upload *.dek
 
           
