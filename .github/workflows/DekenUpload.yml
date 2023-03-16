@@ -195,6 +195,7 @@ jobs:
           mkdir ~/.deken
           echo "username=${{ secrets.DEKEN_USERNAME }}" >> ~/.deken/config
           echo "password=${{ secrets.DEKEN_PASSWORD }}" >> ~/.deken/config
+          python3 -m pip install hy==0.19
           mkdir py4pd
           mkdir py4pd/src
           mkdir py4pd/resources
