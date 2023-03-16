@@ -205,10 +205,7 @@ jobs:
         env:
           DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
         run: |  
-          if [ "$DEKEN_USERNAME" = "charlesneimog" ]
-          then 
-            echo "It is Charles"
-          fi
+          echo $DEKEN_USERNAME
   
 
 
