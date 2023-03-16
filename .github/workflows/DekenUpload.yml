@@ -102,7 +102,7 @@ jobs:
       name: "Install mingw deps"
       uses: msys2/setup-msys2@v2
       with:
-          install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git mingw-w64-x86_64-libsystre mingw-w64-x86_64-dlfcn
+          install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git mingw-w64-x86_64-libsystre mingw-w64-x86_64-dlfcn unzip
           update: false
 
     - name: Configure Environment
@@ -144,8 +144,6 @@ jobs:
         DEKEN_PASSWORD: ${{ secrets.DEKEN_PASSWORD }}
         DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
       shell: msys2 {0}
-      with:
-          install: unzip
       run: |
         mkdir ~/.deken
         echo username=${{ secrets.DEKEN_USERNAME }} > ~/.deken/config
