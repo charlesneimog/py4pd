@@ -115,7 +115,7 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
         x->script_name = script_file_name;
         x->function_name = function_name;
         x->function_called = 1;
-        post("Library loaded");
+        post("[py4pd] Library %s loaded!", script_file_name->s_name);
     } 
     else {
         pd_error(x, "[py4pd] Library %s not loaded!", function_name->s_name);

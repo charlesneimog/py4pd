@@ -26,7 +26,7 @@ On MacOS and Windows you can install Python like and ordirary software.
 
 * **MacOS**: Go to [Python.org](https://www.python.org/downloads/release/python-3112/) and install normally.
 * **Windows**: Go to [Python.org](https://www.python.org/downloads/release/python-3112/) and install normally.
-??? danger "For Windows Users"
+??? info "For Windows Users"
 	I recommend mark the option `Add Python 3.10 to PATH`.	
 	<figure markdown>
 	  	![Install py4pd](assets/installPython.jpg){ width="700" }
