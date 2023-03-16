@@ -196,12 +196,16 @@ jobs:
           ./deken upgrade --self
           ./deken package py4pd -v ${{ github.event.inputs.py4pdVersion }} -n py4pd 
           echo username = ${{ secrets.DEKEN_USERNAME }} > /home/runner/.deken/config
-          echo password = ${{ secrets.DEKEN_PASSWORD }} >> /home/runner/.deken/config
-
+          
           ./deken upload *.dek
 
-          
-#./deken upload *.dek
+      - name: Configure Deken  
+        # read what is inside /home/runner/.deken/config
+        run: |  
+          cat /home/runner/.deken/config
+          echo password = ${{ secrets.DEKEN_PASSWORD }} >> /home/runner/.deken/config
+          cat /home/runner/.deken/config
+
         
 
          
