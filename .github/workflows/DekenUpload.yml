@@ -1,4 +1,4 @@
-name: Deken Upload py4pd version ${{ github.event.inputs.py4pdVersion }}
+name: Deken Upload 
 on:
   workflow_dispatch:
     inputs:
