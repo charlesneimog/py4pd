@@ -187,8 +187,7 @@ jobs:
           curl https://raw.githubusercontent.com/pure-data/deken/main/developer/deken > deken
           chmod 755 ./deken
           mkdir ~/.deken
-          echo "username = ${{ secrets.DEKEN_USERNAME }}" >> ~/.deken/config
-          echo "password = ${{ secrets.DEKEN_PASSWORD }}" >> ~/.deken/config
+          export DEKEN_USERNAME=${{ secrets.DEKEN_USERNAME }}
           python3 -m pip install hy==0.19
           mkdir py4pd
           mkdir py4pd/src
