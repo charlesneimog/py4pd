@@ -189,12 +189,26 @@ jobs:
       #     name: neoscore-Test-linux
       #     path: py4pd_Linux/neoscoretest.png
 
-
-      - name: Upload to Deken
+      - name: Create Package and Upload to Deken
         # get py4pdVersion input
+        # deken package -v ${{ github.event.inputs.py4pdVersion }} py4pd-Object -n py4pd 
+        # deken upload py4pd-${{ github.event.inputs.py4pdVersion }}.dek 
         run: |
+          mkdir py4pd-Object
+          cp py4pd.pd_linux py4pd-Object/py4pd.pd_linux
+          cp resources/py4pd-help.pd py4pd-Object/py4pd-help.pd
+          cp resources/py4pd.cfg py4pd-Object/py4pd.cfg
+          cp resources/py.py py4pd-Object/py.py
+          mkdir py4pd-Object/resources
+          mkdir py4pd-Object/src
+          cp resources/* py4pd-Object/resources -r
+          cp src/* py4pd-Object/resources -r
+          ./resources/localdeps/localdeps.linux.sh py4pd-Object/py4pd.pd_linux
+          sudo apt-get install --no-install-recommends deken
+          mkdir ~/.deken
+          python3 -m pip install hy==0.19
+          deken -h
           
-          echo ${{ github.event.inputs.py4pdVersion }} 
 
 
     
