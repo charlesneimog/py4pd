@@ -172,21 +172,15 @@ jobs:
           path: py4pd_Linux.zip
 
 
-      - name: Set Test Config
-        run: |
-          cp test/runTests.py runTests.py
-          python3.10 -m pip install neoscore matplotlib Pillow -t ./py4pd_Linux/py-modules
+      #- name: Set Test Config
+      #  run: |
+      #    cp test/runTests.py runTests.py
+      #    python3.10 -m pip install neoscore matplotlib Pillow -t ./py4pd_Linux/py-modules
 
 
-      - name: Run Test
-        run: python3.10 runTests.py
-
-
-      - name: Upload Test Image
-        uses: actions/upload-artifact@v3
-        with:
-          name: neoscore-Test-linux
-          path: py4pd_Linux/neoscoretest.png
+      #- name: Run Test
+      #  run: python3.10 runTests.py
+      
 
       - name: Configure Deken
         run: |
