@@ -1,5 +1,6 @@
 #include "pylibraries.h"
 #include "m_pd.h"
+#include "object.h"
 #include "py4pd.h"
 #include "py4pd_utils.h"
 
@@ -33,16 +34,22 @@ void py4pdInlets_proxy_anything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_at
 
 // =====================================
 void py4pdInlets_proxy_list(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av){
+    (void) s;
     t_py *py4pd = (t_py *)x->p_master;
 
     if (ac == 1){
-        PyTuple_SetItem(py4pd->argsDict, x->inletIndex, PyLong_FromLong(av[0].a_w.w_float));
+        if (av[0].a_type == A_FLOAT){ 
+            PyList_SetItem(py4pd->argsDict, 0, PyLong_FromLong(av[0].a_w.w_float));
+        }
+        else if (av[0].a_type == A_SYMBOL){
+            PyList_SetItem(py4pd->argsDict, 0, PyUnicode_FromString(av[0].a_w.w_symbol->s_name));
+        }
     }
     else if (ac > 1){
         PyObject *pyInletValue = PyList_New(ac);
         for (int i = 0; i < ac; i++){
             if (av[i].a_type == A_FLOAT){ // TODO: check if it is an int or a float
-                PyList_SetItem(pyInletValue, i, PyLong_FromLong(av[i].a_w.w_float));
+                PyTuple_SetItem(pyInletValue, x->inletIndex, PyLong_FromLong(av[i].a_w.w_float));
             }
             else if (av[i].a_type == A_SYMBOL){
                 PyList_SetItem(pyInletValue, i, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
@@ -55,20 +62,38 @@ void py4pdInlets_proxy_list(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
 
 // =====================================
 void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
-    (void) av;
-    (void) ac;
-    (void) s;
+    
+    if (ac == 0){
+        PyObject *pyInletValue = PyUnicode_FromString(s->s_name);
+        PyTuple_SetItem(x->argsDict, 0, pyInletValue);
+    }
+    else{
+        PyObject *pyInletValue = PyList_New(ac + 1);
+        PyList_SetItem(pyInletValue, 0, PyUnicode_FromString(s->s_name));
+        for (int i = 0; i < ac; i++){
+            if (av[i].a_type == A_FLOAT){ // TODO: check if it is an int or a float
+                PyList_SetItem(pyInletValue, i + 1, PyLong_FromLong(av[i].a_w.w_float));
+            }
+            else if (av[i].a_type == A_SYMBOL){
+                PyList_SetItem(pyInletValue, i + 1, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
+            }
+        }
+        PyTuple_SetItem(x->argsDict, 0, pyInletValue);
+    }
+    
+    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    if (objectCapsule == NULL){
+        pd_error(x, "[Python] Failed to add object to Python");
+        return;
+    }
 
-    PyObject *pyInletValue = PyLong_FromLong(av[0].a_w.w_float);
-    PyTuple_SetItem(x->argsDict, 0, pyInletValue);
-    PyObject *capsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
-    PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule);  // add the capsule to the python interpreter
     PyObject *pValue = PyObject_CallObject(x->function, x->argsDict);
-    Py_DECREF(capsule);
+
     if (pValue != NULL) { 
         py4pd_convert_to_pd(x, pValue); 
     }
     else{
+        Py_XDECREF(pValue);
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
@@ -80,7 +105,6 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         Py_XDECREF(ptraceback);
         PyErr_Clear();
     }
-
     return;
 }
 

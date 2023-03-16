@@ -289,32 +289,32 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
         t_atom *list_array = (t_atom *)malloc(list_size * sizeof(t_atom));
         int i;
         int listIndex = 0;
+        PyObject *pValue_i = NULL;
         for (i = 0; i < list_size; ++i) {
-            PyObject *pValue_i = PyList_GetItem(pValue, i);
-            if (PyLong_Check(
-                    pValue_i)) {  // If the function return a list of integers
-                long result = PyLong_AsLong(pValue_i);
-                float result_float = (float)result;
+            pValue_i = PyList_GetItem(pValue, i);
+            if (PyLong_Check(pValue_i)) {  // If the function return a list of integers
+                float result = (float)PyLong_AsLong(pValue_i); // NOTE: Necessary to change if want double precision
                 list_array[listIndex].a_type = A_FLOAT;
-                list_array[listIndex].a_w.w_float = result_float;
+                list_array[listIndex].a_w.w_float = result;
                 listIndex++;
-
-            } else if (PyFloat_Check(pValue_i)) {  // If the function return a
-                                                   // list of floats
-                double result = PyFloat_AsDouble(pValue_i);
-                float result_float = (float)result;
+            } 
+            else if (PyFloat_Check(pValue_i)) {  // If the function return a list of floats
+                float result = PyFloat_AsDouble(pValue_i);
                 list_array[listIndex].a_type = A_FLOAT;
-                list_array[listIndex].a_w.w_float = result_float;
+                list_array[listIndex].a_w.w_float = result;
                 listIndex++;
-            } else if (PyUnicode_Check(pValue_i)) {  // If the function return a
+            } 
+            else if (PyUnicode_Check(pValue_i)) {  // If the function return a
                 const char *result = PyUnicode_AsUTF8(pValue_i); 
-                list_array[i].a_type = A_SYMBOL;
+                list_array[listIndex].a_type = A_SYMBOL;
                 list_array[i].a_w.w_symbol = gensym(result);
                 listIndex++;
 
-            } else if (Py_IsNone(pValue_i)) {  // If the function return a list
+            } 
+            else if (Py_IsNone(pValue_i)) {  // If the function return a list
                                                // of None
-            } else {
+            } 
+            else {
                 pd_error(x,
                          "[py4pd] py4pd just convert int, float and string! "
                          "Received: %s",
@@ -325,6 +325,9 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
         }
         outlet_list(x->out_A, 0, list_size, list_array);
         free(list_array);
+        Py_DECREF(pValue);
+        post("recount of pValue_i: %d", Py_REFCNT(pValue_i));
+
     } else {
         if (PyLong_Check(pValue)) {
             long result =
@@ -540,6 +543,35 @@ int *set_py4pd_config(t_py *x) {
 
     // free(PADRAO_packages_path);  // free memory
     return 0;
+}
+
+// ========================= PYTHON ==============================
+
+/**
+ * @brief add PureData Object to Python Module
+ * @param x is the py4pd object
+ * @param capsule is the PyObject (capsule)
+ * @return the pointer to the py capsule
+ */
+
+PyObject *py4pd_add_pd_object(t_py *x) {
+    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
+    PyObject *objectCapsule;
+    if (MainModule != NULL) {
+        objectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        if (objectCapsule != NULL) {
+            PyCapsule_SetPointer(objectCapsule, x);
+        }
+        else{
+            objectCapsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
+            PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", objectCapsule);  // add the capsule to the python interpreter
+        }
+    }
+    else{
+        pd_error(x, "[Python] Could not get the main module");
+        objectCapsule = NULL;
+    }
+    return objectCapsule;
 }
 
 

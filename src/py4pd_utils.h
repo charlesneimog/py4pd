@@ -22,6 +22,7 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue);
 // void *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv);
 PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv);
 int *set_py4pd_config(t_py *x);
+PyObject *py4pd_add_pd_object(t_py *x);
 
 
 #endif
