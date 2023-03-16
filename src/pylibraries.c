@@ -1,5 +1,6 @@
 #include "pylibraries.h"
 #include "m_pd.h"
+#include "object.h"
 #include "py4pd.h"
 #include "py4pd_utils.h"
 
@@ -61,9 +62,6 @@ void py4pdInlets_proxy_list(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
 
 // =====================================
 void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
-    (void) av;
-    (void) ac;
-    (void) s;
     
     if (ac == 0){
         PyObject *pyInletValue = PyUnicode_FromString(s->s_name);
@@ -82,15 +80,20 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         }
         PyTuple_SetItem(x->argsDict, 0, pyInletValue);
     }
+    
+    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    if (objectCapsule == NULL){
+        pd_error(x, "[Python] Failed to add object to Python");
+        return;
+    }
 
-    PyObject *capsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
-    PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", capsule);  // add the capsule to the python interpreter
     PyObject *pValue = PyObject_CallObject(x->function, x->argsDict);
-    Py_DECREF(capsule);
+
     if (pValue != NULL) { 
         py4pd_convert_to_pd(x, pValue); 
     }
     else{
+        Py_XDECREF(pValue);
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
@@ -102,7 +105,6 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         Py_XDECREF(ptraceback);
         PyErr_Clear();
     }
-
     return;
 }
 
