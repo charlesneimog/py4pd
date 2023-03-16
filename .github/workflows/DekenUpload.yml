@@ -1,4 +1,4 @@
-name: Deken Upload
+name: Deken Upload py4pd version ${{ github.event.inputs.py4pdVersion }}
 on:
   workflow_dispatch:
     inputs:
@@ -193,17 +193,18 @@ jobs:
         # get py4pdVersion input
         # deken package -v ${{ github.event.inputs.py4pdVersion }} py4pd-Object -n py4pd 
         # deken upload py4pd-${{ github.event.inputs.py4pdVersion }}.dek 
+	#mkdir py4pd-Object
+        #  cp py4pd.pd_linux py4pd-Object/py4pd.pd_linux
+        #  cp resources/py4pd-help.pd py4pd-Object/py4pd-help.pd
+        #  cp resources/py4pd.cfg py4pd-Object/py4pd.cfg
+        #  cp resources/py.py py4pd-Object/py.py
+        #  mkdir py4pd-Object/resources
+        #  mkdir py4pd-Object/src
+        #  cp resources/* py4pd-Object/resources -r
+        #  cp src/* py4pd-Object/resources -r
+        #  ./resources/localdeps/localdeps.linux.sh py4pd-Object/py4pd.pd_linux
         run: |
-          mkdir py4pd-Object
-          cp py4pd.pd_linux py4pd-Object/py4pd.pd_linux
-          cp resources/py4pd-help.pd py4pd-Object/py4pd-help.pd
-          cp resources/py4pd.cfg py4pd-Object/py4pd.cfg
-          cp resources/py.py py4pd-Object/py.py
-          mkdir py4pd-Object/resources
-          mkdir py4pd-Object/src
-          cp resources/* py4pd-Object/resources -r
-          cp src/* py4pd-Object/resources -r
-          ./resources/localdeps/localdeps.linux.sh py4pd-Object/py4pd.pd_linux
+
           sudo apt-get install --no-install-recommends deken
           mkdir ~/.deken
           python3 -m pip install hy==0.19
