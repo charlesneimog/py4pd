@@ -154,6 +154,7 @@ jobs:
         .\deken.exe upgrade --self
         .\deken package py4pd_WIN64 -v ${{ github.event.inputs.py4pdVersion }} -n py4pd
         .\deken upload *.dek
+      continue-on-error: true
 
       
 
