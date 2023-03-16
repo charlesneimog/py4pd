@@ -195,10 +195,8 @@ jobs:
           python3 -m pip install hy==0.19
           ./deken upgrade --self
           ./deken package py4pd -v ${{ github.event.inputs.py4pdVersion }} -n py4pd 
-          echo ${{ secrets.DEKEN_USERNAME }} > ~/.deken/config
-          echo ${{ secrets.DEKEN_PASSWORD }} >> ~/.deken/config
-
-
+          echo username = ${{ secrets.DEKEN_USERNAME }} > ~/.deken/config
+          echo password = ${{ secrets.DEKEN_PASSWORD }} >> ~/.deken/config
 
           ./deken upload *.dek
 
