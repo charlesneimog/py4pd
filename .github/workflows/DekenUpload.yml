@@ -1,3 +1,4 @@
+name: Deken Upload
 on:
   workflow_dispatch:
     inputs:
