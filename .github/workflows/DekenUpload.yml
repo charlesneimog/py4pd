@@ -191,10 +191,10 @@ jobs:
 
       - name: Create Package and Upload to Deken
         run: |
-          sudo apt-get install deken
-          mkdir ~/.deken
-          python3 -m pip install hy==0.19
-          deken -h
+          curl https://raw.githubusercontent.com/pure-data/deken/main/developer/deken > deken
+          chmod 755 ./deken
+          ./deken -h
+
           
 
 
