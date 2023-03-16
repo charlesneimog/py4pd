@@ -203,6 +203,7 @@ jobs:
           python3 -m venv ~/.deken/virtualenv/
           source ~/.deken/virtualenv/bin/activate
           python3 -m pip install hy==0.19
+          ./deken upgrade --self
           ./deken package py4pd -v ${{ github.event.inputs.py4pdVersion }} -n py4pd 
           ./deken upload *.dek
         
