@@ -1,9 +1,26 @@
-name: Deken Upload
 on:
   workflow_dispatch:
     inputs:
-      Upload-on-deken:
-        description: 'This will compile de object and upload on Deken'
+      logLevel:
+        description: 'Log level'
+        required: true
+        default: 'warning'
+        type: choice
+        options:
+        - info
+        - warning
+        - debug
+      print_tags:
+        description: 'True to print to STDOUT'
+        required: true
+        type: boolean
+      tags:
+        description: 'Test scenario tags'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to run tests against'
+        type: environment
         required: true
 
 jobs:  
