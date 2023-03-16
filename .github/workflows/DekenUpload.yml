@@ -148,8 +148,7 @@ jobs:
         echo username=${{ secrets.DEKEN_USERNAME }} > ~/.deken/config
         echo password=${{ secrets.DEKEN_PASSWORD }} >> ~/.deken/config
         curl https://github.com/pure-data/deken/releases/download/v0.9.2/deken_Windows64.zip -o deken_Windows64.zip
-        7z x deken_Windows64.zip -o deken_Windows64
-        ls 
+        Expand-Archive -Path "./deken_Windows64.zip" -DestinationPath "deken_Windows64" 
         cp deken_Windows64\deken.exe .\deken.exe
         .\deken.exe upgrade --self
         .\deken package py4pd_WIN64 -v ${{ github.event.inputs.py4pdVersion }} -n py4pd
