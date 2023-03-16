@@ -143,70 +143,71 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Install Build Dependencies
-        run: |
-          sudo apt-get install puredata -y
-          sudo apt-get install python3.10-dev -y
-          python3.10 -m pip install numpy
+      # - name: Install Build Dependencies
+      #   run: |
+      #     sudo apt-get install puredata -y
+      #     sudo apt-get install python3.10-dev -y
+      #     python3.10 -m pip install numpy
 
-      - name: Build
-        run: make PYTHON_VERSION=python3.10
+      # - name: Build
+      #   run: make PYTHON_VERSION=python3.10
       
 
-      - name: Copy files to py4pd_Linux
-        run: |
-          mkdir py4pd_Linux
-          cp py4pd.pd_linux resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd_Linux
-          mkdir py4pd_Linux/resources
-          mkdir py4pd_Linux/src
-          cp resources/* py4pd_Linux/resources -r
-          cp src/* py4pd_Linux/resources -r
-          ./resources/localdeps/localdeps.linux.sh py4pd_Linux/py4pd.pd_linux
-          zip -r py4pd_Linux.zip py4pd_Linux
-          cp test/*.pd py4pd_Linux
+      # - name: Copy files to py4pd_Linux
+      #   run: |
+      #     mkdir py4pd_Linux
+      #     cp py4pd.pd_linux resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd_Linux
+      #     mkdir py4pd_Linux/resources
+      #     mkdir py4pd_Linux/src
+      #     cp resources/* py4pd_Linux/resources -r
+      #     cp src/* py4pd_Linux/resources -r
+      #     ./resources/localdeps/localdeps.linux.sh py4pd_Linux/py4pd.pd_linux
+      #     zip -r py4pd_Linux.zip py4pd_Linux
+      #     cp test/*.pd py4pd_Linux
           
-      #- name: Set Test Config
-      #  run: |
-      #    cp test/runTests.py runTests.py
-      #    python3.10 -m pip install neoscore matplotlib Pillow -t ./py4pd_Linux/py-modules
+      # #- name: Set Test Config
+      # #  run: |
+      # #    cp test/runTests.py runTests.py
+      # #    python3.10 -m pip install neoscore matplotlib Pillow -t ./py4pd_Linux/py-modules
 
       
-      - name: Configure Deken
-        env:
-          DEKEN_PASSWORD: ${{ secrets.DEKEN_PASSWORD }}
-          DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
-        run: |
-          curl https://raw.githubusercontent.com/pure-data/deken/main/developer/deken > deken
-          chmod 755 ./deken
-          mkdir ~/.deken
-          python3 -m pip install hy==0.19
-          mkdir py4pd
-          mkdir py4pd/src
-          mkdir py4pd/resources
-          cp py4pd.pd_linux py4pd/py4pd.pd_linux
-          cp resources/* py4pd/resources -r
-          cp src/* py4pd/src -r
-          cp resources/py4pd-help.pd py4pd/py4pd-help.pd
-          cp resources/py4pd.cfg py4pd/py4pd.cfg
-          cp resources/py.py py4pd/py.py
-          ./resources/localdeps/localdeps.linux.sh py4pd/py4pd.pd_linux
-          python3 -m venv ~/.deken/virtualenv/
-          source ~/.deken/virtualenv/bin/activate
-          python3 -m pip install hy==0.19
-          ./deken upgrade --self
-          ./deken package py4pd -v ${{ github.event.inputs.py4pdVersion }} -n py4pd 
-          echo username = ${{ secrets.DEKEN_USERNAME }} > /home/runner/.deken/config
-          
-          ./deken upload *.dek
-        continue-on-error: true
+      # - name: Configure Deken
+      #   env:
+      #     DEKEN_PASSWORD: ${{ secrets.DEKEN_PASSWORD }}
+      #     DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
+      #   run: |
+      #     curl https://raw.githubusercontent.com/pure-data/deken/main/developer/deken > deken
+      #     chmod 755 ./deken
+      #     mkdir ~/.deken
+      #     python3 -m pip install hy==0.19
+      #     mkdir py4pd
+      #     mkdir py4pd/src
+      #     mkdir py4pd/resources
+      #     cp py4pd.pd_linux py4pd/py4pd.pd_linux
+      #     cp resources/* py4pd/resources -r
+      #     cp src/* py4pd/src -r
+      #     cp resources/py4pd-help.pd py4pd/py4pd-help.pd
+      #     cp resources/py4pd.cfg py4pd/py4pd.cfg
+      #     cp resources/py.py py4pd/py.py
+      #     ./resources/localdeps/localdeps.linux.sh py4pd/py4pd.pd_linux
+      #     python3 -m venv ~/.deken/virtualenv/
+      #     source ~/.deken/virtualenv/bin/activate
+      #     python3 -m pip install hy==0.19
+      #     ./deken upgrade --self
+      #     ./deken package py4pd -v ${{ github.event.inputs.py4pdVersion }} -n py4pd 
+      #     echo username = ${{ secrets.DEKEN_USERNAME }} > /home/runner/.deken/config
+      #     echo password = ${{ secrets.DEKEN_PASSWORD }} >> /home/runner/.deken/config
+      #     ./deken upload *.dek
+      #   continue-on-error: true
 
       - name: Configure Deken  
         # read what is inside /home/runner/.deken/config
         run: |  
-          cat /home/runner/.deken/config
-          echo password = ${{ secrets.DEKEN_PASSWORD }} >> /home/runner/.deken/config
-          cat /home/runner/.deken/config
 
-        
+          echo password = $DEKEN_USERNAME >> /home/runner/.deken/config2
+          cat /home/runner/.deken/config2
+
+        env:
+          DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
 
          
