@@ -165,13 +165,6 @@ jobs:
           zip -r py4pd_Linux.zip py4pd_Linux
           cp test/*.pd py4pd_Linux
           
-      - name: Upload Object
-        uses: actions/upload-artifact@v3
-        with:
-          name: py4pd_Linux
-          path: py4pd_Linux.zip
-
-
       #- name: Set Test Config
       #  run: |
       #    cp test/runTests.py runTests.py
@@ -181,7 +174,6 @@ jobs:
       #- name: Run Test
       #  run: python3.10 runTests.py
       
-
       - name: Configure Deken
         run: |
           curl https://raw.githubusercontent.com/pure-data/deken/main/developer/deken > deken
@@ -204,8 +196,10 @@ jobs:
           python3 -m pip install hy==0.19
           ./deken upgrade --self
           ./deken package py4pd -v ${{ github.event.inputs.py4pdVersion }} -n py4pd 
-          
-          
+          export DEKEN_PASSWORD=${{ secrets.DEKEN_PASSWORD }}
+          export DEKEN_USERNAME=${{ secrets.DEKEN_USERNAME }} 
+          ./deken upload *.dek
+
           
 #./deken upload *.dek
         
