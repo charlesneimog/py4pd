@@ -179,7 +179,6 @@ jobs:
           curl https://raw.githubusercontent.com/pure-data/deken/main/developer/deken > deken
           chmod 755 ./deken
           mkdir ~/.deken
-          python3 -m pip install hy==0.19
           mkdir py4pd
           mkdir py4pd/src
           mkdir py4pd/resources
@@ -195,10 +194,17 @@ jobs:
           python3 -m pip install hy==0.19
           ./deken upgrade --self
           ./deken package py4pd -v ${{ github.event.inputs.py4pdVersion }} -n py4pd 
-          echo username = ${{ secrets.DEKEN_USERNAME }} > /home/runner/.deken/config
-          echo password = ${{ secrets.DEKEN_PASSWORD }} >> /home/runner/.deken/config
+          echo username=${{ secrets.DEKEN_USERNAME }} > /home/runner/.deken/config
+          echo password=${{ secrets.DEKEN_PASSWORD }} >> /home/runner/.deken/config
           ./deken upload *.dek
-  
+        continue-on-error: true
 
-
-         
+      - name: Upload Deken
+        env:
+          DEKEN_PASSWORD: ${{ secrets.DEKEN_PASSWORD }}
+          DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
+        run: |
+          source ~/.deken/virtualenv/bin/activate
+          echo username=${{ secrets.DEKEN_USERNAME }} > /home/runner/.deken/config
+          echo password=${{ secrets.DEKEN_PASSWORD }} >> /home/runner/.deken/config
+          ./deken upload *.dek
