@@ -26,17 +26,58 @@ def pd_tabwrite():
 This will write the list `randomNumbers` in the `pd.tabwrite` table in PureData. If the table does not exist it will give an error, like what happens in the `tabwrite` object.
 
 -------------------------------------- 
-<br>
-
 ## <h2 style="text-align:center"> **pd Methods** </h2>
+--------------------------------------
+### <h3 style="text-align:center"> **Write PureData Objects** </h3>
 
-Next, I present all methods provide by `pd` in some categories. 
 
-### <h3 style="text-align:center"> Exchanging Data </h3>
+#### <h4 style="text-align:center"> `pd.addobject` </h4>
+
+For Python users it is very simple to create new objects. For that, you define you Python Function than add it as an object using `pd.addobject`.
+
+See this code:
+
+``` py
+
+import pd
+
+
+def mysumObject(a, b, c, d):
+    return a + b + c + d
+
+
+def py4pdLoadObjects():
+    pd.addobject("mysumObject", "NORMAL", "myNewPdObjects", "mysumObject")
+
+    # My License, Name and University, others information
+    pd.print("", show_prefix=False)
+    pd.print("GPL3 2023, Your Name", show_prefix=False)
+    pd.print("University of São Paulo", show_prefix=False)
+    pd.print("", show_prefix=False)
+
+```
+
+Here we add the function `mysumObject` in PureData enviroment. For more info read the [Researchers](https://py4pd.readthedocs.io/en/latest/researchers/) page.
+
+<p align="center">
+    <img src="../examples/createobj/mynewpdobject.png" width="50%"</img>
+</p>
+
+In this function we have 4 arguments. 
+
+* The name for the creation of the object in PureData;
+* The type (`NORMAL`, `VIS`, `AUDIOIN`, `AUDIOOUT`, `AUDIO`); _(not fully implemented yet!)_
+* The name of the script where the Function that will be loaded is;
+* The name of the function that the object will execute;
+
+The number of inputs will always follow the parameters number of the function.
+
 -------------------------------------- 
+### <h3 style="text-align:center"> **Exchanging Data** </h3>
+
 These are the methods used to send data from Python to PureData. The inverse path is done mainly with `run` and `key` messages. 
 
--------------------------------------- 
+<br>
 #### <h4 style="text-align:center"> `pd.out` </h4>
 
 `#!python pd.out()` allows you to output data to PureData without needing to wait for the Python function to finish executing. This is different from returning data to PureData using the `return` statement, which requires the function to complete before sending data. For example, consider the following function:
@@ -176,11 +217,12 @@ def someAudioFunction(audio): # (1)!
 
 ------------------
 
-### <h3 style="text-align:center"> Info for the user | PureData console </h3>
+### <h3 style="text-align:center"> **Info for the user** </h3>
 
 There are two messages used to print info in the PureData console, they are `pd.print` and `pd.error`.
 
-------------------
+<br>
+
 #### <h4 style="text-align:center"> `pd.print` </h4>
 
 When you want to inform the user (or yourself) of important information in PureData, you should use the `pd.print` method. This is particularly useful when debugging your Python code from within PureData. It's important to note that regular print statements will not work in PureData, so you must use `pd.print` instead.
@@ -201,13 +243,15 @@ Overall, using pd.error can help you effectively communicate errors to the user 
 
 -------------------------------------- 
 
-### Images
+### <h3 style="text-align:center"> **Images** </h3>
  
+<br>
+
 #### <h4 style="text-align:center"> `pd.show` </h4>
 
 If you want to display images inside your PureData patches using Python, you can use the pd.show method. This method is essentially a copy of the else/pic object, but with an interface that allows you to easily show images from within your Python code.
 
-One important thing to note is that pd.show only works with `.gif`, `.ppm`, and `.bmp` image formats. However, this is usually enough to work with a wide range of images and can be particularly useful when working with scores in PureData.
+One important thing to note is that pd.show only works with `.png`, `.gif`, and `.ppm` image formats. However, this is usually enough to work with a wide range of images and can be particularly useful when working with scores in PureData.
 
 For example, you can use the `neoscore` Python library along with `pd.show` to display scores directly in your PureData patches. This provides a complete and useful way to work with scores in PureData, and can greatly enhance your ability to work with music and audio data in your patches.
 Overall, `pd.show` provides a convenient way to display images from within your Python code, and can be a valuable tool when working with PureData.
@@ -303,7 +347,7 @@ def chord(pitches):
 To use this script, you can create a `py4pd` object environment with `py4pd -score score chord`. 
 
 -------------------------------------- 
-### <h3 style="text-align:center"> File Management </h3>
+### <h3 style="text-align:center"> **File Management** </h3>
 -------------------------------------- 
 
 Next is presented `pd.home` and `pd.tempfolder`. These functions can be useful for managing files in PureData and Python.
@@ -324,8 +368,9 @@ In `py4pd`, `pd.home` is a function that returns the path to the directory where
 
 -------------------------------------- 
 
-### <h3 style="text-align:center"> Audio Info </h3>
+### <h3 style="text-align:center"> **Audio Info** </h3>
     
+<br>
 #### <h4 style="text-align:center"> `pd.samplerate` </h4>
 
 This get the current samplerate of PureData. You can use the `pd.SAMPLERATE` variable too.
