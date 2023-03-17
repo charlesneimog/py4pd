@@ -387,16 +387,51 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
     PyObject *pd_module = PyImport_ImportModule("__main__");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+
     PY4PD_erase(py4pd, py4pd->x_glist);
     if (PyArg_ParseTuple(args, "s", &string)) {
         t_symbol *filename = gensym(string);
         if (py4pd->x_def_img) {
             py4pd->x_def_img = 0;
         }
+        FILE *file;
+        char *ext = strrchr(filename->s_name, '.');
+        if (strcmp(ext, ".ppm") == 0) {
+            char magic_number[3];
+            int width, height, max_color_value;
+            file = fopen(filename->s_name, "r");
+            fscanf(file, "%s\n%d %d\n%d\n", magic_number, &width, &height, &max_color_value);
+            py4pd->x_width = width;
+            py4pd->x_height = height;
+            fclose(file);
+        }
+        else if (strcmp(ext, ".gif") == 0){
+            file = fopen(filename->s_name, "rb");
+            fseek(file, 6, SEEK_SET);
+            fread(&py4pd->x_width, 2, 1, file);
+            fread(&py4pd->x_height, 2, 1, file);
+            fclose(file);
+        }
+        else if (strcmp(ext, ".png") == 0) {
+            file = fopen(filename->s_name, "rb");
+            int width, height;
+            fseek(file, 16, SEEK_SET);
+            fread(&width, 4, 1, file);
+            fread(&height, 4, 1, file);
+            width = ntohl(width); 
+            height = ntohl(height);
+            py4pd->x_width = width;
+            py4pd->x_height = height;
+        }
 
+        else{
+            pd_error(py4pd, "[Python] pd.showimage: file format not supported");
+            PyErr_SetString(PyExc_TypeError, "[Python] pd.showimage: file format not supported");
+            return NULL;
+        }
 
         if (glist_isvisible(py4pd->x_glist) && gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
-            const char *file_name_open =    PY4PD_filepath(py4pd, filename->s_name);
+            const char *file_name_open = PY4PD_filepath(py4pd, filename->s_name);
             if (file_name_open) {
                 py4pd->x_filename = filename;
                 py4pd->x_fullname = gensym(file_name_open);
@@ -405,8 +440,7 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
                     py4pd->x_def_img = 0;
                 }
 
-                if (glist_isvisible(py4pd->x_glist) &&
-                    gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
+                if (glist_isvisible(py4pd->x_glist) && gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
                     PY4PD_erase(py4pd, py4pd->x_glist);
                     sys_vgui(
                         "if {[info exists %lx_picname] == 0} {image create "
@@ -414,7 +448,7 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
                         "1\n}\n",
                         py4pd->x_fullname, py4pd->x_fullname, file_name_open,
                         py4pd->x_fullname);
-                    PY4PD_draw(py4pd, py4pd->x_glist, 0);
+                    PY4PD_draw(py4pd, py4pd->x_glist, 1);
                 }
             } 
             else {

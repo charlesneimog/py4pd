@@ -1414,9 +1414,9 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_classAudioOut, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0);  // add a method to a class
 
     // Pic related
-    class_addmethod(py4pd_class_VIS, (t_method)PY4PD_size_callback, gensym("_picsize"), A_DEFFLOAT, A_DEFFLOAT, 0);
+    // class_addmethod(py4pd_class_VIS, (t_method)PY4PD_size_callback, gensym("_picsize"), A_DEFFLOAT, A_DEFFLOAT, 0);
     class_addmethod(py4pd_class_VIS, (t_method)PY4PD_mouserelease,gensym("_mouserelease"), 0);
-    class_addmethod(py4pd_class_VIS, (t_method)PY4PD_outline, gensym("outline"), A_DEFFLOAT, 0);
+    // class_addmethod(py4pd_class_VIS, (t_method)PY4PD_outline, gensym("outline"), A_DEFFLOAT, 0);
     class_addmethod(py4pd_class_VIS, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);
 
     // this is like have lot of objects with the same name, add all methods for

@@ -30,13 +30,6 @@ except Exception as e:
     pd.print(
         "Please, run 'pip install matplotlib -t ./py-modules' in the terminal from current folder")
 
-try:
-    from PIL import Image
-except Exception as e:
-    pd.error(str(e))
-    pd.print(
-        "Please, run 'pip install PIL -t ./py-modules' in the terminal from current folder")
-
 # ================================================
 # ==============  Functions  =====================
 # ================================================
@@ -317,6 +310,7 @@ def neoscoreTest():
     pd.out(1)
 
 
+
 def dft(freq_hz):
     plt.clf()
     plt.switch_backend('agg')
@@ -352,11 +346,7 @@ def dft(freq_hz):
 
     freq_hz = int(round(freq_hz, 0))
     random_number = randint(10, 99)
-    plt.savefig(f'{home_path}/canvas{freq_hz}{random_number}.jpg', dpi=60)
-    im = Image.open(f'{home_path}/canvas{freq_hz}{random_number}.jpg')
-    im.save(f'{home_path}/canvas{freq_hz}{random_number}.gif')
-    os.remove(f'{home_path}/canvas{freq_hz}{random_number}.jpg')
-    output = f'{home_path}/canvas{freq_hz}{random_number}.gif'
-    pd.show(output)
+    plt.savefig(f'{home_path}/canvas{freq_hz}{random_number}.png', dpi=60)
+    pd.show(f'{home_path}/canvas{freq_hz}{random_number}.png')
     return 0
 
