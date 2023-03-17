@@ -6,10 +6,26 @@ on:
         description: 'Add the version for upload'
         type: string
         required: true
+      Windows:
+        description: 'Build Windows?'
+        type: boolean
+        required: true
+        default: true
+      Linux:
+        description: 'Build Linux?'
+        type: boolean
+        required: true
+        default: true
+      Mac:
+        description: 'Build Mac?'
+        type: boolean
+        required: true
+        default: true
 
 jobs:  
   linux-build:
     runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.Linux == 'true' }}
     timeout-minutes: 7
     steps:
       - uses: actions/checkout@v3
@@ -85,6 +101,7 @@ jobs:
 
   windows-build:
     runs-on: windows-latest
+    if: ${{ github.event.inputs.Windows == 'true' }}
     timeout-minutes: 15
     steps:
     - uses: actions/checkout@v3
@@ -141,7 +158,7 @@ jobs:
         DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
       shell: msys2 {0}
       run: |
-        ren py4pd_WIN64 py4pd
+        mv py4pd_WIN64 py4pd
         mkdir ~/.deken
         echo username=${{ secrets.DEKEN_USERNAME }} > ~/.deken/config
         echo password=${{ secrets.DEKEN_PASSWORD }} >> ~/.deken/config
@@ -155,6 +172,7 @@ jobs:
     
   macos-intel-build:
     runs-on: macos-latest
+    if: ${{ github.event.inputs.MacOS == 'true' }}
     timeout-minutes: 10
 
     steps:
