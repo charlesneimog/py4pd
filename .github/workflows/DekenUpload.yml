@@ -141,6 +141,7 @@ jobs:
         DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
       shell: msys2 {0}
       run: |
+      	ren py4pd_WIN64 py4pd
         mkdir ~/.deken
         echo username=${{ secrets.DEKEN_USERNAME }} > ~/.deken/config
         echo password=${{ secrets.DEKEN_PASSWORD }} >> ~/.deken/config
@@ -191,5 +192,6 @@ jobs:
         mkdir ~/.deken
         echo username=${{ secrets.DEKEN_USERNAME }} > ~/.deken/config
         echo password=${{ secrets.DEKEN_PASSWORD }} >> ~/.deken/config
-        ./deken package py4pd_macOS-Intel -v ${{ github.event.inputs.py4pdVersion }} -n py4pd
+        mv py4pd_macOS-Intel py4pd
+        ./deken package py4pd -v ${{ github.event.inputs.py4pdVersion }} -n py4pd
         ./deken upload *.dek
