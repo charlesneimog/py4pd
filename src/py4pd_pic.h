@@ -1,5 +1,4 @@
 #include "py4pd.h"
-#include "png.h"
 
 extern t_class *py4pd_class, *py4pd_class_VIS;
 extern void PY4PD_draw_io_let(t_py *x);
