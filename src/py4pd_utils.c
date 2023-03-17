@@ -326,7 +326,7 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
         outlet_list(x->out_A, 0, list_size, list_array);
         free(list_array);
         Py_DECREF(pValue);
-        post("recount of pValue_i: %d", Py_REFCNT(pValue_i));
+        // post("recount of pValue_i: %d", Py_REFCNT(pValue_i));
 
     } else {
         if (PyLong_Check(pValue)) {

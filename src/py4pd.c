@@ -415,7 +415,7 @@ static void set_param(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argv is the arguments
  * @return void, but it reloads the script
  */
-static void reload(t_py *x) {
+void reload(t_py *x) {
     PyObject *pName, *pFunc, *pModule, *pReload;
     if (x->function_called == 0) {  // if the set method was not called, then we
                                     // can not run the function :)

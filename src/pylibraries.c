@@ -65,6 +65,19 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         PyObject *pyInletValue = PyUnicode_FromString(s->s_name);
         PyTuple_SetItem(x->argsDict, 0, pyInletValue);
     }
+    else if (s == gensym("list") || s == gensym("anything") || s == gensym("float") || s == gensym("symbol")){
+        PyObject *pyInletValue = PyList_New(ac);
+        for (int i = 0; i < ac; i++){
+            if (av[i].a_type == A_FLOAT){ // TODO: check if it is an int or a float
+                PyList_SetItem(pyInletValue, i, PyLong_FromLong(av[i].a_w.w_float));
+            }
+            else if (av[i].a_type == A_SYMBOL){
+                PyList_SetItem(pyInletValue, i, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
+            }
+        }
+        PyTuple_SetItem(x->argsDict, 0, pyInletValue);
+    }
+
     else{
         PyObject *pyInletValue = PyList_New(ac + 1);
         PyList_SetItem(pyInletValue, 0, PyUnicode_FromString(s->s_name));
@@ -238,6 +251,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args) {
     // here I add the new object to the Pd
     pyNewObject = class_new(gensym(objectName), (t_newmethod)py_newObject, 0, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
     class_addanything(pyNewObject, py_anything);
+    class_addmethod(pyNewObject, (t_method)reload, gensym("reload"), 0, 0);  // run python script
 
     // add cold inlet
     py4pdInlets_proxy_class = class_new(gensym("_py4pdInlets_proxy"), 0, 0, sizeof(t_py4pdInlet_proxy), CLASS_DEFAULT, 0);
