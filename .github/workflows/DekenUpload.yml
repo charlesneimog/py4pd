@@ -7,17 +7,17 @@ on:
         type: string
         required: true
       Windows:
-        description: 'Build Windows?'
+        description: 'Build and Upload Windows?'
         type: boolean
         required: true
         default: true
       Linux:
-        description: 'Build Linux?'
+        description: 'Build and Upload Linux?'
         type: boolean
         required: true
         default: true
       Mac:
-        description: 'Build Mac?'
+        description: 'Build and Upload Mac?'
         type: boolean
         required: true
         default: true
@@ -166,7 +166,7 @@ jobs:
         unzip deken_Windows64.zip
         echo username=${{ secrets.DEKEN_USERNAME }} > ~/.deken/config
         echo password=${{ secrets.DEKEN_PASSWORD }} >> ~/.deken/config
-        ./deken package py4pd_WIN64 -v ${{ github.event.inputs.py4pdVersion }} -n py4pd
+        ./deken package py4pd -v ${{ github.event.inputs.py4pdVersion }} -n py4pd
         ./deken upload *.dek
 
     
