@@ -1321,6 +1321,9 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     if (x->audioOutput == 0) {
         x->out_A = outlet_new(&x->x_obj, 0);  // cria um outlet caso o objeto nao contenha audio
     }
+
+    x->x_numInlets = 1;
+    x->x_numOutlets = 1;
     x->thread = 0;
     x->object_number = object_count;  // save object number
     x->home_path = patch_dir;         // set name of the home path

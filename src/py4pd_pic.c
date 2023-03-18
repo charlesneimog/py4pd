@@ -1,4 +1,5 @@
 #include "py4pd_pic.h"
+#include "m_pd.h"
 #include "py4pd.h"
 
 t_widgetbehavior py4pd_widgetbehavior;
@@ -9,12 +10,38 @@ static t_class *PY4PD_edit_proxy_class;
 void PY4PD_draw_io_let(t_py *x){
     t_canvas *cv = glist_getcanvas(x->x_glist);
     int xpos = text_xpix(&x->x_obj, x->x_glist), ypos = text_ypix(&x->x_obj, x->x_glist);
+    
     sys_vgui(".x%lx.c delete %lx_in\n", cv, x);
-        sys_vgui(".x%lx.c create rectangle %d %d %d %d -fill black -tags %lx_in\n",
-            cv, xpos, ypos, xpos+(IOWIDTH * x->x_zoom), ypos+(IHEIGHT * x->x_zoom), x);
     sys_vgui(".x%lx.c delete %lx_out\n", cv, x);
-    sys_vgui(".x%lx.c create rectangle %d %d %d %d -fill black -tags %lx_out\n",
-            cv, xpos, ypos+x->x_height, xpos + IOWIDTH * x->x_zoom, ypos + x->x_height - IHEIGHT * x->x_zoom, x);
+    
+    // CREATE INLETS
+    sys_vgui(".x%lx.c create rectangle %d %d %d %d -fill black -tags %lx_in\n", 
+            cv, xpos, ypos, xpos+(IOWIDTH * x->x_zoom), ypos+(IHEIGHT * x->x_zoom), x); // inlet 1
+    if (x->x_numInlets == 2){
+        int inlet_width = IOWIDTH * x->x_zoom;
+        sys_vgui(".x%lx.c create rectangle %d %d %d %d -fill black -tags %lx_in\n", 
+            cv, xpos + x->x_width - inlet_width, ypos, xpos + x->x_width, ypos + IHEIGHT * x->x_zoom, x);
+    }
+    else if (x->x_numInlets > 2){
+        int inlet_width = IOWIDTH * x->x_zoom;
+        int ghostLines = x->x_width /  (x->x_numInlets - 1);
+        int i;
+        for (i = 1; i < x->x_numInlets - 1; i++){
+            sys_vgui(".x%lx.c create rectangle %d %d %d %d -fill black -tags %lx_in\n", 
+                cv, // canvas
+                xpos + (i * ghostLines) - (inlet_width / 2), // size horizontal
+                ypos, // size vertical
+                xpos + (i * ghostLines) + (inlet_width / 2), // size horizontal 
+                ypos + IHEIGHT * x->x_zoom, // size vertical
+                x); // object
+        }
+        sys_vgui(".x%lx.c create rectangle %d %d %d %d -fill black -tags %lx_in\n", 
+                    cv, xpos + x->x_width - inlet_width, ypos, xpos + x->x_width, ypos + IHEIGHT * x->x_zoom, x);
+    }
+
+    // CREATE OUTLETS
+    sys_vgui(".x%lx.c create rectangle %d %d %d %d -fill black -tags %lx_out\n", 
+             cv, xpos, ypos+x->x_height, xpos + IOWIDTH * x->x_zoom, ypos + x->x_height - IHEIGHT * x->x_zoom, x);
 }
 
 // =================================================
@@ -522,6 +549,7 @@ void py4pd_picDefintion(char *imageData) {
     sys_vgui(
         "    pack $id.sz_latch.lsize $id.sz_latch.size $id.sz_latch.llatch "
         "$id.sz_latch.latch -side left\n");
+    // lx_out
     sys_vgui("\n");
     sys_vgui("    frame $id.snd_rcv\n");
     sys_vgui("    pack $id.snd_rcv -side top\n");
@@ -550,11 +578,16 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
                        int argc, t_atom *argv) {
     char *py4pdImageData;
     if (py4pdArgs == gensym("-picture")) {
-        py4pdImageData = malloc(strlen(PICIMAGE) + 1);
-        strcpy(py4pdImageData, PICIMAGE);
-    } else {
-        py4pdImageData = malloc(strlen(PICIMAGE) + 1);
-        strcpy(py4pdImageData, PICIMAGE);
+        py4pdImageData = malloc(strlen(PY4PD_IMAGE) + 1);
+        strcpy(py4pdImageData, PY4PD_IMAGE);
+    }
+    else if (py4pdArgs == gensym("-score")) {
+        py4pdImageData = malloc(strlen(PY4PD_SCORE) + 1);
+        strcpy(py4pdImageData, PY4PD_SCORE);
+    } 
+    else {
+        py4pdImageData = malloc(strlen(PY4PD_IMAGE) + 1);
+        strcpy(py4pdImageData, PY4PD_IMAGE);
     }
     PY4PD_edit_proxy_class = class_new(0, 0, 0, sizeof(t_py4pd_edit_proxy), CLASS_NOINLET | CLASS_PD, 0);
     class_addanything(PY4PD_edit_proxy_class, PY4PD_edit_proxy_any);
