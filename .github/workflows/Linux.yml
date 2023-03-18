@@ -33,7 +33,6 @@ jobs:
       - name: Install Build Dependencies
         run: |
           sudo apt-get install puredata -y
-          sudo apt-get install python3.10-dev -y
           python3.10 -m pip install numpy
 
       - name: Build
