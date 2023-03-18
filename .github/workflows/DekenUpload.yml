@@ -40,6 +40,9 @@ jobs:
       - name: Install Build Dependencies
         run: |
           sudo apt-get install puredata -y
+          sudo apt install software-properties-common -y
+          sudo add-apt-repository ppa:deadsnakes/ppa -y
+          sudo apt-get update
           sudo apt-get install python3.10-dev -y
           python3.10 -m pip install numpy
 
