@@ -14,7 +14,9 @@ void PY4PD_draw_io_let(t_py *x){
     sys_vgui(".x%lx.c delete %lx_in\n", cv, x);
     sys_vgui(".x%lx.c delete %lx_out\n", cv, x);
     
+    // =============
     // CREATE INLETS
+    // =============
     sys_vgui(".x%lx.c create rectangle %d %d %d %d -fill black -tags %lx_in\n", 
             cv, xpos, ypos, xpos+(IOWIDTH * x->x_zoom), ypos+(IHEIGHT * x->x_zoom), x); // inlet 1
     if (x->x_numInlets == 2){
@@ -39,9 +41,11 @@ void PY4PD_draw_io_let(t_py *x){
                     cv, xpos + x->x_width - inlet_width, ypos, xpos + x->x_width, ypos + IHEIGHT * x->x_zoom, x);
     }
 
+    // ==============
     // CREATE OUTLETS
+    // ==============
     sys_vgui(".x%lx.c create rectangle %d %d %d %d -fill black -tags %lx_out\n", 
-             cv, xpos, ypos+x->x_height, xpos + IOWIDTH * x->x_zoom, ypos + x->x_height - IHEIGHT * x->x_zoom, x);
+            cv, xpos, ypos+x->x_height, xpos + IOWIDTH * x->x_zoom, ypos + x->x_height - IHEIGHT * x->x_zoom, x);
 }
 
 // =================================================
@@ -129,21 +133,43 @@ void PY4PD_mouserelease(t_py* x){
     //     x->x_rcv_raw = gensym("empty");
 // }
 
+
 // =================================================
-int PY4PD_click(t_py *x, struct _glist *glist, int xpos, int ypos, int shift, int alt, int dbl, int doit){
+int PY4PD_click(t_py *object, struct _glist *glist, int xpos, int ypos, int shift, int alt, int dbl, int doit){
+    (void)object;
     (void)glist;
     (void)xpos;
     (void)ypos;
-    (void)shift;
-    (void)alt;
-    (void)dbl;
-    (void)doit;
 
-    if(doit){
-        x->x_latch ? outlet_float(x->out_A, 1) : outlet_bang(x->out_A) ;
-        if(x->x_send != &s_ && x->x_send->s_thing)
-            x->x_latch ? pd_float(x->x_send->s_thing, 1) : pd_bang(x->x_send->s_thing);
+    if(dbl){
+        // t_canvas *cv = glist_getcanvas(object->x_glist);
+        // // int inlet_width = IOWIDTH * object->x_zoom;
+        // int x_xpos = text_xpix(&object->x_obj, object->x_glist), x_ypos = text_ypix(&object->x_obj, object->x_glist);
+        // 
+        // // create a small green triangle in the top left corner
+        //         // create a small green triangle in the top left corner rotated 90 degrees clockwise
+        // int triangle_size = 10; // size of the triangle
+        // int x = x_xpos; // x-coordinate of the triangle
+        // int y = x_ypos; // y-coordinate of the triangle
+        // // sys_vgui(".x%lx.c create polygon %d %d %d %d %d %d -fill green -tags %lx_play\n", 
+        //         // cv, x + 10, y + 10, x + triangle_size + 10, y, x + 10, y+triangle_size, x);
+        //
+
+
     }
+
+    if (alt){
+        // post("[py4pd] Alt or Option click on object");
+    }
+
+    if (shift){
+        // post("[py4pd] Shift click on object");
+    }
+
+    if (doit){
+        // post("[py4pd] Click on object");
+    }
+
     return(1);
 }
 
@@ -159,12 +185,12 @@ void PY4PD_displace(t_gobj *z, t_glist *glist, int dx, int dy){
     t_py *obj = (t_py *)z;
     obj->x_obj.te_xpix += dx, obj->x_obj.te_ypix += dy;
     t_canvas *cv = glist_getcanvas(glist);
-    sys_vgui(".x%lx.c move %lx_outline %d %d\n", cv, obj, dx*obj->x_zoom, dy*obj->x_zoom);
-    sys_vgui(".x%lx.c move %lx_picture %d %d\n", cv, obj, dx*obj->x_zoom, dy*obj->x_zoom);
-    if(obj->x_receive == &s_)
-        sys_vgui(".x%lx.c move %lx_in %d %d\n", cv, obj, dx*obj->x_zoom, dy*obj->x_zoom);
-    if(obj->x_send == &s_)
-        sys_vgui(".x%lx.c move %lx_out %d %d\n", cv, obj, dx*obj->x_zoom, dy*obj->x_zoom);
+    sys_vgui(".x%lx.c move %lx_outline %d %d\n", cv, obj, dx * obj->x_zoom, dy * obj->x_zoom);
+    sys_vgui(".x%lx.c move %lx_picture %d %d\n", cv, obj, dx * obj->x_zoom, dy * obj->x_zoom);
+    // if(obj->x_receive == &s_) // I don't know why this is here 
+    sys_vgui(".x%lx.c move %lx_in %d %d\n", cv, obj, dx * obj->x_zoom, dy * obj->x_zoom);
+    // if(obj->x_send == &s_)
+    sys_vgui(".x%lx.c move %lx_out %d %d\n", cv, obj, dx * obj->x_zoom, dy * obj->x_zoom);
     canvas_fixlinesfor(glist, (t_text*)obj);
 }
 
@@ -203,7 +229,15 @@ void PY4PD_draw(t_py* x, struct _glist *glist, t_floatarg vis){
     int visible = (glist_isvisible(x->x_glist) && gobj_shouldvis((t_gobj *)x, x->x_glist));
     if(x->x_def_img && (visible || vis)){ // DEFAULT PIC
         sys_vgui(".x%lx.c create image %d %d -anchor nw -tags %lx_picture\n", cv, xpos, ypos, x);
-        sys_vgui(".x%lx.c itemconfigure %lx_picture -image %s\n", cv, x, "PY4PD_def_img");
+        if (x->visMode == 1) {
+            sys_vgui(".x%lx.c itemconfigure %lx_picture -image %s\n", cv, x, "PY4PD_def_img_CANVAS");
+        } 
+        else if (x->visMode == 2) {
+            sys_vgui(".x%lx.c itemconfigure %lx_picture -image %s\n", cv, x, "PY4PD_def_img_PIC");
+        }
+        else if (x->visMode == 3) {
+            sys_vgui(".x%lx.c itemconfigure %lx_picture -image %s\n", cv, x, "PY4PD_def_img_SCORE");
+        }
     }
     else{
         if(visible || vis){
@@ -217,7 +251,7 @@ void PY4PD_draw(t_py* x, struct _glist *glist, t_floatarg vis){
                 x->x_fullname, cv, xpos, ypos, xpos+x->x_width, ypos+x->x_height, x, x->x_zoom);
         }
     }
-    sys_vgui(".x%lx.c bind %lx_picture <ButtonRelease> {pdsend [concat %s _mouserelease \\;]}\n", cv, x, x->x_x->s_name);
+    // sys_vgui(".x%lx.c bind %lx_picture <ButtonRelease> {pdsend [concat %s _mouserelease \\;]}\n", cv, x, x->x_x->s_name);
     sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline black -width %d\n", cv, xpos, ypos, xpos+x->x_width, ypos+x->x_height, x, x->x_zoom);
     PY4PD_draw_io_let(x);
          
@@ -452,10 +486,27 @@ void PY4PD_free(t_py *x){ // delete if variable is unset and image is unused
 }
 
 // =====================================
-void py4pd_picDefintion(char *imageData) {
-    sys_vgui("image create photo PY4PD_def_img -data {%s} \n", imageData);
+void py4pd_picDefintion(t_py *x) {
+    (void)x;
+    if (x->visMode == 1) {
+        sys_vgui("image create photo PY4PD_def_img_CANVAS -data {%s} \n", PY4PD_IMAGE); // BUG: this is because I have diferentes images
+    } 
+    else if (x->visMode == 2) {
+        sys_vgui("image create photo PY4PD_def_img_PIC -data {%s} \n", PY4PD_IMAGE);
+    }
+    else if (x->visMode == 3) {
+        sys_vgui("image create photo PY4PD_def_img_SCORE -data {%s} \n", PY4PD_SCORE);
+    
+    }
+  
+
+
+
+
+
+    
     sys_vgui("if {[catch {pd}]} {\n");
-    sys_vgui("    proc pd {args} {pdsend [join $args \" \"]}\n");
+    // sys_vgui("    proc pd {args} {pdsend [join $args \" \"]}\n");
     sys_vgui("}\n");
     sys_vgui("proc PY4PD_ok {id} {\n");
     sys_vgui("    set vid [string trimleft $id .]\n");
@@ -576,18 +627,18 @@ void py4pd_picDefintion(char *imageData) {
 // ================================================
 void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
                        int argc, t_atom *argv) {
-    char *py4pdImageData;
-    if (py4pdArgs == gensym("-picture")) {
-        py4pdImageData = malloc(strlen(PY4PD_IMAGE) + 1);
-        strcpy(py4pdImageData, PY4PD_IMAGE);
+    if (py4pdArgs == gensym("-canvas")) {
+        x->visMode = 1;
+    }
+    else if (py4pdArgs == gensym("-picture")) {
+        x->visMode = 2;
     }
     else if (py4pdArgs == gensym("-score")) {
-        py4pdImageData = malloc(strlen(PY4PD_SCORE) + 1);
-        strcpy(py4pdImageData, PY4PD_SCORE);
+        x->visMode = 3;
     } 
     else {
-        py4pdImageData = malloc(strlen(PY4PD_IMAGE) + 1);
-        strcpy(py4pdImageData, PY4PD_IMAGE);
+        x->visMode = 1;
+        pd_error(x, "[py4pd]: unknown visMode");
     }
     PY4PD_edit_proxy_class = class_new(0, 0, 0, sizeof(t_py4pd_edit_proxy), CLASS_NOINLET | CLASS_PD, 0);
     class_addanything(PY4PD_edit_proxy_class, PY4PD_edit_proxy_any);
@@ -599,7 +650,7 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     py4pd_widgetbehavior.w_clickfn = (t_clickfn)PY4PD_click;
     class_setwidget(py4pd_class_VIS, &py4pd_widgetbehavior);
     // class_setsavefn(py4pd_class_VIS, &PY4PD_save);
-    py4pd_picDefintion(py4pdImageData);
+    py4pd_picDefintion(x);
     t_canvas *cv = canvas_getcurrent();
     x->x_glist = (t_glist *)cv;
     x->x_zoom = x->x_glist->gl_zoom;
@@ -641,6 +692,5 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
         argv[j] = argv[j + 1];
     }
     argc--;
-    freebytes(py4pdImageData, strlen(py4pdImageData) + 1);
 }
 

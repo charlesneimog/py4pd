@@ -1,8 +1,13 @@
 #include "pylibraries.h"
 #include "py4pd.h"
 #include "py4pd_utils.h"
+#include "py4pd_pic.h"
 
 static t_class *pyNewObject;
+static t_class *pyNewObject_VIS;
+static t_class *pyNewObject_AudioIn;
+static t_class *pyNewObject_AudioOut;
+
 static t_class *py4pdInlets_proxy_class;
 
 // =====================================
@@ -189,13 +194,13 @@ void *py_newObject(t_symbol *s, int argc, t_atom *argv) {
     py4pdInlet_proxies = (t_pd **)getbytes((pyFuncArgs + 1) * sizeof(*py4pdInlet_proxies));
     for (i = 0; i < pyFuncArgs; i++){
 
-        char methodForInlet[MAXPDSTRING];
-        if (i < 9) {
-            sprintf(methodForInlet, "addInlet 0%d", i + 1);
-        }
-        else {
-            sprintf(methodForInlet, "addInlet %d", i + 1);
-        }
+        // char methodForInlet[MAXPDSTRING];
+        // if (i < 9) {
+            // sprintf(methodForInlet, "addInlet 0%d", i + 1);
+        // }
+        // else {
+            // sprintf(methodForInlet, "addInlet %d", i + 1);
+        // }
             py4pdInlet_proxies[i] = pd_new(py4pdInlets_proxy_class);
         	t_py4pdInlet_proxy *y = (t_py4pdInlet_proxy *)py4pdInlet_proxies[i];
             y->p_master = x;
@@ -232,6 +237,12 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args) {
     char *objectModule;
     char *objectFunction;
 
+    // ================================
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_OBJECT = PyObject_GetAttrString(pd_module, "py4pd");
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_OBJECT, "py4pd");
+    // ================================
+
     if (!PyArg_ParseTuple(args, "ssss", &objectName, &objectType, &objectModule, &objectFunction)) {
         post("[Python]: Error parsing arguments");
         return NULL;
@@ -248,14 +259,34 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args) {
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
     PyModule_AddObject(PyImport_ImportModule("__main__"), py4pd_objectName, py4pd_capsule);
 
-    // here I add the new object to the Pd
-    pyNewObject = class_new(gensym(objectName), (t_newmethod)py_newObject, 0, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
-    class_addanything(pyNewObject, py_anything);
-    class_addmethod(pyNewObject, (t_method)reload, gensym("reload"), 0, 0);  // run python script
+    // NORMAL
+    if ((strcmp(objectType, "NORMAL") == 0)){
+        pyNewObject = class_new(gensym(objectName), (t_newmethod)py_newObject, 0, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
+        class_addanything(pyNewObject, py_anything);
+        class_addmethod(pyNewObject, (t_method)reload, gensym("reload"), 0, 0);  // run python script
+    }
+    // VIS
+    else if ((strcmp(objectType, "VIS") == 0)){
+        pyNewObject_VIS = class_new(gensym(objectName), (t_newmethod)py_newObject, 0, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
+        class_addanything(pyNewObject_VIS, py_anything);
+        class_addmethod(pyNewObject_VIS, (t_method)reload, gensym("reload"), 0, 0);  // run python script
+    }
+    // AUDIOIN
+    else if ((strcmp(objectType, "AUDIOIN") == 0)){
 
-    // add cold inlet
+    }
+    // AUDIOOUT
+    else if ((strcmp(objectType, "AUDIOOUT") == 0)){
+
+    }
+    // AUDIO
+    else if ((strcmp(objectType, "AUDIO") == 0)){
+
+    }
+
     py4pdInlets_proxy_class = class_new(gensym("_py4pdInlets_proxy"), 0, 0, sizeof(t_py4pdInlet_proxy), CLASS_DEFAULT, 0);
     class_addanything(py4pdInlets_proxy_class, py4pdInlets_proxy_anything);
     class_addlist(py4pdInlets_proxy_class, py4pdInlets_proxy_list);
-    return PyLong_FromLong(0);
+
+    return PyLong_FromLong(1);
 }

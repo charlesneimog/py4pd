@@ -1244,7 +1244,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     t_symbol *patch_dir = canvas_getdir(c);
     x->audioInput = 0;
     x->audioOutput = 0;
-    x->visMode = 0;
     x->editorName = NULL;
 
     object_count++;  // count the number of objects;
@@ -1255,7 +1254,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                 py4pdArgs == gensym("-score") ||
                 py4pdArgs == gensym("-canvas")) {
                 py4pd_InitVisMode(x, c, py4pdArgs, i, argc, argv);
-                x->visMode = 1;
                 x->x_outline = 1;
                 // remove the '-picture' from the arguments
                 int j;
@@ -1322,8 +1320,10 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         x->out_A = outlet_new(&x->x_obj, 0);  // cria um outlet caso o objeto nao contenha audio
     }
 
-    x->x_numInlets = 1;
-    x->x_numOutlets = 1;
+
+
+    x->x_numInlets = 1;  // set the number of inlets
+    x->x_numOutlets = 1;  // set the number of outlets
     x->thread = 0;
     x->object_number = object_count;  // save object number
     x->home_path = patch_dir;         // set name of the home path
@@ -1371,7 +1371,7 @@ void *py4pd_free(t_py *x) {
             system(command);
         #endif
     }
-    if (x->visMode == 1) {
+    if (x->visMode != 0) {
         PY4PD_free(x);
     }
 
@@ -1417,7 +1417,7 @@ void py4pd_setup(void) {
 
     // Pic related
     // class_addmethod(py4pd_class_VIS, (t_method)PY4PD_size_callback, gensym("_picsize"), A_DEFFLOAT, A_DEFFLOAT, 0);
-    class_addmethod(py4pd_class_VIS, (t_method)PY4PD_mouserelease,gensym("_mouserelease"), 0);
+    // class_addmethod(py4pd_class_VIS, (t_method)PY4PD_mouserelease,gensym("_mouserelease"), 0);
     // class_addmethod(py4pd_class_VIS, (t_method)PY4PD_outline, gensym("outline"), A_DEFFLOAT, 0);
     class_addmethod(py4pd_class_VIS, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);
 

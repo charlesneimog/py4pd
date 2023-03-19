@@ -14,7 +14,7 @@ except Exception as e:
     pd.print("Create a new object with 'py4pd pdpip install' and send 'run neoscore' to install neoscore")
 
 
-def getpitchKey(pitch):
+def getpitchKey(pitch, cents=0):
     note = {
         # natural
         'c': ['c', ''],
@@ -93,9 +93,6 @@ def note(pitch):
     except BaseException:
         pass
     neoscore.setup()
-    # change QT_QPA_PLATFORM to xcb
-
-        
     py4pdTMPfolder = pd.tempfolder()
     for file in py4pdTMPfolder:
         if file.endswith(".ppm"):
@@ -111,10 +108,22 @@ def note(pitch):
     Clef(ZERO, staffBaixo, bassClef)
     Path.rect((Mm(-10), Mm(-10)), None, Mm(42), Mm(42),
               Brush(Color(0, 0, 0, 0)), Pen(thickness=Mm(0.5)))
+    # get cents
+    # the note can be represent as c#5 cb3 
+    # with cents we have  c#5+50 cb3-50
+    # get cents and remove from pitch
+    cents = 0
+    if '+' in pitch:
+        cents = int(pitch.split('+')[1])
+        pitch = pitch.split('+')[0]
+    if '-' in pitch:
+        cents = int(pitch.split('-')[1]) * -1
+        pitch = pitch.split('-')[0]
+    
     # in pitch remove not number
     pitchWithoutNumber = pitch.replace(pitch[-1], '')
     pitchOctave = int(pitch[-1])
-    pitchClass, accidental = getpitchKey(pitchWithoutNumber)
+    pitchClass, accidental = getpitchKey(pitchWithoutNumber,  cents)
     note = [(pitchClass, accidental, pitchOctave)]
     if pitchOctave < 4:
         Chordrest(Mm(5), staffBaixo, note, (int(1), int(1)))

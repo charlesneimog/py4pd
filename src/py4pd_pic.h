@@ -27,6 +27,5 @@ extern void PY4PD_ok(t_py *x, t_symbol *s, int ac, t_atom *av);
 extern void PY4PD_edit_proxy_free(t_py4pd_edit_proxy *p);
 extern t_py4pd_edit_proxy * PY4PD_edit_proxy_new(t_py *x, t_symbol *s);
 extern void PY4PD_free(t_py *x);
-extern void py4pd_picDefintion(char *imageData);
 extern void py4pd_InitVisMode(t_py *x, t_canvas *c , t_symbol *py4pdArgs, int index, int argc, t_atom *argv);
 

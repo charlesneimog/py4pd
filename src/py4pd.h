@@ -17,8 +17,8 @@
 #endif
 
 #define PY4PD_MAJOR_VERSION 0
-#define PY4PD_MINOR_VERSION 6
-#define PY4PD_MICRO_VERSION 1
+#define PY4PD_MINOR_VERSION 7
+#define PY4PD_MICRO_VERSION 0
 
 // DEFINE STANDARD IDE EDITOR
 
@@ -44,10 +44,10 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_object            x_obj; // convensao no puredata source code
     t_glist             *x_glist;
     t_py4pd_edit_proxy  *x_proxy;
-    t_float             py4pd_audio; // audio
+    
     t_int               object_number; // object number
     t_int               thread; // arguments
-    t_int               visMode; // picture mode
+    t_int               visMode; // 1 for canvas, 2 for picture, 3 for score
     t_int               function_called; // flag to check if the set function was called
     t_int               py_arg_numbers; // number of arguments
 
@@ -67,6 +67,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int               audioInput; // flag to check if is to use audio input
     t_int               use_NumpyArray; // flag to check if is to use numpy array in audioInput
     t_int               numpyImported; // flag to check if numpy was imported
+    t_float             py4pd_audio; // audio
 
     // == PICTURE AND SCORE
     int             x_zoom;
@@ -86,6 +87,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     int             x_latch;
     int             x_numInlets;
     int             x_numOutlets;
+    // int             
     t_symbol        *file_name_open;
     t_symbol        *x_fullname;
     t_symbol        *x_filename;
@@ -94,6 +96,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_symbol        *x_rcv_raw;
     t_symbol        *x_send;
     t_symbol        *x_snd_raw;
+   
 
     t_canvas        *x_canvas; // pointer to the canvas
 
@@ -111,10 +114,6 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_symbol        *script_name; // script name
     t_outlet        *out_A; // outlet 1.
     t_inlet         *in1; // intlet 1
-    t_inlet         *in2; // intlet 2
-    t_inlet         *in3; // intlet 3
-    t_inlet         *in4; // intlet 4
-    t_inlet         *in5; // intlet 5
 }t_py;
 
 // =====================================
