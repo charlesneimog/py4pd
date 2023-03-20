@@ -1405,7 +1405,7 @@ void py4pd_setup(void) {
     py4pd_class_VIS = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
     py4pd_classAudioOut = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
     py4pd_classAudioIn = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
-    py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
+    py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), CLASS_NOINLET, A_GIMME, 0);
 
     // Sound in
     class_addmethod(py4pd_classAudioIn, (t_method)py4pd_audio_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
@@ -1497,7 +1497,7 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class_VIS, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
     class_addmethod(py4pd_classAudioOut, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
     class_addmethod(py4pd_classAudioIn, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
-    class_addmethod(py4pd_classLibrary, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
+    // class_addmethod(py4pd_classLibrary, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
 
 }
 
