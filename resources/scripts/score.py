@@ -64,7 +64,7 @@ def chord(pitches):
     bassClef = 'bass'
     Clef(ZERO, staffBaixo, bassClef)
     Path.rect((Mm(-10), Mm(-10)), None, Mm(42), Mm(42),
-              Brush(Color(0, 0, 0, 0)), Pen(thickness=Mm(0.5)))
+              Brush(Color(255, 255, 255, 0)), Pen(thickness=Mm(0)))
     for pitch in pitches:
         # in pitch remove not number
         pitchWithoutNumber = pitch.replace(pitch[-1], '')
@@ -107,7 +107,7 @@ def note(pitch):
     bassClef = 'bass'
     Clef(ZERO, staffBaixo, bassClef)
     Path.rect((Mm(-10), Mm(-10)), None, Mm(42), Mm(42),
-              Brush(Color(0, 0, 0, 0)), Pen(thickness=Mm(0.5)))
+              Brush(Color(255, 255, 255, 0)), Pen(thickness=Mm(0)))
     # get cents
     # the note can be represent as c#5 cb3 
     # with cents we have  c#5+50 cb3-50
@@ -120,6 +120,7 @@ def note(pitch):
         cents = int(pitch.split('-')[1]) * -1
         pitch = pitch.split('-')[0]
     
+
     # in pitch remove not number
     pitchWithoutNumber = pitch.replace(pitch[-1], '')
     pitchOctave = int(pitch[-1])
