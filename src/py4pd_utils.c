@@ -535,7 +535,6 @@ int *set_py4pd_config(t_py *x) {
                 removeChar(editor, '\r');
                 removeChar(editor, ' ');
                 x->editorName = gensym(editor);
-                post("[py4pd] Editor set to %s", x->editorName->s_name);
             }
         }
         fclose(file);  // close file
