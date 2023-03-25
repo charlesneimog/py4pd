@@ -12,7 +12,7 @@ For now, we need install `py4pd` _and_ Python.
 First, open PureData, `Help->Find Externals->` search for `py4pd` then select py4pd and click on `Install`: 
 
 <figure markdown>
-  ![Install py4pd](assets/install-py4pd.gif){ width="900" }
+  ![Install py4pd](assets/install-py4pd.gif){ width="900" loading="lazy"}
   <figcaption>Process of install py4pd on PureData</figcaption>
 </figure>
 
