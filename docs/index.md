@@ -21,7 +21,7 @@ By sharing these examples, I intend to showcase the significant benefits that ca
 Specific musicians using PureData might find that the Score visualization is missing. This issue can be resolved by utilizing `py4pd`. This script is delivered along with the `py4pd` library.
 
 <p align="center">
-    <img src="examples/score/score.gif" width="40%"</img>
+    <img src="examples/score/score.gif" width="40%" loading="lazy"</img>
 </p>
 
 <hr>

@@ -1,5 +1,7 @@
 site_name: py4pd
    
+copyright: Copyright &copy 2023 | Charles K. Neimog | University of São Paulo. 
+
 theme:
   logo: assets/py4pd-logo.svg
   custom_dir: docs/overrides
@@ -18,7 +20,7 @@ theme:
     - toc.integrate
     - toc.follow
     - navigation.instant
-    - header.autohide
+    #- header.autohide
     - attr_list
     - md_in_html
   
@@ -52,7 +54,6 @@ markdown_extensions:
     - admonition
     - pymdownx.details
 
-
 repo_url: https://github.com/charlesneimog/py4pd
 
 extra_css:
@@ -65,5 +66,14 @@ nav:
     - python-users.md
     - researchers.md
     #- examples.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/instagram
+      link: https://www.instagram.com/charlesneimog/
+    - icon: fontawesome/brands/github
+      link: https://www.github.com/charlesneimog/
+    - icon: fontawesome/solid/paper-plane
+      link: mailto:charlesneimog@outlook.com
 
 
