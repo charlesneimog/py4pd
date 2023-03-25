@@ -390,9 +390,7 @@ static void set_param(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         pd_error(x, "[py4pd] The value must be a symbol or a float!");
         return;
     }
-    
     int result = PyDict_SetItem(x->Dict, key, value);
-
     if (result == -1) {
         pd_error(x, "[py4pd] Error setting the parameter!");
         return;
