@@ -1,6 +1,6 @@
-# Researchers
+# PureData Objects with Python 
 
-With the `py4pd` version `>` that `0.5.0-beta` it is possible to create new PureData objects using Python. For that, you need to declare your functions and then create a function called `py4pdLoadObjects`. See the Python Code:
+With the `py4pd` it is possible to create new PureData objects using Python. For that, you need to declare your Python functions and then create a function called `py4pdLoadObjects`. See the Python Code:
 
 ``` py title="myNewPdObjects.py"
 
@@ -16,7 +16,7 @@ def py4pdLoadObjects():
 
     # My License, Name and University, others information
     pd.print("", show_prefix=False)
-    pd.print("GPL3 2023, Your Name", show_prefix=False)
+    pd.print("GPL3 | by Charles K. Neimog", show_prefix=False)
     pd.print("University of São Paulo", show_prefix=False)
     pd.print("", show_prefix=False)
 
@@ -33,3 +33,10 @@ Following this steps we have this patch:
 <p align="center">
     <img src="../examples/createobj/mynewpdobject.png" width="50%"</img>
 </p>
+
+Note that we need to declare `py4pd -library` as is used in `declare` object, followed by the name of the script where the function `py4pdLoadObjects` is located. 
+
+If you have some problem to do that, please report on [Github](https://github.com/charlesneimog/py4pd/discussions/categories/q-a). 
+
+!!! note "Just normal objects"
+	Note that, at least in version 0.6.1 we have no possibility to create `audio` and `vis` objects. I am 		working on that!
