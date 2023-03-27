@@ -35,6 +35,11 @@ This will write the list `randomNumbers` in the `pd.tabwrite` table in PureData.
 
 For Python users it is very simple to create new objects. For that, you define you Python Function than add it as an object using `pd.addobject`.
 
+!!! danger "Possible breaking changes"
+	I am thinking about how to design this function yet. **It can bring breaking changes for now.**
+
+
+
 See this code:
 
 ``` py
