@@ -185,67 +185,51 @@ void *py_newObject(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
 
-    PyObject *moduleName = PyDict_GetItemString(PdDict, "moduleName");
-    if (moduleName == NULL) {
-        pd_error(x, "Error: moduleName is NULL");
+    PyObject *pyFunction = PyDict_GetItemString(PdDict, "py4pdOBJFunction");
+    if (pyFunction == NULL) {
+        pd_error(x, "Error: pyFunction is NULL");
         return NULL;
     }
-
-    PyObject *functionName = PyDict_GetItemString(PdDict, "functionName");
-    if (functionName == NULL) {
-        pd_error(x, "Error: functionName is NULL");
-        return NULL;
-    }
-
-    PyObject *objectType = PyDict_GetItemString(PdDict, "objectType");
-    if (objectType == NULL) {
-        pd_error(x, "Error: objectType is NULL");
-        return NULL;
-    }
-
+    x->function = pyFunction;
     x->home_path = patch_dir;         // set name of the home path
     x->packages_path = patch_dir;     // set name of the packages path
     set_py4pd_config(x);  // set the config file (in py4pd.cfg, make this be
     py4pd_tempfolder(x);  // find the py4pd folder
     findpy4pd_folder(x);  // find the py4pd object folder
 
-    t_atom setArgs[2];
-    setArgs[0].a_type = A_SYMBOL;
-    setArgs[0].a_w.w_symbol = gensym(PyUnicode_AsUTF8(moduleName));
-    setArgs[1].a_type = A_SYMBOL;
-    setArgs[1].a_w.w_symbol = gensym(PyUnicode_AsUTF8(functionName));
-    x->py4pd_lib = 1;
+    
+    PyObject *inspect = NULL, *getfullargspec = NULL;
+    PyObject *argspec = NULL, *argsFunc = NULL;
+    inspect = PyImport_ImportModule("inspect");
+    getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
+    argspec = PyObject_CallFunctionObjArgs(getfullargspec, pyFunction, NULL);
+    argsFunc = PyTuple_GetItem(argspec, 0);       
+    int py_args = PyObject_Size(argsFunc);
+    x->py_arg_numbers = py_args;
 
-    set_function(x, NULL, 2, setArgs);
     int i;
     int pyFuncArgs = x->py_arg_numbers - 1;
 
-    py4pdInlet_proxies = (t_pd **)getbytes((pyFuncArgs + 1) * sizeof(*py4pdInlet_proxies));
-    for (i = 0; i < pyFuncArgs; i++){
-
-        // char methodForInlet[MAXPDSTRING];
-        // if (i < 9) {
-            // sprintf(methodForInlet, "addInlet 0%d", i + 1);
-        // }
-        // else {
-            // sprintf(methodForInlet, "addInlet %d", i + 1);
-        // }
-            py4pdInlet_proxies[i] = pd_new(py4pdInlets_proxy_class);
-        	t_py4pdInlet_proxy *y = (t_py4pdInlet_proxy *)py4pdInlet_proxies[i];
-            y->p_master = x;
-            y->inletIndex = i + 1;
-            inlet_new((t_object *)x, (t_pd *)y, 0, 0);
+    // Set inlet for all functions
+    if (pyFuncArgs != 0){
+        py4pdInlet_proxies = (t_pd **)getbytes((pyFuncArgs + 1) * sizeof(*py4pdInlet_proxies));
+        for (i = 0; i < pyFuncArgs; i++){
+                py4pdInlet_proxies[i] = pd_new(py4pdInlets_proxy_class);
+                t_py4pdInlet_proxy *y = (t_py4pdInlet_proxy *)py4pdInlet_proxies[i];
+                y->p_master = x;
+                y->inletIndex = i + 1;
+                inlet_new((t_object *)x, (t_pd *)y, 0, 0);
+        }
     }
 
     x->out_A = outlet_new(&x->x_obj, 0);
+
+    // set all args for Python Function to None, this prevent errors when users don't send all args
     int argNumbers = x->py_arg_numbers;
     x->argsDict = PyTuple_New(argNumbers);
     for (i = 0; i < argNumbers; i++) {
         PyTuple_SetItem(x->argsDict, i, Py_None);
     }
-
-
-
     return (x);
 }
 
@@ -258,35 +242,34 @@ void *py_newObject(t_symbol *s, int argc, t_atom *argv) {
  * @return
  */
 
-PyObject *pdAddPyObject(PyObject *self, PyObject *args) {
+PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
-
     char *objectName;
-    char *objectType;
-    char *objectModule;
-    char *objectFunction;
+    PyObject *Function;
 
-    // ================================
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_OBJECT = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_OBJECT, "py4pd");
-    // ================================
-
-    if (!PyArg_ParseTuple(args, "ssss", &objectName, &objectType, &objectModule, &objectFunction)) {
+    if (!PyArg_ParseTuple(args, "Os", &Function, &objectName)) { 
         post("[Python]: Error parsing arguments");
         return NULL;
     }
-
+    
+    const char *objectType = "NORMAL";
+    if (keywords != NULL) {
+        if (PyDict_Contains(keywords, PyUnicode_FromString("objtype"))) {
+            PyObject *type = PyDict_GetItemString(keywords, "objtype");
+            objectType = PyUnicode_AsUTF8(type);
+        }
+    }
+    
     PyObject *nestedDict = PyDict_New();
-    PyDict_SetItemString(nestedDict, "functionName", PyUnicode_FromString(objectFunction));
-    PyDict_SetItemString(nestedDict, "moduleName", PyUnicode_FromString(objectModule));
-    PyDict_SetItemString(nestedDict, "objectType", PyUnicode_FromString(objectType));
+    PyDict_SetItemString(nestedDict, "py4pdOBJFunction", Function);
+
     PyObject *objectDict = PyDict_New();
     PyDict_SetItemString(objectDict, objectName, nestedDict);
     PyObject *py4pd_capsule = PyCapsule_New(objectDict, objectName, NULL);
     char py4pd_objectName[MAXPDSTRING];
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
     PyModule_AddObject(PyImport_ImportModule("__main__"), py4pd_objectName, py4pd_capsule);
+
 
     // NORMAL
     if ((strcmp(objectType, "NORMAL") == 0)){
@@ -318,4 +301,5 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args) {
     class_addlist(py4pdInlets_proxy_class, py4pdInlets_proxy_list);
 
     return PyLong_FromLong(1);
+
 }

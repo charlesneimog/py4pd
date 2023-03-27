@@ -558,7 +558,7 @@ PyMethodDef PdMethods[] = {
 
 
     // library methods
-    {"addobject", pdAddPyObject, METH_VARARGS, "It add python functions as objects"},
+    {"addobject", pdAddPyObject, METH_VARARGS | METH_KEYWORDS, "It add python functions as objects"},
 
 
     {NULL, NULL, 0, NULL}  //

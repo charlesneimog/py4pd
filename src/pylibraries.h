@@ -6,7 +6,6 @@
 extern void *py_newObject(t_symbol *s, int argc, t_atom *argv);
 void *py_freeObject(t_py *x);
 
-
-extern PyObject *pdAddPyObject(PyObject *self, PyObject *args);
+extern PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords);
 
 #endif

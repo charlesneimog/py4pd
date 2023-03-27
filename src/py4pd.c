@@ -1,4 +1,5 @@
 #include "py4pd.h"
+#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
@@ -488,9 +489,7 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
             x->function_called = 0;
         }
     }
-
-    // Check if there is extension (not to use it)
-    char *extension = strrchr(script_file_name->s_name, '.');
+    char *extension = strstr(script_file_name->s_name, ".py");
     if (extension != NULL) {
         pd_error(x, "[py4pd] Don't use extensions in the script file name!");
         Py_XDECREF(x->function);
