@@ -1,4 +1,5 @@
 #include "pylibraries.h"
+#include "m_pd.h"
 #include "py4pd.h"
 #include "py4pd_utils.h"
 #include "py4pd_pic.h"
@@ -7,6 +8,7 @@ static t_class *pyNewObject;
 static t_class *pyNewObject_VIS;
 static t_class *pyNewObject_AudioIn;
 static t_class *pyNewObject_AudioOut;
+static t_class *pyNewObject_Audio;
 
 static t_class *py4pdInlets_proxy_class;
 
@@ -14,7 +16,6 @@ static t_class *py4pdInlets_proxy_class;
 void py4pdInlets_proxy_anything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av){
     t_py *py4pd = (t_py *)x->p_master;
     if (ac == 0){
-        // convert *s to string in Python
         PyObject *pyInletValue = PyUnicode_FromString(s->s_name);
         PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pyInletValue);
     }
@@ -72,18 +73,51 @@ void py4pdInlets_proxy_list(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
         }
         PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pyInletValue);
     }
+    return;
+}
 
-
-
+// =====================================
+void py_bang(t_py *x){
+    // check if number of args is 0
+    if (x->py_arg_numbers != 0){
+        pd_error(x, "[py4pd] Python Objects just accept bangs when the Python Function has no arguments.");
+        return;
+    }
+    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    if (objectCapsule == NULL){
+        pd_error(x, "[py4pd] Failed to add object to Python");
+        return;
+    }
+    PyObject *pArgs = PyTuple_New(0);
+    PyObject *pValue = PyObject_CallObject(x->function, pArgs);
+    if (pValue != NULL) { 
+        py4pd_convert_to_pd(x, pValue); 
+    }
+    else{
+        Py_XDECREF(pValue);
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[Python] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+        PyErr_Clear();
+    }
     return;
 }
 
 // =====================================
 void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
+
+    if (s == gensym("bang")){
+        py_bang(x);
+        return;
+    }
     
     PyObject *pyInletValue;
-    
-    // CONVERT TO PYTHON OBJECTS
     if (ac == 0){
         pyInletValue = PyUnicode_FromString(s->s_name);
         PyTuple_SetItem(x->argsDict, 0, pyInletValue);
@@ -220,16 +254,17 @@ void *py_newObject(t_symbol *s, int argc, t_atom *argv) {
                 y->inletIndex = i + 1;
                 inlet_new((t_object *)x, (t_pd *)y, 0, 0);
         }
+        // set all args for Python Function to None, this prevent errors when users don't send all args
+        int argNumbers = x->py_arg_numbers;
+        x->argsDict = PyTuple_New(argNumbers);
+        for (i = 0; i < argNumbers; i++) {
+            PyTuple_SetItem(x->argsDict, i, Py_None);
+        }
     }
 
     x->out_A = outlet_new(&x->x_obj, 0);
 
-    // set all args for Python Function to None, this prevent errors when users don't send all args
-    int argNumbers = x->py_arg_numbers;
-    x->argsDict = PyTuple_New(argNumbers);
-    for (i = 0; i < argNumbers; i++) {
-        PyTuple_SetItem(x->argsDict, i, Py_None);
-    }
+
     return (x);
 }
 
@@ -247,11 +282,13 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     char *objectName;
     PyObject *Function;
 
+    // check args
     if (!PyArg_ParseTuple(args, "Os", &Function, &objectName)) { 
         post("[Python]: Error parsing arguments");
         return NULL;
     }
     
+    // check object mode
     const char *objectType = "NORMAL";
     if (keywords != NULL) {
         if (PyDict_Contains(keywords, PyUnicode_FromString("objtype"))) {
@@ -260,15 +297,26 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         }
     }
     
+    // add object to main dict
     PyObject *nestedDict = PyDict_New();
     PyDict_SetItemString(nestedDict, "py4pdOBJFunction", Function);
-
     PyObject *objectDict = PyDict_New();
     PyDict_SetItemString(objectDict, objectName, nestedDict);
     PyObject *py4pd_capsule = PyCapsule_New(objectDict, objectName, NULL);
     char py4pd_objectName[MAXPDSTRING];
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
     PyModule_AddObject(PyImport_ImportModule("__main__"), py4pd_objectName, py4pd_capsule);
+
+    
+    // get number of args
+    PyObject *inspect = NULL, *getfullargspec = NULL;
+    PyObject *argspec = NULL, *argsFunc = NULL;
+    inspect = PyImport_ImportModule("inspect");
+    getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
+    argspec = PyObject_CallFunctionObjArgs(getfullargspec, Function, NULL);
+    argsFunc = PyTuple_GetItem(argspec, 0);       
+    int py_args = PyObject_Size(argsFunc);
+
 
 
     // NORMAL
@@ -284,21 +332,24 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     }
     // AUDIOIN
     else if ((strcmp(objectType, "AUDIOIN") == 0)){
+        pyNewObject_AudioIn = NULL;
 
     }
     // AUDIOOUT
     else if ((strcmp(objectType, "AUDIOOUT") == 0)){
+        pyNewObject_AudioOut = NULL;
 
     }
     // AUDIO
     else if ((strcmp(objectType, "AUDIO") == 0)){
-
+        pyNewObject_Audio = NULL;
     }
-
-    py4pdInlets_proxy_class = class_new(gensym("_py4pdInlets_proxy"), 0, 0, sizeof(t_py4pdInlet_proxy), CLASS_DEFAULT, 0);
-    class_addanything(py4pdInlets_proxy_class, py4pdInlets_proxy_anything);
-    class_addlist(py4pdInlets_proxy_class, py4pdInlets_proxy_list);
-
+    
+    if (py_args != 0){
+        py4pdInlets_proxy_class = class_new(gensym("_py4pdInlets_proxy"), 0, 0, sizeof(t_py4pdInlet_proxy), CLASS_DEFAULT, 0);
+        class_addanything(py4pdInlets_proxy_class, py4pdInlets_proxy_anything);
+        class_addlist(py4pdInlets_proxy_class, py4pdInlets_proxy_list);
+    }
     return PyLong_FromLong(1);
 
 }
