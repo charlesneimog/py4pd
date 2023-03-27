@@ -275,13 +275,12 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     if ((strcmp(objectType, "NORMAL") == 0)){
         pyNewObject = class_new(gensym(objectName), (t_newmethod)py_newObject, 0, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
         class_addanything(pyNewObject, py_anything);
-        class_addmethod(pyNewObject, (t_method)reload, gensym("reload"), 0, 0);  // run python script
+        // TODO: add reload method
     }
     // VIS
     else if ((strcmp(objectType, "VIS") == 0)){
         pyNewObject_VIS = class_new(gensym(objectName), (t_newmethod)py_newObject, 0, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
         class_addanything(pyNewObject_VIS, py_anything);
-        class_addmethod(pyNewObject_VIS, (t_method)reload, gensym("reload"), 0, 0);  // run python script
     }
     // AUDIOIN
     else if ((strcmp(objectType, "AUDIOIN") == 0)){
