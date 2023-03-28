@@ -1242,6 +1242,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     x->audioInput = 0;
     x->audioOutput = 0;
     x->editorName = NULL;
+    x->pyObject = 0;
 
     object_count++;  // count the number of objects;
     for (i = 0; i < argc; i++) {
