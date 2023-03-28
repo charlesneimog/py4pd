@@ -1346,7 +1346,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
  */
 void *py4pd_free(t_py *x) {
     object_count--;
-
     if (object_count == 1) {
         // Py_Finalize(); // BUG: Not possible because it crashes if another
         post("[py4pd] Python interpreter finalized");
@@ -1375,10 +1374,6 @@ void *py4pd_free(t_py *x) {
 
     
     if (x->function_called){
-        // Py_DECREF(x->function);
-        // Py_DECREF(x->module);
-        // inlet_free(x->in1);
-        // outlet_free(x->out_A);
 
     }
 
