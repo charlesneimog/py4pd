@@ -1,6 +1,4 @@
 #include "py4pd_pic.h"
-#include "m_pd.h"
-#include "py4pd.h"
 
 t_widgetbehavior py4pd_widgetbehavior;
 static t_class *PY4PD_edit_proxy_class;
@@ -499,12 +497,6 @@ void py4pd_picDefintion(t_py *x) {
     
     }
   
-
-
-
-
-
-    
     sys_vgui("if {[catch {pd}]} {\n");
     // sys_vgui("    proc pd {args} {pdsend [join $args \" \"]}\n");
     sys_vgui("}\n");
@@ -629,6 +621,7 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
                        int argc, t_atom *argv) {
     if (py4pdArgs == gensym("-canvas")) {
         x->visMode = 1;
+        post("[py4pd]: visMode = canvas");
     }
     else if (py4pdArgs == gensym("-picture")) {
         x->visMode = 2;
@@ -648,8 +641,12 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     py4pd_widgetbehavior.w_deletefn = PY4PD_delete;
     py4pd_widgetbehavior.w_visfn = PY4PD_vis;
     py4pd_widgetbehavior.w_clickfn = (t_clickfn)PY4PD_click;
-    class_setwidget(py4pd_class_VIS, &py4pd_widgetbehavior);
-    // class_setsavefn(py4pd_class_VIS, &PY4PD_save);
+    if (x->pyObject == 0) {
+        class_setwidget(py4pd_class_VIS, &py4pd_widgetbehavior);
+    }
+    else{
+        class_setwidget(pyNewObject_VIS, &py4pd_widgetbehavior);
+    }
     py4pd_picDefintion(x);
     t_canvas *cv = canvas_getcurrent();
     x->x_glist = (t_glist *)cv;
