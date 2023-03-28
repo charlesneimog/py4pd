@@ -26,7 +26,6 @@ void py4pdInlets_proxy_anything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_at
         }
         else{
         }
-
         PyList_SetItem(pyInletValue, 0, PyUnicode_FromString(s->s_name));
         for (int i = 0; i < ac; i++){
             if (av[i].a_type == A_FLOAT){ // TODO: check if it is an int or a float
@@ -53,8 +52,13 @@ void py4pdInlets_proxy_list(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
     }
     else if (ac == 1){
         if (av[0].a_type == A_FLOAT){
-            pyInletValue = PyLong_FromLong(av[0].a_w.w_float);
-            PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pyInletValue);
+            int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
+            if (isInt){
+                PyTuple_SetItem(py4pd->argsDict, x->inletIndex, PyLong_FromLong(av[0].a_w.w_float));
+            }
+            else{
+                PyTuple_SetItem(py4pd->argsDict, x->inletIndex, PyFloat_FromDouble(av[0].a_w.w_float));
+            }
         }
         else if (av[0].a_type == A_SYMBOL){
             pyInletValue = PyUnicode_FromString(av[0].a_w.w_symbol->s_name);
@@ -64,9 +68,16 @@ void py4pdInlets_proxy_list(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
     else { // NOTE: Need some work here
         pyInletValue = PyList_New(ac);
         for (int i = 0; i < ac; i++){
-            if (av[i].a_type == A_FLOAT){ // TODO: check if it is an int or a float
-                PyList_SetItem(pyInletValue, i, PyLong_FromLong(av[i].a_w.w_float));
+            if (av[i].a_type == A_FLOAT){ 
+                int isInt = (int)av[i].a_w.w_float == av[i].a_w.w_float;
+                if (isInt){
+                    PyList_SetItem(pyInletValue, i, PyLong_FromLong(av[i].a_w.w_float));
+                }
+                else{
+                    PyList_SetItem(pyInletValue, i, PyFloat_FromDouble(av[i].a_w.w_float));
+                }
             }
+
             else if (av[i].a_type == A_SYMBOL){
                 PyList_SetItem(pyInletValue, i, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
             }
@@ -125,8 +136,14 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
     else if ((s == gensym("list") || s == gensym("anything")) && ac > 0){
         pyInletValue = PyList_New(ac);
         for (int i = 0; i < ac; i++){
-            if (av[i].a_type == A_FLOAT){ // TODO: check if it is an int or a float
-                PyList_SetItem(pyInletValue, i, PyLong_FromLong(av[i].a_w.w_float));
+            if (av[i].a_type == A_FLOAT){ 
+                int isInt = (int)av[i].a_w.w_float == av[i].a_w.w_float;
+                if (isInt){
+                    PyList_SetItem(pyInletValue, i + 1, PyLong_FromLong(av[i].a_w.w_float));
+                }
+                else{
+                    PyList_SetItem(pyInletValue, i + 1, PyFloat_FromDouble(av[i].a_w.w_float));
+                }
             }
             else if (av[i].a_type == A_SYMBOL){
                 PyList_SetItem(pyInletValue, i, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
@@ -135,7 +152,7 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         PyTuple_SetItem(x->argsDict, 0, pyInletValue);
     }
     else if ((s == gensym("float") || s == gensym("symbol")) && ac == 1){
-        if (av[0].a_type == A_FLOAT){
+        if (av[0].a_type == A_FLOAT){ // TODO: float or int
             pyInletValue = PyLong_FromLong(av[0].a_w.w_float);
             PyTuple_SetItem(x->argsDict, 0, pyInletValue);
         }
@@ -149,8 +166,14 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         pyInletValue = PyList_New(ac + 1);
         PyList_SetItem(pyInletValue, 0, PyUnicode_FromString(s->s_name));
         for (int i = 0; i < ac; i++){
-            if (av[i].a_type == A_FLOAT){ // TODO: check if it is an int or a float
-                PyList_SetItem(pyInletValue, i + 1, PyLong_FromLong(av[i].a_w.w_float));
+            if (av[i].a_type == A_FLOAT){ 
+                int isInt = (int)av[i].a_w.w_float == av[i].a_w.w_float;
+                if (isInt){
+                    PyList_SetItem(pyInletValue, i + 1, PyLong_FromLong(av[i].a_w.w_float));
+                }
+                else{
+                    PyList_SetItem(pyInletValue, i + 1, PyFloat_FromDouble(av[i].a_w.w_float));
+                }
             }
             else if (av[i].a_type == A_SYMBOL){
                 PyList_SetItem(pyInletValue, i + 1, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
