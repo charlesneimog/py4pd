@@ -164,7 +164,7 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
     else{
         pyInletValue = PyList_New(ac + 1);
         PyList_SetItem(pyInletValue, 0, PyUnicode_FromString(s->s_name));
-        for (int i = 1; i < ac; i++){
+        for (int i = 0; i < ac; i++){
             if (av[i].a_type == A_FLOAT){ 
                 int isInt = (int)av[i].a_w.w_float == av[i].a_w.w_float;
                 if (isInt){
@@ -217,6 +217,7 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
 
     t_pd **py4pdInlet_proxies;
 
+    x->visMode  = 0;
     x->x_canvas = canvas_getcurrent();       // pega o canvas atual
     t_canvas *c = x->x_canvas;               // get the current canvas
     t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
@@ -300,6 +301,7 @@ void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
     t_py *x = (t_py *)pd_new(pyNewObject_VIS);
     t_pd **py4pdInlet_proxies;
     x->pyObject = 1;
+    x->visMode  = 1;
     x->x_canvas = canvas_getcurrent();       // pega o canvas atual
     t_canvas *c = x->x_canvas;               // get the current canvas
     t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
@@ -379,6 +381,15 @@ void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
 }
 
 // =====================================
+void *pyObjectFree(t_py *x) {
+    if (x->visMode != 0) {
+        PY4PD_free(x);
+    }
+    return (void *)x;
+
+}
+
+// =====================================
 /**
  * @brief add new Python Object to PureData
  * @param x
@@ -436,7 +447,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     }
     // VIS
     else if ((strcmp(objectType, "VIS") == 0)){
-        pyNewObject_VIS = class_new(gensym(objectName), (t_newmethod)CreateNew_VISObject, 0, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
+        pyNewObject_VIS = class_new(gensym(objectName), (t_newmethod)CreateNew_VISObject, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
         class_addanything(pyNewObject_VIS, py_anything);
         class_addmethod(pyNewObject_VIS, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);
     }
