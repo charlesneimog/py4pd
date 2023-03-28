@@ -621,7 +621,6 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
                        int argc, t_atom *argv) {
     if (py4pdArgs == gensym("-canvas")) {
         x->visMode = 1;
-        post("[py4pd]: visMode = canvas");
     }
     else if (py4pdArgs == gensym("-picture")) {
         x->visMode = 2;
