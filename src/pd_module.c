@@ -450,6 +450,7 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
                         py4pd->x_fullname);
                     PY4PD_draw(py4pd, py4pd->x_glist, 1);
                 }
+                PY4PD_draw_io_let(py4pd);
             } 
             else {
                 pd_error(py4pd, "[Python]: Error displaying image, file not found");
