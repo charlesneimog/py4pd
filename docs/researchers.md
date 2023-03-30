@@ -2,9 +2,8 @@
 
 With the `py4pd` it is possible to create new PureData objects using Python. For that, you need to declare your Python functions and then create a function called `py4pdLoadObjects`. See the Python Code:
 
-!!! danger "Possible breaking changes"
-	I am thinking about how to design this function yet. **It can bring breaking changes for now.**
-	This docs are avaible for version `0.7.0`.
+!!! danger "Breaking Changes"
+	I had change how `pd.addobject` work from version `0.6` to version `0.7`. Now, me use the function and the Pure Data object. Instead of use this, `pd.addobject("mysumObject", "NORMAL", "myNewPdObjects", "mysumObject")` we use this `pd.addobject(mysumObject, "mysumObject")`
 
 ``` py title="myNewPdObjects.py"
 
