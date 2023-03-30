@@ -333,11 +333,16 @@ void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
     // Vis config
     t_symbol *py4pdArgs = gensym("-canvas");
     py4pd_InitVisMode(x, c, py4pdArgs, 0, argc, argv);
-
-    // 
     x->function = pyFunction;
     x->home_path = patch_dir;         // set name of the home path
     x->packages_path = patch_dir;     // set name of the packages path
+
+    // get width and height of py4pdOBJwidth and py4pdOBJheight
+    PyObject *py4pdOBJwidth = PyDict_GetItemString(PdDict, "py4pdOBJwidth");
+    x->x_width = PyLong_AsLong(py4pdOBJwidth);
+    PyObject *py4pdOBJheight = PyDict_GetItemString(PdDict, "py4pdOBJheight");
+    x->x_height = PyLong_AsLong(py4pdOBJheight);
+
     set_py4pd_config(x);  // set the config file (in py4pd.cfg, make this be
     py4pd_tempfolder(x);  // find the py4pd folder
     findpy4pd_folder(x);  // find the py4pd object folder
@@ -401,25 +406,34 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     char *objectName;
     PyObject *Function;
-
-    // check args
+    int w = 250, h = 250;
     if (!PyArg_ParseTuple(args, "Os", &Function, &objectName)) { 
         post("[Python]: Error parsing arguments");
         return NULL;
     }
-    
-    // check object mode
     const char *objectType = "NORMAL";
     if (keywords != NULL) {
         if (PyDict_Contains(keywords, PyUnicode_FromString("objtype"))) {
             PyObject *type = PyDict_GetItemString(keywords, "objtype");
             objectType = PyUnicode_AsUTF8(type);
         }
+        if(PyDict_Contains(keywords, PyUnicode_FromString("figsize"))) {
+            PyObject *figsize = PyDict_GetItemString(keywords, "figsize"); // this is defined in python using figsize=(w,h)
+            PyObject *width = PyTuple_GetItem(figsize, 0);
+            PyObject *height = PyTuple_GetItem(figsize, 1);
+            w = PyLong_AsLong(width);
+            h = PyLong_AsLong(height);
+            
+        }
     }
+
+
     
     // add object to main dict
     PyObject *nestedDict = PyDict_New();
     PyDict_SetItemString(nestedDict, "py4pdOBJFunction", Function);
+    PyDict_SetItemString(nestedDict, "py4pdOBJwidth", PyLong_FromLong(w));
+    PyDict_SetItemString(nestedDict, "py4pdOBJheight", PyLong_FromLong(h));
     PyObject *objectDict = PyDict_New();
     PyDict_SetItemString(objectDict, objectName, nestedDict);
     PyObject *py4pd_capsule = PyCapsule_New(objectDict, objectName, NULL);
