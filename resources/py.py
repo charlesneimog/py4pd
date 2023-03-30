@@ -87,6 +87,14 @@ def pd_output():
     for x in range(10):
         pd.out(x)
 
+def example_pdout():
+    for x in range(10):
+        pd.out(x, symbol="myloop")
+    pd.print("=======================")
+    for x in range(10):
+        pd.out(x, symbol="myloop2")
+    return None
+
 
 def pd_print():
     "It sends a message to the py4pd message box."
