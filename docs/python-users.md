@@ -33,12 +33,7 @@ This will write the list `randomNumbers` in the `pd.tabwrite` table in PureData.
 
 #### <h4 style="text-align:center"> `pd.addobject` </h4>
 
-For Python users it is very simple to create new objects. For that, you define you Python Function than add it as an object using `pd.addobject`.
-
-!!! danger "Possible breaking changes"
-	I am thinking about how to design this function yet. **It can bring breaking changes for now.**
-
-
+For Python users it is very simple to create new objects for PureData. For that, you define you Python Function and add it as an object using `pd.addobject`.
 
 See this code:
 
@@ -50,9 +45,8 @@ import pd
 def mysumObject(a, b, c, d):
     return a + b + c + d
 
-
 def py4pdLoadObjects():
-    pd.addobject("mysumObject", "NORMAL", "myNewPdObjects", "mysumObject")
+    pd.addobject(mysumObject, "mysumObject")
 
     # My License, Name and University, others information
     pd.print("", show_prefix=False)
@@ -62,20 +56,11 @@ def py4pdLoadObjects():
 
 ```
 
-Here we add the function `mysumObject` in PureData enviroment. For more info read the [Researchers](https://py4pd.readthedocs.io/en/latest/researchers/) page.
+Here we add the function `mysumObject` in PureData enviroment. For more infos read the [Researchers](https://www.charlesneimog.com/py4pd/researchers/) page.
 
 <p align="center">
     <img src="../examples/createobj/mynewpdobject.png" width="50%"</img>
 </p>
-
-In this function we have 4 arguments. 
-
-* The name for the creation of the object in PureData;
-* The type (`NORMAL`, `VIS`, `AUDIOIN`, `AUDIOOUT`, `AUDIO`); _(not fully implemented yet!)_
-* The name of the script where the Function that will be loaded is;
-* The name of the function that the object will execute;
-
-The number of inputs will always follow the parameters number of the function.
 
 -------------------------------------- 
 ### <h3 style="text-align:center"> **Exchanging Data** </h3>
