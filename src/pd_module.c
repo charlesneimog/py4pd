@@ -1,3 +1,4 @@
+#include "m_pd.h"
 #include "py4pd.h"
 #include "py4pd_utils.h"
 #include "py4pd_pic.h"  
@@ -6,10 +7,34 @@
 // ======================================
 // ======== py4pd embbeded module =======
 // ======================================
-PyObject *pdout(PyObject *self, PyObject *args) {
+PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
     (void)self;
     float f;
     char *string;
+    t_symbol *symbol;
+    symbol = gensym("list");
+    int keyword_arg = 0;
+
+    // check if there is a keyword argument
+    if (keywords == NULL) {
+        PyErr_Clear();
+    } else {
+        PyObject *anything_symbol = PyDict_GetItemString(keywords, "symbol");
+        if (anything_symbol == NULL) {
+            PyErr_Clear();
+        } 
+        else {
+            if (PyUnicode_Check(anything_symbol)) {
+                const char *result = PyUnicode_AsUTF8(anything_symbol);
+                symbol = gensym(result);
+                keyword_arg = 1;
+            } 
+            else {
+                PyErr_SetString(PyExc_TypeError, "[Python] pd.out keyword argument 'symbol' must be a string.");  // Colocar melhor descrição do erro
+                return NULL;
+            }
+        }
+    }
 
     // ================================
     PyObject *pd_module = PyImport_ImportModule("__main__");
@@ -18,13 +43,33 @@ PyObject *pdout(PyObject *self, PyObject *args) {
     // ================================
 
     if (PyArg_ParseTuple(args, "f", &f)) {
-        PyErr_Clear();
-        outlet_float(py4pd->out_A, f);
-    } else if (PyArg_ParseTuple(args, "s", &string)) {
-        t_symbol *pd_symbol = gensym(string);
-        outlet_symbol(py4pd->out_A, pd_symbol);  // TODO: make this output without the symbol, just like fromsymbol.
-        PyErr_Clear();
-    } else if (PyArg_ParseTuple(args, "O", &args)) {
+        if (keyword_arg == 1) {
+            t_atom *list_array = (t_atom *)malloc(1 * sizeof(t_atom));
+            list_array[0].a_type = A_FLOAT;
+            list_array[0].a_w.w_float = f;
+            outlet_anything(py4pd->out_A, symbol, 1, list_array);
+            free(list_array);
+        } 
+        else {
+            outlet_float(py4pd->out_A, f);
+        }
+    } 
+    else if (PyArg_ParseTuple(args, "s", &string)) {    
+        if (keyword_arg == 1) {
+            t_atom *list_array = (t_atom *)malloc(1 * sizeof(t_atom));
+            list_array[0].a_type = A_SYMBOL;
+            list_array[0].a_w.w_symbol = gensym(string);
+            outlet_anything(py4pd->out_A, symbol, 1, list_array);
+            free(list_array);
+        } 
+        else {
+            outlet_anything(py4pd->out_A, gensym(string), 0, NULL);
+        }
+
+
+        outlet_symbol(py4pd->out_A, gensym(string));  // TODO: make this output without the symbol, just like fromsymbol.
+    } 
+    else if (PyArg_ParseTuple(args, "O", &args)) {
         int list_size = PyList_Size(args);
         t_atom *list_array = (t_atom *)malloc(list_size * sizeof(t_atom));
         int i;
@@ -35,24 +80,29 @@ PyObject *pdout(PyObject *self, PyObject *args) {
                 float result_float = (float)result;
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
-            } else if (PyFloat_Check(pValue_i)) {  // If the function return a list of floats
+            } 
+            else if (PyFloat_Check(pValue_i)) {  // If the function return a list of floats
                 double result = PyFloat_AsDouble(pValue_i);
                 float result_float = (float)result;
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
-            } else if (PyUnicode_Check(pValue_i)) {  // If the function return a list of strings
+            } 
+            else if (PyUnicode_Check(pValue_i)) {  // If the function return a list of strings
                 const char *result = PyUnicode_AsUTF8(pValue_i);
                 list_array[i].a_type = A_SYMBOL;
                 list_array[i].a_w.w_symbol = gensym(result);
-            } else if (Py_IsNone(pValue_i)) {
+            } 
+            else if (Py_IsNone(pValue_i)) {
                 // If the function return a list of None
-            } else {
+            } 
+            else {
                 Py_DECREF(pValue_i);
                 Py_DECREF(args);
                 return NULL;
             }
         }
-        outlet_list(py4pd->out_A, &s_list, list_size, list_array);
+        outlet_anything(py4pd->out_A, symbol, list_size, list_array);
+        free(list_array);
         PyErr_Clear();
     } else {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.out argument must be a list, float or a string");  // Colocar melhor descrição do erro
@@ -254,7 +304,6 @@ PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords) {
         PyErr_Clear();
     } 
     else {
-
         resize = PyDict_Contains(keywords, PyUnicode_FromString("resize"));
         if (resize == -1) {
             post("error");
@@ -536,7 +585,7 @@ PyObject *pdmoduleError;
 PyMethodDef PdMethods[] = {
 
     // PureData inside Python
-    {"out", pdout, METH_VARARGS, "Output in out0 from PureData"},
+    {"out", (PyCFunction)pdout, METH_VARARGS | METH_KEYWORDS, "Output in out0 from PureData"},
     {"send", pdsend, METH_VARARGS, "Send message to PureData, it can be received with the object [receive]"},
     {"print", (PyCFunction)pdprint, METH_VARARGS | METH_KEYWORDS,  "Print informations in PureData Console"},
     {"error", pderror, METH_VARARGS, "Print informations in error format (red) in PureData Console"},
