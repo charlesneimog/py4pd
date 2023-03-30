@@ -95,6 +95,20 @@ _Here I will put I amazing print_
 
 <hr>
 
+### <h3 align="center"> **Audio Descriptors Graphs** </h3>
+
+PureData provides a rich set of audio descriptors that offer versatile means for musical expression. In the context of music composition, descriptor contours can be a valuable resource for creating and controlling various musical parameters. In this example I use `audioflux` as a tool for visualizing the contours of audio descriptors in the composition process.
+
+<p align="center">
+	<img src="examples/descriptors/audioflux.png" width="50%"></img>
+</p>
+
+<hr>
+
+## <h2 align="center"> **My own Pieces** </h2>
+
+Here I will present some of the works where I am using `py4pd`.
+
 ### <h3 align="center"> **Eco (2023)** </h3>
 
 Eco (2023) is the first version of one under developing piece that use some concepts of the composer Ricardo Thomasi in his PhD research. The idea here, is to use smartphones/tablets putted in the performance music stand, to make realtime `FFT` and `Partial Tracking` and then, generate scores that are played. The smartphones/tablets send data to PureData, and using `py4pd`, we generate realtime scores using `neoscore`.
