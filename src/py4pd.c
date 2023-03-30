@@ -1184,7 +1184,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
             else if (py4pdArgs == gensym("-audioin")) {
                 audioIN = 1;
             }
-            else if (py4pdArgs == gensym("-library")) {
+            else if (py4pdArgs == gensym("-library") || py4pdArgs == gensym("-lib")) {
                 libraryMODE = 1;
                 normalMODE = 0;
             }
