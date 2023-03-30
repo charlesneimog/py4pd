@@ -236,6 +236,9 @@ void PY4PD_draw(t_py* x, struct _glist *glist, t_floatarg vis){
         else if (x->visMode == 3) {
             sys_vgui(".x%lx.c itemconfigure %lx_picture -image %s\n", cv, x, "PY4PD_def_img_SCORE");
         }
+        else if (x->visMode == 3){
+            sys_vgui(".x%lx.c itemconfigure %lx_picture -image %s\n", cv, x, "PY4PD_def_img_WHITE");
+        }
     }
     else{
         if(visible || vis){
@@ -486,16 +489,24 @@ void PY4PD_free(t_py *x){ // delete if variable is unset and image is unused
 // =====================================
 void py4pd_picDefintion(t_py *x) {
     (void)x;
-    if (x->visMode == 1) {
-        sys_vgui("image create photo PY4PD_def_img_CANVAS -data {%s} \n", PY4PD_IMAGE); // BUG: this is because I have diferentes images
-    } 
-    else if (x->visMode == 2) {
-        sys_vgui("image create photo PY4PD_def_img_PIC -data {%s} \n", PY4PD_IMAGE);
+
+    if (x->x_width == 250 && x->x_height == 250) {
+        if (x->visMode == 1) {
+            sys_vgui("image create photo PY4PD_def_img_CANVAS -data {%s} \n", PY4PD_IMAGE); // BUG: this is because I have diferentes images
+        } 
+        else if (x->visMode == 2) {
+            sys_vgui("image create photo PY4PD_def_img_PIC -data {%s} \n", PY4PD_IMAGE);
+        }
+        else if (x->visMode == 3) {
+            sys_vgui("image create photo PY4PD_def_img_SCORE -data {%s} \n", PY4PD_SCORE);
+        }
     }
-    else if (x->visMode == 3) {
-        sys_vgui("image create photo PY4PD_def_img_SCORE -data {%s} \n", PY4PD_SCORE);
-    
+    else{
+        sys_vgui("image create photo PY4PD_def_img_WHITE -data {R0lGODlhKgAhAPAAAP///wAAACH5BAAAAAAAIf8LSW1hZ2VNYWdpY2sOZ2FtbWE9MC40NTQ1NDUALAAAAAAqACEAAAIkhI+py+0Po5y02ouz3rz7D4biSJbmiabqyrbuC8fyTNf2jTMFADs=} \n");
+        x->visMode = 4;
+
     }
+
   
     sys_vgui("if {[catch {pd}]} {\n");
     // sys_vgui("    proc pd {args} {pdsend [join $args \" \"]}\n");
@@ -688,5 +699,6 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
         argv[j] = argv[j + 1];
     }
     argc--;
+    // PY4PD_draw_io_let(x);
 }
 
