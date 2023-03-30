@@ -35,6 +35,11 @@ This will write the list `randomNumbers` in the `pd.tabwrite` table in PureData.
 
 For Python users it is very simple to create new objects for PureData. For that, you define you Python Function and add it as an object using `pd.addobject`.
 
+!!! danger "Breaking Changes"
+	I had change how `pd.addobject` work from version `0.6` to version `0.7`. Now, me use the function and the Pure Data object. Instead of use this, `pd.addobject("mysumObject", "NORMAL", "myNewPdObjects", "mysumObject")` we use this `pd.addobject(mysumObject, "mysumObject")`.
+
+
+
 See this code:
 
 ``` py
@@ -123,6 +128,27 @@ def lorisAnalisys(audiofile, parcialnumber):
 <p align="center"><a href="../assets/EXAMPLE-pd.out.zip">Download</a></p>
 
 </p>
+
+
+??? tip "Using route object with py4pd"
+	If you want to `route` data in your patch, you can use the `symbol` keyword. This will add one keyword of your choice in the begin of the output message. For example:
+
+	``` py
+	import pd
+
+	def example_pdout():
+		for x in range(10):
+			pd.out(x, symbol='myloop')
+		pd.print('======================================')
+		for x in range(10):
+			pd.out(x, symbol='myloop2')
+		return None
+	```
+	This two different loop can be routed using `route myloop myloop2`.
+	<p align="center">
+	  <img src="../examples/pd.out/pd.out.png" alt="pd.out Example" width="70%">
+	</p>
+
 
 ---------------------------
 
