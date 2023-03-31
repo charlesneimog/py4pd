@@ -128,6 +128,7 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         return;
     }
     PyObject *pyInletValue;
+    PyObject *pValue;
     if (ac == 0){
         pyInletValue = PyUnicode_FromString(s->s_name);
         PyTuple_SetItem(x->argsDict, 0, pyInletValue);
@@ -181,13 +182,36 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         PyTuple_SetItem(x->argsDict, 0, pyInletValue);
     }
 
+    // odd code, but solve the bug
+    t_py *prev_obj;
+    int prev_obj_exists = 0;
+    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
+    PyObject *oldObjectCapsule;
+    if (MainModule != NULL) {
+        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        if (oldObjectCapsule != NULL) {
+            PyObject *pd_module = PyImport_ImportModule("__main__");
+            PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+            prev_obj_exists = 1;
+        }
+    }
+
     PyObject *objectCapsule = py4pd_add_pd_object(x);
     if (objectCapsule == NULL){
         pd_error(x, "[Python] Failed to add object to Python");
         return;
     }
-    
-    PyObject *pValue = PyObject_CallObject(x->function, x->argsDict);
+    pValue = PyObject_CallObject(x->function, x->argsDict);
+
+    // odd code, but solve the bug
+    if (prev_obj_exists == 1) {
+        objectCapsule = py4pd_add_pd_object(prev_obj);
+        if (objectCapsule == NULL){
+            pd_error(x, "[Python] Failed to add object to Python");
+            return;
+        }
+    }
 
     if (pValue != NULL) { 
         py4pd_convert_to_pd(x, pValue); 
@@ -427,8 +451,6 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         }
     }
 
-
-    
     // add object to main dict
     PyObject *nestedDict = PyDict_New();
     PyDict_SetItemString(nestedDict, "py4pdOBJFunction", Function);
@@ -442,16 +464,21 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     PyModule_AddObject(PyImport_ImportModule("__main__"), py4pd_objectName, py4pd_capsule);
 
     
-    // get number of args
+    // get number of args, BUG: in build-in functions, this will return 0
     PyObject *inspect = NULL, *getfullargspec = NULL;
     PyObject *argspec = NULL, *argsFunc = NULL;
     inspect = PyImport_ImportModule("inspect");
     getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
-    argspec = PyObject_CallFunctionObjArgs(getfullargspec, Function, NULL);
+    argspec = PyObject_CallFunctionObjArgs(getfullargspec, Function, NULL); // it returns -1 for built-in functions
+    if (argspec == NULL) {
+        // get python function name
+        PyObject *pyFunctionName = PyObject_GetAttrString(Function, "__name__");
+        post("[Python]: Error getting the number of arguments for function {%s}", PyUnicode_AsUTF8(pyFunctionName));
+        Py_DECREF(pyFunctionName);
+        return NULL;
+    }
     argsFunc = PyTuple_GetItem(argspec, 0);       
     int py_args = PyObject_Size(argsFunc);
-
-
 
     // NORMAL
     if ((strcmp(objectType, "NORMAL") == 0)){
