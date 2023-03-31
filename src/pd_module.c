@@ -15,6 +15,9 @@ PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
     symbol = gensym("list");
     int keyword_arg = 0;
 
+
+
+
     // check if there is a keyword argument
     if (keywords == NULL) {
         PyErr_Clear();
@@ -171,15 +174,9 @@ PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
 PyObject *pderror(PyObject *self, PyObject *args) {
     (void)self;
     char *string;
-    // get py4pd object pointer
-    // ================================
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-    // ================================
 
     if (PyArg_ParseTuple(args, "s", &string)) {
-        pd_error(py4pd, "[Python]: %s", string);
+        pd_error(NULL, "[Python]: %s", string);
         PyErr_Clear();
     } else {
         PyErr_SetString(
