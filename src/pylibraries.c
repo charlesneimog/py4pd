@@ -1,5 +1,4 @@
 #include "pylibraries.h"
-#include "m_pd.h"
 #include "py4pd.h"
 #include "py4pd_utils.h"
 #include "py4pd_pic.h"
@@ -10,8 +9,8 @@ static t_class *pyNewObject;
 static t_class *pyNewObject_AudioIn;
 static t_class *pyNewObject_AudioOut;
 static t_class *pyNewObject_Audio;
-
 static t_class *py4pdInlets_proxy_class;
+
 
 // =====================================
 void py4pdInlets_proxy_anything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av){
@@ -236,6 +235,7 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
 void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
     (void) argc;
     (void) argv;
+    object_count++;  // count the number of objects;
     const char *objectName = s->s_name;
     t_py *x = (t_py *)pd_new(pyNewObject);
 
@@ -321,6 +321,7 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
 void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
     (void) argc;
     (void) argv;
+    object_count++;  // count the number of objects;
     const char *objectName = s->s_name;
     t_py *x = (t_py *)pd_new(pyNewObject_VIS);
     t_pd **py4pdInlet_proxies;
@@ -411,11 +412,32 @@ void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
 
 // =====================================
 void *pyObjectFree(t_py *x) {
+    object_count--;
+    if (object_count == 1) {
+        post("[py4pd] Python interpreter finalized");
+        object_count = 0;
+
+        #ifdef _WIN64
+            char command[1000];
+            sprintf(command, "del /q /s %s\\*", x->temp_folder->s_name);
+            SHELLEXECUTEINFO sei = {0};
+            sei.cbSize = sizeof(SHELLEXECUTEINFO);
+            sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+            sei.lpFile = "cmd.exe";
+            sei.lpParameters = command;
+            sei.nShow = SW_HIDE;
+            ShellExecuteEx(&sei);
+            CloseHandle(sei.hProcess);
+        #else
+            char command[1000];
+            sprintf(command, "rm -rf %s", x->temp_folder->s_name);
+            system(command);
+        #endif
+    }
     if (x->visMode != 0) {
         PY4PD_free(x);
     }
     return (void *)x;
-
 }
 
 // =====================================
