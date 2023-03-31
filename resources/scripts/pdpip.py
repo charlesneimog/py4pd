@@ -31,4 +31,7 @@ def install(package):
 
 
 
+def py4pdLoadObjects():
+    pd.addobject(install, "pipinstall")
+    pd.print("Added pipinstall object, it freezes PureData, please wait...")
 

@@ -140,3 +140,8 @@ def note(pitch):
     pd.show(notePathName)
     return None
 
+
+def py4pdLoadObjects():
+    pd.addobject(note, "note")
+    pd.addobject(chord, "chord")
+    pd.print("Added note and chord objects")
