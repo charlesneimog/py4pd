@@ -441,7 +441,6 @@ void reload(t_py *x) {
         if (pFunc && PyCallable_Check(pFunc)) {  // Check if the function exists and is callable
             x->function = pFunc;
             x->function_called = 1;
-            // get new number of python function
             PyObject *inspect = NULL, *getfullargspec = NULL;
             PyObject *argspec = NULL, *args = NULL;
             inspect = PyImport_ImportModule("inspect");
@@ -453,6 +452,7 @@ void reload(t_py *x) {
             Py_DECREF(inspect);
             Py_DECREF(getfullargspec);
             Py_DECREF(argspec);
+            Py_DECREF(args);
             return;
         } 
         else {
@@ -533,7 +533,6 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     Py_DECREF(home_path);
     Py_DECREF(site_package);
     Py_DECREF(py4pdScripts);
-    // free(pyScripts_folder);
 
     // =====================
     pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file
@@ -547,6 +546,9 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
         Py_XDECREF(pstr);
         Py_XDECREF(pModule);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptype);
+        Py_XDECREF(ptraceback);
         return;
     }
     pFunc = PyObject_GetAttrString(pModule, function_name->s_name);  // Function name inside the script file
@@ -646,12 +648,36 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         ArgsTuple = PyTuple_New(0);
     }
 
+    // odd code, but solve the bug
+    t_py *prev_obj;
+    int prev_obj_exists = 0;
+    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
+    PyObject *oldObjectCapsule;
+    if (MainModule != NULL) {
+        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        if (oldObjectCapsule != NULL) {
+            PyObject *pd_module = PyImport_ImportModule("__main__");
+            PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+            prev_obj_exists = 1;
+        }
+    }
+
     PyObject *objectCapsule = py4pd_add_pd_object(x);
     if (objectCapsule == NULL){
         pd_error(x, "[Python] Failed to add object to Python");
         return;
     }
     pValue = PyObject_CallObject(x->function, ArgsTuple);
+
+    // odd code, but solve the bug
+    if (prev_obj_exists == 1) {
+        objectCapsule = py4pd_add_pd_object(prev_obj);
+        if (objectCapsule == NULL){
+            pd_error(x, "[Python] Failed to add object to Python");
+            return;
+        }
+    }
 
     if (pValue != NULL) { // if the function returns a value  TODO: add pointer output when x->Python is 1;
         py4pd_convert_to_pd(x, pValue);  // convert the value to pd
@@ -939,12 +965,36 @@ t_int *py4pd_perform(t_int *w) {
         // }
     }
 
+        // odd code, but solve the bug
+    t_py *prev_obj;
+    int prev_obj_exists = 0;
+    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
+    PyObject *oldObjectCapsule;
+    if (MainModule != NULL) {
+        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        if (oldObjectCapsule != NULL) {
+            PyObject *pd_module = PyImport_ImportModule("__main__");
+            PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+            prev_obj_exists = 1;
+        }
+    }
+
     PyObject *objectCapsule = py4pd_add_pd_object(x);
     if (objectCapsule == NULL){
         pd_error(x, "[Python] Failed to add object to Python");
         return (w + 4);
     }
     pValue = PyObject_CallObject(x->function, ArgsTuple);
+
+    // odd code, but solve the bug
+    if (prev_obj_exists == 1) {
+        objectCapsule = py4pd_add_pd_object(prev_obj);
+        if (objectCapsule == NULL){
+            pd_error(x, "[Python] Failed to add object to Python");
+            return (w + 4);
+        }
+    }
 
     if (pValue != NULL) {
         py4pd_convert_to_pd(x, pValue);  // convert the value to pd
@@ -1033,6 +1083,21 @@ t_int *py4pd_performAudioOutput(t_int *w) {
         ArgsTuple = PyTuple_New(0);
     }
 
+    // odd code, but seems to solve the bug in issue #21
+    t_py *prev_obj;
+    int prev_obj_exists = 0;
+    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
+    PyObject *oldObjectCapsule;
+    if (MainModule != NULL) {
+        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        if (oldObjectCapsule != NULL) {
+            PyObject *pd_module = PyImport_ImportModule("__main__");
+            PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+            prev_obj_exists = 1;
+        }
+    }
+
     // WARNING: this can generate errors? How this will work on multithreading? || In PEP 684 this will be per interpreter or global?
     PyObject *objectCapsule = py4pd_add_pd_object(x);
     if (objectCapsule == NULL){
@@ -1040,6 +1105,15 @@ t_int *py4pd_performAudioOutput(t_int *w) {
         return (w + 5);
     }
     pValue = PyObject_CallObject(x->function, ArgsTuple);
+
+    // odd code, but solve the bug
+    if (prev_obj_exists == 1) {
+        objectCapsule = py4pd_add_pd_object(prev_obj);
+        if (objectCapsule == NULL){
+            pd_error(x, "[Python] Failed to add object to Python");
+            return (w + 5);
+        }
+    }
     
     if (pValue != NULL) {
         if (PyList_Check(pValue)) {
@@ -1063,17 +1137,14 @@ t_int *py4pd_performAudioOutput(t_int *w) {
                 }
                 else {
                     pd_error(x, "[py4pd] The numpy array must have the same length of the vecsize and have 1 dim. Returned: %d samples and %d dims", arrayLength, PyArray_NDIM(pArray));
-                    // return (w + 5);
                 }
             } 
             else {
                 pd_error(x, "[py4pd] The function must return a list, a tuple or a numpy array, returned: %s", pValue->ob_type->tp_name);
-                // return (w + 5);
             }
         } 
         else {
             pd_error(x, "[py4pd] The function must return a list or tuplet, since numpy array is disabled, returned: %s", pValue->ob_type->tp_name);
-            // return (w + 5);
         }
     } 
     else {  // if the function returns a error
