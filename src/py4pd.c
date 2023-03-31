@@ -14,8 +14,9 @@ t_class *py4pd_class_VIS;      // For visualisation | pic object by pd-else
 t_class *py4pd_classAudioIn;   // For audio in
 t_class *py4pd_classAudioOut;  // For audio out
 t_class *py4pd_classLibrary;   // For libraries
-int object_count; 
 
+
+int object_count = 0;  // count the number of py4pd objects
 
 // ============================================
 // =========== PY4PD LOAD LIBRARIES ===========
@@ -1314,7 +1315,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     x->audioOutput = 0;
     x->editorName = NULL;
     x->pyObject = 0;
-
     object_count++;  // count the number of objects;
     for (i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
@@ -1389,8 +1389,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         x->out_A = outlet_new(&x->x_obj, 0);  // cria um outlet caso o objeto nao contenha audio
     }
 
-
-
     x->x_numInlets = 1;  // set the number of inlets
     x->x_numOutlets = 1;  // set the number of outlets
     x->thread = 0;
@@ -1418,7 +1416,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
 void *py4pd_free(t_py *x) {
     object_count--;
     if (object_count == 1) {
-        // Py_Finalize(); // BUG: Not possible because it crashes if another
         post("[py4pd] Python interpreter finalized");
         object_count = 0;
 
