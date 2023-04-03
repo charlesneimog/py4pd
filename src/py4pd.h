@@ -7,7 +7,7 @@
 
 // for thread
 #include <fcntl.h>
-#include <sys/mman.h>
+// #include <sys/mman.h>
 #include <signal.h>
 #include <sys/wait.h>
 // ===
