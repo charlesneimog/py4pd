@@ -193,28 +193,22 @@ char *py4pd_mtok(char *input, char *delimiter) {
     // adapted from stack overflow - Derek Kwan
     // designed to work like strtok
     static char *string;
-    //mif not passed null, use static var
     if(input != NULL)
         string = input;
-    //if reached the end, just return the static var, i think
     if(string == NULL)
         return string;
-    //return pointer of first occurrence of delim
-    //added, keep going until first non delim
     char *end = strstr(string, delimiter);
     while(end == string){
         *end = '\0';
         string = end + strlen(delimiter);
         end = strstr(string, delimiter);
     };
-    //if not found, just return the string
     if(end == NULL){
         char *temp = string;
         string = NULL;
         return temp;
     }
     char *temp = string;
-    // set thing pointed to at end as null char, advance pointer to after delim
     *end = '\0';
     string = end + strlen(delimiter);
     return(temp);
@@ -326,6 +320,7 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
         outlet_list(x->out_A, 0, list_size, list_array);
         free(list_array);
         Py_DECREF(pValue);
+        post("recount of pValue_i: %d", Py_REFCNT(pValue_i));
 
     } else {
         if (PyLong_Check(pValue)) {
@@ -351,6 +346,94 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
                      "[py4pd] py4pd just convert int, float and string or list "
                      "of this atoms! Received: %s",
                      Py_TYPE(pValue)->tp_name);
+        }
+    }
+    return 0;
+}
+
+// ============================================
+// =====================================================================
+/**
+ * @brief Convert and output Python Values to PureData values
+ * @param x is the py4pd object
+ * @param pValue is the Python value to convert
+ * @return nothing, but output the value to the outlet
+ */
+
+t_atom *py4pd_convert_to_pd_FORK(t_py *x, PyObject *pValue, t_atom *list_array) {
+    (void)x;
+    if (PyList_Check(pValue)) {  // If the function return a list list
+        int list_size = PyList_Size(pValue);
+        int i;
+        int listIndex = 0;
+        PyObject *pValue_i = NULL;
+        for (i = 0; i < list_size; ++i) {
+            pValue_i = PyList_GetItem(pValue, i);
+            if (PyLong_Check(pValue_i)) {  // If the function return a list of integers
+                float result = (float)PyLong_AsLong(pValue_i); // NOTE: Necessary to change if want double precision
+                list_array[listIndex].a_type = A_FLOAT;
+                list_array[listIndex].a_w.w_float = result;
+                listIndex++;
+            } 
+            else if (PyFloat_Check(pValue_i)) {  // If the function return a list of floats
+                float result = PyFloat_AsDouble(pValue_i);
+                list_array[listIndex].a_type = A_FLOAT;
+                list_array[listIndex].a_w.w_float = result;
+                listIndex++;
+            } 
+            else if (PyUnicode_Check(pValue_i)) {  // If the function return a
+                const char *result = PyUnicode_AsUTF8(pValue_i); 
+                list_array[listIndex].a_type = A_SYMBOL;
+                list_array[i].a_w.w_symbol = gensym(result);
+                listIndex++;
+
+            } 
+            else if (Py_IsNone(pValue_i)) {  // If the function return a list
+                                               // of None
+            } 
+            else {
+                printf("[py4pd] py4pd just convert int, float and string! "
+                         "Received: %s",
+                         Py_TYPE(pValue_i)->tp_name);
+                Py_DECREF(pValue_i);
+                return 0;
+            }
+        }
+        // malloc memory for outsFromFork
+        return list_array;
+
+    } 
+    else {
+        if (PyLong_Check(pValue)) {
+            long result = PyLong_AsLong(pValue);  // If the function return a integer
+            t_atom *result_atom = (t_atom *)malloc(sizeof(t_atom));
+            result_atom->a_type = A_FLOAT;
+            result_atom->a_w.w_float = (t_float)result;
+            list_array[0] = *result_atom;
+            return list_array;
+        } 
+        else if (PyFloat_Check(pValue)) {
+            double result = PyFloat_AsDouble(pValue);  // If the function return a float
+            float result_float = (float)result;
+            t_atom *result_atom = (t_atom *)malloc(sizeof(t_atom));
+            result_atom->a_type = A_FLOAT;
+            result_atom->a_w.w_float = result_float;
+            list_array[0] = *result_atom;
+            return list_array;
+        } 
+        else if (PyUnicode_Check(pValue)) {
+            const char *result = PyUnicode_AsUTF8(pValue); // If the function return a string
+            t_atom *result_atom = (t_atom *)malloc(sizeof(t_atom));
+            result_atom->a_type = A_SYMBOL;
+            result_atom->a_w.w_symbol = gensym(result);
+            list_array[0] = *result_atom;
+            return list_array;
+        } 
+        else if (Py_IsNone(pValue)) {
+
+        }
+        else {
+            return 0;
         }
     }
     return 0;
@@ -534,6 +617,7 @@ int *set_py4pd_config(t_py *x) {
                 removeChar(editor, '\r');
                 removeChar(editor, ' ');
                 x->editorName = gensym(editor);
+                post("[py4pd] Editor set to %s", x->editorName->s_name);
             }
         }
         fclose(file);  // close file
@@ -570,31 +654,6 @@ PyObject *py4pd_add_pd_object(t_py *x) {
         objectCapsule = NULL;
     }
     return objectCapsule;
-}
-
-
-// ========================= IMG CONVERTER ==============================
-
-int png_sig_cmp(uint8_t *sig, int start, int num_to_check)
-{
-    static uint8_t png_signature[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
-    if (start < 0 || num_to_check < 1 || start + num_to_check > 8) {
-        return -1;
-    }
-    return memcmp(sig + start, png_signature + start, num_to_check);
-}
-
-// ========================= PNG ==============================
-
-uint32_t py4pd_ntohl(uint32_t netlong){ // ntohl exists on windows but not on mac
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    return ((netlong & 0xff) << 24) |
-           ((netlong & 0xff00) << 8) |
-           ((netlong & 0xff0000) >> 8) |
-           ((netlong & 0xff000000) >> 24);
-#else
-    return netlong;
-#endif
 }
 
 

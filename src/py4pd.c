@@ -3,6 +3,9 @@
 #include "pd_module.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
+#include "pylifecycle.h"
+#include "pystate.h"
+#include <stdio.h>
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
@@ -14,9 +17,8 @@ t_class *py4pd_class_VIS;      // For visualisation | pic object by pd-else
 t_class *py4pd_classAudioIn;   // For audio in
 t_class *py4pd_classAudioOut;  // For audio out
 t_class *py4pd_classLibrary;   // For libraries
+int object_count; 
 
-
-int object_count = 0;  // count the number of py4pd objects
 
 // ============================================
 // =========== PY4PD LOAD LIBRARIES ===========
@@ -392,7 +394,9 @@ static void set_param(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         pd_error(x, "[py4pd] The value must be a symbol or a float!");
         return;
     }
+    
     int result = PyDict_SetItem(x->Dict, key, value);
+
     if (result == -1) {
         pd_error(x, "[py4pd] Error setting the parameter!");
         return;
@@ -415,7 +419,7 @@ static void set_param(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argv is the arguments
  * @return void, but it reloads the script
  */
-void reload(t_py *x) {
+static void reload(t_py *x) {
     PyObject *pName, *pFunc, *pModule, *pReload;
     if (x->function_called == 0) {  // if the set method was not called, then we
                                     // can not run the function :)
@@ -442,6 +446,7 @@ void reload(t_py *x) {
         if (pFunc && PyCallable_Check(pFunc)) {  // Check if the function exists and is callable
             x->function = pFunc;
             x->function_called = 1;
+            // get new number of python function
             PyObject *inspect = NULL, *getfullargspec = NULL;
             PyObject *argspec = NULL, *args = NULL;
             inspect = PyImport_ImportModule("inspect");
@@ -453,7 +458,6 @@ void reload(t_py *x) {
             Py_DECREF(inspect);
             Py_DECREF(getfullargspec);
             Py_DECREF(argspec);
-            Py_DECREF(args);
             return;
         } 
         else {
@@ -490,7 +494,9 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
             x->function_called = 0;
         }
     }
-    char *extension = strstr(script_file_name->s_name, ".py");
+
+    // Check if there is extension (not to use it)
+    char *extension = strrchr(script_file_name->s_name, '.');
     if (extension != NULL) {
         pd_error(x, "[py4pd] Don't use extensions in the script file name!");
         Py_XDECREF(x->function);
@@ -534,6 +540,7 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     Py_DECREF(home_path);
     Py_DECREF(site_package);
     Py_DECREF(py4pdScripts);
+    // free(pyScripts_folder);
 
     // =====================
     pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file
@@ -547,9 +554,6 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
         Py_XDECREF(pstr);
         Py_XDECREF(pModule);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptype);
-        Py_XDECREF(ptraceback);
         return;
     }
     pFunc = PyObject_GetAttrString(pModule, function_name->s_name);  // Function name inside the script file
@@ -649,36 +653,12 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         ArgsTuple = PyTuple_New(0);
     }
 
-    // odd code, but solve the bug
-    t_py *prev_obj;
-    int prev_obj_exists = 0;
-    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
-    PyObject *oldObjectCapsule;
-    if (MainModule != NULL) {
-        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
-        if (oldObjectCapsule != NULL) {
-            PyObject *pd_module = PyImport_ImportModule("__main__");
-            PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-            prev_obj_exists = 1;
-        }
-    }
-
     PyObject *objectCapsule = py4pd_add_pd_object(x);
     if (objectCapsule == NULL){
         pd_error(x, "[Python] Failed to add object to Python");
         return;
     }
     pValue = PyObject_CallObject(x->function, ArgsTuple);
-
-    // odd code, but solve the bug
-    if (prev_obj_exists == 1) {
-        objectCapsule = py4pd_add_pd_object(prev_obj);
-        if (objectCapsule == NULL){
-            pd_error(x, "[Python] Failed to add object to Python");
-            return;
-        }
-    }
 
     if (pValue != NULL) { // if the function returns a value  TODO: add pointer output when x->Python is 1;
         py4pd_convert_to_pd(x, pValue);  // convert the value to pd
@@ -701,67 +681,178 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // ============================================
-/*
-static void run_function_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void run_function_FORK(t_py *x, t_symbol *s, int argc, t_atom *argv, int pipefd[]){
+    //  TODO: Check for memory leaks
     (void)s;
+    int OpenList_count = 0;
+    int CloseList_count = 0;
 
-    if (argc != x->py_arg_numbers) {
-        pd_error(x, "[py4pd] Wrong number of arguments!");
-        return;
-    }
-    PyObject *pFunc, *pArgs, *pValue; // pDict, *pModule,
-    pFunc = x->function;
-    pArgs = PyTuple_New(argc);
-    int i;
-    if (x->function_called == 0) { // if the set method was not called, then we
-can not run the function :) if(pFunc != NULL){
-            // create t_atom *argv from x->script_name and x->function_name
-            t_atom *newargv = malloc(sizeof(t_atom) * 2);
-            SETSYMBOL(newargv, x->script_name);
-            SETSYMBOL(newargv+1, x->function_name);
-            set_function(x, NULL, 2, newargv);
-        } else{
-            pd_error(x, "[py4pd] The message need to be formatted like 'set
-{script_name} {function_name}'!"); return;
+    PyObject *pValue, *ArgsTuple;
+    if (argc != 0) {
+        for (int i = 0; i < argc; i++) {
+            if (argv[i].a_type == A_SYMBOL) {
+                if (strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL) {
+                    CloseList_count++;
+                }
+                if (strchr(argv[i].a_w.w_symbol->s_name, ']') != NULL) {
+                    OpenList_count++;
+                }
+            }
         }
-    }
-
-    // CONVERTION TO PYTHON OBJECTS
-    // create an array of t_atom to store the list
-    t_atom *list = malloc(sizeof(t_atom) * argc);
-    for (i = 0; i < argc; ++i) {
-        t_atom *argv_i = malloc(sizeof(t_atom));
-        *argv_i = argv[i];
-        pValue = py4pd_convert_to_python(argv_i);
-        if (!pValue) {
-            pd_error(x, "[py4pd] Cannot convert argument\n");
+        if (OpenList_count != CloseList_count) {
+            printf("The number of '[' and ']' is not the same!");
             return;
         }
-        PyTuple_SetItem(pArgs, i, pValue); // Set the argument in the tuple
+        PyObject **lists = (PyObject **)malloc(OpenList_count * sizeof(PyObject *));
+
+        ArgsTuple = py4pd_convert_to_py(lists, argc, argv);  // convert the arguments to python
+        int argCount = PyTuple_Size(ArgsTuple);  // get the number of arguments
+        if (argCount != x->py_arg_numbers) {
+            printf("Wrong args");
+            pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %i arguments, received %i!", 
+                        x->function_name->s_name, (int)x->py_arg_numbers,
+                        argCount);
+            return;
+        }
+    } 
+    else {
+        ArgsTuple = PyTuple_New(0);
     }
 
-    pValue = PyObject_CallObject(pFunc, pArgs); // Call and execute the function
-    if (pValue != NULL) {                                // if the function
-returns a value
-        // convert the python object to a t_atom
-        py4pd_convert_to_pd(x, pValue);
+    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    if (objectCapsule == NULL){
+        pd_error(x, "[Python] Failed to add object to Python");
+        printf("Failed to add object to Python");
+        return;
     }
-    else { // if the function returns a error
+    pValue = PyObject_CallObject(x->function, ArgsTuple);
+
+
+
+
+    if (pValue != NULL) { // if the function returns a value  TODO: add pointer output when x->Python is 1;
+        int size;
+        if (PyList_Check(pValue)){
+            size = PyList_Size(pValue);
+        }
+        else if (PyTuple_Check(pValue)){
+            size = PyTuple_Size(pValue);
+        }
+        else{
+            size = 1;
+        }
+        t_atom *out = (t_atom *)malloc(size * sizeof(t_atom));
+        py4pd_convert_to_pd_FORK(x, pValue, out);  // convert the value to pd 
+        t_outsFromFork *outFork = (t_outsFromFork *)malloc(sizeof(t_outsFromFork));
+        outFork->outSize = size;
+        printf("size in child: %i\n", size);
+        outFork->out = out;
+        write(pipefd[1], outFork, sizeof(t_outsFromFork));
+        close(pipefd[0]);
+        printf("Forked finished to write\n");
+    } 
+
+
+
+
+
+
+
+    else {                             // if the function returns a error
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        pd_error(x, "[Python] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        printf("Call failed: %s", PyUnicode_AsUTF8(pstr));
         Py_DECREF(pstr);
-        Py_DECREF(pvalue);
-        Py_DECREF(ptype);
-        Py_DECREF(ptraceback);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+        PyErr_Clear();
     }
-    return;
+    Py_XDECREF(pValue);
+    Py_DECREF(ArgsTuple);
+    // this is runned by the child process
+    // so we need to close the pipe
+
 }
 
 // ============================================
 
+static int child_pid;
+
+// ============================================
+static void sigint_handler(int signum) {
+    (void)signum;
+    kill(child_pid, SIGTERM);
+}
+// ============================================
+
+static void py4pdFork(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    (void)s;
+    int pipefd[2];
+    if (x->function_called == 0) {
+        pd_error(x, "[py4pd] You need to call a function before run!");
+        return;
+    } 
+    else {
+        if (pipe(pipefd) == -1) {
+            pd_error(x, "[py4pd] Error in pipe!");
+            return;
+        }
+        PyOS_BeforeFork();
+        child_pid = fork(); // WARNING: Fork
+        PyOS_AfterFork_Child();
+        if (child_pid == -1) {
+            pd_error(x, "[py4pd] Error in fork!");
+            exit(1);
+        }
+        else if (child_pid == 0) {
+            run_function_FORK(x, s, argc, argv, pipefd);
+            close(pipefd[1]);
+
+            exit(0);
+        }
+        else{
+            // WAIT FOR CHILD IS DONE
+            int status;
+            waitpid(child_pid, &status, 0);
+            if (WIFEXITED(status)) {
+                t_outsFromFork *outFork = (t_outsFromFork *)malloc(sizeof(t_outsFromFork));
+                read(pipefd[0], outFork, sizeof(t_outsFromFork));
+                printf("finished to read\n");
+                if (outFork->outSize == 1){
+                    if (outFork->out[0].a_type == A_FLOAT){
+                        outlet_float(x->out_A, outFork->out[0].a_w.w_float);
+                    }
+                    else if (outFork->out[0].a_type == A_SYMBOL){
+                        outlet_symbol(x->out_A, outFork->out[0].a_w.w_symbol);
+                    }
+                    else if (outFork->out[0].a_type == A_POINTER){
+                        post("pointer");
+                    }
+                    else{
+                        //post the name of the type
+                        post("type: %i\n", outFork->out[0].a_type);
+                    }
+
+                }
+                else{
+                    outlet_list(x->out_A, 0, outFork->outSize, outFork->out);
+                }
+                printf("ok\n");
+            }
+            else{
+                pd_error(x, "[py4pd] Some error occur after run the function!");
+            }
+        }
+    }
+}
+
+
+
+// ============================================
 struct thread_arg_struct {
     t_py x;
     t_symbol s;
@@ -770,52 +861,35 @@ struct thread_arg_struct {
     PyThreadState *interp;
 } thread_arg;
 
-// // ============================================
-
+// ============================================
 static void *ThreadFunc(void *lpParameter) {
     struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParameter;
     t_py *x = &arg->x;
     t_symbol *s = &arg->s;
     int argc = arg->argc;
     t_atom *argv = arg->argv;
-    int object_number = x->object_number;
-    thread_status[object_number] = 1;
-    // PyGILState_STATE gstate;
-    running_some_thread = 1;
-    run_function_thread(x, s, argc, argv);
-    thread_status[object_number] = 0;
-    running_some_thread = 0;
+    py4pdFork(x, s, argc, argv);
     return 0;
 }
 
-// ============================================
 
+// ============================================
 static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
-    struct thread_arg_struct *arg = (struct thread_arg_struct
-*)malloc(sizeof(struct thread_arg_struct)); arg->x = *x; arg->argc = argc;
+    struct thread_arg_struct *arg = (struct thread_arg_struct*)malloc(sizeof(struct thread_arg_struct)); arg->x = *x; arg->argc = argc;
     arg->argv = argv;
-    int object_number = x->object_number;
     if (x->function_called == 0) {
         // Pd is crashing when I try to create a thread.
         pd_error(x, "[py4pd] You need to call a function before run!");
         free(arg);
         return;
     } else {
-        if (thread_status[object_number] == 0){
-            // PyThread is not thread safe, so we need to lock the GIL
-            pthread_t thread;
-            pthread_create(&thread, NULL, ThreadFunc, arg);
-            x->state = 1;
-            // check the Thread was created
-        } else {
-            pd_error(x, "[py4pd] There is a thread running in this Object!");
-            free(arg);
-        }
+        pthread_t thread;
+        pthread_create(&thread, NULL, ThreadFunc, arg);
     }
     return;
 }
-*/
+
 
 // ============================================
 /**
@@ -834,8 +908,7 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         return;
     }
     if (x->thread == 1) {
-        run_function(x, s, argc, argv);
-        pd_error(x, "[py4pd] Not implemenented! Wait for approval of PEP 684");
+        create_thread(x, s, argc, argv);
     } 
     else if (x->thread == 0) {
         run_function(x, s, argc, argv);
@@ -966,36 +1039,12 @@ t_int *py4pd_perform(t_int *w) {
         // }
     }
 
-        // odd code, but solve the bug
-    t_py *prev_obj;
-    int prev_obj_exists = 0;
-    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
-    PyObject *oldObjectCapsule;
-    if (MainModule != NULL) {
-        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
-        if (oldObjectCapsule != NULL) {
-            PyObject *pd_module = PyImport_ImportModule("__main__");
-            PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-            prev_obj_exists = 1;
-        }
-    }
-
     PyObject *objectCapsule = py4pd_add_pd_object(x);
     if (objectCapsule == NULL){
         pd_error(x, "[Python] Failed to add object to Python");
         return (w + 4);
     }
     pValue = PyObject_CallObject(x->function, ArgsTuple);
-
-    // odd code, but solve the bug
-    if (prev_obj_exists == 1) {
-        objectCapsule = py4pd_add_pd_object(prev_obj);
-        if (objectCapsule == NULL){
-            pd_error(x, "[Python] Failed to add object to Python");
-            return (w + 4);
-        }
-    }
 
     if (pValue != NULL) {
         py4pd_convert_to_pd(x, pValue);  // convert the value to pd
@@ -1084,21 +1133,6 @@ t_int *py4pd_performAudioOutput(t_int *w) {
         ArgsTuple = PyTuple_New(0);
     }
 
-    // odd code, but seems to solve the bug in issue #21
-    t_py *prev_obj;
-    int prev_obj_exists = 0;
-    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
-    PyObject *oldObjectCapsule;
-    if (MainModule != NULL) {
-        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
-        if (oldObjectCapsule != NULL) {
-            PyObject *pd_module = PyImport_ImportModule("__main__");
-            PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-            prev_obj_exists = 1;
-        }
-    }
-
     // WARNING: this can generate errors? How this will work on multithreading? || In PEP 684 this will be per interpreter or global?
     PyObject *objectCapsule = py4pd_add_pd_object(x);
     if (objectCapsule == NULL){
@@ -1106,15 +1140,6 @@ t_int *py4pd_performAudioOutput(t_int *w) {
         return (w + 5);
     }
     pValue = PyObject_CallObject(x->function, ArgsTuple);
-
-    // odd code, but solve the bug
-    if (prev_obj_exists == 1) {
-        objectCapsule = py4pd_add_pd_object(prev_obj);
-        if (objectCapsule == NULL){
-            pd_error(x, "[Python] Failed to add object to Python");
-            return (w + 5);
-        }
-    }
     
     if (pValue != NULL) {
         if (PyList_Check(pValue)) {
@@ -1138,14 +1163,17 @@ t_int *py4pd_performAudioOutput(t_int *w) {
                 }
                 else {
                     pd_error(x, "[py4pd] The numpy array must have the same length of the vecsize and have 1 dim. Returned: %d samples and %d dims", arrayLength, PyArray_NDIM(pArray));
+                    // return (w + 5);
                 }
             } 
             else {
                 pd_error(x, "[py4pd] The function must return a list, a tuple or a numpy array, returned: %s", pValue->ob_type->tp_name);
+                // return (w + 5);
             }
         } 
         else {
             pd_error(x, "[py4pd] The function must return a list or tuplet, since numpy array is disabled, returned: %s", pValue->ob_type->tp_name);
+            // return (w + 5);
         }
     } 
     else {  // if the function returns a error
@@ -1256,7 +1284,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
             else if (py4pdArgs == gensym("-audioin")) {
                 audioIN = 1;
             }
-            else if (py4pdArgs == gensym("-library") || py4pdArgs == gensym("-lib")) {
+            else if (py4pdArgs == gensym("-library")) {
                 libraryMODE = 1;
                 normalMODE = 0;
             }
@@ -1313,8 +1341,9 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     t_symbol *patch_dir = canvas_getdir(c);
     x->audioInput = 0;
     x->audioOutput = 0;
+    x->visMode = 0;
     x->editorName = NULL;
-    x->pyObject = 0;
+
     object_count++;  // count the number of objects;
     for (i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
@@ -1323,6 +1352,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                 py4pdArgs == gensym("-score") ||
                 py4pdArgs == gensym("-canvas")) {
                 py4pd_InitVisMode(x, c, py4pdArgs, i, argc, argv);
+                x->visMode = 1;
                 x->x_outline = 1;
                 // remove the '-picture' from the arguments
                 int j;
@@ -1388,9 +1418,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     if (x->audioOutput == 0) {
         x->out_A = outlet_new(&x->x_obj, 0);  // cria um outlet caso o objeto nao contenha audio
     }
-
-    x->x_numInlets = 1;  // set the number of inlets
-    x->x_numOutlets = 1;  // set the number of outlets
     x->thread = 0;
     x->object_number = object_count;  // save object number
     x->home_path = patch_dir;         // set name of the home path
@@ -1415,7 +1442,9 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
  */
 void *py4pd_free(t_py *x) {
     object_count--;
+
     if (object_count == 1) {
+        // Py_Finalize(); // BUG: Not possible because it crashes if another
         post("[py4pd] Python interpreter finalized");
         object_count = 0;
 
@@ -1436,12 +1465,16 @@ void *py4pd_free(t_py *x) {
             system(command);
         #endif
     }
-    if (x->visMode != 0) {
+    if (x->visMode == 1) {
         PY4PD_free(x);
     }
 
     
     if (x->function_called){
+        // Py_DECREF(x->function);
+        // Py_DECREF(x->module);
+        // inlet_free(x->in1);
+        // outlet_free(x->out_A);
 
     }
 
@@ -1466,7 +1499,7 @@ void py4pd_setup(void) {
     py4pd_class_VIS = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
     py4pd_classAudioOut = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
     py4pd_classAudioIn = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
-    py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), CLASS_NOINLET, A_GIMME, 0);
+    py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
 
     // Sound in
     class_addmethod(py4pd_classAudioIn, (t_method)py4pd_audio_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
@@ -1477,9 +1510,9 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_classAudioOut, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0);  // add a method to a class
 
     // Pic related
-    // class_addmethod(py4pd_class_VIS, (t_method)PY4PD_size_callback, gensym("_picsize"), A_DEFFLOAT, A_DEFFLOAT, 0);
-    // class_addmethod(py4pd_class_VIS, (t_method)PY4PD_mouserelease,gensym("_mouserelease"), 0);
-    // class_addmethod(py4pd_class_VIS, (t_method)PY4PD_outline, gensym("outline"), A_DEFFLOAT, 0);
+    class_addmethod(py4pd_class_VIS, (t_method)PY4PD_size_callback, gensym("_picsize"), A_DEFFLOAT, A_DEFFLOAT, 0);
+    class_addmethod(py4pd_class_VIS, (t_method)PY4PD_mouserelease,gensym("_mouserelease"), 0);
+    class_addmethod(py4pd_class_VIS, (t_method)PY4PD_outline, gensym("outline"), A_DEFFLOAT, 0);
     class_addmethod(py4pd_class_VIS, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);
 
     // this is like have lot of objects with the same name, add all methods for
@@ -1558,7 +1591,7 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class_VIS, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
     class_addmethod(py4pd_classAudioOut, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
     class_addmethod(py4pd_classAudioIn, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
-    // class_addmethod(py4pd_classLibrary, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
+    class_addmethod(py4pd_classLibrary, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
 
 }
 

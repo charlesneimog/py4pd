@@ -1,4 +1,3 @@
-#include "m_pd.h"
 #include "py4pd.h"
 #include "py4pd_utils.h"
 #include "py4pd_pic.h"  
@@ -7,37 +6,10 @@
 // ======================================
 // ======== py4pd embbeded module =======
 // ======================================
-PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
+PyObject *pdout(PyObject *self, PyObject *args) {
     (void)self;
     float f;
     char *string;
-    t_symbol *symbol;
-    symbol = gensym("list");
-    int keyword_arg = 0;
-
-
-
-
-    // check if there is a keyword argument
-    if (keywords == NULL) {
-        PyErr_Clear();
-    } else {
-        PyObject *anything_symbol = PyDict_GetItemString(keywords, "symbol");
-        if (anything_symbol == NULL) {
-            PyErr_Clear();
-        } 
-        else {
-            if (PyUnicode_Check(anything_symbol)) {
-                const char *result = PyUnicode_AsUTF8(anything_symbol);
-                symbol = gensym(result);
-                keyword_arg = 1;
-            } 
-            else {
-                PyErr_SetString(PyExc_TypeError, "[Python] pd.out keyword argument 'symbol' must be a string.");  // Colocar melhor descrição do erro
-                return NULL;
-            }
-        }
-    }
 
     // ================================
     PyObject *pd_module = PyImport_ImportModule("__main__");
@@ -46,33 +18,13 @@ PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
     // ================================
 
     if (PyArg_ParseTuple(args, "f", &f)) {
-        if (keyword_arg == 1) {
-            t_atom *list_array = (t_atom *)malloc(1 * sizeof(t_atom));
-            list_array[0].a_type = A_FLOAT;
-            list_array[0].a_w.w_float = f;
-            outlet_anything(py4pd->out_A, symbol, 1, list_array);
-            free(list_array);
-        } 
-        else {
-            outlet_float(py4pd->out_A, f);
-        }
-    } 
-    else if (PyArg_ParseTuple(args, "s", &string)) {    
-        if (keyword_arg == 1) {
-            t_atom *list_array = (t_atom *)malloc(1 * sizeof(t_atom));
-            list_array[0].a_type = A_SYMBOL;
-            list_array[0].a_w.w_symbol = gensym(string);
-            outlet_anything(py4pd->out_A, symbol, 1, list_array);
-            free(list_array);
-        } 
-        else {
-            outlet_anything(py4pd->out_A, gensym(string), 0, NULL);
-        }
-
-
-        outlet_symbol(py4pd->out_A, gensym(string));  // TODO: make this output without the symbol, just like fromsymbol.
-    } 
-    else if (PyArg_ParseTuple(args, "O", &args)) {
+        PyErr_Clear();
+        outlet_float(py4pd->out_A, f);
+    } else if (PyArg_ParseTuple(args, "s", &string)) {
+        t_symbol *pd_symbol = gensym(string);
+        outlet_symbol(py4pd->out_A, pd_symbol);  // TODO: make this output without the symbol, just like fromsymbol.
+        PyErr_Clear();
+    } else if (PyArg_ParseTuple(args, "O", &args)) {
         int list_size = PyList_Size(args);
         t_atom *list_array = (t_atom *)malloc(list_size * sizeof(t_atom));
         int i;
@@ -83,29 +35,24 @@ PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
                 float result_float = (float)result;
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
-            } 
-            else if (PyFloat_Check(pValue_i)) {  // If the function return a list of floats
+            } else if (PyFloat_Check(pValue_i)) {  // If the function return a list of floats
                 double result = PyFloat_AsDouble(pValue_i);
                 float result_float = (float)result;
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
-            } 
-            else if (PyUnicode_Check(pValue_i)) {  // If the function return a list of strings
+            } else if (PyUnicode_Check(pValue_i)) {  // If the function return a list of strings
                 const char *result = PyUnicode_AsUTF8(pValue_i);
                 list_array[i].a_type = A_SYMBOL;
                 list_array[i].a_w.w_symbol = gensym(result);
-            } 
-            else if (Py_IsNone(pValue_i)) {
+            } else if (Py_IsNone(pValue_i)) {
                 // If the function return a list of None
-            } 
-            else {
+            } else {
                 Py_DECREF(pValue_i);
                 Py_DECREF(args);
                 return NULL;
             }
         }
-        outlet_anything(py4pd->out_A, symbol, list_size, list_array);
-        free(list_array);
+        outlet_list(py4pd->out_A, &s_list, list_size, list_array);
         PyErr_Clear();
     } else {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.out argument must be a list, float or a string");  // Colocar melhor descrição do erro
@@ -174,9 +121,15 @@ PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
 PyObject *pderror(PyObject *self, PyObject *args) {
     (void)self;
     char *string;
+    // get py4pd object pointer
+    // ================================
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    // ================================
 
     if (PyArg_ParseTuple(args, "s", &string)) {
-        pd_error(NULL, "[Python]: %s", string);
+        pd_error(py4pd, "[Python]: %s", string);
         PyErr_Clear();
     } else {
         PyErr_SetString(
@@ -301,6 +254,7 @@ PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords) {
         PyErr_Clear();
     } 
     else {
+
         resize = PyDict_Contains(keywords, PyUnicode_FromString("resize"));
         if (resize == -1) {
             post("error");
@@ -433,51 +387,16 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
     PyObject *pd_module = PyImport_ImportModule("__main__");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-
     PY4PD_erase(py4pd, py4pd->x_glist);
     if (PyArg_ParseTuple(args, "s", &string)) {
         t_symbol *filename = gensym(string);
         if (py4pd->x_def_img) {
             py4pd->x_def_img = 0;
         }
-        FILE *file;
-        char *ext = strrchr(filename->s_name, '.');
-        if (strcmp(ext, ".ppm") == 0) {
-            char magic_number[3];
-            int width, height, max_color_value;
-            file = fopen(filename->s_name, "r");
-            fscanf(file, "%s\n%d %d\n%d\n", magic_number, &width, &height, &max_color_value);
-            py4pd->x_width = width;
-            py4pd->x_height = height;
-            fclose(file);
-        }
-        else if (strcmp(ext, ".gif") == 0){
-            file = fopen(filename->s_name, "rb");
-            fseek(file, 6, SEEK_SET);
-            fread(&py4pd->x_width, 2, 1, file);
-            fread(&py4pd->x_height, 2, 1, file);
-            fclose(file);
-        }
-        else if (strcmp(ext, ".png") == 0) {
-            file = fopen(filename->s_name, "rb");
-            int width, height;
-            fseek(file, 16, SEEK_SET);
-            fread(&width, 4, 1, file);
-            fread(&height, 4, 1, file);
-            width = py4pd_ntohl(width);
-            height = py4pd_ntohl(height);
-            py4pd->x_width = width;
-            py4pd->x_height = height;
-        }
 
-        else{
-            pd_error(py4pd, "[Python] pd.showimage: file format not supported");
-            PyErr_SetString(PyExc_TypeError, "[Python] pd.showimage: file format not supported");
-            return NULL;
-        }
 
         if (glist_isvisible(py4pd->x_glist) && gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
-            const char *file_name_open = PY4PD_filepath(py4pd, filename->s_name);
+            const char *file_name_open =    PY4PD_filepath(py4pd, filename->s_name);
             if (file_name_open) {
                 py4pd->x_filename = filename;
                 py4pd->x_fullname = gensym(file_name_open);
@@ -486,7 +405,8 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
                     py4pd->x_def_img = 0;
                 }
 
-                if (glist_isvisible(py4pd->x_glist) && gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
+                if (glist_isvisible(py4pd->x_glist) &&
+                    gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
                     PY4PD_erase(py4pd, py4pd->x_glist);
                     sys_vgui(
                         "if {[info exists %lx_picname] == 0} {image create "
@@ -494,9 +414,8 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
                         "1\n}\n",
                         py4pd->x_fullname, py4pd->x_fullname, file_name_open,
                         py4pd->x_fullname);
-                    PY4PD_draw(py4pd, py4pd->x_glist, 1);
+                    PY4PD_draw(py4pd, py4pd->x_glist, 0);
                 }
-                PY4PD_draw_io_let(py4pd);
             } 
             else {
                 pd_error(py4pd, "[Python]: Error displaying image, file not found");
@@ -582,7 +501,7 @@ PyObject *pdmoduleError;
 PyMethodDef PdMethods[] = {
 
     // PureData inside Python
-    {"out", (PyCFunction)pdout, METH_VARARGS | METH_KEYWORDS, "Output in out0 from PureData"},
+    {"out", pdout, METH_VARARGS, "Output in out0 from PureData"},
     {"send", pdsend, METH_VARARGS, "Send message to PureData, it can be received with the object [receive]"},
     {"print", (PyCFunction)pdprint, METH_VARARGS | METH_KEYWORDS,  "Print informations in PureData Console"},
     {"error", pderror, METH_VARARGS, "Print informations in error format (red) in PureData Console"},
@@ -605,7 +524,7 @@ PyMethodDef PdMethods[] = {
 
 
     // library methods
-    {"addobject", (PyCFunction)pdAddPyObject, METH_VARARGS | METH_KEYWORDS, "It add python functions as objects"},
+    {"addobject", pdAddPyObject, METH_VARARGS, "It add python functions as objects"},
 
 
     {NULL, NULL, 0, NULL}  //
