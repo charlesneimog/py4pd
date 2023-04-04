@@ -3,22 +3,16 @@
 
 #include <m_pd.h>
 #include <g_canvas.h>
+#include <pthread.h>
 
-
-// for thread
-#include <sys/wait.h>
-// ===
-
-
-// in _WIN64 include windows.h, if not, include <pthread.h>
 #define PY_SSIZE_T_CLEAN // Good practice to use this before include Python.h because it will remove some deprecated function
+#include <Python.h>
 
 #ifdef _WIN64 
     #include <windows.h>  // on Windows, system() open a console window and we don't want that
-    #include <Python.h>
+    //#include "../resources/windows/syswait/sys/wait.h"
 #else
-    #include <pthread.h>
-    #include <Python.h>
+    #include <sys/wait.h>
     // #include <dirent.h>
 #endif
 

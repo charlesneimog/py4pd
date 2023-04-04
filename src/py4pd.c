@@ -715,7 +715,9 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     return;
 }
 
+
 // ============================================
+#ifdef __unix__
 static void run_function_FORK(t_py *x, t_symbol *s, int argc, t_atom *argv, int pipefd[]){
     //  TODO: Check for memory leaks
     (void)s;
@@ -811,6 +813,7 @@ static void run_function_FORK(t_py *x, t_symbol *s, int argc, t_atom *argv, int 
 }
 
 // ============================================
+
 static void py4pdFork(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     int pipefd[2];
@@ -874,6 +877,7 @@ static void py4pdFork(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
 }
 
+
 // ============================================
 struct thread_arg_struct {
     t_py x;
@@ -913,7 +917,7 @@ static void create_fork(t_py *x, t_symbol *s, int argc, t_atom *argv){
     return;
 }
 
-
+#endif
 // ============================================
 /**
  * @brief This function will control were the Python will run, wil PEP 684, I want to make possible using parallelism in Python
@@ -931,7 +935,11 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         return;
     }
     if (x->runmode == 1) {
-        create_fork(x, s, argc, argv);
+        #ifdef __unix__ 
+            create_fork(x, s, argc, argv);
+        #else
+            pd_error(x, "[py4pd] Threading is not implemented in Windows yet!");
+        #endif
     } 
     else if (x->runmode == 0) {
         run_function(x, s, argc, argv);
@@ -948,6 +956,10 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 static void runmode(t_py *x, t_floatarg f) {
     int thread = (int)f;
     if (thread == 1) {
+        #ifdef _WIN32
+            pd_error(x, "[py4pd] Threading is not implemented in Windows yet!");
+            return;
+        #endif
         x->runmode = 1; //fork
         return;
     } 
