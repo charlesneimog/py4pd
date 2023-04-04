@@ -6,10 +6,6 @@
 // ======================================
 // ======== py4pd embbeded module =======
 // ======================================
-
-// ======================================
-// ======== py4pd embbeded module =======
-// ======================================
 PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
     (void)self;
     float f;
@@ -17,9 +13,6 @@ PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
     t_symbol *symbol;
     symbol = gensym("list");
     int keyword_arg = 0;
-
-
-
 
     // check if there is a keyword argument
     if (keywords == NULL) {

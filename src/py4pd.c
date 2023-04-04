@@ -762,9 +762,6 @@ static void run_function_FORK(t_py *x, t_symbol *s, int argc, t_atom *argv, int 
     }
     pValue = PyObject_CallObject(x->function, ArgsTuple);
 
-
-
-
     if (pValue != NULL) { // if the function returns a value  TODO: add pointer output when x->Python is 1;
         int size;
         if (PyList_Check(pValue)){
@@ -800,10 +797,17 @@ static void run_function_FORK(t_py *x, t_symbol *s, int argc, t_atom *argv, int 
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);
         PyErr_Clear();
+        close(pipefd[0]);
+        t_outsFromFork *outFork = (t_outsFromFork *)malloc(sizeof(t_outsFromFork));
+        outFork->error = 1;
+        write(pipefd[1], outFork, sizeof(t_outsFromFork));
+        close(pipefd[0]);
+        close(pipefd[1]);
+        free(outFork);
     }
     Py_XDECREF(pValue);
     Py_DECREF(ArgsTuple);
-
+    return;
 }
 
 // ============================================
@@ -838,6 +842,10 @@ static void py4pdFork(t_py *x, t_symbol *s, int argc, t_atom *argv){
             if (WIFEXITED(status)) {
                 t_outsFromFork *outFork = (t_outsFromFork *)malloc(sizeof(t_outsFromFork));
                 read(pipefd[0], outFork, sizeof(t_outsFromFork));
+                if (outFork->error == 1){
+                    pd_error(x, "[py4pd] Some error occur when run Python Function!");
+                    return;
+                }
                 if (outFork->outSize == 1){
                     t_atom *atoms = (t_atom *) malloc(sizeof(t_atom));
                     read(pipefd[0], atoms, sizeof(t_atom));
@@ -860,7 +868,7 @@ static void py4pdFork(t_py *x, t_symbol *s, int argc, t_atom *argv){
                 kill(child_pid, SIGKILL);
             }
             else{
-                pd_error(x, "[py4pd] Some error occur after run the function!");
+                pd_error(x, "[py4pd] Some error occur when run Python Function!");
             }
         }
     }
@@ -888,18 +896,19 @@ static void *ThreadFunc(void *lpParameter) {
 
 
 // ============================================
-static void create_thread(t_py *x, t_symbol *s, int argc, t_atom *argv){
+static void create_fork(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     struct thread_arg_struct *arg = (struct thread_arg_struct*)malloc(sizeof(struct thread_arg_struct)); arg->x = *x; arg->argc = argc;
     arg->argv = argv;
     if (x->function_called == 0) {
-        // Pd is crashing when I try to create a thread.
         pd_error(x, "[py4pd] You need to call a function before run!");
         free(arg);
         return;
     } else {
         pthread_t thread;
         pthread_create(&thread, NULL, ThreadFunc, arg);
+        pthread_detach(thread);
+        free(arg);
     }
     return;
 }
@@ -922,7 +931,7 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         return;
     }
     if (x->runmode == 1) {
-        create_thread(x, s, argc, argv);
+        create_fork(x, s, argc, argv);
     } 
     else if (x->runmode == 0) {
         run_function(x, s, argc, argv);

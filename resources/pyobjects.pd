@@ -3,5 +3,8 @@
 #X obj 16 74 score;
 #X obj 16 208 print;
 #X msg 16 50 c#4 c3;
+#X obj 156 75 score;
+#X msg 156 44 c#5 c3;
 #X connect 1 0 2 0;
 #X connect 3 0 1 0;
+#X connect 5 0 4 0;
