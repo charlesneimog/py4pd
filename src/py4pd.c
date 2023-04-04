@@ -828,7 +828,7 @@ static void py4pdFork(t_py *x, t_symbol *s, int argc, t_atom *argv){
             return;
         }
         PyOS_BeforeFork();
-        child_pid = fork(); // WARNING: Fork
+        child_pid = fork(); // NOTE: Fork
         PyOS_AfterFork_Child();
         if (child_pid == -1) {
             pd_error(x, "[py4pd] Error in fork!");
