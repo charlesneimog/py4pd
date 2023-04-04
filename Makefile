@@ -2,6 +2,9 @@ lib.name = py4pd
 
 uname := $(shell uname -s)
 
+
+# TODO: to add sys/wait.h to the include path of MINGW (Windows), you need to add the following line to the file /mingw64/x86_64-w64-mingw32/include/sys/_mingw.h
+
 # =================================== Windows ===================================
 ifeq (MINGW,$(findstring MINGW,$(uname)))
 	  PYTHON_INCLUDE := $(shell cat pythonincludes.txt)
