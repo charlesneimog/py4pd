@@ -399,34 +399,26 @@ t_atom *py4pd_convert_to_pd_FORK(t_py *x, PyObject *pValue, t_atom *list_array) 
                 return 0;
             }
         }
-        // malloc memory for outsFromFork
         return list_array;
 
     } 
     else {
         if (PyLong_Check(pValue)) {
             long result = PyLong_AsLong(pValue);  // If the function return a integer
-            t_atom *result_atom = (t_atom *)malloc(sizeof(t_atom));
-            result_atom->a_type = A_FLOAT;
-            result_atom->a_w.w_float = (t_float)result;
-            list_array[0] = *result_atom;
+            list_array[0].a_type = A_FLOAT;
+            list_array[0].a_w.w_float = result;
             return list_array;
         } 
         else if (PyFloat_Check(pValue)) {
             double result = PyFloat_AsDouble(pValue);  // If the function return a float
-            float result_float = (float)result;
-            t_atom *result_atom = (t_atom *)malloc(sizeof(t_atom));
-            result_atom->a_type = A_FLOAT;
-            result_atom->a_w.w_float = result_float;
-            list_array[0] = *result_atom;
+            list_array[0].a_type = A_FLOAT;
+            list_array[0].a_w.w_float = result;
             return list_array;
         } 
         else if (PyUnicode_Check(pValue)) {
             const char *result = PyUnicode_AsUTF8(pValue); // If the function return a string
-            t_atom *result_atom = (t_atom *)malloc(sizeof(t_atom));
-            result_atom->a_type = A_SYMBOL;
-            result_atom->a_w.w_symbol = gensym(result);
-            list_array[0] = *result_atom;
+            list_array[0].a_type = A_SYMBOL;
+            list_array[0].a_w.w_symbol = gensym(result);
             return list_array;
         } 
         else if (Py_IsNone(pValue)) {
@@ -546,7 +538,7 @@ int *set_py4pd_config(t_py *x) {
     char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py-modules/") + 1));  //
     snprintf(PADRAO_packages_path, strlen(x->home_path->s_name) + strlen("/py-modules/") + 1, "%s/py-modules/", x->home_path->s_name);
     x->packages_path = gensym(PADRAO_packages_path);
-    x->thread = 0;
+    x->runmode = 0;
     if (x->editorName == NULL){
         const char *editor = PY4PD_EDITOR;
         x->editorName = gensym(editor);
@@ -602,9 +594,9 @@ int *set_py4pd_config(t_py *x) {
                     *i = 0;
                     // if thread start with . add the home_path
                     if (thread[0] == '1') {
-                        x->thread = 1;
+                        x->runmode = 1;
                     } else {
-                        x->thread = 0;
+                        x->runmode = 0;
                     }
                 }
             } else if (strstr(line, "editor =") != NULL) {
