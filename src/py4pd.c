@@ -712,106 +712,8 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     Py_DECREF(ArgsTuple);
     return;
 }
-
-
 // ============================================
-static void run_function_FORK(t_py *x, t_symbol *s, int argc, t_atom *argv, int pipefd[]){
-    //  TODO: Check for memory leaks
-    (void)s;
-    int OpenList_count = 0;
-    int CloseList_count = 0;
 
-    PyObject *pValue, *ArgsTuple;
-    if (argc != 0) {
-        for (int i = 0; i < argc; i++) {
-            if (argv[i].a_type == A_SYMBOL) {
-                if (strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL) {
-                    CloseList_count++;
-                }
-                if (strchr(argv[i].a_w.w_symbol->s_name, ']') != NULL) {
-                    OpenList_count++;
-                }
-            }
-        }
-        if (OpenList_count != CloseList_count) {
-            printf("The number of '[' and ']' is not the same!");
-            return;
-        }
-        PyObject **lists = (PyObject **)malloc(OpenList_count * sizeof(PyObject *));
-
-        ArgsTuple = py4pd_convert_to_py(lists, argc, argv);  // convert the arguments to python
-        int argCount = PyTuple_Size(ArgsTuple);  // get the number of arguments
-        if (argCount != x->py_arg_numbers) {
-            printf("Wrong args");
-            pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %i arguments, received %i!", 
-                        x->function_name->s_name, (int)x->py_arg_numbers,
-                        argCount);
-            return;
-        }
-    } 
-    else {
-        ArgsTuple = PyTuple_New(0);
-    }
-
-    PyObject *objectCapsule = py4pd_add_pd_object(x);
-    if (objectCapsule == NULL){
-        pd_error(x, "[Python] Failed to add object to Python");
-        printf("Failed to add object to Python");
-        return;
-    }
-    pValue = PyObject_CallObject(x->function, ArgsTuple);
-
-    if (pValue != NULL) { // if the function returns a value  TODO: add pointer output when x->Python is 1;
-        int size;
-        if (PyList_Check(pValue)){
-            size = PyList_Size(pValue);
-        }
-        else if (PyTuple_Check(pValue)){
-            size = PyTuple_Size(pValue);
-        }
-        else{
-            size = 1;
-        }
-        close(pipefd[0]);
-        t_atom *out = (t_atom *)malloc(size * sizeof(t_atom));
-        py4pd_convert_to_pd_FORK(x, pValue, out);  // convert the value to pd 
-        t_outsFromFork *outFork = (t_outsFromFork *)malloc(sizeof(t_outsFromFork));
-        outFork->outSize = size;
-        write(pipefd[1], outFork, sizeof(t_outsFromFork));
-        write(pipefd[1], out, outFork->outSize * sizeof(t_atom)); // Send the output data to the parent
-        close(pipefd[0]);
-        close(pipefd[1]);
-        free(out);
-        free(outFork);
-    } 
-    else {                             // if the function returns a error
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[Python] Call failed: %s", PyUnicode_AsUTF8(pstr));
-        printf("Call failed: %s", PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
-        PyErr_Clear();
-        close(pipefd[0]);
-        t_outsFromFork *outFork = (t_outsFromFork *)malloc(sizeof(t_outsFromFork));
-        outFork->error = 1;
-        write(pipefd[1], outFork, sizeof(t_outsFromFork));
-        close(pipefd[0]);
-        close(pipefd[1]);
-        free(outFork);
-    }
-    Py_XDECREF(pValue);
-    Py_DECREF(ArgsTuple);
-    return;
-}
-
-
-
-// ============================================
 struct thread_arg_struct {
     t_py x;
     t_symbol s;
@@ -822,6 +724,7 @@ struct thread_arg_struct {
 
 // ============================================
 static void thread_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    (void)s;
     #ifdef _WIN32
         PyObject* multiprocessing = PyImport_ImportModule("threading");
         PyObject* Process = PyObject_GetAttrString(multiprocessing, "Thread");
@@ -870,7 +773,7 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
 // ===========================================
 
-static void runmode(t_py *x, t_floatarg f) {
+static void py4pdThread(t_py *x, t_floatarg f) {
     int mode = (int)f;
     if (mode == 0) {
         x->runmode = 0;
@@ -878,10 +781,10 @@ static void runmode(t_py *x, t_floatarg f) {
     }
     else if (mode == 1) {
         #ifdef _WIN32
-            pd_error(x, "[py4pd] Fork is not implemented in Windows OS, send an email for Microsoft!");
+            pd_error(x, "[py4pd] Thread is not implemented in Windows OS, wait for PEP 684");
         #endif
         x->runmode = 1; //fork
-        post("[py4pd] Fork mode activated");
+        post("[py4pd] Thread mode activated");
         return;
     }
     else {
@@ -1477,8 +1380,8 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_classAudioOut, (t_method)packages, gensym("packages"), A_GIMME, 0);  // set packages path
     class_addmethod(py4pd_classAudioIn, (t_method)packages, gensym("packages"), A_GIMME, 0);  // set packages path
 
-    class_addmethod(py4pd_class, (t_method)runmode, gensym("runmode"), A_FLOAT, 0);  // on/off threading
-    class_addmethod(py4pd_class_VIS, (t_method)runmode, gensym("runmode"), A_FLOAT, 0);  // on/off threading
+    class_addmethod(py4pd_class, (t_method)py4pdThread, gensym("thread"), A_FLOAT, 0);  // on/off threading
+    class_addmethod(py4pd_class_VIS, (t_method)py4pdThread, gensym("thread"), A_FLOAT, 0);  // on/off threading
     // class_addmethod(py4pd_classAudioOut, (t_method)thread, gensym("thread"), A_FLOAT, 0);  // on/off threading
 
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0);  // reload python script
