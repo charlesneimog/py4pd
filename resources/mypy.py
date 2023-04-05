@@ -2,7 +2,7 @@ import multiprocessing
 import time
 
 def printThread():
-    time.sleep(10)
+    time.sleep(2)
     print("Print")
 
 

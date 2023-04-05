@@ -897,9 +897,13 @@ static void *ThreadFunc(void *lpParameter) {
 
 // ============================================
 static void thread_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
-
-    PyObject* multiprocessing = PyImport_ImportModule("multiprocessing");
-    PyObject* Process = PyObject_GetAttrString(multiprocessing, "Process");
+    #ifdef _WIN32
+        PyObject* multiprocessing = PyImport_ImportModule("threading");
+        PyObject* Process = PyObject_GetAttrString(multiprocessing, "Thread");
+    #else
+        PyObject* multiprocessing = PyImport_ImportModule("multiprocessing");
+        PyObject* Process = PyObject_GetAttrString(multiprocessing, "Process");
+    #endif
 
     PyObject* kwargs = Py_BuildValue("{s:O}", "target", x->function);
     PyObject* process = PyObject_Call(Process, Py_BuildValue("()"), kwargs);
