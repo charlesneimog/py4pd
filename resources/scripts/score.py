@@ -142,6 +142,6 @@ def note(pitch):
 
 
 def py4pdLoadObjects():
-    pd.addobject(note, "note")
+    pd.addobject(note, "note", objtype="VIS")
     pd.addobject(chord, "chord")
     pd.print("Added note and chord objects")

@@ -3,8 +3,6 @@
 #include "pd_module.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
-#include "pylifecycle.h"
-#include "pystate.h"
 #include <stdio.h>
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -717,7 +715,6 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
 
 // ============================================
-#ifdef __unix__
 static void run_function_FORK(t_py *x, t_symbol *s, int argc, t_atom *argv, int pipefd[]){
     //  TODO: Check for memory leaks
     (void)s;
@@ -877,7 +874,6 @@ static void py4pdFork(t_py *x, t_symbol *s, int argc, t_atom *argv){
     }
 }
 
-
 // ============================================
 struct thread_arg_struct {
     t_py x;
@@ -900,6 +896,25 @@ static void *ThreadFunc(void *lpParameter) {
 
 
 // ============================================
+static void thread_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
+
+    PyObject* multiprocessing = PyImport_ImportModule("multiprocessing");
+    PyObject* Process = PyObject_GetAttrString(multiprocessing, "Process");
+
+    PyObject* kwargs = Py_BuildValue("{s:O}", "target", x->function);
+    PyObject* process = PyObject_Call(Process, Py_BuildValue("()"), kwargs);
+
+    PyObject_SetAttrString(process, "daemon", Py_True);
+    PyObject_CallMethod(process, "start", NULL);
+
+    Py_DECREF(process);
+    Py_DECREF(Process);
+    Py_DECREF(multiprocessing);
+    return;
+}
+
+
+// ============================================
 static void create_fork(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
     struct thread_arg_struct *arg = (struct thread_arg_struct*)malloc(sizeof(struct thread_arg_struct)); arg->x = *x; arg->argc = argc;
@@ -908,7 +923,8 @@ static void create_fork(t_py *x, t_symbol *s, int argc, t_atom *argv){
         pd_error(x, "[py4pd] You need to call a function before run!");
         free(arg);
         return;
-    } else {
+    } 
+    else {
         pthread_t thread;
         pthread_create(&thread, NULL, ThreadFunc, arg);
         pthread_detach(thread);
@@ -917,7 +933,6 @@ static void create_fork(t_py *x, t_symbol *s, int argc, t_atom *argv){
     return;
 }
 
-#endif
 // ============================================
 /**
  * @brief This function will control were the Python will run, wil PEP 684, I want to make possible using parallelism in Python
@@ -934,18 +949,19 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         pd_error(x, "[py4pd] You need to call a function before run!");
         return;
     }
-    if (x->runmode == 1) {
+    
+    if (x->runmode == 0) {
+        run_function(x, s, argc, argv);
+    }
+    else if (x->runmode == 1) {
         #ifdef __unix__ 
             create_fork(x, s, argc, argv);
         #else
             pd_error(x, "[py4pd] Threading is not implemented in Windows yet!");
         #endif
     } 
-    else if (x->runmode == 0) {
-        run_function(x, s, argc, argv);
-    } 
-    else {
-        pd_error(x, "[py4pd] Thread not created");
+    else if(x->runmode == 2) {
+        thread_run(x, s, argc, argv);
     }
     return;
 }
@@ -954,21 +970,29 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 // ===========================================
 
 static void runmode(t_py *x, t_floatarg f) {
-    int thread = (int)f;
-    if (thread == 1) {
+    int mode = (int)f;
+    if (mode == 0) {
+        x->runmode = 0;
+        return;
+    }
+    else if (mode == 1) {
         #ifdef _WIN32
-            pd_error(x, "[py4pd] Threading is not implemented in Windows yet!");
+            pd_error(x, "[py4pd] Fork is not implemented in Windows OS, send an email for Microsoft!");
             return;
         #endif
         x->runmode = 1; //fork
+        post("[py4pd] Fork mode activated");
         return;
-    } 
-    else if (thread == 0) {
-        x->runmode = 0;
+    }
+    else if(mode == 2) {
+        x->runmode = 2; //subinterpreter
+        post("[py4pd] Multithreading mode activated");
         return;
-    } 
+    }
+
+
     else {
-        pd_error(x, "[py4pd] Threading status must be 0 or 1");
+        pd_error(x, "[py4pd] Invalid runmode, use 0 for normal mode and 1 for threading mode");
     }
 }
 
@@ -1317,7 +1341,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
             else if (py4pdArgs == gensym("-audioin")) {
                 audioIN = 1;
             }
-            else if (py4pdArgs == gensym("-library")) {
+            else if (py4pdArgs == gensym("-library") || py4pdArgs == gensym("-lib")) {
                 libraryMODE = 1;
                 normalMODE = 0;
             }
