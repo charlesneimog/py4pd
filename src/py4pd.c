@@ -809,70 +809,7 @@ static void run_function_FORK(t_py *x, t_symbol *s, int argc, t_atom *argv, int 
     return;
 }
 
-// ============================================
 
-static void py4pdFork(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    (void)s;
-    int pipefd[2];
-    int child_pid;
-    if (x->function_called == 0) {
-        pd_error(x, "[py4pd] You need to call a function before run!");
-        return;
-    } 
-    else {
-        if (pipe(pipefd) == -1) {
-            pd_error(x, "[py4pd] Error in pipe!");
-            return;
-        }
-        PyOS_BeforeFork();
-        child_pid = fork(); // NOTE: Fork
-        PyOS_AfterFork_Child();
-        if (child_pid == -1) {
-            pd_error(x, "[py4pd] Error in fork!");
-            exit(1);
-        }
-        else if (child_pid == 0) {
-            run_function_FORK(x, s, argc, argv, pipefd);
-            Py_Finalize();
-            exit(EXIT_SUCCESS);
-        }
-        else{
-            int status;
-            waitpid(child_pid, &status, 0);
-            if (WIFEXITED(status)) {
-                t_outsFromFork *outFork = (t_outsFromFork *)malloc(sizeof(t_outsFromFork));
-                read(pipefd[0], outFork, sizeof(t_outsFromFork));
-                if (outFork->error == 1){
-                    pd_error(x, "[py4pd] Some error occur when run Python Function!");
-                    return;
-                }
-                if (outFork->outSize == 1){
-                    t_atom *atoms = (t_atom *) malloc(sizeof(t_atom));
-                    read(pipefd[0], atoms, sizeof(t_atom));
-                    if (atoms[0].a_type == A_FLOAT){
-                        outlet_float(x->out_A, atoms[0].a_w.w_float);
-                    }
-                    else if (atoms[0].a_type == A_SYMBOL){
-                        pd_error(x, "[py4pd] The function returns a symbol, symbol output is not implemented yet!");
-                    }
-                    free(atoms);
-                }
-                else{
-                    t_atom *atoms = (t_atom *) malloc(outFork->outSize  * sizeof(t_atom));
-                    read(pipefd[0], atoms, outFork->outSize * sizeof(t_atom));
-                    outlet_list(x->out_A, 0, outFork->outSize, atoms);
-                    free(atoms);
-                }
-                free(outFork);
-                close(pipefd[0]);
-                kill(child_pid, SIGKILL);
-            }
-            else{
-                pd_error(x, "[py4pd] Some error occur when run Python Function!");
-            }
-        }
-    }
-}
 
 // ============================================
 struct thread_arg_struct {
@@ -882,18 +819,6 @@ struct thread_arg_struct {
     t_atom *argv;
     PyThreadState *interp;
 } thread_arg;
-
-// ============================================
-static void *ThreadFunc(void *lpParameter) {
-    struct thread_arg_struct *arg = (struct thread_arg_struct *)lpParameter;
-    t_py *x = &arg->x;
-    t_symbol *s = &arg->s;
-    int argc = arg->argc;
-    t_atom *argv = arg->argv;
-    py4pdFork(x, s, argc, argv);
-    return 0;
-}
-
 
 // ============================================
 static void thread_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
@@ -917,26 +842,6 @@ static void thread_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     return;
 }
 
-
-// ============================================
-static void create_fork(t_py *x, t_symbol *s, int argc, t_atom *argv){
-    (void)s;
-    struct thread_arg_struct *arg = (struct thread_arg_struct*)malloc(sizeof(struct thread_arg_struct)); arg->x = *x; arg->argc = argc;
-    arg->argv = argv;
-    if (x->function_called == 0) {
-        pd_error(x, "[py4pd] You need to call a function before run!");
-        free(arg);
-        return;
-    } 
-    else {
-        pthread_t thread;
-        pthread_create(&thread, NULL, ThreadFunc, arg);
-        pthread_detach(thread);
-        free(arg);
-    }
-    return;
-}
-
 // ============================================
 /**
  * @brief This function will control were the Python will run, wil PEP 684, I want to make possible using parallelism in Python
@@ -953,18 +858,10 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         pd_error(x, "[py4pd] You need to call a function before run!");
         return;
     }
-    
     if (x->runmode == 0) {
         run_function(x, s, argc, argv);
     }
-    else if (x->runmode == 1) {
-        #ifdef __unix__ 
-            create_fork(x, s, argc, argv);
-        #else
-            pd_error(x, "[py4pd] Threading is not implemented in Windows yet!");
-        #endif
-    } 
-    else if(x->runmode == 2) {
+    else if(x->runmode == 1) {
         thread_run(x, s, argc, argv);
     }
     return;
@@ -982,19 +879,11 @@ static void runmode(t_py *x, t_floatarg f) {
     else if (mode == 1) {
         #ifdef _WIN32
             pd_error(x, "[py4pd] Fork is not implemented in Windows OS, send an email for Microsoft!");
-            return;
         #endif
         x->runmode = 1; //fork
         post("[py4pd] Fork mode activated");
         return;
     }
-    else if(mode == 2) {
-        x->runmode = 2; //subinterpreter
-        post("[py4pd] Multithreading mode activated");
-        return;
-    }
-
-
     else {
         pd_error(x, "[py4pd] Invalid runmode, use 0 for normal mode and 1 for threading mode");
     }
@@ -1543,16 +1432,6 @@ void *py4pd_free(t_py *x) {
 
 }
 
-// ====================================================
-/**
- * @brief Setup the class
- * 
- */
-// ====================================================
-/**
- * @brief Setup the class
- * 
- */
 // ====================================================
 /**
  * @brief Setup the class
