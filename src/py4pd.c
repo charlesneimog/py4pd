@@ -1,12 +1,11 @@
 #include "py4pd.h"
-#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
-#include <stdio.h>
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
+
 
 
 // ============================================
@@ -16,6 +15,7 @@ t_class *py4pd_classAudioIn;   // For audio in
 t_class *py4pd_classAudioOut;  // For audio out
 t_class *py4pd_classLibrary;   // For libraries
 int object_count; 
+int pipePy4pdNum = 0;
 
 
 // ============================================
@@ -479,6 +479,15 @@ static void reload(t_py *x) {
  */
 void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
+
+
+    // =====================
+    // check number of arguments
+    if (argc < 2) {  // check is the number of arguments is correct | set
+        pd_error(x, "[py4pd] 'set' message needs two arguments! The 'Script Name' and the 'Function Name'!");
+        return;
+    }
+
     t_symbol *script_file_name = atom_gensym(argv + 0);
     t_symbol *function_name = atom_gensym(argv + 1);
 
@@ -514,14 +523,6 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         Py_XDECREF(x->function);
         return;
     }
-
-    // =====================
-    // check number of arguments
-    if (argc < 2) {  // check is the number of arguments is correct | set
-        pd_error(x, "[py4pd] 'set' message needs two arguments! The 'Script Name' and the 'Function Name'!");
-        return;
-    }
-    // =====================
     PyObject *pModule, *pFunc;  // Create the variables of the python objects
 
     // =====================
@@ -569,11 +570,8 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
         int py_args = PyObject_Size(args);
         x->py_arg_numbers = py_args;
-        if (args == Py_None && x->py4pd_lib == 0) {
-            x->py_arg_numbers = -1;
-            post("[py4pd] The '%s' function has *args or **kwargs!", function_name->s_name);
-        } 
-        else if (x->py4pd_lib == 0) {
+
+        if (x->py4pd_lib == 0) {
             post("[py4pd] The '%s' function has %d arguments!", function_name->s_name, py_args);
         }
         Py_DECREF(inspect);
@@ -584,6 +582,7 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         x->function = pFunc;
         x->script_name = script_file_name;
         x->function_name = function_name;
+        printf("[py4pd] The function %s was set!\n", function_name->s_name);
         x->function_called = 1;
 
     } 
@@ -605,15 +604,6 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
     return;
 }
-
-// ============================================
-/**
- * @brief Run the function setted, it works with lists too.
- * @param x 
- * @param s 
- * @param argc 
- * @param argv 
- */
 
 // ============================================
 /**
@@ -722,7 +712,6 @@ struct thread_arg_struct {
 // ============================================
 static void thread_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
-
     PyObject* multiprocessing = PyImport_ImportModule("multiprocessing");
     PyObject* context = PyObject_CallMethod(multiprocessing, "get_context", "s", "spawn");
     PyObject* Process = PyObject_GetAttrString(context, "Process");
@@ -733,6 +722,145 @@ static void thread_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     return;
 
 }
+
+// =====================================
+struct py4pdEXE{
+    t_py            *x;
+    t_symbol        *s;
+    int             argc;
+    t_atom          *argv;
+}t_py4pdEXE;
+
+
+// ============================================
+void *py4pdThreadExe(void *arg) {
+    char *command = (char *)arg;
+    system(command);
+    pthread_exit(NULL);
+}
+
+
+// ============================================
+void *independed_run(void *arg) {
+    struct py4pdEXE *py4pdEXE = (struct py4pdEXE *)arg;
+    t_py *x = py4pdEXE->x;
+    t_symbol *s = py4pdEXE->s;
+    int argc = py4pdEXE->argc;
+    t_atom *argv = py4pdEXE->argv;
+
+    const char *pipe_PDARGS = "/tmp/py4pd_PDARGS"; // It sends the arguments list to the py4pd (exe)
+    const char *pipe_PDARGS_SIZE = "/tmp/py4pd_PDARGS_SIZE"; // It sends the arguments list size to the py4pd (exe)
+    const char *pipe_PY4PDHOME = "/tmp/py4pd_PY4PDHOME"; // It sends the Pd home path to the py4pd (exe)
+    const char *pipe_PATCHHOME = "/tmp/py4pd_PATCHHOME"; // It sends the Pd patch path to the py4pd (exe)
+    const char *pipe_SITEPACKAGES = "/tmp/py4pd_SITEPACKAGES";
+    const char *pipe_PYMODULE = "/tmp/py4pd_PYMODULE"; // The name of the named pipe
+    const char *pipe_PYFUNCTION = "/tmp/py4pd_PYFUNCTION"; // The name of the named pipe
+    const char *pipe_PYRETURN = "/tmp/py4pd_PYRETURN"; // The name of the named pipe
+    const char *pipe_RETURNSIZE = "/tmp/py4pd_RETURNSIZE"; // The name of the named pipe
+
+    // ============================================
+    unlink(pipe_PYRETURN);
+    unlink(pipe_RETURNSIZE);
+    const char *py4pd_PATH = x->py4pd_folder->s_name;
+    const char py4pd_EXEC[] = "py4pd";
+
+    // create exec path
+    char *exec_path = (char *)malloc(strlen(py4pd_PATH) + strlen(py4pd_EXEC) + 2);
+    strcpy(exec_path, py4pd_PATH);
+    strcat(exec_path, "/");
+    strcat(exec_path, py4pd_EXEC);
+    
+    pthread_t thread;
+    pthread_create(&thread, NULL, py4pdThreadExe, exec_path);
+
+    mkfifo(pipe_PY4PDHOME, 0666);
+    mkfifo(pipe_PATCHHOME, 0666);
+    mkfifo(pipe_PYMODULE, 0666);
+    mkfifo(pipe_PYFUNCTION, 0666);
+    mkfifo(pipe_SITEPACKAGES, 0666);
+
+
+    int fd_PY4PDHOME = open(pipe_PY4PDHOME, O_WRONLY);
+    int fd_PATCHHOME = open(pipe_PATCHHOME, O_WRONLY);
+    int fd_PYMODULE = open(pipe_PYMODULE, O_WRONLY);
+    int fd_PYFUNCTION = open(pipe_PYFUNCTION, O_WRONLY);
+    int fd_SITEPACKAGES = open(pipe_SITEPACKAGES, O_WRONLY);
+
+    if (fd_PY4PDHOME < 0 || fd_PYMODULE < 0 || fd_PYFUNCTION < 0 || fd_SITEPACKAGES < 0 || fd_PATCHHOME < 0 ) {
+        pd_error(x, "[py4pd] Failed to open pipe");
+        return 0;
+    }
+
+    const char *home = canvas_getdir(x->x_canvas)->s_name;
+    write(fd_PY4PDHOME, x->py4pd_folder->s_name, strlen(x->py4pd_folder->s_name) + 1);
+    write(fd_PATCHHOME, home, strlen(home) + 1);
+    write(fd_PYMODULE, x->script_name->s_name, strlen(x->script_name->s_name) + 1);
+    write(fd_PYFUNCTION, x->function_name->s_name, strlen(x->function_name->s_name) + 1);
+    write(fd_SITEPACKAGES, x->packages_path->s_name, strlen(x->packages_path->s_name) + 1);
+    close(fd_PY4PDHOME);
+    close(fd_PYMODULE);
+    close(fd_PYFUNCTION);
+    close(fd_SITEPACKAGES);
+    close(fd_SITEPACKAGES);
+
+    mkfifo(pipe_PYRETURN, 0666);
+    mkfifo(pipe_RETURNSIZE, 0666);
+    int pipeVALUES = open(pipe_PYRETURN, O_RDONLY);
+    int pipeSIZE = open(pipe_RETURNSIZE, O_RDONLY);
+
+    // read the size of the return value
+    int size;
+    read(pipeSIZE, &size, sizeof(int));
+    close(pipeSIZE);
+
+    py4pd_atom *value = (py4pd_atom *)malloc(size * sizeof(py4pd_atom));
+    read(pipeVALUES, value, size * sizeof(py4pd_atom));
+    if (size == 1){
+        if (value[0].a_type == PY4PD_FLOAT){
+            outlet_float(x->x_obj.ob_outlet, value[0].floatvalue);
+        }
+        else if (value[0].a_type == PY4PD_SYMBOL){
+            outlet_symbol(x->x_obj.ob_outlet, gensym(value[0].symbolvalue));
+        }
+        else{
+            pd_error(x, "[py4pd] Error: Unknown type");
+        }
+    }
+    else if (size > 1){
+        t_atom *atoms = (t_atom *)malloc(size * sizeof(t_atom));
+        for (int i = 0; i < size; i++){
+            if (value[i].a_type == PY4PD_FLOAT){
+                SETFLOAT(&atoms[i], value[i].floatvalue);
+            }
+            else if (value[i].a_type == PY4PD_SYMBOL){
+                SETSYMBOL(&atoms[i], gensym(value[i].symbolvalue));
+            }
+            else{
+                pd_error(x, "[py4pd] Error: Unknown type");
+            }
+        }
+        outlet_list(x->x_obj.ob_outlet, &s_list, size, atoms);
+        free(atoms);
+    }
+    else{
+        pd_error(x, "[py4pd] Error: Unknown type");
+    }
+    return 0;
+}
+
+// ============================================
+static void py4pdexe_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
+    struct py4pdEXE *x_py4pdEXE = (struct py4pdEXE *)malloc(sizeof(struct py4pdEXE));
+    x_py4pdEXE->x = x;
+    x_py4pdEXE->s = s;
+    x_py4pdEXE->argc = argc;
+    x_py4pdEXE->argv = argv;
+    pthread_t thread;
+    pthread_create(&thread, NULL, independed_run, x_py4pdEXE);
+    pthread_detach(thread);
+    return;
+}
+
 
 // ============================================
 /**
@@ -756,6 +884,9 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     else if(x->runmode == 1) {
         thread_run(x, s, argc, argv);
     }
+    else if(x->runmode == 2){
+        py4pdexe_run(x, s, argc, argv);
+    }
     return;
 }
 
@@ -774,6 +905,11 @@ static void py4pdThread(t_py *x, t_floatarg f) {
         #endif
         x->runmode = 1; //fork
         post("[py4pd] Thread mode activated");
+        return;
+    }   
+    else if (mode == 2){
+        x->runmode = 2; //my own .exe
+        post("[py4pd] Independed mode activated");
         return;
     }
     else {
