@@ -17,8 +17,8 @@
 #X msg 193 236 run;
 #X msg 320 289 runmode 0;
 #X msg 333 235 set mypy printThread;
-#X msg 69 107 runmode 1;
-#X msg 254 236 runmode 1;
+#X msg 69 107 thread 1;
+#X msg 254 236 thread 1;
 #X connect 0 0 8 0;
 #X connect 1 0 9 0;
 #X connect 3 0 4 0;

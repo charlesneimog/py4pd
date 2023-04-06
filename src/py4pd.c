@@ -716,33 +716,22 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
 struct thread_arg_struct {
     t_py x;
-    t_symbol s;
-    int argc;
-    t_atom *argv;
-    PyThreadState *interp;
+    PyObject *process;
 } thread_arg;
 
 // ============================================
 static void thread_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
-    #ifdef _WIN32
-        PyObject* multiprocessing = PyImport_ImportModule("threading");
-        PyObject* Process = PyObject_GetAttrString(multiprocessing, "Thread");
-    #else
-        PyObject* multiprocessing = PyImport_ImportModule("multiprocessing");
-        PyObject* Process = PyObject_GetAttrString(multiprocessing, "Process");
-    #endif
 
+    PyObject* multiprocessing = PyImport_ImportModule("multiprocessing");
+    PyObject* context = PyObject_CallMethod(multiprocessing, "get_context", "s", "spawn");
+    PyObject* Process = PyObject_GetAttrString(context, "Process");
     PyObject* kwargs = Py_BuildValue("{s:O}", "target", x->function);
     PyObject* process = PyObject_Call(Process, Py_BuildValue("()"), kwargs);
-
     PyObject_SetAttrString(process, "daemon", Py_True);
     PyObject_CallMethod(process, "start", NULL);
-
-    Py_DECREF(process);
-    Py_DECREF(Process);
-    Py_DECREF(multiprocessing);
     return;
+
 }
 
 // ============================================
@@ -1016,17 +1005,14 @@ t_int *py4pd_performAudioOutput(t_int *w) {
                 }
                 else {
                     pd_error(x, "[py4pd] The numpy array must have the same length of the vecsize and have 1 dim. Returned: %d samples and %d dims", arrayLength, PyArray_NDIM(pArray));
-                    // return (w + 5);
                 }
             } 
             else {
                 pd_error(x, "[py4pd] The function must return a list, a tuple or a numpy array, returned: %s", pValue->ob_type->tp_name);
-                // return (w + 5);
             }
         } 
         else {
             pd_error(x, "[py4pd] The function must return a list or tuplet, since numpy array is disabled, returned: %s", pValue->ob_type->tp_name);
-            // return (w + 5);
         }
     } 
     else {  // if the function returns a error
