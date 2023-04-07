@@ -652,7 +652,6 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     else {
         ArgsTuple = PyTuple_New(0);
     }
-
     // odd code, but solve the bug
     t_py *prev_obj;
     int prev_obj_exists = 0;
