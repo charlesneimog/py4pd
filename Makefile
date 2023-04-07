@@ -71,6 +71,7 @@ ifeq (MINGW,$(findstring MINGW,$(uname)))
 else ifeq (Linux,$(findstring Linux,$(uname)))
 	$(CC) -o py4pd src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
 else ifeq (Darwin,$(findstring Darwin,$(uname)))
+	PYTHON_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
 	PYTHON_LIB := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
 	$(CC) -o py4pd src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
 else
