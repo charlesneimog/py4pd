@@ -1,5 +1,4 @@
-$(info ========== py4pd Object =========)
-$(info )
+all: py4pd
 
 lib.name = py4pd
 uname := $(shell uname -s)
@@ -35,6 +34,30 @@ else
   $(shell exit 1)
 endif
 
+# =====================================================
+# ==================== py4pd ==========================
+# =====================================================
+
+ifeq (MINGW,$(findstring MINGW,$(uname)))
+    CC := gcc
+    py4pd.exe: src/py4pd_exe.c
+	    $(CC) -o py4pd.exe src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
+else ifeq (Linux,$(findstring Linux,$(uname)))
+    CC := gcc
+    py4pd: src/py4pd_exe.c
+	    $(CC) -o py4pd src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
+else ifeq (Darwin,$(findstring Darwin,$(uname)))
+    PYTHON_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
+    PYTHON_LIB := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
+    CC := clang
+    py4pd: src/py4pd_exe.c
+	    $(CC) -o py4pd src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
+else
+    $(error "Unknown system type: $(uname)")
+    $(shell exit 1)
+endif
+
+
 # =================================== Sources ===================================
 
 py4pd.class.sources = src/py4pd.c src/py4pd_utils.c src/pd_module.c src/py4pd_pic.c src/pylibraries.c
@@ -45,7 +68,7 @@ $(wildcard Help-files/*.pd) \
 $(wildcard scripts/*.py) \
 $(wildcard py.py) \
 $(wildcard py4pd-help.pd) \
-$(wildcard python311._pth) \
+# $(wildcard python311._pth) \
 $(PYTHON_DLL)
 
 # =================================== Pd Lib Builder =============================
@@ -59,26 +82,26 @@ localdep_windows: install
 localdep_macos: install
 	resources/localdeps/localdeps.macos.sh "${installpath}/py4pd.${extension}"
 
-# define py4pd_exe
-py4pd_exe: src/py4pd_exe.c
-	$(info ) 
-	$(info ========== py4pd StandAlone =========)
-	$(info)
-ifeq (MINGW,$(findstring MINGW,$(uname)))
-	$(CC) -o py4pd.exe src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
-else ifeq (Linux,$(findstring Linux,$(uname)))
-	$(CC) -o py4pd src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
-else ifeq (Darwin,$(findstring Darwin,$(uname)))
-	PYTHON_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
-	PYTHON_LIB := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
-	$(info $(PYTHON_INCLUDE))
-	$(info $(PYTHON_LIB))
-	$(CC) -o py4pd src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
-else
-	$(error "Unknown system type: $(uname)")
-	$(shell exit 1)
-endif
-
-# in normal mode, compile py4pd and the py4pd_exe
-all: py4pd py4pd_exe
+# py4pd_exe: src/py4pd_exe.c
+# 	$(info ) 
+# 	$(info ========== py4pd StandAlone =========)
+# 	$(info)
+#
+# ifeq (MINGW,$(findstring MINGW,$(uname)))
+# 	$(CC) -o py4pd.exe src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
+# else ifeq (Linux,$(findstring Linux,$(uname)))
+# 	$(CC) -o py4pd src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
+# else ifeq (Darwin,$(findstring Darwin,$(uname)))
+# 	PYTHON_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
+# 	PYTHON_LIB := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
+# 	$(info $(PYTHON_INCLUDE))
+# 	$(info $(PYTHON_LIB))
+# 	$(CC) -o py4pd src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
+# else
+# 	$(error "Unknown system type: $(uname)")
+# 	$(shell exit 1)
+# endif
+#
+# # in normal mode, compile py4pd and the py4pd_exe
+# all: py4pd py4pd_exe
 
