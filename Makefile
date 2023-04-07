@@ -1,9 +1,8 @@
+$(info ========== py4pd Object =========)
+$(info )
+
 lib.name = py4pd
-
 uname := $(shell uname -s)
-
-
-# TODO: to add sys/wait.h to the include path of MINGW (Windows), you need to add the following line to the file /mingw64/x86_64-w64-mingw32/include/sys/_mingw.h
 
 # =================================== Windows ===================================
 ifeq (MINGW,$(findstring MINGW,$(uname)))
@@ -64,8 +63,20 @@ localdep_macos: install
 
 # define py4pd_exe
 py4pd_exe: src/py4pd_exe.c
-	gcc -o py4pd src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
-
+	$(info ) 
+	$(info ========== py4pd StandAlone =========)
+	$(info )
+ifeq (MINGW,$(findstring MINGW,$(uname)))
+	$(CC) -o py4pd.exe src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
+else ifeq (Linux,$(findstring Linux,$(uname)))
+	$(CC) -o py4pd src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
+else ifeq (Darwin,$(findstring Darwin,$(uname)))
+	PYTHON_LIB := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
+	$(CC) -o py4pd src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
+else
+	$(error "Unknown system type: $(uname)")
+	$(shell exit 1)
+endif
 
 # in normal mode, compile py4pd and the py4pd_exe
 all: py4pd py4pd_exe
