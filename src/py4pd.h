@@ -4,17 +4,15 @@
 #include <m_pd.h>
 #include <g_canvas.h>
 #include <pthread.h>
-#include <fcntl.h>
+
 
 #define PY_SSIZE_T_CLEAN // Good practice to use this before include Python.h because it will remove some deprecated function
 #include <Python.h>
 
 #ifdef _WIN64 
     #include <windows.h>  // on Windows, system() open a console window and we don't want that
-    //#include "../resources/windows/syswait/sys/wait.h"
 #else
-    #include <sys/wait.h>
-    // #include <dirent.h>
+    #include <fcntl.h>
 #endif
 
 #define PY4PD_MAJOR_VERSION 0

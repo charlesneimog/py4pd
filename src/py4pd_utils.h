@@ -9,7 +9,6 @@
 
 #include <dlfcn.h>
 
-
 // declare function of utilities.c
 void findpy4pd_folder(t_py *x);
 void py4pd_tempfolder(t_py *x);
