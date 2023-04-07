@@ -6,6 +6,12 @@
 #include <pthread.h>
 #include <fcntl.h>
 
+
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/stat.h>
+
+
 #define PY_SSIZE_T_CLEAN // Good practice to use this before include Python.h because it will remove some deprecated function
 #include <Python.h>
 
@@ -135,15 +141,21 @@ typedef struct outsFromFork{
 
 // =====================================
 typedef enum{
-    PY4PD_FLOAT,
-    PY4PD_SYMBOL,
+    PY4PD_FLOAT, // 1
+    PY4PD_SYMBOL, // 2
 } py4pd_atomtype;
 
 typedef struct _py4pdatom{
     float floatvalue;
-    char *symbolvalue;
-    py4pd_atomtype a_type;
+    const char *symbolvalue;
+    int a_type;
 } py4pd_atom;
+
+typedef struct _pdArgs{
+    int size;
+    py4pd_atom *atoms;
+} pd_args;
+
 
 
 // =====================================

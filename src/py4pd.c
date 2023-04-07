@@ -1,7 +1,9 @@
 #include "py4pd.h"
+#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
+#include <sys/stat.h>
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
@@ -712,13 +714,15 @@ struct thread_arg_struct {
 // ============================================
 static void thread_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
-    PyObject* multiprocessing = PyImport_ImportModule("multiprocessing");
-    PyObject* context = PyObject_CallMethod(multiprocessing, "get_context", "s", "spawn");
-    PyObject* Process = PyObject_GetAttrString(context, "Process");
+    PyObject *multiprocessing = PyImport_ImportModule("multiprocessing");
+    PyObject* Process = PyObject_GetAttrString(multiprocessing, "Process");
     PyObject* kwargs = Py_BuildValue("{s:O}", "target", x->function);
     PyObject* process = PyObject_Call(Process, Py_BuildValue("()"), kwargs);
     PyObject_SetAttrString(process, "daemon", Py_True);
     PyObject_CallMethod(process, "start", NULL);
+    Py_DECREF(process);
+    Py_DECREF(Process);
+    Py_DECREF(multiprocessing);
     return;
 
 }
@@ -735,7 +739,10 @@ struct py4pdEXE{
 // ============================================
 void *py4pdThreadExe(void *arg) {
     char *command = (char *)arg;
-    system(command);
+    int status = system(command);
+    if (status != 0) {
+        pd_error(NULL, "[py4pd] py4pd detached thread exited with status %d", status);
+    }
     pthread_exit(NULL);
 }
 
@@ -744,12 +751,12 @@ void *py4pdThreadExe(void *arg) {
 void *independed_run(void *arg) {
     struct py4pdEXE *py4pdEXE = (struct py4pdEXE *)arg;
     t_py *x = py4pdEXE->x;
-    t_symbol *s = py4pdEXE->s;
     int argc = py4pdEXE->argc;
     t_atom *argv = py4pdEXE->argv;
 
     const char *pipe_PDARGS = "/tmp/py4pd_PDARGS"; // It sends the arguments list to the py4pd (exe)
     const char *pipe_PDARGS_SIZE = "/tmp/py4pd_PDARGS_SIZE"; // It sends the arguments list size to the py4pd (exe)
+    const char *pipe_PDATOM_SIZE = "/tmp/py4pd_PDATOM_SIZE"; // It sends the arguments list size to the py4pd (exe)
     const char *pipe_PY4PDHOME = "/tmp/py4pd_PY4PDHOME"; // It sends the Pd home path to the py4pd (exe)
     const char *pipe_PATCHHOME = "/tmp/py4pd_PATCHHOME"; // It sends the Pd patch path to the py4pd (exe)
     const char *pipe_SITEPACKAGES = "/tmp/py4pd_SITEPACKAGES";
@@ -757,6 +764,17 @@ void *independed_run(void *arg) {
     const char *pipe_PYFUNCTION = "/tmp/py4pd_PYFUNCTION"; // The name of the named pipe
     const char *pipe_PYRETURN = "/tmp/py4pd_PYRETURN"; // The name of the named pipe
     const char *pipe_RETURNSIZE = "/tmp/py4pd_RETURNSIZE"; // The name of the named pipe
+    
+    mkfifo(pipe_PDARGS, 0666);
+    mkfifo(pipe_PDARGS_SIZE, 0666);
+    mkfifo(pipe_PDATOM_SIZE, 0666);
+    mkfifo(pipe_PY4PDHOME, 0666);
+    mkfifo(pipe_PATCHHOME, 0666);
+    mkfifo(pipe_SITEPACKAGES, 0666);
+    mkfifo(pipe_PYMODULE, 0666);
+    mkfifo(pipe_PYFUNCTION, 0666);
+    mkfifo(pipe_PYRETURN, 0666);
+    mkfifo(pipe_RETURNSIZE, 0666);
 
     // ============================================
     unlink(pipe_PYRETURN);
@@ -769,16 +787,8 @@ void *independed_run(void *arg) {
     strcpy(exec_path, py4pd_PATH);
     strcat(exec_path, "/");
     strcat(exec_path, py4pd_EXEC);
-    
     pthread_t thread;
-    pthread_create(&thread, NULL, py4pdThreadExe, exec_path);
-
-    mkfifo(pipe_PY4PDHOME, 0666);
-    mkfifo(pipe_PATCHHOME, 0666);
-    mkfifo(pipe_PYMODULE, 0666);
-    mkfifo(pipe_PYFUNCTION, 0666);
-    mkfifo(pipe_SITEPACKAGES, 0666);
-
+    pthread_create(&thread, NULL, py4pdThreadExe, exec_path); // this execute where pipes in read mode are opened
 
     int fd_PY4PDHOME = open(pipe_PY4PDHOME, O_WRONLY);
     int fd_PATCHHOME = open(pipe_PATCHHOME, O_WRONLY);
@@ -786,29 +796,54 @@ void *independed_run(void *arg) {
     int fd_PYFUNCTION = open(pipe_PYFUNCTION, O_WRONLY);
     int fd_SITEPACKAGES = open(pipe_SITEPACKAGES, O_WRONLY);
 
-    if (fd_PY4PDHOME < 0 || fd_PYMODULE < 0 || fd_PYFUNCTION < 0 || fd_SITEPACKAGES < 0 || fd_PATCHHOME < 0 ) {
+    if (fd_PY4PDHOME < 0 || fd_PYMODULE < 0 || fd_PYFUNCTION < 0 || fd_SITEPACKAGES < 0 || fd_PATCHHOME < 0){ 
         pd_error(x, "[py4pd] Failed to open pipe");
+        pthread_cancel(thread);
         return 0;
     }
-
     const char *home = canvas_getdir(x->x_canvas)->s_name;
     write(fd_PY4PDHOME, x->py4pd_folder->s_name, strlen(x->py4pd_folder->s_name) + 1);
     write(fd_PATCHHOME, home, strlen(home) + 1);
     write(fd_PYMODULE, x->script_name->s_name, strlen(x->script_name->s_name) + 1);
     write(fd_PYFUNCTION, x->function_name->s_name, strlen(x->function_name->s_name) + 1);
     write(fd_SITEPACKAGES, x->packages_path->s_name, strlen(x->packages_path->s_name) + 1);
+    
     close(fd_PY4PDHOME);
+    close(fd_PATCHHOME);
     close(fd_PYMODULE);
     close(fd_PYFUNCTION);
     close(fd_SITEPACKAGES);
-    close(fd_SITEPACKAGES);
+
+    int fd_PDARGS_SIZE = open(pipe_PDARGS_SIZE, O_WRONLY);
+    write(fd_PDARGS_SIZE, &argc, sizeof(int));
+    close(fd_PDARGS_SIZE);
+    
+    char pd_atoms[64 * argc]; // Buffer to hold all arguments
+    int offset = 0; // Offset within buffer
+    int *sizes = (int *)malloc(argc * sizeof(int));
+    for (int i = 0; i < argc; i++) {
+        char pd_atom[64];
+        atom_string(&argv[i], pd_atom, 64);
+        int len = strlen(pd_atom) + 1; // Add 1 to include null terminator
+        memcpy(pd_atoms + offset, pd_atom, len); // Copy argument to buffer
+        offset += len; // Update offset
+        sizes[i] = len;
+    }
+
+    int fd_PDARGS = open(pipe_PDARGS, O_WRONLY);
+    int fd_PDATOM_SIZE = open(pipe_PDATOM_SIZE, O_WRONLY);
+    int bytes_written = write(fd_PDARGS, pd_atoms, offset);
+    if (bytes_written == -1) {
+        pd_error(NULL, "Error to convert\n");
+    }
+    write(fd_PDATOM_SIZE, sizes, argc * sizeof(int));
+    close(fd_PDARGS);
 
     mkfifo(pipe_PYRETURN, 0666);
     mkfifo(pipe_RETURNSIZE, 0666);
     int pipeVALUES = open(pipe_PYRETURN, O_RDONLY);
     int pipeSIZE = open(pipe_RETURNSIZE, O_RDONLY);
 
-    // read the size of the return value
     int size;
     read(pipeSIZE, &size, sizeof(int));
     close(pipeSIZE);
@@ -845,6 +880,7 @@ void *independed_run(void *arg) {
     else{
         pd_error(x, "[py4pd] Error: Unknown type");
     }
+    free(value);
     return 0;
 }
 
@@ -890,7 +926,6 @@ static void run(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     return;
 }
 
-
 // ===========================================
 
 static void py4pdThread(t_py *x, t_floatarg f) {
@@ -902,9 +937,10 @@ static void py4pdThread(t_py *x, t_floatarg f) {
     else if (mode == 1) {
         #ifdef _WIN32
             pd_error(x, "[py4pd] Thread is not implemented in Windows OS, wait for PEP 684");
-        #endif
+        #else
         x->runmode = 1; //fork
         post("[py4pd] Thread mode activated");
+        #endif
         return;
     }   
     else if (mode == 2){

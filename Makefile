@@ -62,5 +62,11 @@ localdep_windows: install
 localdep_macos: install
 	resources/localdeps/localdeps.macos.sh "${installpath}/py4pd.${extension}"
 
-py4pd: py4pd
+# define py4pd_exe
+py4pd_exe: src/py4pd_exe.c
 	gcc -o py4pd src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
+
+
+# in normal mode, compile py4pd and the py4pd_exe
+all: py4pd py4pd_exe
+
