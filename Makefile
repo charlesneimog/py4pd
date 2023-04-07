@@ -6,12 +6,12 @@ uname := $(shell uname -s)
 
 # =================================== Windows ===================================
 ifeq (MINGW,$(findstring MINGW,$(uname)))
-	  PYTHON_INCLUDE := $(shell cat pythonincludes.txt)
-	  PYTHON_PATH := $(shell cat pythonpath.txt)
-	  NUMPY_INCLUDE := $(shell cat numpyincludes.txt)
-	  PYTHON_DLL := $(PYTHON_PATH)/python310.dll
-	  cflags = -l dl -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -Wno-unused-variable -DPY4PD_EDITOR=\"nvim\"
-	  ldlibs =  $(PYTHON_DLL) -l dl -lwinpthread -Xlinker --export-all-symbols
+	PYTHON_INCLUDE := $(shell cat pythonincludes.txt)
+	PYTHON_PATH := $(shell cat pythonpath.txt)
+	NUMPY_INCLUDE := $(shell cat numpyincludes.txt)
+	PYTHON_DLL := $(PYTHON_PATH)/python310.dll
+	cflags = -l dl -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -Wno-unused-variable -DPY4PD_EDITOR=\"nvim\"
+	ldlibs =  $(PYTHON_DLL) -l dl -lwinpthread -Xlinker --export-all-symbols
 
 # =================================== Linux =====================================
 else ifeq (Linux,$(findstring Linux,$(uname)))
@@ -22,12 +22,13 @@ else ifeq (Linux,$(findstring Linux,$(uname)))
 
 # =================================== MacOS =====================================
 else ifeq (Darwin,$(findstring Darwin,$(uname)))
-  PYTHON_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
-  NUMPY_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import numpy.distutils.misc_util as np_utils; print(np_utils.get_numpy_include_dirs()[0])')
-  cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -mmacosx-version-min=10.9 -DPY4PD_EDITOR=\"nvim\"
-  PYTHON_LIB := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
-  ldlibs = -l dl -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wno-null-pointer-subtraction
-  # BUG: -Xlinker -export-dynamic is not working on MacOS
+  	PYTHON_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
+  	NUMPY_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import numpy.distutils.misc_util as np_utils; print(np_utils.get_numpy_include_dirs()[0])')
+  	cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -mmacosx-version-min=10.9 -DPY4PD_EDITOR=\"nvim\"
+  	PYTHON_LIB := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
+  	ldlibs = -l dl -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wno-null-pointer-subtraction
+	$(info $(PYTHON_INCLUDE))
+	$(info $(PYTHON_LIB))
 
 else
   $(error "Unknown system type: $(uname)")
@@ -51,13 +52,10 @@ $(PYTHON_DLL)
 
 PDLIBBUILDER_DIR=./resources/pd-lib-builder/
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
-
 localdep_linux: install
 	resources/localdeps/localdeps.linux.sh "${installpath}/py4pd.${extension}"
-
 localdep_windows: install
 	resources/localdeps/localdeps.win.sh "${installpath}/py4pd.${extension}"
-
 localdep_macos: install
 	resources/localdeps/localdeps.macos.sh "${installpath}/py4pd.${extension}"
 
@@ -65,7 +63,7 @@ localdep_macos: install
 py4pd_exe: src/py4pd_exe.c
 	$(info ) 
 	$(info ========== py4pd StandAlone =========)
-	$(info )
+	$(info)
 ifeq (MINGW,$(findstring MINGW,$(uname)))
 	$(CC) -o py4pd.exe src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
 else ifeq (Linux,$(findstring Linux,$(uname)))
@@ -73,6 +71,8 @@ else ifeq (Linux,$(findstring Linux,$(uname)))
 else ifeq (Darwin,$(findstring Darwin,$(uname)))
 	PYTHON_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
 	PYTHON_LIB := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
+	$(info $(PYTHON_INCLUDE))
+	$(info $(PYTHON_LIB))
 	$(CC) -o py4pd src/py4pd_exe.c -I $(PYTHON_INCLUDE) -l dl -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wno-cast-function-type -Wl,-export-dynamic
 else
 	$(error "Unknown system type: $(uname)")

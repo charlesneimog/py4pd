@@ -22,7 +22,6 @@
 #define PY4PD_MICRO_VERSION 1
 
 // DEFINE STANDARD IDE EDITOR
-
 #ifndef PY4PD_EDITOR
     #ifdef _WIN64
         #define PY4PD_EDITOR "notepad"
