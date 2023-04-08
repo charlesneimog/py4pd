@@ -283,9 +283,9 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
         t_atom *list_array = (t_atom *)malloc(list_size * sizeof(t_atom));
         int i;
         int listIndex = 0;
-        PyObject *pValue_i = NULL;
+        PyObject *pValue_i;
         for (i = 0; i < list_size; ++i) {
-            pValue_i = PyList_GetItem(pValue, i);
+            pValue_i = PyList_GetItem(pValue, i); // borrowed reference
             if (PyLong_Check(pValue_i)) {  // If the function return a list of integers
                 float result = (float)PyLong_AsLong(pValue_i); // NOTE: Necessary to change if want double precision
                 list_array[listIndex].a_type = A_FLOAT;
@@ -316,31 +316,32 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
                 Py_DECREF(pValue_i);
                 return 0;
             }
+            Py_DECREF(pValue_i);
         }
         outlet_list(x->out_A, 0, list_size, list_array);
-        free(list_array);
         Py_DECREF(pValue);
-        post("recount of pValue_i: %d", Py_REFCNT(pValue_i));
-
-    } else {
+        free(list_array);
+    } 
+    else {
         if (PyLong_Check(pValue)) {
-            long result =
-                PyLong_AsLong(pValue);  // If the function return a integer
+            long result = PyLong_AsLong(pValue);  // If the function return a integer
             outlet_float(x->out_A, result);
+            Py_DECREF(pValue);
         } 
         else if (PyFloat_Check(pValue)) {
             double result = PyFloat_AsDouble(pValue);  // If the function return a float
             float result_float = (float)result;
             outlet_float(x->out_A, result_float);
+            Py_DECREF(pValue);
         } 
         else if (PyUnicode_Check(pValue)) {
             const char *result = PyUnicode_AsUTF8(pValue); // If the function return a string
             py4pd_fromsymbol_symbol(x, gensym(result));
+            Py_DECREF(pValue);
         } 
         else if (Py_IsNone(pValue)) {
-            // x->function_name->s_name); 
+            Py_DECREF(pValue);
         }
-        // when function not use return
         else {
             pd_error(x,
                      "[py4pd] py4pd just convert int, float and string or list "
@@ -448,43 +449,39 @@ PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
     for (int i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
             //   TODO: Create way to work with things like [1], [a], [casa] |
-            //   One thing in list
-
             // ========================================
             if (strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL) {
-                char *str =
-                    (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
+                char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
                 strcpy(str, argv[i].a_w.w_symbol->s_name);
                 removeChar(str, '[');
                 listsArrays[listCount] = PyList_New(0);
                 int isNumeric = isNumericOrDot(str);
                 if (isNumeric == 1) {
                     PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atof(str)));
-                } else {
+                } 
+                else {
                     PyList_Append(listsArrays[listCount], PyUnicode_FromString(str));
                 }
+                free(str);
                 listStarted = 1;
             }
 
             // ========================================
             else if (strchr(argv[i].a_w.w_symbol->s_name, ']') != NULL) {
-                char *str =
-                    (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
+                char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
                 strcpy(str, argv[i].a_w.w_symbol->s_name);
                 removeChar(str, ']');
                 int isNumeric = isNumericOrDot(str);
                 _PyTuple_Resize(&ArgsTuple, argCount + 1);
                 if (isNumeric == 1) {
-                    PyList_Append(listsArrays[listCount],
-                                  PyFloat_FromDouble(atof(str)));
-                    PyTuple_SetItem(ArgsTuple, argCount,
-                                    listsArrays[listCount]);
-                } else {
-                    PyList_Append(listsArrays[listCount],
-                                  PyUnicode_FromString(str));
-                    PyTuple_SetItem(ArgsTuple, argCount,
-                                    listsArrays[listCount]);
+                    PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atof(str)));
+                    PyTuple_SetItem(ArgsTuple, argCount, listsArrays[listCount]);
+                } 
+                else {
+                    PyList_Append(listsArrays[listCount], PyUnicode_FromString(str));
+                    PyTuple_SetItem(ArgsTuple, argCount, listsArrays[listCount]);
                 }
+                free(str);
                 listStarted = 0;
                 listCount++;
                 argCount++;
@@ -493,33 +490,31 @@ PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
             // ========================================
             else {
                 if (listStarted == 1) {
-                    char *str = (char *)malloc(
-                        strlen(argv[i].a_w.w_symbol->s_name) + 1);
+                    char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
                     strcpy(str, argv[i].a_w.w_symbol->s_name);
                     int isNumeric = isNumericOrDot(str);
                     if (isNumeric == 1) {
-                        PyList_Append(listsArrays[listCount],
-                                      PyFloat_FromDouble(atof(str)));
-                    } else {
-                        PyList_Append(listsArrays[listCount],
-                                      PyUnicode_FromString(str));
+                        PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atof(str)));
+                    } 
+                    else {
+                        PyList_Append(listsArrays[listCount], PyUnicode_FromString(str));
                     }
-                } else {
+                    free(str);
+                } 
+                else {
                     _PyTuple_Resize(&ArgsTuple, argCount + 1);
-                    PyTuple_SetItem(
-                        ArgsTuple, argCount,
-                        PyUnicode_FromString(argv[i].a_w.w_symbol->s_name));
+                    PyTuple_SetItem(ArgsTuple, argCount, PyUnicode_FromString(argv[i].a_w.w_symbol->s_name));
                     argCount++;
                 }
             }
-        } else {
+        } 
+        else {
             if (listStarted == 1) {
-                PyList_Append(listsArrays[listCount],
-                              PyFloat_FromDouble(argv[i].a_w.w_float));
-            } else {
+                PyList_Append(listsArrays[listCount], PyFloat_FromDouble(argv[i].a_w.w_float));
+            } 
+            else {
                 _PyTuple_Resize(&ArgsTuple, argCount + 1);
-                PyTuple_SetItem(ArgsTuple, argCount,
-                                PyFloat_FromDouble(argv[i].a_w.w_float));
+                PyTuple_SetItem(ArgsTuple, argCount, PyFloat_FromDouble(argv[i].a_w.w_float));
                 argCount++;
             }
         }
