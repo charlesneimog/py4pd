@@ -223,7 +223,7 @@ char *py4pd_mtok(char *input, char *delimiter) {
  * @return nothing, but output the value to the outlet
  */
 
-static void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){
+void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){
     //new and redone - Derek Kwan
     long unsigned int seplen = strlen(" ");
     seplen++;
@@ -259,10 +259,12 @@ static void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){
             };
             ret = py4pd_mtok(NULL, sep);
         };
-        if(out->a_type == A_SYMBOL)
+        if(out->a_type == A_SYMBOL){
             outlet_anything(((t_object *)x)->ob_outlet, out->a_w.w_symbol, atompos-1, out+1);
-        else if(out->a_type == A_FLOAT && atompos >= 1)
+        }
+        else if(out->a_type == A_FLOAT && atompos >= 1){
             outlet_list(((t_object *)x)->ob_outlet, &s_list, atompos, out);
+        }
         t_freebytes(out, iptlen * sizeof(*out));
         t_freebytes(newstr, iptlen * sizeof(*newstr));
     };
@@ -347,86 +349,6 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
                      "[py4pd] py4pd just convert int, float and string or list "
                      "of this atoms! Received: %s",
                      Py_TYPE(pValue)->tp_name);
-        }
-    }
-    return 0;
-}
-
-// ============================================
-// =====================================================================
-/**
- * @brief Convert and output Python Values to PureData values
- * @param x is the py4pd object
- * @param pValue is the Python value to convert
- * @return nothing, but output the value to the outlet
- */
-
-t_atom *py4pd_convert_to_pd_FORK(t_py *x, PyObject *pValue, t_atom *list_array) {
-    (void)x;
-    if (PyList_Check(pValue)) {  // If the function return a list list
-        int list_size = PyList_Size(pValue);
-        int i;
-        int listIndex = 0;
-        PyObject *pValue_i = NULL;
-        for (i = 0; i < list_size; ++i) {
-            pValue_i = PyList_GetItem(pValue, i);
-            if (PyLong_Check(pValue_i)) {  // If the function return a list of integers
-                float result = (float)PyLong_AsLong(pValue_i); // NOTE: Necessary to change if want double precision
-                list_array[listIndex].a_type = A_FLOAT;
-                list_array[listIndex].a_w.w_float = result;
-                listIndex++;
-            } 
-            else if (PyFloat_Check(pValue_i)) {  // If the function return a list of floats
-                float result = PyFloat_AsDouble(pValue_i);
-                list_array[listIndex].a_type = A_FLOAT;
-                list_array[listIndex].a_w.w_float = result;
-                listIndex++;
-            } 
-            else if (PyUnicode_Check(pValue_i)) {  // If the function return a
-                const char *result = PyUnicode_AsUTF8(pValue_i); 
-                list_array[listIndex].a_type = A_SYMBOL;
-                list_array[i].a_w.w_symbol = gensym(result);
-                listIndex++;
-
-            } 
-            else if (Py_IsNone(pValue_i)) {  // If the function return a list
-                                               // of None
-            } 
-            else {
-                printf("[py4pd] py4pd just convert int, float and string! "
-                         "Received: %s",
-                         Py_TYPE(pValue_i)->tp_name);
-                Py_DECREF(pValue_i);
-                return 0;
-            }
-        }
-        return list_array;
-
-    } 
-    else {
-        if (PyLong_Check(pValue)) {
-            long result = PyLong_AsLong(pValue);  // If the function return a integer
-            list_array[0].a_type = A_FLOAT;
-            list_array[0].a_w.w_float = result;
-            return list_array;
-        } 
-        else if (PyFloat_Check(pValue)) {
-            double result = PyFloat_AsDouble(pValue);  // If the function return a float
-            list_array[0].a_type = A_FLOAT;
-            list_array[0].a_w.w_float = result;
-            return list_array;
-        } 
-        else if (PyUnicode_Check(pValue)) {
-            const char *result = PyUnicode_AsUTF8(pValue); // If the function return a string
-            list_array[0].a_type = A_SYMBOL;
-            list_array[0].a_w.w_symbol = gensym(result);
-            return list_array;
-        } 
-        else if (Py_IsNone(pValue)) {
-
-        }
-        else {
-            return 0;
         }
     }
     return 0;
@@ -640,3 +562,82 @@ PyObject *py4pd_add_pd_object(t_py *x) {
 }
 
 
+// ========================= IMG CONVERTER ==============================
+
+int png_sig_cmp(uint8_t *sig, int start, int num_to_check)
+{
+    static uint8_t png_signature[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
+    if (start < 0 || num_to_check < 1 || start + num_to_check > 8) {
+        return -1;
+    }
+    return memcmp(sig + start, png_signature + start, num_to_check);
+}
+
+// ========================= PNG ==============================
+
+
+uint32_t ntohl(uint32_t netlong){
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    return ((netlong & 0xff) << 24) |
+           ((netlong & 0xff00) << 8) |
+           ((netlong & 0xff0000) >> 8) |
+           ((netlong & 0xff000000) >> 24);
+#else
+    return netlong;
+#endif
+}
+
+int get_png_size(const char *pngfile){
+    FILE *file = fopen(pngfile, "rb");
+
+    uint8_t header[8];
+    if (fread(header, 1, sizeof(header), file) != sizeof(header)) {
+        printf("Failed to read PNG header\n");
+        fclose(file);
+        return 1;
+    }
+
+    if (png_sig_cmp(header, 0, sizeof(header)) != 0) {
+        printf("File is not a PNG\n");
+        fclose(file);
+        return 1;
+    }
+
+    uint32_t length;
+    if (fread(&length, sizeof(length), 1, file) != 1) {
+        printf("Failed to read chunk length\n");
+        fclose(file);
+        return 1;
+    }
+    length = ntohl(length);
+
+    uint8_t chunk_type[5];
+    if (fread(chunk_type, 1, sizeof(chunk_type), file) != sizeof(chunk_type)) {
+        printf("Failed to read chunk type\n");
+        fclose(file);
+        return 1;
+    }
+    chunk_type[sizeof(chunk_type) - 1] = '\0';
+
+    if (strcmp((char*)chunk_type, "IHDR") != 0) {
+        printf("First chunk is not IHDR\n");
+        fclose(file);
+        return 1;
+    }
+
+    uint32_t width, height;
+    if (fread(&width, sizeof(width), 1, file) != 1 ||
+        fread(&height, sizeof(height), 1, file) != 1) {
+        printf("Failed to read PNG dimensions\n");
+        fclose(file);
+        return 1;
+    }
+    width = ntohl(width);
+    height = ntohl(height);
+
+    post("Width: %u, Height: %u\n", width, height);
+
+    fclose(file);
+
+    return 0;
+}

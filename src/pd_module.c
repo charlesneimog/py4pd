@@ -14,13 +14,11 @@ PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
     symbol = gensym("list");
     int keyword_arg = 0;
 
-    // check if there is a keyword argument
-    if (keywords == NULL) {
-        PyErr_Clear();
-    } else {
+    if (keywords != NULL) {
+        post("keywords: %s", keywords);
         PyObject *anything_symbol = PyDict_GetItemString(keywords, "symbol");
         if (anything_symbol == NULL) {
-            PyErr_Clear();
+            // PyErr_Clear(); ??
         } 
         else {
             if (PyUnicode_Check(anything_symbol)) {
@@ -54,26 +52,15 @@ PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
         }
     } 
     else if (PyArg_ParseTuple(args, "s", &string)) {    
-        if (keyword_arg == 1) {
-            t_atom *list_array = (t_atom *)malloc(1 * sizeof(t_atom));
-            list_array[0].a_type = A_SYMBOL;
-            list_array[0].a_w.w_symbol = gensym(string);
-            outlet_anything(py4pd->out_A, symbol, 1, list_array);
-            free(list_array);
-        } 
-        else {
-            outlet_anything(py4pd->out_A, gensym(string), 0, NULL);
-        }
-
-
-        outlet_symbol(py4pd->out_A, gensym(string));  // TODO: make this output without the symbol, just like fromsymbol.
+            py4pd_fromsymbol_symbol(py4pd, gensym(string));
+            PyErr_Clear();
     } 
     else if (PyArg_ParseTuple(args, "O", &args)) {
         int list_size = PyList_Size(args);
         t_atom *list_array = (t_atom *)malloc(list_size * sizeof(t_atom));
         int i;
         for (i = 0; i < list_size; ++i) {
-            PyObject *pValue_i = PyList_GetItem(args, i);
+            PyObject *pValue_i = PyList_GetItem(args, i);  // borrowed reference
             if (PyLong_Check(pValue_i)) {  // If the function return a list of integers
                 long result = PyLong_AsLong(pValue_i);
                 float result_float = (float)result;
@@ -99,12 +86,16 @@ PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
                 Py_DECREF(args);
                 return NULL;
             }
+            Py_DECREF(pValue_i);
         }
         outlet_anything(py4pd->out_A, symbol, list_size, list_array);
         free(list_array);
+        Py_DECREF(args);
         PyErr_Clear();
-    } else {
+    } 
+    else {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.out argument must be a list, float or a string");  // Colocar melhor descrição do erro
+        pd_error(py4pd, "[Python] pd.out argument must be a list, float or a string");
         return NULL;
     }
     return PyLong_FromLong(0);
@@ -201,15 +192,18 @@ PyObject *pdsend(PyObject *self, PyObject *args) {
         t_symbol *symbol = gensym(receiver);
         if (symbol->s_thing) {
             pd_symbol(symbol->s_thing, gensym(string));
-        } else {
+        } 
+        else {
             post("[Python] pd.send not found object [r %s] in pd patch",
                  receiver);
         }
-    } else if (PyArg_ParseTuple(args, "sf", &receiver, &floatNumber)) {
+    } 
+    else if (PyArg_ParseTuple(args, "sf", &receiver, &floatNumber)) {
         t_symbol *symbol = gensym(receiver);
         if (symbol->s_thing) {
             pd_float(symbol->s_thing, floatNumber);
-        } else {
+        } 
+        else {
             post("[Python] pd.send not found object [r %s] in pd patch",
                  receiver);
         }
@@ -217,11 +211,13 @@ PyObject *pdsend(PyObject *self, PyObject *args) {
         t_symbol *symbol = gensym(receiver);
         if (symbol->s_thing) {
             pd_float(symbol->s_thing, intNumber);
-        } else {
+        } 
+        else {
             post("[Python] pd.send not found object [r %s] in pd patch",
                  receiver);
         }
-    } else if (PyArg_ParseTuple(args, "sO", &receiver, &listargs)) {
+    } 
+    else if (PyArg_ParseTuple(args, "sO", &receiver, &listargs)) {
         if (PyDict_Check(listargs)) {
             char error_message[100];
             sprintf(error_message,
@@ -242,19 +238,23 @@ PyObject *pdsend(PyObject *self, PyObject *args) {
                 float result_float = (float)result;
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
-            } else if (PyFloat_Check(pValue_i)) {  
+            } 
+            else if (PyFloat_Check(pValue_i)) {  
                                                   
                 double result = PyFloat_AsDouble(pValue_i);
                 float result_float = (float)result;
                 list_array[i].a_type = A_FLOAT;
                 list_array[i].a_w.w_float = result_float;
-            } else if (PyUnicode_Check(pValue_i)) { 
+            } 
+            else if (PyUnicode_Check(pValue_i)) { 
                 const char *result = PyUnicode_AsUTF8(pValue_i);
                 list_array[i].a_type = A_SYMBOL;
                 list_array[i].a_w.w_symbol = gensym(result);
-            } else if (Py_IsNone(pValue_i)) {
+            } 
+            else if (Py_IsNone(pValue_i)) {
                 // post("None");
-            } else {
+            }
+            else {
                 char error_message[100];
                 sprintf(error_message,
                         "[Python] received a type '%s' in index %d of the "
@@ -267,13 +267,16 @@ PyObject *pdsend(PyObject *self, PyObject *args) {
                 free(list_array);
                 return NULL;
             }
+            Py_DECREF(pValue_i);
         }
         if (gensym(receiver)->s_thing) {
             pd_list(gensym(receiver)->s_thing, &s_list, list_size, list_array);
-        } else {
-            post("[Python] object [r %s] not found", receiver);
+        } 
+        else {
+            pd_error(NULL, "[Python] object [r %s] not found", receiver);
         }
-    } else {
+    } 
+    else {
         char error_message[100];
         PyObject *pValue_i = PyTuple_GetItem(args, 1);
         sprintf(error_message,
@@ -426,7 +429,6 @@ PyObject *pdtempfolder(PyObject *self, PyObject *args) {
     return PyUnicode_FromString(py4pd->temp_folder->s_name);
 }
 
-
 // =================================
 PyObject *pdshowimage(PyObject *self, PyObject *args) {
     (void)self;
@@ -435,16 +437,51 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
     PyObject *pd_module = PyImport_ImportModule("__main__");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+
     PY4PD_erase(py4pd, py4pd->x_glist);
     if (PyArg_ParseTuple(args, "s", &string)) {
         t_symbol *filename = gensym(string);
         if (py4pd->x_def_img) {
             py4pd->x_def_img = 0;
         }
+        FILE *file;
+        char *ext = strrchr(filename->s_name, '.');
+        if (strcmp(ext, ".ppm") == 0) {
+            char magic_number[3];
+            int width, height, max_color_value;
+            file = fopen(filename->s_name, "r");
+            fscanf(file, "%s\n%d %d\n%d\n", magic_number, &width, &height, &max_color_value);
+            py4pd->x_width = width;
+            py4pd->x_height = height;
+            fclose(file);
+        }
+        else if (strcmp(ext, ".gif") == 0){
+            file = fopen(filename->s_name, "rb");
+            fseek(file, 6, SEEK_SET);
+            fread(&py4pd->x_width, 2, 1, file);
+            fread(&py4pd->x_height, 2, 1, file);
+            fclose(file);
+        }
+        else if (strcmp(ext, ".png") == 0) {
+            file = fopen(filename->s_name, "rb");
+            int width, height;
+            fseek(file, 16, SEEK_SET);
+            fread(&width, 4, 1, file);
+            fread(&height, 4, 1, file);
+            width = ntohl(width); 
+            height = ntohl(height);
+            py4pd->x_width = width;
+            py4pd->x_height = height;
+        }
 
+        else{
+            pd_error(py4pd, "[Python] pd.showimage: file format not supported");
+            PyErr_SetString(PyExc_TypeError, "[Python] pd.showimage: file format not supported");
+            return NULL;
+        }
 
         if (glist_isvisible(py4pd->x_glist) && gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
-            const char *file_name_open =    PY4PD_filepath(py4pd, filename->s_name);
+            const char *file_name_open = PY4PD_filepath(py4pd, filename->s_name);
             if (file_name_open) {
                 py4pd->x_filename = filename;
                 py4pd->x_fullname = gensym(file_name_open);
@@ -453,8 +490,7 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
                     py4pd->x_def_img = 0;
                 }
 
-                if (glist_isvisible(py4pd->x_glist) &&
-                    gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
+                if (glist_isvisible(py4pd->x_glist) && gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
                     PY4PD_erase(py4pd, py4pd->x_glist);
                     sys_vgui(
                         "if {[info exists %lx_picname] == 0} {image create "
@@ -462,7 +498,7 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
                         "1\n}\n",
                         py4pd->x_fullname, py4pd->x_fullname, file_name_open,
                         py4pd->x_fullname);
-                    PY4PD_draw(py4pd, py4pd->x_glist, 0);
+                    PY4PD_draw(py4pd, py4pd->x_glist, 1);
                 }
             } 
             else {
