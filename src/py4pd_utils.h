@@ -9,6 +9,7 @@
 
 #include <dlfcn.h>
 
+
 // declare function of utilities.c
 void findpy4pd_folder(t_py *x);
 void py4pd_tempfolder(t_py *x);
@@ -18,9 +19,9 @@ void pd4py_system_func(const char *command);
 int isNumericOrDot(const char *str);
 void removeChar(char *str, char c);
 void *py4pd_convert_to_pd(t_py *x, PyObject *pValue);
-t_atom *py4pd_convert_to_pd_FORK(t_py *x, PyObject *pValue, t_atom *outsFromFork);
 PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv);
 PyObject *py4pd_add_pd_object(t_py *x);
 
+uint32_t ntohl(uint32_t netlong);
 
 #endif
