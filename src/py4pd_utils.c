@@ -323,7 +323,7 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
         outlet_list(x->out_A, 0, list_size, list_array);
         Py_DECREF(pValue);
         free(list_array);
-        post("Defcont of pValue: %d", Py_REFCNT(pValue));
+        // post("Defcont of pValue: %d", Py_REFCNT(pValue));
     } 
     else {
         if (PyLong_Check(pValue)) {
@@ -562,83 +562,78 @@ PyObject *py4pd_add_pd_object(t_py *x) {
     return objectCapsule;
 }
 
-
-// ========================= IMG CONVERTER ==============================
-
-int png_sig_cmp(uint8_t *sig, int start, int num_to_check)
-{
-    static uint8_t png_signature[] = { 137, 80, 78, 71, 13, 10, 26, 10 };
-    if (start < 0 || num_to_check < 1 || start + num_to_check > 8) {
-        return -1;
-    }
-    return memcmp(sig + start, png_signature + start, num_to_check);
-}
-
 // ========================= PNG ==============================
 
+// ntohl is one function that is not available on Windows, so we need to define it
 
-uint32_t ntohl(uint32_t netlong){
-#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-    return ((netlong & 0xff) << 24) |
-           ((netlong & 0xff00) << 8) |
-           ((netlong & 0xff0000) >> 8) |
-           ((netlong & 0xff000000) >> 24);
-#else
-    return netlong;
+#ifndef ntohl
+    uint32_t ntohl(uint32_t netlong){
+        #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+            return ((netlong & 0xff) << 24) |
+                   ((netlong & 0xff00) << 8) |
+                   ((netlong & 0xff0000) >> 8) |
+                   ((netlong & 0xff000000) >> 24);
+        #else
+            return netlong;
+        #endif
+    }
 #endif
-}
 
-int get_png_size(const char *pngfile){
-    FILE *file = fopen(pngfile, "rb");
 
-    uint8_t header[8];
-    if (fread(header, 1, sizeof(header), file) != sizeof(header)) {
-        printf("Failed to read PNG header\n");
-        fclose(file);
-        return 1;
-    }
 
-    if (png_sig_cmp(header, 0, sizeof(header)) != 0) {
-        printf("File is not a PNG\n");
-        fclose(file);
-        return 1;
-    }
 
-    uint32_t length;
-    if (fread(&length, sizeof(length), 1, file) != 1) {
-        printf("Failed to read chunk length\n");
-        fclose(file);
-        return 1;
-    }
-    length = ntohl(length);
-
-    uint8_t chunk_type[5];
-    if (fread(chunk_type, 1, sizeof(chunk_type), file) != sizeof(chunk_type)) {
-        printf("Failed to read chunk type\n");
-        fclose(file);
-        return 1;
-    }
-    chunk_type[sizeof(chunk_type) - 1] = '\0';
-
-    if (strcmp((char*)chunk_type, "IHDR") != 0) {
-        printf("First chunk is not IHDR\n");
-        fclose(file);
-        return 1;
-    }
-
-    uint32_t width, height;
-    if (fread(&width, sizeof(width), 1, file) != 1 ||
-        fread(&height, sizeof(height), 1, file) != 1) {
-        printf("Failed to read PNG dimensions\n");
-        fclose(file);
-        return 1;
-    }
-    width = ntohl(width);
-    height = ntohl(height);
-
-    post("Width: %u, Height: %u\n", width, height);
-
-    fclose(file);
-
-    return 0;
-}
+//
+// int get_png_size(const char *pngfile){
+//     FILE *file = fopen(pngfile, "rb");
+//
+//     uint8_t header[8];
+//     if (fread(header, 1, sizeof(header), file) != sizeof(header)) {
+//         printf("Failed to read PNG header\n");
+//         fclose(file);
+//         return 1;
+//     }
+//
+//     if (png_sig_cmp(header, 0, sizeof(header)) != 0) {
+//         printf("File is not a PNG\n");
+//         fclose(file);
+//         return 1;
+//     }
+//
+//     uint32_t length;
+//     if (fread(&length, sizeof(length), 1, file) != 1) {
+//         printf("Failed to read chunk length\n");
+//         fclose(file);
+//         return 1;
+//     }
+//     length = ntohl(length);
+//
+//     uint8_t chunk_type[5];
+//     if (fread(chunk_type, 1, sizeof(chunk_type), file) != sizeof(chunk_type)) {
+//         printf("Failed to read chunk type\n");
+//         fclose(file);
+//         return 1;
+//     }
+//     chunk_type[sizeof(chunk_type) - 1] = '\0';
+//
+//     if (strcmp((char*)chunk_type, "IHDR") != 0) {
+//         printf("First chunk is not IHDR\n");
+//         fclose(file);
+//         return 1;
+//     }
+//
+//     uint32_t width, height;
+//     if (fread(&width, sizeof(width), 1, file) != 1 ||
+//         fread(&height, sizeof(height), 1, file) != 1) {
+//         printf("Failed to read PNG dimensions\n");
+//         fclose(file);
+//         return 1;
+//     }
+//     width = ntohl(width);
+//     height = ntohl(height);
+//
+//     post("Width: %u, Height: %u\n", width, height);
+//
+//     fclose(file);
+//
+//     return 0;
+// }
