@@ -529,7 +529,7 @@ PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
  * @return the pointer to the py4pd object with the config
  */
 
-int *set_py4pd_config(t_py *x) {
+void set_py4pd_config(t_py *x) {
     char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py-modules/") + 1));  //
     snprintf(PADRAO_packages_path, strlen(x->home_path->s_name) + strlen("/py-modules/") + 1, "%s/py-modules/", x->home_path->s_name);
     x->packages_path = gensym(PADRAO_packages_path);
@@ -564,22 +564,19 @@ int *set_py4pd_config(t_py *x) {
                         strcat(new_packages_path, packages_path + 1);  // append string two to the result.
                         x->packages_path = gensym(new_packages_path);
                         free(new_packages_path);
-                    } else {
+                    } 
+                    else {
                         x->packages_path = gensym(packages_path);
                     }
                 }
                 free(packages_path);  // free memory
-            } else if (strstr(line, "thread =") != NULL) {
-                char *thread = (char *)malloc(
-                    sizeof(char) *
-                    (strlen(line) - strlen("thread = ") + 1));  //
-                strcpy(thread, line + strlen("thread = "));  // copy string one into the result.
-                // print thread value
-                if (strlen(thread) > 0) {  // check if path is not empty
-                    // from thread remove the two last character
-                    thread[strlen(thread) - 1] = '\0';  // remove the last character
-                    thread[strlen(thread) - 1] = '\0';  // remove the last character
-
+            } 
+            else if (strstr(line, "thread =") != NULL) {
+                char *thread = (char *)malloc(sizeof(char) * (strlen(line) - strlen("thread = ") + 1));  //
+                strcpy(thread, line + strlen("thread = ")); 
+                if (strlen(thread) > 0) {  
+                    thread[strlen(thread) - 1] = '\0';  
+                    thread[strlen(thread) - 1] = '\0'; 
                     char *i = thread;
                     char *j = thread;
                     while (*j != 0) {
@@ -587,31 +584,30 @@ int *set_py4pd_config(t_py *x) {
                         if (*i != ' ') i++;
                     }
                     *i = 0;
-                    // if thread start with . add the home_path
                     if (thread[0] == '1') {
                         x->runmode = 1;
-                    } else {
+                    } 
+                    else {
                         x->runmode = 0;
                     }
                 }
-            } else if (strstr(line, "editor =") != NULL) {
-                // get editor name
-                char *editor = (char *)malloc(
-                    sizeof(char) *
-                    (strlen(line) - strlen("editor = ") + 1));  //
+                free(thread);  // free memory
+            } 
+            else if (strstr(line, "editor =") != NULL) {
+                char *editor = (char *)malloc(sizeof(char) * (strlen(line) - strlen("editor = ") + 1));  //
                 strcpy(editor, line + strlen("editor = "));
                 removeChar(editor, '\n');
                 removeChar(editor, '\r');
                 removeChar(editor, ' ');
                 x->editorName = gensym(editor);
-                post("[py4pd] Editor set to %s", x->editorName->s_name);
+                free(editor);  // free memory
             }
         }
         fclose(file);  // close file
     }
 
-    // free(PADRAO_packages_path);  // free memory
-    return 0;
+    free(PADRAO_packages_path);  // free memory
+    return;
 }
 
 // ========================= PYTHON ==============================
