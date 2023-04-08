@@ -481,8 +481,6 @@ static void reload(t_py *x) {
  */
 void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
-
-
     // =====================
     // check number of arguments
     if (argc < 2) {  // check is the number of arguments is correct | set
@@ -1433,7 +1431,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     findpy4pd_folder(x);  // find the py4pd object folder
     if (argc > 1) {       // check if there are two arguments
         set_function(x, s, argc, argv);
-        import_array();  // import numpy
+        py4pdImportNumpy();
         x->numpyImported = 1;
     }
     return (x);

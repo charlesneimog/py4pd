@@ -315,7 +315,6 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
                          "[py4pd] py4pd just convert int, float and string! "
                          "Received: %s",
                          Py_TYPE(pValue_i)->tp_name);
-                Py_DECREF(pValue_i);
                 return 0;
             }
             // Py_DECREF(pValue_i);
@@ -323,27 +322,26 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
         outlet_list(x->out_A, 0, list_size, list_array);
         Py_DECREF(pValue);
         free(list_array);
-        // post("Defcont of pValue: %d", Py_REFCNT(pValue));
     } 
     else {
         if (PyLong_Check(pValue)) {
             long result = PyLong_AsLong(pValue);  // If the function return a integer
             outlet_float(x->out_A, result);
-            Py_DECREF(pValue);
+            // Py_DECREF(pValue);
         } 
         else if (PyFloat_Check(pValue)) {
             double result = PyFloat_AsDouble(pValue);  // If the function return a float
             float result_float = (float)result;
             outlet_float(x->out_A, result_float);
-            Py_DECREF(pValue);
+            // Py_DECREF(pValue);
         } 
         else if (PyUnicode_Check(pValue)) {
             const char *result = PyUnicode_AsUTF8(pValue); // If the function return a string
             py4pd_fromsymbol_symbol(x, gensym(result));
-            Py_DECREF(pValue);
+            // Py_DECREF(pValue);
         } 
         else if (Py_IsNone(pValue)) {
-            Py_DECREF(pValue);
+            // Py_DECREF(pValue);
         }
         else {
             pd_error(x,
@@ -380,12 +378,18 @@ PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
                 listsArrays[listCount] = PyList_New(0);
                 int isNumeric = isNumericOrDot(str);
                 if (isNumeric == 1) {
-                    PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atof(str)));
+                    // check if is a float or int
+                    if (strchr(str, '.') != NULL) {
+                        PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atof(str)));
+                    } 
+                    else {
+                        PyList_Append(listsArrays[listCount], PyLong_FromLong(atol(str)));
+                    }
                 } 
                 else {
                     PyList_Append(listsArrays[listCount], PyUnicode_FromString(str));
                 }
-                free(str);
+                // free(str);
                 listStarted = 1;
             }
 
@@ -397,14 +401,19 @@ PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
                 int isNumeric = isNumericOrDot(str);
                 _PyTuple_Resize(&ArgsTuple, argCount + 1);
                 if (isNumeric == 1) {
-                    PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atof(str)));
+                    if (strchr(str, '.') != NULL) {
+                        PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atof(str)));
+                    } 
+                    else {
+                        PyList_Append(listsArrays[listCount], PyLong_FromLong(atol(str)));
+                    }
                     PyTuple_SetItem(ArgsTuple, argCount, listsArrays[listCount]);
                 } 
                 else {
                     PyList_Append(listsArrays[listCount], PyUnicode_FromString(str));
                     PyTuple_SetItem(ArgsTuple, argCount, listsArrays[listCount]);
                 }
-                free(str);
+                // free(str);
                 listStarted = 0;
                 listCount++;
                 argCount++;
@@ -417,12 +426,17 @@ PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
                     strcpy(str, argv[i].a_w.w_symbol->s_name);
                     int isNumeric = isNumericOrDot(str);
                     if (isNumeric == 1) {
-                        PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atof(str)));
+                        if (strchr(str, '.') != NULL) {
+                            PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atof(str)));
+                        } 
+                        else {
+                            PyList_Append(listsArrays[listCount], PyLong_FromLong(atol(str)));
+                        }
                     } 
                     else {
                         PyList_Append(listsArrays[listCount], PyUnicode_FromString(str));
                     }
-                    free(str);
+                    // free(str);
                 } 
                 else {
                     _PyTuple_Resize(&ArgsTuple, argCount + 1);
