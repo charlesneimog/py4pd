@@ -81,7 +81,6 @@ def pd_tempfolder():
     pd.print(str(tempfolder))
 
 
-
 def pd_output():
     "It sends some output to the py4pd output."
     for x in range(10):
@@ -134,10 +133,6 @@ def pd_tabwrite():
 def printall(x, y):
     "It sends a message to the py4pd message box."
     pd.print(str(x + y))
-
-
-
-
 
 # ================================================
 # ================ Audio =========================
