@@ -1,7 +1,0 @@
-#N canvas 1103 101 771 832 12;
-#X obj 9 9 py4pd -library myNewPdObjects;
-#X obj 119 99 py4pd mypy printThread;
-#X msg 152 37 run;
-#X obj 119 124 print;
-#X connect 1 0 3 0;
-#X connect 2 0 1 0;

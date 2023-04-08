@@ -318,11 +318,12 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
                 Py_DECREF(pValue_i);
                 return 0;
             }
-            Py_DECREF(pValue_i);
+            // Py_DECREF(pValue_i);
         }
         outlet_list(x->out_A, 0, list_size, list_array);
         Py_DECREF(pValue);
         free(list_array);
+        post("Defcont of pValue: %d", Py_REFCNT(pValue));
     } 
     else {
         if (PyLong_Check(pValue)) {

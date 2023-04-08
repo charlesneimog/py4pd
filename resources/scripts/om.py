@@ -58,8 +58,8 @@ def omabs(a):
 
 
 def py4pdLoadObjects():
-    pd.addobject(omsum, "om+")
-    pd.addobject(omminus, "om-")
-    pd.addobject(omtimes, "om*")
-    pd.addobject(omdiv, "om/")
-    pd.addobject(omabs, "omabs")
+    pd.addobject(omsum, "py.sum")
+    pd.addobject(omminus, "py.minus")
+    pd.addobject(omtimes, "py.times")
+    pd.addobject(omdiv, "py.div")
+    pd.addobject(omabs, "py.abs")

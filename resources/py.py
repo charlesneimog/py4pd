@@ -289,7 +289,6 @@ def note(pitches):
     neoscore.shutdown()
     if os.name == 'nt':
         notePathName = notePathName.replace("\\", "/")
-    pd.print(str(notePathName))
     pd.show(notePathName)
     return None
 
