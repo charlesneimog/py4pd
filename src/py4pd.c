@@ -1361,9 +1361,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                 py4pdArgs == gensym("-score") ||
                 py4pdArgs == gensym("-canvas")) {
                 py4pd_InitVisMode(x, c, py4pdArgs, i, argc, argv);
-                x->visMode = 1;
                 x->x_outline = 1;
-                // remove the '-picture' from the arguments
                 int j;
                 for (j = i; j < argc; j++) {
                     argv[j] = argv[j + 1];
@@ -1379,7 +1377,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                 const char *editor = py4pdArgs->s_name;
                 editor++;
                 x->editorName = gensym(editor); 
-
                 int j;
                 for (j = i; j < argc; j++) {
                     argv[j] = argv[j + 1];

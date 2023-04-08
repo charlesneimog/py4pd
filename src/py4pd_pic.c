@@ -477,7 +477,6 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     else{
         class_setwidget(pyNewObject_VIS, &py4pd_widgetbehavior);
     }
-    py4pd_picDefintion(x);
     t_canvas *cv = canvas_getcurrent();
     x->x_glist = (t_glist *)cv;
     x->x_zoom = x->x_glist->gl_zoom;
@@ -519,6 +518,7 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
         argv[j] = argv[j + 1];
     }
     argc--;
+    py4pd_picDefintion(x);
     // PY4PD_draw_io_let(x);
 }
 
