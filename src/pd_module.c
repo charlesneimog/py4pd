@@ -468,8 +468,8 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
             fseek(file, 16, SEEK_SET);
             fread(&width, 4, 1, file);
             fread(&height, 4, 1, file);
-            width = ntohl(width); 
-            height = ntohl(height);
+            width = py4pd_ntohl(width); 
+            height = py4pd_ntohl(height);
             py4pd->x_width = width;
             py4pd->x_height = height;
         }

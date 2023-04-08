@@ -566,20 +566,16 @@ PyObject *py4pd_add_pd_object(t_py *x) {
 
 // ntohl is one function that is not available on Windows, so we need to define it
 
-#ifndef ntohl
-    uint32_t ntohl(uint32_t netlong){
-        #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
-            return ((netlong & 0xff) << 24) |
-                   ((netlong & 0xff00) << 8) |
-                   ((netlong & 0xff0000) >> 8) |
-                   ((netlong & 0xff000000) >> 24);
-        #else
-            return netlong;
-        #endif
-    }
+uint32_t py4pd_ntohl(uint32_t netlong){ // ntohl exists on windows but not on mac
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    return ((netlong & 0xff) << 24) |
+           ((netlong & 0xff00) << 8) |
+           ((netlong & 0xff0000) >> 8) |
+           ((netlong & 0xff000000) >> 24);
+#else
+    return netlong;
 #endif
-
-
+}
 
 
 //
