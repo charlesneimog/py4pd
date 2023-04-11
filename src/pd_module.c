@@ -1,7 +1,6 @@
 #include "py4pd.h"
 #include "py4pd_utils.h"
 #include "py4pd_pic.h"  
-#include "pyerrors.h"
 #include "pylibraries.h"
 
 // ======================================
@@ -353,6 +352,23 @@ PyObject *pdhome(PyObject *self, PyObject *args) {
     return PyUnicode_FromString(py4pd->home_path->s_name);
 }
 
+// =================================
+PyObject *py4pdfolder(PyObject *self, PyObject *args) {
+    (void)self;
+
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+
+    // check if there is no argument
+    if (!PyArg_ParseTuple(args, "")) {
+        PyErr_SetString(PyExc_TypeError,
+                        "[Python] pd.py4pdfolder: no argument expected");
+        return NULL;
+    }
+    return PyUnicode_FromString(py4pd->py4pd_folder->s_name);
+}
+
 
 // =================================
 PyObject *pdtempfolder(PyObject *self, PyObject *args) {
@@ -588,6 +604,7 @@ PyMethodDef PdMethods[] = {
 
     // Files
     {"home", pdhome, METH_VARARGS, "Get PureData Patch Path Folder"},
+    {"py4pdfolder", py4pdfolder, METH_VARARGS, "Get PureData Py4PD Folder"},
     {"tempfolder", pdtempfolder, METH_VARARGS, "Get PureData Temp Folder"},
 
     // User
