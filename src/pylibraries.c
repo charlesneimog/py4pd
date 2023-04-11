@@ -14,6 +14,16 @@ static t_class *pyNewObject_Audio;
 static t_class *py4pdInlets_proxy_class;
 
 // =====================================
+void py4pdInlets_proxy_pointer(t_py4pdInlet_proxy *x, t_atom *argv){
+    t_py *py4pd = (t_py *)x->p_master;
+    PyObject *pValue;
+    pValue = pointer_to_pyobject(argv);
+    PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pValue);
+    return;
+}
+
+
+// =====================================
 void py4pdInlets_proxy_anything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av){
     t_py *py4pd = (t_py *)x->p_master;
     if (ac == 0){
@@ -45,8 +55,6 @@ void py4pdInlets_proxy_list(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
     (void)s;
     t_py *py4pd = (t_py *)x->p_master;
     PyObject *pyInletValue;
-
-    // CONVERT TO PYTHON OBJECTS
     if (ac == 0){
         pyInletValue = PyUnicode_FromString(s->s_name);
         PyTuple_SetItem(py4pd->argsDict, 0, pyInletValue);
@@ -161,7 +169,6 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
             PyTuple_SetItem(x->argsDict, 0, pyInletValue);
         }
     }
-
     else{
         pyInletValue = PyList_New(ac + 1);
         PyList_SetItem(pyInletValue, 0, PyUnicode_FromString(s->s_name));
@@ -212,7 +219,65 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
             return;
         }
     }
+    if (pValue != NULL) { 
+        py4pd_convert_to_pd(x, pValue); 
+    }
+    else{
+        Py_XDECREF(pValue);
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[Python] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+        PyErr_Clear();
+    }
+    return;
+}
 
+// ======================== py_Object
+void py_Object(t_py *x, t_atom *argv){
+    // convert pointer to PyObject using pointer_to_pyobject
+    PyObject *pValue;
+    PyObject *pArg;
+    pArg = pointer_to_pyobject(argv);
+    if (pArg == NULL) {
+        pd_error(x, "[py4pd] The pointer is not a PyObject!");
+        return;
+    }
+    PyTuple_SetItem(x->argsDict, 0, pArg);
+    t_py *prev_obj;
+    int prev_obj_exists = 0;
+    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
+    PyObject *oldObjectCapsule;
+    if (MainModule != NULL) {
+        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        if (oldObjectCapsule != NULL) {
+            PyObject *pd_module = PyImport_ImportModule("__main__");
+            PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+            prev_obj_exists = 1;
+        }
+    }
+
+    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    if (objectCapsule == NULL){
+        pd_error(x, "[Python] Failed to add object to Python");
+        return;
+    }
+    pValue = PyObject_CallObject(x->function, x->argsDict);
+
+    // odd code, but solve the bug
+    if (prev_obj_exists == 1) {
+        objectCapsule = py4pd_add_pd_object(prev_obj);
+        if (objectCapsule == NULL){
+            pd_error(x, "[Python] Failed to add object to Python");
+            return;
+        }
+    }
     if (pValue != NULL) { 
         py4pd_convert_to_pd(x, pValue); 
     }
@@ -254,34 +319,45 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
     PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
     // ================================
+
     if (PdDictCapsule == NULL) {
         pd_error(x, "Error: PdDictCapsule is NULL");
         return NULL;
     }
-
     PyObject *PdDict = PyDict_GetItemString(PdDictCapsule, objectName);
     if (PdDict == NULL) {
         pd_error(x, "Error: PdDict is NULL");
         return NULL;
     }
-
     PyObject *pyFunction = PyDict_GetItemString(PdDict, "py4pdOBJFunction");
     if (pyFunction == NULL) {
         pd_error(x, "Error: pyFunction is NULL");
         return NULL;
     }
+    
+    PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
+    x->outPyPointer = PyLong_AsLong(pyOUT);
+    PyObject *nooutlet = PyDict_GetItemString(PdDict, "py4pdOBJnooutlet");
+    int nooutlet_int = PyLong_AsLong(nooutlet);
+    x->function_called = 1;
     x->function = pyFunction;
+    x->function_name = s;
     x->home_path = patch_dir;         // set name of the home path
     x->packages_path = patch_dir;     // set name of the packages path
     set_py4pd_config(x);  // set the config file (in py4pd.cfg, make this be
     py4pd_tempfolder(x);  // find the py4pd folder
     findpy4pd_folder(x);  // find the py4pd object folder
-
     
     PyObject *inspect = NULL, *getfullargspec = NULL;
-    PyObject *argspec = NULL, *argsFunc = NULL;
+    PyObject *argspec = NULL, *argsFunc = NULL, *getfile = NULL;
     inspect = PyImport_ImportModule("inspect");
     getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
+    getfile = PyObject_GetAttrString(inspect, "getfile");
+    // get script.py name
+    PyObject *pyFunctionFile = PyObject_CallFunctionObjArgs(getfile, pyFunction, NULL);
+    const char *pyFunctionFileName = PyUnicode_AsUTF8(pyFunctionFile);
+    x->script_name = gensym(pyFunctionFileName);
+
     argspec = PyObject_CallFunctionObjArgs(getfullargspec, pyFunction, NULL);
     argsFunc = PyTuple_GetItem(argspec, 0);       
     int py_args = PyObject_Size(argsFunc);
@@ -312,7 +388,9 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
         PyTuple_SetItem(x->argsDict, 0, Py_None);
     }
 
-    x->out_A = outlet_new(&x->x_obj, 0);
+    if (nooutlet_int == 0){
+        x->out_A = outlet_new(&x->x_obj, 0);
+    }
     return (x);
 }
 
@@ -354,10 +432,16 @@ void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
         pd_error(x, "Error: pyFunction is NULL");
         return NULL;
     }
+
+    // ==================
+    PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
+    x->outPyPointer = PyLong_AsLong(pyOUT);
     // Vis config
     t_symbol *py4pdArgs = gensym("-canvas");
     py4pd_InitVisMode(x, c, py4pdArgs, 0, argc, argv);
+    x->function_called = 1;
     x->function = pyFunction;
+    x->function_name = s;
     x->home_path = patch_dir;         // set name of the home path
     x->packages_path = patch_dir;     // set name of the packages path
 
@@ -378,7 +462,6 @@ void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
     argsFunc = PyTuple_GetItem(argspec, 0);       
     int py_args = PyObject_Size(argsFunc);
     x->py_arg_numbers = py_args;
-
     int i;
     int pyFuncArgs = x->py_arg_numbers - 1;
 
@@ -403,8 +486,6 @@ void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
         x->argsDict = PyTuple_New(1);
         PyTuple_SetItem(x->argsDict, 0, Py_None);
     }
-
-
     x->out_A = outlet_new(&x->x_obj, 0);
     return (x);
 }
@@ -426,19 +507,13 @@ void *pyObjectFree(t_py *x) {
  * @param argv
  * @return
  */
-// =====================================
-/**
- * @brief add new Python Object to PureData
- * @param x
- * @param argc
- * @param argv
- * @return
- */
 PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     char *objectName;
     PyObject *Function;
     int w = 250, h = 250;
+    int objpyout = 0;
+    int nooutlet = 0;
     if (!PyArg_ParseTuple(args, "Os", &Function, &objectName)) { 
         post("[Python]: Error parsing arguments");
         return NULL;
@@ -455,7 +530,18 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
             PyObject *height = PyTuple_GetItem(figsize, 1);
             w = PyLong_AsLong(width);
             h = PyLong_AsLong(height);
-            
+        }
+        if (PyDict_Contains(keywords, PyUnicode_FromString("pyout"))) {
+            PyObject *output = PyDict_GetItemString(keywords, "pyout"); // it gets the data type output
+            if (output == Py_True) {
+                objpyout = 1;
+            }
+        }
+        if (PyDict_Contains(keywords, PyUnicode_FromString("no_outlet"))) {
+            PyObject *output = PyDict_GetItemString(keywords, "no_outlet"); // it gets the data type output
+            if (output == Py_True) {
+                nooutlet = 1;
+            }
         }
     }
 
@@ -464,6 +550,8 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     PyDict_SetItemString(nestedDict, "py4pdOBJFunction", Function);
     PyDict_SetItemString(nestedDict, "py4pdOBJwidth", PyLong_FromLong(w));
     PyDict_SetItemString(nestedDict, "py4pdOBJheight", PyLong_FromLong(h));
+    PyDict_SetItemString(nestedDict, "py4pdOBJpyout", PyLong_FromLong(objpyout));
+    PyDict_SetItemString(nestedDict, "py4pdOBJnooutlet", PyLong_FromLong(nooutlet));
     PyObject *objectDict = PyDict_New();
     PyDict_SetItemString(objectDict, objectName, nestedDict);
     PyObject *py4pd_capsule = PyCapsule_New(objectDict, objectName, NULL);
@@ -491,34 +579,43 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     // NORMAL
     if ((strcmp(objectType, "NORMAL") == 0)){
         pyNewObject = class_new(gensym(objectName), (t_newmethod)CreateNewObject, 0, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
+        class_addmethod(pyNewObject, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
+        class_addmethod(pyNewObject, (t_method)documentation, gensym("doc"), 0, 0);
+        class_addmethod(pyNewObject, (t_method)usepointers, gensym("pointers"), A_FLOAT, 0);
         class_addanything(pyNewObject, py_anything);
-        // TODO: add reload method
+
     }
     // VIS
     else if ((strcmp(objectType, "VIS") == 0)){
         pyNewObject_VIS = class_new(gensym(objectName), (t_newmethod)CreateNew_VISObject, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
         class_addanything(pyNewObject_VIS, py_anything);
         class_addmethod(pyNewObject_VIS, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);
+        class_addmethod(pyNewObject, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
+        class_addmethod(pyNewObject, (t_method)documentation, gensym("doc"), 0, 0);
     }
     // AUDIOIN
     else if ((strcmp(objectType, "AUDIOIN") == 0)){
         pyNewObject_AudioIn = NULL;
+        class_addmethod(pyNewObject, (t_method)documentation, gensym("doc"), 0, 0);
 
     }
     // AUDIOOUT
     else if ((strcmp(objectType, "AUDIOOUT") == 0)){
         pyNewObject_AudioOut = NULL;
+        class_addmethod(pyNewObject, (t_method)documentation, gensym("doc"), 0, 0);
 
     }
     // AUDIO
     else if ((strcmp(objectType, "AUDIO") == 0)){
         pyNewObject_Audio = NULL;
+        class_addmethod(pyNewObject, (t_method)documentation, gensym("doc"), 0, 0);
     }
     
     if (py_args != 0){
         py4pdInlets_proxy_class = class_new(gensym("_py4pdInlets_proxy"), 0, 0, sizeof(t_py4pdInlet_proxy), CLASS_DEFAULT, 0);
         class_addanything(py4pdInlets_proxy_class, py4pdInlets_proxy_anything);
         class_addlist(py4pdInlets_proxy_class, py4pdInlets_proxy_list);
+        class_addmethod(py4pdInlets_proxy_class, (t_method)py4pdInlets_proxy_pointer, gensym("PyObject"), A_POINTER, 0);
     }
     return PyLong_FromLong(1);
 
