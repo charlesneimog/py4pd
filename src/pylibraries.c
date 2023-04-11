@@ -271,7 +271,7 @@ void py_Object(t_py *x, t_atom *argv){
     pValue = PyObject_CallObject(x->function, x->argsDict);
 
     // odd code, but solve the bug
-    if (prev_obj_exists == 1) {
+    if (prev_obj_exists == 1 && pValue != NULL) {
         objectCapsule = py4pd_add_pd_object(prev_obj);
         if (objectCapsule == NULL){
             pd_error(x, "[Python] Failed to add object to Python");
@@ -379,11 +379,11 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
             return NULL;
         }
     }
-    else if (code->co_flags & CO_VARKEYWORDS) {
-        x->py_arg_numbers = 1;
+    if (code->co_flags & CO_VARKEYWORDS) {
+        // x->py_arg_numbers = 1;
         post("py4pd: function %s use **kwargs", objectName);
     }
-    else {
+    if (code->co_argcount != 0){
         x->py_arg_numbers = code->co_argcount;
         post("py4pd: function %s use %d arguments", objectName, x->py_arg_numbers);
     }
