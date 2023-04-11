@@ -211,7 +211,6 @@ static void getmoduleFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)argc;
     (void)argv;
 
-
     PyObject *module_dict = PyModule_GetDict(x->module);
     Py_ssize_t pos = 0;
     PyObject *key, *value;
@@ -234,15 +233,13 @@ static void getmoduleFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argv is the arguments
  * @return void, but it prints the documentation
  */
-static void documentation(t_py *x) {
-    PyObject *pFunc;
+void documentation(t_py *x) {
     if (x->function_called == 0) { 
         pd_error(x, "[py4pd] To see the documentaion you need to set the function first!");
         return;
     }
-    pFunc = x->function;
-    if (pFunc && PyCallable_Check(pFunc)) {  // Check if the function exists and is callable
-        PyObject *pDoc = PyObject_GetAttrString(pFunc, "__doc__");  // Get the documentation of the function
+    if (x->function && PyCallable_Check(x->function)) {  // Check if the function exists and is callable
+        PyObject *pDoc = PyObject_GetAttrString(x->function, "__doc__");  // Get the documentation of the function
         if (pDoc != NULL) {
             const char *Doc = PyUnicode_AsUTF8(pDoc);
             if (Doc != NULL) {
@@ -420,7 +417,7 @@ static void set_param(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argv is the arguments
  * @return void, but it reloads the script
  */
-static void reload(t_py *x) {
+void reload(t_py *x) {
     PyObject *pName, *pFunc, *pModule, *pReload;
     if (x->function_called == 0) {  // if the set method was not called, then we
                                     // can not run the function :)
@@ -432,6 +429,15 @@ static void reload(t_py *x) {
     // reload the module
     pName = PyUnicode_DecodeFSDefault(x->script_name->s_name);  // Name of script file
     pModule = PyImport_Import(pName);
+    if (pModule == NULL) {
+        pd_error(x, "Error importing the module!");
+        x->function_called = 0;
+        Py_DECREF(pFunc);
+        Py_DECREF(pName);
+        return;
+    }
+
+
     pReload = PyImport_ReloadModule(pModule);
     if (pReload == NULL) {
         pd_error(x, "Error reloading the module!");
@@ -1258,6 +1264,30 @@ static void usenumpy(t_py *x, t_floatarg f) {
 }
 
 // ============================================
+/**
+ * @brief This will enable or disable the numpy array support and start numpy import if it is not imported.
+ * @param x is the py4pd object
+ * @param f is the status of the numpy array support
+ * @return It will return void.
+ */
+void usepointers(t_py *x, t_floatarg f) {
+    int usepointers = (int)f;
+    if (usepointers == 1) {
+        post("[py4pd] Python Pointers enabled.");
+        x->outPyPointer = 1;
+    } 
+    else if (usepointers == 0) {
+        x->outPyPointer = 0;
+        post("[py4pd] Python Pointers disabled");
+    } 
+    else {
+        pd_error(x, "[py4pd] Python Pointers status must be 0 (disable) or 1 (enable)");
+    }
+    return;
+}
+
+
+// ============================================
 // =========== SETUP OF OBJECT ================
 // ============================================
 /**
@@ -1431,8 +1461,8 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     findpy4pd_folder(x);  // find the py4pd object folder
     if (argc > 1) {       // check if there are two arguments
         set_function(x, s, argc, argv);
-        py4pdImportNumpy();
-        x->numpyImported = 1;
+        // py4pdImportNumpy();
+        x->numpyImported = 0;
     }
     return (x);
 }
@@ -1510,17 +1540,12 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_classAudioOut, (t_method)py4pd_audio_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
     CLASS_MAINSIGNALIN(py4pd_classAudioIn, t_py, py4pd_audio);  
     CLASS_MAINSIGNALIN(py4pd_classAudioOut, t_py, py4pd_audio);  
-    class_addmethod(py4pd_classAudioIn, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0);  // add a method to a class
-    class_addmethod(py4pd_classAudioOut, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0);  // add a method to a class
+
 
     // Pic related
-    // class_addmethod(py4pd_class_VIS, (t_method)PY4PD_size_callback, gensym("_picsize"), A_DEFFLOAT, A_DEFFLOAT, 0);
-    // class_addmethod(py4pd_class_VIS, (t_method)PY4PD_mouserelease,gensym("_mouserelease"), 0);
-    // class_addmethod(py4pd_class_VIS, (t_method)PY4PD_outline, gensym("outline"), A_DEFFLOAT, 0);
     class_addmethod(py4pd_class_VIS, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);
 
     // this is like have lot of objects with the same name, add all methods for
-    // py4pd_class, py4pd_class_AudioOut and py4pd_class_VIS
     class_addmethod(py4pd_class, (t_method)home, gensym("home"), A_GIMME, 0);  // set home path
     class_addmethod(py4pd_class_VIS, (t_method)home, gensym("home"), A_GIMME, 0);  // set home path
     class_addmethod(py4pd_classAudioOut, (t_method)packages, gensym("home"), A_GIMME, 0);  // set packages path
@@ -1531,10 +1556,16 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_classAudioOut, (t_method)packages, gensym("packages"), A_GIMME, 0);  // set packages path
     class_addmethod(py4pd_classAudioIn, (t_method)packages, gensym("packages"), A_GIMME, 0);  // set packages path
 
+    // Definitios for the class
     class_addmethod(py4pd_class, (t_method)py4pdThread, gensym("thread"), A_FLOAT, 0);  // on/off threading
     class_addmethod(py4pd_class_VIS, (t_method)py4pdThread, gensym("thread"), A_FLOAT, 0);  // on/off threading
-    // class_addmethod(py4pd_classAudioOut, (t_method)thread, gensym("thread"), A_FLOAT, 0);  // on/off threading
+    
+    class_addmethod(py4pd_class, (t_method)usepointers, gensym("pointers"), A_FLOAT, 0);  // set home path
 
+    class_addmethod(py4pd_classAudioIn, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0);  // add a method to a class
+    class_addmethod(py4pd_classAudioOut, (t_method)usenumpy, gensym("numpy"), A_FLOAT, 0);  // add a method to a class
+
+    // Coding Methods
     class_addmethod(py4pd_class, (t_method)reload, gensym("reload"), 0, 0);  // reload python script
     class_addmethod(py4pd_class_VIS, (t_method)reload, gensym("reload"), 0, 0);  // reload python script
     class_addmethod(py4pd_classAudioOut, (t_method)reload, gensym("reload"), 0, 0);  // reload python script
@@ -1578,8 +1609,7 @@ void py4pd_setup(void) {
  
     class_addmethod(py4pd_class, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class_VIS, (t_method)run, gensym("run"), A_GIMME, 0);  // run function
-    // TODO: Put some error here
-
+    
     class_addmethod(py4pd_class, (t_method)set_function, gensym("set"), A_GIMME, 0);  // set function to be called
     class_addmethod(py4pd_class_VIS, (t_method)set_function, gensym("set"), A_GIMME, 0);  // set function to be called
     class_addmethod(py4pd_classAudioOut, (t_method)set_function, gensym("set"), A_GIMME, 0);  // set function to be called
