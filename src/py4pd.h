@@ -47,6 +47,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int               visMode; // 1 for canvas, 2 for picture, 3 for score
     t_int               function_called; // flag to check if the set function was called
     t_int               py_arg_numbers; // number of arguments
+    t_int               outPyPointer; // flag to check if is to output the python pointer
 
     // Library
     t_int                py4pd_lib; // flag to check if is to use python library
@@ -122,14 +123,9 @@ typedef struct _py4pdInlet_proxy{
 }t_py4pdInlet_proxy;
 
 // =====================================
-typedef struct outsFromFork{
-    t_py            *x;
-    int             outSize;
-    t_atom          *out;
-    int             error;
-}t_outsFromFork;
-
-
+typedef struct _pyObjectData {
+    PyObject *pValue;
+} t_pyObjectData;
 // =====================================
 typedef enum{
     PY4PD_FLOAT, // 1
@@ -150,6 +146,9 @@ typedef struct _pdArgs{
 
 
 // =====================================
+extern void reload(t_py *x);
+extern void documentation(t_py *x);
+extern void usepointers(t_py *x, t_floatarg f);
 extern void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv);
 
 #define PY4PD_IMAGE "R0lGODlh+gD6AOfdAAAAAAEBAQICAgMDAwQEBAUFBQYGBgcHBwgICAkJCQoKCgwMDA0NDQ4ODg8PDxAQEBERERISEhMTExQUFBUVFRYWFhcXFxgYGBkZGRoaGhsbGxwcHB0dHR4eHiAgICEhISMjIyQkJCUlJSYmJicnJygoKCkpKSsrKy0tLS4uLi8vLzAwMDExMTIyMjMzMzY2Njc3Nzg4ODk5OTo6Ojs7Ozw8PD09PT4+Pj8/P0BAQEFBQUJCQkNDQ0REREVFRUZGRkdHR0hISElJSUpKSktLS0xMTE1NTU9PT1BQUFFRUVJSUlNTU1RUVFVVVVZWVldXV1hYWFlZWVpaWltbW1xcXF5eXl9fX2FhYWJiYmNjY2RkZGVlZWZmZmdnZ2hoaGlpaWpqamtra2xsbG1tbW5ubm9vb3BwcHJycnNzc3V1dXd3d3h4eHl5eXt7e3x8fH9/f4CAgIGBgYKCgoODg4WFhYaGhoeHh4iIiImJiYqKioyMjI6Ojo+Pj5OTk5SUlJWVlZaWlpeXl5iYmJmZmZycnJ2dnZ6enp+fn6CgoKGhoaKioqOjo6WlpaampqioqKmpqaqqqqurq6ysrK2tra+vr7CwsLGxsbOzs7S0tLW1tba2tre3t7i4uLm5ubq6ury8vL29vb6+vr+/v8DAwMLCwsPDw8TExMXFxcbGxsfHx8jIyMnJycrKysvLy8zMzM3Nzc/Pz9DQ0NHR0dLS0tPT09TU1NXV1dbW1tfX19jY2NnZ2dra2tvb29zc3N3d3d/f3+Hh4eLi4uPj4+Tk5OXl5ebm5ufn5+jo6Onp6erq6uvr6+3t7e7u7u/v7/Dw8PHx8fLy8vPz8/T09PX19fb29vf39/j4+Pn5+fr6+vv7+/z8/P39/f7+/v///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////yH+EUNyZWF0ZWQgd2l0aCBHSU1QACwAAAAA+gD6AAAI/gABCBxIsKDBgwgTKlzIsKHDhxAjSpxIsaLFixgzatzIsaPHjwcdiBxJsqTJkyhTqlzJsqXLlzBjypxJs2bLgg666dzJs6fPn0CDCh1KtKjRo0iTKl3KtGlRBwRzOp1KtarVq1izag0KdaDUrWDDih1LtizPrgK/ml3Ltq3btmgBqH1Lt67du0fjzsXLt69fuFH/Ch5MWKvewogTKzZ6eLHjx4sbQ55Mua/kypgzs72subNnw4E/ix5NlTPp06iHmk7NunW31a5jj4Ytu7Zm2rZzT8atu7di3r6DDwYuvDhf4saT00WuvPla5s6ji4UuvXpW6tazlw6tvftY7N7D/uflLr68VfDm0/tEr779a/Lu4z+FL78+UPb2w+PP330//+z+/VddgAJGR2CBzR2IYHIKLlhcgw4GB2GEvU1IYW4WXlhbhhrGxmGHrX0IYmoijnhaiSbORl+K/a3IIoAuvjhgjDIaSGONCd6II4M67vhgjz5KCGSQFQ5JJIZGHrlhkkp6yGSTIT4JJYlSTnlilVaq6FWWPG7J5Y9efilkmGIWSWaZSJ6J5pJqrulkm25GCWecVM5J55V23qllWnrKhmKfy2EJ6G+CDorYn4ZuVmiiwy3K6F+IPkpWpJJO52ileFGK6VaabnrdpZ4GmmeohI5K6qGgnqqoqao2ymqr/pCmCuukss5q6au2ZlprrpzuyuunuP4qKp/CJtZpsYz5iux2wS77nLLONnVstFxBS61S0167nrXajtdst2BlC65O4o5bLrjndpuutute2y6170Ybr7PzLlsvsvcWm6+w+/7aL6//5hqwrQPPWjCsB7easKoLn9owqQ+HGrGnE29aMaYXV5qxpBs/2jGjHycasqEjD1oyoCf3mbKeK9/ZMp0vxxmzmzOvWTOaN5eZs5g7f9kzlz9nGbSVQ09ZNJRHN5m0kksf2TSRTwcZtY9T71g1jlfXmLWMW7/YNYtfpxi2iWOPWDaIZ3eYtoZrX9g2hW9HGLeDcy9YN4J3F5i3xoB7/9c3f3/nF7h9g9dXuHyHx5e4e4u317h6j6cXuXmTl1e5eJfrx+24qm3OebXffn5V5t6R3mLooldlunarw4h66lO1bp3sM74Ou7Se374T7dLxbqPtumObe/C+O1d8jsAHj9TxyjHfJbHKl+W8cdODCX303w2ve/XCcT/m9diH5b1v45sJfvi9Jo++UOXr1n6a56+P1fu20c9m/PKfp/3tccll0/8ADKAAB0jAAhowJSBJoAIXyMAGOvCBEIygBCdIwYQEBAA7"
