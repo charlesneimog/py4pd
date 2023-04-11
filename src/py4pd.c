@@ -569,14 +569,9 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         inspect = PyImport_ImportModule("inspect");
         getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
         argspec = PyObject_CallFunctionObjArgs(getfullargspec, pFunc, NULL);
-
         args = PyTuple_GetItem(argspec, 0);
-        
-        //  TODO: way to check if function has *args or **kwargs
-
         int py_args = PyObject_Size(args);
         x->py_arg_numbers = py_args;
-
         if (x->py4pd_lib == 0) {
             post("[py4pd] The '%s' function has %d arguments!", function_name->s_name, py_args);
         }
@@ -717,6 +712,8 @@ struct thread_arg_struct {
 // ============================================
 static void thread_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
     (void)s;
+    (void)argc;
+    (void)argv;
     PyObject *multiprocessing = PyImport_ImportModule("multiprocessing");
     PyObject* Process = PyObject_GetAttrString(multiprocessing, "Process");
     PyObject* kwargs = Py_BuildValue("{s:O}", "target", x->function);
@@ -1620,11 +1617,12 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class_VIS, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
     class_addmethod(py4pd_classAudioOut, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
     class_addmethod(py4pd_classAudioIn, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
+    //
+    // class_addmethod(py4pd_class, (t_method)py4pd_install_pip, gensym("install"), A_GIMME, 0);  // unset parameter inside py4pd->params
 
     class_addmethod(py4pd_class, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0); 
     class_addmethod(py4pd_class_VIS, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
     class_addmethod(py4pd_classAudioOut, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
     class_addmethod(py4pd_classAudioIn, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
-    // class_addmethod(py4pd_classLibrary, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
 
 }
