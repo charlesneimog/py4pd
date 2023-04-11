@@ -1,105 +1,44 @@
 #include "py4pd.h"
 #include "py4pd_utils.h"
 #include "py4pd_pic.h"  
+#include "pyerrors.h"
 #include "pylibraries.h"
 
 // ======================================
 // ======== py4pd embbeded module =======
 // ======================================
 PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
+    (void)keywords;
     (void)self;
-    float f;
-    char *string;
-    t_symbol *symbol;
-    symbol = gensym("list");
-    int keyword_arg = 0;
-
-    if (keywords != NULL) {
-        post("keywords: %s", keywords);
-        PyObject *anything_symbol = PyDict_GetItemString(keywords, "symbol");
-        if (anything_symbol == NULL) {
-            // PyErr_Clear(); ??
-        } 
-        else {
-            if (PyUnicode_Check(anything_symbol)) {
-                const char *result = PyUnicode_AsUTF8(anything_symbol);
-                symbol = gensym(result);
-                keyword_arg = 1;
-            } 
-            else {
-                PyErr_SetString(PyExc_TypeError, "[Python] pd.out keyword argument 'symbol' must be a string.");  // Colocar melhor descrição do erro
-                return NULL;
-            }
-        }
-    }
-
-    // ================================
+    
     PyObject *pd_module = PyImport_ImportModule("__main__");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-    // ================================
-
-    if (PyArg_ParseTuple(args, "f", &f)) {
-        if (keyword_arg == 1) {
-            t_atom *list_array = (t_atom *)malloc(1 * sizeof(t_atom));
-            list_array[0].a_type = A_FLOAT;
-            list_array[0].a_w.w_float = f;
-            outlet_anything(py4pd->out_A, symbol, 1, list_array);
-            free(list_array);
-        } 
-        else {
-            outlet_float(py4pd->out_A, f);
+    //
+    if (keywords != NULL) { // special case for py.iterate
+        PyObject *pyiterate = PyDict_GetItemString(keywords, "pyiterate"); // it gets the data type output
+        PyObject *pycollect = PyDict_GetItemString(keywords, "pycollect"); // it gets the data type output
+        if (pyiterate == Py_True || pycollect == Py_True) {
+            py4pd->outPyPointer = 1;
+            PyObject *copyModule = PyImport_ImportModule("copy");
+            PyObject *deepcopyFunction = PyObject_GetAttrString(copyModule, "deepcopy");
+            PyObject *argsTuple = PyTuple_Pack(1, args);
+            PyObject *newObject = PyObject_CallObject(deepcopyFunction, argsTuple);
+            PyObject *element = PyTuple_GetItem(newObject, 0);
+            py4pd_convert_to_pd(py4pd, element);
+            py4pd->outPyPointer = 0;
+            Py_DECREF(copyModule);
+            Py_DECREF(deepcopyFunction);
+            Py_DECREF(argsTuple);
+            Py_DECREF(newObject);
+            Py_DECREF(element);
+            return Py_True;
         }
-    } 
-    else if (PyArg_ParseTuple(args, "s", &string)) {    
-            py4pd_fromsymbol_symbol(py4pd, gensym(string));
-            PyErr_Clear();
-    } 
-    else if (PyArg_ParseTuple(args, "O", &args)) {
-        int list_size = PyList_Size(args);
-        t_atom *list_array = (t_atom *)malloc(list_size * sizeof(t_atom));
-        int i;
-        for (i = 0; i < list_size; ++i) {
-            PyObject *pValue_i = PyList_GetItem(args, i);  // borrowed reference
-            if (PyLong_Check(pValue_i)) {  // If the function return a list of integers
-                long result = PyLong_AsLong(pValue_i);
-                float result_float = (float)result;
-                list_array[i].a_type = A_FLOAT;
-                list_array[i].a_w.w_float = result_float;
-            } 
-            else if (PyFloat_Check(pValue_i)) {  // If the function return a list of floats
-                double result = PyFloat_AsDouble(pValue_i);
-                float result_float = (float)result;
-                list_array[i].a_type = A_FLOAT;
-                list_array[i].a_w.w_float = result_float;
-            } 
-            else if (PyUnicode_Check(pValue_i)) {  // If the function return a list of strings
-                const char *result = PyUnicode_AsUTF8(pValue_i);
-                list_array[i].a_type = A_SYMBOL;
-                list_array[i].a_w.w_symbol = gensym(result);
-            } 
-            else if (Py_IsNone(pValue_i)) {
-                // If the function return a list of None
-            } 
-            else {
-                Py_DECREF(pValue_i);
-                Py_DECREF(args);
-                return NULL;
-            }
-            Py_DECREF(pValue_i);
-        }
-        outlet_anything(py4pd->out_A, symbol, list_size, list_array);
-        free(list_array);
-        Py_DECREF(args);
-        PyErr_Clear();
-    } 
-    else {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.out argument must be a list, float or a string");  // Colocar melhor descrição do erro
-        pd_error(py4pd, "[Python] pd.out argument must be a list, float or a string");
-        return NULL;
     }
+    py4pd_convert_to_pd(py4pd, args);
     return PyLong_FromLong(0);
 }
+
 // =================================
 PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
@@ -549,7 +488,11 @@ PyObject *pdveczise(PyObject *self, PyObject *args) {
     return PyLong_FromLong(vector);
 }
 
+
 // =================================
+// ========== Utilities ============
+// =================================
+
 PyObject *pdkey(PyObject *self, PyObject *args) {
     //get values from Dict salved in x->param
     (void)self;
@@ -558,12 +501,9 @@ PyObject *pdkey(PyObject *self, PyObject *args) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.key: no argument expected");
         return NULL;
     }
-    // ================================
     PyObject *pd_module = PyImport_ImportModule("__main__");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-    // ================================
-    // get value from dict
     if (py4pd->Dict == NULL) {
         PyErr_Clear();
         Py_RETURN_NONE;
@@ -576,6 +516,57 @@ PyObject *pdkey(PyObject *self, PyObject *args) {
     }
     Py_INCREF(value);
     return value;
+}
+
+// =================================
+PyObject *pditerate(PyObject *self, PyObject *args){
+    (void)self;
+
+    PyObject *iter, *item;
+
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+
+    if (!PyTuple_Check(args)) {
+        PyErr_SetString(PyExc_TypeError, "pditerate() argument must be a tuple");
+        return NULL;
+    }
+    iter = PyObject_GetIter(args);
+    if (iter == NULL) {
+        PyErr_SetString(PyExc_TypeError, "pditerate() argument must be iterable");
+        return NULL;
+    }
+    while ((item = PyIter_Next(iter))) {
+        if (!PyList_Check(item)) {
+            PyErr_SetString(PyExc_TypeError, "pditerate() argument must be a list");
+            return NULL;
+        }
+        // get item size
+        int size = PyList_Size(item);
+        for (int i = 0; i < size; i++) {
+            PyObject *out_args = PyList_GetItem(item, i);
+            void *pData = pyobject_to_pointer(out_args);
+            if (Py_REFCNT(out_args) == 1) { // TODO: think about how will clear this
+                Py_INCREF(out_args);
+            }
+            t_atom pointer_atom;
+            SETPOINTER(&pointer_atom, pData);
+            outlet_anything(py4pd->x_obj.ob_outlet, gensym("PyObject"), 1, &pointer_atom);
+        }
+    }
+    Py_DECREF(iter);
+    Py_RETURN_NONE;
+}
+
+// =================================
+PyObject *getobjpointer(PyObject *self, PyObject *args){
+    (void)self;
+    (void)args;
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    return PyUnicode_FromFormat("%p", py4pd);
 }
 
 // =================================
@@ -603,13 +594,17 @@ PyMethodDef PdMethods[] = {
     {"getkey", pdkey, METH_VARARGS, "Get Object User Parameters"},
 
     // audio
-    {"samplerate", pdsamplerate, METH_VARARGS, "Get PureData SampleRate"},
-    {"vecsize", pdveczise, METH_VARARGS, "Get PureData Vector Size"},
-
+    {"samplerate", pdsamplerate, METH_NOARGS, "Get PureData SampleRate"},
+    {"vecsize", pdveczise, METH_NOARGS, "Get PureData Vector Size"},
 
     // library methods
-    {"addobject", (PyCFunction)pdAddPyObject, METH_VARARGS | METH_KEYWORDS, "It add python functions as objects"},
+    {"addobject", (PyCFunction)pdAddPyObject, METH_VARARGS | METH_KEYWORDS, "It adds python functions as objects"},
 
+    // OpenMusic Methods
+    {"iterate", pditerate, METH_VARARGS, "It iterates throw one list of PyObjects"},
+
+    // Others
+    {"getobjpointer", getobjpointer, METH_NOARGS, "Get PureData Object Pointer"},
 
     {NULL, NULL, 0, NULL}  //
 };
