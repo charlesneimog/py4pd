@@ -17,9 +17,15 @@ char *get_editor_command(t_py *x);
 void pd4py_system_func(const char *command);
 int isNumericOrDot(const char *str);
 void removeChar(char *str, char c);
+
+// ========================
 void *py4pd_convert_to_pd(t_py *x, PyObject *pValue);
 PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv);
 PyObject *py4pd_add_pd_object(t_py *x);
+void *pyobject_to_pointer(PyObject *pValue);
+PyObject *pointer_to_pyobject(void *p);
+void free_pyobject_data(void *p);
+
 void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s);
 
 uint32_t py4pd_ntohl(uint32_t netlong);
