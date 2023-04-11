@@ -1,3 +1,9 @@
+#### py4pd version 0.7.0
+* Add support to detach (It runs I separete Python executable (probably will be uncessary with PEP 684).
+* Add way to work with Python Types inside PureData (need to send message `pointers 1`)
+* Add possibility to write Python Objects (like PureData Libraries) in add to PureData as standart Objects.
+
+
 #### py4pd version 0.6.0
 * Add audio support
   * For audioout you need to create the object with the `-audioout` flag. 
