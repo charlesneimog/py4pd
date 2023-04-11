@@ -347,21 +347,47 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
     set_py4pd_config(x);  // set the config file (in py4pd.cfg, make this be
     py4pd_tempfolder(x);  // find the py4pd folder
     findpy4pd_folder(x);  // find the py4pd object folder
-    
-    PyObject *inspect = NULL, *getfullargspec = NULL;
-    PyObject *argspec = NULL, *argsFunc = NULL, *getfile = NULL;
-    inspect = PyImport_ImportModule("inspect");
-    getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
-    getfile = PyObject_GetAttrString(inspect, "getfile");
-    // get script.py name
-    PyObject *pyFunctionFile = PyObject_CallFunctionObjArgs(getfile, pyFunction, NULL);
-    const char *pyFunctionFileName = PyUnicode_AsUTF8(pyFunctionFile);
-    x->script_name = gensym(pyFunctionFileName);
-
-    argspec = PyObject_CallFunctionObjArgs(getfullargspec, pyFunction, NULL);
-    argsFunc = PyTuple_GetItem(argspec, 0);       
-    int py_args = PyObject_Size(argsFunc);
-    x->py_arg_numbers = py_args;
+        
+    // check if function use *args or **kwargs
+    PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
+    if (code->co_flags & CO_VARARGS) {
+        x->py_arg_numbers = 1;
+        int argsNumberDefined = 0;
+        int i;
+        for (i = 0; i < argc; i++) {
+            if (argv[i].a_type == A_SYMBOL) {
+                if (strcmp(argv[i].a_w.w_symbol->s_name, "-n_args") == 0) {
+                    if (i + 1 < argc) {
+                        if (argv[i + 1].a_type == A_FLOAT) {
+                            x->py_arg_numbers = (int)argv[i + 1].a_w.w_float;
+                            argsNumberDefined = 1;
+                        }
+                        else {
+                            pd_error(x, "[%s] function uses *args, you need to specify the number of arguments", objectName);
+                            return NULL;
+                        }
+                    }
+                    else {
+                        pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args {number}", objectName);
+                        return NULL;
+                    }
+                }
+            }
+        }
+        if (argsNumberDefined == 0) {
+            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args {number}", objectName);
+            return NULL;
+        }
+    }
+    else if (code->co_flags & CO_VARKEYWORDS) {
+        x->py_arg_numbers = 1;
+        post("py4pd: function %s use **kwargs", objectName);
+    }
+    else {
+        x->py_arg_numbers = code->co_argcount;
+        post("py4pd: function %s use %d arguments", objectName, x->py_arg_numbers);
+    }
+    x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
 
     int i;
     int pyFuncArgs = x->py_arg_numbers - 1;
@@ -514,6 +540,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     int w = 250, h = 250;
     int objpyout = 0;
     int nooutlet = 0;
+    int added2pd_info = 0;
     if (!PyArg_ParseTuple(args, "Os", &Function, &objectName)) { 
         post("[Python]: Error parsing arguments");
         return NULL;
@@ -541,6 +568,12 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
             PyObject *output = PyDict_GetItemString(keywords, "no_outlet"); // it gets the data type output
             if (output == Py_True) {
                 nooutlet = 1;
+            }
+        }
+        if (PyDict_Contains(keywords, PyUnicode_FromString("added2pd_info"))) {
+            PyObject *output = PyDict_GetItemString(keywords, "added2pd_info"); // it gets the data type output
+            if (output == Py_True) {
+                added2pd_info = 1;
             }
         }
     }
@@ -617,6 +650,11 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         class_addlist(py4pdInlets_proxy_class, py4pdInlets_proxy_list);
         class_addmethod(py4pdInlets_proxy_class, (t_method)py4pdInlets_proxy_pointer, gensym("PyObject"), A_POINTER, 0);
     }
+    if (added2pd_info == 1){
+        post("[py4pd]: Object {%s} added to PureData", objectName);
+    }
+
+
     return PyLong_FromLong(1);
 
 }
