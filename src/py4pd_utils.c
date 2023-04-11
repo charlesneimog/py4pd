@@ -1,3 +1,4 @@
+#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd.h"
 #include "py4pd_utils.h"
@@ -272,6 +273,26 @@ void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){
 }
 
 // =====================================================================
+void *pyobject_to_pointer(PyObject *pValue) {
+    t_pyObjectData *data = (t_pyObjectData *)malloc(sizeof(t_pyObjectData));
+    data->pValue = pValue;
+    return (void *)data;
+}
+
+// =====================================================================
+PyObject *pointer_to_pyobject(void *p) {
+    t_pyObjectData *data = (t_pyObjectData *)p;
+    return data->pValue;
+}
+
+// =====================================================================
+void free_pyobject_data(void *p) {
+    t_pyObjectData *data = (t_pyObjectData *)p;
+    Py_XDECREF(data->pValue);
+    free(data);
+}
+
+// =====================================================================
 /**
  * @brief Convert and output Python Values to PureData values
  * @param x is the py4pd object
@@ -279,7 +300,18 @@ void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){
  * @return nothing, but output the value to the outlet
  */
 
-void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
+void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) { // TODO: fix the type of the output
+    if (x->outPyPointer) {
+void *pData = pyobject_to_pointer(pValue);
+        if (Py_REFCNT(pValue) == 1) {
+            Py_INCREF(pValue);
+        }
+        t_atom pointer_atom;
+        SETPOINTER(&pointer_atom, pData);
+        outlet_anything(x->x_obj.ob_outlet, gensym("PyObject"), 1, &pointer_atom);
+        return 0;
+    }
+
     if (PyList_Check(pValue)) {  // If the function return a list list
         int list_size = PyList_Size(pValue);
         t_atom *list_array = (t_atom *)malloc(list_size * sizeof(t_atom));
@@ -327,18 +359,15 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
         if (PyLong_Check(pValue)) {
             long result = PyLong_AsLong(pValue);  // If the function return a integer
             outlet_float(x->out_A, result);
-            // Py_DECREF(pValue);
         } 
         else if (PyFloat_Check(pValue)) {
             double result = PyFloat_AsDouble(pValue);  // If the function return a float
             float result_float = (float)result;
             outlet_float(x->out_A, result_float);
-            // Py_DECREF(pValue);
         } 
         else if (PyUnicode_Check(pValue)) {
             const char *result = PyUnicode_AsUTF8(pValue); // If the function return a string
             py4pd_fromsymbol_symbol(x, gensym(result));
-            // Py_DECREF(pValue);
         } 
         else if (Py_IsNone(pValue)) {
             // Py_DECREF(pValue);
