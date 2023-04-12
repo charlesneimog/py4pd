@@ -5,6 +5,7 @@ from py4pd_scripts.py4pdpip import *
 from py4pd_scripts.py4pdconvertion import *
 from py4pd_scripts.py4pdloop import *
 from py4pd_scripts.py4pdinfo import *
+from py4pd_scripts.py4pdscore import *
 
 
 def py4pdLoadObjects():
@@ -39,4 +40,8 @@ def py4pdLoadObjects():
     pd.addobject(omdiv, "py.div")
     pd.addobject(omabs, "py.abs")
 
+    # Score Functions
+    pd.addobject(note, "py.note", objtype="VIS")
+    pd.addobject(chord, "py.chord", objtype="VIS")
+    
 

@@ -9,9 +9,8 @@ try:
     from neoscore.common import *
 except Exception as e:
     pd.error(str(e))
-    pd.error(
-        "Neoscore not found")
-    pd.print("Create a new object with 'py4pd pdpip install' and send 'run neoscore' to install neoscore")
+    pd.error("To fix this, send the message 'global nescore' to the object py.pip and restart Pd.")
+    # TODO: CREATE pd.install('neoscore') to install the module
 
 
 def getpitchKey(pitch, cents=0):
@@ -140,8 +139,3 @@ def note(pitch):
     pd.show(notePathName)
     return None
 
-
-def py4pdLoadObjects():
-    pd.addobject(note, "note", objtype="VIS")
-    pd.addobject(chord, "chord")
-    pd.print("Added note and chord objects")
