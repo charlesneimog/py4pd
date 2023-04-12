@@ -6,12 +6,18 @@ from py4pd_scripts.py4pdconvertion import *
 from py4pd_scripts.py4pdloop import *
 from py4pd_scripts.py4pdinfo import *
 from py4pd_scripts.py4pdscore import *
+from py4pd_scripts.py4pdconvertion import *
+from py4pd_scripts.py4pdoperators import *
 
 
 def py4pdLoadObjects():
     # Pip install
     if addpip:
         pd.addobject(pipinstall, "py.pip")
+
+    # Logic Functions
+    pd.addobject(pyand, "py.and")
+    pd.addobject(pyor, "py.or")
 
     # info
     pd.addobject(pdprint, "py.print", no_outlet=True)
