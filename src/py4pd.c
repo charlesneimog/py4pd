@@ -47,17 +47,23 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
 
     PyObject *pModule, *pFunc;  // Create the variables of the python objects
     char *pyScriptsFolder = malloc(strlen(x->py4pd_folder->s_name) + 20); // allocate extra space
+    char *pyGlobalFolder = malloc(strlen(x->py4pd_folder->s_name) + 30); // allocate extra space
+
     snprintf(pyScriptsFolder, strlen(x->py4pd_folder->s_name) + 20, "%s/resources/scripts", x->py4pd_folder->s_name);
+    snprintf(pyGlobalFolder, strlen(x->py4pd_folder->s_name) + 30, "%s/resources/py-modules/", x->py4pd_folder->s_name);
     PyObject *home_path = PyUnicode_FromString(x->home_path->s_name);  // Place where script file will probably be
     PyObject *site_package = PyUnicode_FromString(x->packages_path->s_name);  // Place where the packages will be
+    PyObject *globalPackages = PyUnicode_FromString(pyGlobalFolder);  // Place where the py4pd scripts will be
     PyObject *py4pdScripts = PyUnicode_FromString(pyScriptsFolder);  // Place where the py4pd scripts will be
     PyObject *sys_path = PySys_GetObject("path");
     PyList_Insert(sys_path, 0, home_path);
     PyList_Insert(sys_path, 0, site_package);
     PyList_Insert(sys_path, 0, py4pdScripts);
+    PyList_Insert(sys_path, 0, globalPackages);
     Py_DECREF(home_path);
     Py_DECREF(site_package);
     Py_DECREF(py4pdScripts);
+    Py_DECREF(globalPackages);
     pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file
     if (pModule == NULL) {
         PyObject *ptype, *pvalue, *ptraceback;
@@ -535,14 +541,19 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     char *pyScripts_folder = malloc(strlen(x->py4pd_folder->s_name) + 20); // allocate extra space
     snprintf(pyScripts_folder, strlen(x->py4pd_folder->s_name) + 20, "%s/resources/scripts", x->py4pd_folder->s_name);
     // =====================
+    char *pyGlobal_packages = malloc(strlen(x->py4pd_folder->s_name) + 20); // allocate extra space
+    snprintf(pyGlobal_packages, strlen(x->py4pd_folder->s_name) + 20, "%s/resources/py-modules", x->py4pd_folder->s_name);
+
     // Add aditional path to python to work with Pure Data
     PyObject *home_path = PyUnicode_FromString(x->home_path->s_name);  // Place where script file will probably be
     PyObject *site_package = PyUnicode_FromString(x->packages_path->s_name);  // Place where the packages will be
     PyObject *py4pdScripts = PyUnicode_FromString(pyScripts_folder);  // Place where the py4pd scripts will be
+    PyObject *py4pdGlobalPackages = PyUnicode_FromString(pyGlobal_packages);  // Place where the py4pd global packages will be
     PyObject *sys_path = PySys_GetObject("path");
     PyList_Insert(sys_path, 0, home_path);
     PyList_Insert(sys_path, 0, site_package);
     PyList_Insert(sys_path, 0, py4pdScripts);
+    PyList_Insert(sys_path, 0, py4pdGlobalPackages);
     Py_DECREF(home_path);
     Py_DECREF(site_package);
     Py_DECREF(py4pdScripts);

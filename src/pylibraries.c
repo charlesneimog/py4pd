@@ -270,7 +270,10 @@ void py_Object(t_py *x, t_atom *argv){
     }
     pValue = PyObject_CallObject(x->function, x->argsDict);
 
-    // odd code, but solve the bug
+    // If there is a previous object and a value is passed, 
+    // create a Python object capsule and add the previous object to it, 
+    // so that when the current object is connected to a Python object, 
+    // its output is sent to the right outlet.
     if (prev_obj_exists == 1 && pValue != NULL) {
         objectCapsule = py4pd_add_pd_object(prev_obj);
         if (objectCapsule == NULL){
@@ -307,6 +310,7 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
     t_pd **py4pdInlet_proxies;
 
     x->visMode  = 0;
+    x->pyObject = 1;
     x->x_canvas = canvas_getcurrent();       // pega o canvas atual
     t_canvas *c = x->x_canvas;               // get the current canvas
     t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
@@ -380,12 +384,13 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
         }
     }
     if (code->co_flags & CO_VARKEYWORDS) {
+        // TODO: IMPLEMENT **kwargs
         // x->py_arg_numbers = 1;
-        post("py4pd: function %s use **kwargs", objectName);
+        // post("py4pd: function %s use **kwargs", objectName);
     }
     if (code->co_argcount != 0){
         x->py_arg_numbers = code->co_argcount;
-        post("py4pd: function %s use %d arguments", objectName, x->py_arg_numbers);
+        // post("py4pd: function %s use %d arguments", objectName, x->py_arg_numbers);
     }
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
 
