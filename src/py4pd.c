@@ -763,7 +763,10 @@ void *independed_run(void *arg) {
     t_py *x = py4pdEXE->x;
     int argc = py4pdEXE->argc;
     t_atom *argv = py4pdEXE->argv;
-
+    
+    // # run just if is is not Windows
+    #ifndef _WIN32
+    
     const char *pipe_PDARGS = "/tmp/py4pd_PDARGS"; // It sends the arguments list to the py4pd (exe)
     const char *pipe_PDARGS_SIZE = "/tmp/py4pd_PDARGS_SIZE"; // It sends the arguments list size to the py4pd (exe)
     const char *pipe_PDATOM_SIZE = "/tmp/py4pd_PDATOM_SIZE"; // It sends the arguments list size to the py4pd (exe)
@@ -891,6 +894,8 @@ void *independed_run(void *arg) {
         pd_error(x, "[py4pd] Error: Unknown type");
     }
     free(value);
+    close(pipeVALUES);
+    #endif
     return 0;
 }
 
