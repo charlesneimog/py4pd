@@ -483,23 +483,18 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
 // ========== AUDIO CONFIG =========
 // =================================
 
-PyObject *pdsamplerate(PyObject *self, PyObject *args) {
+static PyObject* pdsamplerate(PyObject* self, PyObject* args) {
     (void)self;
-    if (!PyArg_ParseTuple(args, "")) {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.samplerate: no argument expected");
-        return NULL;
-    }
-    t_sample sr = sys_getsr();
-    return PyLong_FromLong(sr);
+    (void)args;
+
+    float sr = sys_getsr(); // call PureData's sys_getsr function to get the current sample rate
+    return PyFloat_FromDouble(sr); // return the sample rate as a Python float object
 }
 
 // =================================
 PyObject *pdveczise(PyObject *self, PyObject *args) {
     (void)self;
-    if (!PyArg_ParseTuple(args, "")) {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.samplerate: no argument expected");
-        return NULL;
-    }
+    (void)args;
     t_sample vector = sys_getblksize();
     return PyLong_FromLong(vector);
 }
