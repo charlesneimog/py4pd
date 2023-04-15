@@ -22,7 +22,6 @@ void py4pdInlets_proxy_pointer(t_py4pdInlet_proxy *x, t_atom *argv){
     return;
 }
 
-
 // =====================================
 void py4pdInlets_proxy_anything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av){
     t_py *py4pd = (t_py *)x->p_master;
@@ -31,16 +30,17 @@ void py4pdInlets_proxy_anything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_at
         PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pyInletValue);
     }
     else{
-        // create a list in Python
         PyObject *pyInletValue = PyList_New(ac + 1);
-        if (isNumericOrDot(s->s_name)){
-        }
-        else{
-        }
         PyList_SetItem(pyInletValue, 0, PyUnicode_FromString(s->s_name));
         for (int i = 0; i < ac; i++){
             if (av[i].a_type == A_FLOAT){ // TODO: check if it is an int or a float
-                PyList_SetItem(pyInletValue, i + 1, PyLong_FromLong(av[i].a_w.w_float));
+                int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
+                if (isInt){
+                    PyList_SetItem(pyInletValue, i + 1, PyLong_FromLong(av[i].a_w.w_float));
+                }
+                else{
+                    PyList_SetItem(pyInletValue, i + 1, PyFloat_FromDouble(av[i].a_w.w_float));
+                }
             }
             else if (av[i].a_type == A_SYMBOL){
                 PyList_SetItem(pyInletValue, i + 1, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
@@ -48,6 +48,7 @@ void py4pdInlets_proxy_anything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_at
         }
         PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pyInletValue);
     }
+    return;
 }
 
 // =====================================
@@ -110,6 +111,7 @@ void py_bang(t_py *x){
     }
     PyObject *pArgs = PyTuple_New(0);
     PyObject *pValue = PyObject_CallObject(x->function, pArgs);
+    // TODO: revisar, error quando pValue is null and we add a new object
     if (pValue != NULL) { 
         py4pd_convert_to_pd(x, pValue); 
     }
@@ -212,7 +214,7 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
     pValue = PyObject_CallObject(x->function, x->argsDict);
 
     // odd code, but solve the bug
-    if (prev_obj_exists == 1) {
+    if (prev_obj_exists == 1 && pValue != NULL) {
         objectCapsule = py4pd_add_pd_object(prev_obj);
         if (objectCapsule == NULL){
             pd_error(x, "[Python] Failed to add object to Python");
@@ -348,15 +350,17 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
     x->function_name = s;
     x->home_path = patch_dir;         // set name of the home path
     x->packages_path = patch_dir;     // set name of the packages path
+    x->py_arg_numbers = 0;
     set_py4pd_config(x);  // set the config file (in py4pd.cfg, make this be
     py4pd_tempfolder(x);  // find the py4pd folder
     findpy4pd_folder(x);  // find the py4pd object folder
         
     // check if function use *args or **kwargs
+    int argsNumberDefined = 0;
     PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
     if (code->co_flags & CO_VARARGS) {
         x->py_arg_numbers = 1;
-        int argsNumberDefined = 0;
+        
         int i;
         for (i = 0; i < argc; i++) {
             if (argv[i].a_type == A_SYMBOL) {
@@ -367,7 +371,7 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
                             argsNumberDefined = 1;
                         }
                         else {
-                            pd_error(x, "[%s] function uses *args, you need to specify the number of arguments", objectName);
+                            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args {number}", objectName);
                             return NULL;
                         }
                     }
@@ -384,13 +388,19 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
         }
     }
     if (code->co_flags & CO_VARKEYWORDS) {
+        pd_error(x, "[%s] function use **kwargs, **kwargs are not implemented yet", objectName);
         // TODO: IMPLEMENT **kwargs
         // x->py_arg_numbers = 1;
         // post("py4pd: function %s use **kwargs", objectName);
     }
     if (code->co_argcount != 0){
-        x->py_arg_numbers = code->co_argcount;
-        // post("py4pd: function %s use %d arguments", objectName, x->py_arg_numbers);
+        // check if x->py_arg_numbers is already defined by *args
+        if (x->py_arg_numbers == 0) {
+            x->py_arg_numbers = code->co_argcount;
+        }
+        else{
+            x->py_arg_numbers = x->py_arg_numbers + code->co_argcount;
+        }
     }
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
 
@@ -411,7 +421,33 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
         int argNumbers = x->py_arg_numbers;
         x->argsDict = PyTuple_New(argNumbers);
         for (i = 0; i < argNumbers; i++) {
-            PyTuple_SetItem(x->argsDict, i, Py_None);
+            if (argsNumberDefined == 0 && i <= argc) {
+                if (argv[i].a_type == A_FLOAT) {
+                    char pd_atom[64];
+                    atom_string(&argv[i], pd_atom, 64);
+                    if (strchr(pd_atom, '.') != NULL) {
+                        PyTuple_SetItem(x->argsDict, i, PyFloat_FromDouble(argv[i].a_w.w_float));
+                    }
+                    else{
+                        PyTuple_SetItem(x->argsDict, i, PyLong_FromLong(argv[i].a_w.w_float));
+                    }
+                }
+                else if (argv[i].a_type == A_SYMBOL) {
+                    // if symbol is "None" set to None
+                    if (strcmp(argv[i].a_w.w_symbol->s_name, "None") == 0) {
+                        PyTuple_SetItem(x->argsDict, i, Py_None);
+                    }
+                    else {
+                        PyTuple_SetItem(x->argsDict, i, PyUnicode_FromString(argv[i].a_w.w_symbol->s_name));
+                    }
+                }
+                else {
+                    PyTuple_SetItem(x->argsDict, i, Py_None);
+                }
+            }
+            else{
+                PyTuple_SetItem(x->argsDict, i, Py_None);
+            } 
         }
     }
     else{
@@ -619,6 +655,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         pyNewObject = class_new(gensym(objectName), (t_newmethod)CreateNewObject, 0, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
         class_addmethod(pyNewObject, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
         class_addmethod(pyNewObject, (t_method)documentation, gensym("doc"), 0, 0);
+        class_addmethod(pyNewObject, (t_method)set_param, gensym("key"), A_GIMME, 0);
         class_addmethod(pyNewObject, (t_method)usepointers, gensym("pointers"), A_FLOAT, 0);
         class_addanything(pyNewObject, py_anything);
 
