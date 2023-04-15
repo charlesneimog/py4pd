@@ -52,12 +52,12 @@ def runTest(pdpatch):
         cmd = '/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -send "start-test bang" ' + pathfile
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
-        print("00000000000000000000000000000000000000000000000000000000")
+        lastLine = "Fail"
         for line in outputLines:
-            print(line)
-        print("00000000000000000000000000000000000000000000000000000000")
-
-        lastLine = outputLines[-2]
+            # check if there is PASS inside some line
+            if "PASS" in line:
+                lastLine = line
+                break
     else:
         print('OS not supported')
         sys.exit()
