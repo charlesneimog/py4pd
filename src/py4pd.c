@@ -25,7 +25,7 @@ int pipePy4pdNum = 0;
 // ============================================
 static void libraryLoad(t_py *x, int argc, t_atom *argv){
     if (argc > 2) {
-        pd_error(x, "[py4pd] Too many arguments! Usage: py4pd -library <library_name>");
+        pd_error(x, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
         return;
     }
 
@@ -39,10 +39,27 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
     char script_inside_py4pd_path[MAXPDSTRING];
     snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/%s.py", x->py4pd_scripts->s_name, script_file_name->s_name);
 
+    PyObject *sys_path = PySys_GetObject("path");
     if (access(script_file_path, F_OK) == -1 && access(script_inside_py4pd_path, F_OK) == -1) {
-        pd_error(x, "[py4pd] The Library file %s was not found!", script_file_name->s_name);
         Py_XDECREF(x->function);
-        return;
+        int libraryNotFound = 1; // search if it is possible to found library  in search path
+        for (int i = 0; 1; i++){ 
+            const char *pathelem = namelist_get(STUFF->st_searchpath, i);
+            if (!pathelem){
+                break;
+            }
+            char library_path[MAXPDSTRING];
+            snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, script_file_name->s_name);
+            if (access(library_path, F_OK) != -1) {
+                libraryNotFound = 0;
+                PyObject *library_path_py = PyUnicode_FromString(library_path);
+                PyList_Insert(sys_path, 0, library_path_py);
+            }
+        }
+        if (libraryNotFound){
+            pd_error(x, "[py4pd] Library file %s not found in search path", script_file_name->s_name);
+            return;
+        }
     }
 
     PyObject *pModule, *pFunc;  // Create the variables of the python objects
@@ -55,7 +72,7 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
     PyObject *site_package = PyUnicode_FromString(x->packages_path->s_name);  // Place where the packages will be
     PyObject *globalPackages = PyUnicode_FromString(pyGlobalFolder);  // Place where the py4pd scripts will be
     PyObject *py4pdScripts = PyUnicode_FromString(pyScriptsFolder);  // Place where the py4pd scripts will be
-    PyObject *sys_path = PySys_GetObject("path");
+    
     PyList_Insert(sys_path, 0, home_path);
     PyList_Insert(sys_path, 0, site_package);
     PyList_Insert(sys_path, 0, py4pdScripts);
@@ -373,7 +390,7 @@ static void vscode(t_py *x) {
  * @param argv is the arguments
  * @return void, but it sets the editor
  */
-static void set_param(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+void set_param(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     if (argc > 2) {
         pd_error(x, "[py4pd] For now, just one parameter at a time!");
@@ -686,7 +703,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     pValue = PyObject_CallObject(x->function, ArgsTuple);
 
     // odd code, but solve the bug
-    if (prev_obj_exists == 1) {
+    if (prev_obj_exists == 1 && pValue != NULL) {
         objectCapsule = py4pd_add_pd_object(prev_obj);
         if (objectCapsule == NULL){
             pd_error(x, "[Python] Failed to add object to Python");
@@ -754,6 +771,7 @@ void *py4pdThreadExe(void *arg) {
         pd_error(NULL, "[py4pd] py4pd detached thread exited with status %d", status);
     }
     pthread_exit(NULL);
+    return NULL;
 }
 
 
@@ -1319,7 +1337,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     int audioIN = 0;
     int libraryMODE = 0;
     int normalMODE = 1;
-
+    
     for (i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
             t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
@@ -1340,6 +1358,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
             }
         }
     }
+    
 
     // INIT PYTHON
     if (!Py_IsInitialized()) {
@@ -1408,7 +1427,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                     argv[j] = argv[j + 1];
                 }
                 argc--;
-
             } 
             else if (py4pdArgs == gensym("-nvim") ||
                         py4pdArgs == gensym("-vscode") ||
@@ -1433,7 +1451,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                     argv[j] = argv[j + 1];
                 }
                 argc--;
-
             } 
             else if (py4pdArgs == gensym("-audioout")) {
                 // post("[py4pd] Audio Outlets enabled");
@@ -1474,7 +1491,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     findpy4pd_folder(x);  // find the py4pd object folder
     if (argc > 1) {       // check if there are two arguments
         set_function(x, s, argc, argv);
-        // py4pdImportNumpy();
+        py4pdImportNumpy();
         x->numpyImported = 0;
     }
     return (x);
