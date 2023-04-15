@@ -3,6 +3,7 @@
 
 #include <m_pd.h>
 #include <g_canvas.h>
+#include <s_stuff.h>
 #include <pthread.h>
 
 
@@ -147,6 +148,7 @@ typedef struct _pdArgs{
 
 // =====================================
 extern void reload(t_py *x);
+extern void set_param(t_py *x, t_symbol *s, int argc, t_atom *argv);
 extern void documentation(t_py *x);
 extern void usepointers(t_py *x, t_floatarg f);
 extern void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv);
