@@ -2,6 +2,7 @@
 #include "pd_module.h"
 #include "py4pd.h"
 #include "py4pd_utils.h"
+#include "tupleobject.h"
 
 
 // ====================================================
@@ -302,7 +303,7 @@ void free_pyobject_data(void *p) {
 
 void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) { // TODO: fix the type of the output
     if (x->outPyPointer) {
-void *pData = pyobject_to_pointer(pValue);
+        void *pData = pyobject_to_pointer(pValue);
         if (Py_REFCNT(pValue) == 1) {
             Py_INCREF(pValue);
         }
@@ -351,7 +352,13 @@ void *pData = pyobject_to_pointer(pValue);
             }
             // Py_DECREF(pValue_i);
         }
-        outlet_list(x->out_A, 0, list_size, list_array);
+        // check if the list_array[0] is a symbol
+        if (list_array[0].a_type == A_SYMBOL) {
+            outlet_anything(x->x_obj.ob_outlet, list_array[0].a_w.w_symbol, listIndex - 1, list_array + 1);
+        } 
+        else {
+            outlet_list(x->x_obj.ob_outlet, &s_list, listIndex, list_array);
+        }
         Py_DECREF(pValue);
         free(list_array);
     } 
