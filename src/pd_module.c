@@ -6,6 +6,7 @@
 // ======================================
 // ======== py4pd embbeded module =======
 // ======================================
+
 PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
     (void)keywords;
     (void)self;
@@ -17,7 +18,8 @@ PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
     if (keywords != NULL) { // special case for py.iterate
         PyObject *pyiterate = PyDict_GetItemString(keywords, "pyiterate"); // it gets the data type output
         PyObject *pycollect = PyDict_GetItemString(keywords, "pycollect"); // it gets the data type output
-        if (pyiterate == Py_True || pycollect == Py_True) {
+        PyObject *pyout = PyDict_GetItemString(keywords, "pyout"); // it gets the data type output
+        if (pyiterate == Py_True || pycollect == Py_True || pyout == Py_True) {
             py4pd->outPyPointer = 1;
             PyObject *copyModule = PyImport_ImportModule("copy");
             PyObject *deepcopyFunction = PyObject_GetAttrString(copyModule, "deepcopy");
@@ -98,13 +100,9 @@ PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
 PyObject *pderror(PyObject *self, PyObject *args) {
     (void)self;
     char *string;
-    // get py4pd object pointer
-    // ================================
     PyObject *pd_module = PyImport_ImportModule("__main__");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-    // ================================
-
     if (PyArg_ParseTuple(args, "s", &string)) {
         pd_error(py4pd, "[Python]: %s", string);
         PyErr_Clear();
@@ -116,6 +114,62 @@ PyObject *pderror(PyObject *self, PyObject *args) {
     }
     return PyLong_FromLong(0);
 }
+
+// =================================
+PyObject *pipinstall(PyObject *self, PyObject *args){
+    (void)self;
+    char *package;
+
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+
+    if (PyArg_ParseTuple(args, "s", &package)) {
+        t_atom argv[2];
+        SETSYMBOL(argv, gensym("py4pd"));
+        SETSYMBOL(argv+1, gensym("pipinstall"));
+        
+        char *pyScripts_folder = malloc(strlen(py4pd->py4pd_folder->s_name) + 20); // allocate extra space
+        snprintf(pyScripts_folder, strlen(py4pd->py4pd_folder->s_name) + 20, "%s/resources/scripts", py4pd->py4pd_folder->s_name);
+
+
+        PyObject *sys_path = PySys_GetObject("path");
+        PyList_Append(sys_path, PyUnicode_FromString(pyScripts_folder));
+        PyObject *pipinstall_module = PyImport_ImportModule("py4pd");
+        if (pipinstall_module == NULL) {
+            PyErr_Print();
+            return NULL;
+        }
+        PyObject *pipinstall_function = PyObject_GetAttrString(pipinstall_module, "pipinstall");
+        if (pipinstall_function == NULL) {
+            PyErr_Print();
+            return NULL;
+        }
+        // create new List
+        PyObject *argsList = PyList_New(2);
+        PyList_SetItem(argsList, 0, PyUnicode_FromString("global"));
+        PyList_SetItem(argsList, 1, PyUnicode_FromString(package));
+        PyObject *result = PyObject_CallObject(pipinstall_function, argsList);
+        if (result == NULL) {
+            PyErr_Print();
+            return NULL;
+        }
+        Py_DECREF(pipinstall_module);
+        Py_DECREF(pipinstall_function);
+        Py_DECREF(argsList);
+        Py_DECREF(result);
+        free(pyScripts_folder);
+        return PyLong_FromLong(0);
+    }
+    else {
+        PyErr_SetString(
+            PyExc_TypeError,
+            "[Python] argument of pd.pipinstall must be a string");  
+        return NULL;
+    }
+    return PyLong_FromLong(0);
+}
+
 
 // =================================
 PyObject *pdsend(PyObject *self, PyObject *args) {
@@ -617,6 +671,9 @@ PyMethodDef PdMethods[] = {
 
     // Others
     {"getobjpointer", getobjpointer, METH_NOARGS, "Get PureData Object Pointer"},
+
+    // pip
+    {"pip", (PyCFunction)pipinstall, METH_VARARGS, "It installs python packages"},
 
     {NULL, NULL, 0, NULL}  //
 };
