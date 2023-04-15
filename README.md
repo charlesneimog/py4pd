@@ -35,6 +35,12 @@ Go to [Docs](https://www.charlesneimog.com/py4pd) to see examples.
 
 * Go to [Docs](https://www.charlesneimog.com/py4pd).
 
+## Libraries Developed with `py4pd`
+
+* `py4pd-Alea`: It implements the `Alea` (OpenMusic) developed by Mikhail Malt (Ircam).
+* `py4pd-Combine`: It implements the `Combine` developed by Malt when Ferneyhough was at Ircam.
+
+
 ## Building from Source
 
 * To build from the source code, you can follow the steps: [Compiling from Source Code.](https://github.com/charlesneimog/py4pd/blob/master/resources/BUILD.md).
