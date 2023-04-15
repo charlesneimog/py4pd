@@ -49,7 +49,7 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
                 break;
             }
             char library_path[MAXPDSTRING];
-            snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, script_file_name->s_name);
+            snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, script_file_name->s_name); // NOTE: The library folder must have the same name as the library file
             if (access(library_path, F_OK) != -1) {
                 libraryNotFound = 0;
                 PyObject *library_path_py = PyUnicode_FromString(library_path);
