@@ -2,7 +2,11 @@ import pd
 
 def pyiterate(value):
     """Iterate over a Python data type"""
-    pd.iterate(value) 
+    if isinstance(value, list):
+        pd.iterate(value)
+    else:
+        pd.error("[py.iterate]: pyiterate only works with lists")
+        return None
 
 
 def pycollect(data):

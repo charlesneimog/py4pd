@@ -86,4 +86,9 @@ def pyreduce(key, value):
     else:
         pd.error("[py.reduce]: bad arguments")
 
-
+def rotate(list, n):
+    """Rotate a list"""
+    if list is None:
+        pd.error("[py.rotate]: bad arguments")
+        return None
+    return list[n:] + list[:n]

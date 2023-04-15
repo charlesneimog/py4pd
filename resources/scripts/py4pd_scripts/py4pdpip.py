@@ -16,14 +16,11 @@ def pipinstall(package):
         folder = package[0]
         if folder == "local":
             folder = pd.home()
-
         elif folder == "global":
-            folder = pd.py4pdfolder()
-
+            folder = pd.py4pdfolder() + "/resources"
         else:
             pd.error("[py.install]: the first argument must be 'local' or 'global'")
             return None
-        
         package = package[1]
     else:
         pd.error("[py.install]: bad arguments")
@@ -32,7 +29,7 @@ def pipinstall(package):
     # If linux or macos
     if os.name == 'posix':
         try:
-            pipmain(['install', '--target', f'{folder}/resources/py-modules', package, '--upgrade'])
+            pipmain(['install', '--target', f'{folder}/py-modules', package, '--upgrade'])
             pd.print("Installed " + package)
             return None
         except Exception as e:

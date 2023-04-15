@@ -8,11 +8,12 @@ from py4pd_scripts.py4pdinfo import *
 from py4pd_scripts.py4pdscore import *
 from py4pd_scripts.py4pdconvertion import *
 from py4pd_scripts.py4pdoperators import *
+from py4pd_scripts.py4pdtree import *
 
 
 def py4pdLoadObjects():
     # Pip install
-    if addpip:
+    if addpip: # when is possible, add pip install object
         pd.addobject(pipinstall, "py.pip")
 
     # Logic Functions
@@ -25,6 +26,7 @@ def py4pdLoadObjects():
     # Convertion Objects
     pd.addobject(py2pd, "py2pd")
     pd.addobject(pd2py, "pd2py", pyout=True)
+    pd.addobject(pdlist2pylist, "py.mklist", pyout=True)
 
     # List Functions
     pd.addobject(pylen, "py.len")
@@ -33,7 +35,8 @@ def py4pdLoadObjects():
     pd.addobject(pymax, "py.max")
     pd.addobject(pymin, "py.min")
     pd.addobject(pyreduce, "py.reduce", pyout=True)
-    pd.addobject(mat_trans, "py.mattrans", pyout=True)
+    pd.addobject(mat_trans, "py.mat_trans", pyout=True)
+    pd.addobject(rotate, "py.rotate", pyout=True)
 
     # Loop Functions
     pd.addobject(pyiterate, "py.iterate") # these are special objects, they don't have a pyout argument but output py data types
@@ -49,5 +52,8 @@ def py4pdLoadObjects():
     # Score Functions
     pd.addobject(note, "py.note", objtype="VIS")
     pd.addobject(chord, "py.chord", objtype="VIS")
+
+    # Rhythm Tree
+    pd.addobject(extract_numbers, "py.rhythm_tree")
     
 
