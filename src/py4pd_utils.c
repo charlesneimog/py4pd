@@ -340,9 +340,9 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) { // TODO: fix the type of 
                 listIndex++;
 
             } 
-            else if (Py_IsNone(pValue_i)) {  // If the function return a list
-                                               // of None
-            } 
+            // else if (Py_IsNone(pValue_i)) {  // If the function return a list
+            //                                    // NOTE: for now, I do not  know how to represent None in Pd
+            // } 
             else {
                 pd_error(x,
                          "[py4pd] py4pd just convert int, float and string! "
@@ -352,7 +352,6 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) { // TODO: fix the type of 
             }
             // Py_DECREF(pValue_i);
         }
-        // check if the list_array[0] is a symbol
         if (list_array[0].a_type == A_SYMBOL) {
             outlet_anything(x->x_obj.ob_outlet, list_array[0].a_w.w_symbol, listIndex - 1, list_array + 1);
         } 
