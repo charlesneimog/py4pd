@@ -340,9 +340,9 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) { // TODO: fix the type of 
                 listIndex++;
 
             } 
-            // else if (Py_IsNone(pValue_i)) {  // If the function return a list
-            //                                    // NOTE: for now, I do not  know how to represent None in Pd
-            // } 
+            else if (Py_IsNone(pValue_i)) {
+            //  NOTE: for now, I do not  know how to represent None in Pd
+            } 
             else {
                 pd_error(x,
                          "[py4pd] py4pd just convert int, float and string! "

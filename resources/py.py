@@ -312,7 +312,7 @@ def neoscoreTest():
         filename = f'{script_dir}/neoscoretest.png'
     neoscore.render_image(rect=None, dest=filename, dpi=150, wait=True)
     neoscore.shutdown()
-    pd.out(1)
+    return 1
 
 
 
