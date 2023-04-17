@@ -574,10 +574,11 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     Py_DECREF(home_path);
     Py_DECREF(site_package);
     Py_DECREF(py4pdScripts);
-    // free(pyScripts_folder);
+    free(pyScripts_folder);
+    free(pyGlobal_packages);
 
     // =====================
-    pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file
+    pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file with the function
     // =====================
     // check if the module was loaded
     if (pModule == NULL) {
@@ -592,28 +593,28 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
     pFunc = PyObject_GetAttrString(pModule, function_name->s_name);  // Function name inside the script file
     if (pFunc && PyCallable_Check(pFunc)) {  // Check if the function exists and is callable
-        PyObject *inspect = NULL, *getfullargspec = NULL;
-        PyObject *argspec = NULL, *args = NULL;
-        inspect = PyImport_ImportModule("inspect");
-        getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
-        argspec = PyObject_CallFunctionObjArgs(getfullargspec, pFunc, NULL);
-        args = PyTuple_GetItem(argspec, 0);
-        int py_args = PyObject_Size(args);
-        x->py_arg_numbers = py_args;
-        if (x->py4pd_lib == 0) {
-            post("[py4pd] The '%s' function has %d arguments!", function_name->s_name, py_args);
+        PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(pFunc);
+        if (code->co_flags & CO_VARARGS) {
+            pd_error(x, "[py4pd] The '%s' function has variable arguments (*args)!", function_name->s_name);
+            Py_XDECREF(pFunc);
+            Py_XDECREF(pModule);
+            return;
         }
-        Py_DECREF(inspect);
-        Py_DECREF(getfullargspec);
-        Py_DECREF(argspec);
-        Py_DECREF(args);
+        else if (code->co_flags & CO_VARKEYWORDS) {
+            pd_error(x, "[py4pd] The '%s' function has variable keyword arguments (**kwargs)!", function_name->s_name);
+            Py_XDECREF(pFunc);
+            Py_XDECREF(pModule);
+            return;
+        }
+        x->py_arg_numbers = code->co_argcount;
+        if (x->py4pd_lib == 0) {
+            post("[py4pd] The '%s' function has %d arguments!", function_name->s_name, x->py_arg_numbers);
+        }
         x->module = pModule;
         x->function = pFunc;
         x->script_name = script_file_name;
         x->function_name = function_name;
-        printf("[py4pd] The function %s was set!\n", function_name->s_name);
         x->function_called = 1;
-
     } 
     else {
         pd_error(x, "[py4pd] Function %s not loaded!", function_name->s_name);
@@ -933,7 +934,7 @@ static void py4pdexe_run(t_py *x, t_symbol *s, int argc, t_atom *argv){
 
 // ============================================
 /**
- * @brief This function will control were the Python will run, wil PEP 684, I want to make possible using parallelism in Python
+ * @brief This function will control were the Python will run, with PEP 684, I want to make possible using parallelism in Python
  * @param x 
  * @param s 
  * @param argc 
@@ -1191,12 +1192,12 @@ t_int *py4pd_performAudioOutput(t_int *w) {
     if (pValue != NULL) {
         if (PyList_Check(pValue)) {
             for (int i = 0; i < n; i++) {
-                audioOut[i] = PyFloat_AsDouble(PyList_GetItem(pValue, i));
+                audioOut[i] = PyFloat_AsDouble(PyList_GetItem(pValue, i)); // TODO: Fix this
             }        
         } 
         else if (PyTuple_Check(pValue)) {
             for (int i = 0; i < n; i++) {
-                audioOut[i] = PyFloat_AsDouble(PyTuple_GetItem(pValue, i));
+                audioOut[i] = PyFloat_AsDouble(PyTuple_GetItem(pValue, i)); // TODO: Fix this
             }
         } 
         else if (x->numpyImported == 1 && x->use_NumpyArray == 1) {
@@ -1362,17 +1363,17 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
 
     // INIT PYTHON
     if (!Py_IsInitialized()) {
-        object_count = 1;  // To count the numbers of objects, and finalize the
+        object_count = 1; 
         post("");
         post("[py4pd] by Charles K. Neimog");
         post("[py4pd] Version %d.%d.%d", PY4PD_MAJOR_VERSION, PY4PD_MINOR_VERSION, PY4PD_MICRO_VERSION);
         post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
         post("");
-        PyImport_AppendInittab("pd", PyInit_pd);  // Add the pd module to the python interpreter
-        Py_Initialize();  // Initialize the Python interpreter. If 1, the signal
+        PyImport_AppendInittab("pd", PyInit_pd);  
+        Py_Initialize();  
     }
 
-    // INIT PY4PD
+    // INIT PY4PD OBJECT
     if (visMODE == 1 && audioOUT == 0 && audioIN == 0) {
         x = (t_py *)pd_new(py4pd_class_VIS);  // create a new object
     } 
@@ -1412,8 +1413,10 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     x->audioOutput = 0;
     x->visMode = 0;
     x->editorName = NULL;
+    object_count++;  
 
-    object_count++;  // count the number of objects;
+
+    // PASSING ARGUMENTS TO PY4PD OBJECT
     for (i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
             t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
