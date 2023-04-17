@@ -312,7 +312,16 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) { // TODO: fix the type of 
         outlet_anything(x->x_obj.ob_outlet, gensym("PyObject"), 1, &pointer_atom);
         return 0;
     }
-
+    
+    if (PyTuple_Check(pValue)){
+        if (PyTuple_Size(pValue) == 1) {
+            PyObject *new_pValue = PyTuple_GetItem(pValue, 0);
+            Py_INCREF(new_pValue);
+            Py_DECREF(pValue);
+            pValue = new_pValue;
+        }
+    }
+    
     if (PyList_Check(pValue)) {  // If the function return a list list
         int list_size = PyList_Size(pValue);
         t_atom *list_array = (t_atom *)malloc(list_size * sizeof(t_atom));
