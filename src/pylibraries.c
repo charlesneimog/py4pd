@@ -230,7 +230,7 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[Python] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        pd_error(x, "[%s] Call failed: %s", x->objectName->s_name, PyUnicode_AsUTF8(pstr));
         Py_DECREF(pstr);
         Py_XDECREF(ptype);
         Py_XDECREF(pvalue);
@@ -340,6 +340,12 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
         pd_error(x, "Error: pyFunction is NULL");
         return NULL;
     }
+    PyObject *pyObjectName = PyDict_GetItemString(PdDict, "py4pdOBJname");
+    if (pyFunction == NULL) {
+        pd_error(x, "Error: pyFunction is NULL");
+        return NULL;
+    }
+    x->objectName = gensym(PyUnicode_AsUTF8(pyObjectName));
     
     PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
     x->outPyPointer = PyLong_AsLong(pyOUT);
@@ -626,6 +632,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     PyDict_SetItemString(nestedDict, "py4pdOBJheight", PyLong_FromLong(h));
     PyDict_SetItemString(nestedDict, "py4pdOBJpyout", PyLong_FromLong(objpyout));
     PyDict_SetItemString(nestedDict, "py4pdOBJnooutlet", PyLong_FromLong(nooutlet));
+    PyDict_SetItemString(nestedDict, "py4pdOBJname", PyUnicode_FromString(objectName));
     PyObject *objectDict = PyDict_New();
     PyDict_SetItemString(objectDict, objectName, nestedDict);
     PyObject *py4pd_capsule = PyCapsule_New(objectDict, objectName, NULL);

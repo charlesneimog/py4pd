@@ -108,6 +108,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_symbol        *py4pd_folder; // save object path  
     t_symbol        *temp_folder;
     t_symbol        *py4pd_scripts;
+    t_symbol        *objectName;
 
 
     t_symbol        *function_name; // function name

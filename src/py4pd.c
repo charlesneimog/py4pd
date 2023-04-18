@@ -720,7 +720,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[Python] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        pd_error(x, "[%s] Call failed: %s", x->function_name->s_name, PyUnicode_AsUTF8(pstr));
         Py_DECREF(pstr);
         Py_XDECREF(ptype);
         Py_XDECREF(pvalue);

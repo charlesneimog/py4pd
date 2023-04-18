@@ -1,8 +1,6 @@
-#include "m_pd.h"
 #include "pd_module.h"
 #include "py4pd.h"
 #include "py4pd_utils.h"
-#include "tupleobject.h"
 
 
 // ====================================================

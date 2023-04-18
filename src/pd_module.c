@@ -104,7 +104,12 @@ PyObject *pderror(PyObject *self, PyObject *args) {
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
     if (PyArg_ParseTuple(args, "s", &string)) {
-        pd_error(py4pd, "[Python]: %s", string);
+        if (py4pd->pyObject == 1){
+            pd_error(py4pd, "[%s]: %s", py4pd->objectName->s_name, string);
+        }
+        else{
+            pd_error(py4pd, "[%s]: %s", py4pd->function_name->s_name, string);
+        }
         PyErr_Clear();
     } else {
         PyErr_SetString(
