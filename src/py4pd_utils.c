@@ -29,18 +29,6 @@ void findpy4pd_folder(t_py *x){
         }
         x->py4pdPath = gensym(path);
         free(path);
-        const char *py4pd_folder = x->py4pdPath->s_name;
-        LPSTR py4pdScripts = (LPSTR)malloc(256 * sizeof(char));
-        memset(py4pdScripts, 0, 256);
-        sprintf(py4pdScripts, "%s\\resources\\scripts", py4pd_folder);
-        x->py4pdScriptsPath = gensym(py4pdScripts);
-        if (access(py4pdScripts, F_OK) == -1) {
-            char *command = (char *)malloc(256 * sizeof(char));
-            memset(command, 0, 256);
-            if (!CreateDirectory(py4pdScripts, NULL)){
-                post("Failed to create directory, Report, this create instabilities: %d\n", GetLastError());
-            }
-        }
     #else
         char *path = strdup(info.dli_fname);
         char *last_slash = strrchr(path, '/');
