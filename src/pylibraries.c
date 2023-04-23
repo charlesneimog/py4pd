@@ -354,8 +354,8 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
     x->function_called = 1;
     x->function = pyFunction;
     x->function_name = s;
-    x->home_path = patch_dir;         // set name of the home path
-    x->packages_path = patch_dir;     // set name of the packages path
+    x->pdPatchFolder = patch_dir;         // set name of the home path
+    x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
     set_py4pd_config(x);  // set the config file (in py4pd.cfg, make this be
     py4pd_tempfolder(x);  // find the py4pd folder
@@ -462,7 +462,7 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
     }
 
     if (nooutlet_int == 0){
-        x->out_A = outlet_new(&x->x_obj, 0);
+        x->out1 = outlet_new(&x->x_obj, 0);
     }
     return (x);
 }
@@ -515,8 +515,8 @@ void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
     x->function_called = 1;
     x->function = pyFunction;
     x->function_name = s;
-    x->home_path = patch_dir;         // set name of the home path
-    x->packages_path = patch_dir;     // set name of the packages path
+    x->pdPatchFolder = patch_dir;         // set name of the home path
+    x->pkgPath = patch_dir;     // set name of the packages path
 
     // get width and height of py4pdOBJwidth and py4pdOBJheight
     PyObject *py4pdOBJwidth = PyDict_GetItemString(PdDict, "py4pdOBJwidth");
@@ -559,7 +559,7 @@ void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
         x->argsDict = PyTuple_New(1);
         PyTuple_SetItem(x->argsDict, 0, Py_None);
     }
-    x->out_A = outlet_new(&x->x_obj, 0);
+    x->out1 = outlet_new(&x->x_obj, 0);
     return (x);
 }
 
