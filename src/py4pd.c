@@ -34,10 +34,10 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
 
     // check if script file exists
     char script_file_path[MAXPDSTRING];
-    snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name, script_file_name->s_name);
+    snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->pdPatchFolder->s_name, script_file_name->s_name);
 
     char script_inside_py4pd_path[MAXPDSTRING];
-    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/%s.py", x->py4pd_scripts->s_name, script_file_name->s_name);
+    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/resources/scripts/%s.py", x->py4pdPath->s_name, script_file_name->s_name);
 
     PyObject *sys_path = PySys_GetObject("path");
     if (access(script_file_path, F_OK) == -1 && access(script_inside_py4pd_path, F_OK) == -1) {
@@ -63,13 +63,13 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
     }
 
     PyObject *pModule, *pFunc;  // Create the variables of the python objects
-    char *pyScriptsFolder = malloc(strlen(x->py4pd_folder->s_name) + 20); // allocate extra space
-    char *pyGlobalFolder = malloc(strlen(x->py4pd_folder->s_name) + 30); // allocate extra space
+    char *pyScriptsFolder = malloc(strlen(x->py4pdPath->s_name) + 20); // allocate extra space
+    char *pyGlobalFolder = malloc(strlen(x->py4pdPath->s_name) + 30); // allocate extra space
 
-    snprintf(pyScriptsFolder, strlen(x->py4pd_folder->s_name) + 20, "%s/resources/scripts", x->py4pd_folder->s_name);
-    snprintf(pyGlobalFolder, strlen(x->py4pd_folder->s_name) + 30, "%s/resources/py-modules/", x->py4pd_folder->s_name);
-    PyObject *home_path = PyUnicode_FromString(x->home_path->s_name);  // Place where script file will probably be
-    PyObject *site_package = PyUnicode_FromString(x->packages_path->s_name);  // Place where the packages will be
+    snprintf(pyScriptsFolder, strlen(x->py4pdPath->s_name) + 20, "%s/resources/scripts", x->py4pdPath->s_name);
+    snprintf(pyGlobalFolder, strlen(x->py4pdPath->s_name) + 30, "%s/resources/py-modules/", x->py4pdPath->s_name);
+    PyObject *home_path = PyUnicode_FromString(x->pdPatchFolder->s_name);  // Place where script file will probably be
+    PyObject *site_package = PyUnicode_FromString(x->pkgPath->s_name);  // Place where the packages will be
     PyObject *globalPackages = PyUnicode_FromString(pyGlobalFolder);  // Place where the py4pd scripts will be
     PyObject *py4pdScripts = PyUnicode_FromString(pyScriptsFolder);  // Place where the py4pd scripts will be
     
@@ -145,7 +145,7 @@ static void out_py4pdVersion(t_py *x){
     SETFLOAT(&py4pdVersionArray[0], major);
     SETFLOAT(&py4pdVersionArray[1], minor);
     SETFLOAT(&py4pdVersionArray[2], micro);
-    outlet_anything(x->out_A, gensym("py4pd"), 3, py4pdVersionArray);
+    outlet_anything(x->out1, gensym("py4pd"), 3, py4pdVersionArray);
     t_atom pythonVersionArray[3];
     major = PY_MAJOR_VERSION;
     minor = PY_MINOR_VERSION;
@@ -153,7 +153,7 @@ static void out_py4pdVersion(t_py *x){
     SETFLOAT(&pythonVersionArray[0], major);
     SETFLOAT(&pythonVersionArray[1], minor);
     SETFLOAT(&pythonVersionArray[2], micro);
-    outlet_anything(x->out_A, gensym("python"), 3, pythonVersionArray);
+    outlet_anything(x->out1, gensym("python"), 3, pythonVersionArray);
 }
 
 // ============================================
@@ -170,10 +170,10 @@ static void out_py4pdVersion(t_py *x){
 static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;  // unused but required by pd
     if (argc < 1) {
-        post("[py4pd] The home path is: %s", x->home_path->s_name);
+        post("[py4pd] The home path is: %s", x->pdPatchFolder->s_name);
     } else {
-        x->home_path = atom_getsymbol(argv);
-        post("[py4pd] The home path set to: %s", x->home_path->s_name);
+        x->pdPatchFolder = atom_getsymbol(argv);
+        post("[py4pd] The home path set to: %s", x->pdPatchFolder->s_name);
     }
     return;
 }
@@ -191,7 +191,7 @@ static void home(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     if (argc < 1) {
-        post("[py4pd] The packages path is: %s", x->packages_path->s_name);
+        post("[py4pd] The packages path is: %s", x->pkgPath->s_name);
         return;  // is this necessary?
     } else {
         if (argc < 2 && argc > 0) {
@@ -199,24 +199,24 @@ static void packages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                 t_symbol *path = atom_getsymbol(argv);
                 // It checks relative path
                 if (path->s_name[0] == '.' && path->s_name[1] == '/') {
-                    char *new_path = malloc(strlen(x->home_path->s_name) +
+                    char *new_path = malloc(strlen(x->pdPatchFolder->s_name) +
                                             strlen(path->s_name) + 1);
-                    strcpy(new_path, x->home_path->s_name);
+                    strcpy(new_path, x->pdPatchFolder->s_name);
                     strcat(new_path, path->s_name + 1);
                     post("[py4pd] The packages path set to: %s", new_path);
-                    x->packages_path = gensym(new_path);
+                    x->pkgPath = gensym(new_path);
                     free(new_path);
                 } else {
-                    x->packages_path = atom_getsymbol(argv);
+                    x->pkgPath = atom_getsymbol(argv);
                     post("[py4pd] The packages path set to: %s",
-                         x->packages_path->s_name);
+                         x->pkgPath->s_name);
                 }
             } else {
                 pd_error(x, "[py4pd] The packages path must be a string");
                 return;
             }
             // check if path exists and is valid
-            if (access(x->packages_path->s_name, F_OK) == -1) {
+            if (access(x->pkgPath->s_name, F_OK) == -1) {
                 pd_error(x, "[py4pd] The packages path is not valid");
                 return;
             }
@@ -307,7 +307,7 @@ static void openscript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     // Open VsCode in Windows
     #ifdef _WIN64
-        char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
+        char *command = malloc(strlen(x->pdPatchFolder->s_name) + strlen(x->script_name->s_name) + 20);
         command = get_editor_command(x);
         SHELLEXECUTEINFO sei = {0};
         sei.cbSize = sizeof(sei);
@@ -320,7 +320,7 @@ static void openscript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         return;
     // Not Windows OS
     #else  
-        char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
+        char *command = malloc(strlen(x->pdPatchFolder->s_name) + strlen(x->script_name->s_name) + 20);
         command = get_editor_command(x);
         pd4py_system_func(command);
         return;
@@ -366,7 +366,7 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     // Not Windows OS
     #else  // if not windows 64bits
-        char *command = malloc(strlen(x->home_path->s_name) + strlen(x->script_name->s_name) + 20);
+        char *command = malloc(strlen(x->pdPatchFolder->s_name) + strlen(x->script_name->s_name) + 20);
         command = get_editor_command(x);
         pd4py_system_func(command);
         return;
@@ -542,10 +542,10 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     // check if script file exists
     char script_file_path[MAXPDSTRING];
-    snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->home_path->s_name, script_file_name->s_name);
+    snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->pdPatchFolder->s_name, script_file_name->s_name);
 
     char script_inside_py4pd_path[MAXPDSTRING];
-    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/%s.py", x->py4pd_scripts->s_name, script_file_name->s_name);
+    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/resources/scripts/%s.py", x->py4pdPath->s_name, script_file_name->s_name);
 
     if (access(script_file_path, F_OK) == -1 && access(script_inside_py4pd_path, F_OK) == -1) {
         pd_error(x, "[py4pd] The script file %s was not found!", script_file_name->s_name);
@@ -555,15 +555,15 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     PyObject *pModule, *pFunc;  // Create the variables of the python objects
 
     // =====================
-    char *pyScripts_folder = malloc(strlen(x->py4pd_folder->s_name) + 20); // allocate extra space
-    snprintf(pyScripts_folder, strlen(x->py4pd_folder->s_name) + 20, "%s/resources/scripts", x->py4pd_folder->s_name);
+    char *pyScripts_folder = malloc(strlen(x->py4pdPath->s_name) + 20); // allocate extra space
+    snprintf(pyScripts_folder, strlen(x->py4pdPath->s_name) + 20, "%s/resources/scripts", x->py4pdPath->s_name);
     // =====================
-    char *pyGlobal_packages = malloc(strlen(x->py4pd_folder->s_name) + 20); // allocate extra space
-    snprintf(pyGlobal_packages, strlen(x->py4pd_folder->s_name) + 20, "%s/resources/py-modules", x->py4pd_folder->s_name);
+    char *pyGlobal_packages = malloc(strlen(x->py4pdPath->s_name) + 20); // allocate extra space
+    snprintf(pyGlobal_packages, strlen(x->py4pdPath->s_name) + 20, "%s/resources/py-modules", x->py4pdPath->s_name);
 
     // Add aditional path to python to work with Pure Data
-    PyObject *home_path = PyUnicode_FromString(x->home_path->s_name);  // Place where script file will probably be
-    PyObject *site_package = PyUnicode_FromString(x->packages_path->s_name);  // Place where the packages will be
+    PyObject *home_path = PyUnicode_FromString(x->pdPatchFolder->s_name);  // Place where script file will probably be
+    PyObject *site_package = PyUnicode_FromString(x->pkgPath->s_name);  // Place where the packages will be
     PyObject *py4pdScripts = PyUnicode_FromString(pyScripts_folder);  // Place where the py4pd scripts will be
     PyObject *py4pdGlobalPackages = PyUnicode_FromString(pyGlobal_packages);  // Place where the py4pd global packages will be
     PyObject *sys_path = PySys_GetObject("path");
@@ -811,7 +811,7 @@ void *independed_run(void *arg) {
     // ============================================
     unlink(pipe_PYRETURN);
     unlink(pipe_RETURNSIZE);
-    const char *py4pd_PATH = x->py4pd_folder->s_name;
+    const char *py4pd_PATH = x->py4pdPath->s_name;
     const char py4pd_EXEC[] = "py4pd";
 
     // create exec path
@@ -834,11 +834,11 @@ void *independed_run(void *arg) {
         return 0;
     }
     const char *home = canvas_getdir(x->x_canvas)->s_name;
-    write(fd_PY4PDHOME, x->py4pd_folder->s_name, strlen(x->py4pd_folder->s_name) + 1);
+    write(fd_PY4PDHOME, x->py4pdPath->s_name, strlen(x->py4pdPath->s_name) + 1);
     write(fd_PATCHHOME, home, strlen(home) + 1);
     write(fd_PYMODULE, x->script_name->s_name, strlen(x->script_name->s_name) + 1);
     write(fd_PYFUNCTION, x->function_name->s_name, strlen(x->function_name->s_name) + 1);
-    write(fd_SITEPACKAGES, x->packages_path->s_name, strlen(x->packages_path->s_name) + 1);
+    write(fd_SITEPACKAGES, x->pkgPath->s_name, strlen(x->pkgPath->s_name) + 1);
     
     close(fd_PY4PDHOME);
     close(fd_PATCHHOME);
@@ -1393,8 +1393,8 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         t_symbol *patch_dir = canvas_getdir(c);
         x->runmode = 0;
         x->object_number = object_count; 
-        x->home_path = patch_dir;       
-        x->packages_path = patch_dir;  
+        x->pdPatchFolder = patch_dir;       
+        x->pkgPath = patch_dir;  
         set_py4pd_config(x); 
         py4pd_tempfolder(x); 
         findpy4pd_folder(x); 
@@ -1413,6 +1413,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     x->audioOutput = 0;
     x->visMode = 0;
     x->editorName = NULL;
+    x->pyObject = 0;
     object_count++;  
 
 
@@ -1460,7 +1461,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                 x->audioOutput = 1;
                 x->audioInput = 0;
                 x->use_NumpyArray = 0;
-                x->out_A = outlet_new(
+                x->out1 = outlet_new(
                     &x->x_obj, gensym("signal"));  // create a signal outlet
                 int j;
                 for (j = i; j < argc; j++) {
@@ -1471,7 +1472,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
             else if (py4pdArgs == gensym("-audio")) {
                 x->audioInput = 1;
                 x->audioOutput = 1;
-                x->out_A = outlet_new(
+                x->out1 = outlet_new(
                     &x->x_obj, gensym("signal"));  // create a signal outlet
                 x->use_NumpyArray = 0;
                 int j;
@@ -1483,12 +1484,12 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         }
     }
     if (x->audioOutput == 0) {
-        x->out_A = outlet_new(&x->x_obj, 0);  // cria um outlet caso o objeto nao contenha audio
+        x->out1 = outlet_new(&x->x_obj, 0);  // cria um outlet caso o objeto nao contenha audio
     }
     x->runmode = 0;
     x->object_number = object_count;  // save object number
-    x->home_path = patch_dir;         // set name of the home path
-    x->packages_path = patch_dir;     // set name of the packages path
+    x->pdPatchFolder = patch_dir;         // set name of the home path
+    x->pkgPath = patch_dir;     // set name of the packages path
     set_py4pd_config(x);  // set the config file (in py4pd.cfg, make this be
     py4pd_tempfolder(x);  // find the py4pd folder
     findpy4pd_folder(x);  // find the py4pd object folder
@@ -1517,7 +1518,7 @@ void *py4pd_free(t_py *x) {
 
         #ifdef _WIN64
             char command[1000];
-            sprintf(command, "del /q /s %s\\*", x->temp_folder->s_name);
+            sprintf(command, "del /q /s %s\\*", x->tempPath->s_name);
             SHELLEXECUTEINFO sei = {0};
             sei.cbSize = sizeof(SHELLEXECUTEINFO);
             sei.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -1528,7 +1529,7 @@ void *py4pd_free(t_py *x) {
             CloseHandle(sei.hProcess);
         #else
             char command[1000];
-            sprintf(command, "rm -rf %s", x->temp_folder->s_name);
+            sprintf(command, "rm -rf %s", x->tempPath->s_name);
             system(command);
         #endif
     }
@@ -1541,7 +1542,7 @@ void *py4pd_free(t_py *x) {
         // Py_DECREF(x->function);
         // Py_DECREF(x->module);
         // inlet_free(x->in1);
-        // outlet_free(x->out_A);
+        // outlet_free(x->out1);
 
     }
 
