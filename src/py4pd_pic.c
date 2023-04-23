@@ -65,7 +65,6 @@ const char* PY4PD_filepath(t_py *x, const char *filename){
 // =================================================
 void PY4PD_mouserelease(t_py* x){
     if(x->x_latch){
-        outlet_float(x->out_A, 0);
         if(x->x_send != &s_ && x->x_send->s_thing)
             pd_float(x->x_send->s_thing, 0);
     }
@@ -497,7 +496,7 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     pd_bind(&x->x_obj.ob_pd, x->x_x = gensym(buf));
     x->x_edit = cv->gl_edit;
     x->x_send = x->x_snd_raw = x->x_receive = x->x_rcv_raw = x->x_filename = &s_;
-    int loaded = x->x_rcv_set = x->x_snd_set = x->x_def_img = x->x_init = x->x_latch = 0;
+    int loaded = x->x_def_img = x->x_init = x->x_latch = 0;
     x->x_outline = x->x_size = 0;
     x->x_fullname = NULL;
     x->x_edit = c->gl_edit;
@@ -506,9 +505,6 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
         x->x_height = 250;
         x->x_def_img = 1;
     }
-    x->x_flag = 0;
-    x->x_s_flag = 0;
-    x->x_r_flag = 0;
     if (x->x_receive != &s_) {
         pd_bind(&x->x_obj.ob_pd, x->x_receive);
     }
