@@ -7,7 +7,7 @@
 /**
 * @brief Get the py4pd folder object, it creates the folder for scripts inside resources
  * @param x is the py4pd object
- * @return save the py4pd folder in x->py4pd_folder
+ * @return save the py4pd folder in x->py4pdPath
  */
 
 void findpy4pd_folder(t_py *x){
@@ -27,13 +27,13 @@ void findpy4pd_folder(t_py *x){
         if (last_slash != NULL) {
             *last_slash = '\0';
         }
-        x->py4pd_folder = gensym(path);
+        x->py4pdPath = gensym(path);
         free(path);
-        const char *py4pd_folder = x->py4pd_folder->s_name;
+        const char *py4pd_folder = x->py4pdPath->s_name;
         LPSTR py4pdScripts = (LPSTR)malloc(256 * sizeof(char));
         memset(py4pdScripts, 0, 256);
         sprintf(py4pdScripts, "%s\\resources\\scripts", py4pd_folder);
-        x->py4pd_scripts = gensym(py4pdScripts);
+        x->py4pdScriptsPath = gensym(py4pdScripts);
         if (access(py4pdScripts, F_OK) == -1) {
             char *command = (char *)malloc(256 * sizeof(char));
             memset(command, 0, 256);
@@ -47,20 +47,8 @@ void findpy4pd_folder(t_py *x){
         if (last_slash != NULL) {
             *last_slash = '\0';
         }
-        x->py4pd_folder = gensym(path);
+        x->py4pdPath = gensym(path);
         free(path);
-        const char *py4pd_folder = x->py4pd_folder->s_name;
-        char *py4pdScripts = (char *)malloc(256 * sizeof(char));
-        memset(py4pdScripts, 0, 256);
-        sprintf(py4pdScripts, "%s/resources/scripts", py4pd_folder);
-        x->py4pd_scripts = gensym(py4pdScripts);
-        if (access(py4pdScripts, F_OK) == -1) {
-            char *command = (char *)malloc(256 * sizeof(char));
-            memset(command, 0, 256);
-            sprintf(command, "mkdir %s", py4pdScripts);
-            system(command);
-        }
-        // free(py4pdScripts);
     #endif
 }
 
@@ -68,7 +56,7 @@ void findpy4pd_folder(t_py *x){
 /**
  * @brief Get the temp path object (inside Users/.py4pd), it creates the folder if it not exist
  * * @param x is the py4pd object
- * @return save the temp path in x->temp_folder
+ * @return save the temp path in x->tempPath
  */
 
 void py4pd_tempfolder(t_py *x) {
@@ -78,7 +66,7 @@ void py4pd_tempfolder(t_py *x) {
         LPSTR home = (LPSTR)malloc(256 * sizeof(char));
         memset(home, 0, 256);
         sprintf(home, "%s\\.py4pd\\", user_folder);
-        x->temp_folder = gensym(home);
+        x->tempPath = gensym(home);
         if (access(home, F_OK) == -1) {
             char *command = (char *)malloc(256 * sizeof(char));
             memset(command, 0, 256);
@@ -94,7 +82,7 @@ void py4pd_tempfolder(t_py *x) {
         char *temp_folder = (char *)malloc(256 * sizeof(char));
         memset(temp_folder, 0, 256);
         sprintf(temp_folder, "%s/.py4pd/", home);
-        x->temp_folder = gensym(temp_folder);
+        x->tempPath = gensym(temp_folder);
         if (access(temp_folder, F_OK) == -1) {
             char *command = (char *)malloc(256 * sizeof(char));
             memset(command, 0, 256);
@@ -114,7 +102,7 @@ void py4pd_tempfolder(t_py *x) {
  */
 char *get_editor_command(t_py *x) {
     const char *editor = x->editorName->s_name;
-    const char *home = x->home_path->s_name;
+    const char *home = x->pdPatchFolder->s_name;
     const char *filename = x->script_name->s_name;
     char *command = (char *)malloc(256 * sizeof(char));
     memset(command, 0, 256);
@@ -371,12 +359,12 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) { // TODO: fix the type of 
     else {
         if (PyLong_Check(pValue)) {
             long result = PyLong_AsLong(pValue);  // If the function return a integer
-            outlet_float(x->out_A, result);
+            outlet_float(x->out1, result);
         } 
         else if (PyFloat_Check(pValue)) {
             double result = PyFloat_AsDouble(pValue);  // If the function return a float
             float result_float = (float)result;
-            outlet_float(x->out_A, result_float);
+            outlet_float(x->out1, result_float);
         } 
         else if (PyUnicode_Check(pValue)) {
             const char *result = PyUnicode_AsUTF8(pValue); // If the function return a string
@@ -509,16 +497,16 @@ PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
  */
 
 void set_py4pd_config(t_py *x) {
-    char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen("/py-modules/") + 1));  //
-    snprintf(PADRAO_packages_path, strlen(x->home_path->s_name) + strlen("/py-modules/") + 1, "%s/py-modules/", x->home_path->s_name);
-    x->packages_path = gensym(PADRAO_packages_path);
+    char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->pdPatchFolder->s_name) + strlen("/py-modules/") + 1));  //
+    snprintf(PADRAO_packages_path, strlen(x->pdPatchFolder->s_name) + strlen("/py-modules/") + 1, "%s/py-modules/", x->pdPatchFolder->s_name);
+    x->pkgPath = gensym(PADRAO_packages_path);
     x->runmode = 0;
     if (x->editorName == NULL){
         const char *editor = PY4PD_EDITOR;
         x->editorName = gensym(editor);
     }
     char config_path[PATH_MAX];
-    snprintf(config_path, sizeof(config_path), "%s/py4pd.cfg", x->home_path->s_name);
+    snprintf(config_path, sizeof(config_path), "%s/py4pd.cfg", x->pdPatchFolder->s_name);
     if (access(config_path, F_OK) != -1) {  // check if file exists
         FILE *file = fopen(config_path, "r");      /* should check the result */
         char line[256];                            // line buffer
@@ -538,14 +526,14 @@ void set_py4pd_config(t_py *x) {
                     *i = 0;
                     // if packages_path start with . add the home_path
                     if (packages_path[0] == '.') {
-                        char *new_packages_path = (char *)malloc(sizeof(char) * (strlen(x->home_path->s_name) + strlen(packages_path) + 1));  //
-                        strcpy(new_packages_path, x->home_path->s_name);  // copy string one into the result.
+                        char *new_packages_path = (char *)malloc(sizeof(char) * (strlen(x->pdPatchFolder->s_name) + strlen(packages_path) + 1));  //
+                        strcpy(new_packages_path, x->pdPatchFolder->s_name);  // copy string one into the result.
                         strcat(new_packages_path, packages_path + 1);  // append string two to the result.
-                        x->packages_path = gensym(new_packages_path);
+                        x->pkgPath = gensym(new_packages_path);
                         free(new_packages_path);
                     } 
                     else {
-                        x->packages_path = gensym(packages_path);
+                        x->pkgPath = gensym(packages_path);
                     }
                 }
                 free(packages_path);  // free memory
