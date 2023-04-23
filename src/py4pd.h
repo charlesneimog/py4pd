@@ -54,7 +54,8 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int                py4pd_lib; // flag to check if is to use python library
     t_int                pyObject;
     t_atom               *inlets; // vector to store the arguments
-    PyObject            *argsDict; // parameters
+    PyObject             *argsDict; // parameters
+    t_symbol            *objectName; // object name
 
     
     // == PYTHON
@@ -70,51 +71,47 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_float             py4pd_audio; // audio
 
     // == PICTURE AND SCORE
-    int             x_zoom;
-    int             x_width;
-    int             x_height;
-    int             x_snd_set;
-    int             x_rcv_set;
-    int             x_edit;
-    int             x_init;
-    int             x_def_img;
-    int             x_sel;
-    int             x_outline;
-    int             x_s_flag;
-    int             x_r_flag;
-    int             x_flag;
-    int             x_size;
-    int             x_latch;
-    int             x_numInlets;
-    int             x_numOutlets;
+    int                 x_zoom;
+    int                 x_width;
+    int                 x_height;
+    int                 x_edit;
+    int                 x_init;
+    int                 x_def_img;
+    int                 x_sel;
+    int                 x_outline;
+    int                 x_size;
+    int                 x_latch;
+    int                 x_numInlets;
+    int                 x_numOutlets;
     // int             
-    t_symbol        *file_name_open;
-    t_symbol        *x_fullname;
-    t_symbol        *x_filename;
-    t_symbol        *x_x;
-    t_symbol        *x_receive;
-    t_symbol        *x_rcv_raw;
-    t_symbol        *x_send;
-    t_symbol        *x_snd_raw;
+    t_symbol            *file_name_open;
+    t_symbol            *x_fullname;
+    t_symbol            *x_filename;
+    t_symbol            *x_x;
+    t_symbol            *x_receive;
+    t_symbol            *x_rcv_raw;
+    t_symbol            *x_send;
+    t_symbol            *x_snd_raw;
    
 
-    t_canvas        *x_canvas; // pointer to the canvas
+    t_canvas            *x_canvas; // pointer to the canvas
 
-    t_symbol        *editorName; // editor name
+    t_symbol            *editorName; // editor name
 
     // == PATHS
-    t_symbol        *packages_path; // packages path
-    t_symbol        *home_path; // home path this always is the path folder (?)
-    t_symbol        *py4pd_folder; // save object path  
-    t_symbol        *temp_folder;
-    t_symbol        *py4pd_scripts;
-    t_symbol        *objectName;
+    t_symbol            *pkgPath; // packages path
+    t_symbol            *pdPatchFolder; // home path this always is the path folder (?)
+    t_symbol            *py4pdPath; // where py4pd object is located
+    t_symbol            *tempPath; // temp path located in ~/.py4pd/, always is deleted when py4pd is closed
+    // t_symbol            *py4pdScriptsPath; // where scripts are located
 
 
-    t_symbol        *function_name; // function name
-    t_symbol        *script_name; // script name
-    t_outlet        *out_A; // outlet 1.
-    t_inlet         *in1; // intlet 1
+
+
+    t_symbol            *function_name; // function name
+    t_symbol            *script_name; // script name
+    t_outlet            *out1; // outlet 1.
+    t_inlet             *in1; // intlet 1
 }t_py;
 
 // =====================================
