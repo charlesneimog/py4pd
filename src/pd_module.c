@@ -43,56 +43,87 @@ PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
 // =================================
 PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
-    char *string;
-    int printPreffix = 1;
+    int printPrefix = 1;
+    int objPrefix = 1;
 
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
     if (keywords == NULL) {
-        printPreffix = 1;
+        printPrefix = 1;
         PyErr_Clear();
     } 
     else {
-        printPreffix = PyDict_Contains(keywords, PyUnicode_FromString("show_prefix"));
-        if (printPreffix == -1) {
-            post("error");
+        printPrefix = PyDict_Contains(keywords, PyUnicode_FromString("show_prefix"));
+        objPrefix = PyDict_Contains(keywords, PyUnicode_FromString("obj_prefix"));
+        if (printPrefix == -1) {
+            pd_error(NULL, "[Python] pd.print: error in show_prefix argument.");
         } 
-        else if (printPreffix == 1) {
+        else if (printPrefix == 1) {
             PyObject *resize_value = PyDict_GetItemString(keywords, "show_prefix");
             if (resize_value == Py_True) {
-                printPreffix = 1;
+                printPrefix = 1;
             } 
             else if (resize_value == Py_False) {
-                printPreffix = 0;
+                printPrefix = 0;
             } 
             else {
-                printPreffix = 1;
+                post("[Python] pd.print: show_prefix argument must be True or False.");
+                printPrefix = 1;
             }
         } 
         else {
-            printPreffix = 1;
+            printPrefix = 1;
+        }
+        // check if obj_prefix is present and see if it is True or False
+        if (objPrefix == -1) {
+            pd_error(NULL, "[Python] pd.print: error in obj_prefix argument.");
+        } 
+        else if (objPrefix == 1) {
+            PyObject *resize_value = PyDict_GetItemString(keywords, "obj_prefix");
+            if (resize_value == Py_True) {
+                objPrefix = 1;
+            } 
+            else if (resize_value == Py_False) {
+                objPrefix = 0;
+            } 
+            else {
+                post("[Python] pd.print: obj_prefix argument must be True or False.");
+                objPrefix = 0;
+            }
+        } 
+        else {
+            objPrefix = 0;
         }
     }
 
-    if (PyArg_ParseTuple(args, "s", &string)) {
-        if (printPreffix == 1) {
-            post("[Python]: %s", string);
+    PyObject* obj;
+    if (PyArg_ParseTuple(args, "O", &obj)) {
+        PyObject* str = PyObject_Str(obj);
+        if (str == NULL) {
+            PyErr_SetString(PyExc_TypeError, "[Python] pd.print failed to convert object to string.");
+            return NULL;
+        }
+        const char* str_value = PyUnicode_AsUTF8(str);
+        if (str_value == NULL) {
+            PyErr_SetString(PyExc_TypeError, "[Python] pd.print failed to convert string object to UTF-8.");
+            Py_DECREF(str);
+            return NULL;
+        }
+        if (printPrefix == 1) {
+            post("[%s]: %s", py4pd->objectName->s_name, str_value);
+            return PyLong_FromLong(0);
+
         } 
         else {
-            post("%s", string);
+            pd_error(NULL, "%s", str_value);
         }
-        PyErr_Clear();
     } 
-    else if (PyArg_ParseTuple(args, "f", &string)) {
-        if (printPreffix == 1) {
-            post("[Python]: %f", string);
-        } 
-        else {
-            post("%f", string);
-        }
-    }
     else {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.print work with string or number.");  // Colocar melhor descrição do
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.print works with strings, numbers, and any other valid Python object.");
         return NULL;
     }
+
     return PyLong_FromLong(0);
 }
 
@@ -108,7 +139,12 @@ PyObject *pderror(PyObject *self, PyObject *args) {
             pd_error(py4pd, "[%s]: %s", py4pd->objectName->s_name, string);
         }
         else{
-            pd_error(py4pd, "[%s]: %s", py4pd->function_name->s_name, string);
+            if (py4pd->function_name == NULL){
+                pd_error(py4pd, "[Python]: %s", string);
+            }
+            else{
+                pd_error(py4pd, "[%s]: %s", py4pd->function_name->s_name, string);
+            }
         }
         PyErr_Clear();
     } else {
@@ -134,8 +170,8 @@ PyObject *pipinstall(PyObject *self, PyObject *args){
         SETSYMBOL(argv, gensym("py4pd"));
         SETSYMBOL(argv+1, gensym("pipinstall"));
         
-        char *pyScripts_folder = malloc(strlen(py4pd->py4pd_folder->s_name) + 20); // allocate extra space
-        snprintf(pyScripts_folder, strlen(py4pd->py4pd_folder->s_name) + 20, "%s/resources/scripts", py4pd->py4pd_folder->s_name);
+        char *pyScripts_folder = malloc(strlen(py4pd->py4pdPath->s_name) + 20); // allocate extra space
+        snprintf(pyScripts_folder, strlen(py4pd->py4pdPath->s_name) + 20, "%s/resources/scripts", py4pd->py4pdPath->s_name);
 
 
         PyObject *sys_path = PySys_GetObject("path");
@@ -408,7 +444,7 @@ PyObject *pdhome(PyObject *self, PyObject *args) {
                         "[Python] pd.home: no argument expected");
         return NULL;
     }
-    return PyUnicode_FromString(py4pd->home_path->s_name);
+    return PyUnicode_FromString(py4pd->pdPatchFolder->s_name);
 }
 
 // =================================
@@ -425,7 +461,7 @@ PyObject *py4pdfolder(PyObject *self, PyObject *args) {
                         "[Python] pd.py4pdfolder: no argument expected");
         return NULL;
     }
-    return PyUnicode_FromString(py4pd->py4pd_folder->s_name);
+    return PyUnicode_FromString(py4pd->py4pdPath->s_name);
 }
 
 
@@ -440,7 +476,7 @@ PyObject *pdtempfolder(PyObject *self, PyObject *args) {
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
     py4pd_tempfolder(py4pd);
-    return PyUnicode_FromString(py4pd->temp_folder->s_name);
+    return PyUnicode_FromString(py4pd->tempPath->s_name);
 }
 
 // =================================
