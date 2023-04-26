@@ -68,7 +68,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int               audioInput; // flag to check if is to use audio input
     t_int               use_NumpyArray; // flag to check if is to use numpy array in audioInput
     t_int               numpyImported; // flag to check if numpy was imported
-    t_float             py4pd_audio; // audio
+    t_float             py4pdAudio; // audio
 
     // == PICTURE AND SCORE
     int                 x_zoom;
@@ -99,11 +99,10 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_symbol            *editorName; // editor name
 
     // == PATHS
-    t_symbol            *pkgPath; // packages path
-    t_symbol            *pdPatchFolder; // home path this always is the path folder (?)
+    t_symbol            *pkgPath; // packages path, where the packages are located
+    t_symbol            *pdPatchFolder; // where the patch is located
     t_symbol            *py4pdPath; // where py4pd object is located
     t_symbol            *tempPath; // temp path located in ~/.py4pd/, always is deleted when py4pd is closed
-    // t_symbol            *py4pdScriptsPath; // where scripts are located
 
 
 
