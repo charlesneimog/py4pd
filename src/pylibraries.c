@@ -346,14 +346,13 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
     x->objectName = gensym(PyUnicode_AsUTF8(pyObjectName));
-    
     PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
     x->outPyPointer = PyLong_AsLong(pyOUT);
     PyObject *nooutlet = PyDict_GetItemString(PdDict, "py4pdOBJnooutlet");
     int nooutlet_int = PyLong_AsLong(nooutlet);
     x->function_called = 1;
     x->function = pyFunction;
-    x->function_name = s;
+    // x->function_name = s;
     x->pdPatchFolder = patch_dir;         // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
@@ -364,6 +363,7 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
     // check if function use *args or **kwargs
     int argsNumberDefined = 0;
     PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
+    x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     if (code->co_flags & CO_VARARGS) {
         x->py_arg_numbers = 1;
         
@@ -509,7 +509,6 @@ void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
     // ==================
     PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
     x->outPyPointer = PyLong_AsLong(pyOUT);
-    // Vis config
     t_symbol *py4pdArgs = gensym("-canvas");
     py4pd_InitVisMode(x, c, py4pdArgs, 0, argc, argv);
     x->function_called = 1;
