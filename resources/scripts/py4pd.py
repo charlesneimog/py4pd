@@ -9,6 +9,7 @@ from py4pd_scripts.py4pdscore import *
 from py4pd_scripts.py4pdconvertion import *
 from py4pd_scripts.py4pdoperators import *
 from py4pd_scripts.py4pdtree import *
+from py4pd_scripts.py4pdshow import *
 
 
 def py4pdLoadObjects():
@@ -56,4 +57,6 @@ def py4pdLoadObjects():
     # Rhythm Tree
     pd.addobject(extract_numbers, "py.rhythm_tree")
     
+    # img 
+    pd.addobject(py4pdshow, "py.show", objtype="VIS")
 
