@@ -141,7 +141,12 @@ void PY4PD_select(t_gobj *z, t_glist *glist, int state){
 
 // =================================================
 void PY4PD_delete(t_gobj *z, t_glist *glist){
+    t_py *x = (t_py *)z;
     canvas_deletelinesfor(glist, (t_text *)z);
+
+    t_canvas *cv = glist_getcanvas(x->x_glist);
+    sys_vgui(".x%lx.c delete %lx_in\n", cv, x);
+    sys_vgui(".x%lx.c delete %lx_out\n", cv, x);
 }
 
 
@@ -452,7 +457,7 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     if (py4pdArgs == gensym("-canvas")) {
         x->visMode = 1;
     }
-    else if (py4pdArgs == gensym("-picture")) {
+    else if (py4pdArgs == gensym("-picture") || py4pdArgs == gensym("-pic")) {
         x->visMode = 2;
     }
     else if (py4pdArgs == gensym("-score")) {
@@ -501,10 +506,16 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     x->x_fullname = NULL;
     x->x_edit = c->gl_edit;
     if (!loaded) {  // default image
-        x->x_width = 250;
-        x->x_height = 250;
+        // x->x_width = 250;
+        // x->x_height = 250;
         x->x_def_img = 1;
     }
+    if (x->x_width == 0 && x->x_height == 0) {
+        x->x_width = 250;
+        x->x_height = 250;
+    }
+
+
     if (x->x_receive != &s_) {
         pd_bind(&x->x_obj.ob_pd, x->x_receive);
     }
