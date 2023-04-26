@@ -1604,7 +1604,6 @@ void py4pdLibrary_save(t_gobj *z, t_binbuf *b){ // this just will work with "py4
     int i;
     int newsize;
 
-    post("+++++++++++++++++++++++++++++++++++++++");
     // normal save of the object
     binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix);
     binbuf_addbinbuf(b, ((t_py *)x)->x_obj.te_binbuf);
@@ -1614,8 +1613,6 @@ void py4pdLibrary_save(t_gobj *z, t_binbuf *b){ // this just will work with "py4
     t_atom *patchObjsVec = binbuf_getvec(b);
     int bufLength = binbuf_getnatom(b);
     int indexAfterLibraryDeclaration = -1;
-    post("bufLength: %d", bufLength);
-    // return;
     for (i = 0; i < bufLength; i++) {
         if (patchObjsVec[i].a_type == A_SYMBOL && 
             patchObjsVec[i + 1].a_type == A_SYMBOL && 
@@ -1634,7 +1631,6 @@ void py4pdLibrary_save(t_gobj *z, t_binbuf *b){ // this just will work with "py4
 
     // Case py4pd is not declared yet, it adds the declaration on the top of the patch
     if (!py4pdAlreadyDeclared){
-        post("py4pd not declared yet");
         int semi_index = -1;
         for (i = 0; i < bufLength; i++) {
             if (patchObjsVec[i].a_type == A_SEMI) {
@@ -1688,8 +1684,6 @@ void py4pdLibrary_save(t_gobj *z, t_binbuf *b){ // this just will work with "py4
         return;
     }
 
-
-
     for (i = 0; i < bufLength; i++) {
         if (patchObjsVec[i].a_type == A_SYMBOL && 
             patchObjsVec[i + 1].a_type == A_SYMBOL && 
@@ -1705,10 +1699,6 @@ void py4pdLibrary_save(t_gobj *z, t_binbuf *b){ // this just will work with "py4
                 }
         }
     }
-
-    post("Library %s already declared: %d", libraryName->s_name, pyLibraryAlreadyDeclared);
-    // return;
-
 
     // This add the function py4pdLibrary to the patch, it loads the Python Library 
     if (indexAfterLibraryDeclaration >= 0 && pyLibraryAlreadyDeclared == 0 && libraryName != NULL){
@@ -1728,17 +1718,7 @@ void py4pdLibrary_save(t_gobj *z, t_binbuf *b){ // this just will work with "py4
         SETSEMI(&patchObjsVec[indexAfterLibraryDeclaration + 5]);
     } 
 
-    else if (libraryName == NULL){
-        char *objectName; 
-        int objectSize;
-        binbuf_gettext(((t_py *)x)->x_obj.te_binbuf, &objectName, &objectSize);
-        pd_error(NULL, "[py4pd] Error when saving the patch: Object %s no define Library Name", objectName);
-
-    }
-
-    post("+++++++++++++++++++++++++++++++++++++++");
-    // post("py4pd: %s", x->script_name->s_name);
-    // return;
+    return;
 }
 
 
