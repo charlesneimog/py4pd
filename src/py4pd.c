@@ -1375,14 +1375,22 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     int libraryMODE = 0;
     int normalMODE = 1;
     t_symbol *scriptName;
+    int width = 0;
+    int height = 0;
     
     for (i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
             t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
             if (py4pdArgs == gensym("-picture") ||
                 py4pdArgs == gensym("-score") ||
+                py4pdArgs == gensym("-pic") ||
                 py4pdArgs == gensym("-canvas")) {
                 visMODE = 1;
+                if (argv[i + 1].a_type == A_FLOAT && argv[i + 2].a_type == A_FLOAT){
+                    width = atom_getfloatarg(i + 1, argc, argv);
+                    height = atom_getfloatarg(i + 2, argc, argv);
+                    
+                }
             } 
             else if (py4pdArgs == gensym("-audio") || py4pdArgs == gensym("-audioout")) {
                 audioOUT = 1;
@@ -1394,6 +1402,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                 libraryMODE = 1;
                 normalMODE = 0;
                 scriptName = atom_getsymbolarg(i + 1, argc, argv);
+                post("[py4pd] Library mode enabled. Script name: %s", scriptName->s_name);
             }
         }
     }
@@ -1413,7 +1422,11 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
 
     // INIT PY4PD OBJECT
     if (visMODE == 1 && audioOUT == 0 && audioIN == 0) {
-        x = (t_py *)pd_new(py4pd_class_VIS);  // create a new object
+        x = (t_py *)pd_new(py4pd_class_VIS);  // create a new picture object
+        if (width > 0 && height > 0) {
+            x->x_width = width;
+            x->x_height = height;
+        }
     } 
     else if (audioIN == 1 && visMODE == 0 && audioOUT == 0) {
         x = (t_py *)pd_new(py4pd_classAudioIn);  // create a new object
@@ -1466,6 +1479,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
             t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
             if (py4pdArgs == gensym("-picture") ||
                 py4pdArgs == gensym("-score") ||
+                py4pdArgs == gensym("-pic") ||
                 py4pdArgs == gensym("-canvas")) {
                 py4pd_InitVisMode(x, c, py4pdArgs, i, argc, argv);
                 x->x_outline = 1;
@@ -1595,130 +1609,123 @@ void *py4pd_free(t_py *x) {
 
 // ====================================================
 // TODO: Add special save for PIC mode
-
-
-// ====================================================
-void py4pdLibrary_save(t_gobj *z, t_binbuf *b){ // this just will work with "py4pd -lib" objects
+void py4pdPic_save(t_gobj *z, t_binbuf *b){ 
+    post("Saving py4pd pic properties");
     t_py *x = (t_py *)z;
-    int py4pdAlreadyDeclared = 0;
-    int i;
-    int newsize;
-
-    // normal save of the object
     binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix);
-    binbuf_addbinbuf(b, ((t_py *)x)->x_obj.te_binbuf);
+    binbuf_addv(b, "ssssii", gensym("py4pd"), x->script_name, x->function_name, gensym("-pic"), x->x_width, x->x_height);
     binbuf_addsemi(b);
+    return;
+}
 
-    // It checks if py4pd is already declared
-    t_atom *patchObjsVec = binbuf_getvec(b);
-    int bufLength = binbuf_getnatom(b);
-    int indexAfterLibraryDeclaration = -1;
-    for (i = 0; i < bufLength; i++) {
-        if (patchObjsVec[i].a_type == A_SYMBOL && 
-            patchObjsVec[i + 1].a_type == A_SYMBOL && 
-            patchObjsVec[i + 2].a_type == A_SYMBOL &&
-            patchObjsVec[i + 3].a_type == A_SYMBOL) {    
-            if (patchObjsVec[i].a_w.w_symbol == gensym("#X") && 
-                patchObjsVec[i + 1].a_w.w_symbol == gensym("declare") && 
-                patchObjsVec[i + 2].a_w.w_symbol == gensym("-lib") &&
-                patchObjsVec[i + 3].a_w.w_symbol == gensym("py4pd")) {
-                    py4pdAlreadyDeclared = 1;
-                    indexAfterLibraryDeclaration = i + 5;
-                    break;
-            }
-        }
+// =======================================================================
+void py4pd_binbuf_insert(t_binbuf *x, int index, int argc, const t_atom *argv) {
+    t_atom *temp = (t_atom *) malloc(argc * sizeof(t_atom));
+    memcpy(temp, argv, argc * sizeof(t_atom));
+    t_atom *vec = binbuf_getvec(x);
+    int n = binbuf_getnatom(x);
+    if (index < 0 || index > n) {
+        index = n;
     }
-
-    // Case py4pd is not declared yet, it adds the declaration on the top of the patch
-    if (!py4pdAlreadyDeclared){
-        int semi_index = -1;
-        for (i = 0; i < bufLength; i++) {
-            if (patchObjsVec[i].a_type == A_SEMI) {
-                semi_index = i;
-                break;
-            }
-        }
-        if (semi_index >= 0) {
-            // resize the binbuf to insert the new atoms
-            newsize = bufLength + 5;
-            binbuf_resize(b, newsize);
-
-            // move the existing atoms after the first A_SEMI to make room for the new atoms
-            for (i = newsize - 1; i > semi_index + 5; i--) {
-                patchObjsVec[i] = patchObjsVec[i - 5];
-            }
-            // insert the "#X declare -lib py4pd" on the top of the patch 
-            SETSYMBOL(&patchObjsVec[semi_index + 1], gensym("#X"));
-            SETSYMBOL(&patchObjsVec[semi_index + 2], gensym("declare"));
-            SETSYMBOL(&patchObjsVec[semi_index + 3], gensym("-lib"));
-            SETSYMBOL(&patchObjsVec[semi_index + 4], gensym("py4pd"));
-            SETSEMI(&patchObjsVec[semi_index + 5]);
-        } 
+    binbuf_resize(x, n + argc);
+    for (int i = n - 1; i >= index; i--) {
+        vec[i + argc] = vec[i];
     }
-
-    // This see where is the declaration of the py4pd library, TODO: It can be improved, I believe that I don't need to loop again
-    for (i = 0; i < bufLength; i++) {
-        if (patchObjsVec[i].a_type == A_SYMBOL && 
-            patchObjsVec[i + 1].a_type == A_SYMBOL && 
-            patchObjsVec[i + 2].a_type == A_SYMBOL &&
-            patchObjsVec[i + 3].a_type == A_SYMBOL) {    
-            if (patchObjsVec[i].a_w.w_symbol == gensym("#X") && 
-                patchObjsVec[i + 1].a_w.w_symbol == gensym("declare") && 
-                patchObjsVec[i + 2].a_w.w_symbol == gensym("-lib") &&
-                patchObjsVec[i + 3].a_w.w_symbol == gensym("py4pd")) {
-                    py4pdAlreadyDeclared = 1;
-                    indexAfterLibraryDeclaration = i + 4;
-                    break;
-            }
-        }
+    for (int i = 0; i < argc; i++) {
+        vec[index + i] = temp[i];
     }
-    // check if the Python Library x->script_name is already declared
+    free(temp);
+}
+
+// =======================================================================
+void py4pdLibrary_save(t_gobj *z, t_binbuf *b) {
+    t_py *x = (t_py *)z;
+    int i;
     t_symbol *libraryName = x->script_name;
-    int pyLibraryAlreadyDeclared = 0;
 
     if (libraryName == NULL){
         char *objectName; 
         int objectSize;
         binbuf_gettext(((t_py *)x)->x_obj.te_binbuf, &objectName, &objectSize);
         pd_error(NULL, "[py4pd] Error when saving the patch: Object %s no define Library Name", objectName);
+        binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix);
+        binbuf_addbinbuf(b, ((t_py *)x)->x_obj.te_binbuf);
+        binbuf_addsemi(b);
         return;
     }
 
+    // Check if py4pd is already declared
+    t_atom *patchObjsVec = binbuf_getvec(b);
+    int bufLength = binbuf_getnatom(b);
+    int py4pdAlreadyDeclared = 0;
     for (i = 0; i < bufLength; i++) {
-        if (patchObjsVec[i].a_type == A_SYMBOL && 
+        if (patchObjsVec[i + 0].a_type == A_SYMBOL && 
             patchObjsVec[i + 1].a_type == A_SYMBOL && 
             patchObjsVec[i + 2].a_type == A_SYMBOL &&
             patchObjsVec[i + 3].a_type == A_SYMBOL) {    
-                post("%s %s %s %s", patchObjsVec[i].a_w.w_symbol->s_name, patchObjsVec[i + 1].a_w.w_symbol->s_name, patchObjsVec[i + 2].a_w.w_symbol->s_name, patchObjsVec[i + 3].a_w.w_symbol->s_name);
-                if (patchObjsVec[i].a_w.w_symbol == gensym("#X") && 
-                    patchObjsVec[i + 1].a_w.w_symbol == gensym("py4pdLibrary") && 
-                    patchObjsVec[i + 2].a_w.w_symbol == gensym("-lib") &&
-                    patchObjsVec[i + 3].a_w.w_symbol == libraryName) {
-                        pyLibraryAlreadyDeclared = 1;
-                        break;
-                }
+            if (patchObjsVec[i + 0].a_w.w_symbol == gensym("#X") && 
+                patchObjsVec[i + 1].a_w.w_symbol == gensym("declare") && 
+                patchObjsVec[i + 2].a_w.w_symbol == gensym("-lib") &&
+                patchObjsVec[i + 3].a_w.w_symbol == gensym("py4pd")) {
+                    py4pdAlreadyDeclared = 1;
+                    break;
+            }
         }
     }
 
-    // This add the function py4pdLibrary to the patch, it loads the Python Library 
-    if (indexAfterLibraryDeclaration >= 0 && pyLibraryAlreadyDeclared == 0 && libraryName != NULL){
-        bufLength = binbuf_getnatom(b);
-        newsize = bufLength + 5;
-        binbuf_resize(b, newsize);
-
-        // move the existing atoms after the first A_SEMI to make room for the new atoms
-        for (i = newsize - 1; i > indexAfterLibraryDeclaration + 5; i--) {
-            patchObjsVec[i] = patchObjsVec[i - 5];
+    int semi_index = -1;
+    for (i = 0; i < bufLength; i++) {
+        if (patchObjsVec[i].a_type == A_SEMI) {
+            semi_index = i + 1;
+            break;
         }
-        // insert the "#X declare -lib py4pd" on the top of the patch 
-        SETSYMBOL(&patchObjsVec[indexAfterLibraryDeclaration + 1], gensym("#X"));
-        SETSYMBOL(&patchObjsVec[indexAfterLibraryDeclaration + 2], gensym("py4pdLibrary"));
-        SETSYMBOL(&patchObjsVec[indexAfterLibraryDeclaration + 3], gensym("-lib"));
-        SETSYMBOL(&patchObjsVec[indexAfterLibraryDeclaration + 4], libraryName);
-        SETSEMI(&patchObjsVec[indexAfterLibraryDeclaration + 5]);
-    } 
+    }
 
+    if (!py4pdAlreadyDeclared && semi_index >= 0) {
+        t_atom py4pdDeclareAtoms[5];
+        SETSYMBOL(&py4pdDeclareAtoms[0], gensym("#X"));
+        SETSYMBOL(&py4pdDeclareAtoms[1], gensym("declare"));
+        SETSYMBOL(&py4pdDeclareAtoms[2], gensym("-lib"));
+        SETSYMBOL(&py4pdDeclareAtoms[3], gensym("py4pd"));
+        SETSEMI(&py4pdDeclareAtoms[4]);
+        py4pd_binbuf_insert(b, semi_index, 5, py4pdDeclareAtoms);
+    }
+
+    // this save the index after the declaration of the library
+    patchObjsVec = binbuf_getvec(b);
+    bufLength = binbuf_getnatom(b);
+    int indexAfterLibraryDeclaration = -1;
+    for (i = 0; i < bufLength; i++) {
+        if (patchObjsVec[i + 0].a_type == A_SYMBOL && 
+            patchObjsVec[i + 1].a_type == A_SYMBOL && 
+            patchObjsVec[i + 2].a_type == A_SYMBOL &&
+            patchObjsVec[i + 3].a_type == A_SYMBOL) {    
+            if (patchObjsVec[i + 0].a_w.w_symbol == gensym("#X") && 
+                patchObjsVec[i + 1].a_w.w_symbol == gensym("declare") && 
+                patchObjsVec[i + 2].a_w.w_symbol == gensym("-lib") &&
+                patchObjsVec[i + 3].a_w.w_symbol == gensym("py4pd")) {
+                    indexAfterLibraryDeclaration = i + 5;
+                    break;
+            }
+        }
+    }
+    // add the library name
+    if (indexAfterLibraryDeclaration >= 0) {
+        t_atom py4pdDeclareAtoms[5];
+        SETSYMBOL(&py4pdDeclareAtoms[0], gensym("#X"));
+        SETSYMBOL(&py4pdDeclareAtoms[1], gensym("py4pdLibrary"));
+        SETSYMBOL(&py4pdDeclareAtoms[2], gensym("-lib"));
+        SETSYMBOL(&py4pdDeclareAtoms[3], libraryName);
+        SETSEMI(&py4pdDeclareAtoms[4]);
+        py4pd_binbuf_insert(b, indexAfterLibraryDeclaration, 5, py4pdDeclareAtoms);
+    }
+
+    // Normal save of the object
+    binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix);
+    binbuf_addbinbuf(b, ((t_py *)x)->x_obj.te_binbuf);
+    binbuf_addsemi(b);
     return;
+
 }
 
 
@@ -1774,7 +1781,10 @@ void py4pd_setup(void) {
 
 
     // Library save need to be saved  in the canvas to be loaded first
-    class_setsavefn(py4pd_classLibrary, py4pdLibrary_save);
+    class_setsavefn(py4pd_classLibrary, &py4pdLibrary_save);
+    class_setsavefn(py4pd_class_VIS, &py4pdPic_save);
+
+    // Load libraries before all other objects
     class_addmethod(canvas_class, (t_method)canvas_py4pdLibrary, gensym("py4pdLibrary"), A_GIMME, 0);
 
 
