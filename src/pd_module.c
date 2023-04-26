@@ -3,6 +3,28 @@
 #include "py4pd_pic.h"  
 #include "pylibraries.h"
 
+
+
+
+// ======================================
+// ======== py4pd embbeded module =======
+// ======================================
+
+t_py *get_py4pd_object(void){
+    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    if (py4pd_capsule == NULL){
+        post("[Python] py4pd capsule not found.");
+        return NULL;
+    }
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    return py4pd;
+}
+
+
+
+
+
 // ======================================
 // ======== py4pd embbeded module =======
 // ======================================
@@ -11,10 +33,12 @@ PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
     (void)keywords;
     (void)self;
     
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-    //
+    t_py *py4pd = get_py4pd_object();
+    if (py4pd == NULL){
+        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
+
     if (keywords != NULL) { // special case for py.iterate
         PyObject *pyiterate = PyDict_GetItemString(keywords, "pyiterate"); // it gets the data type output
         PyObject *pycollect = PyDict_GetItemString(keywords, "pycollect"); // it gets the data type output
@@ -46,9 +70,13 @@ PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
     int printPrefix = 1;
     int objPrefix = 1;
 
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    t_py *py4pd = get_py4pd_object();
+    if (py4pd == NULL){
+        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
+
+
     if (keywords == NULL) {
         printPrefix = 1;
         PyErr_Clear();
@@ -110,13 +138,17 @@ PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
             Py_DECREF(str);
             return NULL;
         }
-        if (printPrefix == 1) {
-            post("[%s]: %s", py4pd->objectName->s_name, str_value);
+        if (printPrefix == 1) { //
+            if (py4pd->objectName == NULL){
+                post("[Python]: %s", str_value);
+            }
+            else{
+                post("[%s]: %s", py4pd->objectName->s_name, str_value);
+            }
             return PyLong_FromLong(0);
-
         } 
         else {
-            pd_error(NULL, "%s", str_value);
+            post("%s", str_value);
         }
     } 
     else {
@@ -131,9 +163,14 @@ PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
 PyObject *pderror(PyObject *self, PyObject *args) {
     (void)self;
     char *string;
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+
+    t_py *py4pd = get_py4pd_object();
+    if (py4pd == NULL){
+        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
+
+
     if (PyArg_ParseTuple(args, "s", &string)) {
         if (py4pd->pyObject == 1){
             pd_error(py4pd, "[%s]: %s", py4pd->objectName->s_name, string);
@@ -161,9 +198,11 @@ PyObject *pipinstall(PyObject *self, PyObject *args){
     (void)self;
     char *package;
 
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    t_py *py4pd = get_py4pd_object();
+    if (py4pd == NULL){
+        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
 
     if (PyArg_ParseTuple(args, "s", &package)) {
         t_atom argv[2];
@@ -361,9 +400,12 @@ PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords) {
     }
 
     // ================================
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    t_py *py4pd = get_py4pd_object();
+    if (py4pd == NULL){
+        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
+
     // ================================
 
     if (PyArg_ParseTuple(args, "sO", &string, &PYarray)) {
@@ -434,9 +476,11 @@ PyObject *pdtabread(PyObject *self, PyObject *args) {
 PyObject *pdhome(PyObject *self, PyObject *args) {
     (void)self;
 
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    t_py *py4pd = get_py4pd_object();
+    if (py4pd == NULL){
+        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
 
     // check if there is no argument
     if (!PyArg_ParseTuple(args, "")) {
@@ -451,9 +495,11 @@ PyObject *pdhome(PyObject *self, PyObject *args) {
 PyObject *py4pdfolder(PyObject *self, PyObject *args) {
     (void)self;
 
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    t_py *py4pd = get_py4pd_object();
+    if (py4pd == NULL){
+        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
 
     // check if there is no argument
     if (!PyArg_ParseTuple(args, "")) {
@@ -472,9 +518,11 @@ PyObject *pdtempfolder(PyObject *self, PyObject *args) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.samplerate: no argument expected");
         return NULL;
     }
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    t_py *py4pd = get_py4pd_object();
+    if (py4pd == NULL){
+        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
     py4pd_tempfolder(py4pd);
     return PyUnicode_FromString(py4pd->tempPath->s_name);
 }
@@ -484,9 +532,11 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
     (void)self;
     char *string;
 
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    t_py *py4pd = get_py4pd_object();
+    if (py4pd == NULL){
+        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
 
     PY4PD_erase(py4pd, py4pd->x_glist);
     if (PyArg_ParseTuple(args, "s", &string)) {
@@ -607,9 +657,13 @@ PyObject *pdkey(PyObject *self, PyObject *args) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.key: no argument expected");
         return NULL;
     }
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    
+    t_py *py4pd = get_py4pd_object();
+    if (py4pd == NULL){
+        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
+
     if (py4pd->Dict == NULL) {
         PyErr_Clear();
         Py_RETURN_NONE;
@@ -630,9 +684,11 @@ PyObject *pditerate(PyObject *self, PyObject *args){
 
     PyObject *iter, *item;
 
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    t_py *py4pd = get_py4pd_object();
+    if (py4pd == NULL){
+        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
 
     if (!PyTuple_Check(args)) {
         PyErr_SetString(PyExc_TypeError, "pditerate() argument must be a tuple");
@@ -669,9 +725,13 @@ PyObject *pditerate(PyObject *self, PyObject *args){
 PyObject *getobjpointer(PyObject *self, PyObject *args){
     (void)self;
     (void)args;
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    
+    t_py *py4pd = get_py4pd_object();
+    if (py4pd == NULL){
+        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
+    
     return PyUnicode_FromFormat("%p", py4pd);
 }
 
