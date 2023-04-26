@@ -1643,6 +1643,15 @@ void py4pdLibrary_save(t_gobj *z, t_binbuf *b) {
     int i;
     t_symbol *libraryName = x->script_name;
 
+    if(!x->x_canvas->gl_dirty){
+        logpost(NULL, 3, "[py4pd] Saving py4pd object: %s", libraryName->s_name);
+        return;
+    }
+
+    binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix);
+    binbuf_addbinbuf(b, ((t_py *)x)->x_obj.te_binbuf);
+    binbuf_addsemi(b);
+    
     if (libraryName == NULL){
         char *objectName; 
         int objectSize;
@@ -1720,14 +1729,9 @@ void py4pdLibrary_save(t_gobj *z, t_binbuf *b) {
         py4pd_binbuf_insert(b, indexAfterLibraryDeclaration, 5, py4pdDeclareAtoms);
     }
 
-    // Normal save of the object
-    binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix);
-    binbuf_addbinbuf(b, ((t_py *)x)->x_obj.te_binbuf);
-    binbuf_addsemi(b);
     return;
 
 }
-
 
 // ====================================================
 void canvas_py4pdLibrary(t_canvas *x, t_symbol *s, int argc, t_atom *argv){
