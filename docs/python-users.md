@@ -243,9 +243,15 @@ There are two messages used to print info in the PureData console, they are `pd.
 
 When you want to inform the user (or yourself) of important information in PureData, you should use the `pd.print` method. This is particularly useful when debugging your Python code from within PureData. It's important to note that regular print statements will not work in PureData, so you must use `pd.print` instead.
 
-For example, if you're using the py4pd library to debug your Python code, you can use `pd.print` to display useful information and status updates in the PureData console. Additionally, if you're working with example files and some dependencies are missing, you can use `pd.print` to inform the user what they need to do to get the patch working.
+You can use the keyword `show_prefix` to indicates if `[Python]` will be printed or not. For example:
 
-Overall, `pd.print` provides a reliable way to communicate important information to the user (or yourself) from Python code in PureData console.
+``` py
+import pd
+	
+pd.print("ok") # It prints "[Python] ok"
+pd.print("ok", show_prefix=False) # It prints "ok".
+
+```
 
 -------------------------------------- 
 
