@@ -1,7 +1,12 @@
 #### py4pd version 0.7.0
+* * Add possibility to write Python Objects (like PureData Libraries) in add to PureData as standart Objects.
 * Add support to detach (It runs I separete Python executable (probably will be uncessary with PEP 684).
-* Add way to work with Python Types inside PureData (need to send message `pointers 1`)
-* Add possibility to write Python Objects (like PureData Libraries) in add to PureData as standart Objects.
+* Add way to work with Python Types inside PureData. It requires to send message `pointers 1`, or from Python Object, set `pyout = True`.
+* Now `py4pd -library` are added in the begin of the patch, we not have problem with Py Objects not exits.
+* Add new `pd` modules:
+	* `getobjpointer`: It returns the string pointer to the object. Can be used to create global variables per object.
+	* `iterate`: It is one copy of the OpenMusic iterate.
+	* `show`: It works exactly as `pic` object, but no require the `open` message.
 
 
 #### py4pd version 0.6.0

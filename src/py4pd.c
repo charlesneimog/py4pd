@@ -3,9 +3,8 @@
 #include "pd_module.h"
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
-#include <sys/stat.h>
 
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
 
 
@@ -24,6 +23,7 @@ int pipePy4pdNum = 0;
 // =========== PY4PD LOAD LIBRARIES ===========
 // ============================================
 static void libraryLoad(t_py *x, int argc, t_atom *argv){
+
     if (argc > 2) {
         pd_error(x, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
         return;
@@ -68,17 +68,14 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
     PyObject *pModule, *pFunc;  // Create the variables of the python objects
     char *pyScriptsFolder = malloc(strlen(x->py4pdPath->s_name) + 40); // allocate extra space
     char *pyGlobalFolder = malloc(strlen(x->py4pdPath->s_name) + 40); // allocate extra space
-
     snprintf(pyScriptsFolder, strlen(x->py4pdPath->s_name) + 40, "%s/resources/scripts/", x->py4pdPath->s_name);
     snprintf(pyGlobalFolder, strlen(x->py4pdPath->s_name) + 40, "%s/resources/py-modules/", x->py4pdPath->s_name);
-    // post("pyScriptsFolder: %s", pyScriptsFolder);
-    // post("pyGlobalFolder: %s", pyGlobalFolder);
+
     PyObject *home_path = PyUnicode_FromString(x->pdPatchFolder->s_name);  // Place where script file will probably be
     PyObject *site_package = PyUnicode_FromString(x->pkgPath->s_name);  // Place where the packages will be
     PyObject *globalPackages = PyUnicode_FromString(pyGlobalFolder);  // Place where the py4pd scripts will be
     PyObject *py4pdScripts = PyUnicode_FromString(pyScriptsFolder);  // Place where the py4pd scripts will be
     
-    // return;
     PyList_Insert(sys_path, 0, home_path);
     PyList_Insert(sys_path, 0, site_package);
     PyList_Insert(sys_path, 0, py4pdScripts);
@@ -147,7 +144,7 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
         x->script_name = script_file_name;
         x->function_name = function_name;
         x->function_called = 1;
-        post("[py4pd] Library %s loaded!", script_file_name->s_name);
+        logpost(x, 3, "[py4pd] Library %s loaded!", script_file_name->s_name);
     } 
     else {
         pd_error(x, "[py4pd] Library %s not loaded!", function_name->s_name);
@@ -354,7 +351,6 @@ static void openscript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         ShellExecuteEx(&sei);
         CloseHandle(sei.hProcess);
         return;
-    // Not Windows OS
     #else  
         char *command = malloc(strlen(x->pdPatchFolder->s_name) + strlen(x->script_name->s_name) + 20);
         command = get_editor_command(x);
@@ -616,6 +612,7 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     // =====================
     pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file with the function
     // =====================
+
     // check if the module was loaded
     if (pModule == NULL) {
         PyObject *ptype, *pvalue, *ptraceback;
@@ -1569,7 +1566,8 @@ void *py4pd_free(t_py *x) {
     object_count--;
 
     if (object_count == 1) {
-        // Py_Finalize(); // BUG: Not possible because it crashes if another
+        // Py_Finalize(); // BUG: Not possible because it crashes if another py object is created, 
+        //                          (not possible to reinitialize the python interpreter)
         post("[py4pd] Python interpreter finalized");
         object_count = 0;
 
@@ -1718,6 +1716,8 @@ void py4pdLibrary_save(t_gobj *z, t_binbuf *b) {
             }
         }
     }
+
+    return;
     // add the library name
     if (indexAfterLibraryDeclaration >= 0) {
         t_atom py4pdDeclareAtoms[5];
@@ -1785,11 +1785,11 @@ void py4pd_setup(void) {
 
 
     // Library save need to be saved  in the canvas to be loaded first
-    class_setsavefn(py4pd_classLibrary, &py4pdLibrary_save);
-    class_setsavefn(py4pd_class_VIS, &py4pdPic_save);
+    // class_setsavefn(py4pd_classLibrary, &py4pdLibrary_save);
+    // class_setsavefn(py4pd_class_VIS, &py4pdPic_save);
 
     // Load libraries before all other objects
-    class_addmethod(canvas_class, (t_method)canvas_py4pdLibrary, gensym("py4pdLibrary"), A_GIMME, 0);
+    // class_addmethod(canvas_class, (t_method)canvas_py4pdLibrary, gensym("py4pdLibrary"), A_GIMME, 0);
 
 
     // Sound in
@@ -1885,4 +1885,12 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_classAudioOut, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
     class_addmethod(py4pd_classAudioIn, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
 
+
+    // get the pd patch t_binbuf 
+    // t_canvas *canvas = canvas_getcurrent();
+    // t_binbuf *binbuf = canvas->gl_obj.te_binbuf;
+    // t_atom *atom = binbuf_getvec(binbuf);
+
+    
+        
 }

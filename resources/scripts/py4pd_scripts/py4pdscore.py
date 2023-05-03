@@ -49,6 +49,13 @@ def chord(pitches):
     except BaseException:
         pass
     neoscore.setup()
+
+    if isinstance(pitches, str):
+        pitches = [pitches]
+
+    # make all string with small letters
+    pitches = [x.lower() for x in pitches]
+
     py4pdTMPfolder = pd.tempfolder()
     for file in py4pdTMPfolder:
         if file.endswith(".ppm"):
@@ -80,7 +87,6 @@ def chord(pitches):
     neoscore.shutdown()
     if os.name == 'nt':
         notePathName = notePathName.replace("\\", "/")
-    #pd.print(str(notePathName))
     pd.show(notePathName)
     return None
 
