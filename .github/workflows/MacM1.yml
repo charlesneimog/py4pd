@@ -11,14 +11,14 @@ on:
     branches: [ "master" ]
     paths:
       - 'src/**'
-      - '.github/workflows/Mac.yml'
+      - '.github/workflows/MacM1.yml'
       - 'test/runTests.py'
   workflow_dispatch:
 
 jobs:  
   macos-intel-build:
     runs-on: [self-hosted, macOS, ARM64]
-    timeout-minutes: 10
+    timeout-minutes: 100
 
     steps:
     - uses: actions/checkout@v3
