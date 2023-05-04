@@ -5,7 +5,7 @@ on:
     branches: [ "master" , "v-0.5.0", "develop" ]
     paths:
       - 'src/**'
-      - '.github/workflows/Mac.yml'
+      - '.github/workflows/MacM1.yml'
       - 'test/runTests.py'
   pull_request:
     branches: [ "master" ]
@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
 
 jobs:  
-  macos-intel-build:
+  macos-m1-build:
     runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 100
 
