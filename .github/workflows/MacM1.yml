@@ -1,4 +1,4 @@
-name: macOS (Intel)
+name: macOS (M1)
 
 on:
   push:
