@@ -1,7 +1,6 @@
 import pd
 from py4pd_scripts.py4pdlist import *
 from py4pd_scripts.py4pdmath import *
-from py4pd_scripts.py4pdpip import *
 from py4pd_scripts.py4pdconvertion import *
 from py4pd_scripts.py4pdloop import *
 from py4pd_scripts.py4pdinfo import *
