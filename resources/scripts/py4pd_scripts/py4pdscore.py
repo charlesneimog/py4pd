@@ -39,6 +39,44 @@ def getpitchKey(pitch, cents=0):
         'gb': ['g', 'accidentalFlat'],
         'ab': ['a', 'accidentalFlat'],
         'bb': ['b', 'accidentalFlat'],
+
+        # quarter-tone sharp
+        'c+': ['c', 'accidentalQuarterToneSharpStein'],
+        'd+': ['d', 'accidentalQuarterToneSharpStein'],
+        'e+': ['e', 'accidentalQuarterToneSharpStein'],
+        'f+': ['f', 'accidentalQuarterToneSharpStein'],
+        'g+': ['g', 'accidentalQuarterToneSharpStein'],
+        'a+': ['a', 'accidentalQuarterToneSharpStein'],
+        'b+': ['b', 'accidentalQuarterToneSharpStein'],
+
+        # quarter-tone flat
+        'c-': ['c', 'accidentalQuarterToneFlatStein'],
+        'd-': ['d', 'accidentalQuarterToneFlatStein'],
+        'e-': ['e', 'accidentalQuarterToneFlatStein'],
+        'f-': ['f', 'accidentalQuarterToneFlatStein'],
+        'g-': ['g', 'accidentalQuarterToneFlatStein'],
+        'a-': ['a', 'accidentalQuarterToneFlatStein'],
+        'b-': ['b', 'accidentalQuarterToneFlatStein'],
+
+        # three-quarter-tone sharp
+        'c#+': ['c', 'accidentalThreeQuarterTonesSharpStein'],
+        'd#+': ['d', 'accidentalThreeQuarterTonesSharpStein'],
+        'e#+': ['e', 'accidentalThreeQuarterTonesSharpStein'],
+        'f#+': ['f', 'accidentalThreeQuarterTonesSharpStein'],
+        'g#+': ['g', 'accidentalThreeQuarterTonesSharpStein'],
+        'a#+': ['a', 'accidentalThreeQuarterTonesSharpStein'],
+        'b#+': ['b', 'accidentalThreeQuarterTonesSharpStein'],
+
+        # three-quarter-tone flat
+        'cb-': ['c', 'accidentalThreeQuarterTonesFlatZimmermann'],
+        'db-': ['d', 'accidentalThreeQuarterTonesFlatZimmermann'],
+        'eb-': ['e', 'accidentalThreeQuarterTonesFlatZimmermann'],
+        'fb-': ['f', 'accidentalThreeQuarterTonesFlatZimmermann'],
+        'gb-': ['g', 'accidentalThreeQuarterTonesFlatZimmermann'],
+        'ab-': ['a', 'accidentalThreeQuarterTonesFlatZimmermann'],
+        'bb-': ['b', 'accidentalThreeQuarterTonesFlatZimmermann'],
+
+
     }
     return note[pitch]
 
