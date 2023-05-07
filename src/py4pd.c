@@ -86,13 +86,12 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
 
     t_py *prev_obj;
     int prev_obj_exists = 0;
-    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
+    PyObject *MainModule = PyImport_ImportModule("__main__");
     PyObject *oldObjectCapsule;
     if (MainModule != NULL) {
         oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
         if (oldObjectCapsule != NULL) {
-            PyObject *pd_module = PyImport_ImportModule("__main__");
-            PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
             prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
             prev_obj_exists = 1;
         }
@@ -711,18 +710,22 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     else {
         ArgsTuple = PyTuple_New(0);
     }
+
     // odd code, but solve the bug
     t_py *prev_obj;
     int prev_obj_exists = 0;
-    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
+    PyObject *MainModule = PyImport_ImportModule("__main__");
     PyObject *oldObjectCapsule;
+
     if (MainModule != NULL) {
         oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
         if (oldObjectCapsule != NULL) {
-            PyObject *pd_module = PyImport_ImportModule("__main__");
-            PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
             prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
             prev_obj_exists = 1;
+        }
+        else {
+            prev_obj_exists = 0;
         }
     }
 
@@ -732,6 +735,7 @@ static void run_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         pd_error(x, "[Python] Failed to add object to Python");
         return;
     }
+
     pValue = PyObject_CallObject(x->function, ArgsTuple);
 
     // odd code, but solve the bug
