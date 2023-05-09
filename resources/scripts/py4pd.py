@@ -1,4 +1,11 @@
 import pd
+from py4pd_scripts.py4pdpip import *
+
+try:
+    pd.addobject(pipinstall, "py.pip")
+except:
+    pass
+
 from py4pd_scripts.py4pdlist import *
 from py4pd_scripts.py4pdmath import *
 from py4pd_scripts.py4pdconvertion import *
@@ -11,10 +18,10 @@ from py4pd_scripts.py4pdtree import *
 from py4pd_scripts.py4pdshow import *
 
 
+
 def py4pdLoadObjects():
     # Pip install
-    if addpip: # when is possible, add pip install object
-        pd.addobject(pipinstall, "py.pip")
+    pd.addobject(pipinstall, "py.pip")
 
     # Logic Functions
     pd.addobject(pyand, "py.and")
