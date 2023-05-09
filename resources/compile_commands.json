@@ -8,7 +8,7 @@
       "-DUNIX",
       "-fPIC",
       "-I",
-      "/usr/include/python3.11/",
+      "/usr/include/python3.10/",
       "-Wno-cast-function-type",
       "-Wno-unused-variable",
       "-Wall",

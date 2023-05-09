@@ -1448,12 +1448,12 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         set_py4pd_config(x); 
         py4pd_tempfolder(x); 
         findpy4pd_folder(x); 
-        if (!x->x_canvas->gl_loading){
+        // if (!x->x_canvas->gl_loading){
             libraryLoad(x, argc, argv);
-        }
-        else{
+        // }
+        // else{
             x->script_name = scriptName;
-        }
+        // }
         return (x);
     }
     else {
