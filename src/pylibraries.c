@@ -13,6 +13,21 @@ static t_class *pyNewObject_Audio;
 
 static t_class *py4pdInlets_proxy_class;
 
+
+// =====================================
+void py4pdObjPic_save(t_gobj *z, t_binbuf *b){ 
+    t_py *x = (t_py *)z;
+    binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix);
+    binbuf_addbinbuf(b, ((t_py *)x)->x_obj.te_binbuf);
+
+    int objAtomsCount = binbuf_getnatom(((t_py *)x)->x_obj.te_binbuf);
+    if (objAtomsCount == 1){
+        binbuf_addv(b, "ii", x->x_width, x->x_height);
+    }
+    binbuf_addsemi(b);
+    return;
+}
+
 // =====================================
 void py4pdInlets_proxy_pointer(t_py4pdInlet_proxy *x, t_atom *argv){
     t_py *py4pd = (t_py *)x->p_master;
@@ -304,8 +319,8 @@ void py_Object(t_py *x, t_atom *argv){
 
 // =====================================
 void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
-    (void) argc;
-    (void) argv;
+    // (void) argc;
+    // (void) argv;
     const char *objectName = s->s_name;
     t_py *x = (t_py *)pd_new(pyNewObject);
 
@@ -352,7 +367,6 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
     int nooutlet_int = PyLong_AsLong(nooutlet);
     x->function_called = 1;
     x->function = pyFunction;
-    // x->function_name = s;
     x->pdPatchFolder = patch_dir;         // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
@@ -507,33 +521,87 @@ void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
     }
 
     // ==================
+    // PIC PIC
     PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
     x->outPyPointer = PyLong_AsLong(pyOUT);
     t_symbol *py4pdArgs = gensym("-canvas");
-    py4pd_InitVisMode(x, c, py4pdArgs, 0, argc, argv);
-    x->function_called = 1;
-    x->function = pyFunction;
-    x->function_name = s;
-    x->pdPatchFolder = patch_dir;         // set name of the home path
-    x->pkgPath = patch_dir;     // set name of the packages path
-
-    // get width and height of py4pdOBJwidth and py4pdOBJheight
     PyObject *py4pdOBJwidth = PyDict_GetItemString(PdDict, "py4pdOBJwidth");
     x->x_width = PyLong_AsLong(py4pdOBJwidth);
     PyObject *py4pdOBJheight = PyDict_GetItemString(PdDict, "py4pdOBJheight");
     x->x_height = PyLong_AsLong(py4pdOBJheight);
+    if (argc > 1) {
+        if (argv[0].a_type == A_FLOAT) {
+            x->x_width = argv[0].a_w.w_float;
+        }
+        if (argv[1].a_type == A_FLOAT) {
+            x->x_height = argv[1].a_w.w_float;
+        }
+    }
+    py4pd_InitVisMode(x, c, py4pdArgs, 0, argc, argv);
+    // PIC =============
 
+    x->outPyPointer = PyLong_AsLong(pyOUT);
+    PyObject *nooutlet = PyDict_GetItemString(PdDict, "py4pdOBJnooutlet");
+    int nooutlet_int = PyLong_AsLong(nooutlet);
+    x->function_called = 1;
+    x->function = pyFunction;
+    x->pdPatchFolder = patch_dir;         // set name of the home path
+    x->pkgPath = patch_dir;     // set name of the packages path
+    x->py_arg_numbers = 0;
     set_py4pd_config(x);  // set the config file (in py4pd.cfg, make this be
     py4pd_tempfolder(x);  // find the py4pd folder
     findpy4pd_folder(x);  // find the py4pd object folder
-    PyObject *inspect = NULL, *getfullargspec = NULL;
-    PyObject *argspec = NULL, *argsFunc = NULL;
-    inspect = PyImport_ImportModule("inspect");
-    getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
-    argspec = PyObject_CallFunctionObjArgs(getfullargspec, pyFunction, NULL);
-    argsFunc = PyTuple_GetItem(argspec, 0);       
-    int py_args = PyObject_Size(argsFunc);
-    x->py_arg_numbers = py_args;
+        
+    // check if function use *args or **kwargs
+    int argsNumberDefined = 0;
+    PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
+    x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
+    if (code->co_flags & CO_VARARGS) {
+        x->py_arg_numbers = 1;
+        
+        int i;
+        for (i = 0; i < argc; i++) {
+            if (argv[i].a_type == A_SYMBOL) {
+                if (strcmp(argv[i].a_w.w_symbol->s_name, "-n_args") == 0) {
+                    if (i + 1 < argc) {
+                        if (argv[i + 1].a_type == A_FLOAT) {
+                            x->py_arg_numbers = (int)argv[i + 1].a_w.w_float;
+                            argsNumberDefined = 1;
+                        }
+                        else {
+                            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args {number}", objectName);
+                            return NULL;
+                        }
+                    }
+                    else {
+                        pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args {number}", objectName);
+                        return NULL;
+                    }
+                }
+            }
+        }
+        if (argsNumberDefined == 0) {
+            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args {number}", objectName);
+            return NULL;
+        }
+    }
+    if (code->co_flags & CO_VARKEYWORDS) {
+        pd_error(x, "[%s] function use **kwargs, **kwargs are not implemented yet", objectName);
+        // TODO: IMPLEMENT **kwargs
+        // x->py_arg_numbers = 1;
+        // post("py4pd: function %s use **kwargs", objectName);
+    }
+    if (code->co_argcount != 0){
+        // check if x->py_arg_numbers is already defined by *args
+        if (x->py_arg_numbers == 0) {
+            x->py_arg_numbers = code->co_argcount;
+        }
+        else{
+            x->py_arg_numbers = x->py_arg_numbers + code->co_argcount;
+        }
+    }
+    x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
+
     int i;
     int pyFuncArgs = x->py_arg_numbers - 1;
 
@@ -551,17 +619,48 @@ void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
         int argNumbers = x->py_arg_numbers;
         x->argsDict = PyTuple_New(argNumbers);
         for (i = 0; i < argNumbers; i++) {
-            PyTuple_SetItem(x->argsDict, i, Py_None);
+            if (argsNumberDefined == 0 && i <= argc) {
+                if (argv[i].a_type == A_FLOAT) {
+                    char pd_atom[64];
+                    atom_string(&argv[i], pd_atom, 64);
+                    if (strchr(pd_atom, '.') != NULL) {
+                        PyTuple_SetItem(x->argsDict, i, PyFloat_FromDouble(argv[i].a_w.w_float));
+                    }
+                    else{
+                        PyTuple_SetItem(x->argsDict, i, PyLong_FromLong(argv[i].a_w.w_float));
+                    }
+                }
+                else if (argv[i].a_type == A_SYMBOL) {
+                    // if symbol is "None" set to None
+                    if (strcmp(argv[i].a_w.w_symbol->s_name, "None") == 0) {
+                        PyTuple_SetItem(x->argsDict, i, Py_None);
+                    }
+                    else {
+                        PyTuple_SetItem(x->argsDict, i, PyUnicode_FromString(argv[i].a_w.w_symbol->s_name));
+                    }
+                }
+                else {
+                    PyTuple_SetItem(x->argsDict, i, Py_None);
+                }
+            }
+            else{
+                PyTuple_SetItem(x->argsDict, i, Py_None);
+            } 
         }
     }
     else{
         x->argsDict = PyTuple_New(1);
         PyTuple_SetItem(x->argsDict, 0, Py_None);
     }
-    x->out1 = outlet_new(&x->x_obj, 0);
+
+    if (nooutlet_int == 0){
+        x->out1 = outlet_new(&x->x_obj, 0);
+    }
     return (x);
 }
 
+    
+    
 // =====================================
 void *pyObjectFree(t_py *x) {
     if (x->visMode != 0) {
@@ -671,8 +770,9 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         pyNewObject_VIS = class_new(gensym(objectName), (t_newmethod)CreateNew_VISObject, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
         class_addanything(pyNewObject_VIS, py_anything);
         class_addmethod(pyNewObject_VIS, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);
-        class_addmethod(pyNewObject, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
-        class_addmethod(pyNewObject, (t_method)documentation, gensym("doc"), 0, 0);
+        class_addmethod(pyNewObject_VIS, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
+        class_addmethod(pyNewObject_VIS, (t_method)documentation, gensym("doc"), 0, 0);
+        class_setsavefn(pyNewObject_VIS, &py4pdObjPic_save);
     }
     // AUDIOIN
     else if ((strcmp(objectType, "AUDIOIN") == 0)){
