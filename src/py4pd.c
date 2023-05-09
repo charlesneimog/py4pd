@@ -1788,7 +1788,7 @@ void py4pd_setup(void) {
 
     // Library save need to be saved  in the canvas to be loaded first
     // class_setsavefn(py4pd_classLibrary, &py4pdLibrary_save);
-    // class_setsavefn(py4pd_class_VIS, &py4pdPic_save);
+    class_setsavefn(py4pd_class_VIS, &py4pdPic_save);
 
     // Load libraries before all other objects
     // class_addmethod(canvas_class, (t_method)canvas_py4pdLibrary, gensym("py4pdLibrary"), A_GIMME, 0);
