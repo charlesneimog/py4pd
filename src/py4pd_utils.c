@@ -594,6 +594,15 @@ PyObject *py4pd_add_pd_object(t_py *x) {
     return objectCapsule;
 }
 
+
+// ========================= PIP ==============================
+/**
+ * @brief install a python package
+ * @param x is the py4pd object
+ * @param package is the name of the package
+ * @return 0 if success, 1 if error
+ */
+
 // ========================= PNG ==============================
 
 // ntohl is one function that is not available on Windows, so we need to define it

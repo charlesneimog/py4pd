@@ -6,7 +6,6 @@
 #include <s_stuff.h>
 #include <pthread.h>
 
-
 #define PY_SSIZE_T_CLEAN // Good practice to use this before include Python.h because it will remove some deprecated function
 #include <Python.h>
 

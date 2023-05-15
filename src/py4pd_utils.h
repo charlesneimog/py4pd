@@ -26,8 +26,11 @@ void *pyobject_to_pointer(PyObject *pValue);
 PyObject *pointer_to_pyobject(void *p);
 void free_pyobject_data(void *p);
 
-void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s);
+// ========================
+// void get_pip(t_py *x);
 
+// ========================
+void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s);
 uint32_t py4pd_ntohl(uint32_t netlong);
 
 #endif

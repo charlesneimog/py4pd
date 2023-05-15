@@ -1,17 +1,21 @@
 import pd
 import os
+import sys
 
 try:
     from pip._internal.cli.main import main as pipmain
     addpip = True
 except Exception as e:
-    pd.error("Error importing pip: " + str(e))
+    pd.error(str(e))
     addpip = False
-
-
-
-
-
+    if os.name == 'nt':
+        pd.error("You need to install pip for windows")
+    elif os.name == 'posix':
+        pd.error("Open one terminal window and run 'sudo apt install python3-pip', or 'sudo pacman -S python-pip', or 'sudo dnf install python3-pip'")
+        sys.exit(1)
+    elif os.name == 'darwin':
+        pd.error("Open one terminal window and run 'sudo easy_install pip'")
+        sys.exit(1)
 
 def pipinstall(package):
     """Install a Python package from Pd"""

@@ -1791,7 +1791,10 @@ void py4pd_setup(void) {
     class_setsavefn(py4pd_class_VIS, &py4pdPic_save);
 
     // Load libraries before all other objects
-    // class_addmethod(canvas_class, (t_method)canvas_py4pdLibrary, gensym("py4pdLibrary"), A_GIMME, 0);
+    
+
+    // Install pip
+    // class_addmethod(py4pd_class, (t_method)get_pip, gensym("get-pip"), A_GIMME, 0);
 
 
     // Sound in

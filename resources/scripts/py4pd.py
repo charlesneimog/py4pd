@@ -16,6 +16,7 @@ from py4pd_scripts.py4pdconvertion import *
 from py4pd_scripts.py4pdoperators import *
 from py4pd_scripts.py4pdtree import *
 from py4pd_scripts.py4pdshow import *
+from py4pd_scripts.py4pd_musicconvertions import *
 
 
 
@@ -65,4 +66,10 @@ def py4pdLoadObjects():
     
     # img 
     pd.addobject(py4pdshow, "py.show", objtype="VIS")
+
+
+    # music convertions
+    pd.addobject(freq2midicent, "f2mc")
+    pd.addobject(midicent2freq, "mc2f")
+    pd.addobject(midicent2note, "mc2n")
 
