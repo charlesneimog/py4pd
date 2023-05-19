@@ -39,7 +39,7 @@ jobs:
 
     - name: Copy files to py4pd_macOS-Intel
       run: |
-        cp py4pd.pd_darwin resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd_macOS-Intel
+        cp py4pd.d_arm64 resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd_macOS-Intel
         mkdir py4pd_macOS-Intel/resources
         mkdir py4pd_macOS-Intel/src
         cp -r resources/* py4pd_macOS-Intel/resources

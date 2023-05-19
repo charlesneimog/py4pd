@@ -46,11 +46,10 @@ jobs:
       name: Build py4pd
       shell: msys2 {0}
       run: |
-        make PYTHON_VERSION=python3.10
+        make PYTHON_VERSION=python3.10 extension=m_amd64
     
     - name: Copy Files and Set for Tests
       run: |
-        mv py4pd.dll py4pd.m_amd64
         $pythonpath = Get-Content pythonpath.txt
         Copy-Item -Path "$pythonpath\python310.dll" -Destination py4pd_WIN64\ -Recurse
         Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd_WIN64\ -Recurse

@@ -41,17 +41,17 @@ jobs:
           python3.10 -m pip install numpy
 
       - name: Build
-        run: make PYTHON_VERSION=python3.10
+        run: make PYTHON_VERSION=python3.10 extension=l_amd64
       
       - name: Copy files to py4pd_Linux
         run: |
           mkdir py4pd_Linux
-          cp py4pd.pd_linux resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd_Linux
+          cp py4pd.l_amd64 resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd_Linux
           mkdir py4pd_Linux/resources
           mkdir py4pd_Linux/src
           cp resources/* py4pd_Linux/resources -r
           cp src/* py4pd_Linux/resources -r
-          ./resources/localdeps/localdeps.linux.sh py4pd_Linux/py4pd.pd_linux
+          ./resources/localdeps/localdeps.linux.sh py4pd_Linux/py4pd.l_amd64
           zip -r py4pd_Linux.zip py4pd_Linux
           cp test/*.pd py4pd_Linux
           
