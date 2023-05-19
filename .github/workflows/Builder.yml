@@ -1,4 +1,4 @@
-name: Linux
+name: Builder
 'on':
   push:
     branches:
@@ -7,6 +7,7 @@ name: Linux
 
     paths:
       - src/**
+      - .github/workflows/Builder.yml
       - test/runTests.py
 
   pull_request:
@@ -15,6 +16,7 @@ name: Linux
 
     paths:
       - src/**
+      - .github/workflows/Builder.yml
 
 jobs:
   linux-build:
@@ -57,8 +59,8 @@ jobs:
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
-          name: py4pd-linux
-          path: py4pd.zip
+          name: py4pd
+          path: py4pd
 
       - name: Set Test Config
         run: |
@@ -99,18 +101,13 @@ jobs:
 
     - name: Copy files to py4pd
       run: |
-        cp py4pd.d_arm64 resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd
-        mkdir py4pd/resources
-        mkdir py4pd/src
-        cp -r resources/* py4pd/resources
-        cp -r src/* py4pd/src
-        zip -r py4pd.zip py4pd
+        cp py4pd.d_arm64 py4pd
 
     - name: Upload Object
       uses: actions/upload-artifact@v3
       with:
-        name: py4pd_macOS-arm
-        path: py4pd_macOS-arm.zip
+        name: py4pd
+        path: py4pd
 
     - name: Set Test Config
       run: |
@@ -151,18 +148,14 @@ jobs:
 
     - name: Copy files to py4pd
       run: |
-        cp py4pd.d_amd64 resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd
-        mkdir py4pd/resources
-        mkdir py4pd/src
-        cp -r resources/* py4pd/resources
-        cp -r src/* py4pd/src
-        zip -r py4pd.zip py4pd
+        cp py4pd.d_amd64 py4pd
+
 
     - name: Upload Object
       uses: actions/upload-artifact@v3
       with:
-        name: py4pd_macOS-Inlet
-        path: py4pd.zip
+        name: py4pd
+        path: py4pd
 
     - name: Set Test Config
       run: |
@@ -220,20 +213,14 @@ jobs:
         $pythonpath = Get-Content pythonpath.txt
         Copy-Item -Path "$pythonpath\python310.dll" -Destination py4pd\ -Recurse
         Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd\ -Recurse
-        mkdir py4pd\\src\\
-        mkdir py4pd\\resources\\
         cp py4pd.m_amd64 py4pd\
-        cp resources\\py4pd.cfg py4pd\
-        cp resources\\py.py py4pd\ 
-        cp resources\\py4pd-help.pd py4pd\         
-        xcopy src\*.h py4pd\src\
-        xcopy src\*.c py4pd\src\
-        cp -r resources\* py4pd\resources\
-        7z a py4pd.zip py4pd
+  
+    - name: Config tests
+      run:
         cp test\\*.pd py4pd\
         cp test/runTests.py runTests.py
         python3 -m pip install neoscore matplotlib Pillow numpy -t ./py4pd/py-modules
-  
+
     - name: Run PureData Tests
       run: python3 ./runTests.py 
       
@@ -246,7 +233,9 @@ jobs:
     - name: Upload Object ZIP
       uses: actions/upload-artifact@v3
       with:
-        name: py4pd-win
-        path: py4pd.zip
+        name: py4pd
+        path: py4pd
 
+  # wait for all builds to finish and upload the artifacts
+    
 
