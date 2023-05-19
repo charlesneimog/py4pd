@@ -52,6 +52,7 @@ jobs:
           cp resources/* py4pd/resources -r
           cp src/* py4pd/resources -r
           ./resources/localdeps/localdeps.linux.sh py4pd/py4pd.l_amd64
+          rm py4pd/amd64/libpython*.so
           zip -r py4pd.zip py4pd
           cp test/*.pd py4pd
           
@@ -161,7 +162,7 @@ jobs:
       run: |
           cp test/*.pd py4pd
           cp test/runTests.py runTests.py
-          python3.10 -m pip install matplotlib neoscore matplotlib Pillow -t ./py4pd/py-modules
+          python3.10 -m pip install matplotlib neoscore matplotlib Pillow -t py4pd/py-modules
 
     - name: Run Test
       run: python3.10 ./runTests.py
