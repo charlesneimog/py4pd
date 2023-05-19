@@ -160,8 +160,8 @@ jobs:
 
     - name: Set Test Config
       run: |
-          cp test/*.pd py4pd
-          cp test/runTests.py runTests.py
+        cp test/*.pd py4pd
+        cp test/runTests.py runTests.py
           
 
     - name: Run Test

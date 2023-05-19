@@ -11,7 +11,7 @@ def runTest(pdpatch):
     if platform.system() == 'Linux':
         scriptfile = os.path.abspath(__file__)
         scriptfolder = os.path.dirname(scriptfile)
-        pathfile = scriptfolder + '/py4pd_Linux/' + pdpatch
+        pathfile = scriptfolder + '/py4pd/' + pdpatch
         # check if file exists
         if os.path.isfile(pathfile):
             cmd = f'pd -nogui -send "start-test bang" {pathfile}' 
@@ -27,7 +27,7 @@ def runTest(pdpatch):
     elif platform.system() == 'Windows':
         scriptfile = os.path.abspath(__file__)
         scriptfolder = os.path.dirname(scriptfile)
-        pathfile = scriptfolder + '\\py4pd_WIN64\\' + pdpatch
+        pathfile = scriptfolder + '\\py4pd\\' + pdpatch
         # check if file exists
         if os.path.isfile(pathfile):
             pass
@@ -41,7 +41,7 @@ def runTest(pdpatch):
     elif platform.system() == 'Darwin':
         scriptfile = os.path.abspath(__file__)
         scriptfolder = os.path.dirname(scriptfile)
-        pathfile = scriptfolder + '/py4pd_macOS-Intel/' + pdpatch
+        pathfile = scriptfolder + '/py4pd/' + pdpatch
         # check if file exists
         if os.path.isfile(pathfile):
             pass
