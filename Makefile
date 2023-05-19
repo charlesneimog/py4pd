@@ -72,12 +72,9 @@ $(PYTHON_DLL)
 
 PDLIBBUILDER_DIR=./resources/pd-lib-builder/
 
-
 ifeq ($(extension),d_arm64)
   override arch := arm64
 endif
-
-$(info Building with architecture: $(arch))
 
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 
