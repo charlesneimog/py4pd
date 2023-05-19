@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
 
 jobs:  
-  macos-intel-build:
+  macos-X64-build:
     runs-on: macos-latest
     timeout-minutes: 10
 
@@ -32,31 +32,31 @@ jobs:
         brew install --cask pd
         python3.10 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
         python3.10 -m pip install numpy
-        mkdir py4pd_macOS-Intel
+        mkdir py4pd
 
     - name: Build
       run: make PYTHON_VERSION=python3.10 extension=d_amd64
 
-    - name: Copy files to py4pd_macOS-Intel
+    - name: Copy files to py4pd
       run: |
-        cp py4pd.d_amd64 resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd_macOS-Intel
-        mkdir py4pd_macOS-Intel/resources
-        mkdir py4pd_macOS-Intel/src
-        cp -r resources/* py4pd_macOS-Intel/resources
-        cp -r src/* py4pd_macOS-Intel/src
-        zip -r py4pd_macOS-Intel.zip py4pd_macOS-Intel
+        cp py4pd.d_amd64 resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd
+        mkdir py4pd/resources
+        mkdir py4pd/src
+        cp -r resources/* py4pd/resources
+        cp -r src/* py4pd/src
+        zip -r py4pd.zip py4pd
 
     - name: Upload Object
       uses: actions/upload-artifact@v3
       with:
-        name: py4pd_macOS-Intel
-        path: py4pd_macOS-Intel.zip
+        name: py4pd_macOS-Inlet
+        path: py4pd.zip
 
     - name: Set Test Config
       run: |
-          cp test/*.pd py4pd_macOS-Intel
+          cp test/*.pd py4pd
           cp test/runTests.py runTests.py
-          python3.10 -m pip install matplotlib neoscore matplotlib Pillow -t ./py4pd_macOS-Intel/py-modules
+          python3.10 -m pip install matplotlib neoscore matplotlib Pillow -t ./py4pd/py-modules
 
     - name: Run Test
       run: python3.10 ./runTests.py
@@ -65,7 +65,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: neoscore-Test-Mac
-        path: py4pd_macOS-Intel/neoscoretest.png
+        path: py4pd/neoscoretest.png
 
 
 

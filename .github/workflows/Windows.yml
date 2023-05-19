@@ -35,7 +35,7 @@ jobs:
 
     - name: Configure Environment
       run: |
-        mkdir py4pd_WIN64
+        mkdir py4pd
         choco install puredata --yes
         python -m pip install numpy
         python -c "import sysconfig; f = open('pythonincludes.txt', 'w'); print(sysconfig.get_paths()['include'].replace('\\', '/'), file=f); f.close()"
@@ -51,21 +51,21 @@ jobs:
     - name: Copy Files and Set for Tests
       run: |
         $pythonpath = Get-Content pythonpath.txt
-        Copy-Item -Path "$pythonpath\python310.dll" -Destination py4pd_WIN64\ -Recurse
-        Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd_WIN64\ -Recurse
-        mkdir py4pd_WIN64\\src\\
-        mkdir py4pd_WIN64\\resources\\
-        cp py4pd.m_amd64 py4pd_WIN64\
-        cp resources\\py4pd.cfg py4pd_WIN64\
-        cp resources\\py.py py4pd_WIN64\ 
-        cp resources\\py4pd-help.pd py4pd_WIN64\         
-        xcopy src\*.h py4pd_WIN64\src\
-        xcopy src\*.c py4pd_WIN64\src\
-        cp -r resources\* py4pd_WIN64\resources\
-        7z a py4pd_WIN64.zip py4pd_WIN64
-        cp test\\*.pd py4pd_WIN64\
+        Copy-Item -Path "$pythonpath\python310.dll" -Destination py4pd\ -Recurse
+        Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd\ -Recurse
+        mkdir py4pd\\src\\
+        mkdir py4pd\\resources\\
+        cp py4pd.m_amd64 py4pd\
+        cp resources\\py4pd.cfg py4pd\
+        cp resources\\py.py py4pd\ 
+        cp resources\\py4pd-help.pd py4pd\         
+        xcopy src\*.h py4pd\src\
+        xcopy src\*.c py4pd\src\
+        cp -r resources\* py4pd\resources\
+        7z a py4pd.zip py4pd
+        cp test\\*.pd py4pd\
         cp test/runTests.py runTests.py
-        python3 -m pip install neoscore matplotlib Pillow numpy -t ./py4pd_WIN64/py-modules
+        python3 -m pip install neoscore matplotlib Pillow numpy -t ./py4pd/py-modules
   
     - name: Run PureData Tests
       run: python3 ./runTests.py 
@@ -74,13 +74,13 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: neoscore-Test-Windows
-        path: py4pd_WIN64/neoscoretest.png
+        path: py4pd/neoscoretest.png
       
     - name: Upload Object ZIP
       uses: actions/upload-artifact@v3
       with:
-        name: py4pd_WIN64
-        path: py4pd_WIN64.zip
+        name: py4pd-win
+        path: py4pd.zip
 
 
 
