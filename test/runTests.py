@@ -22,6 +22,8 @@ def runTest(pdpatch):
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
         lastLine = outputLines[-2]
+        for lastLine in outputLines:
+            print(lastLine)
         # sys.exit()
         
     elif platform.system() == 'Windows':
@@ -37,6 +39,8 @@ def runTest(pdpatch):
         os.system(f'cmd /c "\"C://Program Files//Pd//bin//pd.exe\" -send \"start-test bang\" \"{pathfile}\""')
         output = subprocess.run(f'"C:\\Program Files\\Pd\\bin\\pd.exe" -nogui -send "start-test bang" "{pathfile}"', capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
+        for lastLine in outputLines:
+            print(lastLine)
         lastLine = outputLines[-2]
     elif platform.system() == 'Darwin':
         scriptfile = os.path.abspath(__file__)
@@ -52,6 +56,8 @@ def runTest(pdpatch):
         cmd = '/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -send "start-test bang" ' + pathfile
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
+        for lastLine in outputLines:
+            print(lastLine)
         lastLine = "Fail"
         for line in outputLines:
             # check if there is PASS inside some line
