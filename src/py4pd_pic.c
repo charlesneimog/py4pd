@@ -6,7 +6,12 @@ static t_class *PY4PD_edit_proxy_class;
 // =================================================
 
 void PY4PD_draw_io_let(t_py *x){
+    // check if it is on edit mode
     t_canvas *cv = glist_getcanvas(x->x_glist);
+    if (cv->gl_edit == 0){
+        return;
+    }
+
     int xpos = text_xpix(&x->x_obj, x->x_glist), ypos = text_ypix(&x->x_obj, x->x_glist);
     
     sys_vgui(".x%lx.c delete %lx_in\n", cv, x);
