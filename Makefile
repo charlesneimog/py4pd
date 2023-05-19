@@ -72,8 +72,6 @@ $(PYTHON_DLL)
 
 PDLIBBUILDER_DIR=./resources/pd-lib-builder/
 
-# if extension == d_arm64
-
 ifeq ($(uname),Darwin)
 	ifeq ($(extension),d_arm64)
 		override arch := arm64
@@ -83,8 +81,9 @@ ifeq ($(uname),Darwin)
 	endif
 endif
 
-include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
+all: py4pd
 
+include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
 
 # py4pd_exe: src/py4pd_exe.c
 # 	$(info ) 
