@@ -45,7 +45,7 @@ jobs:
       
       - name: Copy files to py4pd
         run: |
-          mkdir py4pd
+          mkdir -p py4pd 
           cp py4pd.l_amd64 resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd
           mkdir py4pd/resources
           mkdir py4pd/src
@@ -95,7 +95,7 @@ jobs:
         brew install --cask pd
         python3.10 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
         python3.10 -m pip install numpy
-        mkdir py4pd
+        mkdir -p py4pd
 
     - name: Build
       run: make PYTHON_VERSION=python3.10 extension=d_arm64
@@ -142,7 +142,7 @@ jobs:
         brew install --cask pd
         python3.10 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
         python3.10 -m pip install numpy
-        mkdir py4pd
+        mkdir -p py4pd
 
     - name: Build
       run: make PYTHON_VERSION=python3.10 extension=d_amd64
@@ -196,7 +196,7 @@ jobs:
 
     - name: Configure Environment
       run: |
-        mkdir py4pd
+        mkdir -p py4pd
         choco install puredata --yes
         python -m pip install numpy
         python -c "import sysconfig; f = open('pythonincludes.txt', 'w'); print(sysconfig.get_paths()['include'].replace('\\', '/'), file=f); f.close()"
