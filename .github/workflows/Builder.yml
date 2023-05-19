@@ -217,7 +217,7 @@ jobs:
         cp py4pd.m_amd64 py4pd\
   
     - name: Config tests
-      run:
+      run: |
         cp test\\*.pd py4pd\
         cp test/runTests.py runTests.py
 
