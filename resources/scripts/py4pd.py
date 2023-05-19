@@ -45,6 +45,7 @@ def py4pdLoadObjects():
     pd.addobject(pyreduce, "py.reduce", pyout=True)
     pd.addobject(mat_trans, "py.mat_trans", pyout=True)
     pd.addobject(rotate, "py.rotate", pyout=True)
+    pd.addobject(flat, "py.flat")
 
     # Loop Functions
     pd.addobject(pyiterate, "py.iterate") # these are special objects, they don't have a pyout argument but output py data types
@@ -72,4 +73,6 @@ def py4pdLoadObjects():
     pd.addobject(freq2midicent, "f2mc")
     pd.addobject(midicent2freq, "mc2f")
     pd.addobject(midicent2note, "mc2n")
+
+    
 
