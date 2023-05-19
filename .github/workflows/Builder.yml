@@ -54,7 +54,7 @@ jobs:
           ./resources/localdeps/localdeps.linux.sh py4pd/py4pd.l_amd64
           find . -name 'libpython*.so' -exec rm {} \;
           zip -r py4pd.zip py4pd
-          cp test/*.pd py4pd
+          cp test/*.pd .
           
           
       - name: Upload Object
@@ -112,7 +112,8 @@ jobs:
 
     - name: Set Test Config
       run: |
-          cp test/*.pd py4pd
+          cp test/*.pd .
+          cp resources\\py.py py4pd\
           cp test/runTests.py runTests.py
           
 
@@ -160,8 +161,9 @@ jobs:
 
     - name: Set Test Config
       run: |
-        cp test/*.pd py4pd
-        cp test/runTests.py runTests.py
+        cp test/*.pd .
+        cp resources\\py.py py4pd\
+        cp test\\runTests.py runTests.py
           
 
     - name: Run Test
@@ -218,7 +220,8 @@ jobs:
   
     - name: Config tests
       run: |
-        cp test\\*.pd py4pd\
+        cp test\\*.pd .
+        cp resources\\py.py py4pd\
         cp test/runTests.py runTests.py
 
     - name: Run PureData Tests
