@@ -9,7 +9,8 @@
 
 #include <dlfcn.h>
 
-// declare function of utilities.c
+// ========================
+void py4pd_parser_args(t_py *x, t_canvas *c, int argc, t_atom *argv);
 void findpy4pd_folder(t_py *x);
 void py4pd_tempfolder(t_py *x);
 void set_py4pd_config(t_py *x);
@@ -25,9 +26,6 @@ PyObject *py4pd_add_pd_object(t_py *x);
 void *pyobject_to_pointer(PyObject *pValue);
 PyObject *pointer_to_pyobject(void *p);
 void free_pyobject_data(void *p);
-
-// ========================
-// void get_pip(t_py *x);
 
 // ========================
 void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s);

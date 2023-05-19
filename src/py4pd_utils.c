@@ -1,6 +1,84 @@
-#include "pd_module.h"
 #include "py4pd.h"
+#include "pd_module.h"
 #include "py4pd_utils.h"
+#include "py4pd_pic.h"
+
+
+// ====================================================
+
+void py4pd_parser_args(t_py *x, t_canvas *c, int argc, t_atom *argv) {
+
+    int i;
+    for (i = 0; i < argc; i++) {
+        if (argv[i].a_type == A_SYMBOL) {
+            t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
+            if (py4pdArgs == gensym("-picture") ||
+                py4pdArgs == gensym("-score") ||
+                py4pdArgs == gensym("-pic") ||
+                py4pdArgs == gensym("-canvas")) {
+                py4pd_InitVisMode(x, c, py4pdArgs, i, argc, argv);
+                x->x_outline = 1;
+                int j;
+                for (j = i; j < argc; j++) {
+                    argv[j] = argv[j + 1];
+                }
+                argc--;
+            } 
+            else if (py4pdArgs == gensym("-nvim") ||
+                        py4pdArgs == gensym("-vscode") ||
+                        py4pdArgs == gensym("-sublime") || 
+                        py4pdArgs == gensym("-emacs")) {
+                // remove the '-' from the name of the editor
+                const char *editor = py4pdArgs->s_name;
+                editor++;
+                x->editorName = gensym(editor); 
+                int j;
+                for (j = i; j < argc; j++) {
+                    argv[j] = argv[j + 1];
+                }
+                argc--;
+            } 
+            else if (py4pdArgs == gensym("-audioin")) {
+                x->audioInput = 1;
+                x->audioOutput = 0;
+                x->use_NumpyArray = 0;
+                int j;
+                for (j = i; j < argc; j++) {
+                    argv[j] = argv[j + 1];
+                }
+                argc--;
+            } 
+            else if (py4pdArgs == gensym("-audioout")) {
+                // post("[py4pd] Audio Outlets enabled");
+                x->audioOutput = 1;
+                x->audioInput = 0;
+                x->use_NumpyArray = 0;
+                x->out1 = outlet_new(&x->x_obj, gensym("signal"));  // create a signal outlet
+                int j;
+                for (j = i; j < argc; j++) {
+                    argv[j] = argv[j + 1];
+                }
+                argc--;
+            }
+            else if (py4pdArgs == gensym("-audio")) {
+                x->audioInput = 1;
+                x->audioOutput = 1;
+                x->out1 = outlet_new(
+                    &x->x_obj, gensym("signal"));  // create a signal outlet
+                x->use_NumpyArray = 0;
+                int j;
+                for (j = i; j < argc; j++) {
+                    argv[j] = argv[j + 1];
+                }
+                argc--;
+            }
+        }
+    }
+    if (x->audioOutput == 0) {
+        x->out1 = outlet_new(&x->x_obj, 0);  // cria um outlet caso o objeto nao contenha audio
+    }
+}
+
 
 
 // ====================================================

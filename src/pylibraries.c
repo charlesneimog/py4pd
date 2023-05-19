@@ -478,6 +478,7 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
     if (nooutlet_int == 0){
         x->out1 = outlet_new(&x->x_obj, 0);
     }
+    object_count++;
     return (x);
 }
 
@@ -656,6 +657,7 @@ void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
     if (nooutlet_int == 0){
         x->out1 = outlet_new(&x->x_obj, 0);
     }
+    object_count++;
     return (x);
 }
 
@@ -663,6 +665,29 @@ void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
     
 // =====================================
 void *pyObjectFree(t_py *x) {
+    if (object_count == 0) {
+        // Py_Finalize(); // BUG: This not work properly with submodules written in C
+        // post("[py4pd] Trying to finalize python");
+        object_count = 0;
+
+        #ifdef _WIN64
+            char command[1000];
+            sprintf(command, "del /q /s %s\\*", x->tempPath->s_name);
+            SHELLEXECUTEINFO sei = {0};
+            sei.cbSize = sizeof(SHELLEXECUTEINFO);
+            sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+            sei.lpFile = "cmd.exe";
+            sei.lpParameters = command;
+            sei.nShow = SW_HIDE;
+            ShellExecuteEx(&sei);
+            CloseHandle(sei.hProcess);
+        #else
+            char command[1000];
+            sprintf(command, "rm -rf %s", x->tempPath->s_name);
+            system(command);
+        #endif
+    }
+
     if (x->visMode != 0) {
         PY4PD_free(x);
     }
@@ -757,7 +782,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
 
     // NORMAL
     if ((strcmp(objectType, "NORMAL") == 0)){
-        pyNewObject = class_new(gensym(objectName), (t_newmethod)CreateNewObject, 0, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
+        pyNewObject = class_new(gensym(objectName), (t_newmethod)CreateNewObject, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
         class_addmethod(pyNewObject, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
         class_addmethod(pyNewObject, (t_method)documentation, gensym("doc"), 0, 0);
         class_addmethod(pyNewObject, (t_method)set_param, gensym("key"), A_GIMME, 0);

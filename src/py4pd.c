@@ -13,8 +13,8 @@ t_class *py4pd_class_VIS;      // For visualisation | pic object by pd-else
 t_class *py4pd_classAudioIn;   // For audio in
 t_class *py4pd_classAudioOut;  // For audio out
 t_class *py4pd_classLibrary;   // For libraries
-int object_count; 
 int pipePy4pdNum = 0;
+int object_count = 0;
 
 
 // ============================================
@@ -1377,6 +1377,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     int width = 0;
     int height = 0;
     
+    // Get what will be the type of the object
     for (i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
             t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
@@ -1401,7 +1402,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
                 libraryMODE = 1;
                 normalMODE = 0;
                 scriptName = atom_getsymbolarg(i + 1, argc, argv);
-                post("[py4pd] Library mode enabled. Script name: %s", scriptName->s_name);
             }
         }
     }
@@ -1409,7 +1409,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
 
     // INIT PYTHON
     if (!Py_IsInitialized()) {
-        object_count = 1; 
+        object_count = 0; 
         post("");
         post("[py4pd] by Charles K. Neimog");
         post("[py4pd] Version %d.%d.%d", PY4PD_MAJOR_VERSION, PY4PD_MINOR_VERSION, PY4PD_MICRO_VERSION);
@@ -1419,7 +1419,9 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         Py_Initialize();  
     }
 
+    // =================
     // INIT PY4PD OBJECT
+    // =================
     if (visMODE == 1 && audioOUT == 0 && audioIN == 0) {
         x = (t_py *)pd_new(py4pd_class_VIS);  // create a new picture object
         if (width > 0 && height > 0) {
@@ -1428,13 +1430,13 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         }
     } 
     else if (audioIN == 1 && visMODE == 0 && audioOUT == 0) {
-        x = (t_py *)pd_new(py4pd_classAudioIn);  // create a new object
+        x = (t_py *)pd_new(py4pd_classAudioIn);  // create audio in object
     }
     else if (audioOUT == 1 && visMODE == 0 && audioIN == 0) {
-        x = (t_py *)pd_new(py4pd_classAudioOut);  // create a new object
+        x = (t_py *)pd_new(py4pd_classAudioOut);  // create audio out object
     } 
     else if (normalMODE == 1 && visMODE == 0 && audioOUT == 0 && audioIN == 0) {
-        x = (t_py *)pd_new(py4pd_class);  // create a new object
+        x = (t_py *)pd_new(py4pd_class);  // create a new py4pd object
     } 
     else if (libraryMODE == 1 && visMODE == 0 && audioOUT == 0 && audioIN == 0) {  // library
         x = (t_py *)pd_new(py4pd_classLibrary);  
@@ -1448,12 +1450,9 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         set_py4pd_config(x); 
         py4pd_tempfolder(x); 
         findpy4pd_folder(x); 
-        // if (!x->x_canvas->gl_loading){
-            libraryLoad(x, argc, argv);
-        // }
-        // else{
-            x->script_name = scriptName;
-        // }
+        libraryLoad(x, argc, argv);
+        x->script_name = scriptName;
+        object_count++;
         return (x);
     }
     else {
@@ -1469,79 +1468,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     x->visMode = 0;
     x->editorName = NULL;
     x->pyObject = 0;
-    object_count++;  
-
-
-    // PASSING ARGUMENTS TO PY4PD OBJECT
-    for (i = 0; i < argc; i++) {
-        if (argv[i].a_type == A_SYMBOL) {
-            t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
-            if (py4pdArgs == gensym("-picture") ||
-                py4pdArgs == gensym("-score") ||
-                py4pdArgs == gensym("-pic") ||
-                py4pdArgs == gensym("-canvas")) {
-                py4pd_InitVisMode(x, c, py4pdArgs, i, argc, argv);
-                x->x_outline = 1;
-                int j;
-                for (j = i; j < argc; j++) {
-                    argv[j] = argv[j + 1];
-                }
-                argc--;
-            } 
-            else if (py4pdArgs == gensym("-nvim") ||
-                        py4pdArgs == gensym("-vscode") ||
-                        py4pdArgs == gensym("-sublime") || 
-                        py4pdArgs == gensym("-emacs")) {
-                // remove the '-' from the name of the editor
-                const char *editor = py4pdArgs->s_name;
-                editor++;
-                x->editorName = gensym(editor); 
-                int j;
-                for (j = i; j < argc; j++) {
-                    argv[j] = argv[j + 1];
-                }
-                argc--;
-            } 
-            else if (py4pdArgs == gensym("-audioin")) {
-                x->audioInput = 1;
-                x->audioOutput = 0;
-                x->use_NumpyArray = 0;
-                int j;
-                for (j = i; j < argc; j++) {
-                    argv[j] = argv[j + 1];
-                }
-                argc--;
-            } 
-            else if (py4pdArgs == gensym("-audioout")) {
-                // post("[py4pd] Audio Outlets enabled");
-                x->audioOutput = 1;
-                x->audioInput = 0;
-                x->use_NumpyArray = 0;
-                x->out1 = outlet_new(
-                    &x->x_obj, gensym("signal"));  // create a signal outlet
-                int j;
-                for (j = i; j < argc; j++) {
-                    argv[j] = argv[j + 1];
-                }
-                argc--;
-            }
-            else if (py4pdArgs == gensym("-audio")) {
-                x->audioInput = 1;
-                x->audioOutput = 1;
-                x->out1 = outlet_new(
-                    &x->x_obj, gensym("signal"));  // create a signal outlet
-                x->use_NumpyArray = 0;
-                int j;
-                for (j = i; j < argc; j++) {
-                    argv[j] = argv[j + 1];
-                }
-                argc--;
-            }
-        }
-    }
-    if (x->audioOutput == 0) {
-        x->out1 = outlet_new(&x->x_obj, 0);  // cria um outlet caso o objeto nao contenha audio
-    }
+    py4pd_parser_args(x, c, argc, argv);  // parse arguments
     x->runmode = 0;
     x->object_number = object_count;  // save object number
     x->pdPatchFolder = patch_dir;         // set name of the home path
@@ -1554,6 +1481,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         py4pdImportNumpy();
         x->numpyImported = 0;
     }
+    object_count++;
     return (x);
 }
 
@@ -1566,11 +1494,10 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
  */
 void *py4pd_free(t_py *x) {
     object_count--;
-
-    if (object_count == 1) {
-        // Py_Finalize(); // BUG: Not possible because it crashes if another py object is created, 
-        //                          (not possible to reinitialize the python interpreter)
-        post("[py4pd] Python interpreter finalized");
+    // post("We have %d objects", object_count);
+    if (object_count == 0) {
+        // Py_Finalize(); // BUG: This not work properly with submodules written in C
+        // post("[py4pd] Trying to finalize python");
         object_count = 0;
 
         #ifdef _WIN64
@@ -1608,165 +1535,6 @@ void *py4pd_free(t_py *x) {
 }
 
 // ====================================================
-// TODO: Add special save for PIC mode
-void py4pdPic_save(t_gobj *z, t_binbuf *b){ 
-    post("Saving py4pd pic properties");
-    t_py *x = (t_py *)z;
-    binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix);
-    binbuf_addv(b, "ssssii", gensym("py4pd"), x->script_name, x->function_name, gensym("-pic"), x->x_width, x->x_height);
-    binbuf_addsemi(b);
-    return;
-}
-
-// =======================================================================
-void py4pd_binbuf_insert(t_binbuf *x, int index, int argc, const t_atom *argv) {
-    t_atom *temp = (t_atom *) malloc(argc * sizeof(t_atom));
-    memcpy(temp, argv, argc * sizeof(t_atom));
-    t_atom *vec = binbuf_getvec(x);
-    int n = binbuf_getnatom(x);
-    if (index < 0 || index > n) {
-        index = n;
-    }
-    binbuf_resize(x, n + argc);
-    for (int i = n - 1; i >= index; i--) {
-        vec[i + argc] = vec[i];
-    }
-    for (int i = 0; i < argc; i++) {
-        vec[index + i] = temp[i];
-    }
-    free(temp);
-}
-
-// =======================================================================
-void py4pdLibrary_save(t_gobj *z, t_binbuf *b) {
-    t_py *x = (t_py *)z;
-    int i;
-    t_symbol *libraryName = x->script_name;
-
-    if(!x->x_canvas->gl_dirty){
-        logpost(NULL, 3, "[py4pd] Saving py4pd object: %s", libraryName->s_name);
-        return;
-    }
-
-    binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix);
-    binbuf_addbinbuf(b, ((t_py *)x)->x_obj.te_binbuf);
-    binbuf_addsemi(b);
-    
-    if (libraryName == NULL){
-        char *objectName; 
-        int objectSize;
-        binbuf_gettext(((t_py *)x)->x_obj.te_binbuf, &objectName, &objectSize);
-        pd_error(NULL, "[py4pd] Error when saving the patch: Object %s no define Library Name", objectName);
-        binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix);
-        binbuf_addbinbuf(b, ((t_py *)x)->x_obj.te_binbuf);
-        binbuf_addsemi(b);
-        return;
-    }
-
-    // Check if py4pd is already declared
-    t_atom *patchObjsVec = binbuf_getvec(b);
-    int bufLength = binbuf_getnatom(b);
-    int py4pdAlreadyDeclared = 0;
-    for (i = 0; i < bufLength; i++) {
-        if (patchObjsVec[i + 0].a_type == A_SYMBOL && 
-            patchObjsVec[i + 1].a_type == A_SYMBOL && 
-            patchObjsVec[i + 2].a_type == A_SYMBOL &&
-            patchObjsVec[i + 3].a_type == A_SYMBOL) {    
-            if (patchObjsVec[i + 0].a_w.w_symbol == gensym("#X") && 
-                patchObjsVec[i + 1].a_w.w_symbol == gensym("declare") && 
-                patchObjsVec[i + 2].a_w.w_symbol == gensym("-lib") &&
-                patchObjsVec[i + 3].a_w.w_symbol == gensym("py4pd")) {
-                    py4pdAlreadyDeclared = 1;
-                    break;
-            }
-        }
-    }
-
-    int semi_index = -1;
-    for (i = 0; i < bufLength; i++) {
-        if (patchObjsVec[i].a_type == A_SEMI) {
-            semi_index = i + 1;
-            break;
-        }
-    }
-
-    if (!py4pdAlreadyDeclared && semi_index >= 0) {
-        t_atom py4pdDeclareAtoms[5];
-        SETSYMBOL(&py4pdDeclareAtoms[0], gensym("#X"));
-        SETSYMBOL(&py4pdDeclareAtoms[1], gensym("declare"));
-        SETSYMBOL(&py4pdDeclareAtoms[2], gensym("-lib"));
-        SETSYMBOL(&py4pdDeclareAtoms[3], gensym("py4pd"));
-        SETSEMI(&py4pdDeclareAtoms[4]);
-        py4pd_binbuf_insert(b, semi_index, 5, py4pdDeclareAtoms);
-    }
-
-    // this save the index after the declaration of the library
-    patchObjsVec = binbuf_getvec(b);
-    bufLength = binbuf_getnatom(b);
-    int indexAfterLibraryDeclaration = -1;
-    for (i = 0; i < bufLength; i++) {
-        if (patchObjsVec[i + 0].a_type == A_SYMBOL && 
-            patchObjsVec[i + 1].a_type == A_SYMBOL && 
-            patchObjsVec[i + 2].a_type == A_SYMBOL &&
-            patchObjsVec[i + 3].a_type == A_SYMBOL) {    
-            if (patchObjsVec[i + 0].a_w.w_symbol == gensym("#X") && 
-                patchObjsVec[i + 1].a_w.w_symbol == gensym("declare") && 
-                patchObjsVec[i + 2].a_w.w_symbol == gensym("-lib") &&
-                patchObjsVec[i + 3].a_w.w_symbol == gensym("py4pd")) {
-                    indexAfterLibraryDeclaration = i + 5;
-                    break;
-            }
-        }
-    }
-
-    return;
-    // add the library name
-    if (indexAfterLibraryDeclaration >= 0) {
-        t_atom py4pdDeclareAtoms[5];
-        SETSYMBOL(&py4pdDeclareAtoms[0], gensym("#X"));
-        SETSYMBOL(&py4pdDeclareAtoms[1], gensym("py4pdLibrary"));
-        SETSYMBOL(&py4pdDeclareAtoms[2], gensym("-lib"));
-        SETSYMBOL(&py4pdDeclareAtoms[3], libraryName);
-        SETSEMI(&py4pdDeclareAtoms[4]);
-        py4pd_binbuf_insert(b, indexAfterLibraryDeclaration, 5, py4pdDeclareAtoms);
-    }
-
-    return;
-
-}
-
-// ====================================================
-void canvas_py4pdLibrary(t_canvas *x, t_symbol *s, int argc, t_atom *argv){
-    (void)x;
-    (void)s;
-    if (!Py_IsInitialized()) {
-        object_count = 0; 
-        post("");
-        post("[py4pd] by Charles K. Neimog");
-        post("[py4pd] Version %d.%d.%d", PY4PD_MAJOR_VERSION, PY4PD_MINOR_VERSION, PY4PD_MICRO_VERSION);
-        post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
-        post("");
-        PyImport_AppendInittab("pd", PyInit_pd);  
-        Py_Initialize();  
-    }
-    t_py *py4pdObj = (t_py *)pd_new(py4pd_classLibrary);  
-    py4pdObj->x_canvas = canvas_getcurrent();      
-    t_canvas *c = py4pdObj->x_canvas;             
-    t_symbol *patch_dir = canvas_getdir(c);
-    py4pdObj->runmode = 0;
-    py4pdObj->object_number = object_count; 
-    py4pdObj->pdPatchFolder = patch_dir;       
-    py4pdObj->pkgPath = patch_dir;  
-    set_py4pd_config(py4pdObj); 
-    py4pd_tempfolder(py4pdObj); 
-    findpy4pd_folder(py4pdObj); 
-    libraryLoad(py4pdObj, argc, argv);
-    PyErr_Clear();
-    return;
-}
-
-
-// ====================================================
 /**
  * @brief Setup the class
  * 
@@ -1784,17 +1552,6 @@ void py4pd_setup(void) {
     py4pd_classAudioOut = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
     py4pd_classAudioIn = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
     py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), CLASS_NOINLET, A_GIMME, 0);
-
-
-    // Library save need to be saved  in the canvas to be loaded first
-    // class_setsavefn(py4pd_classLibrary, &py4pdLibrary_save);
-    class_setsavefn(py4pd_class_VIS, &py4pdPic_save);
-
-    // Load libraries before all other objects
-    
-
-    // Install pip
-    // class_addmethod(py4pd_class, (t_method)get_pip, gensym("get-pip"), A_GIMME, 0);
 
 
     // Sound in
@@ -1890,12 +1647,4 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_classAudioOut, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
     class_addmethod(py4pd_classAudioIn, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
 
-
-    // get the pd patch t_binbuf 
-    // t_canvas *canvas = canvas_getcurrent();
-    // t_binbuf *binbuf = canvas->gl_obj.te_binbuf;
-    // t_atom *atom = binbuf_getvec(binbuf);
-
-    
-        
 }
