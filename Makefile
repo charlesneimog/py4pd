@@ -71,13 +71,20 @@ $(PYTHON_DLL)
 # =================================== Pd Lib Builder =============================
 
 PDLIBBUILDER_DIR=./resources/pd-lib-builder/
+
+# if extension == d_arm64
+
+ifeq ($(uname),Darwin)
+	ifeq ($(extension),d_arm64)
+		override arch := arm64
+		$(info Building with architecture: $(arch))
+	else
+		arch := x86_64
+	endif
+endif
+
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
-localdep_linux: install
-	resources/localdeps/localdeps.linux.sh "${installpath}/py4pd.${extension}"
-localdep_windows: install
-	resources/localdeps/localdeps.win.sh "${installpath}/py4pd.${extension}"
-localdep_macos: install
-	resources/localdeps/localdeps.macos.sh "${installpath}/py4pd.${extension}"
+
 
 # py4pd_exe: src/py4pd_exe.c
 # 	$(info ) 
