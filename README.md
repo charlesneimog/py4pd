@@ -35,6 +35,10 @@ Go to [Docs](https://www.charlesneimog.com/py4pd) to see examples.
 
 * Go to [Docs](https://www.charlesneimog.com/py4pd).
 
+## For Developers
+
+Just one thing, the development of this object occurs in de `develop` branch, the main branch corresponds to the last release available in `Deken`.
+
 ## Building from Source
 
 * To build from the source code, you can follow the steps: [Compiling from Source Code.](https://github.com/charlesneimog/py4pd/blob/master/resources/BUILD.md).
