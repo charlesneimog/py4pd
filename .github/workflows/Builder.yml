@@ -66,7 +66,7 @@ jobs:
       - name: Set Test Config
         run: |
           cp test/runTests.py runTests.py
-          python3.10 -m pip install neoscore matplotlib Pillow -t ./py4pd/py-modules
+          
 
       - name: Run Test
         run: python3.10 runTests.py
@@ -114,7 +114,7 @@ jobs:
       run: |
           cp test/*.pd py4pd
           cp test/runTests.py runTests.py
-          python3.10 -m pip install matplotlib neoscore matplotlib Pillow -t ./py4pd/py-modules
+          
 
     - name: Run Test
       run: python3.10 ./runTests.py
@@ -162,7 +162,7 @@ jobs:
       run: |
           cp test/*.pd py4pd
           cp test/runTests.py runTests.py
-          python3.10 -m pip install matplotlib neoscore matplotlib Pillow -t py4pd/py-modules
+          
 
     - name: Run Test
       run: python3.10 ./runTests.py
@@ -220,7 +220,6 @@ jobs:
       run:
         cp test\\*.pd py4pd\
         cp test/runTests.py runTests.py
-        python3 -m pip install neoscore matplotlib Pillow numpy -t ./py4pd/py-modules
 
     - name: Run PureData Tests
       run: python3 ./runTests.py 
