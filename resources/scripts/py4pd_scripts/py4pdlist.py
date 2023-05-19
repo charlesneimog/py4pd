@@ -92,3 +92,14 @@ def rotate(list, n):
         pd.error("[py.rotate]: bad arguments")
         return None
     return list[n:] + list[:n]
+
+
+def flat(nested_list):
+    result = []
+    for item in nested_list:
+        if isinstance(item, list):
+            result.extend(flat(item))
+        else:
+            result.append(item)
+    return result
+

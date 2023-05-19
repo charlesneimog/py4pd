@@ -49,6 +49,7 @@ def midicent2note(midicent):
 
     newmidicent = round(float(midicent) * 0.01) * 100
     desviation = midicent - newmidicent
+    desviation = round(desviation, 1)
     octave = int(midicent // 1200) - 1
     note = int(newmidicent / 100) % 12
 
