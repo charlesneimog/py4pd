@@ -52,7 +52,7 @@ jobs:
           cp resources/* py4pd/resources -r
           cp src/* py4pd/resources -r
           ./resources/localdeps/localdeps.linux.sh py4pd/py4pd.l_amd64
-          rm py4pd/amd64/libpython*.so
+          find . -name 'libpython*.so' -exec rm {} \;
           zip -r py4pd.zip py4pd
           cp test/*.pd py4pd
           
