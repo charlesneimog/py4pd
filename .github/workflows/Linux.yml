@@ -45,14 +45,15 @@ jobs:
       
       - name: Copy files to py4pd
         run: |
-          mkdir py4pd
-          cp py4pd.l_amd64 resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd
-          mkdir py4pd/resources
-          mkdir py4pd/src
-          cp resources/* py4pd/resources -r
-          cp src/* py4pd/resources -r
-          ./resources/localdeps/localdeps.linux.sh py4pd/py4pd.l_amd64
-          zip -r py4pd.zip py4pd
+          mkdir object
+          mkdir object/py4pd
+          cp py4pd.l_amd64 resources/py4pd.cfg resources/py.py resources/py4pd-help.pd object/py4pd
+          mkdir object/py4pd/resources
+          mkdir object/py4pd/src
+          cp resources/* object/py4pd/resources -r
+          cp src/* object/py4pd/resources -r
+          ./resources/localdeps/localdeps.linux.sh object/py4pd/py4pd.l_amd64
+          zip -r py4pd.zip object/py4pd
           cp test/*.pd py4pd
           
           

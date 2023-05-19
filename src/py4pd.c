@@ -1525,6 +1525,7 @@ void *py4pd_free(t_py *x) {
  * @brief Setup the class
  * 
  */
+
 void py4pd_setup(void) {
     py4pd_class =
         class_new(gensym("py4pd"),  // cria o objeto quando escrevemos py4pd
