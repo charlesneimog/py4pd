@@ -66,7 +66,6 @@ jobs:
       - name: Set Test Config
         run: |
           cp test/runTests.py runTests.py
-          
 
       - name: Run Test
         run: python3.10 runTests.py
@@ -162,12 +161,12 @@ jobs:
     - name: Set Test Config
       run: |
         cp test/*.pd .
-        cp resources\\py.py py4pd\
-        cp test\\runTests.py runTests.py
+        cp resources/py.py py4pd
+        cp test/runTests.py .
           
 
     - name: Run Test
-      run: python3.10 ./runTests.py
+      run: python3.10 runTests.py
 
     - name: Upload Test Image
       uses: actions/upload-artifact@v3
