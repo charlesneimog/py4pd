@@ -72,18 +72,15 @@ $(PYTHON_DLL)
 
 PDLIBBUILDER_DIR=./resources/pd-lib-builder/
 
-ifeq ($(uname),Darwin)
-	ifeq ($(extension),d_arm64)
-		override arch := arm64
-		$(info Building with architecture: $(arch))
-	else
-		arch := x86_64
-	endif
+
+ifeq ($(extension),d_arm64)
+  override arch := arm64
 endif
 
-all: py4pd
+$(info Building with architecture: $(arch))
 
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
+
 
 # py4pd_exe: src/py4pd_exe.c
 # 	$(info ) 
