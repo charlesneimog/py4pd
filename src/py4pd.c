@@ -1494,12 +1494,9 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
  */
 void *py4pd_free(t_py *x) {
     object_count--;
-    // post("We have %d objects", object_count);
     if (object_count == 0) {
-        // Py_Finalize(); // BUG: This not work properly with submodules written in C
-        // post("[py4pd] Trying to finalize python");
+        // Py_Finalize();  BUG: This not work properly with submodules written in C
         object_count = 0;
-
         #ifdef _WIN64
             char command[1000];
             sprintf(command, "del /q /s %s\\*", x->tempPath->s_name);
@@ -1520,18 +1517,7 @@ void *py4pd_free(t_py *x) {
     if (x->visMode == 1) {
         PY4PD_free(x);
     }
-
-    
-    if (x->function_called){
-        // Py_DECREF(x->function);
-        // Py_DECREF(x->module);
-        // inlet_free(x->in1);
-        // outlet_free(x->out1);
-
-    }
-
     return (void *)x;
-
 }
 
 // ====================================================
@@ -1553,13 +1539,11 @@ void py4pd_setup(void) {
     py4pd_classAudioIn = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), 0, A_GIMME, 0);
     py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)py4pd_new, (t_method)py4pd_free, sizeof(t_py), CLASS_NOINLET, A_GIMME, 0);
 
-
     // Sound in
     class_addmethod(py4pd_classAudioIn, (t_method)py4pd_audio_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
     class_addmethod(py4pd_classAudioOut, (t_method)py4pd_audio_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
     CLASS_MAINSIGNALIN(py4pd_classAudioIn, t_py, py4pdAudio);  
     CLASS_MAINSIGNALIN(py4pd_classAudioOut, t_py, py4pdAudio);  
-
 
     // Pic related
     class_addmethod(py4pd_class_VIS, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);
@@ -1639,12 +1623,9 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class_VIS, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
     class_addmethod(py4pd_classAudioOut, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
     class_addmethod(py4pd_classAudioIn, (t_method)set_param, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
-    //
-    // class_addmethod(py4pd_class, (t_method)py4pd_install_pip, gensym("install"), A_GIMME, 0);  // unset parameter inside py4pd->params
 
     class_addmethod(py4pd_class, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0); 
     class_addmethod(py4pd_class_VIS, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
     class_addmethod(py4pd_classAudioOut, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
     class_addmethod(py4pd_classAudioIn, (t_method)getmoduleFunction, gensym("functions"), A_GIMME, 0);
-
 }

@@ -384,26 +384,26 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
         int i;
         for (i = 0; i < argc; i++) {
             if (argv[i].a_type == A_SYMBOL) {
-                if (strcmp(argv[i].a_w.w_symbol->s_name, "-n_args") == 0) {
+                if (strcmp(argv[i].a_w.w_symbol->s_name, "-n_args") == 0 || strcmp(argv[i].a_w.w_symbol->s_name, "-a") == 0) {
                     if (i + 1 < argc) {
                         if (argv[i + 1].a_type == A_FLOAT) {
                             x->py_arg_numbers = (int)argv[i + 1].a_w.w_float;
                             argsNumberDefined = 1;
                         }
                         else {
-                            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args {number}", objectName);
+                            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args (-a for short) {number}", objectName);
                             return NULL;
                         }
                     }
                     else {
-                        pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args {number}", objectName);
+                        pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args (-a for short) {number}", objectName);
                         return NULL;
                     }
                 }
             }
         }
         if (argsNumberDefined == 0) {
-            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args {number}", objectName);
+            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args (-a for short) {number}", objectName);
             return NULL;
         }
     }
@@ -563,26 +563,26 @@ void *CreateNew_VISObject(t_symbol *s, int argc, t_atom *argv) {
         int i;
         for (i = 0; i < argc; i++) {
             if (argv[i].a_type == A_SYMBOL) {
-                if (strcmp(argv[i].a_w.w_symbol->s_name, "-n_args") == 0) {
+                if (strcmp(argv[i].a_w.w_symbol->s_name, "-n_args") == 0 || strcmp(argv[i].a_w.w_symbol->s_name, "-a") == 0) {
                     if (i + 1 < argc) {
                         if (argv[i + 1].a_type == A_FLOAT) {
                             x->py_arg_numbers = (int)argv[i + 1].a_w.w_float;
                             argsNumberDefined = 1;
                         }
                         else {
-                            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args {number}", objectName);
+                            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args (-a for short) {number}", objectName);
                             return NULL;
                         }
                     }
                     else {
-                        pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args {number}", objectName);
+                        pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args (-a for short) {number}", objectName);
                         return NULL;
                     }
                 }
             }
         }
         if (argsNumberDefined == 0) {
-            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args {number}", objectName);
+            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args (-a for short) {number}", objectName);
             return NULL;
         }
     }

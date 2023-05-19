@@ -34,7 +34,7 @@ jobs:
         mkdir py4pd_macOS-Intel
 
     - name: Build
-      run: make PYTHON_VERSION=python3.10 
+      run: make PYTHON_VERSION=python3.10 extension=d_arm64
 
     - name: Copy files to py4pd_macOS-Intel
       run: |
