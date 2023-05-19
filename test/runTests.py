@@ -75,6 +75,7 @@ if __name__ == "__main__":
     # list all patches inside test folder
     patches = os.listdir('test')
     patches = [patch for patch in patches if patch.endswith('.pd')]
+    patches.sort()
     for patch in patches:
         print("============= " + patch + " =============")
         runTest(patch)
