@@ -318,6 +318,48 @@ void py_Object(t_py *x, t_atom *argv){
 }
 
 // =====================================
+void reloadObject(t_py *x){
+    // reload script_name of *x (script_name is a t_symbol for path of script)
+    const char* full_path = x->script_name->s_name;
+    const char* separator = strrchr(full_path, '/');
+    if (separator == NULL) {
+        separator = strrchr(full_path, '\\');
+    }
+
+    if (separator != NULL) {
+        const char* tree = separator + 1;
+        const char* extension = strstr(tree, ".py");
+        if (extension != NULL) {
+            size_t len = extension - tree;
+            char* name = (char*)malloc(len + 1);
+            memcpy(name, tree, len);
+            name[len] = '\0';
+            PyObject *pName = PyUnicode_FromString(name);
+            PyObject *pModule = PyImport_Import(pName);
+            // reload module
+            PyObject *pModuleReloaded = PyImport_ReloadModule(pModule);
+            if (pModuleReloaded == NULL) {
+                pd_error(x, "[Python] Failed to reload module");
+            }
+            x->function = PyObject_GetAttrString(pModuleReloaded, x->function_name->s_name);
+            if (x->function == NULL) {
+                pd_error(x, "[Python] Failed to get function");
+                free(name);
+                return;
+            }
+            else {
+                post("[Python] Function reloaded");
+            }
+            free(name);
+        }
+        else {
+            pd_error(x, "[Python] Invalid script name");
+        }
+    }
+}
+
+
+// =====================================
 void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
     // (void) argc;
     // (void) argv;
@@ -378,6 +420,8 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
     int argsNumberDefined = 0;
     PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
+    x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
+
     if (code->co_flags & CO_VARARGS) {
         x->py_arg_numbers = 1;
         
@@ -422,8 +466,6 @@ void *CreateNewObject(t_symbol *s, int argc, t_atom *argv) {
             x->py_arg_numbers = x->py_arg_numbers + code->co_argcount;
         }
     }
-    x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
-
     int i;
     int pyFuncArgs = x->py_arg_numbers - 1;
 
@@ -787,6 +829,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         class_addmethod(pyNewObject, (t_method)documentation, gensym("doc"), 0, 0);
         class_addmethod(pyNewObject, (t_method)set_param, gensym("key"), A_GIMME, 0);
         class_addmethod(pyNewObject, (t_method)usepointers, gensym("pointers"), A_FLOAT, 0);
+        class_addmethod(pyNewObject, (t_method)reloadObject, gensym("reload"), 0, 0);
         class_addanything(pyNewObject, py_anything);
 
     }
