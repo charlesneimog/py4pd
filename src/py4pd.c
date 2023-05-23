@@ -4,9 +4,6 @@
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
 
-#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
-#include <numpy/arrayobject.h>
-
 // ============================================
 t_class *py4pd_class;          // For audioin and without audio
 t_class *py4pd_class_VIS;      // For visualisation | pic object by pd-else
@@ -1099,7 +1096,6 @@ t_int *py4pd_perform(t_int *w) {
         pd_error(x, "[py4pd] You need to call a function before run!");
         return (w + 4);
     }
-
     pSample = NULL;  //
 
     if (x->numpyImported == 1 && x->audioInput == 1 && x->use_NumpyArray == 1) { // BUG: Mess up, fix this later.
@@ -1239,9 +1235,11 @@ t_int *py4pd_performAudioOutput(t_int *w) {
             if (PyArray_Check(pValue)) {
                 PyArrayObject *pArray = PyArray_GETCONTIGUOUS((PyArrayObject *)pValue);
                 int arrayLength = PyArray_SIZE(pArray);
-                // check the dimensions of the array
                 if (arrayLength == n && PyArray_NDIM(pArray) == 1) {
-                    memcpy(audioOut, PyArray_DATA(pArray), n * sizeof(float));
+                    double *audioDouble = (double*)PyArray_DATA(pValue);
+                    for (int i = 0; i < n; i++) {
+                        audioOut[i] = (t_sample)audioDouble[i];
+                    }
                     Py_DECREF(pArray);
                 }
                 else {
@@ -1272,7 +1270,6 @@ t_int *py4pd_performAudioOutput(t_int *w) {
     Py_DECREF(ArgsTuple);
     Py_XDECREF(pValue);
     Py_XDECREF(pSample); 
-    // memset(pAudio, 0, n * sizeof(float));  
     return (w + 5);
 }
 
@@ -1284,7 +1281,6 @@ t_int *py4pd_performAudioOutput(t_int *w) {
  */
 static void py4pd_audio_dsp(t_py *x, t_signal **sp) {
     if (x->audioOutput == 0) {
-        post("Added -audioin to the py4pd object");
         dsp_add(py4pd_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
     } 
     else {  // python output is audio
@@ -1298,7 +1294,7 @@ static void py4pd_audio_dsp(t_py *x, t_signal **sp) {
  * @param NULL 
  * @return It will return NULL.
  */
-static void *py4pdImportNumpy() {
+void *py4pdImportNumpy() {
     import_array();
     return NULL;
 }

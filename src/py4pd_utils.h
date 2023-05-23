@@ -10,6 +10,8 @@
 #include <dlfcn.h>
 
 // ========================
+void create_pyObject_inlets(t_py *x, int argc, t_atom *argv);
+int libraries_parser_args(t_py *x, PyCodeObject *code, int argc, t_atom *argv);
 void py4pd_parser_args(t_py *x, t_canvas *c, int argc, t_atom *argv);
 void findpy4pd_folder(t_py *x);
 void py4pd_tempfolder(t_py *x);

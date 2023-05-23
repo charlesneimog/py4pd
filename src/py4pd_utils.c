@@ -3,9 +3,55 @@
 #include "py4pd_utils.h"
 #include "py4pd_pic.h"
 
+// ====================================================
+int libraries_parser_args(t_py *x, PyCodeObject *code, int argc, t_atom *argv){
+    int argsNumberDefined = 0;
+    if (code->co_flags & CO_VARARGS) {
+        x->py_arg_numbers = 1;
+        int i;
+        for (i = 0; i < argc; i++) {
+            if (argv[i].a_type == A_SYMBOL) {
+                if (strcmp(argv[i].a_w.w_symbol->s_name, "-n_args") == 0 || strcmp(argv[i].a_w.w_symbol->s_name, "-a") == 0) {
+                    if (i + 1 < argc) {
+                        if (argv[i + 1].a_type == A_FLOAT) {
+                            x->py_arg_numbers = (int)argv[i + 1].a_w.w_float;
+                            argsNumberDefined = 1;
+                        }
+                        else {
+                            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args (-a for short) {number}", x->objectName->s_name);
+                            return 0;
+                        }
+                    }
+                    else {
+                        pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args (-a for short) {number}", x->objectName->s_name);
+                        return 0;
+                    }
+                }
+            }
+        }
+        if (argsNumberDefined == 0) {
+            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args (-a for short) {number}", x->objectName->s_name);
+            return 0;
+        }
+    }
+    if (code->co_flags & CO_VARKEYWORDS) {
+        pd_error(x, "[%s] function use **kwargs, **kwargs are not implemented yet", x->objectName->s_name);
+        return 0;
+        // TODO: IMPLEMENT **kwargs
+    }
+    if (code->co_argcount != 0){
+        if (x->py_arg_numbers == 0) {
+            x->py_arg_numbers = code->co_argcount;
+        }
+        else{
+            x->py_arg_numbers = x->py_arg_numbers + code->co_argcount;
+        }
+    }
+    return 1; 
+}
+
 
 // ====================================================
-
 void py4pd_parser_args(t_py *x, t_canvas *c, int argc, t_atom *argv) {
 
     int i;
