@@ -464,7 +464,6 @@ t_int *library_AudioOUT_perform(t_int *w) {
     int n = (int)(w[3]);
     PyObject *pValue; 
 
-
     // TODO: add old capsule
 
     PyObject *objectCapsule = py4pd_add_pd_object(x);
