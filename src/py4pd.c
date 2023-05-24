@@ -1401,7 +1401,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         }
     }
     
-
     // INIT PYTHON
     if (!Py_IsInitialized()) {
         object_count = 0; 

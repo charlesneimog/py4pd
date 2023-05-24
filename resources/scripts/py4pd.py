@@ -24,7 +24,7 @@ def py4pdLoadObjects():
     # Pip install
     pd.addobject(pipinstall, "py.pip")
 
-    # Logic Functions
+   # Logic Functions
     pd.addobject(pyand, "py.and")
     pd.addobject(pyor, "py.or")
 
