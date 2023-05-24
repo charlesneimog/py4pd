@@ -1105,7 +1105,6 @@ t_int *py4pd_perform(t_int *w) {
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
     } 
     else {
-        // pSample = NULL;  NOTE: this distorce the sound.
         pAudio = PyList_New(n);
         for (int i = 0; i < n; i++) {
             pSample = PyFloat_FromDouble(audioIn[i]);
@@ -1113,9 +1112,6 @@ t_int *py4pd_perform(t_int *w) {
         }
         ArgsTuple = PyTuple_New(1);
         PyTuple_SetItem(ArgsTuple, 0, pAudio);
-        // if (pSample != NULL) { NOTE: this distorce the sound.
-        //     Py_DECREF(pSample);
-        // }
     }
 
     PyObject *objectCapsule = py4pd_add_pd_object(x);
@@ -1221,37 +1217,38 @@ t_int *py4pd_performAudioOutput(t_int *w) {
     pValue = PyObject_CallObject(x->function, ArgsTuple);
     
     if (pValue != NULL) {
-        if (PyList_Check(pValue)) {
-            for (int i = 0; i < n; i++) {
-                audioOut[i] = PyFloat_AsDouble(PyList_GetItem(pValue, i)); // TODO: Fix this
-            }        
-        } 
-        else if (PyTuple_Check(pValue)) {
-            for (int i = 0; i < n; i++) {
-                audioOut[i] = PyFloat_AsDouble(PyTuple_GetItem(pValue, i)); // TODO: Fix this
-            }
-        } 
-        else if (x->numpyImported == 1 && x->use_NumpyArray == 1) {
-            if (PyArray_Check(pValue)) {
-                PyArrayObject *pArray = PyArray_GETCONTIGUOUS((PyArrayObject *)pValue);
-                int arrayLength = PyArray_SIZE(pArray);
-                if (arrayLength == n && PyArray_NDIM(pArray) == 1) {
+        if (PyArray_Check(pValue)) {
+            PyArrayObject *pArray = PyArray_GETCONTIGUOUS((PyArrayObject *)pValue);
+            PyArray_Descr *pArrayType = PyArray_DESCR(pArray);
+            int arrayLength = PyArray_SIZE(pArray);
+            if (arrayLength == n && PyArray_NDIM(pArray) == 1) {
+                if (pArrayType->type_num == NPY_INT) {
+                    pd_error(x, "[py4pd] The numpy array must be float, returned int");
+                }
+                else if (pArrayType->type_num == NPY_FLOAT) {
+                    float *audioFloat = (float*)PyArray_DATA(pValue);
+                    for (int i = 0; i < n; i++) {
+                        audioOut[i] = (t_sample)audioFloat[i];
+                    }
+                }
+                else if (pArrayType->type_num == NPY_DOUBLE) {
                     double *audioDouble = (double*)PyArray_DATA(pValue);
                     for (int i = 0; i < n; i++) {
                         audioOut[i] = (t_sample)audioDouble[i];
                     }
-                    Py_DECREF(pArray);
                 }
                 else {
-                    pd_error(x, "[py4pd] The numpy array must have the same length of the vecsize and have 1 dim. Returned: %d samples and %d dims", arrayLength, PyArray_NDIM(pArray));
+                    pd_error(x, "[py4pd] The numpy array must be float, returned %d", pArrayType->type_num);
                 }
-            } 
+                Py_DECREF(pArray);
+            }
             else {
-                pd_error(x, "[py4pd] The function must return a list, a tuple or a numpy array, returned: %s", pValue->ob_type->tp_name);
+                pd_error(x, "[py4pd] The numpy array must have the same length of the vecsize and 1 dim. Returned: %d samples and %d dims", arrayLength, PyArray_NDIM(pArray));
+                Py_DECREF(pArray);
             }
         } 
-        else {
-            pd_error(x, "[py4pd] The function must return a list or tuplet, since numpy array is disabled, returned: %s", pValue->ob_type->tp_name);
+        else{
+            pd_error(x, "[Python] Python function must return a numpy array");
         }
     } 
     else {  // if the function returns a error
@@ -1449,6 +1446,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         libraryLoad(x, argc, argv);
         x->script_name = scriptName;
         object_count++;
+        py4pdImportNumpy();
         return (x);
     }
     else {
@@ -1475,7 +1473,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     if (argc > 1) {       // check if there are two arguments
         set_function(x, s, argc, argv);
         py4pdImportNumpy();
-        x->numpyImported = 0;
     }
     object_count++;
     return (x);
@@ -1507,7 +1504,11 @@ void *py4pd_free(t_py *x) {
         #else
             char command[1000];
             sprintf(command, "rm -rf %s", x->tempPath->s_name);
-            system(command);
+            int commandValue = system(command);
+            if (commandValue != 0) {
+                pd_error(NULL, "Error to free the temp folder");
+            }
+
         #endif
     }
     if (x->visMode == 1) {

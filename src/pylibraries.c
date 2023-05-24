@@ -87,7 +87,6 @@ void py4pdObjPic_save(t_gobj *z, t_binbuf *b){
 
 // =====================================
 void py4pdInlets_proxy_pointer(t_py4pdInlet_proxy *x, t_atom *argv){
-    post("Running py4pdInlets_proxy_pointer");
     t_py *py4pd = (t_py *)x->p_master;
     PyObject *pValue;
     pValue = pointer_to_pyobject(argv);
@@ -97,7 +96,6 @@ void py4pdInlets_proxy_pointer(t_py4pdInlet_proxy *x, t_atom *argv){
 
 // =====================================
 void py4pdInlets_proxy_anything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av){
-    post("Running py4pdInlets_proxy_anything");
     t_py *py4pd = (t_py *)x->p_master;
     if (ac == 0){
         PyObject *pyInletValue = PyUnicode_FromString(s->s_name);
@@ -128,7 +126,6 @@ void py4pdInlets_proxy_anything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_at
 // =====================================
 void py4pdInlets_proxy_list(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av){
     (void)s;
-    post("Running py4pdInlets_proxy_list");
     t_py *py4pd = (t_py *)x->p_master;
     PyObject *pyInletValue;
     if (ac == 0){
@@ -208,7 +205,6 @@ void py_bang(t_py *x){
 
 // =====================================
 void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
-    post("Running py_anything");
     if (s == gensym("bang")){
         py_bang(x);
         return;
@@ -270,7 +266,6 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
     if (x->audioOutput == 1){
         return;
     }
-
 
     // odd code, but solve the bug
     t_py *prev_obj;
@@ -457,6 +452,7 @@ t_int *library_AudioIN_perform(t_int *w) {
         Py_XDECREF(ptraceback);
         PyErr_Clear();
     }
+    Py_XDECREF(pAudio);
     Py_XDECREF(pValue);
     return (w + 4);
 }
@@ -464,10 +460,13 @@ t_int *library_AudioIN_perform(t_int *w) {
 // =====================================
 t_int *library_AudioOUT_perform(t_int *w) {
     t_py *x = (t_py *)(w[1]);  // this is the object itself
-    // t_sample *audioIn = (t_sample *)(w[2]);  // this is the input vector (the sound)
     t_sample *audioOut = (t_sample *)(w[2]);
     int n = (int)(w[3]);
     PyObject *pValue; 
+
+
+    // TODO: add old capsule
+
     PyObject *objectCapsule = py4pd_add_pd_object(x);
     if (objectCapsule == NULL){
         pd_error(x, "[Python] Failed to add object to Python");
@@ -478,16 +477,34 @@ t_int *library_AudioOUT_perform(t_int *w) {
     if (pValue != NULL) {
         if (PyArray_Check(pValue)) {
             PyArrayObject *pArray = PyArray_GETCONTIGUOUS((PyArrayObject *)pValue);
+            PyArray_Descr *pArrayType = PyArray_DESCR(pArray);
             int arrayLength = PyArray_SIZE(pArray);
             if (arrayLength == n && PyArray_NDIM(pArray) == 1) {
-                double *audioDouble = (double*)PyArray_DATA(pValue);
-                for (int i = 0; i < n; i++) {
-                    audioOut[i] = (t_sample)audioDouble[i];
+                if (pArrayType->type_num == NPY_INT) {
+                    pd_error(x, "[py4pd] The numpy array must be float, returned int");
                 }
+                else if (pArrayType->type_num == NPY_FLOAT) {
+                    float *audioFloat = (float*)PyArray_DATA(pValue);
+                    for (int i = 0; i < n; i++) {
+                        audioOut[i] = (t_sample)audioFloat[i];
+                    }
+                }
+                else if (pArrayType->type_num == NPY_DOUBLE) {
+                    double *audioDouble = (double*)PyArray_DATA(pValue);
+                    for (int i = 0; i < n; i++) {
+                        audioOut[i] = (t_sample)audioDouble[i];
+                    }
+                }
+                else {
+                    pd_error(x, "[py4pd] The numpy array must be float, returned %d", pArrayType->type_num);
+                }
+                Py_DECREF(pArrayType);
                 Py_DECREF(pArray);
             }
             else {
                 pd_error(x, "[py4pd] The numpy array must have the same length of the vecsize and 1 dim. Returned: %d samples and %d dims", arrayLength, PyArray_NDIM(pArray));
+                Py_DECREF(pArrayType);
+                Py_DECREF(pArray);
             }
         } 
         else{
@@ -518,11 +535,9 @@ t_int *library_Audio_perform(t_int *w) {
     int n = (int)(w[4]);
     PyObject *pValue, *pAudio; 
 
-    if (x->audioInput != 0){
-        const npy_intp dims = n;
-        pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
-        PyTuple_SetItem(x->argsDict, 0, pAudio);
-    }
+    const npy_intp dims = n;
+    pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
+    PyTuple_SetItem(x->argsDict, 0, pAudio);
 
     PyObject *objectCapsule = py4pd_add_pd_object(x);
     if (objectCapsule == NULL){
@@ -530,20 +545,37 @@ t_int *library_Audio_perform(t_int *w) {
         return (w + 5);
     }
     pValue = PyObject_CallObject(x->function, x->argsDict);
-
     if (pValue != NULL) {
         if (PyArray_Check(pValue)) {
             PyArrayObject *pArray = PyArray_GETCONTIGUOUS((PyArrayObject *)pValue);
+            PyArray_Descr *pArrayType = PyArray_DESCR(pArray);
             int arrayLength = PyArray_SIZE(pArray);
             if (arrayLength == n && PyArray_NDIM(pArray) == 1) {
-                double *audioDouble = (double*)PyArray_DATA(pValue);
-                for (int i = 0; i < n; i++) {
-                    audioOut[i] = (t_sample)audioDouble[i];
+                if (pArrayType->type_num == NPY_INT) {
+                    pd_error(x, "[py4pd] The numpy array must be float, returned int");
                 }
+                else if (pArrayType->type_num == NPY_FLOAT) {
+                    float *audioFloat = (float*)PyArray_DATA(pValue);
+                    for (int i = 0; i < n; i++) {
+                        audioOut[i] = (t_sample)audioFloat[i];
+                    }
+                }
+                else if (pArrayType->type_num == NPY_DOUBLE) {
+                    double *audioDouble = (double*)PyArray_DATA(pValue);
+                    for (int i = 0; i < n; i++) {
+                        audioOut[i] = (t_sample)audioDouble[i];
+                    }
+                }
+                else {
+                    pd_error(x, "[py4pd] The numpy array must be float, returned %d", pArrayType->type_num);
+                }
+                Py_DECREF(pArrayType);
                 Py_DECREF(pArray);
             }
             else {
                 pd_error(x, "[py4pd] The numpy array must have the same length of the vecsize and 1 dim. Returned: %d samples and %d dims", arrayLength, PyArray_NDIM(pArray));
+                Py_DECREF(pArrayType);
+                Py_DECREF(pArray);
             }
         } 
         else{
@@ -779,8 +811,15 @@ void *New_AudioIN_Object(t_symbol *s, int argc, t_atom *argv) {
         x->out1 = outlet_new(&x->x_obj, 0);
     }
     // check if numpy array is imported
-    import_array();
-    x->numpyImported = 1;
+    int numpyArrayImported = _import_array();
+    if (numpyArrayImported == 0) {
+        x->numpyImported = 1;
+    }
+    else{
+        x->numpyImported = 0;
+        pd_error(x, "[py4pd] Not possible to import numpy array");
+        return NULL;
+    }
     object_count++;
     return (x);
 }
@@ -843,12 +882,19 @@ void *New_AudioOUT_Object(t_symbol *s, int argc, t_atom *argv) {
         x->out1 = outlet_new(&x->x_obj, &s_signal);
     }
     // check if numpy array is imported
-    import_array();
-    x->numpyImported = 1;
+    int numpyArrayImported = _import_array();
+    if (numpyArrayImported == 0) {
+        x->numpyImported = 1;
+    }
+    else{
+        x->numpyImported = 0;
+        pd_error(x, "[py4pd] Not possible to import numpy array");
+        return NULL;
+    }
+    
     object_count++;
     return (x);
 }
-
 
 // =====================================
 void *New_Audio_Object(t_symbol *s, int argc, t_atom *argv) {
@@ -908,8 +954,15 @@ void *New_Audio_Object(t_symbol *s, int argc, t_atom *argv) {
         x->out1 = outlet_new(&x->x_obj, &s_signal);
     }
     // check if numpy array is imported
-    import_array();
-    x->numpyImported = 1;
+    int numpyArrayImported = _import_array();
+    if (numpyArrayImported == 0) {
+        x->numpyImported = 1;
+    }
+    else{
+        x->numpyImported = 0;
+        pd_error(x, "[py4pd] Not possible to import numpy array");
+        return NULL;
+    }
     object_count++;
     return (x);
 }
@@ -1076,8 +1129,5 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     if (added2pd_info == 1){
         post("[py4pd]: Object {%s} added to PureData", objectName);
     }
-
-
     return PyLong_FromLong(1);
-
 }

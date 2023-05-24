@@ -4,8 +4,6 @@
 #include "pylibraries.h"
 
 
-
-
 // ======================================
 // ======== py4pd embbeded module =======
 // ======================================
@@ -611,8 +609,8 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
 
     } 
     else {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.showimage received wrong arguments");
-         PyErr_Clear();
+        pd_error(py4pd, "[Python] pd.showimage received wrong arguments");
+        PyErr_Clear();
         Py_RETURN_NONE;
     }
     // python return True
@@ -732,6 +730,61 @@ PyObject *getobjpointer(PyObject *self, PyObject *args){
 }
 
 // =================================
+PyObject *setglobalvar(PyObject *self, PyObject *args){
+    (void)self;
+
+    PyObject* globalsDict = PyEval_GetGlobals();
+    t_py *py4pd = get_py4pd_object();
+    char varString[MAXPDSTRING];
+
+    char *varName;
+    PyObject *value;
+    if (!PyArg_ParseTuple(args, "sO", &varName, &value)) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
+        return NULL;
+    }
+    snprintf(varString, MAXPDSTRING, "%s_%p", varName, py4pd);
+    PyObject* globalVariableString = PyUnicode_FromFormat(varString);
+    PyObject* globalValue = PyDict_GetItem(globalsDict, globalVariableString);
+    if (globalValue == NULL) {
+        PyDict_SetItem(globalsDict, globalVariableString, value);
+    } 
+    else {
+        Py_DECREF(globalValue);
+        PyDict_SetItem(globalsDict, globalVariableString, value);
+    }
+    Py_DECREF(globalVariableString);
+    Py_RETURN_TRUE;
+}
+
+// =================================
+PyObject *getglobalvar(PyObject *self, PyObject *args){
+    (void)self;
+
+    PyObject* globalsDict = PyEval_GetGlobals();
+    t_py *py4pd = get_py4pd_object();
+    char varString[MAXPDSTRING];
+
+    char *varName;
+    if (!PyArg_ParseTuple(args, "s", &varName)) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
+        return NULL;
+    }
+    snprintf(varString, MAXPDSTRING, "%s_%p", varName, py4pd);
+    PyObject* globalVariableString = PyUnicode_FromFormat(varString);
+    PyObject* globalValue = PyDict_GetItem(globalsDict, globalVariableString);
+    if (globalValue == NULL) {
+        Py_DECREF(globalVariableString);
+        return Py_None;
+    } 
+    else {
+        Py_INCREF(globalValue);
+        Py_DECREF(globalVariableString);
+        return globalValue;
+    }
+}
+
+// =================================
 PyObject *pdmoduleError;
 
 // =================================
@@ -768,6 +821,8 @@ PyMethodDef PdMethods[] = {
 
     // Others
     {"getobjpointer", getobjpointer, METH_NOARGS, "Get PureData Object Pointer"},
+    {"setglobalvar", setglobalvar, METH_VARARGS, "It sets a global variable for the Object, it is not clear after the execution of the function"},
+    {"getglobalvar", getglobalvar, METH_VARARGS, "It gets a global variable for the Object, it is not clear after the execution of the function"},
 
     // pip
     {"pip", (PyCFunction)pipinstall, METH_VARARGS, "It installs python packages"},
