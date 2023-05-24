@@ -452,7 +452,6 @@ t_int *library_AudioIN_perform(t_int *w) {
         Py_XDECREF(ptraceback);
         PyErr_Clear();
     }
-    Py_XDECREF(pAudio);
     Py_XDECREF(pValue);
     return (w + 4);
 }

@@ -1241,10 +1241,12 @@ t_int *py4pd_performAudioOutput(t_int *w) {
                     pd_error(x, "[py4pd] The numpy array must be float, returned %d", pArrayType->type_num);
                 }
                 Py_DECREF(pArray);
+                Py_DECREF(pArrayType);
             }
             else {
                 pd_error(x, "[py4pd] The numpy array must have the same length of the vecsize and 1 dim. Returned: %d samples and %d dims", arrayLength, PyArray_NDIM(pArray));
                 Py_DECREF(pArray);
+                Py_DECREF(pArrayType);
             }
         } 
         else{
