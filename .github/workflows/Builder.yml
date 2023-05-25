@@ -163,6 +163,7 @@ jobs:
       run: |
         cp test/*.pd .
         cp resources/py.py py4pd
+        cp resources/py.py .
         cp test/runTests.py .
           
     - name: Run Test
