@@ -10,9 +10,9 @@
     
     
 <p align="center">
-  <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Linux.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Linux.yml/badge.svg?branch=develop" alt="Linux"></a>
-  <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Windows.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Windows.yml/badge.svg?branch=develop" alt="Windows"></a>
-  <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Mac.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Mac.yml/badge.svg?branch=develop" alt="Mac"></a>
+  <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Linux.yml/badge.svg?branch=develop" alt="Linux"></a>
+  <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Windows.yml/badge.svg?branch=develop" alt="Windows"></a>
+  <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Mac.yml/badge.svg?branch=develop" alt="Mac"></a>
 </p>
 
 `py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things.  with Python you can:
