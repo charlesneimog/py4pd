@@ -9,7 +9,7 @@
 #X obj 135 13 loadbang;
 #X obj 135 73 delay 1000 1 msec;
 #X obj 135 34 t b b;
-#X obj 37 73 delay 20000 1 msec;
+#X obj 37 73 delay 60000 1 msec;
 #X obj 37 94 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
 #X obj 165 130 py.pip;
 #X msg 165 105 local tk;

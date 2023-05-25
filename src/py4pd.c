@@ -26,7 +26,6 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
         pd_error(x, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
         return;
     }
-
     t_symbol *script_file_name = atom_gensym(argv + 1);
     t_symbol *function_name = gensym("py4pdLoadObjects");
 
