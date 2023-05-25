@@ -9,9 +9,6 @@
 #define PY_SSIZE_T_CLEAN // Good practice to use this before include Python.h because it will remove some deprecated function
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
-#include <numpy/arrayobject.h>
-
 #ifdef _WIN64 
     #include <windows.h>  // on Windows, system() open a console window and we don't want that
 #else

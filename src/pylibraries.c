@@ -4,6 +4,8 @@
 #include "py4pd_pic.h"
 #include "py4pd.h"
 
+#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
+#include <numpy/arrayobject.h>
 
 t_class *pyNewObject_VIS;
 

@@ -4,6 +4,9 @@
 #include "py4pd_pic.h"
 #include "py4pd_utils.h"
 
+#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
+#include <numpy/arrayobject.h>
+
 // ============================================
 t_class *py4pd_class;          // For audioin and without audio
 t_class *py4pd_class_VIS;      // For visualisation | pic object by pd-else
