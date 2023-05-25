@@ -2,7 +2,6 @@ import pd
 import os
 import sys
 import platform
-import time
 
 try:
     from pip._internal.cli.main import main as pipmain
@@ -20,8 +19,6 @@ except Exception as e:
         pd.error("Open one terminal window and run 'sudo easy_install pip'")
         sys.exit(1)
 
-def closeWindow():
-    root.destroy()
 
 
 def pipinstall(package):
@@ -87,44 +84,12 @@ def pipinstall(package):
         
         elif platform.system() == 'Darwin':
             try:
-                from tkinter import Tk, LabelFrame, Label
-                root = Tk()
-            except Exception as e:
-                root = None
-                pd.error(str(e))
-            try:
-                if root is not None:
-                    root.title("Installing " + package)
-                    screen_width = root.winfo_screenwidth()
-                    screen_height = root.winfo_screenheight()
-                    x = (screen_width/2) - (300/2)
-                    y = (screen_height/2) - (100/2)
-
-                    root.geometry("300x100+%d+%d" % (x, y))
-                    root.resizable(False, False)
-
-                    # create text
-                    text = LabelFrame(root, text="Installing " + package + " , please wait...",
-                                      padx=20, pady=20)
-                    text.pack(fill="both", expand=1)
-
-                    # add label inside the label frame
-                    label = Label(text, text="Installing " + package + " , please wait...",
-                                  anchor="center", justify="center")
-                    label.pack(fill="both", expand=1)
-
-                    # update window
-                    root.update()   
                 pipmain(['install', '--target', f'{folder}/py-modules', package, '--upgrade'])
                 pd.print("Installed " + package)
                 pd.print("I recommend restart PureData...")
-                if root is not None:
-                    root.destroy()
                 return 'bang'
             except Exception as e:
                 pd.error(str(e))
-                if root is not None:
-                    root.destroy()
                 return 'bang'
 
         # If windows
