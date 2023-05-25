@@ -16,7 +16,6 @@ t_class *py4pd_classLibrary;   // For libraries
 int pipePy4pdNum = 0;
 int object_count = 0;
 
-
 // ============================================
 // =========== PY4PD LOAD LIBRARIES ===========
 // ============================================
