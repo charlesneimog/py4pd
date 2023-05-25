@@ -159,13 +159,14 @@ PyObject *pderror(PyObject *self, PyObject *args) {
     char *string;
 
     t_py *py4pd = get_py4pd_object();
-    if (py4pd == NULL){
-        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
-        return NULL;
-    }
-
 
     if (PyArg_ParseTuple(args, "s", &string)) {
+        if (py4pd == NULL){
+            pd_error(NULL, "[Python]: %s", string);
+            PyLong_FromLong(0);
+        }
+
+
         if (py4pd->pyObject == 1){
             pd_error(py4pd, "[%s]: %s", py4pd->objectName->s_name, string);
         }

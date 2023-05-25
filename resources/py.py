@@ -15,7 +15,7 @@ try:
     import numpy as np
 except Exception as e:
     pd.error(str(e))
-    pd.print(
+    pd.error(
         "Please, run 'pip install numpy -t ./py-modules' in the terminal from current folder")
 
 try:
@@ -27,7 +27,7 @@ try:
 except Exception as e:
     pd.error(str(e))
     pd.error("Error importing matplotlib")
-    pd.print(
+    pd.error(
         "Please, run 'pip install matplotlib -t ./py-modules' in the terminal from current folder")
 
 # ================================================
