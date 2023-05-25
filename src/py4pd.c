@@ -33,7 +33,6 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
     char script_file_path[MAXPDSTRING];
     snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->pdPatchFolder->s_name, script_file_name->s_name);
 
-
     char script_inside_py4pd_path[MAXPDSTRING];
     snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/resources/scripts/%s.py", x->py4pdPath->s_name, script_file_name->s_name);
 
