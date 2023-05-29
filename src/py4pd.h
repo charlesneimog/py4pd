@@ -82,6 +82,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     int                 x_latch;
     int                 x_numInlets;
     int                 x_numOutlets;
+    int                 mouseIsOver;
     // int             
     t_symbol            *file_name_open;
     t_symbol            *x_fullname;

@@ -1,4 +1,5 @@
 #include "py4pd_pic.h"
+#include "m_pd.h"
 
 t_widgetbehavior py4pd_widgetbehavior;
 static t_class *PY4PD_edit_proxy_class;
@@ -66,22 +67,12 @@ const char* PY4PD_filepath(t_py *x, const char *filename){
         return(0);
 }
 
-
-// =================================================
-void PY4PD_mouserelease(t_py* x){
-    if(x->x_latch){
-        if(x->x_send != &s_ && x->x_send->s_thing)
-            pd_float(x->x_send->s_thing, 0);
-    }
-}
-
 // =================================================
 int PY4PD_click(t_py *object, struct _glist *glist, int xpos, int ypos, int shift, int alt, int dbl, int doit){
     (void)object;
     (void)glist;
     (void)xpos;
     (void)ypos;
-
     if(dbl){
 
     }
@@ -115,9 +106,7 @@ void PY4PD_displace(t_gobj *z, t_glist *glist, int dx, int dy){
     t_canvas *cv = glist_getcanvas(glist);
     sys_vgui(".x%lx.c move %lx_outline %d %d\n", cv, obj, dx * obj->x_zoom, dy * obj->x_zoom);
     sys_vgui(".x%lx.c move %lx_picture %d %d\n", cv, obj, dx * obj->x_zoom, dy * obj->x_zoom);
-    // if(obj->x_receive == &s_) // I don't know why this is here 
     sys_vgui(".x%lx.c move %lx_in %d %d\n", cv, obj, dx * obj->x_zoom, dy * obj->x_zoom);
-    // if(obj->x_send == &s_)
     sys_vgui(".x%lx.c move %lx_out %d %d\n", cv, obj, dx * obj->x_zoom, dy * obj->x_zoom);
     canvas_fixlinesfor(glist, (t_text*)obj);
 }
@@ -148,7 +137,6 @@ void PY4PD_select(t_gobj *z, t_glist *glist, int state){
 void PY4PD_delete(t_gobj *z, t_glist *glist){
     t_py *x = (t_py *)z;
     canvas_deletelinesfor(glist, (t_text *)z);
-
     t_canvas *cv = glist_getcanvas(x->x_glist);
     sys_vgui(".x%lx.c delete %lx_in\n", cv, x);
     sys_vgui(".x%lx.c delete %lx_out\n", cv, x);
@@ -249,9 +237,49 @@ void PY4PD_open(t_py* x, t_symbol *filename){
 // =================================================
 void PY4PD_edit_proxy_any(t_py4pd_edit_proxy *p, t_symbol *s, int ac, t_atom *av){
     int edit = ac = 0;
+    
+    if (s == gensym("key") && p->p_cnv->mouseIsOver){
+        if ((av + 0)->a_w.w_float == 1){
+            if ((av + 1)->a_w.w_float == 80 || (av + 1)->a_w.w_float == 112){
+                post("Playing Object %p", p->p_cnv);
+                // TODO: Add function to play object, Scores, for example, must send to the outputs some datas...
+            }
+            else if ((av + 1)->a_w.w_float == 83 || (av + 1)->a_w.w_float == 115){
+                post("Show Object %p", p->p_cnv);
+                // TODO: This function must show the object, open some Python Window, for example...
+            }
+        }
+        return;
+    }
+    else if (s == gensym("motion")) {
+        int mouse_x = (av+0)->a_w.w_float; // horizontal coordinate
+        int mouse_y = (av+1)->a_w.w_float; // vertical coordinate 
+
+        // Get object position
+        int obj_x = p->p_cnv->x_obj.te_xpix * p->p_cnv->x_zoom;
+        int obj_y = p->p_cnv->x_obj.te_ypix * p->p_cnv->x_zoom;
+
+        // Get object size
+        int obj_width = p->p_cnv->x_width;
+        int obj_height = p->p_cnv->x_height;
+        
+        // Check if the mouse is over the object
+        if (mouse_x >= obj_x && mouse_x <= (obj_x + obj_width) &&
+            mouse_y >= obj_y && mouse_y <= (obj_y + obj_height)) {
+                p->p_cnv->mouseIsOver = 1;
+        }
+        else{
+            p->p_cnv->mouseIsOver = 0;
+        }
+        return;
+    }
+
+
+
     if(p->p_cnv){
-        if(s == gensym("editmode"))
+        if(s == gensym("editmode")){
             edit = (int)(av->a_w.w_float);
+        }
         else if(s == gensym("obj") || s == gensym("msg") || s == gensym("floatatom")
         || s == gensym("symbolatom") || s == gensym("text") || s == gensym("bng")
         || s == gensym("toggle") || s == gensym("numbox") || s == gensym("vslider")
@@ -259,8 +287,9 @@ void PY4PD_edit_proxy_any(t_py4pd_edit_proxy *p, t_symbol *s, int ac, t_atom *av
         || s == gensym("vumeter") || s == gensym("mycnv") || s == gensym("selectall")){
             edit = 1;
         }
-        else
+        else{
             return;
+        }
         if(p->p_cnv->x_edit != edit){
             p->p_cnv->x_edit = edit;
             t_canvas *cv = glist_getcanvas(p->p_cnv->x_glist);
@@ -269,14 +298,13 @@ void PY4PD_edit_proxy_any(t_py4pd_edit_proxy *p, t_symbol *s, int ac, t_atom *av
                 int y = text_ypix(&p->p_cnv->x_obj, p->p_cnv->x_glist);
                 int w = p->p_cnv->x_width;
                 int h = p->p_cnv->x_height;
-                if(!p->p_cnv->x_outline)
+                if(!p->p_cnv->x_outline){
                     sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline black -width %d\n",
                              cv, x, y, x+w, y+h, p->p_cnv, p->p_cnv->x_zoom);
+                }
                 PY4PD_draw_io_let(p->p_cnv);
             }
             else{
-                // if(!p->p_cnv->x_outline)
-                    // sys_vgui(".x%lx.c delete %lx_outline\n", cv, p->p_cnv);
                 sys_vgui(".x%lx.c delete %lx_in\n", cv, p->p_cnv);
                 sys_vgui(".x%lx.c delete %lx_out\n", cv, p->p_cnv);
             }
@@ -335,10 +363,8 @@ void py4pd_picDefintion(t_py *x) {
         x->visMode = 4;
 
     }
-
   
     sys_vgui("if {[catch {pd}]} {\n");
-    // sys_vgui("    proc pd {args} {pdsend [join $args \" \"]}\n");
     sys_vgui("}\n");
     sys_vgui("proc PY4PD_ok {id} {\n");
     sys_vgui("    set vid [string trimleft $id .]\n");
@@ -474,12 +500,14 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     }
     PY4PD_edit_proxy_class = class_new(0, 0, 0, sizeof(t_py4pd_edit_proxy), CLASS_NOINLET | CLASS_PD, 0);
     class_addanything(PY4PD_edit_proxy_class, PY4PD_edit_proxy_any);
+
     py4pd_widgetbehavior.w_getrectfn = PY4PD_getrect;
     py4pd_widgetbehavior.w_displacefn = PY4PD_displace;
     py4pd_widgetbehavior.w_selectfn = PY4PD_select;
     py4pd_widgetbehavior.w_deletefn = PY4PD_delete;
     py4pd_widgetbehavior.w_visfn = PY4PD_vis;
     py4pd_widgetbehavior.w_clickfn = (t_clickfn)PY4PD_click;
+
     if (x->pyObject == 0) {
         class_setwidget(py4pd_class_VIS, &py4pd_widgetbehavior);
     }
@@ -504,6 +532,8 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
         snprintf(buf, MAXPDSTRING - 1, ".x%lx.c", (unsigned long)cv);   
     #endif
     pd_bind(&x->x_obj.ob_pd, x->x_x = gensym(buf));
+
+
     x->x_edit = cv->gl_edit;
     x->x_send = x->x_snd_raw = x->x_receive = x->x_rcv_raw = x->x_filename = &s_;
     int loaded = x->x_def_img = x->x_init = x->x_latch = 0;
@@ -511,18 +541,11 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     x->x_fullname = NULL;
     x->x_edit = c->gl_edit;
     if (!loaded) {  // default image
-        // x->x_width = 250;
-        // x->x_height = 250;
         x->x_def_img = 1;
     }
     if (x->x_width == 0 && x->x_height == 0) {
         x->x_width = 250;
         x->x_height = 250;
-    }
-
-
-    if (x->x_receive != &s_) {
-        pd_bind(&x->x_obj.ob_pd, x->x_receive);
     }
 
     int j;
@@ -531,7 +554,6 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     }
     argc--;
     py4pd_picDefintion(x);
-    // PY4PD_draw_io_let(x);
 }
 
 
