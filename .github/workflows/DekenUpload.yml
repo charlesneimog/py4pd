@@ -1,28 +1,20 @@
 name: Make Release Folder
 on:
+  # just one develop commit
+  push:
+    branches:
+      - develop    
+    paths:
+      - '**/*.c'
+      - '**/*.h'
+      - '**/*.yml'
+
   workflow_dispatch:
     inputs:
-      logLevel:
-        description: 'Log level'
+      version:
+        description: 'Version to release'
         required: true
-        default: 'warning'
-        type: choice
-        options:
-        - info
-        - warning
-        - debug
-      print_tags:
-        description: 'True to print to STDOUT'
-        required: true
-        type: boolean
-      tags:
-        description: 'Test scenario tags'
-        required: true
-        type: string
-      environment:
-        description: 'Environment to run tests against'
-        type: environment
-        required: true
+        default: '0.0.0'
 
 jobs:  
   # ==============================================================================
@@ -178,21 +170,15 @@ jobs:
           mkdir py4pd/resources
           mkdir py4pd/src
           cp resources/* py4pd/resources -r
-          cp src/* py4pd/resources -r
-          cp test/*.pd py4pd
-          
-          
+          cp src/* py4pd/src -r
+          find py4pd/src -name "*.o" -type f -delete
+          cp resources/README.deken.pd py4pd 
+
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
           name: py4pd
           path: py4pd
-
-      - name: Upload Test Image
-        uses: actions/upload-artifact@v3
-        with:
-          name: neoscore-Test-linux
-          path: py4pd/neoscoretest.png
 
 
 

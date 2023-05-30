@@ -82,10 +82,12 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
     Py_DECREF(globalPackages);
 
 
+    // odd code, but solve the bug
     t_py *prev_obj;
     int prev_obj_exists = 0;
     PyObject *MainModule = PyImport_ImportModule("__main__");
     PyObject *oldObjectCapsule;
+
     if (MainModule != NULL) {
         oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
         if (oldObjectCapsule != NULL) {
@@ -93,8 +95,17 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
             prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
             prev_obj_exists = 1;
         }
+        else {
+            prev_obj_exists = 0;
+        }
     }
+
     PyObject *objectCapsule = py4pd_add_pd_object(x);
+
+    if (objectCapsule == NULL){
+        pd_error(x, "[Python] Failed to add object to Python");
+        return;
+    }
 
     pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file
     if (pModule == NULL) {
@@ -109,12 +120,20 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
     }
     pFunc = PyObject_GetAttrString(pModule, function_name->s_name);  // Function name inside the script file
     if (pFunc && PyCallable_Check(pFunc)) {  
-
         if (objectCapsule == NULL){
             pd_error(x, "[Python] Failed to add object to Python");
             return;
         }
         PyObject *pValue = PyObject_CallNoArgs(pFunc);  // Call the function
+
+        if (prev_obj_exists == 1 && pValue != NULL) {
+            objectCapsule = py4pd_add_pd_object(prev_obj);
+            if (objectCapsule == NULL){
+                pd_error(x, "[Python] Failed to add object to Python");
+                return;
+            }
+        }
+
         if (pValue == NULL) {
             PyObject *ptype, *pvalue, *ptraceback;
             PyErr_Fetch(&ptype, &pvalue, &ptraceback);
@@ -604,6 +623,28 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     free(pyScripts_folder);
     free(pyGlobal_packages);
 
+        // odd code, but solve the bug
+    t_py *prev_obj;
+    int prev_obj_exists = 0;
+    PyObject *MainModule = PyImport_ImportModule("__main__");
+    PyObject *oldObjectCapsule;
+
+    if (MainModule != NULL) {
+        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        if (oldObjectCapsule != NULL) {
+            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
+            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+            prev_obj_exists = 1;
+        }
+        else {
+            prev_obj_exists = 0;
+        }
+    }
+
+    PyObject *objectCapsule = py4pd_add_pd_object(x);
+
+
+
     // =====================
     pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file with the function
     // =====================
@@ -622,6 +663,15 @@ void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     pFunc = PyObject_GetAttrString(pModule, function_name->s_name);  // Function name inside the script file
     if (pFunc && PyCallable_Check(pFunc)) {  // Check if the function exists and is callable
         PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(pFunc);
+
+        if (prev_obj_exists == 1 && pFunc != NULL) {
+            objectCapsule = py4pd_add_pd_object(prev_obj);
+            if (objectCapsule == NULL){
+                pd_error(x, "[Python] Failed to add object to Python");
+                return;
+            }
+        }
+
         if (code->co_flags & CO_VARARGS) {
             pd_error(x, "[py4pd] The '%s' function has variable arguments (*args)!", function_name->s_name);
             Py_XDECREF(pFunc);
