@@ -8,11 +8,8 @@
     <a href="https://zenodo.org/record/7677265"><img src="https://zenodo.org/badge/doi/10.5281/zenodo.7677265.svg" alt="DOI"></a>
 </p>
     
-    
 <p align="center">
-  <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Linux.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Linux.yml/badge.svg?branch=develop" alt="Linux"></a>
-  <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Windows.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Windows.yml/badge.svg?branch=develop" alt="Windows"></a>
-  <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Mac.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Mac.yml/badge.svg?branch=develop" alt="Mac"></a>
+  <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml/badge.svg?branch=develop"></a>
 </p>
 
 `py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things.  with Python you can:
@@ -35,11 +32,9 @@ Go to [Docs](https://www.charlesneimog.com/py4pd) to see examples.
 
 * Go to [Docs](https://www.charlesneimog.com/py4pd).
 
-## Libraries Developed with `py4pd`
+## For Developers
 
-* `py4pd-Alea`: It implements the `Alea` (OpenMusic) developed by Mikhail Malt (Ircam).
-* `py4pd-Combine`: It implements the `Combine` developed by Malt when Ferneyhough was at Ircam.
-
+Just one thing, the development of this object occurs in de `develop` branch, the main branch corresponds to the last release available in `Deken`.
 
 ## Building from Source
 
