@@ -3,7 +3,12 @@ on:
   # just one develop commit
   push:
     branches:
-      - develop
+      - develop    
+    paths:
+      - '**/*.c'
+      - '**/*.h'
+      - '**/*.yml'
+      
   workflow_dispatch:
     inputs:
       version:
