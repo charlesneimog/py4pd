@@ -1,4 +1,4 @@
-name: Deken Upload
+name: Make Release Folder
 on:
   workflow_dispatch:
     inputs:
@@ -150,7 +150,7 @@ jobs:
   # ==============================================================================
   # =                               LINUX                                        =
   # ==============================================================================
-  
+
   linux-build:
     runs-on: ubuntu-latest
     timeout-minutes: 5 
