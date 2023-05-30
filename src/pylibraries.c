@@ -707,6 +707,20 @@ void *New_VIS_Object(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
 
+
+    /* NOTE: For version 0.8.0
+    PyObject *pyShowFunction = PyDict_GetItemString(PdDict, "py4pdOBJshowFunction");
+    if (pyShowFunction == NULL){
+        x->showFunction = NULL;
+        logpost(x, 4, "showFunction was not defined");
+    }
+    else{
+        x->showFunction = pyShowFunction;
+        logpost(x, 4, "showFunction was defined");
+    }
+    */
+
+
     // ==================
     // PIC PIC
     PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
@@ -730,8 +744,11 @@ void *New_VIS_Object(t_symbol *s, int argc, t_atom *argv) {
     x->outPyPointer = PyLong_AsLong(pyOUT);
     PyObject *nooutlet = PyDict_GetItemString(PdDict, "py4pdOBJnooutlet");
     int nooutlet_int = PyLong_AsLong(nooutlet);
-    x->function_called = 1;
+
+    // Ordinary Function
     x->function = pyFunction;
+    x->function_called = 1;
+
     x->pdPatchFolder = patch_dir;         // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
@@ -1010,11 +1027,13 @@ void *pyObjectFree(t_py *x) {
 PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     char *objectName;
-    PyObject *Function;
+    PyObject *Function, *showFunction;
     int w = 250, h = 250;
     int objpyout = 0;
     int nooutlet = 0;
     int added2pd_info = 0;
+    showFunction = NULL;
+
     if (!PyArg_ParseTuple(args, "Os", &Function, &objectName)) { 
         post("[Python]: Error parsing arguments");
         return NULL;
@@ -1050,10 +1069,17 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
                 added2pd_info = 1;
             }
         }
+        /* NOTE: Version 0.8.0
+        if (PyDict_Contains(keywords, PyUnicode_FromString("showFunction"))){
+            post("[Python]: showFunction");
+            showFunction = PyDict_GetItemString(keywords, "showFunction"); // it gets the data type output
+        }
+        */
     }
     // Add configs to the object
     PyObject *nestedDict = PyDict_New();
     PyDict_SetItemString(nestedDict, "py4pdOBJFunction", Function);
+    // PyDict_SetItemString(nestedDict, "py4pdOBJshowFunction", showFunction);
     PyDict_SetItemString(nestedDict, "py4pdOBJwidth", PyLong_FromLong(w));
     PyDict_SetItemString(nestedDict, "py4pdOBJheight", PyLong_FromLong(h));
     PyDict_SetItemString(nestedDict, "py4pdOBJpyout", PyLong_FromLong(objpyout));

@@ -1,5 +1,4 @@
 #include "py4pd_pic.h"
-#include "m_pd.h"
 
 t_widgetbehavior py4pd_widgetbehavior;
 static t_class *PY4PD_edit_proxy_class;
@@ -145,10 +144,11 @@ void PY4PD_delete(t_gobj *z, t_glist *glist){
 
 // =================================================
 void PY4PD_draw(t_py* x, struct _glist *glist, t_floatarg vis){
+
     t_canvas *cv = glist_getcanvas(glist);
     int xpos = text_xpix(&x->x_obj, x->x_glist), ypos = text_ypix(&x->x_obj, x->x_glist);
     int visible = (glist_isvisible(x->x_glist) && gobj_shouldvis((t_gobj *)x, x->x_glist));
-    if(x->x_def_img && (visible || vis)){ // DEFAULT PIC
+    if(x->x_def_img && (visible || vis)){ // TODO: REMOVE THIS, THERE IS JUST ONE STATIC IMAGE
         sys_vgui(".x%lx.c create image %d %d -anchor nw -tags %lx_picture\n", cv, xpos, ypos, x);
         if (x->visMode == 1) {
             sys_vgui(".x%lx.c itemconfigure %lx_picture -image %s\n", cv, x, "PY4PD_def_img_CANVAS");
@@ -166,18 +166,20 @@ void PY4PD_draw(t_py* x, struct _glist *glist, t_floatarg vis){
     else{
         if(visible || vis){
             sys_vgui("if { [info exists %lx_picname] == 1 } { .x%lx.c create image %d %d -anchor nw -image %lx_picname -tags %lx_picture\n} \n",
-                x->x_fullname, cv, xpos, ypos, x->x_fullname, x);
+                            x->x_fullname, cv, xpos, ypos, x->x_fullname, x);
         }
-        if(!x->x_init)
+        if(!x->x_init){
             x->x_init = 1;
+        }
         else if((visible || vis)){
             sys_vgui("if { [info exists %lx_picname] == 1 } {.x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline black -width %d}\n",
                 x->x_fullname, cv, xpos, ypos, xpos+x->x_width, ypos+x->x_height, x, x->x_zoom);
         }
     }
-    sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline black -width %d\n", cv, xpos, ypos, xpos+x->x_width, ypos+x->x_height, x, x->x_zoom);
+    sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline black -width %d\n", 
+                        cv, xpos, ypos, xpos+x->x_width, ypos+x->x_height, x, x->x_zoom);
+
     PY4PD_draw_io_let(x);
-         
 }
 
 // =================================================
@@ -274,9 +276,8 @@ void PY4PD_edit_proxy_any(t_py4pd_edit_proxy *p, t_symbol *s, int ac, t_atom *av
         return;
     }
 
-
-
     if(p->p_cnv){
+
         if(s == gensym("editmode")){
             edit = (int)(av->a_w.w_float);
         }
@@ -290,6 +291,7 @@ void PY4PD_edit_proxy_any(t_py4pd_edit_proxy *p, t_symbol *s, int ac, t_atom *av
         else{
             return;
         }
+
         if(p->p_cnv->x_edit != edit){
             p->p_cnv->x_edit = edit;
             t_canvas *cv = glist_getcanvas(p->p_cnv->x_glist);
@@ -337,10 +339,11 @@ t_py4pd_edit_proxy *PY4PD_edit_proxy_new(t_py *x, t_symbol *s){
 void PY4PD_free(t_py *x){ // delete if variable is unset and image is unused
     sys_vgui("if { [info exists %lx_picname] == 1 && [image inuse %lx_picname] == 0} { image delete %lx_picname \n unset %lx_picname\n}\n",
         x->x_fullname, x->x_fullname, x->x_fullname, x->x_fullname);
-    if(x->x_receive != &s_)
+
+    if(x->x_receive != &s_){
         pd_unbind(&x->x_obj.ob_pd, x->x_receive);
+    }
     pd_unbind(&x->x_obj.ob_pd, x->x_x);
-    x->x_proxy->p_cnv = NULL;
     clock_delay(x->x_proxy->p_clock, 0);
     gfxstub_deleteforkey(x);
 }
@@ -352,16 +355,15 @@ void py4pd_picDefintion(t_py *x) {
             sys_vgui("image create photo PY4PD_def_img_CANVAS -data {%s} \n", PY4PD_IMAGE); // BUG: this is because I have diferentes images
         } 
         else if (x->visMode == 2) {
-            sys_vgui("image create photo PY4PD_def_img_PIC -data {%s} \n", PY4PD_IMAGE);
+            sys_vgui("image create photo PY4PD_def_img_PIC -data {%s} \n", PY4PD_IMAGE); // TODO: THING if I need to use special images for something
         }
         else if (x->visMode == 3) {
-            sys_vgui("image create photo PY4PD_def_img_SCORE -data {%s} \n", PY4PD_SCORE);
+            sys_vgui("image create photo PY4PD_def_img_SCORE -data {%s} \n", PY4PD_IMAGE);
         }
     }
     else{
-        sys_vgui("image create photo PY4PD_def_img_WHITE -data {R0lGODlhKgAhAPAAAP///wAAACH5BAAAAAAAIf8LSW1hZ2VNYWdpY2sOZ2FtbWE9MC40NTQ1NDUALAAAAAAqACEAAAIkhI+py+0Po5y02ouz3rz7D4biSJbmiabqyrbuC8fyTNf2jTMFADs=} \n");
+        sys_vgui("image create photo PY4PD_def_img_WHITE -data {%s} \n", PY4PD_IMAGE);
         x->visMode = 4;
-
     }
   
     sys_vgui("if {[catch {pd}]} {\n");
@@ -498,9 +500,9 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
         x->visMode = 1;
         pd_error(x, "[py4pd]: unknown visMode");
     }
+
     PY4PD_edit_proxy_class = class_new(0, 0, 0, sizeof(t_py4pd_edit_proxy), CLASS_NOINLET | CLASS_PD, 0);
     class_addanything(PY4PD_edit_proxy_class, PY4PD_edit_proxy_any);
-
     py4pd_widgetbehavior.w_getrectfn = PY4PD_getrect;
     py4pd_widgetbehavior.w_displacefn = PY4PD_displace;
     py4pd_widgetbehavior.w_selectfn = PY4PD_select;
@@ -514,6 +516,7 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     else{
         class_setwidget(pyNewObject_VIS, &py4pd_widgetbehavior);
     }
+
     t_canvas *cv = canvas_getcurrent();
     x->x_glist = (t_glist *)cv;
     x->x_zoom = x->x_glist->gl_zoom;
@@ -523,16 +526,18 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     #else
         snprintf(buf, MAXPDSTRING - 1, ".x%lx", (unsigned long)cv);
     #endif
+
     buf[MAXPDSTRING - 1] = 0;
     x->x_proxy = PY4PD_edit_proxy_new(x, gensym(buf));
     
+
     #ifdef _WIN64
         snprintf(buf, MAXPDSTRING - 1, ".x%llx.c", (uintptr_t)cv);
     #else
         snprintf(buf, MAXPDSTRING - 1, ".x%lx.c", (unsigned long)cv);   
     #endif
-    pd_bind(&x->x_obj.ob_pd, x->x_x = gensym(buf));
 
+    pd_bind(&x->x_obj.ob_pd, x->x_x = gensym(buf));
 
     x->x_edit = cv->gl_edit;
     x->x_send = x->x_snd_raw = x->x_receive = x->x_rcv_raw = x->x_filename = &s_;
@@ -540,6 +545,7 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     x->x_outline = x->x_size = 0;
     x->x_fullname = NULL;
     x->x_edit = c->gl_edit;
+
     if (!loaded) {  // default image
         x->x_def_img = 1;
     }
