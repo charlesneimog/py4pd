@@ -1,5 +1,9 @@
 name: Make Release Folder
 on:
+  # just one develop commit
+  push:
+    branches:
+      - develop
   workflow_dispatch:
     inputs:
       version:
