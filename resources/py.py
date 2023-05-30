@@ -8,7 +8,7 @@ except Exception as e:
     import platform
     py4pdObjectFolder = pd.py4pdfolder()
     if platform.system() != "Darwin":
-        pd.error("Numpy not installed, to solve this...")
+        pd.error("=== Numpy not installed, to solve this... ===")
         pd.print("\n", show_prefix=False)
         pd.print("    1º Create new object with 'py4pd -lib py4pd'", show_prefix=False)
         pd.print("\n", show_prefix=False)
@@ -17,12 +17,11 @@ except Exception as e:
         pd.print("    3º Send the message 'global numpy' and wait for the installation", show_prefix=False)
         pd.print("\n", show_prefix=False)
         pd.error("==================================")
-
     else:
-        pd.error("Numpy not installed, to solve this...")
-        pd.print("    1º Open the terminal and run this line:", show_prefix=False)
+        pd.error("=== Numpy not installed, to solve this... ===")
+        pd.print("    Open the terminal and run this line:", show_prefix=False)
         pd.print("\n")
-        pd.print("cd '" + py4pdObjectFolder + "' && pip install numpy -t ./py-modules", show_prefix=False)
+        pd.print("cd '" + py4pdObjectFolder + "' && pip install numpy -t ./resources/py-modules", show_prefix=False)
         pd.print("\n", show_prefix=False)
 
     numpyIsInstalled = False
@@ -165,7 +164,4 @@ def py4pdLoadObjects():
         pd.addobject(audioin, "audioin", objtype="AUDIOIN")
         pd.addobject(audioout, "audioout", objtype="AUDIOOUT")
         pd.addobject(audio, "audio", objtype="AUDIO")
-    else:
-        pd.error(
-            "Please, run 'pip install numpy -t ./py-modules' in the terminal from current folder")
     
