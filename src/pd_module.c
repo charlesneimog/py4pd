@@ -9,8 +9,8 @@
 // ======================================
 
 t_py *get_py4pd_object(void){
-    PyObject *pd_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    PyObject *main_module = PyImport_ImportModule("__main__");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(main_module, "py4pd");
     if (py4pd_capsule == NULL){
         post("[Python] py4pd capsule not found.");
         return NULL;
@@ -156,30 +156,32 @@ PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
 // =================================
 PyObject *pderror(PyObject *self, PyObject *args) {
     (void)self;
+
     char *string;
 
     t_py *py4pd = get_py4pd_object();
 
     if (PyArg_ParseTuple(args, "s", &string)) {
         if (py4pd == NULL){
-            pd_error(NULL, "[Python]: %s", string);
-            PyLong_FromLong(0);
+            pd_error(NULL, "%s", string);
+            PyErr_Clear();
+            return PyLong_FromLong(0);
         }
-
 
         if (py4pd->pyObject == 1){
             pd_error(py4pd, "[%s]: %s", py4pd->objectName->s_name, string);
         }
         else{
             if (py4pd->function_name == NULL){
-                pd_error(py4pd, "[Python]: %s", string);
+                pd_error(py4pd, "%s", string);
             }
             else{
                 pd_error(py4pd, "[%s]: %s", py4pd->function_name->s_name, string);
             }
         }
         PyErr_Clear();
-    } else {
+    } 
+    else {
         PyErr_SetString(
             PyExc_TypeError,
             "[Python] argument of pd.error must be a string");  
