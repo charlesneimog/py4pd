@@ -1483,7 +1483,6 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
 // ============================================
 /**
  * @brief Free the memory of the object
- * 
  * @param x 
  * @return void* 
  */
