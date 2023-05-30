@@ -181,9 +181,3 @@ jobs:
         with:
           name: neoscore-Test-linux
           path: py4pd_Linux/neoscoretest.png
-
-
-
-
-    
-
