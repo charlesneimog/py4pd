@@ -165,21 +165,15 @@ jobs:
           mkdir py4pd/resources
           mkdir py4pd/src
           cp resources/* py4pd/resources -r
-          cp src/* py4pd/resources -r
-          cp test/*.pd py4pd
-          
-          
+          cp src/* py4pd/src -r
+          find py4pd/src -name "*.o" -type f -delete
+          cp resources/README.deken.pd py4pd 
+
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
           name: py4pd
           path: py4pd
-
-      - name: Upload Test Image
-        uses: actions/upload-artifact@v3
-        with:
-          name: neoscore-Test-linux
-          path: py4pd/neoscoretest.png
 
 
 
