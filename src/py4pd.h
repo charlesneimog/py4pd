@@ -143,13 +143,13 @@ typedef struct _pdArgs{
 } pd_args;
 
 // =====================================
-extern void reload(t_py *x);
-extern void set_param(t_py *x, t_symbol *s, int argc, t_atom *argv);
-extern void documentation(t_py *x);
-extern void usepointers(t_py *x, t_floatarg f);
-extern void set_function(t_py *x, t_symbol *s, int argc, t_atom *argv);
-extern void *py4pdImportNumpy();
-extern void *py4pd_free(t_py *x);
+extern void reloadPy4pdFunction(t_py *x);
+extern void setParametersForFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
+extern void printDocs(t_py *x);
+extern void setPythonPointersUsage(t_py *x, t_floatarg f);
+extern void setFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
+extern void *importNumpyForPy4pd();
+extern void *py4pdFree(t_py *x);
 
 #define PY4PD_IMAGE "R0lGODlhKgAhAPAAAP///wAAACH5BAAAAAAAIf8LSW1hZ2VNYWdpY2sOZ2FtbWE9MC40NTQ1NDUALAAAAAAqACEAAAIkhI+py+0Po5y02ouz3rz7D4biSJbmiabqyrbuC8fyTNf2jTMFADs="
 

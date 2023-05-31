@@ -313,7 +313,7 @@ void removeChar(char *str, char c) {
 }
 
 // =====================================================================
-char *py4pd_mtok(char *input, char *delimiter) {
+char *py4pd_mtok(char *input, char *delimiter) { // TODO: Rename this function
     static char *string;
     if(input != NULL)
         string = input;
@@ -347,7 +347,7 @@ char *py4pd_mtok(char *input, char *delimiter) {
 
 */
 
-void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){
+void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){ // TODO: Rename this function
     //new and redone - Derek Kwan
     long unsigned int seplen = strlen(" ");
     seplen++;
@@ -398,7 +398,7 @@ void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){
 * @return the PureData pointer
 
 */
-void *pyobject_to_pointer(PyObject *pValue) {
+void *pyobject_to_pointer(PyObject *pValue) { // TODO: Rename this function
     t_pyObjectData *data = (t_pyObjectData *)malloc(sizeof(t_pyObjectData));
     data->pValue = pValue;
     return (void *)data;
@@ -412,7 +412,7 @@ void *pyobject_to_pointer(PyObject *pValue) {
 
 */
 
-PyObject *pointer_to_pyobject(void *p) {
+PyObject *pointer_to_pyobject(void *p) { // TODO: Rename this function
     t_pyObjectData *data = (t_pyObjectData *)p;
     return data->pValue;
 }
@@ -423,7 +423,7 @@ PyObject *pointer_to_pyobject(void *p) {
 * @param p is the PureData pointer to free
 */
 
-void free_pyobject_data(void *p) {
+void free_pyobject_data(void *p) { // TODO: Rename this function
     t_pyObjectData *data = (t_pyObjectData *)p;
     Py_XDECREF(data->pValue);
     free(data);
@@ -542,7 +542,7 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) { // TODO: fix the type of 
 * @param argv is the arguments
 * @return the Python tuple with the values
 */
-PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
+PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) { // TODO: Rename this function
     PyObject *ArgsTuple = PyTuple_New(0);  // start new tuple with 1 element
     int listStarted = 0;
     int argCount = 0;
@@ -649,7 +649,7 @@ PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
 
 */
 
-void set_py4pd_config(t_py *x) {
+void setPy4pdConfig(t_py *x) {
     char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->pdPatchFolder->s_name) + strlen("/py-modules/") + 1));  //
     snprintf(PADRAO_packages_path, strlen(x->pdPatchFolder->s_name) + strlen("/py-modules/") + 1, "%s/py-modules/", x->pdPatchFolder->s_name);
     x->pkgPath = gensym(PADRAO_packages_path);
@@ -741,7 +741,7 @@ void set_py4pd_config(t_py *x) {
 
 */
 
-PyObject *py4pd_add_pd_object(t_py *x) {
+PyObject *py4pd_add_pd_object(t_py *x) { // TODO: RENAME this function
     PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
     PyObject *objectCapsule;
     if (MainModule != NULL) {
@@ -782,7 +782,7 @@ PyObject *py4pd_add_pd_object(t_py *x) {
 
 */
 
-uint32_t py4pd_ntohl(uint32_t netlong){ // ntohl exists on windows but not on mac
+uint32_t py4pd_ntohl(uint32_t netlong){ // TODO: RENAME this function
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     return ((netlong & 0xff) << 24) |
            ((netlong & 0xff00) << 8) |

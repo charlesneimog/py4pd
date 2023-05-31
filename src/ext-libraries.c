@@ -1098,9 +1098,9 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     if ((strcmp(objectType, "NORMAL") == 0)){
         pyNewObject = class_new(gensym(objectName), (t_newmethod)New_NORMAL_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
         class_addmethod(pyNewObject, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
-        class_addmethod(pyNewObject, (t_method)documentation, gensym("doc"), 0, 0);
-        class_addmethod(pyNewObject, (t_method)set_param, gensym("key"), A_GIMME, 0);
-        class_addmethod(pyNewObject, (t_method)usepointers, gensym("pointers"), A_FLOAT, 0);
+        class_addmethod(pyNewObject, (t_method)printDocs, gensym("doc"), 0, 0);
+        class_addmethod(pyNewObject, (t_method)setParametersForFunction, gensym("key"), A_GIMME, 0);
+        class_addmethod(pyNewObject, (t_method)setPythonPointersUsage, gensym("pointers"), A_FLOAT, 0);
         class_addmethod(pyNewObject, (t_method)reloadObject, gensym("reload"), 0, 0);
         class_addanything(pyNewObject, py_anything);
     }
@@ -1110,14 +1110,14 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         class_addanything(pyNewObject_VIS, py_anything);
         class_addmethod(pyNewObject_VIS, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);
         class_addmethod(pyNewObject_VIS, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
-        class_addmethod(pyNewObject_VIS, (t_method)documentation, gensym("doc"), 0, 0);
+        class_addmethod(pyNewObject_VIS, (t_method)printDocs, gensym("doc"), 0, 0);
         class_addmethod(pyNewObject_VIS, (t_method)reloadObject, gensym("reload"), 0, 0);
         class_setsavefn(pyNewObject_VIS, &py4pdObjPic_save);
     }
     // AUDIOIN
     else if ((strcmp(objectType, "AUDIOIN") == 0)){
         pyNewObject_AudioIn = class_new(gensym(objectName), (t_newmethod)New_AudioIN_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
-        class_addmethod(pyNewObject_AudioIn, (t_method)documentation, gensym("doc"), 0, 0);
+        class_addmethod(pyNewObject_AudioIn, (t_method)printDocs, gensym("doc"), 0, 0);
         class_addmethod(pyNewObject_AudioIn, (t_method)reloadObject, gensym("reload"), 0, 0);
         class_addmethod(pyNewObject_AudioIn, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
         CLASS_MAINSIGNALIN(pyNewObject_AudioIn, t_py, py4pdAudio);
@@ -1125,7 +1125,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     // AUDIOIN
     else if ((strcmp(objectType, "AUDIOOUT") == 0)){
         pyNewObject_AudioOut = class_new(gensym(objectName), (t_newmethod)New_AudioOUT_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
-        class_addmethod(pyNewObject_AudioOut, (t_method)documentation, gensym("doc"), 0, 0);
+        class_addmethod(pyNewObject_AudioOut, (t_method)printDocs, gensym("doc"), 0, 0);
         class_addmethod(pyNewObject_AudioOut, (t_method)reloadObject, gensym("reload"), 0, 0);
         class_addmethod(pyNewObject_AudioOut, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
         class_addanything(pyNewObject_AudioOut, py_anything);
@@ -1134,7 +1134,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     // AUDIO
     else if (strcmp(objectType, "AUDIO") == 0) {
         pyNewObject_Audio = class_new(gensym(objectName), (t_newmethod)New_Audio_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
-        class_addmethod(pyNewObject_Audio, (t_method)documentation, gensym("doc"), 0, 0);
+        class_addmethod(pyNewObject_Audio, (t_method)printDocs, gensym("doc"), 0, 0);
         class_addmethod(pyNewObject_Audio, (t_method)reloadObject, gensym("reload"), 0, 0);
         class_addmethod(pyNewObject_Audio, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
         CLASS_MAINSIGNALIN(pyNewObject_Audio, t_py, py4pdAudio);
