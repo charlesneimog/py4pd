@@ -1,8 +1,7 @@
 #include "py4pd.h"
-#include "m_pd.h"
-#include "pd_module.h"
-#include "py4pd_pic.h"
-#include "py4pd_utils.h"
+#include "module.h"
+#include "pic.h"
+#include "utils.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
