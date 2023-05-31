@@ -2,7 +2,7 @@
 
 If you're using Python and PureData together, you can use the pd module within the py4pd package to exchange data, set configurations, and inform users of errors, among other things. This module is embedded in the py4pd code and is only accessible within the PureData environment. It's similar to how Google Collab uses modules like google.collab.drive and google.collab.widgets.
 
-For instance, if you want to write to a PureData array, you can use the pd.tabwrite method. This method takes in the array name, a list or a numpy.array, and a resize keyword (resize=) to specify whether or not to resize the table.
+For instance, if you want to write to a PureData array, you can use the pd.tabwrite method. This method takes in the array name, a list or a numpy.array, and a resize keyword (`resize=`) to specify whether or not to resize the table.
 
 ``` py
 import pd
@@ -209,18 +209,16 @@ def readFromArray(arrayname):
 -------------------------------------- 
 #### <h4 style="text-align:center"> `pd.getkey` </h4>
 
-When working with audio in py4pd, I've designed the audio functions to accept only one argument: the audio itself. This makes things simpler in many ways. However, it also raises the question of how to specify different audio parameters, such as fft-size or bandwidth. To address this, py4pd includes a function called pd.getkey, which works in conjunction with the key message in PureData.
+With `pd.getkey`, you can retrieve the value of a specific key that has been set by the user in a `key` message. For example, if the user sends a key message to `py4pd` with the name "fft-size" and a value of 1024, you can retrieve this value in your Python code using `pd.getkey("fft-size")`. If the user hasn't defined a particular key, `pd.getkey` will return `None`, allowing you to set a default value if necessary.
 
-With `pd.getkey`, you can retrieve the value of a specific key that has been set by the user in a key message. For example, if the user sends a key message to `py4pd` with the name "fft-size" and a value of 1024, you can retrieve this value in your Python code using `pd.getkey("fft-size")`. If the user hasn't defined a particular key, `pd.getkey` will return None, allowing you to set a default value if necessary.
-
-By using `pd.getkey` in combination with the key message, you can easily specify and retrieve different audio parameters in your py4pd functions.
+By using `pd.getkey` in combination with the key message, you can easily specify and retrieve different audio parameters in your py4pd functions, for example.
 
 ``` py
 import pd
 
 def someAudioFunction(audio): # (1)!
     fftvalue = pd.getkey("fft-size")
-    if fftvalue == None:
+    if fftvalue is None:
         fftvalue = 2048 # default value for fft-size key.
     
     # Do something with the audio.
@@ -229,7 +227,7 @@ def someAudioFunction(audio): # (1)!
 
 ```
 
-1. Remember, audio functions receive just one `arg` that is the audio. The **standart** is to use python lists, but you can turn on `numpy` array input use the message `numpy 1`. [See numpy method.](puredata-users/#numpy)
+1. Remember, audio functions that run with `py4pd script myaudiofunction -audio` receive just one `arg` that is the audio. In Audio objects written in Python this is different.
 
 ------------------
 
@@ -264,6 +262,37 @@ The main difference between `pd.print` and `pd.error` is that info printed with 
 Overall, using pd.error can help you effectively communicate errors to the user and improve the debugging process when working with Python and PureData. 
 
 -------------------------------------- 
+
+### <h3 style="text-align:center"> **Utilities** </h3>
+
+
+#### <h4 style="text-align:center"> `pd.getobjpointer` </h4>
+
+When working with audio objects, there are situations where we require global variables or variables that retain their values across different runs. For instance, when creating a Python function to generate a sine wave, we may need a global variable for the phase in order to generate a continuous waveform. However, using Python Global Variables can be problematic when working with multiple objects, as all functions would modify the phase value, potentially overwriting it unintentionally. To address this issue, we introduced the pd.getobjpointer function, which returns a unique string representing the pointer of the C object. This string is unique and can be utilized in other contexts to locate and retrieve the desired global variable. 
+
+--------------------------------------
+
+#### <h4 style="text-align:center"> `pd.getglobalvar` </h4>
+
+When working with audio objects, we have another helpful function called pd.getglobalvar. This function serves a similar purpose to pd.getobjpointer, but with a slight difference. Here, it creates the variable automatically if it doesn't exist yet. Let's take a look at an example. In the code snippet below, when we use pd.getglobalvar("PHASE"), it retrieves the value of the variable associated with the current running object. If the value hasn't been set yet, it will be initialized to 0.0.
+
+``` python
+
+phase = pd.getglobalvar("PHASE", initial_value=0.0)
+        
+```
+
+--------------------------------------
+
+#### <h4 style="text-align:center"> `pd.setglobalvar` </h4>
+
+To set new values for the variable of the object we use `pd.setglobalvar`. It recives the name of the variable (string) and the new value (any Python Thing).
+
+``` python
+pd.setglobalvar("PHASE", phase)
+```
+
+--------------------------------------
 
 ### <h3 style="text-align:center"> **Images** </h3>
  
@@ -384,9 +413,13 @@ In `py4pd`, `pd.home` is a function that returns the path to the directory where
 
 #### <h4 style="text-align:center"> `pd.tempfolder` </h4>
 
-`pd.tempfolder` is used get one tempfolder to save stuff that won't be used more than once. In `pd.show` I am using `pd.tempfolder`. All the data inside this folder will be deleted after you close PureData or delete all `py4pd` objects. The tempfolder is located in `~/.py4pd` for Windows, Linux and Mac and it is a hidden folder on Windows too.
+`pd.tempfolder` get one tempfolder to save stuff that won't be used more than once. In `pd.show` I am using `pd.tempfolder`. All the data inside this folder will be deleted after you close PureData or delete all `py4pd` objects. The tempfolder is located in `~/.py4pd` for Windows, Linux and Mac and it is a hidden folder on Windows too.
 
-`pd.tempfolder` returns the path to a temporary folder that can be used to store data that is only needed temporarily. In `pd.show` example I am using this function to store image files that are displayed in the patch. Any data stored in the tempfolder is automatically deleted when the patch is closed or all `py4pd` objects are deleted. The tempfolder is located at ~/.py4pd.
+--------------------------------------
+
+#### <h4 style="text-align:center"> `pd.py4pdfolder` </h4>
+
+`pd.py4pdfolder` returns the folder where the binary of `py4pd` is located.
 
 -------------------------------------- 
 
