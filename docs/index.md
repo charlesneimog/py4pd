@@ -1,11 +1,16 @@
-# Home
+# Introduction
 
-Welcome to the `py4pd` documentation! 
+## <h2 align="center"> **What is py4pd?** </h2>
 
-`py4pd` allows the use of [Python](https://www.python.org/) as an object in [PureData](https://puredata.info/). It is similar to [py/pyext](https://github.com/grrrr/py), but is simpler to keep up to date, use modules, use lists, and other things. 
 
-With Python as an object, you can see scores inside PureData, work with AI, lot of Audio Analysis tools, use svg/draws as scores, and OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
-	
+Welcome to the py4pd documentation!
+
+py4pd enables the integration of [Python](https://www.python.org/) as an object in [PureData](https://puredata.info/), providing a simpler and more up-to-date alternative to [py/pyext](https://github.com/grrrr/py). With py4pd, you can take advantage of Python's features such as modules, lists, and more.
+
+The primary focus of py4pd is to allow the use of Python for writing PureData objects, bringing the possibilities of OpenMusic and OM-Sharp into the real-time environment. This opens up a world of opportunities, including visualizing scores within PureData, utilizing AI capabilities, leveraging various audio analysis tools, working with SVG/draws as scores, and much more.
+
+To check how to install go to [Installation](https://www.charlesneimog.com/py4pd/setup/).
+
 <hr>
 
 ## <h2 align="center"> **Examples and Use Cases** </h2>
@@ -100,18 +105,28 @@ _Here I will put I amazing print_
 PureData provides a rich set of audio descriptors that offer versatile means for musical expression. In the context of music composition, descriptor contours can be a valuable resource for creating and controlling various musical parameters. In this example I use `audioflux` as a tool for visualizing the contours of audio descriptors in the composition process.
 
 <p align="center">
-	<img src="examples/descriptors/audioflux.png" width="50%"></img>
+	<img src="examples/vis-object/VIS-object.png" width="50%"></img>
 </p>
 
 <hr>
 
-## <h2 align="center"> **My own Pieces** </h2>
+## <h2 align="center"><b>My own Pieces</b></h2>
 
 Here I will present some of the works where I am using `py4pd`.
+
+<hr>
 
 ### <h3 align="center"> **Eco (2023)** </h3>
 
 Eco (2023) is the first version of one under developing piece that use some concepts of the composer Ricardo Thomasi in his PhD research. The idea here, is to use smartphones/tablets putted in the performance music stand, to make realtime `FFT` and `Partial Tracking` and then, generate scores that are played. The smartphones/tablets send data to PureData, and using `py4pd`, we generate realtime scores using `neoscore`.
+
+  <iframe align="center" width="560" height="315" src="https://www.youtube.com/watch?v=XIEI7-W7t2o" frameborder="0" allowfullscreen></iframe>
+
+<hr>
+
+### <h3 align="center"> **Moteto (2023)** </h3>
+
+The piece Moteto aims to be a rereading medieval motet. In addition, to overlapping independent voices, we use Just Intonation structures. With the help of technology, I aim to make the piece playable, also by amateur choirs, it is available in this website: www.charlesneimog.com/moteto/.
 
 <hr>
 ### 

@@ -1,7 +1,7 @@
 #include "py4pd.h"
-#include "py4pd_utils.h"
-#include "py4pd_pic.h"  
-#include "pylibraries.h"
+#include "utils.h"
+#include "pic.h"  
+#include "ext-libraries.h"
 
 
 // ======================================
@@ -520,7 +520,7 @@ PyObject *pdtempfolder(PyObject *self, PyObject *args) {
         post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
         return NULL;
     }
-    py4pd_tempfolder(py4pd);
+    createPy4pdTempFolder(py4pd);
     return PyUnicode_FromString(py4pd->tempPath->s_name);
 }
 
@@ -761,10 +761,16 @@ PyObject *setglobalvar(PyObject *self, PyObject *args){
 }
 
 // =================================
-PyObject *getglobalvar(PyObject *self, PyObject *args){
+PyObject *getglobalvar(PyObject *self, PyObject *args, PyObject *keywords){
     (void)self;
 
     PyObject* globalsDict = PyEval_GetGlobals();
+    if (globalsDict == NULL) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.getglobalvar: globalsDict is NULL");
+        return NULL;
+    }
+
+
     t_py *py4pd = get_py4pd_object();
     char varString[MAXPDSTRING];
 
@@ -773,18 +779,25 @@ PyObject *getglobalvar(PyObject *self, PyObject *args){
         PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
         return NULL;
     }
+
+    PyObject *initial_value;
+    if (keywords != NULL) {
+        initial_value = PyDict_GetItemString(keywords, "initial_value");
+    }
+    else {
+        initial_value = Py_None;
+    }
     snprintf(varString, MAXPDSTRING, "%s_%p", varName, py4pd);
-    PyObject* globalVariableString = PyUnicode_FromFormat(varString);
-    PyObject* globalValue = PyDict_GetItem(globalsDict, globalVariableString);
+    PyObject* globalValue = PyDict_GetItemString(globalsDict, varString);
     if (globalValue == NULL) {
-        Py_DECREF(globalVariableString);
-        return Py_None;
+        PyDict_SetItemString(globalsDict, varString, initial_value);
+        globalValue = PyDict_GetItemString(globalsDict, varString);
+        Py_INCREF(globalValue);
     } 
     else {
         Py_INCREF(globalValue);
-        Py_DECREF(globalVariableString);
-        return globalValue;
     }
+    return Py_BuildValue("O", globalValue);
 }
 
 // =================================
@@ -825,7 +838,7 @@ PyMethodDef PdMethods[] = {
     // Others
     {"getobjpointer", getobjpointer, METH_NOARGS, "Get PureData Object Pointer"},
     {"setglobalvar", setglobalvar, METH_VARARGS, "It sets a global variable for the Object, it is not clear after the execution of the function"},
-    {"getglobalvar", getglobalvar, METH_VARARGS, "It gets a global variable for the Object, it is not clear after the execution of the function"},
+    {"getglobalvar", (PyCFunction)getglobalvar, METH_VARARGS | METH_KEYWORDS, "It gets a global variable for the Object, it is not clear after the execution of the function"},
 
     // pip
     {"pip", (PyCFunction)pipinstall, METH_VARARGS, "It installs python packages"},
@@ -858,13 +871,23 @@ PyMODINIT_FUNC PyInit_pd() {
         return NULL;
     }
     
-    PyObject *puredata_samplerate, *puredata_vecsize;
+    PyObject *puredata_samplerate, *puredata_vecsize, *visObject, *audioINObject, *audioOUTObject, *pdAudio;
 
     puredata_samplerate = PyLong_FromLong(sys_getsr());
     puredata_vecsize = PyLong_FromLong(sys_getblksize());
+    
+    // set visObject as "VIS"
+    visObject = PyUnicode_FromString("VIS");
+    audioINObject = PyUnicode_FromString("AUDIOIN");
+    audioOUTObject = PyUnicode_FromString("AUDIOOUT");
+    pdAudio = PyUnicode_FromString("AUDIO");
 
     PyModule_AddObject(py4pdmodule, "SAMPLERATE", puredata_samplerate);
     PyModule_AddObject(py4pdmodule, "VECSIZE", puredata_vecsize);
+    PyModule_AddObject(py4pdmodule, "VIS", visObject);
+    PyModule_AddObject(py4pdmodule, "AUDIOIN", audioINObject);
+    PyModule_AddObject(py4pdmodule, "AUDIOOUT", audioOUTObject);
+    PyModule_AddObject(py4pdmodule, "AUDIO", pdAudio);
 
     pdmoduleError = PyErr_NewException("spam.error", NULL, NULL);
     

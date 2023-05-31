@@ -8,6 +8,8 @@ def audioin(audio):
     return fft.tolist()
 
 
+
+
 def audioout(freq, amplitude):
     if freq is None: 
         return numpy.zeros(pd.vecsize())

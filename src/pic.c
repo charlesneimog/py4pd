@@ -1,4 +1,4 @@
-#include "py4pd_pic.h"
+#include "pic.h"
 
 t_widgetbehavior py4pd_widgetbehavior;
 static t_class *PY4PD_edit_proxy_class;
