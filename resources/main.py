@@ -2,16 +2,17 @@ import pd
 import numpy
 
 def audioin(audio):
-    length = len(audio)
-    return length
+    # do one simple fft and output the real part
+    fft = numpy.fft.fft(audio)
+    fft = numpy.real(fft)
+    return fft.tolist()
+
 
 def audioout(freq, amplitude):
     if freq is None: 
         return numpy.zeros(pd.vecsize())
     else:
-        phase = pd.getglobalvar("PHASE")
-        if phase is None:
-            phase = 0.0 # set the initial value of phase in the first call of the function
+        phase = pd.getglobalvar("PHASE", initial_value=0.0)
         output = numpy.zeros(pd.vecsize())
         increment = (freq * 2.0 * numpy.pi) / pd.samplerate()
         for i in range(pd.vecsize()):
