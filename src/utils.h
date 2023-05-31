@@ -10,14 +10,13 @@
 #include <dlfcn.h>
 
 // ========================
-void create_pyObject_inlets(t_py *x, int argc, t_atom *argv);
-int libraries_parser_args(t_py *x, PyCodeObject *code, int argc, t_atom *argv);
-void py4pd_parser_args(t_py *x, t_canvas *c, int argc, t_atom *argv);
-void findpy4pd_folder(t_py *x);
-void py4pd_tempfolder(t_py *x);
-void set_py4pd_config(t_py *x);
-char *get_editor_command(t_py *x);
-void pd4py_system_func(const char *command);
+int parseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);
+void parsePy4pdArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);
+void findPy4pdFolder(t_py *x);
+void createPy4pdTempFolder(t_py *x);
+void setPy4pdConfig(t_py *x);
+char *getEditorCommand(t_py *x);
+void executeSystemCommand(const char *command);
 int isNumericOrDot(const char *str);
 void removeChar(char *str, char c);
 

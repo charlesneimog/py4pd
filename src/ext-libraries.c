@@ -650,15 +650,15 @@ void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
     x->pdPatchFolder = patch_dir;         // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
-    set_py4pd_config(x);  // set the config file  TODO: I want to rethink this)
-    py4pd_tempfolder(x);  // find the py4pd temp folder
-    findpy4pd_folder(x);  // find the py4pd object folder
+    setPy4pdConfig(x);  // set the config file  TODO: I want to rethink this)
+    createPy4pdTempFolder(x);  // Create the py4pd temp folder
+    findPy4pdFolder(x);  // find the py4pd object folder
         
     // Parse args for translation between Pd and Python
     PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
-    int parseArgsRight = libraries_parser_args(x, code, argc, argv); // NOTE: added
+    int parseArgsRight = parseLibraryArguments(x, code, argc, argv); // NOTE: added
     if (parseArgsRight == 0) {
         return NULL;
     }
@@ -751,14 +751,14 @@ void *New_VIS_Object(t_symbol *s, int argc, t_atom *argv) {
     x->pdPatchFolder = patch_dir;         // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
-    set_py4pd_config(x);  // set the config file (in py4pd.cfg, make this be
-    py4pd_tempfolder(x);  // find the py4pd folder
-    findpy4pd_folder(x);  // find the py4pd object folder
+    setPy4pdConfig(x);  // set the config file (in py4pd.cfg, make this be
+    createPy4pdTempFolder(x);  // find the py4pd folder
+    findPy4pdFolder(x);  // find the py4pd object folder
     // check if function use *args or **kwargs
     PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
-    int parseArgsRight = libraries_parser_args(x, code, argc, argv); // NOTE: added
+    int parseArgsRight = parseLibraryArguments(x, code, argc, argv); // NOTE: added
     if (parseArgsRight == 0) {
         return NULL;
     }
@@ -811,14 +811,14 @@ void *New_AudioIN_Object(t_symbol *s, int argc, t_atom *argv) {
     x->pdPatchFolder = patch_dir;         // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
-    set_py4pd_config(x);  // set the config file  TODO: I want to rethink this)
-    py4pd_tempfolder(x);  // find the py4pd temp folder
-    findpy4pd_folder(x);  // find the py4pd object folder
+    setPy4pdConfig(x);  // set the config file  TODO: I want to rethink this)
+    createPy4pdTempFolder(x);  // find the py4pd temp folder
+    findPy4pdFolder(x);  // find the py4pd object folder
     // Parse args for translation between Pd and Python
     PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
-    int parseArgsRight = libraries_parser_args(x, code, argc, argv); // NOTE: added
+    int parseArgsRight = parseLibraryArguments(x, code, argc, argv); // NOTE: added
     if (parseArgsRight == 0) {
         return NULL;
     }
@@ -882,14 +882,14 @@ void *New_AudioOUT_Object(t_symbol *s, int argc, t_atom *argv) {
     x->pdPatchFolder = patch_dir;         // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
-    set_py4pd_config(x);  // set the config file  TODO: I want to rethink this)
-    py4pd_tempfolder(x);  // find the py4pd temp folder
-    findpy4pd_folder(x);  // find the py4pd object folder
+    setPy4pdConfig(x);  // set the config file  TODO: I want to rethink this)
+    createPy4pdTempFolder(x);  // find the py4pd temp folder
+    findPy4pdFolder(x);  // find the py4pd object folder
     // Parse args for translation between Pd and Python
     PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
-    int parseArgsRight = libraries_parser_args(x, code, argc, argv); // NOTE: added
+    int parseArgsRight = parseLibraryArguments(x, code, argc, argv); // NOTE: added
     if (parseArgsRight == 0) {
         return NULL;
     }
@@ -954,14 +954,14 @@ void *New_Audio_Object(t_symbol *s, int argc, t_atom *argv) {
     x->pdPatchFolder = patch_dir;         // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
-    set_py4pd_config(x);  // set the config file  TODO: I want to rethink this)
-    py4pd_tempfolder(x);  // find the py4pd temp folder
-    findpy4pd_folder(x);  // find the py4pd object folder
+    setPy4pdConfig(x);  // set the config file  TODO: I want to rethink this)
+    createPy4pdTempFolder(x);  // find the py4pd temp folder
+    findPy4pdFolder(x);  // find the py4pd object folder
     // Parse args for translation between Pd and Python
     PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
-    int parseArgsRight = libraries_parser_args(x, code, argc, argv); // NOTE: added
+    int parseArgsRight = parseLibraryArguments(x, code, argc, argv); // NOTE: added
     if (parseArgsRight == 0) {
         return NULL;
     }

@@ -354,7 +354,7 @@ static void openscript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     // Open VsCode in Windows
     #ifdef _WIN64
         char *command = malloc(strlen(x->pdPatchFolder->s_name) + strlen(x->script_name->s_name) + 20);
-        command = get_editor_command(x);
+        command = getEditorCommand(x);
         SHELLEXECUTEINFO sei = {0};
         sei.cbSize = sizeof(sei);
         sei.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -366,8 +366,8 @@ static void openscript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         return;
     #else  
         char *command = malloc(strlen(x->pdPatchFolder->s_name) + strlen(x->script_name->s_name) + 20);
-        command = get_editor_command(x);
-        pd4py_system_func(command);
+        command = getEditorCommand(x);
+        executeSystemCommand(command);
         return;
     #endif
 }
@@ -396,9 +396,9 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     // Open VsCode in Windows
     #ifdef _WIN64
-        char *command = get_editor_command(x);
-        command = get_editor_command(x);
-        // use get_editor_command
+        char *command = getEditorCommand(x);
+        command = getEditorCommand(x);
+        // use getEditorCommand
         SHELLEXECUTEINFO sei = {0};
         sei.cbSize = sizeof(sei);
         sei.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -412,8 +412,8 @@ static void editor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     // Not Windows OS
     #else  // if not windows 64bits
         char *command = malloc(strlen(x->pdPatchFolder->s_name) + strlen(x->script_name->s_name) + 20);
-        command = get_editor_command(x);
-        pd4py_system_func(command);
+        command = getEditorCommand(x);
+        executeSystemCommand(command);
         return;
     #endif
 }
@@ -1491,9 +1491,9 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
         x->object_number = object_count; 
         x->pdPatchFolder = patch_dir;       
         x->pkgPath = patch_dir;  
-        set_py4pd_config(x); 
-        py4pd_tempfolder(x); 
-        findpy4pd_folder(x); 
+        setPy4pdConfig(x); 
+        createPy4pdTempFolder(x); 
+        findPy4pdFolder(x); 
         libraryLoad(x, argc, argv);
         x->script_name = scriptName;
         object_count++;
@@ -1513,14 +1513,14 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     x->visMode = 0;
     x->editorName = NULL;
     x->pyObject = 0;
-    py4pd_parser_args(x, c, argc, argv);  // parse arguments
+    parsePy4pdArguments(x, c, argc, argv);  // parse arguments
     x->runmode = 0;
     x->object_number = object_count;  // save object number
     x->pdPatchFolder = patch_dir;         // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
-    set_py4pd_config(x);  // set the config file (in py4pd.cfg, make this be
-    py4pd_tempfolder(x);  // find the py4pd folder
-    findpy4pd_folder(x);  // find the py4pd object folder
+    setPy4pdConfig(x);  // set the config file (in py4pd.cfg, make this be
+    createPy4pdTempFolder(x);  // create temp the py4pd folder
+    findPy4pdFolder(x);  // find the py4pd object folder
     if (argc > 1) {       // check if there are two arguments
         set_function(x, s, argc, argv);
         py4pdImportNumpy();

@@ -4,7 +4,15 @@
 #include "pic.h"
 
 // ====================================================
-int libraries_parser_args(t_py *x, PyCodeObject *code, int argc, t_atom *argv){
+/*
+* @brief This function parse the arguments for pd Objects created with the library
+* @param x is the py4pd object
+* @param code is the code object of the function
+* @param argc is the number of arguments
+* @param argv is the arguments
+* @return 1 if all arguments are ok, 0 if not
+*/
+int parseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv){
     int argsNumberDefined = 0;
     if (code->co_flags & CO_VARARGS) {
         x->py_arg_numbers = 1;
@@ -52,7 +60,16 @@ int libraries_parser_args(t_py *x, PyCodeObject *code, int argc, t_atom *argv){
 
 
 // ====================================================
-void py4pd_parser_args(t_py *x, t_canvas *c, int argc, t_atom *argv) {
+/*
+* @brief This function parse the arguments for the py4pd object
+* @param x is the py4pd object
+* @param c is the canvas of the object
+* @param argc is the number of arguments
+* @param argv is the arguments
+* @return return void
+*/
+
+void parsePy4pdArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
 
     int i;
     for (i = 0; i < argc; i++) {
@@ -128,19 +145,19 @@ void py4pd_parser_args(t_py *x, t_canvas *c, int argc, t_atom *argv) {
 
 
 // ====================================================
-/**
+/*
 * @brief Get the py4pd folder object, it creates the folder for scripts inside resources
- * @param x is the py4pd object
- * @return save the py4pd folder in x->py4pdPath
- */
+* @param x is the py4pd object
+* @return save the py4pd folder in x->py4pdPath
+*/
 
-void findpy4pd_folder(t_py *x){
+void findPy4pdFolder(t_py *x){
     void* handle = dlopen(NULL, RTLD_LAZY);
     if (!handle) {
         post("Not possible to locate the folder of the py4pd object");
     }
     Dl_info info;
-    if (dladdr((void*)findpy4pd_folder, &info) == 0) {
+    if (dladdr((void*)findPy4pdFolder, &info) == 0) {
         post("Not possible to locate the folder of the py4pd object");
     }
     // remove filename from path
@@ -167,11 +184,11 @@ void findpy4pd_folder(t_py *x){
 // ===================================================================
 /**
  * @brief Get the temp path object (inside Users/.py4pd), it creates the folder if it not exist
- * * @param x is the py4pd object
+ * @param x is the py4pd object
  * @return save the temp path in x->tempPath
  */
 
-void py4pd_tempfolder(t_py *x) {
+void createPy4pdTempFolder(t_py *x) {
     #ifdef _WIN64
         // get user folder
         char *user_folder = getenv("USERPROFILE");
@@ -207,12 +224,12 @@ void py4pd_tempfolder(t_py *x) {
 }
 
 // ===================================================================
-/**
+/*
  * @brief It creates the commandline to open the editor
  * @param x is the py4pd object
  * @return the commandline to open the editor
  */
-char *get_editor_command(t_py *x) {
+char *getEditorCommand(t_py *x) {
     const char *editor = x->editorName->s_name;
     const char *home = x->pdPatchFolder->s_name;
     const char *filename = x->script_name->s_name;
@@ -234,13 +251,15 @@ char *get_editor_command(t_py *x) {
 }
 
 // ====================================
-/**
- * @brief Run command and check for errors
- * @param command is the command to run
- * @return void, but it prints the error if it fails
- */
+/*
 
-void pd4py_system_func(const char *command) {
+* @brief Run command and check for errors
+* @param command is the command to run
+* @return void, but it prints the error if it fails
+
+*/
+
+void executeSystemCommand(const char *command) {
     int result = system(command);
     if (result == -1) {
         post("[py4pd] %s", command);
@@ -249,11 +268,14 @@ void pd4py_system_func(const char *command) {
 }
 
 // ============================================
-/**
- * @brief See if str is a number or a dot
- * @param str is the string to check
- * @return 1 if it is a number or a dot, 0 otherwise
- */
+/*
+
+* @brief See if str is a number or a dot
+* @param str is the string to check
+* @return 1 if it is a number or a dot, 0 otherwise
+
+*/
+
 int isNumericOrDot(const char *str) {
     int hasDot = 0;
     while (*str) {
@@ -270,12 +292,14 @@ int isNumericOrDot(const char *str) {
 }
 
 // =====================================================================
-/**
- * @brief Remove some char from a string
- * @param str is the string to remove the char
- * @param c is the char to remove
- * @return the string without the char
- */
+/*
+
+* @brief Remove some char from a string
+* @param str is the string to remove the char
+* @param c is the char to remove
+* @return the string without the char
+
+*/
 
 void removeChar(char *str, char c) {
     int i, j;
@@ -290,8 +314,6 @@ void removeChar(char *str, char c) {
 
 // =====================================================================
 char *py4pd_mtok(char *input, char *delimiter) {
-    // adapted from stack overflow - Derek Kwan
-    // designed to work like strtok
     static char *string;
     if(input != NULL)
         string = input;
@@ -316,12 +338,14 @@ char *py4pd_mtok(char *input, char *delimiter) {
 
 
 // =====================================================================
-/**
- * @brief Convert and output Python Values to PureData values
- * @param x is the py4pd object
- * @param pValue is the Python value to convert
- * @return nothing, but output the value to the outlet
- */
+/*
+
+* @brief Convert and output Python Values to PureData values
+* @param x is the py4pd object
+* @param pValue is the Python value to convert
+* @return nothing, but output the value to the outlet
+
+*/
 
 void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){
     //new and redone - Derek Kwan
@@ -331,17 +355,13 @@ void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){
     memset(sep, '\0', seplen);
     strcpy(sep, " "); 
     if(s){
-        // get length of input string
         long unsigned int iptlen = strlen(s->s_name);
-        // allocate t_atom [] on length of string
-        // hacky way of making sure there's enough space
         t_atom* out = t_getbytes(iptlen * sizeof(*out));
         iptlen++;
         char *newstr = t_getbytes(iptlen * sizeof(*newstr));
         memset(newstr, '\0', iptlen);
         strcpy(newstr, s->s_name);
         int atompos = 0; //position in atom
-        // parsing by token
         char *ret = py4pd_mtok(newstr, sep);
         char *err; // error pointer
         while(ret != NULL){
@@ -372,6 +392,12 @@ void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){
 }
 
 // =====================================================================
+/*
+* @brief Convert one PyObject pointer to a PureData pointer
+* @param pValue is the PyObject pointer to convert
+* @return the PureData pointer
+
+*/
 void *pyobject_to_pointer(PyObject *pValue) {
     t_pyObjectData *data = (t_pyObjectData *)malloc(sizeof(t_pyObjectData));
     data->pValue = pValue;
@@ -379,12 +405,24 @@ void *pyobject_to_pointer(PyObject *pValue) {
 }
 
 // =====================================================================
+/*
+* @brief Convert one PureData pointer to a PyObject pointer
+* @param p is the PureData pointer to convert
+* @return the PyObject pointer
+
+*/
+
 PyObject *pointer_to_pyobject(void *p) {
     t_pyObjectData *data = (t_pyObjectData *)p;
     return data->pValue;
 }
 
 // =====================================================================
+/*
+* @brief Free the memory of a PyObject pointer
+* @param p is the PureData pointer to free
+*/
+
 void free_pyobject_data(void *p) {
     t_pyObjectData *data = (t_pyObjectData *)p;
     Py_XDECREF(data->pValue);
@@ -392,12 +430,13 @@ void free_pyobject_data(void *p) {
 }
 
 // =====================================================================
-/**
- * @brief Convert and output Python Values to PureData values
- * @param x is the py4pd object
- * @param pValue is the Python value to convert
- * @return nothing, but output the value to the outlet
- */
+/*
+* @brief Convert and output Python Values to PureData values
+* @param x is the py4pd object
+* @param pValue is the Python value to convert
+* @return nothing, but output the value to the outlet
+
+*/
 
 void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) { // TODO: fix the type of the output
     if (x->outPyPointer) {
@@ -496,13 +535,13 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) { // TODO: fix the type of 
 }
 
 // ============================================
-/**
- * @brief Convert PureData Values to Python values
- * @param listsArrays were the lists are stored
- * @param argc is the number of arguments
- * @param argv is the arguments
- * @return the Python tuple with the values
- */
+/*
+* @brief Convert PureData Values to Python values
+* @param listsArrays were the lists are stored
+* @param argc is the number of arguments
+* @param argv is the arguments
+* @return the Python tuple with the values
+*/
 PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
     PyObject *ArgsTuple = PyTuple_New(0);  // start new tuple with 1 element
     int listStarted = 0;
@@ -602,11 +641,13 @@ PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
 }
 
 // ========================= py4pd object ==============================
-/**
- * @brief Get the config from py4pd.cfg file
- * @param x is the py4pd object
- * @return the pointer to the py4pd object with the config
- */
+/*
+
+* @brief Get the config from py4pd.cfg file
+* @param x is the py4pd object
+* @return the pointer to the py4pd object with the config
+
+*/
 
 void set_py4pd_config(t_py *x) {
     char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->pdPatchFolder->s_name) + strlen("/py-modules/") + 1));  //
@@ -691,12 +732,14 @@ void set_py4pd_config(t_py *x) {
 
 // ========================= PYTHON ==============================
 
-/**
- * @brief add PureData Object to Python Module
- * @param x is the py4pd object
- * @param capsule is the PyObject (capsule)
- * @return the pointer to the py capsule
- */
+/*
+
+* @brief add PureData Object to Python Module
+* @param x is the py4pd object
+* @param capsule is the PyObject (capsule)
+* @return the pointer to the py capsule
+
+*/
 
 PyObject *py4pd_add_pd_object(t_py *x) {
     PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
@@ -720,16 +763,24 @@ PyObject *py4pd_add_pd_object(t_py *x) {
 
 
 // ========================= PIP ==============================
-/**
- * @brief install a python package
- * @param x is the py4pd object
- * @param package is the name of the package
- * @return 0 if success, 1 if error
- */
+/*
+
+* @brief install a python package
+* @param x is the py4pd object
+* @param package is the name of the package
+* @return 0 if success, 1 if error
+
+*/
 
 // ========================= PNG ==============================
 
-// ntohl is one function that is not available on Windows, so we need to define it
+/* 
+
+* @brief get the size of a png file
+* @param pngfile is the path to the png file
+* @return the size of the png file
+
+*/
 
 uint32_t py4pd_ntohl(uint32_t netlong){ // ntohl exists on windows but not on mac
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
@@ -742,59 +793,3 @@ uint32_t py4pd_ntohl(uint32_t netlong){ // ntohl exists on windows but not on ma
 #endif
 }
 
-
-//
-// int get_png_size(const char *pngfile){
-//     FILE *file = fopen(pngfile, "rb");
-//
-//     uint8_t header[8];
-//     if (fread(header, 1, sizeof(header), file) != sizeof(header)) {
-//         printf("Failed to read PNG header\n");
-//         fclose(file);
-//         return 1;
-//     }
-//
-//     if (png_sig_cmp(header, 0, sizeof(header)) != 0) {
-//         printf("File is not a PNG\n");
-//         fclose(file);
-//         return 1;
-//     }
-//
-//     uint32_t length;
-//     if (fread(&length, sizeof(length), 1, file) != 1) {
-//         printf("Failed to read chunk length\n");
-//         fclose(file);
-//         return 1;
-//     }
-//     length = ntohl(length);
-//
-//     uint8_t chunk_type[5];
-//     if (fread(chunk_type, 1, sizeof(chunk_type), file) != sizeof(chunk_type)) {
-//         printf("Failed to read chunk type\n");
-//         fclose(file);
-//         return 1;
-//     }
-//     chunk_type[sizeof(chunk_type) - 1] = '\0';
-//
-//     if (strcmp((char*)chunk_type, "IHDR") != 0) {
-//         printf("First chunk is not IHDR\n");
-//         fclose(file);
-//         return 1;
-//     }
-//
-//     uint32_t width, height;
-//     if (fread(&width, sizeof(width), 1, file) != 1 ||
-//         fread(&height, sizeof(height), 1, file) != 1) {
-//         printf("Failed to read PNG dimensions\n");
-//         fclose(file);
-//         return 1;
-//     }
-//     width = ntohl(width);
-//     height = ntohl(height);
-//
-//     post("Width: %u, Height: %u\n", width, height);
-//
-//     fclose(file);
-//
-//     return 0;
-// }

@@ -520,7 +520,7 @@ PyObject *pdtempfolder(PyObject *self, PyObject *args) {
         post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
         return NULL;
     }
-    py4pd_tempfolder(py4pd);
+    createPy4pdTempFolder(py4pd);
     return PyUnicode_FromString(py4pd->tempPath->s_name);
 }
 
