@@ -174,16 +174,14 @@ void py4pdInlets_proxy_list(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
 void py_bang(t_py *x){
     // check if number of args is 0
     if (x->py_arg_numbers != 0){
-        pd_error(x, "[py4pd] Python Objects just accept bangs when the Python Function has no arguments.");
-        return;
+        post("This is not recommended when using Python functions with arguments");
     }
     PyObject *objectCapsule = py4pd_add_pd_object(x);
     if (objectCapsule == NULL){
         pd_error(x, "[py4pd] Failed to add object to Python");
         return;
     }
-    PyObject *pArgs = PyTuple_New(0);
-    PyObject *pValue = PyObject_CallObject(x->function, pArgs);
+    PyObject *pValue = PyObject_CallObject(x->function, x->argsDict);
     // TODO: revisar, error quando pValue is null and we add a new object
     if (pValue != NULL) { 
         py4pd_convert_to_pd(x, pValue); 
@@ -425,6 +423,7 @@ t_int *library_AudioIN_perform(t_int *w) {
     t_py *x = (t_py *)(w[1]);  // this is the object itself
     t_sample *audioIn = (t_sample *)(w[2]);  // this is the input vector (the sound)
     int n = (int)(w[3]);
+    x->vectorSize = n;
 
     PyObject *pValue, *pAudio; 
     const npy_intp dims = n;
@@ -462,9 +461,8 @@ t_int *library_AudioOUT_perform(t_int *w) {
     t_py *x = (t_py *)(w[1]);  // this is the object itself
     t_sample *audioOut = (t_sample *)(w[2]);
     int n = (int)(w[3]);
+    x->vectorSize = n;
     PyObject *pValue; 
-
-    // TODO: add old capsule
 
     PyObject *objectCapsule = py4pd_add_pd_object(x);
     if (objectCapsule == NULL){
@@ -532,6 +530,7 @@ t_int *library_Audio_perform(t_int *w) {
     t_sample *audioIn = (t_sample *)(w[2]);  // this is the input vector (the sound)
     t_sample *audioOut = (t_sample *)(w[3]);
     int n = (int)(w[4]);
+    x->vectorSize = n;
     PyObject *pValue, *pAudio; 
 
     const npy_intp dims = n;

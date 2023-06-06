@@ -1,46 +1,49 @@
 # Python Users
 
-If you're using Python and PureData together, you can use the pd module within the py4pd package to exchange data, set configurations, and inform users of errors, among other things. This module is embedded in the py4pd code and is only accessible within the PureData environment. It's similar to how Google Collab uses modules like google.collab.drive and google.collab.widgets.
-
-For instance, if you want to write to a PureData array, you can use the pd.tabwrite method. This method takes in the array name, a list or a numpy.array, and a resize keyword (`resize=`) to specify whether or not to resize the table.
-
-``` py
-import pd
-from random import randint
-
-def pd_tabwrite():
-    "It writes data on the pd.tabwrite array."
-    randomNumbers = []
-    tablen = randint(10, 200)
-    i = 0
-    while i < tablen:
-        # gerar aleatoric number between -1 and 1
-        randomNumbers.append(randint(-100, 100) / 100)
-        i += 1
-    pd.tabwrite("pd.tabwrite", randomNumbers, resize=True) # (1)!
-
-```
-
-1.  There should be an array called `pd.tabwrite` in Patch.
-
-This will write the list `randomNumbers` in the `pd.tabwrite` table in PureData. If the table does not exist it will give an error, like what happens in the `tabwrite` object.
+If you're using Python and PureData together, you can use the pd module within the py4pd package to exchange data, set configurations, and inform users of errors, among other things. This module is embedded in the `py4pd` code and is only accessible within the `py4pd` environment. It's similar to how Google Collab uses modules like `google.collab.drive` and `google.collab.widgets`. In the next section I present all the methods that are embbeded.
 
 -------------------------------------- 
-## <h2 style="text-align:center"> **pd Methods** </h2>
+## <h2 style="text-align:center"> **Embbeded Module with `py4pd`** </h2>
 --------------------------------------
 ### <h3 style="text-align:center"> **Write PureData Objects** </h3>
 
 
 #### <h4 style="text-align:center"> `pd.addobject` </h4>
 
-For Python users it is very simple to create new objects for PureData. For that, you define you Python Function and add it as an object using `pd.addobject`.
+You can create your own objects with Python. For that, you define the Python Function and add it as an object using `#!python pd.addobject()`.
 
-!!! danger "Breaking Changes"
+??? danger "Breaking Changes"
 	I had change how `pd.addobject` work from version `0.6` to version `0.7`. Now, me use the function and the Pure Data object. Instead of use this, `pd.addobject("mysumObject", "NORMAL", "myNewPdObjects", "mysumObject")` we use this `pd.addobject(mysumObject, "mysumObject")`.
 
+##### <h5 style="text-align:center"> Parameters </h5> 
+
+| Parameters     | Type | Description                   | 
+| :-----------: | :----: | :------------------------------: |
+| `arg1`   | `Python Function` | Function that will be executed by the object.  |
+| `arg2`   | `String` | String to create the object. |
 
 
-See this code:
+##### <h5 style="text-align:center"> Keywords </h5> 
+
+
+| Keyword     | Type | Description                   | 
+| :-----------: | :----: | :------------------------------: |
+| `objtype`   | `pd` | The type of the object: `pd.VIS`, `pd.AUDIO`, `pd.AUDIOIN`, or `pd.AUDIOOUT`. Hiding this option will create a normal object.  |
+| `figsize`   | `Tuple` | Sets the pixel size of the object. Example: `figsize=(400, 200)` creates an object with a width of 400 and height of 200. |
+| `pyout`    | `Boolean` | Determines whether the output will be in PureData data types or Python. If set to Python, it cannot be used by PureData. |
+| `no_outlet`    | `Boolean` | Creates an object with no outlets if set to `True`. |
+| `added2pd_info`    | `Boolean` | Prints the message `"[py4pd]: Object {objectName} added to PureData"` when set to `True`. |
+
+
+##### <h5 style="text-align:center"> Example </h5>
+
+``` python
+
+pd.addobject(myFunction, "mypyobj", 
+            objtype=pd.VIS, figsize=(400, 200), 
+            pyout=True, no_outlet=False, added2pd_info=False)
+
+```
 
 ``` py
 
@@ -61,7 +64,7 @@ def py4pdLoadObjects():
 
 ```
 
-Here we add the function `mysumObject` in PureData enviroment. For more infos read the [Researchers](https://www.charlesneimog.com/py4pd/researchers/) page.
+Here we add the function `mysumObject` in PureData enviroment. For more infos read the [Python Objects](https://www.charlesneimog.com/py4pd/researchers/) page.
 
 <p align="center">
     <img src="../examples/createobj/mynewpdobject.png" width="50%"</img>
@@ -71,11 +74,27 @@ Here we add the function `mysumObject` in PureData enviroment. For more infos re
 ### <h3 style="text-align:center"> **Exchanging Data** </h3>
 
 These are the methods used to send data from Python to PureData. The inverse path is done mainly with `run` and `key` messages. 
-
 <br>
+--------------------------------------
 #### <h4 style="text-align:center"> `pd.out` </h4>
 
-`#!python pd.out()` allows you to output data to PureData without needing to wait for the Python function to finish executing. This is different from returning data to PureData using the `return` statement, which requires the function to complete before sending data. For example, consider the following function:
+`#!python pd.out()` allows you to output data to PureData without needing to wait for the Python function to finish executing. This is different from returning data to PureData using the `#!python return` statement, which requires the function to complete before sending data. 
+
+##### <h5 style="text-align:center"> Parameters </h5> 
+
+| Parameters     | Type | Description                   | 
+| :-----------: | :----: | :------------------------------: |
+| `arg1`   | `Python Object` | Python thing that will be outputed. |
+
+##### <h5 style="text-align:center"> Keywords </h5> 
+
+| Parameters     | Type | Description                   | 
+| :-----------: | :----: | :------------------------------: |
+| `symbol`   | `string` | It prepend the string in the output, can be used with `route` object. |
+
+##### <h5 style="text-align:center"> Example </h5>
+
+For example, consider the following function:
 
 ``` py
 import pd
@@ -83,78 +102,27 @@ import pd
 
 def example_pdout():
     for x in range(10):
-    	pd.out(x)
-    return x
-```
-When you use a loop in Python, you can use the `pd` module's `out` method to output values, similar to what you can do with `else/iterate` or `cyclone/zl iter 1`. This is useful for sending out additional information. For instance, if you want to use the Partial Tracking feature provided by the Python package `loristrck`, you can use `pd.out` to output information about the frequency, amplitude, and phase, and then save it to a `cyclone/coll` using time as a trigger.
-
-``` py
-
-import pd
-import loristrck
-
-
-def lorisAnalisys(audiofile, parcialnumber):
-    audiopathname = pd.home() + '/' + audiofile
-    samples, sr = loristrck.util.sndreadmono(audiopathname)
-    partials = loristrck.analyze(samples, sr, resolution=30, windowsize=40, 
-                      hoptime=1/120)
-    selected, noise = loristrck.util.select(partials, mindur=0.02, maxfreq=12000, 
-                            minamp=-60,)
-
-    parcialnumber = int(parcialnumber) # (1)!
-    pdPartial = []
-    for partial in selected:
-        sec2ms = int(partial[parcialnumber][0] * 1000) # time
-        try:
-            pdPartial.append(sec2ms) 
-            pdPartial.append(partial[parcialnumber][1]) # frequency
-            pdPartial.append(partial[parcialnumber][2]) # amplitude
-            pdPartial.append(partial[parcialnumber][3]) # prhase
-            pd.out(pdPartial) # output data to save it in the cyclone/coll
-            pdPartial = []
-        except:
-            pd.out([sec2ms, 0, 0, 0]) # if something go wrong
-    
-	pd.print("Done") # Inform the user that the process is finished
+    	pd.out(x, symbol="loop")
+    pd.out("fim", symbol="end")
 
 ```
-
-1.  PureData just have floats, in indices, we need to use `int()` to convert the `float` received to an `int`.
-
-<p align="center">
-  <img src="../assets/EXAMPLE-pd.out.png" alt="pd.out Example" width="50%">
-
-<p align="center"><a href="../assets/EXAMPLE-pd.out.zip">Download</a></p>
 
 </p>
-
-
-??? tip "Using route object with py4pd"
-	If you want to `route` data in your patch, you can use the `symbol` keyword. This will add one keyword of your choice in the begin of the output message. For example:
-
-	``` py
-	import pd
-
-	def example_pdout():
-		for x in range(10):
-			pd.out(x, symbol='myloop')
-		pd.print('======================================')
-		for x in range(10):
-			pd.out(x, symbol='myloop2')
-		return None
-	```
-	This two different loop can be routed using `route myloop myloop2`.
-	<p align="center">
-	  <img src="../examples/pd.out/pd.out.png" alt="pd.out Example" width="70%">
-	</p>
-
 
 ---------------------------
 
 #### <h4 style="text-align:center"> `pd.send` </h4>
 
 You can use `pd.send` to send data to a receive object in your PureData patch. This method takes in two arguments: the name of the `receive` object and the value you want to send. For instance, suppose you have a receive object named "myReceiver" in your patch. To send the value 42 to this object, you could use `pd.send("myReceiver", 42)`.
+
+##### <h5 style="text-align:center"> Parameters </h5> 
+
+| Parameters     | Type | Description                   | 
+| :-----------: | :----: | :------------------------------: |
+| `arg1`   | `string` | Name of the receive object. |
+| `arg2`   | `Python Object` | Data that will be sent. |
+
+##### <h5 style="text-align:center"> Example </h5> 
 
 ``` python
 import pd
@@ -171,47 +139,70 @@ def pd_send():
 
 In this example, it will send to `py4pdreceiver` the message `"hello from python!"`, then the number `1`, then the list `[1, 2, 3, 4, 5]`. 
 
-Let's say that you are using a lot of synths and have some color way to organize some combination of sounds(...). 
-
 -------------------------------------- 
 #### <h4 style="text-align:center"> `pd.tabwrite` </h4>
 
-`pd.tabwrite` is a method that is essentially a copy of the `tabwrite` object in PureData. With this method, you can write audio or any numerical data to a PureData array.
+`pd.tabwrite` is a method that is essentially a copy of the `tabwrite` object in PureData. With this method, you can write audio or any data supported to PureData array.
 
-Arrays are a fundamental data structure in PureData, and they can be used to store a wide range of information, such as audio signals, MIDI data, and control values. With `pd.tabwrite`, you can easily write data to an array from within your Python code.
+##### <h5 style="text-align:center"> Parameters </h5> 
 
-To use `pd.tabwrite`, you first need to specify the name of the array you want to write to, followed by the data you want to write. This data can be either a `list` or a `numpy.array`. Additionally, you can use the optional `resize` keyword argument to resize the array if necessary.
+| Parameters     | Type | Description                   | 
+| :-----------: | :----: | :------------------------------: |
+| `arg1`   | `string` | Name of the table. |
+| `arg2`   | `Python Object` | List or array (numpy) of numbers. |
 
-Overall, `pd.tabwrite` provides a convenient way to write data to PureData arrays directly from your Python code.
+##### <h5 style="text-align:center"> Keywords </h5> 
 
--------------------------------------- 
-#### <h4 style="text-align:center"> `pd.tabread` </h4>
+| Keyword     | Type | Description                   | 
+| :-----------: | :----: | :------------------------------: |
+| `rezise`   | `Boolean` | Set if the table will be resized or not. |
 
-`pd.tabread` is a method that is essentially a copy of the `tabread` object in PureData. With this method, you can read data from a PureData array directly from within your Python code.
+##### <h5 style="text-align:center"> Example </h5> 
 
-To use `pd.tabread`, you need to specify the name of the array you want to read from. This will return a `list` or a `numpy.array` containing the data you read.
+``` python
 
-It's worth noting that `pd.tabread` requires the existence of one `array` inside the PureData Patches. If you try to read from an array that hasn't been written yet, this object will cause an error.
-
-Overall, `pd.tabread` provides a convenient way to read data from PureData arrays directly from your Python code.
-
-
-``` py
-import pd
-
-def readFromArray(arrayname):
-    valuesFromArray = pd.tabread("py4pdArray")
-    return values
-
+  pd.tabwrite("table2test", randomNumbers, resize=True)
+  
 ```
 
 
 -------------------------------------- 
+#### <h4 style="text-align:center"> `pd.tabread` </h4>
+
+`pd.tabread` is a method that is essentially a copy of the `tabread` object in PureData. With this method, you can read data from a PureData array directly from within your Python code. It will return one Numpy Array with the data of the table.
+
+##### <h5 style="text-align:center"> Parameters </h5> 
+
+
+| Parameters | Type    | Description                  |
+| :--------: | :-----: | :--------------------------: |
+|   `arg1`   | `string`|    Name of the table.        |
+
+
+
+##### <h5 style="text-align:center"> Example </h5> 
+
+``` py
+import pd
+
+def readFromArray():
+    valuesFromArray = pd.tabread("py4pdArray")
+    return valuesFromArray # This code don't make any sense :), but you understand it.
+
+```
+
+-------------------------------------- 
 #### <h4 style="text-align:center"> `pd.getkey` </h4>
 
-With `pd.getkey`, you can retrieve the value of a specific key that has been set by the user in a `key` message. For example, if the user sends a key message to `py4pd` with the name "fft-size" and a value of 1024, you can retrieve this value in your Python code using `pd.getkey("fft-size")`. If the user hasn't defined a particular key, `pd.getkey` will return `None`, allowing you to set a default value if necessary.
+With `pd.getkey`, you can retrieve the value of a specific key that has been set by the user in a `key` message to `py4pd` objects. For example, if the user sends a key message to `py4pd` with the name "fft-size" and a value of 1024, you can retrieve this value in your Python code using `pd.getkey("fft-size")`. If the user hasn't defined a particular key, `pd.getkey` will return `None`, allowing you to set a default value if necessary.
 
-By using `pd.getkey` in combination with the key message, you can easily specify and retrieve different audio parameters in your py4pd functions, for example.
+##### <h5 style="text-align:center"> Parameters </h5> 
+
+| Parameters     | Type | Description                   | 
+| :-----------: | :----: | :------------------------------: |
+| `arg1`   | `string` | Name of the key. |
+
+##### <h5 style="text-align:center"> Example </h5> 
 
 ``` py
 import pd
@@ -234,14 +225,27 @@ def someAudioFunction(audio): # (1)!
 ### <h3 style="text-align:center"> **Info for the user** </h3>
 
 There are two messages used to print info in the PureData console, they are `pd.print` and `pd.error`.
-
 <br>
 
+------------------
 #### <h4 style="text-align:center"> `pd.print` </h4>
 
-When you want to inform the user (or yourself) of important information in PureData, you should use the `pd.print` method. This is particularly useful when debugging your Python code from within PureData. It's important to note that regular print statements will not work in PureData, so you must use `pd.print` instead.
+The ordinary function `#!python print()` will not work in `py4pd` (unless that you open PureData from the terminal). So if you want to debug or print some info from the PureData console you need to use `#!python pd.print`. 
 
-You can use the keyword `show_prefix` to indicates if `[Python]` will be printed or not. For example:
+
+##### <h5 style="text-align:center"> Parameters </h5> 
+
+| Parameters     | Type | Description                   | 
+| :-----------: | :----: | :------------------------------: |
+| `arg1`   | `Python Object` | Thing to print |
+
+##### <h5 style="text-align:center"> Keyword </h5> 
+
+| Parameters     | Type | Description                   | 
+| :-----------: | :----: | :------------------------------: |
+| `show_prefix`   | `Python Object` | When `False` it remove the string "[Python]" from the begin of the message | 
+
+##### <h5 style="text-align:center"> Example </h5> 
 
 ``` py
 import pd
@@ -255,11 +259,35 @@ pd.print("ok", show_prefix=False) # It prints "ok".
 
 #### <h4 style="text-align:center"> `pd.error` </h4>
 
-If you want to inform the user of errors in your Python code when working with PureData, you should use the `pd.error` method. 
+If you want to inform errors in PureData console use `pd.error` method. 
 
-The main difference between `pd.print` and `pd.error` is that info printed with `pd.error` are displayed in red text in the console, making them more noticeable and easy to identify. 
 
-Overall, using pd.error can help you effectively communicate errors to the user and improve the debugging process when working with Python and PureData. 
+##### <h5 style="text-align:center"> Parameters </h5> 
+
+| Parameters     | Type | Description                   | 
+| :-----------: | :----: | :------------------------------: |
+| `arg1`   | `string` | Message of the error. |
+
+
+##### <h5 style="text-align:center"> Example </h5> 
+
+``` python
+import pd
+
+def main(arg1):
+    if isinstance(arg1, list):
+        for i in range(1, 10):
+            
+        
+    
+    except:
+        pd.error("This is a not valid operation")
+
+
+```
+
+
+
 
 -------------------------------------- 
 

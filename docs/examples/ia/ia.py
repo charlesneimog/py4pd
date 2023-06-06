@@ -21,5 +21,6 @@ def renderAudio_nn(audio, model):
 
 
 
-
+def py4pdLoadObjects():
+    pd.addobject(renderAudio_nn, "py4pd-nn")
 

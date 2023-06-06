@@ -69,6 +69,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int               use_NumpyArray; // flag to check if is to use numpy array in audioInput
     t_int               numpyImported; // flag to check if numpy was imported
     t_float             py4pdAudio; // audio
+    int                 vectorSize; // vector size
 
     // == PICTURE AND SCORE
     int                 x_zoom;
