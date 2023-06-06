@@ -1,6 +1,10 @@
 body {
   margin: 0;
 }
+table {
+  margin-left: 20%;
+  margin-right: auto;
+}
 
 
 svg, img {

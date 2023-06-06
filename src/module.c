@@ -3,12 +3,15 @@
 #include "pic.h"  
 #include "ext-libraries.h"
 
+#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
+#include <numpy/arrayobject.h>
+
 
 // ======================================
 // ======== py4pd embbeded module =======
 // ======================================
 
-t_py *get_py4pd_object(void){
+static t_py *get_py4pd_object(void){
     PyObject *main_module = PyImport_ImportModule("__main__");
     PyObject *py4pd_capsule = PyObject_GetAttrString(main_module, "py4pd");
     if (py4pd_capsule == NULL){
@@ -432,12 +435,13 @@ PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords) {
 }
 
 // =================================
-PyObject *pdtabread(PyObject *self, PyObject *args) {
+PyObject *pdtabread(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     int vecsize;
     t_garray *pdarray;
     t_word *vec;
     char *string;
+    int numpy;
 
     // ================================
     PyObject *pd_module = PyImport_ImportModule("__main__");
@@ -445,23 +449,78 @@ PyObject *pdtabread(PyObject *self, PyObject *args) {
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
     // ================================
 
+    if (keywords == NULL) {
+        numpy = 0;
+        PyErr_Clear();
+    } 
+    else{
+        numpy = PyDict_Contains(keywords, PyUnicode_FromString("numpy"));
+        if (numpy == -1) {
+            pd_error(NULL, "[Python] Check the keyword arguments.");
+            return NULL;
+        } 
+        else if (numpy == 1) {
+            PyObject *numpy_value = PyDict_GetItemString(keywords, "numpy");
+            if (numpy_value == Py_True) {
+                numpy = 1;
+                int numpyArrayImported = _import_array();
+                if (numpyArrayImported == 0) {
+                    py4pd->numpyImported = 1;
+                }
+                else{
+                    py4pd->numpyImported = 0;
+                    pd_error(py4pd, "[py4pd] Not possible to import numpy array");
+                    return NULL;
+                }
+            } 
+            else if (numpy_value == Py_False) {
+                numpy = 0;
+            } 
+            else {
+                numpy = 0;
+            }
+        } 
+        else {
+            numpy = 0;
+        }
+    }
+
+
+
     if (PyArg_ParseTuple(args, "s", &string)) {
         t_symbol *pd_symbol = gensym(string);
         if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class))) {
             pd_error(py4pd, "[Python] Array %s not found.", string);
             PyErr_SetString(PyExc_TypeError,
                             "[Python] pd.tabread: array not found");
-        } else {
+        } 
+        else {
             int i;
-            garray_getfloatwords(pdarray, &vecsize, &vec);
-            PyObject *list = PyList_New(vecsize);
-            for (i = 0; i < vecsize; i++) {
-                PyList_SetItem(list, i, PyFloat_FromDouble(vec[i].w_float));
+            if (numpy == 0) {
+                garray_getfloatwords(pdarray, &vecsize, &vec);
+                PyObject *list = PyList_New(vecsize);
+                for (i = 0; i < vecsize; i++) {
+                    PyList_SetItem(list, i, PyFloat_FromDouble(vec[i].w_float));
+                }
+                PyErr_Clear();
+                return list;
             }
-            PyErr_Clear();
-            return list;
+            else if (numpy == 1) {
+                garray_getfloatwords(pdarray, &vecsize, &vec);
+                const npy_intp dims = vecsize;
+                // send double float array to numpy
+                PyObject *array = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, vec);
+                PyErr_Clear();
+                return array;
+
+            }
+            else {
+                pd_error(py4pd, "[Python] Check the keyword arguments.");
+                return NULL;
+            }
         }
-    } else {
+    } 
+    else {
         PyErr_SetString(PyExc_TypeError,
                         "[Python] pd.tabread: wrong arguments");
         return NULL;
@@ -637,7 +696,11 @@ static PyObject* pdsamplerate(PyObject* self, PyObject* args) {
 PyObject *pdveczise(PyObject *self, PyObject *args) {
     (void)self;
     (void)args;
-    t_sample vector = sys_getblksize();
+
+    t_py *py4pd = get_py4pd_object();
+    t_sample vector;
+    vector = py4pd->vectorSize;
+
     return PyLong_FromLong(vector);
 }
 
@@ -812,7 +875,7 @@ PyMethodDef PdMethods[] = {
     {"print", (PyCFunction)pdprint, METH_VARARGS | METH_KEYWORDS,  "Print informations in PureData Console"},
     {"error", pderror, METH_VARARGS, "Print informations in error format (red) in PureData Console"},
     {"tabwrite", (PyCFunction)pdtabwrite, METH_VARARGS | METH_KEYWORDS, "Write data to PureData tables/arrays"},
-    {"tabread", pdtabread, METH_VARARGS, "Read data from PureData tables/arrays"},
+    {"tabread", (PyCFunction)pdtabread, METH_VARARGS | METH_KEYWORDS, "Read data from PureData tables/arrays"},
     
     // Pic
     {"show", pdshowimage, METH_VARARGS, "Show image in PureData, it must be .gif, .bmp, .ppm"},
