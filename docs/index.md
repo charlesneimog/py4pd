@@ -19,7 +19,7 @@ The main focus of `py4pd` is to allow the use of Python for writing PureData obj
 
 Here I will present some algorithm tools that I am using `py4pd`. You can submit your own examples using [Github](https://github.com/charlesneimog/py4pd/discussions/categories/show-and-tell).
 
-### <h4 align="center"> **General purposes** </h4>
+### <h3 align="center"> **General purposes** </h3>
 
 === "Score In PureData"
 
@@ -104,11 +104,7 @@ Here I will present some algorithm tools that I am using `py4pd`. You can submit
 
 ----------
 
-### <h4 align="center"> **Pieces** </h4>
-
-<p align="center">
-    I am one composer, and in this section I present some of my works where I use `py4pd`.
-</p>
+### <h3 align="center"> **Pieces** </h3>
 
 <hr>
 
