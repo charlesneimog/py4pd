@@ -20,9 +20,10 @@ theme:
     - toc.integrate
     - toc.follow
     - navigation.instant
-    #- header.autohide
+    - header.autohide
     - attr_list
     - md_in_html
+    - content.tabs.link
   
   palette:
     - media: "(prefers-color-scheme: light)"
@@ -41,7 +42,11 @@ theme:
         name: Switch to light mode
   
 markdown_extensions:
+
     - pymdownx.superfences
+    - pymdownx.tabbed:
+        alternate_style: true 
+
     - pymdownx.extra
     - pymdownx.details
     - pymdownx.inlinehilite
@@ -52,21 +57,21 @@ markdown_extensions:
     - attr_list
     - md_in_html
     - admonition
+
     - pymdownx.details
-    
+
 
 repo_url: https://github.com/charlesneimog/py4pd
 
 extra_css:
   - extra/extra.css
-  
+   
 nav:
     - index.md 
     - setup.md
     - puredata-users.md
     - python-users.md
     - objects.md
-    #- examples.md
 
 extra:
   social:
