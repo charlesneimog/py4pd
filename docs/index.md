@@ -2,12 +2,11 @@
 
 ## <h2 align="center"> **What is py4pd?** </h2>
 
+<p align="center"> Welcome to the py4pd documentation! </p>
 
-Welcome to the py4pd documentation!
+----------
 
-`py4pd` integrates [Python](https://www.python.org/) as an object in [PureData](https://puredata.info/). It provides a simple way to use Python's modules in PureData.
-
-The main focus of `py4pd` is to allow the use of Python for writing PureData objects, bringing the possibilities of OpenMusic and OM-Sharp into the real-time environment. This opens up a world of artistic possibilities (more easy and fast that with `C` or `C++`), including visualizing scores within PureData, utilizing AI capabilities, leveraging various audio analysis tools, working with SVG/draws as scores, and much more.
+`py4pd` integrates [Python](https://www.python.org/) as an object in [PureData](https://puredata.info/) real-time environment. It combines OpenMusic and OM-Sharp benefits. It offers artistic opportunities (easier and faster than `C` or `C++`), including score visualization, AI integration, audio analysis tools, SVG/draw score handling, and more.
 
 !!! info "How to install?"
 
