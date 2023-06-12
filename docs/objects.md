@@ -1,4 +1,4 @@
-# Python as Object 
+# Pd Objects with Python
 
 With the `py4pd` it is possible to create new PureData objects using Python. For that, you need to declare your Python functions and then create a function called `py4pdLoadObjects`. Inside this function we use `pd.addobject` (check the [docs](https://www.charlesneimog.com/py4pd/python-users/#pdaddobject)) to add all functions that you want to use as objects.
 
