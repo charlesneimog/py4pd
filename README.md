@@ -25,8 +25,8 @@ Go to [Docs](https://www.charlesneimog.com/py4pd) to see examples.
 2. ⚠️ For now, you must install Python ⚠️.
 
 * **Linux**: `sudo dnf install python3.10` or `sudo apt install python3.10`;
-* **MacOS**: Go to https://www.python.org/downloads/release/python-31011/ and install normally.
-* **Windows**: Go to https://www.python.org/downloads/release/python-31011/ and install normally.
+* **MacOS**: Go to https://www.python.org/downloads/release/python-31012/ and install normally.
+* **Windows**: Go to https://www.python.org/downloads/release/python-31012/ and install normally.
 
 ## Wiki | Instructions for use
 
