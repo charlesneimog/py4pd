@@ -1,11 +1,27 @@
 body {
   margin: 0;
 }
-table {
-  margin-left: 20%;
-  margin-right: auto;
+
+.special-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
 }
 
+.special-table th, .special-table td {
+  border: 1px solid #e2e2e2;
+  padding: 8px;
+}
+
+.special-table th {
+  background-color: #f2f2f2;
+  text-align: center;
+  font-weight: bold;
+}
+
+.special-table td {
+  text-align: center;
+}
 
 svg, img {
   display: block;
