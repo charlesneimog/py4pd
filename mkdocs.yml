@@ -73,6 +73,7 @@ nav:
     - puredata-users.md
     - python-users.md
     - objects.md
+    - libraries.md
 
 extra:
   social:
