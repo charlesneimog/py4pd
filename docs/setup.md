@@ -21,32 +21,36 @@ We need install `py4pd` _and_ Python.
 
 ### <h3 align="center"> **Install Python** </h3>
 
-#### Linux 
+=== ":fontawesome-brands-windows: Windows"
+    
+    On `Windows` you can install Python like and ordirary software.
 
-1. Open the terminal.
-2. Run: `sudo dnf install python3.10` (Fedora) or `sudo apt install python3.10` (Ubuntu). 
+    * Go to [Python.org](https://www.python.org/downloads/release/python-31011/),
+    * Go to the bottom of the page and download: `Windows installer (64-bit)`.
+    * Install it as an ordinary program.
 
-#### MacOS 
+    !!! info "Click if you are a Windows User"
+	    I recommend mark the option `Add Python 3.10 to PATH`.	
+	    <figure markdown>
+	      	![Install py4pd](assets/installPython.jpg){ width="700" }
+	      	<figcaption>Process of install py4pd on PureData</figcaption>
+	    </figure>
+	    
+=== ":material-apple: macOS"
 
-On MacOS and Windows you can install Python like and ordirary software.
+    On `MacOS` you can install Python like and ordirary software.
 
-1. Go to [Python.org](https://www.python.org/downloads/release/python-31011/),
-2. Download the bottom of the page download: `macOS 64-bit universal2 installer`.
-3. Install it as an ordinary program.
+    * Go to [Python.org](https://www.python.org/downloads/release/python-31011/),
+    * Go to the bottom of the page and download: `macOS 64-bit universal2 installer`.
+    * Install it as an ordinary program.
+    
+    
+=== ":material-linux: Linux"
 
+    On `Linux` you can install Python like and ordirary software.
 
-#### Windows
-
-1. Go to [Python.org](https://www.python.org/downloads/release/python-31011/),
-2. Download the bottom of the page download: `Windows installer (64-bit)`.
-3. Install it as an ordinary program.
-
-??? info "Click if you are a Windows User"
-	I recommend mark the option `Add Python 3.10 to PATH`.	
-	<figure markdown>
-	  	![Install py4pd](assets/installPython.jpg){ width="700" }
-	  	<figcaption>Process of install py4pd on PureData</figcaption>
-	</figure>
+    * Open the terminal.
+    * Run: `sudo dnf install python3.10` (Fedora) or `sudo apt install python3.10` (Ubuntu). 
 	
 ---------------------
 ### <h3 align="center"> **Old versions of py4pd** </h3>
