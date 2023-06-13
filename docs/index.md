@@ -6,7 +6,7 @@
 
 ----------
 
-`py4pd` integrates [Python](https://www.python.org/) as an object in [PureData](https://puredata.info/) real-time environment. It combines OpenMusic and OM-Sharp benefits. It offers artistic opportunities (easier and faster than `C` or `C++`), including score visualization, AI integration, audio analysis tools, SVG/draw score handling, and more.
+`py4pd` integrates the power of [Python](https://www.python.org/) into the real-time environment of [PureData](https://puredata.info/), provide means for score visualization, AI integration, audio analysis tools, SVG/drawing score handling, and various other functionalities.
 
 !!! info "How to install?"
 
@@ -16,7 +16,8 @@
 
 ## <h2 align="center"> **Examples and Use Cases** </h2>
 
-Here I will present some algorithm tools that I am using `py4pd`. You can submit your own examples using [Github](https://github.com/charlesneimog/py4pd/discussions/categories/show-and-tell).
+Here is presented algorithm tools implemented with `py4pd`. Users are encouraged to contribute their own examples through [Github](https://github.com/charlesneimog/py4pd/discussions/categories/show-and-tell).
+
 
 ### <h3 align="center"> **General purposes** </h3>
 
