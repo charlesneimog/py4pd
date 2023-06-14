@@ -43,9 +43,9 @@ int parseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv){
         }
     }
     if (code->co_flags & CO_VARKEYWORDS) {
+        x->kwargs = 1;
         pd_error(x, "[%s] function use **kwargs, **kwargs are not implemented yet", x->objectName->s_name);
         return 0;
-        // TODO: IMPLEMENT **kwargs
     }
     if (code->co_argcount != 0){
         if (x->py_arg_numbers == 0) {

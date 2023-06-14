@@ -1132,7 +1132,6 @@ t_int *performAudioIN(t_int *w) {
 
     t_sample *audioIn = (t_sample *)(w[2]);  // this is the input vector (the sound)
     int n = (int)(w[3]);     
-    x->vectorSize = n;
     PyObject *ArgsTuple, *pValue, *pAudio, *pSample;
 
     if (x->function_called == 0) {
@@ -1220,7 +1219,6 @@ t_int *performAudioOUT(t_int *w) {
     t_sample *audioIn = (t_sample *)(w[2]);  // this is the input vector (the sound)
     t_sample *audioOut = (t_sample *)(w[3]);  // this is the output vector (the sound)
     int n = (int)(w[4]);     // this is the vector size (number of samples, for example 64)
-    x->vectorSize = n;
    
     PyObject *ArgsTuple, *pValue, *pAudio, *pSample;
 
@@ -1507,7 +1505,7 @@ void *py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     x->visMode = 0;
     x->editorName = NULL;
     x->pyObject = 0;
-    x->vectorSize = sys_getblksize();
+    x->vectorSize = 0;
     parsePy4pdArguments(x, c, argc, argv);  // parse arguments
     x->runmode = 0;
     x->object_number = object_count;  // save object number

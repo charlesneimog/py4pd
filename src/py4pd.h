@@ -16,7 +16,7 @@
 #endif
 
 #define PY4PD_MAJOR_VERSION 0
-#define PY4PD_MINOR_VERSION 7
+#define PY4PD_MINOR_VERSION 8
 #define PY4PD_MICRO_VERSION 0
 
 // DEFINE STANDARD IDE EDITOR
@@ -48,6 +48,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int               function_called; // flag to check if the set function was called
     t_int               py_arg_numbers; // number of arguments
     t_int               outPyPointer; // flag to check if is to output the python pointer
+    int                 kwargs;
 
     // Library
     t_int                py4pd_lib; // flag to check if is to use python library
@@ -62,6 +63,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject            *function; // function name
     PyObject            *showFunction; // function to show the function
     PyObject            *Dict; // arguments
+    PyObject            *kwargsDict; // arguments
     
     // == AUDIO AND NUMPY
     t_int               audioOutput; // flag to check if is to use audio output
@@ -154,10 +156,7 @@ extern void *py4pdFree(t_py *x);
 
 #define PY4PD_IMAGE "R0lGODlhKgAhAPAAAP///wAAACH5BAAAAAAAIf8LSW1hZ2VNYWdpY2sOZ2FtbWE9MC40NTQ1NDUALAAAAAAqACEAAAIkhI+py+0Po5y02ouz3rz7D4biSJbmiabqyrbuC8fyTNf2jTMFADs="
 
-
 extern int pipePy4pdNum;
 extern int object_count; 
-
-
 
 #endif
