@@ -23,7 +23,7 @@ theme:
     - header.autohide
     - attr_list
     - md_in_html
-    - content.tabs.link
+    
   
   palette:
     - media: "(prefers-color-scheme: light)"
@@ -72,7 +72,6 @@ nav:
     - setup.md
     - puredata-users.md
     - python-users.md
-    - objects.md
     - libraries.md
 
 extra:
