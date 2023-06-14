@@ -30,4 +30,12 @@ You can download the libraries using `deken`. To install the library search for 
         <td>Charles K. Neimog</td>
       </tr>
     </tbody>
+    <tbody>
+      <tr>
+        <td><a href="https://github.com/charlesneimog/orchidea">orchidea</a></td>
+        <td>It allows loading <a href="https://forum.ircam.fr/projects/detail/orchideasol/">Orchidea</a> samples using midi inputs.</td>
+        <td>Charles K. Neimog</td>
+      </tr>
+    </tbody>
   </table>
+  

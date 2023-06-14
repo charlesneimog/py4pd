@@ -12,7 +12,6 @@ static t_class *pyNewObject;
 static t_class *pyNewObject_AudioIn;
 static t_class *pyNewObject_AudioOut;
 static t_class *pyNewObject_Audio;
-
 static t_class *py4pdInlets_proxy_class;
 
 // ====================================================
@@ -286,6 +285,16 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         pd_error(x, "[Python] Failed to add object to Python");
         return;
     }
+
+    /*
+    if (x->kwargs == 1){
+        size_t nargsf = PyTuple_Size(x->kwargsDict);
+        pValue = PyObject_VectorcallDict(x->function, x->argsDict, nargsf, x->kwargsDict);
+    }
+    else{
+        pValue = PyObject_CallObject(x->function, x->argsDict);
+    }
+    */
     pValue = PyObject_CallObject(x->function, x->argsDict);
 
     // odd code, but solve the bug
@@ -598,14 +607,24 @@ t_int *library_Audio_perform(t_int *w) {
 
 // =====================================
 static void library_dsp(t_py *x, t_signal **sp) {
-    if (x->audioOutput == 0) {
-        dsp_add(library_AudioIN_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
-    } 
-    else if ((x->audioInput == 0) && (x->audioOutput == 1)){
-        dsp_add(library_AudioOUT_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
+    int numChannels = sp[0]->s_nchans; 
+    if (numChannels == 1){
+        // for mono signal    
+        if (x->audioOutput == 0) {
+            dsp_add(library_AudioIN_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
+        } 
+        else if ((x->audioInput == 0) && (x->audioOutput == 1)){
+            dsp_add(library_AudioOUT_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
+        }
+        else if ((x->audioInput == 1) && (x->audioOutput == 1)) {  // python output is audio
+            dsp_add(library_Audio_perform, 4, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
+        }
     }
-    else if ((x->audioInput == 1) && (x->audioOutput == 1)) {  // python output is audio
-        dsp_add(library_Audio_perform, 4, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
+    else{
+        pd_error(x, "[py4pd] The library only works with mono signals");
+
+
+
     }
 }
 
@@ -1119,6 +1138,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         class_addmethod(pyNewObject_AudioIn, (t_method)printDocs, gensym("doc"), 0, 0);
         class_addmethod(pyNewObject_AudioIn, (t_method)reloadObject, gensym("reload"), 0, 0);
         class_addmethod(pyNewObject_AudioIn, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
+        class_addmethod(pyNewObject_AudioIn, (t_method)PY4PD_zoom, gensym("kwargs"), A_CANT, 0);
         CLASS_MAINSIGNALIN(pyNewObject_AudioIn, t_py, py4pdAudio);
     }
     // AUDIOIN
@@ -1137,6 +1157,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         class_addmethod(pyNewObject_Audio, (t_method)reloadObject, gensym("reload"), 0, 0);
         class_addmethod(pyNewObject_Audio, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
         CLASS_MAINSIGNALIN(pyNewObject_Audio, t_py, py4pdAudio);
+        // class_setdspflags(pyNewObject_Audio, CLASS_MULTICHANNEL);
     }
     else{
         // set py error

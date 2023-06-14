@@ -900,6 +900,7 @@ PyMethodDef PdMethods[] = {
 
     // Others
     {"getobjpointer", getobjpointer, METH_NOARGS, "Get PureData Object Pointer"},
+    {"getstrpointer", getobjpointer, METH_NOARGS, "Get PureData Object Pointer"},
     {"setglobalvar", setglobalvar, METH_VARARGS, "It sets a global variable for the Object, it is not clear after the execution of the function"},
     {"getglobalvar", (PyCFunction)getglobalvar, METH_VARARGS | METH_KEYWORDS, "It gets a global variable for the Object, it is not clear after the execution of the function"},
 
