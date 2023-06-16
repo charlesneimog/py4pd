@@ -112,7 +112,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 
 
     t_symbol            *function_name; // function name
-    t_symbol            *script_name; // script name
+    t_symbol            *script_name; // script name or pathname
     t_outlet            *out1; // outlet 1.
     t_inlet             *in1; // intlet 1
 }t_py;

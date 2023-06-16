@@ -1,4 +1,5 @@
 #include "ext-libraries.h"
+#include "m_pd.h"
 #include "utils.h"
 #include "pic.h"
 #include "py4pd.h"
@@ -15,10 +16,21 @@ static t_class *pyNewObject_Audio;
 static t_class *py4pdInlets_proxy_class;
 
 // ====================================================
-void create_pyObject_inlets(t_py *x, int argc, t_atom *argv) {
+void create_pyObject_inlets(PyObject *function, t_py *x, int argc, t_atom *argv) {
     t_pd **py4pdInlet_proxies;
     int i;
     int pyFuncArgs = x->py_arg_numbers - 1;
+
+    PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(function);
+
+    // get default args in PyObject (for example: def func(a, b=1, c=2)) 
+    PyObject *defaults = PyFunction_GetDefaults(function);
+    PyObject *kwdefaults = PyFunction_GetKwDefaults(function);
+
+
+
+    x->kwargsDict = PyDict_New();
+
     if (pyFuncArgs != 0){
         py4pdInlet_proxies = (t_pd **)getbytes((pyFuncArgs + 1) * sizeof(*py4pdInlet_proxies));
 
@@ -34,7 +46,23 @@ void create_pyObject_inlets(t_py *x, int argc, t_atom *argv) {
         // ===========================
         int argNumbers = x->py_arg_numbers;
         x->argsDict = PyTuple_New(argNumbers);
+
+        // post("===================");
+        PyObject *argName = PyCode_GetVarnames(code);
         for (i = 0; i < argNumbers; i++) {
+
+            PyObject *argNameString = PyUnicode_AsUTF8String(PyTuple_GetItem(argName, i));
+            // post("argNameString: %s", PyBytes_AsString(argNameString));
+            
+            // see if the arg have default value
+            if (defaults != NULL && PyTuple_Size(defaults) > 0){
+                PyObject *defaultValue = PyTuple_GetItem(defaults, i);
+                if (defaultValue != NULL){
+                    post("defaultValue: %s for %s var", PyBytes_AsString(PyObject_Str(defaultValue)), PyBytes_AsString(argNameString));
+                }
+            }
+
+
             if (i <= argc) {
                 if (argv[i].a_type == A_FLOAT) {
                     char pd_atom[64];
@@ -69,6 +97,71 @@ void create_pyObject_inlets(t_py *x, int argc, t_atom *argv) {
         x->argsDict = PyTuple_New(1);
         PyTuple_SetItem(x->argsDict, 0, Py_None);
     }
+}
+
+
+// =====================================
+void setKwargs(t_py *x, t_symbol *s, int ac, t_atom *av){
+    t_symbol *key;
+    (void)s;
+    if (av[0].a_type != A_SYMBOL){
+        pd_error(x, "The first argument of the message 'kwargs' must be a symbol");
+        return;
+    }
+    key = av[0].a_w.w_symbol;
+
+    if (ac == 1){
+        if (av[1].a_type == A_FLOAT){
+            int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
+            if (isInt){
+                PyDict_SetItemString(x->kwargsDict, key->s_name, PyLong_FromLong(av[1].a_w.w_float));
+            }
+            else{
+                PyDict_SetItemString(x->kwargsDict, key->s_name, PyFloat_FromDouble(av[1].a_w.w_float));
+            }
+        }
+        else if (av[1].a_type == A_SYMBOL){
+            if (av[1].a_w.w_symbol == gensym("PyObject")){
+                if (av[2].a_type == A_POINTER){
+                    PyObject *pValue;
+                    pValue = pointer_to_pyobject(av[2].a_w.w_gpointer);
+                    PyDict_SetItemString(x->kwargsDict, key->s_name, pValue);
+                }
+            }
+            else{
+                PyDict_SetItemString(x->kwargsDict, key->s_name, PyUnicode_FromString(av[1].a_w.w_symbol->s_name));
+            }
+        }
+        else{
+            pd_error(x, "The second argument of the message 'kwargs' must be a symbol or a float");
+            return;
+        }
+    }
+    else if (ac > 1){
+        PyObject *pyInletValue = PyList_New(ac - 1);
+        for (int i = 0; i < ac; i++){
+            if (av[i].a_type == A_FLOAT){ 
+                int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
+                if (isInt){
+                    PyList_SetItem(pyInletValue, i, PyLong_FromLong(av[i].a_w.w_float));
+                }
+                else{
+                    PyList_SetItem(pyInletValue, i, PyFloat_FromDouble(av[i].a_w.w_float));
+                }
+            }
+            else if (av[i].a_type == A_SYMBOL){
+                PyList_SetItem(pyInletValue, i, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
+            }
+        }
+        PyDict_SetItemString(x->kwargsDict, key->s_name, pyInletValue);
+    }
+    else{
+        pd_error(x, "The message 'kwargs' must have at least 2 arguments");
+        return;
+    }
+
+
+
 }
 
 // =====================================
@@ -286,16 +379,12 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         return;
     }
 
-    /*
     if (x->kwargs == 1){
-        size_t nargsf = PyTuple_Size(x->kwargsDict);
-        pValue = PyObject_VectorcallDict(x->function, x->argsDict, nargsf, x->kwargsDict);
+        pValue = PyObject_Call(x->function, x->argsDict, x->kwargsDict);
     }
     else{
         pValue = PyObject_CallObject(x->function, x->argsDict);
     }
-    */
-    pValue = PyObject_CallObject(x->function, x->argsDict);
 
     // odd code, but solve the bug
     if (prev_obj_exists == 1 && pValue != NULL) {
@@ -388,43 +477,49 @@ void py_Object(t_py *x, t_atom *argv){
 
 // =====================================
 void reloadObject(t_py *x){
-    // reload script_name of *x (script_name is a t_symbol for path of script)
-    const char* full_path = x->script_name->s_name;
-    const char* separator = strrchr(full_path, '/');
-    if (separator == NULL) {
-        separator = strrchr(full_path, '\\');
+    // from x->script_filename->s_name get the folder
+    // x->script_filename->s_name is one const char *, convert to char *
+    char *script_filename = strdup(x->script_name->s_name);
+
+    PyObject *ScriptFolder = PyUnicode_FromString(get_folder_name(script_filename));
+    PyObject *sys_path = PySys_GetObject("path");
+    PyList_Insert(sys_path, 0, ScriptFolder);
+
+    const char *ScriptFileName = get_filename(script_filename);
+    
+    PyObject *pModule = PyImport_ImportModule(ScriptFileName);
+    if (pModule == NULL) {
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[Python] %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+        PyErr_Clear();
+
+
+        return;
     }
 
-    if (separator != NULL) {
-        const char* tree = separator + 1;
-        const char* extension = strstr(tree, ".py");
-        if (extension != NULL) {
-            size_t len = extension - tree;
-            char* name = (char*)malloc(len + 1);
-            memcpy(name, tree, len);
-            name[len] = '\0';
-            PyObject *pName = PyUnicode_FromString(name);
-            PyObject *pModule = PyImport_Import(pName);
-            // reload module
-            PyObject *pModuleReloaded = PyImport_ReloadModule(pModule);
-            if (pModuleReloaded == NULL) {
-                pd_error(x, "[Python] Failed to reload module");
-            }
-            x->function = PyObject_GetAttrString(pModuleReloaded, x->function_name->s_name);
-            if (x->function == NULL) {
-                pd_error(x, "[Python] Failed to get function");
-                free(name);
-                return;
-            }
-            else {
-                post("[Python] Function reloaded");
-            }
-            free(name);
-        }
-        else {
-            pd_error(x, "[Python] Invalid script name");
-        }
+
+
+    PyObject *pModuleReloaded = PyImport_ReloadModule(pModule);
+    if (pModuleReloaded == NULL) {
+        pd_error(x, "[Python] Failed to reload module");
+        return;
     }
+    x->function = PyObject_GetAttrString(pModuleReloaded, x->function_name->s_name);
+    if (x->function == NULL) {
+        pd_error(x, "[Python] Failed to get function");
+        return;
+    }
+    else {
+        post("[Python] Function reloaded");
+    }
+    return;
 }
 
 // =====================================
@@ -674,13 +769,18 @@ void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
         
     // Parse args for translation between Pd and Python
     PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
+
+    // print where is the filename of the function
+
+    
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
+
     int parseArgsRight = parseLibraryArguments(x, code, argc, argv); // NOTE: added
     if (parseArgsRight == 0) {
         return NULL;
     }
-    create_pyObject_inlets(x, argc, argv);
+    create_pyObject_inlets(pyFunction, x, argc, argv);
     if (nooutlet_int == 0){
         x->out1 = outlet_new(&x->x_obj, 0);
     }
@@ -775,12 +875,12 @@ void *New_VIS_Object(t_symbol *s, int argc, t_atom *argv) {
     // check if function use *args or **kwargs
     PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
-    x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
+    x->script_name = gensym(PyUnicode_AsUTF8(code->co_name));
     int parseArgsRight = parseLibraryArguments(x, code, argc, argv); // NOTE: added
     if (parseArgsRight == 0) {
         return NULL;
     }
-    create_pyObject_inlets(x, argc, argv);
+    create_pyObject_inlets(pyFunction, x, argc, argv);
     if (nooutlet_int == 0){
         x->out1 = outlet_new(&x->x_obj, 0);
     }
@@ -836,11 +936,12 @@ void *New_AudioIN_Object(t_symbol *s, int argc, t_atom *argv) {
     PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
+
     int parseArgsRight = parseLibraryArguments(x, code, argc, argv); // NOTE: added
     if (parseArgsRight == 0) {
         return NULL;
     }
-    create_pyObject_inlets(x, argc, argv);
+    create_pyObject_inlets(pyFunction, x, argc, argv);
     if (nooutlet_int == 0){
         x->out1 = outlet_new(&x->x_obj, 0);
     }
@@ -911,7 +1012,7 @@ void *New_AudioOUT_Object(t_symbol *s, int argc, t_atom *argv) {
     if (parseArgsRight == 0) {
         return NULL;
     }
-    create_pyObject_inlets(x, argc, argv);
+    create_pyObject_inlets(pyFunction, x, argc, argv);
     if (nooutlet_int == 0){
         x->out1 = outlet_new(&x->x_obj, &s_signal);
     }
@@ -983,7 +1084,7 @@ void *New_Audio_Object(t_symbol *s, int argc, t_atom *argv) {
     if (parseArgsRight == 0) {
         return NULL;
     }
-    create_pyObject_inlets(x, argc, argv);
+    create_pyObject_inlets(pyFunction, x, argc, argv);
     if (nooutlet_int == 0){
         x->out1 = outlet_new(&x->x_obj, &s_signal);
     }
@@ -1118,6 +1219,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         class_addmethod(pyNewObject, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
         class_addmethod(pyNewObject, (t_method)printDocs, gensym("doc"), 0, 0);
         class_addmethod(pyNewObject, (t_method)setParametersForFunction, gensym("key"), A_GIMME, 0);
+        class_addmethod(pyNewObject, (t_method)setKwargs, gensym("kwargs"), A_GIMME, 0);
         class_addmethod(pyNewObject, (t_method)setPythonPointersUsage, gensym("pointers"), A_FLOAT, 0);
         class_addmethod(pyNewObject, (t_method)reloadObject, gensym("reload"), 0, 0);
         class_addanything(pyNewObject, py_anything);

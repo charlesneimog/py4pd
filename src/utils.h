@@ -21,6 +21,10 @@ int isNumericOrDot(const char *str);
 void removeChar(char *str, char c);
 
 // ========================
+char* get_folder_name(char* path);
+const char* get_filename(const char* path);
+
+// ========================
 void *py4pd_convert_to_pd(t_py *x, PyObject *pValue);
 PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv);
 PyObject *py4pd_add_pd_object(t_py *x);

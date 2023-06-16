@@ -44,8 +44,8 @@ int parseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv){
     }
     if (code->co_flags & CO_VARKEYWORDS) {
         x->kwargs = 1;
-        pd_error(x, "[%s] function use **kwargs, **kwargs are not implemented yet", x->objectName->s_name);
-        return 0;
+        // pd_error(x, "[%s] function use **kwargs, **kwargs are not implemented yet", x->objectName->s_name);
+        // return 0;
     }
     if (code->co_argcount != 0){
         if (x->py_arg_numbers == 0) {
@@ -142,7 +142,74 @@ void parsePy4pdArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
     }
 }
 
+// ====================================================
+/*
+* @brief get the folder name of something
+* @param x is the py4pd object
+* @return save the py4pd folder in x->py4pdPath
+*/
+char* get_folder_name(char* path) {
+    char* folder = NULL;
+    char* last_separator = NULL;
 
+    // Find the last occurrence of a path separator
+    #ifdef _WIN32
+        last_separator = strrchr(path, '\\');
+    #else
+        last_separator = strrchr(path, '/');
+    #endif
+
+    // If a separator is found, extract the folder name
+    if (last_separator != NULL) {
+        size_t folder_length = last_separator - path;
+        folder = malloc(folder_length + 1);
+        strncpy(folder, path, folder_length);
+        folder[folder_length] = '\0';
+    }
+
+    return folder;
+}
+
+// ====================================================
+/*
+* @brief get the folder name of something
+* @param x is the py4pd object
+* @return save the py4pd folder in x->py4pdPath
+*/
+
+const char* get_filename(const char* path) {
+    const char* filename = NULL;
+
+    // Find the last occurrence of a path separator
+    const char* last_separator = strrchr(path, '/');
+
+    #ifdef _WIN32
+        const char* last_separator_win = strrchr(path, '\\');
+        if (last_separator_win != NULL && last_separator_win > last_separator) {
+            last_separator = last_separator_win;
+        }
+    #endif
+
+    // If a separator is found, extract the filename
+    if (last_separator != NULL) {
+        filename = last_separator + 1;
+    } else {
+        // No separator found, use the entire path as the filename
+        filename = path;
+    }
+
+    // remove .py from filename
+    const char* last_dot = strrchr(filename, '.');
+    if (last_dot != NULL) {
+        size_t filename_length = last_dot - filename;
+        char* filename_without_extension = malloc(filename_length + 1);
+        strncpy(filename_without_extension, filename, filename_length);
+        filename_without_extension[filename_length] = '\0';
+        filename = filename_without_extension;
+    }
+
+    return filename;
+}
 
 // ====================================================
 /*
