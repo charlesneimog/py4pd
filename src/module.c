@@ -157,6 +157,23 @@ PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
 }
 
 // =================================
+PyObject *pdlogpost(PyObject *self, PyObject *args) {
+    (void)self;
+    int postlevel;
+    char *string;
+
+    if (PyArg_ParseTuple(args, "is", &postlevel, &string)) {
+        logpost(NULL, postlevel, "%s", string);
+        return PyLong_FromLong(0);
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.logpost works with strings and numbers.");
+        return NULL;
+    }
+}
+
+
+// =================================
 PyObject *pderror(PyObject *self, PyObject *args) {
     (void)self;
 
@@ -873,6 +890,7 @@ PyMethodDef PdMethods[] = {
     {"out", (PyCFunction)pdout, METH_VARARGS | METH_KEYWORDS, "Output in out0 from PureData"},
     {"send", pdsend, METH_VARARGS, "Send message to PureData, it can be received with the object [receive]"},
     {"print", (PyCFunction)pdprint, METH_VARARGS | METH_KEYWORDS,  "Print informations in PureData Console"},
+    {"logpost", pdlogpost, METH_VARARGS, "Print informations in PureData Console"},
     {"error", pderror, METH_VARARGS, "Print informations in error format (red) in PureData Console"},
     {"tabwrite", (PyCFunction)pdtabwrite, METH_VARARGS | METH_KEYWORDS, "Write data to PureData tables/arrays"},
     {"tabread", (PyCFunction)pdtabread, METH_VARARGS | METH_KEYWORDS, "Read data from PureData tables/arrays"},
