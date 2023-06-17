@@ -17,17 +17,16 @@ static t_class *py4pdInlets_proxy_class;
 
 // ====================================================
 void create_pyObject_inlets(PyObject *function, t_py *x, int argc, t_atom *argv) {
+    (void)function;
     t_pd **py4pdInlet_proxies;
     int i;
     int pyFuncArgs = x->py_arg_numbers - 1;
 
-    PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(function);
+    // PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(function);
 
     // get default args in PyObject (for example: def func(a, b=1, c=2)) 
-    PyObject *defaults = PyFunction_GetDefaults(function);
-    PyObject *kwdefaults = PyFunction_GetKwDefaults(function);
-
-
+    // PyObject *defaults = PyFunction_GetDefaults(function);
+    // PyObject *kwdefaults = PyFunction_GetKwDefaults(function);
 
     x->kwargsDict = PyDict_New();
 
@@ -47,21 +46,8 @@ void create_pyObject_inlets(PyObject *function, t_py *x, int argc, t_atom *argv)
         int argNumbers = x->py_arg_numbers;
         x->argsDict = PyTuple_New(argNumbers);
 
-        // post("===================");
-        PyObject *argName = PyCode_GetVarnames(code);
+        // PyObject *argName = PyCode_GetVarnames(code);
         for (i = 0; i < argNumbers; i++) {
-
-            PyObject *argNameString = PyUnicode_AsUTF8String(PyTuple_GetItem(argName, i));
-            // post("argNameString: %s", PyBytes_AsString(argNameString));
-            
-            // see if the arg have default value
-            if (defaults != NULL && PyTuple_Size(defaults) > 0){
-                PyObject *defaultValue = PyTuple_GetItem(defaults, i);
-                if (defaultValue != NULL){
-                    post("defaultValue: %s for %s var", PyBytes_AsString(PyObject_Str(defaultValue)), PyBytes_AsString(argNameString));
-                }
-            }
-
 
             if (i <= argc) {
                 if (argv[i].a_type == A_FLOAT) {
@@ -1145,12 +1131,12 @@ void *pyObjectFree(t_py *x) {
 PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     char *objectName;
-    PyObject *Function, *showFunction;
+    PyObject *Function; // *showFunction;
     int w = 250, h = 250;
     int objpyout = 0;
     int nooutlet = 0;
     int added2pd_info = 0;
-    showFunction = NULL;
+    // showFunction = NULL;
 
     if (!PyArg_ParseTuple(args, "Os", &Function, &objectName)) { 
         post("[Python]: Error parsing arguments");
