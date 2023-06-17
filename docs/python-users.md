@@ -40,7 +40,9 @@ Following this steps we have this patch:
     <img src="../examples/createobj/mynewpdobject.png" width="50%"</img>
 </p>
 
+--------------------
 ### <h3 style="text-align:center"> **Types of Objects** </h3>
+--------------------
 
 In the example above we create ordinary objects. With `py4pd` we can create 5 types of objects: 
 
@@ -187,12 +189,12 @@ In the example above we create ordinary objects. With `py4pd` we can create 5 ty
             
         ```
 
--------------------------------------- 
+ 
 ## <h2 style="text-align:center"> **Embbeded Module with `py4pd`** </h2>
---------------------------------------
 
+--------------------
 ### <h3 style="text-align:center"> **Write PureData Objects** </h3>
-
+--------------------
 
 #### <h4 style="text-align:center"> `pd.addobject` </h4>
 
@@ -257,6 +259,7 @@ You can create your own objects with Python. For that, you define the Python Fun
 
 -------------------------------------- 
 ### <h3 style="text-align:center"> **Exchanging Data** </h3>
+--------------------------------------
 
 These are the methods used to send data from Python to PureData. The inverse path is done mainly with `run` and `key` messages. 
 <br>
@@ -406,8 +409,8 @@ With `pd.getkey`, you can retrieve the value of a specific key that has been set
     1. Remember, audio functions that run with `py4pd script myaudiofunction -audio` receive just one `arg` that is the audio. In Audio objects written in Python this is different.
 
 ------------------
-
 ### <h3 style="text-align:center"> **Info for the user** </h3>
+--------------------
 
 There are two messages used to print info in the PureData console, they are `pd.print` and `pd.error`.
 <br>
@@ -439,6 +442,35 @@ The ordinary function `#!python print()` will not work in `py4pd` (unless that y
     pd.print("ok", show_prefix=False) # It prints "ok".
 
     ```
+
+------------------
+#### <h4 style="text-align:center"> `pd.logpost` </h4>
+
+This function uses `logpost` in C PureData API to log messages using levels. For example, if you use `#!python logpost(4, "PureData message in level 4")`, the message will appear in console just if the user had selected to show the messages of level 4 in PureData Console.
+
+<p align="center">
+    <img src="../assets/logpost.png" width="30%"</img>
+</p>
+
+=== "Parameters" 
+
+    | Parameters     | Type | Description                   | 
+    | :-----------: | :----: | :------------------------------: |
+    | `arg1`   | `int` | Level to print (1-4) |
+    | `arg2`   | `string` | Message to print |
+
+=== "Examples" 
+
+    ``` py
+    import pd
+	    
+    pd.logpost(1, "Level 1") 
+    pd.logpost(2, "Level 2") 
+    pd.logpost(3, "Level 3") 
+    pd.logpost(4, "Level 4") 
+
+    ```
+
 
 -------------------------------------- 
 
@@ -472,9 +504,8 @@ If you want to inform errors in PureData console use `pd.error` method.
     ```
 
 -------------------------------------- 
-
 ### <h3 style="text-align:center"> **Utilities** </h3>
-
+--------------------------------------
 
 #### <h4 style="text-align:center"> `pd.getstrpointer` </h4>
 
@@ -544,10 +575,8 @@ To set new values for the variable of the object we use `pd.setglobalvar`. In au
     ```
 
 --------------------------------------
-
 ### <h3 style="text-align:center"> **Images** </h3>
- 
-<br>
+--------------------------------------
 
 #### <h4 style="text-align:center"> `pd.show` </h4>
 
@@ -662,7 +691,6 @@ With `py4pd` you can display images inside PureData patches using Python, you ca
 ### <h3 style="text-align:center"> **File Management** </h3>
 -------------------------------------- 
 
--------------------------------------- 
 #### <h4 style="text-align:center"> `pd.home` </h4>
 
 In `py4pd`, `pd.home` is a function that returns the path to the directory where the currently-running PureData patch is located. This can be useful for accessing files and resources relative to the location of the patch. 
@@ -727,10 +755,9 @@ In `py4pd`, `pd.home` is a function that returns the path to the directory where
     ```
 
 -------------------------------------- 
-
 ### <h3 style="text-align:center"> **Audio Info** </h3>
-    
-<br>
+--------------------------------------
+
 #### <h4 style="text-align:center"> `pd.samplerate` </h4>
 
 This get the current samplerate of PureData. You can use the `pd.SAMPLERATE` variable too.

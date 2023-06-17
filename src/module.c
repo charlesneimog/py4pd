@@ -929,30 +929,14 @@ PyMethodDef PdMethods[] = {
 };
 
 // =================================
-/*
-static struct PyModuleDef _memoryboard = {
-    PyModuleDef_HEAD_INIT,
-    .m_name = "_memoryboard",
-    .m_doc = module_doc,
-    .m_size = 0,
-    .m_methods = _memoryboard_methods,
-    .m_slots = _memoryboard_slots,
-    .m_traverse = _memoryboard_traverse,
-    .m_clear = _memoryboard_clear,
-};
-
-*/
-
-// =================================
 struct PyModuleDef pdmodule = {
     PyModuleDef_HEAD_INIT,
     .m_name = "pd", /* name of module */
     .m_doc = "pd module provide function to interact with PureData, see the docs in www.charlesneimog.com/py4pd",
-    .m_size = -1,   /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
-    .m_methods = PdMethods,  // Methods
+    .m_size = 0,   /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    .m_methods = PdMethods,  // Methods of the module
     .m_slots = NULL, /* m_slots, that is the slots for multi-phase initialization */
     .m_traverse = NULL, /* m_traverse, that is the traverse function for GC */
-    .m_traverse = NULL, /* m_clear, that is the clear function for GC */
     .m_clear = NULL, /* m_free, that is the free function for GC */
 };
 
