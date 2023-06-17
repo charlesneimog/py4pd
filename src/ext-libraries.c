@@ -347,12 +347,12 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
     // odd code, but solve the bug
     t_py *prev_obj;
     int prev_obj_exists = 0;
-    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
+    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("pd"));
     PyObject *oldObjectCapsule;
     if (MainModule != NULL) {
         oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
         if (oldObjectCapsule != NULL) {
-            PyObject *pd_module = PyImport_ImportModule("__main__");
+            PyObject *pd_module = PyImport_ImportModule("pd");
             PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
             prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
             prev_obj_exists = 1;
@@ -412,12 +412,12 @@ void py_Object(t_py *x, t_atom *argv){
     PyTuple_SetItem(x->argsDict, 0, pArg);
     t_py *prev_obj;
     int prev_obj_exists = 0;
-    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
+    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("pd"));
     PyObject *oldObjectCapsule;
     if (MainModule != NULL) {
         oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
         if (oldObjectCapsule != NULL) {
-            PyObject *pd_module = PyImport_ImportModule("__main__");
+            PyObject *pd_module = PyImport_ImportModule("pd");
             PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
             prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
             prev_obj_exists = 1;
@@ -722,7 +722,7 @@ void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
     x->objectName = gensym(objectName);
     // ================================
-    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *pd_module = PyImport_ImportModule("pd");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
     PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
     // ================================
@@ -791,7 +791,7 @@ void *New_VIS_Object(t_symbol *s, int argc, t_atom *argv) {
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
     
     // ================================
-    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *pd_module = PyImport_ImportModule("pd");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
     PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
     // ================================
@@ -888,7 +888,7 @@ void *New_AudioIN_Object(t_symbol *s, int argc, t_atom *argv) {
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
     x->objectName = gensym(objectName);
     // ================================
-    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *pd_module = PyImport_ImportModule("pd");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
     PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
     // ================================
@@ -960,7 +960,7 @@ void *New_AudioOUT_Object(t_symbol *s, int argc, t_atom *argv) {
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
     x->objectName = gensym(objectName);
     // ================================
-    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *pd_module = PyImport_ImportModule("pd");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
     PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
     // ================================
@@ -1032,7 +1032,7 @@ void *New_Audio_Object(t_symbol *s, int argc, t_atom *argv) {
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
     x->objectName = gensym(objectName);
     // ================================
-    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *pd_module = PyImport_ImportModule("pd");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
     PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
     // ================================
@@ -1194,7 +1194,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     PyObject *py4pd_capsule = PyCapsule_New(objectDict, objectName, NULL);
     char py4pd_objectName[MAXPDSTRING];
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
-    PyModule_AddObject(PyImport_ImportModule("__main__"), py4pd_objectName, py4pd_capsule);
+    PyModule_AddObject(PyImport_ImportModule("pd"), py4pd_objectName, py4pd_capsule);
     // =====================================
     PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(Function);
     int py_args = code->co_argcount;

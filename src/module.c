@@ -12,8 +12,8 @@
 // ======================================
 
 static t_py *get_py4pd_object(void){
-    PyObject *main_module = PyImport_ImportModule("__main__");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(main_module, "py4pd");
+    PyObject *pd_module = PyImport_ImportModule("pd");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     if (py4pd_capsule == NULL){
         post("[Python] py4pd capsule not found.");
         return NULL;
@@ -461,7 +461,7 @@ PyObject *pdtabread(PyObject *self, PyObject *args, PyObject *keywords) {
     int numpy;
 
     // ================================
-    PyObject *pd_module = PyImport_ImportModule("__main__");
+    PyObject *pd_module = PyImport_ImportModule("pd");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
     // ================================
@@ -923,23 +923,37 @@ PyMethodDef PdMethods[] = {
     {"getglobalvar", (PyCFunction)getglobalvar, METH_VARARGS | METH_KEYWORDS, "It gets a global variable for the Object, it is not clear after the execution of the function"},
 
     // pip
-    {"pip", (PyCFunction)pipinstall, METH_VARARGS, "It installs python packages"},
+    // {"pip", (PyCFunction)pipinstall, METH_VARARGS, "It installs python packages"},
 
     {NULL, NULL, 0, NULL}  //
 };
 
 // =================================
+/*
+static struct PyModuleDef _memoryboard = {
+    PyModuleDef_HEAD_INIT,
+    .m_name = "_memoryboard",
+    .m_doc = module_doc,
+    .m_size = 0,
+    .m_methods = _memoryboard_methods,
+    .m_slots = _memoryboard_slots,
+    .m_traverse = _memoryboard_traverse,
+    .m_clear = _memoryboard_clear,
+};
+
+*/
+
+// =================================
 struct PyModuleDef pdmodule = {
     PyModuleDef_HEAD_INIT,
-    "pd", /* name of module */
-    NULL, /* module documentation, may be NULL */
-    -1,   /* size of per-interpreter state of the module, or -1 if the module
-             keeps state in global variables. */
-    PdMethods,  // Methods
-    NULL,
-    NULL,
-    NULL,
-    NULL,
+    .m_name = "pd", /* name of module */
+    .m_doc = "pd module provide function to interact with PureData, see the docs in www.charlesneimog.com/py4pd",
+    .m_size = -1,   /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
+    .m_methods = PdMethods,  // Methods
+    .m_slots = NULL, /* m_slots, that is the slots for multi-phase initialization */
+    .m_traverse = NULL, /* m_traverse, that is the traverse function for GC */
+    .m_traverse = NULL, /* m_clear, that is the clear function for GC */
+    .m_clear = NULL, /* m_free, that is the free function for GC */
 };
 
 // =================================
@@ -958,7 +972,6 @@ PyMODINIT_FUNC PyInit_pd() {
     puredata_samplerate = PyLong_FromLong(sys_getsr());
     puredata_vecsize = PyLong_FromLong(sys_getblksize());
     
-    // set visObject as "VIS"
     visObject = PyUnicode_FromString("VIS");
     audioINObject = PyUnicode_FromString("AUDIOIN");
     audioOUTObject = PyUnicode_FromString("AUDIOOUT");

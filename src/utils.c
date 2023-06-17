@@ -809,7 +809,7 @@ void setPy4pdConfig(t_py *x) {
 */
 
 PyObject *py4pd_add_pd_object(t_py *x) { // TODO: RENAME this function
-    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("__main__"));
+    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("pd"));
     PyObject *objectCapsule;
     if (MainModule != NULL) {
         objectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
@@ -818,7 +818,7 @@ PyObject *py4pd_add_pd_object(t_py *x) { // TODO: RENAME this function
         }
         else{
             objectCapsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
-            PyModule_AddObject(PyImport_AddModule("__main__"), "py4pd", objectCapsule);  // add the capsule to the python interpreter
+            PyModule_AddObject(PyImport_AddModule("pd"), "py4pd", objectCapsule);  // add the capsule to the python interpreter
         }
     }
     else{

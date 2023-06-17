@@ -84,7 +84,7 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
     // odd code, but solve the bug
     t_py *prev_obj;
     int prev_obj_exists = 0;
-    PyObject *MainModule = PyImport_ImportModule("__main__");
+    PyObject *MainModule = PyImport_ImportModule("pd");
     PyObject *oldObjectCapsule;
 
     if (MainModule != NULL) {
@@ -617,7 +617,7 @@ void setFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         // odd code, but solve the bug
     t_py *prev_obj;
     int prev_obj_exists = 0;
-    PyObject *MainModule = PyImport_ImportModule("__main__");
+    PyObject *MainModule = PyImport_ImportModule("pd");
     PyObject *oldObjectCapsule;
 
     if (MainModule != NULL) {
@@ -753,7 +753,7 @@ static void runFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     // odd code, but solve the bug
     t_py *prev_obj;
     int prev_obj_exists = 0;
-    PyObject *MainModule = PyImport_ImportModule("__main__");
+    PyObject *MainModule = PyImport_ImportModule("pd");
     PyObject *oldObjectCapsule;
 
     if (MainModule != NULL) {
