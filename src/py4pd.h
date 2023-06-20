@@ -37,6 +37,14 @@ typedef struct _py4pd_edit_proxy{
 }t_py4pd_edit_proxy;
 
 // =====================================
+typedef struct _py4pd_help_proxy{ 
+    t_object    p_obj;
+    t_symbol   *p_sym;
+    t_clock    *p_clock;
+    struct      _py *p_cnv;
+}t_py4pd_help_proxy;
+
+// =====================================
 typedef struct _py { // It seems that all the objects are some kind of class.
     t_object            x_obj; // convensao no puredata source code
     t_glist             *x_glist;
@@ -107,9 +115,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_symbol            *pdPatchFolder; // where the patch is located
     t_symbol            *py4pdPath; // where py4pd object is located
     t_symbol            *tempPath; // temp path located in ~/.py4pd/, always is deleted when py4pd is closed
-
-
-
+    t_symbol            *libraryFolder; // where the library is located
 
     t_symbol            *function_name; // function name
     t_symbol            *script_name; // script name or pathname

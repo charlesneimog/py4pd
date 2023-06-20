@@ -59,14 +59,14 @@ def py4pdLoadObjects():
     pd.addobject(omabs, "py.abs")
 
     # Score Functions
-    pd.addobject(note, "py.note", objtype="VIS")
-    pd.addobject(chord, "py.chord", objtype="VIS")
+    pd.addobject(note, "py.note", objtype=pd.VIS)
+    pd.addobject(chord, "py.chord", objtype=pd.VIS)
 
     # Rhythm Tree
     pd.addobject(extract_numbers, "py.rhythm_tree")
     
     # img 
-    pd.addobject(py4pdshow, "py.show", objtype="VIS")
+    pd.addobject(py4pdshow, "py.show", objtype=pd.VIS)
 
 
     # music convertions
@@ -75,4 +75,3 @@ def py4pdLoadObjects():
     pd.addobject(midicent2note, "mc2n")
 
     
-

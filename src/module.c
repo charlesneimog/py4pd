@@ -11,21 +11,6 @@
 // ======== py4pd embbeded module =======
 // ======================================
 
-static t_py *get_py4pd_object(void){
-    PyObject *pd_module = PyImport_ImportModule("pd");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    if (py4pd_capsule == NULL){
-        post("[Python] py4pd capsule not found.");
-        return NULL;
-    }
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-    return py4pd;
-}
-
-// ======================================
-// ======== py4pd embbeded module =======
-// ======================================
-
 PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
     (void)keywords;
     (void)self;

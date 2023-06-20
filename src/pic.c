@@ -72,6 +72,8 @@ int PY4PD_click(t_py *object, struct _glist *glist, int xpos, int ypos, int shif
     (void)glist;
     (void)xpos;
     (void)ypos;
+    
+
     if(dbl){
 
     }
@@ -486,7 +488,7 @@ void py4pd_picDefintion(t_py *x) {
 
 // ================================================
 void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
-                       int argc, t_atom *argv) {
+                       int argc, t_atom *argv, t_class *obj_class) {
     if (py4pdArgs == gensym("-canvas")) {
         x->visMode = 1;
     }
@@ -514,7 +516,7 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
         class_setwidget(py4pd_class_VIS, &py4pd_widgetbehavior);
     }
     else{
-        class_setwidget(pyNewObject_VIS, &py4pd_widgetbehavior);
+        class_setwidget(obj_class, &py4pd_widgetbehavior);
     }
 
     t_canvas *cv = canvas_getcurrent();

@@ -21,6 +21,8 @@ int isNumericOrDot(const char *str);
 void removeChar(char *str, char c);
 
 // ========================
+t_py *get_py4pd_object(void);
+// ========================
 char* get_folder_name(char* path);
 const char* get_filename(const char* path);
 

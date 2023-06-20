@@ -7,5 +7,7 @@ extern PyMethodDef PdMethods[];
 
 PyMODINIT_FUNC PyInit_pd(void);
 
+t_py *get_py4pd_object(void);
+
 #endif
 

@@ -69,6 +69,26 @@ int parseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv){
 * @return return void
 */
 
+t_py *get_py4pd_object(void){
+    PyObject *pd_module = PyImport_ImportModule("pd");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    if (py4pd_capsule == NULL){
+        return NULL;
+    }
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    return py4pd;
+}
+
+// ====================================================
+/*
+* @brief This function parse the arguments for the py4pd object
+* @param x is the py4pd object
+* @param c is the canvas of the object
+* @param argc is the number of arguments
+* @param argv is the arguments
+* @return return void
+*/
+
 void parsePy4pdArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
 
     int i;
@@ -79,7 +99,7 @@ void parsePy4pdArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
                 py4pdArgs == gensym("-score") ||
                 py4pdArgs == gensym("-pic") ||
                 py4pdArgs == gensym("-canvas")) {
-                py4pd_InitVisMode(x, c, py4pdArgs, i, argc, argv);
+                py4pd_InitVisMode(x, c, py4pdArgs, i, argc, argv, NULL);
                 x->x_outline = 1;
                 int j;
                 for (j = i; j < argc; j++) {

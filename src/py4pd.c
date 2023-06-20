@@ -80,7 +80,6 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
     Py_DECREF(py4pdScripts);
     Py_DECREF(globalPackages);
 
-
     // odd code, but solve the bug
     t_py *prev_obj;
     int prev_obj_exists = 0;
@@ -98,7 +97,6 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
             prev_obj_exists = 0;
         }
     }
-
     PyObject *objectCapsule = py4pd_add_pd_object(x);
 
     if (objectCapsule == NULL){
@@ -107,6 +105,30 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
     }
 
     pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file
+    
+    if (pModule == NULL){
+        pd_error(x, "[Python] Failed to load script file %s", script_file_name->s_name);
+        return;
+    }
+    PyObject *pModuleDict = PyModule_GetDict(pModule);
+
+    if (pModuleDict == NULL){
+        pd_error(x, "[Python] Failed to get script file dictionary");
+        return;
+    }
+
+    PyObject *pFilenameObj = PyDict_GetItemString(pModuleDict, "__file__");
+    if (!pFilenameObj) {
+        pd_error(x, "[Python] Failed to get script file path");
+        Py_DECREF(pModule);
+        return;
+    }
+    // convert const char * to char *
+    char *libraryFolder = malloc(strlen(PyUnicode_AsUTF8(pFilenameObj)) + 1);
+    strcpy(libraryFolder, PyUnicode_AsUTF8(pFilenameObj));
+    x->libraryFolder = gensym(get_folder_name(libraryFolder));
+    free(libraryFolder);
+
     if (pModule == NULL) {
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);

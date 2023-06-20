@@ -1,17 +1,14 @@
 #include "ext-libraries.h"
+#include "m_pd.h"
 #include "utils.h"
 #include "pic.h"
 #include "py4pd.h"
 
+#include <g_all_guis.h>
+
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
 
-t_class *pyNewObject_VIS;
-
-static t_class *pyNewObject;
-static t_class *pyNewObject_AudioIn;
-static t_class *pyNewObject_AudioOut;
-static t_class *pyNewObject_Audio;
 static t_class *py4pdInlets_proxy_class;
 
 // ====================================================
@@ -20,13 +17,7 @@ void create_pyObject_inlets(PyObject *function, t_py *x, int argc, t_atom *argv)
     t_pd **py4pdInlet_proxies;
     int i;
     int pyFuncArgs = x->py_arg_numbers - 1;
-
-    // PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(function);
-
-    // get default args in PyObject (for example: def func(a, b=1, c=2)) 
-    // PyObject *defaults = PyFunction_GetDefaults(function);
-    // PyObject *kwdefaults = PyFunction_GetKwDefaults(function);
-
+    // TODO: Try to define standard arguments getting it from Python (def (a, b, c=4))
     x->kwargsDict = PyDict_New();
 
     if (pyFuncArgs != 0){
@@ -688,6 +679,7 @@ t_int *library_Audio_perform(t_int *w) {
 // =====================================
 static void library_dsp(t_py *x, t_signal **sp) {
     int numChannels = sp[0]->s_nchans; 
+
     if (numChannels == 1){
         // for mono signal    
         if (x->audioOutput == 0) {
@@ -701,39 +693,47 @@ static void library_dsp(t_py *x, t_signal **sp) {
         }
     }
     else{
-        pd_error(x, "[py4pd] The library only works with mono signals");
-
-
-
+        pd_error(x, "[py4pd] Received %d channels...", numChannels);
     }
 }
 
 // =====================================
 void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
     const char *objectName = s->s_name;
-    t_py *x = (t_py *)pd_new(pyNewObject);
-    x->visMode  = 0;
-    x->pyObject = 1;
-    x->x_canvas = canvas_getcurrent();       // pega o canvas atual
-    t_canvas *c = x->x_canvas;               // get the current canvas
-    t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
+    
     char py4pd_objectName[MAXPDSTRING];
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
-    x->objectName = gensym(objectName);
-    // ================================
     PyObject *pd_module = PyImport_ImportModule("pd");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
     PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
-    // ================================
     if (PdDictCapsule == NULL) {
-        pd_error(x, "Error: PdDictCapsule is NULL");
+        pd_error(NULL, "Error: PdDictCapsule is NULL, please report!");
         return NULL;
     }
     PyObject *PdDict = PyDict_GetItemString(PdDictCapsule, objectName);
     if (PdDict == NULL) {
-        pd_error(x, "Error: PdDict is NULL");
+        pd_error(NULL, "Error: PdDict is NULL");
         return NULL;
     }
+    
+    PyObject *PY_objectClass = PyDict_GetItemString(PdDict, "py4pdOBJ_CLASS");
+    if (PY_objectClass == NULL) {
+        pd_error(NULL, "Error: object Class is NULL");
+        return NULL;
+    }
+
+    // get t_class from PY_objectClass
+    t_class *object_PY4PD_Class = (t_class *)PyLong_AsVoidPtr(PY_objectClass);
+
+    t_py *x = (t_py *)pd_new(object_PY4PD_Class);
+    x->visMode  = 0;
+    x->pyObject = 1;
+    x->x_canvas = canvas_getcurrent();       // pega o canvas atual
+    t_canvas *c = x->x_canvas;
+    t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
+    x->objectName = gensym(objectName);
+    // ================================
+
     PyObject *pyFunction = PyDict_GetItemString(PdDict, "py4pdOBJFunction");
     if (pyFunction == NULL) {
         pd_error(x, "Error: pyFunction is NULL");
@@ -748,6 +748,7 @@ void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
     x->pdPatchFolder = patch_dir;         // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
+
     setPy4pdConfig(x);  // set the config file  TODO: I want to rethink this)
     createPy4pdTempFolder(x);  // Create the py4pd temp folder
     findPy4pdFolder(x);  // find the py4pd object folder
@@ -756,8 +757,6 @@ void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
     PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
 
     // print where is the filename of the function
-
-    
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
 
@@ -775,56 +774,43 @@ void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
 
 // =====================================
 void *New_VIS_Object(t_symbol *s, int argc, t_atom *argv) {
-    (void) argc;
-    (void) argv;
     const char *objectName = s->s_name;
-    t_py *x = (t_py *)pd_new(pyNewObject_VIS);
-    // t_pd **py4pdInlet_proxies;
+    char py4pd_objectName[MAXPDSTRING];
+    sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
+    PyObject *pd_module = PyImport_ImportModule("pd");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
+    PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
+    if (PdDictCapsule == NULL) {
+        pd_error(NULL, "Error: PdDictCapsule is NULL, please report!");
+        return NULL;
+    }
+    PyObject *PdDict = PyDict_GetItemString(PdDictCapsule, objectName);
+    if (PdDict == NULL) {
+        pd_error(NULL, "Error: PdDict is NULL");
+        return NULL;
+    }
+    
+    PyObject *PY_objectClass = PyDict_GetItemString(PdDict, "py4pdOBJ_CLASS");
+    if (PY_objectClass == NULL) {
+        pd_error(NULL, "Error: object Class is NULL");
+        return NULL;
+    }
+    t_class *object_PY4PD_Class = (t_class *)PyLong_AsVoidPtr(PY_objectClass);
+    t_py *x = (t_py *)pd_new(object_PY4PD_Class);
+
     x->pyObject = 1;
     x->visMode  = 1;
     x->x_canvas = canvas_getcurrent();       // pega o canvas atual
     t_canvas *c = x->x_canvas;               // get the current canvas
     t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
 
-    char py4pd_objectName[MAXPDSTRING];
-    sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
-    
-    // ================================
-    PyObject *pd_module = PyImport_ImportModule("pd");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
-    PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
-    // ================================
-    if (PdDictCapsule == NULL) {
-        pd_error(x, "Error: PdDictCapsule is NULL");
-        return NULL;
-    }
-    PyObject *PdDict = PyDict_GetItemString(PdDictCapsule, objectName);
-    if (PdDict == NULL) {
-        pd_error(x, "Error: PdDict is NULL");
-        return NULL;
-    }
     PyObject *pyFunction = PyDict_GetItemString(PdDict, "py4pdOBJFunction");
     if (pyFunction == NULL) {
         pd_error(x, "Error: pyFunction is NULL");
         return NULL;
     }
 
-
-    /* NOTE: For version 0.8.0
-    PyObject *pyShowFunction = PyDict_GetItemString(PdDict, "py4pdOBJshowFunction");
-    if (pyShowFunction == NULL){
-        x->showFunction = NULL;
-        logpost(x, 4, "showFunction was not defined");
-    }
-    else{
-        x->showFunction = pyShowFunction;
-        logpost(x, 4, "showFunction was defined");
-    }
-    */
-
-
     // ==================
-    // PIC PIC
     PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
     x->outPyPointer = PyLong_AsLong(pyOUT);
     t_symbol *py4pdArgs = gensym("-canvas");
@@ -840,7 +826,7 @@ void *New_VIS_Object(t_symbol *s, int argc, t_atom *argv) {
             x->x_height = argv[1].a_w.w_float;
         }
     }
-    py4pd_InitVisMode(x, c, py4pdArgs, 0, argc, argv);
+    py4pd_InitVisMode(x, c, py4pdArgs, 0, argc, argv, object_PY4PD_Class);
     // PIC =============
 
     x->outPyPointer = PyLong_AsLong(pyOUT);
@@ -877,29 +863,36 @@ void *New_VIS_Object(t_symbol *s, int argc, t_atom *argv) {
 // =====================================
 void *New_AudioIN_Object(t_symbol *s, int argc, t_atom *argv) {
     const char *objectName = s->s_name;
-    t_py *x = (t_py *)pd_new(pyNewObject_AudioIn);
-    x->visMode  = 0;
-    x->pyObject = 1;
-    x->x_canvas = canvas_getcurrent();       // pega o canvas atual
-    t_canvas *c = x->x_canvas;               // get the current canvas
-    t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
     char py4pd_objectName[MAXPDSTRING];
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
-    x->objectName = gensym(objectName);
-    // ================================
     PyObject *pd_module = PyImport_ImportModule("pd");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
     PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
-    // ================================
     if (PdDictCapsule == NULL) {
-        pd_error(x, "Error: PdDictCapsule is NULL");
+        pd_error(NULL, "Error: PdDictCapsule is NULL, please report!");
         return NULL;
     }
     PyObject *PdDict = PyDict_GetItemString(PdDictCapsule, objectName);
     if (PdDict == NULL) {
-        pd_error(x, "Error: PdDict is NULL");
+        pd_error(NULL, "Error: PdDict is NULL");
         return NULL;
     }
+    
+    PyObject *PY_objectClass = PyDict_GetItemString(PdDict, "py4pdOBJ_CLASS");
+    if (PY_objectClass == NULL) {
+        pd_error(NULL, "Error: object Class is NULL");
+        return NULL;
+    }
+    t_class *object_PY4PD_Class = (t_class *)PyLong_AsVoidPtr(PY_objectClass);
+    t_py *x = (t_py *)pd_new(object_PY4PD_Class);
+
+    x->pyObject = 1;
+    x->visMode  = 1;
+    x->objectName = gensym(objectName);
+    x->x_canvas = canvas_getcurrent();       // pega o canvas atual
+    t_canvas *c = x->x_canvas;               // get the current canvas
+    t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
+
     PyObject *pyFunction = PyDict_GetItemString(PdDict, "py4pdOBJFunction");
     if (pyFunction == NULL) {
         pd_error(x, "Error: pyFunction is NULL");
@@ -947,7 +940,29 @@ void *New_AudioIN_Object(t_symbol *s, int argc, t_atom *argv) {
 // =====================================
 void *New_AudioOUT_Object(t_symbol *s, int argc, t_atom *argv) {
     const char *objectName = s->s_name;
-    t_py *x = (t_py *)pd_new(pyNewObject_AudioOut);
+    char py4pd_objectName[MAXPDSTRING];
+    sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
+    PyObject *pd_module = PyImport_ImportModule("pd");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
+    PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
+    if (PdDictCapsule == NULL) {
+        pd_error(NULL, "Error: PdDictCapsule is NULL, please report!");
+        return NULL;
+    }
+    PyObject *PdDict = PyDict_GetItemString(PdDictCapsule, objectName);
+    if (PdDict == NULL) {
+        pd_error(NULL, "Error: PdDict is NULL");
+        return NULL;
+    }
+    
+    PyObject *PY_objectClass = PyDict_GetItemString(PdDict, "py4pdOBJ_CLASS");
+    if (PY_objectClass == NULL) {
+        pd_error(NULL, "Error: object Class is NULL");
+        return NULL;
+    }
+    t_class *object_PY4PD_Class = (t_class *)PyLong_AsVoidPtr(PY_objectClass);
+    t_py *x = (t_py *)pd_new(object_PY4PD_Class);
+
     x->visMode  = 0;
     x->pyObject = 1;
     x->audioInput = 0;
@@ -955,19 +970,9 @@ void *New_AudioOUT_Object(t_symbol *s, int argc, t_atom *argv) {
     x->x_canvas = canvas_getcurrent();       // pega o canvas atual
     t_canvas *c = x->x_canvas;               // get the current canvas
     t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
-    char py4pd_objectName[MAXPDSTRING];
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
     x->objectName = gensym(objectName);
     // ================================
-    PyObject *pd_module = PyImport_ImportModule("pd");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
-    PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
-    // ================================
-    if (PdDictCapsule == NULL) {
-        pd_error(x, "Error: PdDictCapsule is NULL");
-        return NULL;
-    }
-    PyObject *PdDict = PyDict_GetItemString(PdDictCapsule, objectName);
     if (PdDict == NULL) {
         pd_error(x, "Error: PdDict is NULL");
         return NULL;
@@ -1019,7 +1024,29 @@ void *New_AudioOUT_Object(t_symbol *s, int argc, t_atom *argv) {
 // =====================================
 void *New_Audio_Object(t_symbol *s, int argc, t_atom *argv) {
     const char *objectName = s->s_name;
-    t_py *x = (t_py *)pd_new(pyNewObject_Audio);
+    char py4pd_objectName[MAXPDSTRING];
+    sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
+    PyObject *pd_module = PyImport_ImportModule("pd");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
+    PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
+    if (PdDictCapsule == NULL) {
+        pd_error(NULL, "Error: PdDictCapsule is NULL, please report!");
+        return NULL;
+    }
+    PyObject *PdDict = PyDict_GetItemString(PdDictCapsule, objectName);
+    if (PdDict == NULL) {
+        pd_error(NULL, "Error: PdDict is NULL");
+        return NULL;
+    }
+    
+    PyObject *PY_objectClass = PyDict_GetItemString(PdDict, "py4pdOBJ_CLASS");
+    if (PY_objectClass == NULL) {
+        pd_error(NULL, "Error: object Class is NULL");
+        return NULL;
+    }
+    t_class *object_PY4PD_Class = (t_class *)PyLong_AsVoidPtr(PY_objectClass);
+    t_py *x = (t_py *)pd_new(object_PY4PD_Class);
+
     x->visMode  = 0;
     x->pyObject = 1;
     x->audioOutput = 1;
@@ -1027,23 +1054,9 @@ void *New_Audio_Object(t_symbol *s, int argc, t_atom *argv) {
     x->x_canvas = canvas_getcurrent();       // pega o canvas atual
     t_canvas *c = x->x_canvas;               // get the current canvas
     t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
-    char py4pd_objectName[MAXPDSTRING];
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
     x->objectName = gensym(objectName);
     // ================================
-    PyObject *pd_module = PyImport_ImportModule("pd");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
-    PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
-    // ================================
-    if (PdDictCapsule == NULL) {
-        pd_error(x, "Error: PdDictCapsule is NULL");
-        return NULL;
-    }
-    PyObject *PdDict = PyDict_GetItemString(PdDictCapsule, objectName);
-    if (PdDict == NULL) {
-        pd_error(x, "Error: PdDict is NULL");
-        return NULL;
-    }
     PyObject *pyFunction = PyDict_GetItemString(PdDict, "py4pdOBJFunction");
     if (pyFunction == NULL) {
         pd_error(x, "Error: pyFunction is NULL");
@@ -1086,7 +1099,6 @@ void *New_Audio_Object(t_symbol *s, int argc, t_atom *argv) {
     object_count++;
     return (x);
 }
-
 
 // =====================================
 void *pyObjectFree(t_py *x) {
@@ -1135,8 +1147,33 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     int objpyout = 0;
     int nooutlet = 0;
     int added2pd_info = 0;
-    // showFunction = NULL;
 
+    // get file folder where this function is called from self
+    t_py *py4pd = get_py4pd_object();
+
+    if (py4pd->libraryFolder == NULL) {
+        pd_error(py4pd, "[py4pd] Error: libraryFolder is NULL");
+        return NULL;
+    } 
+
+    const char *libraryFolder = py4pd->libraryFolder->s_name;
+    
+    if (libraryFolder == NULL) {
+        t_symbol *patch_dir = canvas_getdir(py4pd->x_canvas);  // directory of opened patch
+        libraryFolder = patch_dir->s_name;
+    }
+
+    const char *helpFolder = "/help/";
+
+    size_t totalLength = strlen(libraryFolder) + strlen(helpFolder) + 1;
+    char *helpFolderCHAR = (char *)malloc(totalLength * sizeof(char));
+    if (helpFolderCHAR == NULL) {
+        pd_error(py4pd, "[py4pd] Error allocating memory for helpFolderCHAR");
+        return NULL;
+    }
+    strcpy(helpFolderCHAR, libraryFolder);
+    strcat(helpFolderCHAR, helpFolder);
+    
     if (!PyArg_ParseTuple(args, "Os", &Function, &objectName)) { 
         post("[Python]: Error parsing arguments");
         return NULL;
@@ -1172,17 +1209,35 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
                 added2pd_info = 1;
             }
         }
-        /* NOTE: Version 0.8.0
-        if (PyDict_Contains(keywords, PyUnicode_FromString("showFunction"))){
-            post("[Python]: showFunction");
-            showFunction = PyDict_GetItemString(keywords, "showFunction"); // it gets the data type output
-        }
-        */
     }
+
+    class_set_extern_dir(gensym(helpFolderCHAR));
+    t_class *localClass;
+    if ((strcmp(objectType, "NORMAL") == 0)){
+        localClass = class_new(gensym(objectName), (t_newmethod)New_NORMAL_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
+    }
+    else if ((strcmp(objectType, "VIS") == 0)){
+        localClass = class_new(gensym(objectName), (t_newmethod)New_VIS_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
+    }
+    else if ((strcmp(objectType, "AUDIOIN") == 0)){
+        localClass = class_new(gensym(objectName), (t_newmethod)New_AudioIN_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
+    }
+    else if ((strcmp(objectType, "AUDIOOUT") == 0)){
+        localClass = class_new(gensym(objectName), (t_newmethod)New_AudioOUT_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
+    }
+    else if (strcmp(objectType, "AUDIO") == 0) {
+        localClass = class_new(gensym(objectName), (t_newmethod)New_Audio_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
+    }
+    else{
+        PyErr_SetString(PyExc_TypeError, "Object type not supported, check the spelling");
+        return NULL;
+    }
+    free(helpFolderCHAR);
+
     // Add configs to the object
     PyObject *nestedDict = PyDict_New();
     PyDict_SetItemString(nestedDict, "py4pdOBJFunction", Function);
-    // PyDict_SetItemString(nestedDict, "py4pdOBJshowFunction", showFunction);
+    PyDict_SetItemString(nestedDict, "py4pdOBJ_CLASS", PyLong_FromVoidPtr(localClass));
     PyDict_SetItemString(nestedDict, "py4pdOBJwidth", PyLong_FromLong(w));
     PyDict_SetItemString(nestedDict, "py4pdOBJheight", PyLong_FromLong(h));
     PyDict_SetItemString(nestedDict, "py4pdOBJpyout", PyLong_FromLong(objpyout));
@@ -1200,51 +1255,44 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
 
     // NORMAL
     if ((strcmp(objectType, "NORMAL") == 0)){
-        pyNewObject = class_new(gensym(objectName), (t_newmethod)New_NORMAL_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
-        class_addmethod(pyNewObject, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
-        class_addmethod(pyNewObject, (t_method)printDocs, gensym("doc"), 0, 0);
-        class_addmethod(pyNewObject, (t_method)setParametersForFunction, gensym("key"), A_GIMME, 0);
-        class_addmethod(pyNewObject, (t_method)setKwargs, gensym("kwargs"), A_GIMME, 0);
-        class_addmethod(pyNewObject, (t_method)setPythonPointersUsage, gensym("pointers"), A_FLOAT, 0);
-        class_addmethod(pyNewObject, (t_method)reloadObject, gensym("reload"), 0, 0);
-        class_addanything(pyNewObject, py_anything);
+        class_addmethod(localClass, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
+        class_addmethod(localClass, (t_method)printDocs, gensym("doc"), 0, 0);
+        class_addmethod(localClass, (t_method)setParametersForFunction, gensym("key"), A_GIMME, 0);
+        class_addmethod(localClass, (t_method)setKwargs, gensym("kwargs"), A_GIMME, 0);
+        class_addmethod(localClass, (t_method)setPythonPointersUsage, gensym("pointers"), A_FLOAT, 0);
+        class_addmethod(localClass, (t_method)reloadObject, gensym("reload"), 0, 0);
+        class_addanything(localClass, py_anything);
+        class_sethelpsymbol(localClass, gensym(objectName));
     }
-    // VIS
     else if ((strcmp(objectType, "VIS") == 0)){
-        pyNewObject_VIS = class_new(gensym(objectName), (t_newmethod)New_VIS_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
-        class_addanything(pyNewObject_VIS, py_anything);
-        class_addmethod(pyNewObject_VIS, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);
-        class_addmethod(pyNewObject_VIS, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
-        class_addmethod(pyNewObject_VIS, (t_method)printDocs, gensym("doc"), 0, 0);
-        class_addmethod(pyNewObject_VIS, (t_method)reloadObject, gensym("reload"), 0, 0);
-        class_setsavefn(pyNewObject_VIS, &py4pdObjPic_save);
+        class_addanything(localClass, py_anything);
+        class_addmethod(localClass, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);
+        class_addmethod(localClass, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
+        class_addmethod(localClass, (t_method)printDocs, gensym("doc"), 0, 0);
+        class_addmethod(localClass, (t_method)reloadObject, gensym("reload"), 0, 0);
+        class_setsavefn(localClass, &py4pdObjPic_save);
     }
     // AUDIOIN
     else if ((strcmp(objectType, "AUDIOIN") == 0)){
-        pyNewObject_AudioIn = class_new(gensym(objectName), (t_newmethod)New_AudioIN_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
-        class_addmethod(pyNewObject_AudioIn, (t_method)printDocs, gensym("doc"), 0, 0);
-        class_addmethod(pyNewObject_AudioIn, (t_method)reloadObject, gensym("reload"), 0, 0);
-        class_addmethod(pyNewObject_AudioIn, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
-        class_addmethod(pyNewObject_AudioIn, (t_method)PY4PD_zoom, gensym("kwargs"), A_CANT, 0);
-        CLASS_MAINSIGNALIN(pyNewObject_AudioIn, t_py, py4pdAudio);
+        class_addmethod(localClass, (t_method)printDocs, gensym("doc"), 0, 0);
+        class_addmethod(localClass, (t_method)reloadObject, gensym("reload"), 0, 0);
+        class_addmethod(localClass, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
+        class_addmethod(localClass, (t_method)PY4PD_zoom, gensym("kwargs"), A_CANT, 0);
+        CLASS_MAINSIGNALIN(localClass, t_py, py4pdAudio);
     }
     // AUDIOIN
     else if ((strcmp(objectType, "AUDIOOUT") == 0)){
-        pyNewObject_AudioOut = class_new(gensym(objectName), (t_newmethod)New_AudioOUT_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
-        class_addmethod(pyNewObject_AudioOut, (t_method)printDocs, gensym("doc"), 0, 0);
-        class_addmethod(pyNewObject_AudioOut, (t_method)reloadObject, gensym("reload"), 0, 0);
-        class_addmethod(pyNewObject_AudioOut, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
-        class_addanything(pyNewObject_AudioOut, py_anything);
-        // CLASS_MAINSIGNALIN(pyNewObject_AudioOut, t_py, py4pdAudio);
+        class_addmethod(localClass, (t_method)printDocs, gensym("doc"), 0, 0);
+        class_addmethod(localClass, (t_method)reloadObject, gensym("reload"), 0, 0);
+        class_addmethod(localClass, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
+        class_addanything(localClass, py_anything);
     }
     // AUDIO
     else if (strcmp(objectType, "AUDIO") == 0) {
-        pyNewObject_Audio = class_new(gensym(objectName), (t_newmethod)New_Audio_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
-        class_addmethod(pyNewObject_Audio, (t_method)printDocs, gensym("doc"), 0, 0);
-        class_addmethod(pyNewObject_Audio, (t_method)reloadObject, gensym("reload"), 0, 0);
-        class_addmethod(pyNewObject_Audio, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
-        CLASS_MAINSIGNALIN(pyNewObject_Audio, t_py, py4pdAudio);
-        // class_setdspflags(pyNewObject_Audio, CLASS_MULTICHANNEL);
+        class_addmethod(localClass, (t_method)printDocs, gensym("doc"), 0, 0);
+        class_addmethod(localClass, (t_method)reloadObject, gensym("reload"), 0, 0);
+        class_addmethod(localClass, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
+        CLASS_MAINSIGNALIN(localClass, t_py, py4pdAudio);
     }
     else{
         // set py error
@@ -1261,5 +1309,6 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     if (added2pd_info == 1){
         post("[py4pd]: Object {%s} added to PureData", objectName);
     }
+    class_set_extern_dir(&s_);
     return PyLong_FromLong(1);
 }
