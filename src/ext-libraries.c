@@ -678,9 +678,9 @@ t_int *library_Audio_perform(t_int *w) {
 
 // =====================================
 static void library_dsp(t_py *x, t_signal **sp) {
-    int numChannels = sp[0]->s_nchans; 
+    // int numChannels = sp[0]->s_nchans; 
 
-    if (numChannels == 1){
+    // if (numChannels == 1){
         // for mono signal    
         if (x->audioOutput == 0) {
             dsp_add(library_AudioIN_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
@@ -691,10 +691,10 @@ static void library_dsp(t_py *x, t_signal **sp) {
         else if ((x->audioInput == 1) && (x->audioOutput == 1)) {  // python output is audio
             dsp_add(library_Audio_perform, 4, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
         }
-    }
-    else{
-        pd_error(x, "[py4pd] Received %d channels...", numChannels);
-    }
+    // }
+    // else{
+        // pd_error(x, "[py4pd] Received %d channels...", numChannels);
+    // }
 }
 
 // =====================================
