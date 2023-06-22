@@ -5,7 +5,6 @@ import platform
 
 try:
     from pip._internal.cli.main import main as pipmain
-    pd.print('Modulo achado')
     addpip = True
 except Exception as e:
     pd.error(str(e))
@@ -16,7 +15,7 @@ except Exception as e:
         pd.error("Open one terminal window and run 'sudo apt install python3-pip', or 'sudo pacman -S python-pip', or 'sudo dnf install python3-pip'")
         sys.exit(1)
     elif os.name == 'darwin':
-        pd.error("Open one terminal window and run 'sudo easy_install pip'")
+        pd.error("Was not possible to install pip for macos, please install it manually")
         sys.exit(1)
 
 

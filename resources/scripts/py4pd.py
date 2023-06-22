@@ -1,23 +1,26 @@
 import pd
-from py4pd_scripts.py4pdpip import *
 
 try:
+    from py4pd_scripts.py4pdpip import *
+except Exception as e:
+    pd.error("Error to add py.pip: " + str(e))
+
+try:
+    from py4pd_scripts.py4pdlist import *
+    from py4pd_scripts.py4pdmath import *
+    from py4pd_scripts.py4pdconvertion import *
+    from py4pd_scripts.py4pdloop import *
+    from py4pd_scripts.py4pdinfo import *
+    from py4pd_scripts.py4pdscore import *
+    from py4pd_scripts.py4pdconvertion import *
+    from py4pd_scripts.py4pdoperators import *
+    from py4pd_scripts.py4pdtree import *
+    from py4pd_scripts.py4pdshow import *
+    from py4pd_scripts.py4pd_musicconvertions import *
+
+except Exception as e:
+    pd.error("Error loading py4pd objects: " + str(e))
     pd.addobject(pipinstall, "py.pip")
-except:
-    pass
-
-from py4pd_scripts.py4pdlist import *
-from py4pd_scripts.py4pdmath import *
-from py4pd_scripts.py4pdconvertion import *
-from py4pd_scripts.py4pdloop import *
-from py4pd_scripts.py4pdinfo import *
-from py4pd_scripts.py4pdscore import *
-from py4pd_scripts.py4pdconvertion import *
-from py4pd_scripts.py4pdoperators import *
-from py4pd_scripts.py4pdtree import *
-from py4pd_scripts.py4pdshow import *
-from py4pd_scripts.py4pd_musicconvertions import *
-
 
 
 def py4pdLoadObjects():
