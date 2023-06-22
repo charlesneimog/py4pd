@@ -509,7 +509,7 @@ If you want to inform errors in PureData console use `pd.error` method.
 
 #### <h4 style="text-align:center"> `pd.getstrpointer` </h4>
 
-When working with audio objects, there are situations where we require global variables or variables that retain their values across different runs. For instance, when creating a Python function to generate a sine wave, we may need a global variable for the phase in order to generate a continuous waveform. However, using Python Global Variables can be problematic when working with multiple objects, as all functions would modify the phase value, potentially overwriting it unintentionally. To address this issue, we introduced the pd.getobjpointer function, which returns a unique string representing the pointer of the C object. This string is unique and can be utilized in other contexts to locate and retrieve the desired global variable. 
+When working with audio objects, there are situations where we require global variables or variables that retain their values across different runs. For instance, when creating a Python function to generate a sine wave, we may need a global variable for the phase in order to generate a continuous waveform. However, using Python Global Variables can be problematic when working with multiple objects, as all functions would modify the phase value, potentially overwriting it unintentionally. To address this issue, we introduced the `pd.getobjpointer` function, which returns a unique string representing the pointer of the C object. This string is unique for each object and can be utilized in other contexts to locate and retrieve the desired global variable. 
 
 
 === "Parameters" 
@@ -559,7 +559,7 @@ When working with audio objects, we have another helpful function called `pd.get
 
 #### <h4 style="text-align:center"> `pd.setglobalvar` </h4>
 
-To set new values for the variable of the object we use `pd.setglobalvar`. In audio objects, for example, this value you be saved for the next block calculation.
+To set new values for the variable of the object we use `pd.setglobalvar`. In audio objects, for example, this value you be saved for the next block (next run) calculation.
 
 === "Parameters" 
 
@@ -596,91 +596,92 @@ With `py4pd` you can display images inside PureData patches using Python, you ca
 
 === "Examples"
     
-    This is a big code, but I like it.
+    Bring scores to PureData.
 
-    ``` py
-    import pd
-    from random import randint
-    import os
-    try:
-        from neoscore.common import *
-    except Exception as e:
-        pd.error(str(e))
-        pd.error(
-            "Please, run 'pip install neoscore -t ./py-modules' in the terminal from current folder")
-
-
-    def getpitchKey(pitch):
-        note = {
-            # natural
-            'c': ['c', ''],
-            'd': ['d', ''],
-            'e': ['e', ''],
-            'f': ['f', ''],
-            'g': ['g', ''],
-            'a': ['a', ''],
-            'b': ['b', ''],
-            # sharp
-            'c#': ['c', 'accidentalSharp'],
-            'd#': ['d', 'accidentalSharp'],
-            'e#': ['e', 'accidentalSharp'],
-            'f#': ['f', 'accidentalSharp'],
-            'g#': ['g', 'accidentalSharp'],
-            'a#': ['a', 'accidentalSharp'],
-            'b#': ['b', 'accidentalSharp'],
-            # flat
-            'cb': ['c', 'accidentalFlat'],
-            'db': ['d', 'accidentalFlat'],
-            'eb': ['e', 'accidentalFlat'],
-            'fb': ['f', 'accidentalFlat'],
-            'gb': ['g', 'accidentalFlat'],
-            'ab': ['a', 'accidentalFlat'],
-            'bb': ['b', 'accidentalFlat'],
-        }
-        return note[pitch]
-
-
-    def chord(pitches):
+    ??? code Python Code
+        ``` py
+        import pd
+        from random import randint
+        import os
         try:
-            neoscore.shutdown()
-        except BaseException:
-            pass
-        neoscore.setup()
-        py4pdTMPfolder = pd.tempfolder()
-        for file in py4pdTMPfolder:
-            if file.endswith(".ppm"):
-                try:
-                    os.remove(py4pdTMPfolder + "/" + file)
-                except BaseException:
-                    pass
-        staffSoprano = Staff((Mm(0), Mm(0)), None, Mm(30))
-        trebleClef = 'treble'
-        Clef(ZERO, staffSoprano, trebleClef)
-        staffBaixo = Staff((ZERO, Mm(15)), None, Mm(30))
-        bassClef = 'bass'
-        Clef(ZERO, staffBaixo, bassClef)
-        Path.rect((Mm(-10), Mm(-10)), None, Mm(42), Mm(42),
-                  Brush(Color(0, 0, 0, 0)), Pen(thickness=Mm(0.5)))
-        for pitch in pitches:
-            # in pitch remove not number
-            pitchWithoutNumber = pitch.replace(pitch[-1], '')
-            pitchOctave = int(pitch[-1])
-            pitchClass, accidental = getpitchKey(pitchWithoutNumber)
-            note = [(pitchClass, accidental, pitchOctave)]
-            if pitchOctave < 4:
-                Chordrest(Mm(5), staffBaixo, note, (int(1), int(1)))
-            else:
-                Chordrest(Mm(5), staffSoprano, note, (int(1), int(1)))
-        randomNumber = randint(1, 100)
-        notePathName = py4pdTMPfolder + "/" + pitch + f"{randomNumber}.ppm"
-        neoscore.render_image(rect=None, dest=notePathName, dpi=150, wait=True)
-        neoscore.shutdown()
-        if os.name == 'nt':
-            notePathName = notePathName.replace("\\", "/")
-        pd.show(notePathName) ## HERE THE pd.show
-        return None
+            from neoscore.common import *
+        except Exception as e:
+            pd.error(str(e))
+            pd.error(
+                "Please, run 'pip install neoscore -t ./py-modules' in the terminal from current folder")
 
-    ```
+
+        def getpitchKey(pitch):
+            note = {
+                # natural
+                'c': ['c', ''],
+                'd': ['d', ''],
+                'e': ['e', ''],
+                'f': ['f', ''],
+                'g': ['g', ''],
+                'a': ['a', ''],
+                'b': ['b', ''],
+                # sharp
+                'c#': ['c', 'accidentalSharp'],
+                'd#': ['d', 'accidentalSharp'],
+                'e#': ['e', 'accidentalSharp'],
+                'f#': ['f', 'accidentalSharp'],
+                'g#': ['g', 'accidentalSharp'],
+                'a#': ['a', 'accidentalSharp'],
+                'b#': ['b', 'accidentalSharp'],
+                # flat
+                'cb': ['c', 'accidentalFlat'],
+                'db': ['d', 'accidentalFlat'],
+                'eb': ['e', 'accidentalFlat'],
+                'fb': ['f', 'accidentalFlat'],
+                'gb': ['g', 'accidentalFlat'],
+                'ab': ['a', 'accidentalFlat'],
+                'bb': ['b', 'accidentalFlat'],
+            }
+            return note[pitch]
+
+
+        def chord(pitches):
+            try:
+                neoscore.shutdown()
+            except BaseException:
+                pass
+            neoscore.setup()
+            py4pdTMPfolder = pd.tempfolder()
+            for file in py4pdTMPfolder:
+                if file.endswith(".ppm"):
+                    try:
+                        os.remove(py4pdTMPfolder + "/" + file)
+                    except BaseException:
+                        pass
+            staffSoprano = Staff((Mm(0), Mm(0)), None, Mm(30))
+            trebleClef = 'treble'
+            Clef(ZERO, staffSoprano, trebleClef)
+            staffBaixo = Staff((ZERO, Mm(15)), None, Mm(30))
+            bassClef = 'bass'
+            Clef(ZERO, staffBaixo, bassClef)
+            Path.rect((Mm(-10), Mm(-10)), None, Mm(42), Mm(42),
+                      Brush(Color(0, 0, 0, 0)), Pen(thickness=Mm(0.5)))
+            for pitch in pitches:
+                # in pitch remove not number
+                pitchWithoutNumber = pitch.replace(pitch[-1], '')
+                pitchOctave = int(pitch[-1])
+                pitchClass, accidental = getpitchKey(pitchWithoutNumber)
+                note = [(pitchClass, accidental, pitchOctave)]
+                if pitchOctave < 4:
+                    Chordrest(Mm(5), staffBaixo, note, (int(1), int(1)))
+                else:
+                    Chordrest(Mm(5), staffSoprano, note, (int(1), int(1)))
+            randomNumber = randint(1, 100)
+            notePathName = py4pdTMPfolder + "/" + pitch + f"{randomNumber}.ppm"
+            neoscore.render_image(rect=None, dest=notePathName, dpi=150, wait=True)
+            neoscore.shutdown()
+            if os.name == 'nt':
+                notePathName = notePathName.replace("\\", "/")
+            pd.show(notePathName) ## HERE THE pd.show
+            return None
+
+        ```
 
     <p align="center">
       <img src="../examples/score/score.gif" alt="pd.out Example" width="50%">
