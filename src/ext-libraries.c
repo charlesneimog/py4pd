@@ -1,10 +1,8 @@
 #include "ext-libraries.h"
-#include "m_pd.h"
 #include "utils.h"
 #include "pic.h"
+#include "player.h"
 #include "py4pd.h"
-
-#include <g_all_guis.h>
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
@@ -143,14 +141,16 @@ void setKwargs(t_py *x, t_symbol *s, int ac, t_atom *av){
 // =====================================
 void py4pdObjPic_save(t_gobj *z, t_binbuf *b){ 
     t_py *x = (t_py *)z;
-    binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix);
-    binbuf_addbinbuf(b, ((t_py *)x)->x_obj.te_binbuf);
-
-    int objAtomsCount = binbuf_getnatom(((t_py *)x)->x_obj.te_binbuf);
-    if (objAtomsCount == 1){
-        binbuf_addv(b, "ii", x->x_width, x->x_height);
+    if (x->visMode){
+        post("Function name is %s", x->function_name->s_name);
+        binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix);
+        binbuf_addbinbuf(b, ((t_py *)x)->x_obj.te_binbuf);
+        int objAtomsCount = binbuf_getnatom(((t_py *)x)->x_obj.te_binbuf);
+        if (objAtomsCount == 1){
+            binbuf_addv(b, "ii", x->x_width, x->x_height);
+        }
+        binbuf_addsemi(b);
     }
-    binbuf_addsemi(b);
     return;
 }
 
@@ -237,6 +237,14 @@ void py4pdInlets_proxy_list(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
     }
     return;
 }
+
+// =====================================
+void test(t_py *x){
+    (void)x;
+    post("I am one test");
+
+}
+
 
 // =====================================
 void py_bang(t_py *x){
@@ -1142,17 +1150,19 @@ void *pyObjectFree(t_py *x) {
 PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     char *objectName;
+    const char *helpPatch;
     PyObject *Function; // *showFunction;
     int w = 250, h = 250;
     int objpyout = 0;
     int nooutlet = 0;
     int added2pd_info = 0;
+    int personalisedHelp = 0;
 
     // get file folder where this function is called from self
     t_py *py4pd = get_py4pd_object();
 
     if (py4pd->libraryFolder == NULL) {
-        pd_error(py4pd, "[py4pd] Error: libraryFolder is NULL");
+        pd_error(py4pd, "[py4pd] Library Folder is NULL, some help patches may not be found");
         return NULL;
     } 
 
@@ -1168,7 +1178,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     size_t totalLength = strlen(libraryFolder) + strlen(helpFolder) + 1;
     char *helpFolderCHAR = (char *)malloc(totalLength * sizeof(char));
     if (helpFolderCHAR == NULL) {
-        pd_error(py4pd, "[py4pd] Error allocating memory for helpFolderCHAR");
+        pd_error(py4pd, "[py4pd] Error allocating memory (code 001)"); 
         return NULL;
     }
     strcpy(helpFolderCHAR, libraryFolder);
@@ -1209,6 +1219,11 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
                 added2pd_info = 1;
             }
         }
+        if (PyDict_Contains(keywords, PyUnicode_FromString("helppatch"))) {
+            PyObject *helpname = PyDict_GetItemString(keywords, "helppatch"); // it gets the data type output
+            helpPatch = PyUnicode_AsUTF8(helpname);
+            personalisedHelp = 1;
+        }
     }
 
     class_set_extern_dir(gensym(helpFolderCHAR));
@@ -1232,8 +1247,6 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         PyErr_SetString(PyExc_TypeError, "Object type not supported, check the spelling");
         return NULL;
     }
-    free(helpFolderCHAR);
-
     // Add configs to the object
     PyObject *nestedDict = PyDict_New();
     PyDict_SetItemString(nestedDict, "py4pdOBJFunction", Function);
@@ -1253,53 +1266,58 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(Function);
     int py_args = code->co_argcount;
 
-    // NORMAL
+    // special methods
     if ((strcmp(objectType, "NORMAL") == 0)){
-        class_addmethod(localClass, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
-        class_addmethod(localClass, (t_method)printDocs, gensym("doc"), 0, 0);
-        class_addmethod(localClass, (t_method)setParametersForFunction, gensym("key"), A_GIMME, 0);
-        class_addmethod(localClass, (t_method)setKwargs, gensym("kwargs"), A_GIMME, 0);
-        class_addmethod(localClass, (t_method)setPythonPointersUsage, gensym("pointers"), A_FLOAT, 0);
-        class_addmethod(localClass, (t_method)reloadObject, gensym("reload"), 0, 0);
-        class_addanything(localClass, py_anything);
-        class_sethelpsymbol(localClass, gensym(objectName));
+        class_addmethod(localClass, (t_method)py4pdPlay, gensym("play"), 0, 0);
+        class_addmethod(localClass, (t_method)py4pdStop, gensym("stop"), 0, 0);
+        class_addmethod(localClass, (t_method)py4pdClear, gensym("clear"), 0, 0);
     }
     else if ((strcmp(objectType, "VIS") == 0)){
         class_addanything(localClass, py_anything);
         class_addmethod(localClass, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);
-        class_addmethod(localClass, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
-        class_addmethod(localClass, (t_method)printDocs, gensym("doc"), 0, 0);
-        class_addmethod(localClass, (t_method)reloadObject, gensym("reload"), 0, 0);
+        class_addmethod(localClass, (t_method)setPythonPointersUsage, gensym("pointers"), A_FLOAT, 0);
         class_setsavefn(localClass, &py4pdObjPic_save);
+        class_addmethod(localClass, (t_method)py4pdPlay, gensym("play"), 0, 0);
+        class_addmethod(localClass, (t_method)py4pdStop, gensym("stop"), 0, 0);
+        class_addmethod(localClass, (t_method)py4pdClear, gensym("clear"), 0, 0);
+
     }
     // AUDIOIN
     else if ((strcmp(objectType, "AUDIOIN") == 0)){
-        class_addmethod(localClass, (t_method)printDocs, gensym("doc"), 0, 0);
-        class_addmethod(localClass, (t_method)reloadObject, gensym("reload"), 0, 0);
-        class_addmethod(localClass, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
-        class_addmethod(localClass, (t_method)PY4PD_zoom, gensym("kwargs"), A_CANT, 0);
         CLASS_MAINSIGNALIN(localClass, t_py, py4pdAudio);
     }
     // AUDIOIN
     else if ((strcmp(objectType, "AUDIOOUT") == 0)){
-        class_addmethod(localClass, (t_method)printDocs, gensym("doc"), 0, 0);
-        class_addmethod(localClass, (t_method)reloadObject, gensym("reload"), 0, 0);
         class_addmethod(localClass, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
-        class_addanything(localClass, py_anything);
     }
     // AUDIO
     else if (strcmp(objectType, "AUDIO") == 0) {
-        class_addmethod(localClass, (t_method)printDocs, gensym("doc"), 0, 0);
-        class_addmethod(localClass, (t_method)reloadObject, gensym("reload"), 0, 0);
         class_addmethod(localClass, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
         CLASS_MAINSIGNALIN(localClass, t_py, py4pdAudio);
     }
     else{
-        // set py error
         PyErr_SetString(PyExc_TypeError, "Object type not supported, check the spelling");
         return NULL;
     }
     
+    // add methods to the class
+    class_addanything(localClass, py_anything);
+    class_addmethod(localClass, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);
+    class_addmethod(localClass, (t_method)printDocs, gensym("doc"), 0, 0);
+    class_addmethod(localClass, (t_method)setParametersForFunction, gensym("key"), A_GIMME, 0);
+    class_addmethod(localClass, (t_method)setKwargs, gensym("kwargs"), A_GIMME, 0);
+    class_addmethod(localClass, (t_method)setPythonPointersUsage, gensym("pointers"), A_FLOAT, 0);
+    class_addmethod(localClass, (t_method)reloadObject, gensym("reload"), 0, 0);
+    
+    // add help patch
+    if (personalisedHelp == 1){
+        class_sethelpsymbol(localClass, gensym(helpPatch));
+    }
+    else{
+        class_sethelpsymbol(localClass, gensym(objectName));
+    }
+    free(helpFolderCHAR);
+
     if (py_args != 0){
         py4pdInlets_proxy_class = class_new(gensym("_py4pdInlets_proxy"), 0, 0, sizeof(t_py4pdInlet_proxy), CLASS_DEFAULT, 0);
         class_addanything(py4pdInlets_proxy_class, py4pdInlets_proxy_anything);

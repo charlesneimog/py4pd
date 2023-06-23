@@ -196,19 +196,13 @@ void PY4PD_erase(t_py* x, struct _glist *glist){
 // =================================================
 void PY4PD_vis(t_gobj *z, t_glist *glist, int vis){
     t_py* x = (t_py*)z;
-    vis ? PY4PD_draw(x, glist, 1) : PY4PD_erase(x, glist);
-}
-
-// =================================================
-void PY4PD_save(t_gobj *z, t_binbuf *b){
-    t_py *x = (t_py *)z;
-    if(x->x_filename == &s_)
-        x->x_filename = gensym("empty");
-    // PY4PD_get_snd_rcv(x);
-    binbuf_addv(b, "ssiisisssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix,
-        atom_getsymbol(binbuf_getvec(x->x_obj.te_binbuf)), x->x_outline, x->x_filename, x->x_snd_raw,
-        x->x_rcv_raw, x->x_size, x->x_latch);
-    binbuf_addv(b, ";");
+    if (vis){
+        PY4PD_draw(x, glist, 1);
+    }
+    else{
+        PY4PD_erase(x, glist);
+    }
+    return;
 }
 
 // =================================================

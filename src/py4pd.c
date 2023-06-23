@@ -18,6 +18,13 @@ int object_count = 0;
 // ============================================
 // =========== PY4PD LOAD LIBRARIES ===========
 // ============================================
+/**
+ * @brief function to load the libraries (when -lib is used)
+ * @param x pointer to the object
+ * @param argc number of arguments
+ * @param argv array of arguments
+ * @return void
+*/
 
 static void libraryLoad(t_py *x, int argc, t_atom *argv){
 
@@ -45,7 +52,8 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
                 break;
             }
             char library_path[MAXPDSTRING];
-            snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, script_file_name->s_name); // NOTE: The library folder must have the same name as the library file
+            snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, script_file_name->s_name); 
+            // NOTE: The library folder must have the same name as the library file
             if (access(library_path, F_OK) != -1) {
                 libraryNotFound = 0;
                 PyObject *library_path_py = PyUnicode_FromString(library_path);
@@ -57,8 +65,6 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
             return;
         }
     }
-
-    // return;
 
     PyObject *pModule, *pFunc;  // Create the variables of the python objects
     char *pyScriptsFolder = malloc(strlen(x->py4pdPath->s_name) + 40); // allocate extra space
@@ -110,6 +116,26 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
         pd_error(x, "[Python] Failed to load script file %s", script_file_name->s_name);
         return;
     }
+
+    // reload the module if it already exists
+    PyObject *pModuleReloaded = PyImport_ReloadModule(pModule);
+    if (pModuleReloaded != NULL){
+        Py_DECREF(pModule);
+        pModule = pModuleReloaded;
+    }
+    else{
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_XDECREF(pstr);
+        Py_XDECREF(pModule);
+        return;
+    }
+
+
+
     PyObject *pModuleDict = PyModule_GetDict(pModule);
 
     if (pModuleDict == NULL){
@@ -204,6 +230,11 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
 // ============================================
 // ========= PY4PD METHODS FUNCTIONS ==========
 // ============================================
+/**
+ * @brief it prints the version of py4pd and python
+ * @param x pointer to the object
+ * @return void
+*/
 static void printPy4pdVersion(t_py *x){
     int major, minor, micro;
     major = PY4PD_MAJOR_VERSION;
@@ -236,7 +267,7 @@ static void printPy4pdVersion(t_py *x){
  */
 
 static void setPy4pdHomePath(t_py *x, t_symbol *s, int argc, t_atom *argv) {
-    (void)s;  // unused but required by pd
+    (void)s;  
     if (argc < 1) {
         post("[py4pd] The home path is: %s", x->pdPatchFolder->s_name);
     } else {
@@ -297,6 +328,16 @@ static void setPackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // ====================================
+/**
+ * @brief print all the functions in the module
+ * @param x is the py4pd object
+ * @param s is the symbol (message) that was sent to the object
+ * @param argc is the number of arguments
+ * @param argv is the arguments
+ * @return void, but it prints the functions
+
+
+*/
 static void printModuleFunctions(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     (void)argc;
@@ -315,7 +356,6 @@ static void printModuleFunctions(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // ====================================
-// ALWAYS DESCRIPTION OF NEXT FUNCTION
 /**
  * @brief print the documentation of the function
  * @param x is the py4pd object
@@ -560,7 +600,7 @@ void reloadPy4pdFunction(t_py *x) {
 
 // ====================================
 /**
- * @brief set the function and save it on x->function
+ * @brief set the python function and save it on x->function
  * @param x is the py4pd object
  * @param s is the symbol (message) that was sent to the object
  * @param argc is the number of arguments
@@ -655,8 +695,6 @@ void setFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
 
     PyObject *objectCapsule = py4pd_add_pd_object(x);
-
-
 
     // =====================
     pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file with the function
@@ -1057,6 +1095,8 @@ static void executeFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // ===========================================
+
+// TODO: I will change this when PEP 684 is implemented
 
 static void py4pdThread(t_py *x, t_floatarg f) {
     int mode = (int)f;

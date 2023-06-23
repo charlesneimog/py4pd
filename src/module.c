@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "pic.h"  
 #include "ext-libraries.h"
+#include "player.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
@@ -595,7 +596,7 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
         post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
         return NULL;
     }
-
+    
     PY4PD_erase(py4pd, py4pd->x_glist);
     if (PyArg_ParseTuple(args, "s", &string)) {
         t_symbol *filename = gensym(string);
@@ -626,6 +627,7 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
             fseek(file, 16, SEEK_SET);
             fread(&width, 4, 1, file);
             fread(&height, 4, 1, file);
+            fclose(file);
             width = py4pd_ntohl(width); 
             height = py4pd_ntohl(height);
             py4pd->x_width = width;
@@ -637,6 +639,8 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
             PyErr_SetString(PyExc_TypeError, "[Python] pd.showimage: file format not supported");
             return NULL;
         }
+
+       
 
         if (glist_isvisible(py4pd->x_glist) && gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
             const char *file_name_open = PY4PD_filepath(py4pd, filename->s_name);
@@ -866,6 +870,32 @@ PyObject *getglobalvar(PyObject *self, PyObject *args, PyObject *keywords){
 }
 
 // =================================
+PyObject *addThingToPlay(PyObject *self, PyObject *args, PyObject *keywords){
+    (void)self;
+
+    int onset;
+    PyObject *thingToPlay; 
+    t_py *py4pd = get_py4pd_object();
+
+
+    if (!PyArg_ParseTuple(args, "iO", &onset, &thingToPlay)) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.add2play: wrong arguments");
+        return NULL;
+    }
+
+    PyObject *objectToPlay = Py_BuildValue("O", thingToPlay);
+
+
+    PY4PD_Player_InsertThing(py4pd, onset, objectToPlay);
+
+    if (keywords != NULL) { // add key if needed
+    }
+    
+    Py_RETURN_TRUE;
+}
+
+
+// =================================
 PyObject *pdmoduleError;
 
 // =================================
@@ -907,8 +937,8 @@ PyMethodDef PdMethods[] = {
     {"setglobalvar", setglobalvar, METH_VARARGS, "It sets a global variable for the Object, it is not clear after the execution of the function"},
     {"getglobalvar", (PyCFunction)getglobalvar, METH_VARARGS | METH_KEYWORDS, "It gets a global variable for the Object, it is not clear after the execution of the function"},
 
-    // pip
-    // {"pip", (PyCFunction)pipinstall, METH_VARARGS, "It installs python packages"},
+    // player
+    {"add2player", (PyCFunction)addThingToPlay, METH_VARARGS | METH_KEYWORDS, "It adds a thing to the player"},
 
     {NULL, NULL, 0, NULL}  //
 };

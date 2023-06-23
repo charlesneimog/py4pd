@@ -28,21 +28,34 @@
     #endif
 #endif
 
-// =====================================
+// ================ PLAYER =============
+typedef struct {
+    int onset;
+    PyObject **values;
+    int size;
+} KeyValuePair;
+
+typedef struct {
+    KeyValuePair* entries;
+    int size;
+    int lastOnset;
+} Dictionary;
+
+typedef struct {
+    KeyValuePair* entries;
+    int size;
+    int capacity;
+} HashTable;
+
+
+
+// ================ VIS Object ========= 
 typedef struct _py4pd_edit_proxy{ 
     t_object    p_obj;
     t_symbol   *p_sym;
     t_clock    *p_clock;
     struct      _py *p_cnv;
 }t_py4pd_edit_proxy;
-
-// =====================================
-typedef struct _py4pd_help_proxy{ 
-    t_object    p_obj;
-    t_symbol   *p_sym;
-    t_clock    *p_clock;
-    struct      _py *p_cnv;
-}t_py4pd_help_proxy;
 
 // =====================================
 typedef struct _py { // It seems that all the objects are some kind of class.
@@ -57,6 +70,12 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int               py_arg_numbers; // number of arguments
     t_int               outPyPointer; // flag to check if is to output the python pointer
     int                 kwargs;
+
+    // Player 
+    t_clock             *playerClock;
+    Dictionary          *playerDict;
+    int                 msOnset;
+    int                 playerRunning;
 
     // Library
     t_int                py4pd_lib; // flag to check if is to use python library
@@ -135,6 +154,9 @@ typedef struct _pyObjectData {
     PyObject *pValue;
 } t_pyObjectData;
 // =====================================
+
+// TODO: REMOVE py4pd_atomtype, py4pd_atom, pd_args
+
 typedef enum{
     PY4PD_FLOAT, // 1
     PY4PD_SYMBOL, // 2
@@ -150,6 +172,7 @@ typedef struct _pdArgs{
     int size;
     py4pd_atom *atoms;
 } pd_args;
+
 
 // =====================================
 extern void reloadPy4pdFunction(t_py *x);
