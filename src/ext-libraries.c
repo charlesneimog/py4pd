@@ -708,7 +708,7 @@ static void library_dsp(t_py *x, t_signal **sp) {
 // =====================================
 void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
     const char *objectName = s->s_name;
-    
+
     char py4pd_objectName[MAXPDSTRING];
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
     PyObject *pd_module = PyImport_ImportModule("pd");
@@ -1292,18 +1292,17 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
 
     // special methods
     if ((strcmp(objectType, "NORMAL") == 0)){
-        class_addmethod(localClass, (t_method)py4pdPlay, gensym("play"), 0, 0);
+        class_addmethod(localClass, (t_method)py4pdPlay, gensym("play"), A_GIMME, 0);
         class_addmethod(localClass, (t_method)py4pdStop, gensym("stop"), 0, 0);
         class_addmethod(localClass, (t_method)py4pdClear, gensym("clear"), 0, 0);
     }
     else if ((strcmp(objectType, "VIS") == 0)){
-        class_addanything(localClass, py_anything);
         class_addmethod(localClass, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);
         class_addmethod(localClass, (t_method)setPythonPointersUsage, gensym("pointers"), A_FLOAT, 0);
-        class_setsavefn(localClass, &py4pdObjPic_save);
-        class_addmethod(localClass, (t_method)py4pdPlay, gensym("play"), 0, 0);
+        class_addmethod(localClass, (t_method)py4pdPlay, gensym("play"), A_GIMME, 0);
         class_addmethod(localClass, (t_method)py4pdStop, gensym("stop"), 0, 0);
         class_addmethod(localClass, (t_method)py4pdClear, gensym("clear"), 0, 0);
+        class_setsavefn(localClass, &py4pdObjPic_save);
 
     }
     // AUDIOIN
@@ -1323,7 +1322,6 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         PyErr_SetString(PyExc_TypeError, "Object type not supported, check the spelling");
         return NULL;
     }
-    
     // add methods to the class
     class_addanything(localClass, py_anything);
     class_addmethod(localClass, (t_method)py_Object, gensym("PyObject"), A_POINTER, 0);

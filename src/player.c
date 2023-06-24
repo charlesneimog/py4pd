@@ -101,11 +101,17 @@ void py4pdPlay_tick(t_py *x){
 }
 
 // ====================================================== 
-void py4pdPlay(t_py *x){
+void py4pdPlay(t_py *x, t_symbol *s, int ac, t_atom *av){
+    (void)s;
+
     x->msOnset = 0;
     if (x->playerDict == NULL) {
         pd_error(x, "[%s]: Nothing to play.", x->objectName->s_name);
         return;
+    }
+    if (ac != 0 && av[0].a_type == A_FLOAT) {
+        x->msOnset = (int)av->a_w.w_float;
+        post("Starting at %d ms", x->msOnset);
     }
     x->playerClock = clock_new(x, (t_method)py4pdPlay_tick);
     py4pdPlay_tick(x);
