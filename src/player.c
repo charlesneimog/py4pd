@@ -12,6 +12,32 @@ Dictionary* PY4PD_createDictionary() {
 }
 
 // ======================================================
+int compareOnset(const void* a, const void* b) {
+    const KeyValuePair* entryA = (const KeyValuePair*)a;
+    const KeyValuePair* entryB = (const KeyValuePair*)b;
+    
+    if (entryA->onset < entryB->onset)
+        return -1;
+    else if (entryA->onset > entryB->onset)
+        return 1;
+    else
+        return 0;
+}
+
+// ======================================================
+KeyValuePair* PY4PD_Player_GetValue(Dictionary* dictionary, int onset) {
+    if (dictionary == NULL) {
+        return NULL;
+    }
+    for (int i = 0; i < dictionary->size; i++) {
+        if (dictionary->entries[i].onset == onset) {
+            return &(dictionary->entries[i]);
+        }
+    }
+    return NULL;  // Return NULL if no matching onset is found
+}
+
+// ======================================================
 void PY4PD_Player_InsertThing(t_py *x, int onset, PyObject *value) {
     if (x->playerDict == NULL) {
         x->playerDict = PY4PD_createDictionary();
@@ -44,30 +70,6 @@ void PY4PD_Player_InsertThing(t_py *x, int onset, PyObject *value) {
     }
 }
 
-// ======================================================
-static int compareOnset(const void* a, const void* b) {
-    KeyValuePair* kvp1 = (KeyValuePair*)a;
-    KeyValuePair* kvp2 = (KeyValuePair*)b;
-    
-    if (kvp1->onset < kvp2->onset) {
-        return -1;
-    } else if (kvp1->onset > kvp2->onset) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-// ======================================================
-KeyValuePair* PY4PD_Player_GetValue(Dictionary* dictionary, int onset) {
-    if (dictionary == NULL) {
-        return NULL;
-    }
-    KeyValuePair key;
-    key.onset = onset;
-    KeyValuePair* result = (KeyValuePair*)bsearch(&key, dictionary->entries, dictionary->size, sizeof(KeyValuePair), compareOnset);
-    return result;  // Return NULL if no matching onset is found
-}
 
 // ======================================================
 void PY4PD_freeDictionary(Dictionary* dictionary) {
@@ -84,7 +86,6 @@ void PY4PD_freeDictionary(Dictionary* dictionary) {
 // ================================================
 // ================== PLAYER ======================
 // ================================================
-
 void py4pdPlay_tick(t_py *x){
     x->msOnset++; 
     if (x->playerDict->lastOnset > x->msOnset){
@@ -108,7 +109,6 @@ void py4pdPlay(t_py *x){
     }
     x->playerClock = clock_new(x, (t_method)py4pdPlay_tick);
     py4pdPlay_tick(x);
-
     return;
 }
 
@@ -119,13 +119,22 @@ void py4pdStop(t_py *x, t_symbol *s, int ac, t_atom *av){
     (void)ac;
     (void)av;
     (void)x;
+    
+    if (x->playerClock == NULL) {
+        pd_error(x, "[%s]: Nothing to stop.", x->objectName->s_name);
+        return;
+    }
     clock_unset(x->playerClock);
     return;
 }
 
 // ======================================================
 void py4pdClear(t_py *x){
+    if (x->playerClock != NULL) {
+        clock_unset(x->playerClock);
+    }
     PY4PD_freeDictionary(x->playerDict);
     x->playerDict = NULL;
     return;
 }
+

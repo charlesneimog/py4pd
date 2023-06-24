@@ -741,12 +741,19 @@ void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
     t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
     x->objectName = gensym(objectName);
     // ================================
-
     PyObject *pyFunction = PyDict_GetItemString(PdDict, "py4pdOBJFunction");
     if (pyFunction == NULL) {
         pd_error(x, "Error: pyFunction is NULL");
         return NULL;
     }
+
+    PyObject *ignoreOnNone = PyDict_GetItemString(PdDict, "py4pdOBJIgnoreNone");
+    if (ignoreOnNone == NULL) {
+        pd_error(x, "Error: ignoreOnNone is NULL");
+        return NULL;
+    }
+    x->ignoreOnNone = PyLong_AsLong(ignoreOnNone);
+
     PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
     PyObject *nooutlet = PyDict_GetItemString(PdDict, "py4pdOBJnooutlet");
     int nooutlet_int = PyLong_AsLong(nooutlet);
@@ -817,6 +824,14 @@ void *New_VIS_Object(t_symbol *s, int argc, t_atom *argv) {
         pd_error(x, "Error: pyFunction is NULL");
         return NULL;
     }
+
+    // ==================
+    PyObject *ignoreOnNone = PyDict_GetItemString(PdDict, "py4pdOBJIgnoreNone");
+    if (ignoreOnNone == NULL) {
+        pd_error(x, "Error: ignoreOnNone is NULL");
+        return NULL;
+    }
+    x->ignoreOnNone = PyLong_AsLong(ignoreOnNone);
 
     // ==================
     PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
@@ -1157,6 +1172,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     int nooutlet = 0;
     int added2pd_info = 0;
     int personalisedHelp = 0;
+    int ignoreNoneReturn = 0;
 
     // get file folder where this function is called from self
     t_py *py4pd = get_py4pd_object();
@@ -1224,6 +1240,13 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
             helpPatch = PyUnicode_AsUTF8(helpname);
             personalisedHelp = 1;
         }
+        if (PyDict_Contains(keywords, PyUnicode_FromString("ignore_none_return"))) {
+            PyObject *noneReturn = PyDict_GetItemString(keywords, "ignore_none_return"); // it gets the data type output
+            if (noneReturn == Py_True) {
+                ignoreNoneReturn = 1;
+            }
+        }
+
     }
 
     class_set_extern_dir(gensym(helpFolderCHAR));
@@ -1256,6 +1279,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     PyDict_SetItemString(nestedDict, "py4pdOBJpyout", PyLong_FromLong(objpyout));
     PyDict_SetItemString(nestedDict, "py4pdOBJnooutlet", PyLong_FromLong(nooutlet));
     PyDict_SetItemString(nestedDict, "py4pdOBJname", PyUnicode_FromString(objectName));
+    PyDict_SetItemString(nestedDict, "py4pdOBJIgnoreNone", PyLong_FromLong(ignoreNoneReturn));
     PyObject *objectDict = PyDict_New();
     PyDict_SetItemString(objectDict, objectName, nestedDict);
     PyObject *py4pd_capsule = PyCapsule_New(objectDict, objectName, NULL);

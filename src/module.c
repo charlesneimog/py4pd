@@ -870,30 +870,33 @@ PyObject *getglobalvar(PyObject *self, PyObject *args, PyObject *keywords){
 }
 
 // =================================
+// ============ PLAYER =============
+// =================================
 PyObject *addThingToPlay(PyObject *self, PyObject *args, PyObject *keywords){
     (void)self;
+    (void)keywords;
 
     int onset;
     PyObject *thingToPlay; 
     t_py *py4pd = get_py4pd_object();
 
-
     if (!PyArg_ParseTuple(args, "iO", &onset, &thingToPlay)) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.add2play: wrong arguments");
         return NULL;
     }
-
-    PyObject *objectToPlay = Py_BuildValue("O", thingToPlay);
-
-
-    PY4PD_Player_InsertThing(py4pd, onset, objectToPlay);
-
-    if (keywords != NULL) { // add key if needed
-    }
-    
+    PY4PD_Player_InsertThing(py4pd, onset, Py_BuildValue("O", thingToPlay)); // TODO: check if this is correct
     Py_RETURN_TRUE;
 }
 
+// =================================
+static PyObject *clearPlayer(PyObject *self, PyObject *args){
+    (void)self;
+    (void)args;
+
+    t_py *py4pd = get_py4pd_object();
+    py4pdClear(py4pd);
+    Py_RETURN_TRUE;
+}
 
 // =================================
 PyObject *pdmoduleError;
@@ -939,6 +942,8 @@ PyMethodDef PdMethods[] = {
 
     // player
     {"add2player", (PyCFunction)addThingToPlay, METH_VARARGS | METH_KEYWORDS, "It adds a thing to the player"},
+    {"clearplayer", clearPlayer, METH_NOARGS, "Get PureData Object Pointer"},
+
 
     {NULL, NULL, 0, NULL}  //
 };

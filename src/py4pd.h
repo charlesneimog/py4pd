@@ -31,23 +31,16 @@
 // ================ PLAYER =============
 typedef struct {
     int onset;
-    PyObject **values;
     int size;
+    PyObject **values;
 } KeyValuePair;
 
 typedef struct {
     KeyValuePair* entries;
     int size;
     int lastOnset;
+    int isSorted;
 } Dictionary;
-
-typedef struct {
-    KeyValuePair* entries;
-    int size;
-    int capacity;
-} HashTable;
-
-
 
 // ================ VIS Object ========= 
 typedef struct _py4pd_edit_proxy{ 
@@ -80,6 +73,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     // Library
     t_int                py4pd_lib; // flag to check if is to use python library
     t_int                pyObject;
+    t_int                  ignoreOnNone;
     t_atom               *inlets; // vector to store the arguments
     PyObject             *argsDict; // parameters
     t_symbol            *objectName; // object name

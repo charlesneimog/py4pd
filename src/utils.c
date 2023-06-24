@@ -527,6 +527,11 @@ void free_pyobject_data(void *p) { // TODO: Rename this function
 
 void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) { // TODO: fix the type of the output
     if (x->outPyPointer) {
+        if (pValue == Py_None && x->ignoreOnNone == 1) {
+            return 0;
+        }
+
+
         void *pData = pyobject_to_pointer(pValue);
         if (Py_REFCNT(pValue) == 1) {
             Py_INCREF(pValue);
