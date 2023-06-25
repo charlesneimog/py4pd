@@ -4,6 +4,7 @@
 *.dll
 *.o
 *.sh
+*.json
 .vscode/*
 Python
 bin
