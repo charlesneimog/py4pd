@@ -1,0 +1,8 @@
+#N canvas 529 123 450 300 8;
+#X obj 7 96 py4pd;
+#X msg 7 32 key fft-size 1024;
+#X msg 24 54 key clef G;
+#X msg 39 73 key primenumbers [11 17 19];
+#X connect 1 0 0 0;
+#X connect 2 0 0 0;
+#X connect 3 0 0 0;

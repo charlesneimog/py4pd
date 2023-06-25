@@ -1,0 +1,7 @@
+#N canvas 529 123 744 300 8;
+#X obj 7 96 py4pd myscript myfunction;
+#X msg 7 10 packages;
+#X text 57 6 Print where is the actual packages folder.;
+#X msg 18 49 packages ~/miniconda/envs/composition/lib/python3.11/site-packages, f 63;
+#X connect 1 0 0 0;
+#X connect 3 0 0 0;

@@ -1,0 +1,4 @@
+#N canvas 529 123 450 300 8;
+#X obj 7 82 py4pd;
+#X msg 7 32 set myscript myfunction;
+#X connect 1 0 0 0;

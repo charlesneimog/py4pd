@@ -1,0 +1,11 @@
+#N canvas 529 123 450 300 8;
+#X obj 7 96 py4pd myscript myfunction;
+#X text 45 10 It opens the myscript file;
+#X msg 7 10 editor;
+#X msg 13 49 editor vscode;
+#X text 88 49 Set IDE to vscode.;
+#X msg 23 68 editor nvim;
+#X text 98 68 Set IDE to nvim.;
+#X connect 2 0 0 0;
+#X connect 3 0 0 0;
+#X connect 5 0 0 0;
