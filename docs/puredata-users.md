@@ -1,4 +1,4 @@
-# py4pd Object
+# Object Methods
 
 ## <h2 align="center"> **`py4pd` Args** </h2>
 -------------------------------------- 
