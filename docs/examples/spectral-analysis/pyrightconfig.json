@@ -1,0 +1,13 @@
+{
+	"include": [
+	  "src"
+	],
+	
+	"exclude": [
+	"**/__pycache__",
+	"**/py-modules"
+	],
+	 
+	"venv": "composition",  
+  	"venvPath": "/home/neimog/miniconda3/envs/",
+	  }
