@@ -133,9 +133,6 @@ void setKwargs(t_py *x, t_symbol *s, int ac, t_atom *av){
         pd_error(x, "The message 'kwargs' must have at least 2 arguments");
         return;
     }
-
-
-
 }
 
 // =====================================
@@ -216,7 +213,7 @@ void py4pdInlets_proxy_list(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
             PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pyInletValue);
         }
     }
-    else { // NOTE: Need some work here
+    else { 
         pyInletValue = PyList_New(ac);
         for (int i = 0; i < ac; i++){
             if (av[i].a_type == A_FLOAT){ 
@@ -239,14 +236,6 @@ void py4pdInlets_proxy_list(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
 }
 
 // =====================================
-void test(t_py *x){
-    (void)x;
-    post("I am one test");
-
-}
-
-
-// =====================================
 void py_bang(t_py *x){
     // check if number of args is 0
     if (x->py_arg_numbers != 0){
@@ -258,7 +247,6 @@ void py_bang(t_py *x){
         return;
     }
     PyObject *pValue = PyObject_CallObject(x->function, x->argsDict);
-    // TODO: revisar, error quando pValue is null and we add a new object
     if (pValue != NULL) { 
         py4pd_convert_to_pd(x, pValue); 
     }
@@ -310,8 +298,15 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
     }
     else if ((s == gensym("float") || s == gensym("symbol")) && ac == 1){
         if (av[0].a_type == A_FLOAT){ // TODO: float or int
-            pyInletValue = PyLong_FromLong(av[0].a_w.w_float);
-            PyTuple_SetItem(x->argsDict, 0, pyInletValue);
+            int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
+            if (isInt){
+                // PyList_SetItem(pyInletValue, i, PyLong_FromLong(av[i].a_w.w_float));
+                PyTuple_SetItem(x->argsDict, 0, PyLong_FromLong(av[0].a_w.w_float));
+            }
+            else{
+                // PyList_SetItem(pyInletValue, i, PyFloat_FromDouble(av[i].a_w.w_float));
+                PyTuple_SetItem(x->argsDict, 0, PyFloat_FromDouble(av[0].a_w.w_float));
+            }
         }
         else if (av[0].a_type == A_SYMBOL){
             pyInletValue = PyUnicode_FromString(av[0].a_w.w_symbol->s_name);
@@ -764,7 +759,7 @@ void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
 
-    setPy4pdConfig(x);  // set the config file  TODO: I want to rethink this)
+    setPy4pdConfig(x);  // set the config file  NOTE: I WANT to rethink this...
     createPy4pdTempFolder(x);  // Create the py4pd temp folder
     findPy4pdFolder(x);  // find the py4pd object folder
         
@@ -1126,8 +1121,6 @@ void *New_Audio_Object(t_symbol *s, int argc, t_atom *argv) {
 // =====================================
 void *pyObjectFree(t_py *x) {
     if (object_count == 0) {
-        // Py_Finalize(); // BUG: This not work properly with submodules written in C
-        // post("[py4pd] Trying to finalize python");
         object_count = 0;
         #ifdef _WIN64
             char command[1000];

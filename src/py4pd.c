@@ -774,7 +774,6 @@ void setFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  */
 
 static void runFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
-    //  TODO: Check for memory leaks
     (void)s;
     int OpenList_count = 0;
     int CloseList_count = 0;
@@ -846,10 +845,10 @@ static void runFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         }
     }
 
-    if (pValue != NULL) { // if the function returns a value  TODO: add pointer output when x->Python is 1;
-        py4pd_convert_to_pd(x, pValue);  // convert the value to pd
+    if (pValue != NULL) { 
+        py4pd_convert_to_pd(x, pValue);  
     } 
-    else {                             // if the function returns a error
+    else {                             
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);

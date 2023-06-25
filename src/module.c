@@ -884,7 +884,7 @@ PyObject *addThingToPlay(PyObject *self, PyObject *args, PyObject *keywords){
         PyErr_SetString(PyExc_TypeError, "[Python] pd.add2play: wrong arguments");
         return NULL;
     }
-    PY4PD_Player_InsertThing(py4pd, onset, Py_BuildValue("O", thingToPlay)); // TODO: check if this is correct
+    PY4PD_Player_InsertThing(py4pd, onset, Py_BuildValue("O", thingToPlay)); 
     Py_RETURN_TRUE;
 }
 

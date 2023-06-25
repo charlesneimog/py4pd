@@ -400,7 +400,7 @@ void removeChar(char *str, char c) {
 }
 
 // =====================================================================
-char *py4pd_mtok(char *input, char *delimiter) { // TODO: Rename this function
+char *py4pd_mtok(char *input, char *delimiter) { 
     static char *string;
     if(input != NULL)
         string = input;
@@ -434,7 +434,7 @@ char *py4pd_mtok(char *input, char *delimiter) { // TODO: Rename this function
 
 */
 
-void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){ // TODO: Rename this function
+void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){ 
     //new and redone - Derek Kwan
     long unsigned int seplen = strlen(" ");
     seplen++;
@@ -485,7 +485,7 @@ void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){ // TODO: Rename this functio
 * @return the PureData pointer
 
 */
-void *pyobject_to_pointer(PyObject *pValue) { // TODO: Rename this function
+void *pyobject_to_pointer(PyObject *pValue) { 
     t_pyObjectData *data = (t_pyObjectData *)malloc(sizeof(t_pyObjectData));
     data->pValue = pValue;
     return (void *)data;
@@ -499,7 +499,7 @@ void *pyobject_to_pointer(PyObject *pValue) { // TODO: Rename this function
 
 */
 
-PyObject *pointer_to_pyobject(void *p) { // TODO: Rename this function
+PyObject *pointer_to_pyobject(void *p) { 
     t_pyObjectData *data = (t_pyObjectData *)p;
     return data->pValue;
 }
@@ -510,7 +510,7 @@ PyObject *pointer_to_pyobject(void *p) { // TODO: Rename this function
 * @param p is the PureData pointer to free
 */
 
-void free_pyobject_data(void *p) { // TODO: Rename this function
+void free_pyobject_data(void *p) { 
     t_pyObjectData *data = (t_pyObjectData *)p;
     Py_XDECREF(data->pValue);
     free(data);
@@ -525,7 +525,7 @@ void free_pyobject_data(void *p) { // TODO: Rename this function
 
 */
 
-void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) { // TODO: fix the type of the output
+void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) { 
     if (x->outPyPointer) {
         if (pValue == Py_None && x->ignoreOnNone == 1) {
             return 0;
@@ -634,7 +634,7 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) { // TODO: fix the type of 
 * @param argv is the arguments
 * @return the Python tuple with the values
 */
-PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) { // TODO: Rename this function
+PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) { 
     PyObject *ArgsTuple = PyTuple_New(0);  // start new tuple with 1 element
     int listStarted = 0;
     int argCount = 0;
@@ -642,8 +642,6 @@ PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
 
     for (int i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
-            //   TODO: Create way to work with things like [1], [a], [casa] |
-            // ========================================
             if (strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL) {
                 char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
                 strcpy(str, argv[i].a_w.w_symbol->s_name);
@@ -662,9 +660,34 @@ PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
                 else {
                     PyList_Append(listsArrays[listCount], PyUnicode_FromString(str));
                 }
-                // free(str);
+                free(str);
                 listStarted = 1;
             }
+
+            /*    TODO: TEST THIS
+            else if((strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL) && (strchr(argv[i].a_w.w_symbol->s_name, ']') != NULL)) {
+                char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
+                strcpy(str, argv[i].a_w.w_symbol->s_name);
+                removeChar(str, '[');
+                removeChar(str, ']');
+                listsArrays[listCount] = PyList_New(0);
+                int isNumeric = isNumericOrDot(str);
+                if (isNumeric == 1) {
+                    // check if is a float or int
+                    if (strchr(str, '.') != NULL) {
+                        PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atof(str)));
+                    } 
+                    else {
+                        PyList_Append(listsArrays[listCount], PyLong_FromLong(atol(str)));
+                    }
+                } 
+                else {
+                    PyList_Append(listsArrays[listCount], PyUnicode_FromString(str));
+                }
+                free(str);
+                listStarted = 1;
+            }
+            */
 
             // ========================================
             else if (strchr(argv[i].a_w.w_symbol->s_name, ']') != NULL) {
@@ -833,7 +856,7 @@ void setPy4pdConfig(t_py *x) {
 
 */
 
-PyObject *py4pd_add_pd_object(t_py *x) { // TODO: RENAME this function
+PyObject *py4pd_add_pd_object(t_py *x) { 
     PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("pd"));
     PyObject *objectCapsule;
     if (MainModule != NULL) {
@@ -874,7 +897,7 @@ PyObject *py4pd_add_pd_object(t_py *x) { // TODO: RENAME this function
 
 */
 
-uint32_t py4pd_ntohl(uint32_t netlong){ // TODO: RENAME this function
+uint32_t py4pd_ntohl(uint32_t netlong){ 
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     return ((netlong & 0xff) << 24) |
            ((netlong & 0xff00) << 8) |
