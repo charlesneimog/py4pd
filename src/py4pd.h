@@ -6,14 +6,20 @@
 #include <s_stuff.h> // get the search paths
 #include <pthread.h>
 
-#define PY_SSIZE_T_CLEAN // Good practice to use this before include Python.h because it will remove some deprecated function
+#define PY_SSIZE_T_CLEAN // Remove deprecated functions
 #include <Python.h>
 
 #ifdef _WIN64 
-    #include <windows.h>  // on Windows, system() open a console window and we don't want that
+    #include <windows.h>  
 #else
-    #include <fcntl.h>
+    #include <fcntl.h> // For pipes, TODO: Remove this
 #endif
+
+#ifdef __linux__
+    #define __USE_GNU
+#endif
+
+// #include <dlfcn.h> // for RTLD_LAZY, RTLD_NOW, RTLD_GLOBAL (find where is the root of the object)
 
 #define PY4PD_MAJOR_VERSION 0
 #define PY4PD_MINOR_VERSION 8
@@ -27,6 +33,7 @@
         #define PY4PD_EDITOR "gedit"
     #endif
 #endif
+
 
 // ================ PLAYER =============
 typedef struct {
@@ -181,5 +188,69 @@ extern void *py4pdFree(t_py *x);
 
 extern int pipePy4pdNum;
 extern int object_count; 
+
+
+// ============= UTILITIES =============
+int parseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);
+void parsePy4pdArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);
+void findPy4pdFolder(t_py *x);
+void createPy4pdTempFolder(t_py *x);
+void setPy4pdConfig(t_py *x);
+char *getEditorCommand(t_py *x);
+void executeSystemCommand(const char *command);
+int isNumericOrDot(const char *str);
+void removeChar(char *str, char c);
+// --------
+t_py *get_py4pd_object(void);
+// --------
+char* get_folder_name(char* path);
+const char* get_filename(const char* path);
+// --------
+void *py4pd_convert_to_pd(t_py *x, PyObject *pValue);
+PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv);
+PyObject *py4pd_add_pd_object(t_py *x);
+void *pyobject_to_pointer(PyObject *pValue);
+PyObject *pointer_to_pyobject(void *p);
+void free_pyobject_data(void *p);
+// --------
+void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s);
+uint32_t py4pd_ntohl(uint32_t netlong);
+
+// ============= EMBEDDED MODULE =======
+extern PyMethodDef PdMethods[];
+PyMODINIT_FUNC PyInit_pd(void);
+t_py *get_py4pd_object(void);
+
+// ============= PLAYER ==========
+
+void PY4PD_Player_InsertThing(t_py *x, int onset, PyObject *value);
+KeyValuePair* PY4PD_Player_GetValue(Dictionary* dictionary, int onset);
+
+void py4pdPlay(t_py *x, t_symbol *s, int argc, t_atom *argv);
+void py4pdStop(t_py *x);
+void py4pdClear(t_py *x);
+
+// ============= PIC =============
+extern t_class *py4pd_class, *py4pd_class_VIS, *pyNewObject_VIS;
+extern void PY4PD_free(t_py *x);
+extern void PY4PD_zoom(t_py *x, t_floatarg f);
+extern void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index, int argc, t_atom *argv, t_class *obj_class);
+extern void PY4PD_erase(t_py* x, struct _glist *glist); 
+extern void PY4PD_draw(t_py* x, struct _glist *glist, t_floatarg vis);
+extern const char* PY4PD_filepath(t_py *x, const char *filename);
+
+// widget
+extern void PY4PD_getrect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2, int *yp2);
+extern void PY4PD_displace(t_gobj *z, t_glist *glist, int dx, int dy);
+extern void PY4PD_select(t_gobj *z, t_glist *glist, int state);
+extern void PY4PD_delete(t_gobj *z, t_glist *glist);
+
+// ============= EXTERNAL LIBRARIES =============
+extern void *py_newObject(t_symbol *s, int argc, t_atom *argv);
+extern void *py_freeObject(t_py *x);
+extern PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords);
+
+
+
 
 #endif

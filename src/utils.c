@@ -1,7 +1,4 @@
 #include "py4pd.h"
-#include "module.h"
-#include "utils.h"
-#include "pic.h"
 
 // ====================================================
 /*

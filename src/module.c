@@ -1,8 +1,4 @@
 #include "py4pd.h"
-#include "utils.h"
-#include "pic.h"  
-#include "ext-libraries.h"
-#include "player.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>

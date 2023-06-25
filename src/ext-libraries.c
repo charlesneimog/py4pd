@@ -1,7 +1,3 @@
-#include "ext-libraries.h"
-#include "utils.h"
-#include "pic.h"
-#include "player.h"
 #include "py4pd.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION

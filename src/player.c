@@ -1,6 +1,4 @@
-#include "m_pd.h"
 #include "py4pd.h"
-#include "utils.h"  
 
 // ======================================================
 Dictionary* PY4PD_createDictionary() {
@@ -120,11 +118,7 @@ void py4pdPlay(t_py *x, t_symbol *s, int ac, t_atom *av){
 
 
 // ======================================================
-void py4pdStop(t_py *x, t_symbol *s, int ac, t_atom *av){
-    (void)s;
-    (void)ac;
-    (void)av;
-    (void)x;
+void py4pdStop(t_py *x){ 
     
     if (x->playerClock == NULL) {
         pd_error(x, "[%s]: Nothing to stop.", x->objectName->s_name);
