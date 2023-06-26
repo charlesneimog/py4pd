@@ -190,7 +190,6 @@ extern void *py4pdFree(t_py *x);
 extern int pipePy4pdNum;
 extern int object_count; 
 
-
 // ============= UTILITIES =============
 int parseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);
 void parsePy4pdArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);

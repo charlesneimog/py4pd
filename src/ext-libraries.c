@@ -1,5 +1,4 @@
 #include "py4pd.h"
-#include "pytypedefs.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
