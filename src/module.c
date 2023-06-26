@@ -8,7 +8,7 @@
 // ======== py4pd embbeded module =======
 // ======================================
 
-PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
+static PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
     (void)keywords;
     (void)self;
     
@@ -44,7 +44,7 @@ PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
 }
 
 // =================================
-PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
+static PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     int printPrefix = 1;
     int objPrefix = 1;
@@ -54,7 +54,6 @@ PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
         post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
         return NULL;
     }
-
 
     if (keywords == NULL) {
         printPrefix = 1;
@@ -139,7 +138,7 @@ PyObject *pdprint(PyObject *self, PyObject *args, PyObject *keywords) {
 }
 
 // =================================
-PyObject *pdlogpost(PyObject *self, PyObject *args) {
+static PyObject *pdlogpost(PyObject *self, PyObject *args) {
     (void)self;
     int postlevel;
     char *string;
@@ -156,7 +155,7 @@ PyObject *pdlogpost(PyObject *self, PyObject *args) {
 
 
 // =================================
-PyObject *pderror(PyObject *self, PyObject *args) {
+static PyObject *pderror(PyObject *self, PyObject *args) {
     (void)self;
 
     char *string;
@@ -211,7 +210,6 @@ PyObject *pipinstall(PyObject *self, PyObject *args){
         char *pyScripts_folder = malloc(strlen(py4pd->py4pdPath->s_name) + 20); // allocate extra space
         snprintf(pyScripts_folder, strlen(py4pd->py4pdPath->s_name) + 20, "%s/resources/scripts", py4pd->py4pdPath->s_name);
 
-
         PyObject *sys_path = PySys_GetObject("path");
         PyList_Append(sys_path, PyUnicode_FromString(pyScripts_folder));
         PyObject *pipinstall_module = PyImport_ImportModule("py4pd");
@@ -231,6 +229,7 @@ PyObject *pipinstall(PyObject *self, PyObject *args){
         PyObject *result = PyObject_CallObject(pipinstall_function, argsList);
         if (result == NULL) {
             PyErr_Print();
+
             return NULL;
         }
         Py_DECREF(pipinstall_module);
@@ -251,7 +250,7 @@ PyObject *pipinstall(PyObject *self, PyObject *args){
 
 
 // =================================
-PyObject *pdsend(PyObject *self, PyObject *args) {
+static PyObject *pdsend(PyObject *self, PyObject *args) {
     (void)self;
     char *receiver;
     char *string;
@@ -362,7 +361,7 @@ PyObject *pdsend(PyObject *self, PyObject *args) {
 }
 
 // =================================
-PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords) {
+static PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     int resize = 0;
     int vecsize;
@@ -434,7 +433,7 @@ PyObject *pdtabwrite(PyObject *self, PyObject *args, PyObject *keywords) {
 }
 
 // =================================
-PyObject *pdtabread(PyObject *self, PyObject *args, PyObject *keywords) {
+static PyObject *pdtabread(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     int vecsize;
     t_garray *pdarray;
@@ -528,7 +527,7 @@ PyObject *pdtabread(PyObject *self, PyObject *args, PyObject *keywords) {
 }
 
 // =================================
-PyObject *pdhome(PyObject *self, PyObject *args) {
+static PyObject *pdhome(PyObject *self, PyObject *args) {
     (void)self;
 
     t_py *py4pd = get_py4pd_object();
@@ -547,7 +546,7 @@ PyObject *pdhome(PyObject *self, PyObject *args) {
 }
 
 // =================================
-PyObject *py4pdfolder(PyObject *self, PyObject *args) {
+static PyObject *py4pdfolder(PyObject *self, PyObject *args) {
     (void)self;
 
     t_py *py4pd = get_py4pd_object();
@@ -567,7 +566,7 @@ PyObject *py4pdfolder(PyObject *self, PyObject *args) {
 
 
 // =================================
-PyObject *pdtempfolder(PyObject *self, PyObject *args) {
+static PyObject *pdtempfolder(PyObject *self, PyObject *args) {
     (void)self;
     if (!PyArg_ParseTuple(args, "")) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.samplerate: no argument expected");
@@ -583,7 +582,7 @@ PyObject *pdtempfolder(PyObject *self, PyObject *args) {
 }
 
 // =================================
-PyObject *pdshowimage(PyObject *self, PyObject *args) {
+static PyObject *pdshowimage(PyObject *self, PyObject *args) {
     (void)self;
     char *string;
 
@@ -636,8 +635,6 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
             return NULL;
         }
 
-       
-
         if (glist_isvisible(py4pd->x_glist) && gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
             const char *file_name_open = PY4PD_filepath(py4pd, filename->s_name);
             if (file_name_open) {
@@ -670,14 +667,12 @@ PyObject *pdshowimage(PyObject *self, PyObject *args) {
             PyErr_Clear();
             Py_RETURN_NONE;
         }
-
     } 
     else {
         pd_error(py4pd, "[Python] pd.showimage received wrong arguments");
         PyErr_Clear();
         Py_RETURN_NONE;
     }
-    // python return True
     PyErr_Clear();
     Py_RETURN_TRUE;
 }
@@ -695,7 +690,7 @@ static PyObject* pdsamplerate(PyObject* self, PyObject* args) {
 }
 
 // =================================
-PyObject *pdveczise(PyObject *self, PyObject *args) {
+static PyObject *pdveczise(PyObject *self, PyObject *args) {
     (void)self;
     (void)args;
 
@@ -711,7 +706,7 @@ PyObject *pdveczise(PyObject *self, PyObject *args) {
 // ========== Utilities ============
 // =================================
 
-PyObject *pdkey(PyObject *self, PyObject *args) {
+static PyObject *pdkey(PyObject *self, PyObject *args) {
     //get values from Dict salved in x->param
     (void)self;
     char *key;
@@ -741,7 +736,7 @@ PyObject *pdkey(PyObject *self, PyObject *args) {
 }
 
 // =================================
-PyObject *pditerate(PyObject *self, PyObject *args){
+static PyObject *pditerate(PyObject *self, PyObject *args){
     (void)self;
 
     PyObject *iter, *item;
@@ -784,7 +779,7 @@ PyObject *pditerate(PyObject *self, PyObject *args){
 }
 
 // =================================
-PyObject *getobjpointer(PyObject *self, PyObject *args){
+static PyObject *getobjpointer(PyObject *self, PyObject *args){
     (void)self;
     (void)args;
     
@@ -798,7 +793,7 @@ PyObject *getobjpointer(PyObject *self, PyObject *args){
 }
 
 // =================================
-PyObject *setglobalvar(PyObject *self, PyObject *args){
+static PyObject *setglobalvar(PyObject *self, PyObject *args){
     (void)self;
 
     PyObject* globalsDict = PyEval_GetGlobals();
@@ -826,7 +821,7 @@ PyObject *setglobalvar(PyObject *self, PyObject *args){
 }
 
 // =================================
-PyObject *getglobalvar(PyObject *self, PyObject *args, PyObject *keywords){
+static PyObject *getglobalvar(PyObject *self, PyObject *args, PyObject *keywords){
     (void)self;
 
     PyObject* globalsDict = PyEval_GetGlobals();
@@ -868,7 +863,7 @@ PyObject *getglobalvar(PyObject *self, PyObject *args, PyObject *keywords){
 // =================================
 // ============ PLAYER =============
 // =================================
-PyObject *addThingToPlay(PyObject *self, PyObject *args, PyObject *keywords){
+static PyObject *addThingToPlay(PyObject *self, PyObject *args, PyObject *keywords){
     (void)self;
     (void)keywords;
 
@@ -895,7 +890,7 @@ static PyObject *clearPlayer(PyObject *self, PyObject *args){
 }
 
 // =================================
-PyObject *pdmoduleError;
+static PyObject *pdmoduleError;
 
 // =================================
 PyMethodDef PdMethods[] = {
@@ -945,7 +940,7 @@ PyMethodDef PdMethods[] = {
 };
 
 // =================================
-struct PyModuleDef pdmodule = {
+static struct PyModuleDef pdmodule = {
     PyModuleDef_HEAD_INIT,
     .m_name = "pd", /* name of module */
     .m_doc = "pd module provide function to interact with PureData, see the docs in www.charlesneimog.com/py4pd",
@@ -996,3 +991,5 @@ PyMODINIT_FUNC PyInit_pd() {
     }
     return py4pdmodule;
 }
+
+// =================================
