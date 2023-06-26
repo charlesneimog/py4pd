@@ -124,6 +124,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_symbol            *x_rcv_raw;
     t_symbol            *x_send;
     t_symbol            *x_snd_raw;
+    char                *x_image;
    
 
     t_canvas            *x_canvas; // pointer to the canvas
@@ -213,6 +214,9 @@ void *pyobject_to_pointer(PyObject *pValue);
 PyObject *pointer_to_pyobject(void *p);
 void free_pyobject_data(void *p);
 // --------
+void readGifFile(t_py *x, const char* filename);
+void readPngFile(t_py *x, const char* filename);
+// --------
 void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s);
 uint32_t py4pd_ntohl(uint32_t netlong);
 
@@ -251,6 +255,7 @@ extern void *py_freeObject(t_py *x);
 extern PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords);
 
 
+// ===== TEST
 
 
 #endif

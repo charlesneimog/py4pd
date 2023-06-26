@@ -873,6 +873,181 @@ PyObject *py4pd_add_pd_object(t_py *x) {
     return objectCapsule;
 }
 
+// ========================= GIF ==============================
+#include <stdio.h>
+#include <stdlib.h>
+
+static char* gif2base64(const unsigned char* data, size_t dataSize) {
+    const char base64Chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    size_t outputSize = 4 * ((dataSize + 2) / 3);  // Calculate the output size
+    char* encodedData = (char*)malloc(outputSize + 1);
+    if (!encodedData) {
+        printf("Memory allocation failed.\n");
+        return NULL;
+    }
+
+    size_t i, j;
+    for (i = 0, j = 0; i < dataSize; i += 3, j += 4) {
+        unsigned char byte1 = data[i];
+        unsigned char byte2 = (i + 1 < dataSize) ? data[i + 1] : 0;
+        unsigned char byte3 = (i + 2 < dataSize) ? data[i + 2] : 0;
+
+        unsigned char charIndex1 = byte1 >> 2;
+        unsigned char charIndex2 = ((byte1 & 0x03) << 4) | (byte2 >> 4);
+        unsigned char charIndex3 = ((byte2 & 0x0F) << 2) | (byte3 >> 6);
+        unsigned char charIndex4 = byte3 & 0x3F;
+
+        encodedData[j] = base64Chars[charIndex1];
+        encodedData[j + 1] = base64Chars[charIndex2];
+        encodedData[j + 2] = (i + 1 < dataSize) ? base64Chars[charIndex3] : '=';
+        encodedData[j + 3] = (i + 2 < dataSize) ? base64Chars[charIndex4] : '=';
+    }
+
+    encodedData[outputSize] = '\0';  // Null-terminate the encoded data
+
+    return encodedData;
+}
+
+// ========================= GIF ==============================
+void readGifFile(t_py *x, const char* filename){
+    (void)x;
+    FILE* file = fopen(filename, "rb");
+    if (!file) {
+        post("Unable to open file.\n");
+        return;
+    }
+
+    // pixel size
+    fseek(file, 6, SEEK_SET);
+    fread(&x->x_width, 2, 1, file);
+    fread(&x->x_height, 2, 1, file);
+
+
+    fseek(file, 0, SEEK_END);
+    size_t fileSize = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    // Allocate memory to store file contents
+    unsigned char* fileContents = (unsigned char*)malloc(fileSize);
+    if (!fileContents) {
+        post("Memory allocation failed.\n");
+        fclose(file);
+        return;
+    }
+
+    // Read file contents
+    size_t bytesRead = fread(fileContents, 1, fileSize, file);
+    if (bytesRead != fileSize) {
+        post("Failed to read file.\n");
+        free(fileContents);
+        fclose(file);
+        return;
+    }
+
+    fclose(file);
+
+    // Base64 encoding
+    char* base64Data = gif2base64(fileContents, fileSize);
+    free(fileContents);
+
+    x->x_image = base64Data;
+
+    if (!base64Data) {
+        free(base64Data);
+        x->x_image = PY4PD_IMAGE;
+        post("Base64 encoding failed.\n");
+    }
+
+    return;
+}
+
+// ==========================================================
+// ======================= PNG ==============================
+// ==========================================================
+
+void png2base64(const uint8_t* data, size_t input_length, char* encoded_data) {
+    const char base64_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    size_t output_length = 4 * ((input_length + 2) / 3);
+    size_t padding_length = (3 - (input_length % 3)) % 3;
+    size_t encoded_length = output_length + padding_length + 1;
+
+    for (size_t i = 0, j = 0; i < input_length;) {
+        uint32_t octet_a = i < input_length ? data[i++] : 0;
+        uint32_t octet_b = i < input_length ? data[i++] : 0;
+        uint32_t octet_c = i < input_length ? data[i++] : 0;
+
+        uint32_t triple = (octet_a << 0x10) + (octet_b << 0x08) + octet_c;
+
+        encoded_data[j++] = base64_chars[(triple >> 3 * 6) & 0x3F];
+        encoded_data[j++] = base64_chars[(triple >> 2 * 6) & 0x3F];
+        encoded_data[j++] = base64_chars[(triple >> 1 * 6) & 0x3F];
+        encoded_data[j++] = base64_chars[(triple >> 0 * 6) & 0x3F];
+    }
+
+    // Add padding if necessary
+    for (size_t i = 0; i < padding_length; i++) {
+        encoded_data[output_length - padding_length + i] = '=';
+    }
+
+    encoded_data[encoded_length - 1] = '\0';
+}
+
+// ===============================================
+void readPngFile(t_py *x, const char* filename){
+    FILE* file = fopen(filename, "rb");
+    if (file == NULL) {
+        pd_error(x, "Failed to open file\n");
+        return;
+    }
+
+    int width, height;
+    fseek(file, 16, SEEK_SET);
+    fread(&width, 4, 1, file);
+    fread(&height, 4, 1, file);
+    width = py4pd_ntohl(width); 
+    height = py4pd_ntohl(height);
+    x->x_width = width;
+    x->x_height = height;
+
+    // Determine the file size
+    fseek(file, 0, SEEK_END);
+    size_t file_size = ftell(file);
+    rewind(file);
+
+    // Allocate memory for the file data
+    uint8_t* file_data = (uint8_t*)malloc(file_size);
+    if (file_data == NULL) {
+        pd_error(x, "Failed to allocate memory\n");
+        fclose(file);
+        return;
+    }
+
+    // Read the file into memory
+    size_t bytes_read = fread(file_data, 1, file_size, file);
+    fclose(file);
+
+    if (bytes_read != file_size) {
+        pd_error(x, "Failed to read file\n");
+        free(file_data);
+        return ;
+    }
+
+    // Encode the file data as Base64
+    size_t encoded_length = 4 * ((bytes_read + 2) / 3) + 1;
+    char* base64_data = (char*)malloc(encoded_length);
+    if (base64_data == NULL) {
+        pd_error(x, "Failed to allocate memory\n");
+        free(file_data);
+        return;
+    }
+    png2base64(file_data, bytes_read, base64_data);
+    x->x_image = base64_data;
+    free(file_data);
+    return;
+}
+
+
+
 
 // ========================= PIP ==============================
 /*

@@ -1,4 +1,5 @@
 #include "py4pd.h"
+#include "pytypedefs.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
@@ -135,7 +136,6 @@ void setKwargs(t_py *x, t_symbol *s, int ac, t_atom *av){
 void py4pdObjPic_save(t_gobj *z, t_binbuf *b){ 
     t_py *x = (t_py *)z;
     if (x->visMode){
-        post("Function name is %s", x->function_name->s_name);
         binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix);
         binbuf_addbinbuf(b, ((t_py *)x)->x_obj.te_binbuf);
         int objAtomsCount = binbuf_getnatom(((t_py *)x)->x_obj.te_binbuf);
@@ -809,6 +809,7 @@ void *New_VIS_Object(t_symbol *s, int argc, t_atom *argv) {
     x->x_canvas = canvas_getcurrent();       // pega o canvas atual
     t_canvas *c = x->x_canvas;               // get the current canvas
     t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
+    x->x_image = PY4PD_IMAGE;
 
     PyObject *pyFunction = PyDict_GetItemString(PdDict, "py4pdOBJFunction");
     if (pyFunction == NULL) {
@@ -823,6 +824,13 @@ void *New_VIS_Object(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
     x->ignoreOnNone = PyLong_AsLong(ignoreOnNone);
+
+    // ==================
+    PyObject *pyLibraryFolder = PyDict_GetItemString(PdDict, "py4pdOBJLibraryFolder");
+    if (pyLibraryFolder == NULL) {
+        pd_error(x, "Error: pyLibraryFolder is NULL");
+        return NULL;
+    }
 
     // ==================
     PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
@@ -840,8 +848,32 @@ void *New_VIS_Object(t_symbol *s, int argc, t_atom *argv) {
             x->x_height = argv[1].a_w.w_float;
         }
     }
+
+    PyObject *gifFile = PyDict_GetItemString(PdDict, "py4pdOBJGif");
+    if (gifFile == NULL) {
+        x->x_image = PY4PD_IMAGE;
+    }
+    else{
+        const char *gifFileCHAR = PyUnicode_AsUTF8(gifFile);
+        if (gifFileCHAR[0] == '/') {
+            char gifFileCHAR2[MAXPDSTRING];
+            sprintf(gifFileCHAR2, "%s%s", PyUnicode_AsUTF8(pyLibraryFolder), gifFileCHAR);
+            char *ext = strrchr(gifFileCHAR2, '.');
+            if (strcmp(ext, ".gif") == 0){
+                readGifFile(x, gifFileCHAR2);
+            }
+            else if (strcmp(ext, ".png") == 0) {
+                readPngFile(x, gifFileCHAR2);
+            }
+            else{
+                pd_error(x, "[%s] File extension not supported (uses just .png and .gif), using empty image.", x->objectName->s_name);
+            }
+        }
+        else{
+            pd_error(NULL, "Image file bad format, the file must be relative to library folder and start with '/'.");
+        }
+    }
     py4pd_InitVisMode(x, c, py4pdArgs, 0, argc, argv, object_PY4PD_Class);
-    // PIC =============
 
     x->outPyPointer = PyLong_AsLong(pyOUT);
     PyObject *nooutlet = PyDict_GetItemString(PdDict, "py4pdOBJnooutlet");
@@ -1162,31 +1194,24 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     int added2pd_info = 0;
     int personalisedHelp = 0;
     int ignoreNoneReturn = 0;
+    const char *gifImage = NULL;
 
     // get file folder where this function is called from self
     t_py *py4pd = get_py4pd_object();
 
     if (py4pd->libraryFolder == NULL) {
         pd_error(py4pd, "[py4pd] Library Folder is NULL, some help patches may not be found");
-        return NULL;
     } 
-
-    const char *libraryFolder = py4pd->libraryFolder->s_name;
-    
-    if (libraryFolder == NULL) {
-        t_symbol *patch_dir = canvas_getdir(py4pd->x_canvas);  // directory of opened patch
-        libraryFolder = patch_dir->s_name;
-    }
 
     const char *helpFolder = "/help/";
 
-    size_t totalLength = strlen(libraryFolder) + strlen(helpFolder) + 1;
+    size_t totalLength = strlen(py4pd->libraryFolder->s_name) + strlen(helpFolder) + 1;
     char *helpFolderCHAR = (char *)malloc(totalLength * sizeof(char));
     if (helpFolderCHAR == NULL) {
         pd_error(py4pd, "[py4pd] Error allocating memory (code 001)"); 
         return NULL;
     }
-    strcpy(helpFolderCHAR, libraryFolder);
+    strcpy(helpFolderCHAR, py4pd->libraryFolder->s_name);
     strcat(helpFolderCHAR, helpFolder);
     
     if (!PyArg_ParseTuple(args, "Os", &Function, &objectName)) { 
@@ -1235,6 +1260,10 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
                 ignoreNoneReturn = 1;
             }
         }
+        if (PyDict_Contains(keywords, PyUnicode_FromString("objimage"))) {
+            PyObject *type = PyDict_GetItemString(keywords, "objimage");
+            gifImage = PyUnicode_AsUTF8(type);
+        }
 
     }
 
@@ -1259,12 +1288,17 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         PyErr_SetString(PyExc_TypeError, "Object type not supported, check the spelling");
         return NULL;
     }
+
     // Add configs to the object
     PyObject *nestedDict = PyDict_New();
     PyDict_SetItemString(nestedDict, "py4pdOBJFunction", Function);
+    PyDict_SetItemString(nestedDict, "py4pdOBJLibraryFolder", PyUnicode_FromString(py4pd->libraryFolder->s_name));
     PyDict_SetItemString(nestedDict, "py4pdOBJ_CLASS", PyLong_FromVoidPtr(localClass));
     PyDict_SetItemString(nestedDict, "py4pdOBJwidth", PyLong_FromLong(w));
     PyDict_SetItemString(nestedDict, "py4pdOBJheight", PyLong_FromLong(h));
+    if (gifImage != NULL){
+        PyDict_SetItemString(nestedDict, "py4pdOBJGif", PyUnicode_FromString(gifImage));
+    }
     PyDict_SetItemString(nestedDict, "py4pdOBJpyout", PyLong_FromLong(objpyout));
     PyDict_SetItemString(nestedDict, "py4pdOBJnooutlet", PyLong_FromLong(nooutlet));
     PyDict_SetItemString(nestedDict, "py4pdOBJname", PyUnicode_FromString(objectName));
@@ -1284,6 +1318,9 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         class_addmethod(localClass, (t_method)py4pdPlay, gensym("play"), A_GIMME, 0);
         class_addmethod(localClass, (t_method)py4pdStop, gensym("stop"), 0, 0);
         class_addmethod(localClass, (t_method)py4pdClear, gensym("clear"), 0, 0);
+
+        //readGifFile(t_py *x)
+        // class_addmethod(localClass, (t_method)readGifFile, gensym("test"), 0, 0); 
     }
     else if ((strcmp(objectType, "VIS") == 0)){
         class_addmethod(localClass, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);

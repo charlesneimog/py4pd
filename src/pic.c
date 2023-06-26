@@ -339,6 +339,11 @@ void PY4PD_free(t_py *x){ // delete if variable is unset and image is unused
     if(x->x_receive != &s_){
         pd_unbind(&x->x_obj.ob_pd, x->x_receive);
     }
+
+    if (strcmp(x->x_image, PY4PD_IMAGE) != 0){
+        freebytes(x->x_image, strlen(x->x_image));
+    }
+
     pd_unbind(&x->x_obj.ob_pd, x->x_x);
     clock_delay(x->x_proxy->p_clock, 0);
     gfxstub_deleteforkey(x);
@@ -346,21 +351,9 @@ void PY4PD_free(t_py *x){ // delete if variable is unset and image is unused
 
 // =====================================
 void py4pd_picDefintion(t_py *x) {
-    if (x->x_width == 250 && x->x_height == 250) {
-        if (x->visMode == 1) {
-            sys_vgui("image create photo PY4PD_def_img_CANVAS -data {%s} \n", PY4PD_IMAGE); // BUG: this is because I have diferentes images
-        } 
-        else if (x->visMode == 2) {
-            sys_vgui("image create photo PY4PD_def_img_PIC -data {%s} \n", PY4PD_IMAGE); // TODO: THING if I need to use special images for something
-        }
-        else if (x->visMode == 3) {
-            sys_vgui("image create photo PY4PD_def_img_SCORE -data {%s} \n", PY4PD_IMAGE);
-        }
-    }
-    else{
-        sys_vgui("image create photo PY4PD_def_img_WHITE -data {%s} \n", PY4PD_IMAGE);
-        x->visMode = 4;
-    }
+    x->visMode = 1;
+    
+    sys_vgui("image create photo PY4PD_def_img_CANVAS -data {%s} \n", x->x_image);
   
     sys_vgui("if {[catch {pd}]} {\n");
     sys_vgui("}\n");
