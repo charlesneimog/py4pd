@@ -71,10 +71,8 @@ def pipinstall(package):
                 root.update()   
                 pipmain(['install', '--target', f'{folder}/py-modules', package, '--upgrade'])
                 pd.print("Installed " + package)
-                pd.print("I recommend restart PureData...")
+                pd.error("You need to restart PureData")
                 root.destroy()
-
-
                 return 'bang'
             except Exception as e:
                 pd.error(str(e))
@@ -82,10 +80,39 @@ def pipinstall(package):
                 return 'bang'
         
         elif platform.system() == 'Darwin':
+            from tkinter import Tk, LabelFrame, Label
+            root = Tk()
             try:
+                root.title("Installing " + package)
+
+                # get screen width and height
+                screen_width = root.winfo_screenwidth()
+                screen_height = root.winfo_screenheight()
+
+                # calculate x and y coordinates for the Tk root window to center it on the screen
+                x = (screen_width/2) - (300/2)
+                y = (screen_height/2) - (100/2)
+
+                root.geometry("300x100+%d+%d" % (x, y))
+                root.resizable(False, False)
+
+                # create text
+                text = LabelFrame(root, text="Installing " + package + " , please wait...",
+                                  padx=20, pady=20)
+                text.pack(fill="both", expand=1)
+
+                # add label inside the label frame
+                label = Label(text, text="Installing " + package + " , please wait...",
+                              anchor="center", justify="center")
+                label.pack(fill="both", expand=1)
+
+
+                # update window
+                root.update()
                 pipmain(['install', '--target', f'{folder}/py-modules', package, '--upgrade'])
                 pd.print("Installed " + package)
-                pd.print("I recommend restart PureData...")
+                pd.error("You need to restart PureData")
+                root.destroy()
                 return 'bang'
             except Exception as e:
                 pd.error(str(e))
@@ -100,7 +127,8 @@ def pipinstall(package):
                 # install package from pip without opening a new window
                 subprocess.run(f'pip install --target {home}\\py-modules {package} --upgrade', shell=True, check=True)
                 pd.print("Installed " + package)
-                pd.print("I recommend restart PureData...")       
+                pd.error("You need to restart PureData")
+
             except Exception as e:
                 pd.error(str(e))
                 return 'bang'
