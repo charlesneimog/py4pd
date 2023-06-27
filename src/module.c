@@ -1,3 +1,4 @@
+#include "m_pd.h"
 #include "py4pd.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
@@ -701,6 +702,22 @@ static PyObject *pdveczise(PyObject *self, PyObject *args) {
     return PyLong_FromLong(vector);
 }
 
+// =================================
+static PyObject *pdzoom(PyObject *self, PyObject *args) {
+    (void)self;
+    (void)args;
+
+    t_py *py4pd = get_py4pd_object();
+    int zoom;
+    if (py4pd->x_canvas != NULL) {
+        zoom = (int)py4pd->x_canvas->gl_zoom;
+    }
+    else {
+        pd_error(NULL, "[Python] pd.patchzoom: canvas not found");
+        zoom = 1;
+    }
+    return PyLong_FromLong(zoom);
+}
 
 // =================================
 // ========== Utilities ============
@@ -890,6 +907,56 @@ static PyObject *clearPlayer(PyObject *self, PyObject *args){
 }
 
 // =================================
+// ============= PIP ===============
+// =================================
+static PyObject *pipInstall(PyObject *self, PyObject *args){
+    (void)self;
+    char *pipPackage;
+    char *localORglobal;
+    if (!PyArg_ParseTuple(args, "ss", &localORglobal, &pipPackage)) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: wrong arguments");
+        return NULL;
+    }
+    
+
+    PyObject *py4pdModule = PyImport_ImportModule("py4pd");
+    if (py4pdModule == NULL) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: py4pd module not found");
+        return NULL;
+    }
+    PyObject *pipInstallFunction = PyObject_GetAttrString(py4pdModule, "pipinstall");
+    if (pipInstallFunction == NULL) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: pipinstall function not found");
+        return NULL;
+    }
+
+
+    // the function is executed using pipinstall([localORglobal, pipPackage])
+    PyObject *argsList = PyList_New(2);
+    PyList_SetItem(argsList, 0, Py_BuildValue("s", localORglobal));
+    PyList_SetItem(argsList, 1, Py_BuildValue("s", pipPackage));
+    PyObject *argTuple = Py_BuildValue("(O)", argsList);
+    PyObject *pipInstallResult = PyObject_CallObject(pipInstallFunction, argTuple);
+
+    if (pipInstallResult == NULL) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: pipinstall function failed");
+        return NULL;
+    }
+
+    Py_DECREF(argTuple);
+    Py_DECREF(pipInstallResult);
+    Py_DECREF(pipInstallFunction);
+    Py_DECREF(py4pdModule);
+
+
+
+
+
+
+    Py_RETURN_TRUE;
+}
+
+// =================================
 static PyObject *pdmoduleError;
 
 // =================================
@@ -915,12 +982,16 @@ PyMethodDef PdMethods[] = {
     // User
     {"getkey", pdkey, METH_VARARGS, "Get Object User Parameters"},
 
-    // audio
+    // pd
     {"samplerate", pdsamplerate, METH_NOARGS, "Get PureData SampleRate"},
     {"vecsize", pdveczise, METH_NOARGS, "Get PureData Vector Size"},
+    {"patchzoom", pdzoom, METH_NOARGS, "Get Patch zoom"},
 
     // library methods
     {"addobject", (PyCFunction)pdAddPyObject, METH_VARARGS | METH_KEYWORDS, "It adds python functions as objects"},
+
+    // pip install
+    {"pipinstall", pipInstall, METH_VARARGS, "It installs a pip package"},
 
     // OpenMusic Methods
     {"iterate", pditerate, METH_VARARGS, "It iterates throw one list of PyObjects"},

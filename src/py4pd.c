@@ -66,8 +66,18 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
     PyObject *pModule, *pFunc;  // Create the variables of the python objects
     char *pyScriptsFolder = malloc(strlen(x->py4pdPath->s_name) + 40); // allocate extra space
     char *pyGlobalFolder = malloc(strlen(x->py4pdPath->s_name) + 40); // allocate extra space
-    snprintf(pyScriptsFolder, strlen(x->py4pdPath->s_name) + 40, "%s/resources/scripts/", x->py4pdPath->s_name);
-    snprintf(pyGlobalFolder, strlen(x->py4pdPath->s_name) + 40, "%s/resources/py-modules/", x->py4pdPath->s_name);
+    snprintf(pyScriptsFolder, strlen(x->py4pdPath->s_name) + 40, "%s/resources/scripts", x->py4pdPath->s_name);
+    snprintf(pyGlobalFolder, strlen(x->py4pdPath->s_name) + 40, "%s/resources/py-modules", x->py4pdPath->s_name);
+
+    // TODO: Make error when there is some script with same name inside py4pd and in the patch folder
+
+    // list all folders inside pyGlobalFolder
+    // conver const char* to char*
+    char *pkgPathchar = malloc(strlen(x->pkgPath->s_name) + 1);
+    strcpy(pkgPathchar, x->pkgPath->s_name);
+
+    checkPackageNameConflict(x, pkgPathchar, script_file_name);
+    checkPackageNameConflict(x, pyGlobalFolder, script_file_name);
 
     PyObject *home_path = PyUnicode_FromString(x->pdPatchFolder->s_name);  // Place where script file will probably be
     PyObject *site_package = PyUnicode_FromString(x->pkgPath->s_name);  // Place where the packages will be
@@ -205,13 +215,12 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
         logpost(x, 3, "[py4pd] Library %s loaded!", script_file_name->s_name);
     } 
     else {
-        pd_error(x, "[py4pd] Library %s not loaded!", function_name->s_name);
         x->function_called = 1;  // set the flag to 0 because it crash Pd if
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] ERROR %s", PyUnicode_AsUTF8(pstr));
+        pd_error(x, "[%s] %s.", script_file_name->s_name, PyUnicode_AsUTF8(pstr));
         Py_DECREF(pstr);
         Py_XDECREF(ptype);
         Py_XDECREF(pvalue);

@@ -34,6 +34,8 @@
     #endif
 #endif
 
+// FOLDER
+#include <dirent.h>
 
 // ================ PLAYER =============
 typedef struct {
@@ -205,6 +207,7 @@ t_py *get_py4pd_object(void);
 // --------
 char* get_folder_name(char* path);
 const char* get_filename(const char* path);
+void checkPackageNameConflict(t_py *x, char *folderToCheck, t_symbol *script_file_name);
 // --------
 void *py4pd_convert_to_pd(t_py *x, PyObject *pValue);
 PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv);

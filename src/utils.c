@@ -229,6 +229,32 @@ const char* get_filename(const char* path) {
 }
 
 // ====================================================
+void checkPackageNameConflict(t_py *x, char *folderToCheck, t_symbol *script_file_name){
+    DIR *dir;
+    struct dirent *entry;
+
+    if ((dir = opendir(folderToCheck)) == NULL) {
+        return;
+    }
+
+
+    dir = opendir(folderToCheck);
+    while ((entry = readdir(dir)) != NULL) {
+        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+            if (strcmp(entry->d_name, script_file_name->s_name) == 0) {
+                post("");
+                pd_error(x, "[py4pd] The library '%s' conflicts with a Python package name.", script_file_name->s_name);
+                pd_error(x, "[py4pd] This can cause problems related with py4pdLoadObjects.");
+                pd_error(x, "[py4pd] Rename the library.");
+                post("");
+            }
+        }
+    }
+    closedir(dir);
+    return;
+}
+
+// ====================================================
 /*
 * @brief Get the py4pd folder object, it creates the folder for scripts inside resources
 * @param x is the py4pd object
@@ -762,8 +788,8 @@ PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
 */
 
 void setPy4pdConfig(t_py *x) {
-    char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->pdPatchFolder->s_name) + strlen("/py-modules/") + 1));  //
-    snprintf(PADRAO_packages_path, strlen(x->pdPatchFolder->s_name) + strlen("/py-modules/") + 1, "%s/py-modules/", x->pdPatchFolder->s_name);
+    char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->pdPatchFolder->s_name) + strlen("/py-modules") + 1));  //
+    snprintf(PADRAO_packages_path, strlen(x->pdPatchFolder->s_name) + strlen("/py-modules") + 1, "%s/py-modules", x->pdPatchFolder->s_name);
     x->pkgPath = gensym(PADRAO_packages_path);
     x->runmode = 0;
     if (x->editorName == NULL){
