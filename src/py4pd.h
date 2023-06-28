@@ -11,6 +11,7 @@
 
 #ifdef _WIN64 
     #include <windows.h>  
+    #include <dirent.h>
 #else
     #include <fcntl.h> // For pipes, TODO: Remove this
 #endif
