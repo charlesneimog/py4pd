@@ -11,7 +11,6 @@ try:
     from py4pd_scripts.py4pdconvertion import *
     from py4pd_scripts.py4pdloop import *
     from py4pd_scripts.py4pdinfo import *
-    from py4pd_scripts.py4pdscore import *
     from py4pd_scripts.py4pdconvertion import *
     from py4pd_scripts.py4pdoperators import *
     from py4pd_scripts.py4pdtree import *
@@ -60,10 +59,6 @@ def py4pdLoadObjects():
     pd.addobject(omtimes, "py.times")
     pd.addobject(omdiv, "py.div")
     pd.addobject(omabs, "py.abs")
-
-    # Score Functions
-    pd.addobject(note, "py.note", objtype=pd.VIS)
-    pd.addobject(chord, "py.chord", objtype=pd.VIS)
 
     # Rhythm Tree
     pd.addobject(extract_numbers, "py.rhythm_tree")
