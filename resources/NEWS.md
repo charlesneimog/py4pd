@@ -1,9 +1,13 @@
 #### py4pd version 0.8.0
+
 * Now `py4pd` objects can have they own help-pathes, they must be located inside the folder "help".
 * Add simple player embbeded (you can 'play' python objects).
 * Add `pd.add2player` method.
 * In `pd.addobject` add key `helppatch` (string contains the `.pd` file of help), for example, if the help is `myorchidea.flute-help` here I put `myorchidea.flute`.
 * Add method `pd.clearplayer` to clear the player.
+* Add method `pd.patchzoom` to get the zoom of patch.
+* Add method `pd.pipinstall` to install Python Modules.
+
 
 #### py4pd version 0.7.0
 * * Add possibility to write Python Objects (like PureData Libraries) in add to PureData as standart Objects.
@@ -60,3 +64,4 @@
 #### py4pd version 0.0.0
 
 * First simple build for Windows;
+

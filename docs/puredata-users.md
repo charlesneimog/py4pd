@@ -1,4 +1,4 @@
-# Object Methods
+# PureData Object Usage
 
 ## <h2 align="center"> **`py4pd` Args** </h2>
 -------------------------------------- 

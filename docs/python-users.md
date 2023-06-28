@@ -1,38 +1,49 @@
-# Embedded Module
+# Python Embedded Module
 
 If you're using [Python](https://www.python.org/) and [PureData](puredata.info/) together, you can use the `pd` module within the `py4pd` package to exchange data, set configurations, inform users of errors, and use all Python things. The module is embedded in the `py4pd` code and is only accessible within the `py4pd` environment. It's similar to how Google Collab uses modules like `google.collab.drive` and `google.collab.widgets`. In the next section I present all the methods that are embedded.
 
+## <h2 style="text-align:center"> **Write Pd Objects with Python** </h2>
 
-## <h2 style="text-align:center"> **Pd Objects with Python** </h2>
+With the `py4pd` it is possible to create new PureData objects using just Python. For that, you need to declare your Python functions and then create a function called `py4pdLoadObjects`. Inside this function we use `pd.addobject` (check the [docs](https://www.charlesneimog.com/py4pd/python-users/#pdaddobject)) to add all functions that you want to use as objects. The organization of folders in the library should follow the following standard.
 
-With the `py4pd` it is possible to create new PureData objects using Python. For that, you need to declare your Python functions and then create a function called `py4pdLoadObjects`. Inside this function we use `pd.addobject` (check the [docs](https://www.charlesneimog.com/py4pd/python-users/#pdaddobject)) to add all functions that you want to use as objects.
+!!! info "Folder Organization"
+    <h4 style="text-align:center"> **FolderOfLibrary = libraryname** </h4>
+    
+        └── help/
+            ├── myfunction1-help.pd # helpPatches
+            └── myfunction2-help.pd 
+        └── src/
+            ├── setoffunctions1.py # you can organize this as you want, this is just one example
+            └── setoffunctions2.py
 
+        └── resources/
+            ├── imagetosomeVISobject.png
+            └── imagetootherVISobject.gif
+        ├── libraryname.py # here we have the py4pdLoadObjects function
+        ├── README.deken.pd # If you upload it on Deken, this will open immediately after installation (good to install things).
+        └── README.md # Ordinary readme for Github.
+
+See the some libraries organization in [orchidea](https://github.com/charlesneimog/orchidea?search=1).
+
+---------------------------
 
 See the Python Code:
 
-``` py title="myNewPdObjects.py"
+``` py title="libraryname.py"
 
 import pd
+from src.setoffunctions1 import myfunction1
+from src.setoffunctions2 import myfunction2
+from src.setoffunctions2 import showmycollgraph
 
-def mysumObject(a, b, c, d):
-    return a + b + c + d
 
 def py4pdLoadObjects():
-    pd.addobject(mysumObject, "mysumObject") # function, string with name of the object
+    pd.addobject(myfunction1, "mysumObject") # function, string with name of the object
+    pd.addobject(myfunction2, "mysumObject2") # function, string with name of the object
+    pd.addobject(showmycollgraph, "graph", objtype=pd.VIS, objimage="/resources/imagetosomeVISobject.png")
     
-    # My License, Name and University, others information
-    pd.print("", show_prefix=False)
-    pd.print("GPL3 | by Charles K. Neimog", show_prefix=False)
-    pd.print("University of São Paulo", show_prefix=False)
-    pd.print("", show_prefix=False)
 
 ```
-
-In the code above, we create a new object called `mysymObject`. It is saved inside an script called `myNewPdObjects.py`. To load this script in PureData how need to follow these steps:
-
-* Copy the script `myNewPdObjects.py` for the folder where your PureData patch is.
-* Create a new `py4pd` with this config: `py4pd -lib myNewPdObjects`.
-* Create the new object, in this case `mysumObject`.
 
 Following this steps we have this patch:
 
@@ -218,8 +229,10 @@ You can create your own objects with Python. For that, you define the Python Fun
     | `figsize`   | `Tuple` | Sets the pixel size of the object. Example: `figsize=(400, 200)` creates an object with a width of 400 and height of 200. |
     | `pyout`    | `Boolean` | Determines whether the output will be in PureData data types or Python. If set to Python, it cannot be used by PureData. |
     | `no_outlet`    | `Boolean` | Creates an object with no outlets if set to `True`. |
-    | `added2pd_info`    | `Boolean` | Prints the message `"[py4pd]: Object {objectName} added to PureData"` when set to `True`. |
-
+    | `added2pd_info` | `Boolean` | Prints the message `"[py4pd]: Object {objectName} added to PureData"` when set to `True`. |
+    | `helppatch` | `String` | Personalized help patch, it always must be inside the `help` folder. |
+    | `ignore_none_return` | `Boolean` | When `True` it ignores all things that return None. |
+    | `objimage` | `String` | Set the standard image for `pd.VIS` objects. When you create the object it will load this image. |
 
 === "Examples"
 

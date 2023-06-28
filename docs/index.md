@@ -2,11 +2,13 @@
 
 ## <h2 align="center"> **What is py4pd?** </h2>
 
-<p align="center"> Welcome to the py4pd documentation! </p>
+<p align="center"> Welcome to the <code>py4pd</code> documentation! </p>
 
 ----------
 
-`py4pd` integrates the power of [Python](https://www.python.org/) into the real-time environment of [PureData](https://puredata.info/), provide means for score visualization, AI integration, audio analysis tools, SVG/drawing score handling, and various other functionalities.
+`py4pd` integrates the power of [Python](https://www.python.org/) into the real-time environment of [PureData](https://puredata.info/), provide means for score visualization, AI integration, audio analysis tools, SVG/drawing score handling, and various other functionalities. If you use [OpenMusic](https://openmusic-project.github.io/openmusic/), you will find some inspiration on it.
+
+
 
 !!! info "How to install?"
 
@@ -122,5 +124,93 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
 
     The piece Moteto aims to be a rereading of medieval motet. In addition, to overlapping independent voices, we use Just Intonation structures. With the help of technology, I aim to make the piece playable, also by amateur choirs, it is available in this website: www.charlesneimog.com/moteto/.
 
+
+## <h2 align="center"> **News** </h2>
+
+!!! info "Check the news for each new version"
+
+    <h3 align="center"> **<b>v. 0.8.0 (Not publish on Deken yet)</b>** </h3> 
+    
+    * Now `py4pd` objects can have they own help-patches, they must be located inside the folder "help".
+    * Add simple player embbeded (you can 'play' python objects) in the objects, in others words, put Python Objects in music time.
+    * Add `pd.add2player` method.
+    * Add new option `objimage` in `pd.addobject` to set default images for `VIS` objects.
+    * Remove our own Python executable.
+    * In `pd.addobject` add key `helppatch` (string contains the `.pd` file of help), for example, if the help is `myorchidea.flute-help` here I put `myorchidea.flute`.
+    * Add new `pd` modules methods.
+        * Add method `pd.clearplayer` to clear the player.
+        * Add method `pd.patchzoom` to get the zoom of patch.
+        * Add method `pd.pipinstall` to install Python Modules.
+        
+    ----------------------
+
+    <h3 align="center"> **<b>v. 0.7.0</b>** </h3>
+    
+    * Add possibility to write Python Objects (like PureData Libraries) in add to PureData as standart Objects.
+    * Add support to detach (It runs I separete Python executable (probably will be uncessary with [PEP 684](https://peps.python.org/pep-0684/)).
+    * Add way to work with Python Types inside PureData. It requires to send message `pointers 1`, or from Python Object, set `pyout = True`.
+    * Now `py4pd -library` are added in the begin of the patch, we not have problem with Py Objects not exits.
+    * Add new `pd` modules:
+	    * `getobjpointer`: It returns the string pointer to the object. Can be used to create global variables per object.
+	    * `iterate`: It is one copy of the OpenMusic iterate.
+	    * `show`: It works exactly as `pic` object, but no require the `open` message.
+
+    ----------------------
+    <h3 align="center"> **<b>v. 0.6.0</b>** </h3>
+    
+    * Add `audio` support.
+      * For audioout you need to create the object with the `-audioout` flag. 
+      * For audioint you need to create the object with the `-audioint` flag.
+    * Add `vis` support.
+      * Add support to score (using neoscore).
+      * Add support to anothers visualizations (anothers like matplotlib, vispy, and others).
+    * Create this beautil docs website :).
+
+    ----------------------
+    <h3 align="center"> **<b>v. 0.5.0</b>** </h3>
+    
+    * Add support to list inside PureData using brackts.
+      * 💡 `run [1 2 3 4 5]` from `pd`message is equivalent to run `my_function([1, 2, 3, 4, 5])` in `Python`.
+    * Add better README and Wiki.
+    * Add support to new Editor [sublime, nvim, code, vim].
+
+    ----------------------
+    <h3 align="center"> **<b>v. 0.4.0</b>** </h3>
+    
+    * 🤖 Add Github Actions for Windows, Linux, MacOS (Intel);
+    * 🛠️ Format the code and lot of fixes related with memory leaks.
+
+    ----------------------
+    <h3 align="center"> **<b>v. 0.3.0</b>** </h3>
+    
+    * add list support (Python to PureData);
+    * add reload support;
+    * add better error messages;
+    * Add embedded module `pd` (just print module work for now);
+    * Open vscode from puredata;
+    * Remove thread for now;
+
+    ----------------------
+    <h3 align="center"> **<b>v. 0.2.0</b>** </h3>
+    
+    * ⚠️`Incompatible versions`, now the functions are always in memory;
+    * Add support to Linux;
+    * Set functions;
+    * Try to add support to threads;
+    * First build for MacOS;
+    * 🛠️ Format the code;
+
+    ----------------------
+    <h3 align="center"> **<b>v. 0.1.0</b>** </h3>
+
+    * Possible to run code (without libraries);
+    * Save Function in Memory;
+    * Create scripts from PureData;
+    * Two ways to run Python (Clearing memory or making compiled code ready);
+
+    ----------------------
+    <h3 align="center"> **<b>v. 0.0.0</b>** </h3>
+
+    * First simple build for Windows;
 
 
