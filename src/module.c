@@ -30,7 +30,7 @@ static PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
             PyObject *argsTuple = PyTuple_Pack(1, args);
             PyObject *newObject = PyObject_CallObject(deepcopyFunction, argsTuple);
             PyObject *element = PyTuple_GetItem(newObject, 0);
-            py4pd_convert_to_pd(py4pd, element);
+            py4pd_convert_to_pd(py4pd, element, py4pd->out1);
             py4pd->outPyPointer = 0;
             Py_DECREF(copyModule);
             Py_DECREF(deepcopyFunction);
@@ -40,8 +40,44 @@ static PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
             return Py_True;
         }
     }
-    py4pd_convert_to_pd(py4pd, args);
-    return PyLong_FromLong(0);
+
+    // check for outlet key
+
+    if (keywords != NULL && py4pd->outAUX != NULL){
+        PyObject *outletNumber = PyDict_GetItemString(keywords, "out_n"); // it gets the data type output
+        if (outletNumber == NULL){
+            py4pd_convert_to_pd(py4pd, args, py4pd->out1);
+            return Py_True;
+        }
+
+        // see if out_n is an integer
+        if (!PyLong_Check(outletNumber)){
+            pd_error(py4pd, "[Python] pd.out: out_n must be an integer.");
+            return NULL;
+        }
+        int outletNumberInt = PyLong_AsLong(outletNumber);
+        if (outletNumberInt == 0){
+            py4pd_convert_to_pd(py4pd, args, py4pd->out1);
+            return Py_True;
+        }
+        else{
+            outletNumberInt--;
+            if ((py4pd->outAUX->u_outletNumber > 0) && (outletNumberInt < py4pd->outAUX->u_outletNumber)){
+                py4pd_convert_to_pd(py4pd, args, py4pd->outAUX[outletNumberInt].u_outlet);
+            }
+            else{
+                outletNumberInt++;
+                pd_error(py4pd, "[Python] pd.out: out_n must be an integer between 0 and %d. Received %d.", py4pd->outAUX->u_outletNumber, outletNumberInt);
+                PyErr_SetString(PyExc_TypeError, "[Python] pd.out: Please check the number of outlets."); 
+                return NULL;
+            }
+        }
+    }
+    else{
+        py4pd_convert_to_pd(py4pd, args, py4pd->out1);
+    }
+
+    return Py_True;
 }
 
 // =================================

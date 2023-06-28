@@ -236,8 +236,6 @@ void checkPackageNameConflict(t_py *x, char *folderToCheck, t_symbol *script_fil
     if ((dir = opendir(folderToCheck)) == NULL) {
         return;
     }
-
-
     dir = opendir(folderToCheck);
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
@@ -548,7 +546,7 @@ void free_pyobject_data(void *p) {
 
 */
 
-void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) { 
+void *py4pd_convert_to_pd(t_py *x, PyObject *pValue, t_outlet *outlet) { 
     if (x->outPyPointer) {
         if (pValue == Py_None && x->ignoreOnNone == 1) {
             return 0;
@@ -561,7 +559,7 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
         }
         t_atom pointer_atom;
         SETPOINTER(&pointer_atom, pData);
-        outlet_anything(x->x_obj.ob_outlet, gensym("PyObject"), 1, &pointer_atom);
+        outlet_anything(outlet, gensym("PyObject"), 1, &pointer_atom);
         return 0;
     }
     
@@ -614,10 +612,10 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
             // Py_DECREF(pValue_i);
         }
         if (list_array[0].a_type == A_SYMBOL) {
-            outlet_anything(x->x_obj.ob_outlet, list_array[0].a_w.w_symbol, listIndex - 1, list_array + 1);
+            outlet_anything(outlet, list_array[0].a_w.w_symbol, listIndex - 1, list_array + 1);
         } 
         else {
-            outlet_list(x->x_obj.ob_outlet, &s_list, listIndex, list_array);
+            outlet_list(outlet, &s_list, listIndex, list_array);
         }
         Py_DECREF(pValue);
         free(list_array);
@@ -625,12 +623,12 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue) {
     else {
         if (PyLong_Check(pValue)) {
             long result = PyLong_AsLong(pValue);  // If the function return a integer
-            outlet_float(x->out1, result);
+            outlet_float(outlet, result);
         } 
         else if (PyFloat_Check(pValue)) {
             double result = PyFloat_AsDouble(pValue);  // If the function return a float
             float result_float = (float)result;
-            outlet_float(x->out1, result_float);
+            outlet_float(outlet, result_float);
         } 
         else if (PyUnicode_Check(pValue)) {
             const char *result = PyUnicode_AsUTF8(pValue); // If the function return a string

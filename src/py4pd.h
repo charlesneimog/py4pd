@@ -37,6 +37,13 @@
 // FOLDER
 #include <dirent.h>
 
+// ============ OUTLETS ===============
+typedef struct _py4pd_Outlets{
+    t_atomtype u_type;
+    t_outlet *u_outlet;
+    int u_outletNumber;
+} t_py4pd_Outlets;
+
 // ================ PLAYER =============
 typedef struct {
     int onset;
@@ -128,7 +135,6 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_symbol            *x_snd_raw;
     char                *x_image;
    
-
     t_canvas            *x_canvas; // pointer to the canvas
 
     t_symbol            *editorName; // editor name
@@ -142,6 +148,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 
     t_symbol            *function_name; // function name
     t_symbol            *script_name; // script name or pathname
+    t_py4pd_Outlets     *outAUX; // outlets
     t_outlet            *out1; // outlet 1.
     t_inlet             *in1; // intlet 1
 }t_py;
@@ -209,7 +216,8 @@ char* get_folder_name(char* path);
 const char* get_filename(const char* path);
 void checkPackageNameConflict(t_py *x, char *folderToCheck, t_symbol *script_file_name);
 // --------
-void *py4pd_convert_to_pd(t_py *x, PyObject *pValue);
+void *py4pd_convert_to_pd(t_py *x, PyObject *pValue, t_outlet *outlet);
+// void *py4pd_convert_to_pd(t_py *x, PyObject *pValue);
 PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv);
 PyObject *py4pd_add_pd_object(t_py *x);
 void *pyobject_to_pointer(PyObject *pValue);

@@ -152,18 +152,7 @@ void PY4PD_draw(t_py* x, struct _glist *glist, t_floatarg vis){
     int visible = (glist_isvisible(x->x_glist) && gobj_shouldvis((t_gobj *)x, x->x_glist));
     if(x->x_def_img && (visible || vis)){ // TODO: REMOVE THIS, THERE IS JUST ONE STATIC IMAGE
         sys_vgui(".x%lx.c create image %d %d -anchor nw -tags %lx_picture\n", cv, xpos, ypos, x);
-        if (x->visMode == 1) {
-            sys_vgui(".x%lx.c itemconfigure %lx_picture -image %s\n", cv, x, "PY4PD_def_img_CANVAS");
-        } 
-        else if (x->visMode == 2) {
-            sys_vgui(".x%lx.c itemconfigure %lx_picture -image %s\n", cv, x, "PY4PD_def_img_PIC");
-        }
-        else if (x->visMode == 3) {
-            sys_vgui(".x%lx.c itemconfigure %lx_picture -image %s\n", cv, x, "PY4PD_def_img_SCORE");
-        }
-        else if (x->visMode == 3){
-            sys_vgui(".x%lx.c itemconfigure %lx_picture -image %s\n", cv, x, "PY4PD_def_img_WHITE");
-        }
+        sys_vgui(".x%lx.c itemconfigure %lx_picture -image PY4PD_IMAGE_{%p}\n", cv, x, x);
     }
     else{
         if(visible || vis){
@@ -353,7 +342,7 @@ void PY4PD_free(t_py *x){ // delete if variable is unset and image is unused
 void py4pd_picDefintion(t_py *x) {
     x->visMode = 1;
     
-    sys_vgui("image create photo PY4PD_def_img_CANVAS -data {%s} \n", x->x_image);
+    sys_vgui("image create photo PY4PD_IMAGE_{%p} -data {%s} \n", x, x->x_image);
   
     sys_vgui("if {[catch {pd}]} {\n");
     sys_vgui("}\n");

@@ -243,7 +243,7 @@ void py_bang(t_py *x){
     }
     PyObject *pValue = PyObject_CallObject(x->function, x->argsDict);
     if (pValue != NULL) { 
-        py4pd_convert_to_pd(x, pValue); 
+        py4pd_convert_to_pd(x, pValue, x->out1); 
     }
     else{
         Py_XDECREF(pValue);
@@ -369,7 +369,7 @@ void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         }
     }
     if (pValue != NULL) { 
-        py4pd_convert_to_pd(x, pValue); 
+        py4pd_convert_to_pd(x, pValue, x->out1); 
     }
     else{
         Py_XDECREF(pValue);
@@ -431,7 +431,7 @@ void py_Object(t_py *x, t_atom *argv){
         }
     }
     if (pValue != NULL) { 
-        py4pd_convert_to_pd(x, pValue); 
+        py4pd_convert_to_pd(x, pValue, x->out1); 
     }
     else{
         Py_XDECREF(pValue);
@@ -516,7 +516,7 @@ t_int *library_AudioIN_perform(t_int *w) {
     pValue = PyObject_CallObject(x->function, x->argsDict);
 
     if (pValue != NULL) {
-        py4pd_convert_to_pd(x, pValue);  // convert the value to pd
+        py4pd_convert_to_pd(x, pValue, x->out1);  // convert the value to pd
     } 
     else {                             // if the function returns a error
         PyObject *ptype, *pvalue, *ptraceback;
@@ -773,6 +773,27 @@ void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
     if (nooutlet_int == 0){
         x->out1 = outlet_new(&x->x_obj, 0);
     }
+
+    PyObject *AuxOutletPy = PyDict_GetItemString(PdDict, "py4pdAuxOutlets");
+    if (AuxOutletPy == NULL) {
+        pd_error(x, "Error: pyLibraryFolder is NULL");
+        return NULL;
+    }
+    int AuxOutlet = PyLong_AsLong(AuxOutletPy);
+
+
+
+
+    x->outAUX = (t_py4pd_Outlets *)getbytes(AuxOutlet * sizeof(*x->outAUX));
+    x->outAUX->u_outletNumber = AuxOutlet;
+    t_atom defarg[AuxOutlet], *ap;
+    t_py4pd_Outlets *u;
+    int i;
+
+    for (i = 0, u = x->outAUX, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
+        u->u_outlet = outlet_new(&x->x_obj, &s_anything);
+    }
+
     object_count++;
     return (x);
 }
@@ -830,7 +851,6 @@ void *New_VIS_Object(t_symbol *s, int argc, t_atom *argv) {
         pd_error(x, "Error: pyLibraryFolder is NULL");
         return NULL;
     }
-
     // ==================
     PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
     x->outPyPointer = PyLong_AsLong(pyOUT);
@@ -853,23 +873,24 @@ void *New_VIS_Object(t_symbol *s, int argc, t_atom *argv) {
         x->x_image = PY4PD_IMAGE;
     }
     else{
-        const char *gifFileCHAR = PyUnicode_AsUTF8(gifFile);
-        if (gifFileCHAR[0] == '/') {
-            char gifFileCHAR2[MAXPDSTRING];
-            sprintf(gifFileCHAR2, "%s%s", PyUnicode_AsUTF8(pyLibraryFolder), gifFileCHAR);
-            char *ext = strrchr(gifFileCHAR2, '.');
+        char *gifFileCHAR = (char *)PyUnicode_AsUTF8(gifFile);
+        if (gifFileCHAR[0] == '.' && gifFileCHAR[1] == '/'){
+            char completeImagePath[MAXPDSTRING];
+            gifFileCHAR++;  // remove the first dot
+            sprintf(completeImagePath, "%s%s", PyUnicode_AsUTF8(pyLibraryFolder), gifFileCHAR);
+            char *ext = strrchr(completeImagePath, '.');
             if (strcmp(ext, ".gif") == 0){
-                readGifFile(x, gifFileCHAR2);
+                readGifFile(x, completeImagePath);
             }
             else if (strcmp(ext, ".png") == 0) {
-                readPngFile(x, gifFileCHAR2);
+                readPngFile(x, completeImagePath);
             }
             else{
                 pd_error(x, "[%s] File extension not supported (uses just .png and .gif), using empty image.", x->objectName->s_name);
             }
         }
         else{
-            pd_error(NULL, "Image file bad format, the file must be relative to library folder and start with '/'.");
+            pd_error(NULL, "Image file bad format, the file must be relative to library folder and start with './'.");
         }
     }
     py4pd_InitVisMode(x, c, py4pdArgs, 0, argc, argv, object_PY4PD_Class);
@@ -1194,6 +1215,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     int personalisedHelp = 0;
     int ignoreNoneReturn = 0;
     const char *gifImage = NULL;
+    int auxOutlets = 0;
 
     // get file folder where this function is called from self
     t_py *py4pd = get_py4pd_object();
@@ -1263,6 +1285,11 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
             PyObject *type = PyDict_GetItemString(keywords, "objimage");
             gifImage = PyUnicode_AsUTF8(type);
         }
+        if (PyDict_Contains(keywords, PyUnicode_FromString("num_aux_outlets"))) {
+            PyObject *type = PyDict_GetItemString(keywords, "num_aux_outlets");
+            auxOutlets = PyLong_AsLong(type);
+        }
+
 
     }
 
@@ -1300,6 +1327,11 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     }
     PyDict_SetItemString(nestedDict, "py4pdOBJpyout", PyLong_FromLong(objpyout));
     PyDict_SetItemString(nestedDict, "py4pdOBJnooutlet", PyLong_FromLong(nooutlet));
+    PyDict_SetItemString(nestedDict, "py4pdAuxOutlets", PyLong_FromLong(auxOutlets));
+
+
+    // auxOutlets
+
     PyDict_SetItemString(nestedDict, "py4pdOBJname", PyUnicode_FromString(objectName));
     PyDict_SetItemString(nestedDict, "py4pdOBJIgnoreNone", PyLong_FromLong(ignoreNoneReturn));
     PyObject *objectDict = PyDict_New();

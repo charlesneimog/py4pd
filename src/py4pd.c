@@ -852,7 +852,7 @@ static void runFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
 
     if (pValue != NULL) { 
-        py4pd_convert_to_pd(x, pValue);  
+        py4pd_convert_to_pd(x, pValue, x->out1);  
     } 
     else {                             
         PyObject *ptype, *pvalue, *ptraceback;
@@ -1231,7 +1231,7 @@ t_int *performAudioIN(t_int *w) {
     pValue = PyObject_CallObject(x->function, ArgsTuple);
 
     if (pValue != NULL) {
-        py4pd_convert_to_pd(x, pValue);  // convert the value to pd
+        py4pd_convert_to_pd(x, pValue, x->out1);  // convert the value to pd
     } 
     else {                             // if the function returns a error
         PyObject *ptype, *pvalue, *ptraceback;
