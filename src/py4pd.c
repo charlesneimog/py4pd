@@ -1,4 +1,5 @@
 #include "py4pd.h"
+#include "m_pd.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
@@ -121,6 +122,17 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
     
     if (pModule == NULL){
         pd_error(x, "[Python] Failed to load script file %s", script_file_name->s_name);
+        // get error
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_XDECREF(pstr);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+        Py_XDECREF(pModule);
         return;
     }
 
@@ -1587,6 +1599,7 @@ void *py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     } 
     else if (normalMODE == 1 && visMODE == 0 && audioOUT == 0 && audioIN == 0) {
         x = (t_py *)pd_new(py4pd_class);  // create a new py4pd object
+
     } 
     else if (libraryMODE == 1 && visMODE == 0 && audioOUT == 0 && audioIN == 0) {  // library
         x = (t_py *)pd_new(py4pd_classLibrary);  
@@ -1610,6 +1623,8 @@ void *py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         pd_error(NULL, "Error in py4pdNew, you can not use more than one flag at the same time.");
         return NULL;
     }
+
+
 
     x->x_canvas = canvas_getcurrent();      
     t_canvas *c = x->x_canvas;             
@@ -1715,6 +1730,9 @@ void py4pd_setup(void) {
     py4pd_classAudioOut = class_new(gensym("py4pd"), (t_newmethod)py4pdNew, (t_method)py4pdFree, sizeof(t_py), 0, A_GIMME, 0);
     py4pd_classAudioIn = class_new(gensym("py4pd"), (t_newmethod)py4pdNew, (t_method)py4pdFree, sizeof(t_py), 0, A_GIMME, 0);
     py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)py4pdNew, (t_method)py4pdFree, sizeof(t_py), CLASS_NOINLET, A_GIMME, 0);
+
+
+   
 
     // Sound in
     class_addmethod(py4pd_classAudioIn, (t_method)py4pdDSP, gensym("dsp"), A_CANT, 0);  // add a method to a class

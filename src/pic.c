@@ -127,7 +127,7 @@ void PY4PD_select(t_gobj *z, t_glist *glist, int state){
      }
     else{
         sys_vgui(".x%lx.c delete %lx_outline\n", cv, x);
-        if(x->x_edit || x->x_outline)
+        if(x->x_edit)
             sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline black -width %d\n",
                 cv, xpos, ypos, xpos+x->x_width, ypos+x->x_height, x, x->x_zoom);
     }
@@ -285,10 +285,8 @@ void PY4PD_edit_proxy_any(t_py4pd_edit_proxy *p, t_symbol *s, int ac, t_atom *av
                 int y = text_ypix(&p->p_cnv->x_obj, p->p_cnv->x_glist);
                 int w = p->p_cnv->x_width;
                 int h = p->p_cnv->x_height;
-                if(!p->p_cnv->x_outline){
-                    sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline black -width %d\n",
-                             cv, x, y, x+w, y+h, p->p_cnv, p->p_cnv->x_zoom);
-                }
+                sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline black -width %d\n",
+                        cv, x, y, x+w, y+h, p->p_cnv, p->p_cnv->x_zoom);
                 PY4PD_draw_io_let(p->p_cnv);
             }
             else{
@@ -325,9 +323,7 @@ void PY4PD_free(t_py *x){ // delete if variable is unset and image is unused
     sys_vgui("if { [info exists %lx_picname] == 1 && [image inuse %lx_picname] == 0} { image delete %lx_picname \n unset %lx_picname\n}\n",
         x->x_fullname, x->x_fullname, x->x_fullname, x->x_fullname);
 
-    if(x->x_receive != &s_){
-        pd_unbind(&x->x_obj.ob_pd, x->x_receive);
-    }
+    // pd_unbind(&x->x_obj.ob_pd, x->x_receive);
 
     if (strcmp(x->x_image, PY4PD_IMAGE) != 0){
         freebytes(x->x_image, strlen(x->x_image));
@@ -518,9 +514,9 @@ void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     pd_bind(&x->x_obj.ob_pd, x->x_x = gensym(buf));
 
     x->x_edit = cv->gl_edit;
-    x->x_send = x->x_snd_raw = x->x_receive = x->x_rcv_raw = x->x_filename = &s_;
+    x->x_filename = &s_;
     int loaded = x->x_def_img = x->x_init = x->x_latch = 0;
-    x->x_outline = x->x_size = 0;
+    x->x_size = 0;
     x->x_fullname = NULL;
     x->x_edit = c->gl_edit;
 

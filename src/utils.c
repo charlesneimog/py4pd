@@ -97,7 +97,6 @@ void parsePy4pdArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
                 py4pdArgs == gensym("-pic") ||
                 py4pdArgs == gensym("-canvas")) {
                 py4pd_InitVisMode(x, c, py4pdArgs, i, argc, argv, NULL);
-                x->x_outline = 1;
                 int j;
                 for (j = i; j < argc; j++) {
                     argv[j] = argv[j + 1];
@@ -243,10 +242,10 @@ void checkPackageNameConflict(t_py *x, char *folderToCheck, t_symbol *script_fil
                 if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
                     const char* entryName = findData.cFileName;
                     if (strcmp(entryName, ".") != 0 && strcmp(entryName, "..") != 0) {
-                        if (strcmp(entryName, script_file_name) == 0) {
+                        if (strcmp(entryName, script_file_name->s_name) == 0) {
                             // Process the conflict
                             post("");
-                            pd_error(x, "[py4pd] The library '%s' conflicts with a Python package name.", script_file_name);
+                            pd_error(x, "[py4pd] The library '%s' conflicts with a Python package name.", script_file_name->s_name);
                             pd_error(x, "[py4pd] This can cause problems related to py4pdLoadObjects.");
                             pd_error(x, "[py4pd] Rename the library.");
                             post("");
@@ -288,33 +287,23 @@ void checkPackageNameConflict(t_py *x, char *folderToCheck, t_symbol *script_fil
 */
 
 void findPy4pdFolder(t_py *x){
-    void* handle = dlopen(NULL, RTLD_LAZY);
-    if (!handle) {
-        post("Not possible to locate the folder of the py4pd object");
-    }
-    Dl_info info;
-    if (dladdr((void*)findPy4pdFolder, &info) == 0) {
-        post("Not possible to locate the folder of the py4pd object");
-    }
-    // remove filename from path
-    #ifdef _WIN64
-        // get user folder
-        char *path = strdup(info.dli_fname);
-        char *last_slash = strrchr(path, '\\');
-        if (last_slash != NULL) {
-            *last_slash = '\0';
+    int libraryNotFound = 1;
+    for (int i = 0; 1; i++){ 
+        const char *pathelem = namelist_get(STUFF->st_searchpath, i);
+        if (!pathelem){
+            break;
         }
-        x->py4pdPath = gensym(path);
-        free(path);
-    #else
-        char *path = strdup(info.dli_fname);
-        char *last_slash = strrchr(path, '/');
-        if (last_slash != NULL) {
-            *last_slash = '\0';
+        char library_path[MAXPDSTRING];
+        snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, "py4pd"); 
+        if (access(library_path, F_OK) != -1) {
+            libraryNotFound = 0;
+            x->py4pdPath = gensym(library_path);
+            return;
         }
-        x->py4pdPath = gensym(path);
-        free(path);
-    #endif
+    }
+    if (libraryNotFound){
+        pd_error(x, "[py4pd] py4pd folder not found.");
+    }
 }
 
 // ===================================================================

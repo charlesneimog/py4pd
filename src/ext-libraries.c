@@ -263,10 +263,17 @@ void py_bang(t_py *x){
 
 // =====================================
 void py_anything(t_py *x, t_symbol *s, int ac, t_atom *av){
+    PyErr_Clear();
+    if (x->function == NULL){
+        pd_error(x, "[py4pd] Function not defined");
+        return;
+    }
+
     if (s == gensym("bang")){
         py_bang(x);
         return;
     }
+
     PyObject *pyInletValue;
     PyObject *pValue;
     if (ac == 0){

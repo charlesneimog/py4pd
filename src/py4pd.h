@@ -11,6 +11,7 @@
 
 #ifdef _WIN64 
     #include <windows.h>  
+    #include <Shlwapi.h>
 #else
     #include <fcntl.h> // For pipes, TODO: Remove this
 #endif
@@ -111,28 +112,22 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     int                 vectorSize; // vector size
 
     // == PICTURE AND SCORE
-    int                 x_zoom;
+    int                 x_zoom; 
     int                 x_width;
     int                 x_height;
-    int                 x_edit;
-    int                 x_init;
-    int                 x_def_img;
-    int                 x_sel;
-    int                 x_outline;
+    int                 x_edit; // patch is in edit mode or not
+    int                 x_init; // flag to check if the object was initialized
+    int                 x_def_img; // flag to check if the object was initialized
+    int                 x_sel; // flag to check if the object was selected
+    // int                 x_outline; 
     int                 x_size;
     int                 x_latch;
     int                 x_numInlets;
     int                 x_numOutlets;
     int                 mouseIsOver;
-    // int             
-    t_symbol            *file_name_open;
     t_symbol            *x_fullname;
     t_symbol            *x_filename;
     t_symbol            *x_x;
-    t_symbol            *x_receive;
-    t_symbol            *x_rcv_raw;
-    t_symbol            *x_send;
-    t_symbol            *x_snd_raw;
     char                *x_image;
    
     t_canvas            *x_canvas; // pointer to the canvas
