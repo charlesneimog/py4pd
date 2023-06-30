@@ -490,7 +490,7 @@ static void openScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     // Open VsCode in Windows
     #ifdef _WIN64
         char *command = malloc(strlen(x->pdPatchFolder->s_name) + strlen(x->script_name->s_name) + 20);
-        command = getEditorCommand(x);
+        command = getEditorCommand(x, 0);
         SHELLEXECUTEINFO sei = {0};
         sei.cbSize = sizeof(sei);
         sei.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -537,9 +537,7 @@ void setEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     // Open VsCode in Windows
     #ifdef _WIN64
-        char *command = getEditorCommand(x);
-        command = getEditorCommand(x);
-        // use getEditorCommand
+        char *command = getEditorCommand(x, line);
         SHELLEXECUTEINFO sei = {0};
         sei.cbSize = sizeof(sei);
         sei.fMask = SEE_MASK_NOCLOSEPROCESS;
