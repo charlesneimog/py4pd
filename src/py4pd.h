@@ -11,7 +11,6 @@
 
 #ifdef _WIN64 
     #include <windows.h>  
-    #include <dirent.h>
 #else
     #include <fcntl.h> // For pipes, TODO: Remove this
 #endif
@@ -200,13 +199,17 @@ extern void *py4pdFree(t_py *x);
 extern int pipePy4pdNum;
 extern int object_count; 
 
+
+// ============= METHODS ===============
+void setEditor(t_py *x, t_symbol *s, int argc, t_atom *argv);
+
 // ============= UTILITIES =============
 int parseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);
 void parsePy4pdArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);
 void findPy4pdFolder(t_py *x);
 void createPy4pdTempFolder(t_py *x);
 void setPy4pdConfig(t_py *x);
-char *getEditorCommand(t_py *x);
+char *getEditorCommand(t_py *x, int line);
 void executeSystemCommand(const char *command);
 int isNumericOrDot(const char *str);
 void removeChar(char *str, char c);

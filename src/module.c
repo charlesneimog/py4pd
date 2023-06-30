@@ -983,12 +983,6 @@ static PyObject *pipInstall(PyObject *self, PyObject *args){
     Py_DECREF(pipInstallResult);
     Py_DECREF(pipInstallFunction);
     Py_DECREF(py4pdModule);
-
-
-
-
-
-
     Py_RETURN_TRUE;
 }
 

@@ -236,6 +236,74 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
 // ============================================
 // ========= PY4PD METHODS FUNCTIONS ==========
 // ============================================
+static void py4pdPipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+    (void)s;
+    const char *pipPackage;
+    const char *localORglobal;
+
+
+        // odd code, but solve the bug
+    t_py *prev_obj;
+    int prev_obj_exists = 0;
+    PyObject *MainModule = PyImport_ImportModule("pd");
+    PyObject *oldObjectCapsule;
+    if (MainModule != NULL) {
+        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        if (oldObjectCapsule != NULL) {
+            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
+            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+            prev_obj_exists = 1;
+        }
+        else {
+            prev_obj_exists = 0;
+        }
+    }
+    PyObject *objectCapsule = py4pd_add_pd_object(x);
+
+    PyObject *py4pdModule = PyImport_ImportModule("py4pd");
+    if (py4pdModule == NULL) {
+        pd_error(x, "[Python] pipInstall: py4pd module not found");
+        return;
+    }
+    PyObject *pipInstallFunction = PyObject_GetAttrString(py4pdModule, "pipinstall");
+    if (pipInstallFunction == NULL) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: pipinstall function not found");
+        return;
+    }
+
+    if (prev_obj_exists == 1){ 
+        objectCapsule = py4pd_add_pd_object(prev_obj);
+        if (objectCapsule == NULL){
+            pd_error(x, "[Python] Failed to add object to Python");
+            return;
+        }
+    }
+
+
+
+    localORglobal = atom_getsymbolarg(0, argc, argv)->s_name;
+    pipPackage = atom_getsymbolarg(1, argc, argv)->s_name;
+
+    // the function is executed using pipinstall([localORglobal, pipPackage])
+    PyObject *argsList = PyList_New(2);
+    PyList_SetItem(argsList, 0, Py_BuildValue("s", localORglobal));
+    PyList_SetItem(argsList, 1, Py_BuildValue("s", pipPackage));
+    PyObject *argTuple = Py_BuildValue("(O)", argsList);
+    PyObject *pipInstallResult = PyObject_CallObject(pipInstallFunction, argTuple);
+
+    if (pipInstallResult == NULL) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: pipinstall function failed");
+        return;
+    }
+
+    Py_DECREF(argTuple);
+    Py_DECREF(pipInstallResult);
+    Py_DECREF(pipInstallFunction);
+    Py_DECREF(py4pdModule);
+    return;
+}
+
+// ============================================
 /**
  * @brief it prints the version of py4pd and python
  * @param x pointer to the object
@@ -434,7 +502,7 @@ static void openScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         return;
     #else  
         char *command = malloc(strlen(x->pdPatchFolder->s_name) + strlen(x->script_name->s_name) + 20);
-        command = getEditorCommand(x);
+        command = getEditorCommand(x, 0);
         executeSystemCommand(command);
         return;
     #endif
@@ -449,7 +517,7 @@ static void openScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argv is the arguments
  * @return void, but it sets the editor
  */
-static void setEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+void setEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     if (argc != 0) {
         x->editorName = atom_getsymbol(argv + 0);
@@ -461,6 +529,11 @@ static void setEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         return;
     }
     post("[py4pd] Opening editor...");
+
+    PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->function);
+    int line = PyCode_Addr2Line(code, 0);
+    post("Function %s is in line %d", x->function_name->s_name, line);
+        
 
     // Open VsCode in Windows
     #ifdef _WIN64
@@ -480,7 +553,7 @@ static void setEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     // Not Windows OS
     #else  // if not windows 64bits
         char *command = malloc(strlen(x->pdPatchFolder->s_name) + strlen(x->script_name->s_name) + 20);
-        command = getEditorCommand(x);
+        command = getEditorCommand(x, line);
         executeSystemCommand(command);
         return;
     #endif
@@ -659,30 +732,7 @@ void setFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
     PyObject *pModule, *pFunc;  // Create the variables of the python objects
 
-    // =====================
-    char *pyScripts_folder = malloc(strlen(x->py4pdPath->s_name) + 20); // allocate extra space
-    snprintf(pyScripts_folder, strlen(x->py4pdPath->s_name) + 20, "%s/resources/scripts", x->py4pdPath->s_name);
-    // =====================
-    char *pyGlobal_packages = malloc(strlen(x->py4pdPath->s_name) + 20); // allocate extra space
-    snprintf(pyGlobal_packages, strlen(x->py4pdPath->s_name) + 20, "%s/resources/py-modules", x->py4pdPath->s_name);
-
-    // Add aditional path to python to work with Pure Data
-    PyObject *home_path = PyUnicode_FromString(x->pdPatchFolder->s_name);  // Place where script file will probably be
-    PyObject *site_package = PyUnicode_FromString(x->pkgPath->s_name);  // Place where the packages will be
-    PyObject *py4pdScripts = PyUnicode_FromString(pyScripts_folder);  // Place where the py4pd scripts will be
-    PyObject *py4pdGlobalPackages = PyUnicode_FromString(pyGlobal_packages);  // Place where the py4pd global packages will be
-    PyObject *sys_path = PySys_GetObject("path");
-    PyList_Insert(sys_path, 0, home_path);
-    PyList_Insert(sys_path, 0, site_package);
-    PyList_Insert(sys_path, 0, py4pdScripts);
-    PyList_Insert(sys_path, 0, py4pdGlobalPackages);
-    Py_DECREF(home_path);
-    Py_DECREF(site_package);
-    Py_DECREF(py4pdScripts);
-    free(pyScripts_folder);
-    free(pyGlobal_packages);
-
-        // odd code, but solve the bug
+    // odd code, but solve the bug
     t_py *prev_obj;
     int prev_obj_exists = 0;
     PyObject *MainModule = PyImport_ImportModule("pd");
@@ -1585,6 +1635,27 @@ void *py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         setFunction(x, s, argc, argv);
         importNumpyForPy4pd();
     }
+
+    // Add additional paths to the python path
+    char *pyScripts_folder = malloc(strlen(x->py4pdPath->s_name) + 20); // allocate extra space
+    snprintf(pyScripts_folder, strlen(x->py4pdPath->s_name) + 20, "%s/resources/scripts", x->py4pdPath->s_name);
+    char *pyGlobal_packages = malloc(strlen(x->py4pdPath->s_name) + 20); // allocate extra space
+    snprintf(pyGlobal_packages, strlen(x->py4pdPath->s_name) + 20, "%s/resources/py-modules", x->py4pdPath->s_name);
+    PyObject *home_path = PyUnicode_FromString(x->pdPatchFolder->s_name);  // Place where script file will probably be
+    PyObject *site_package = PyUnicode_FromString(x->pkgPath->s_name);  // Place where the packages will be
+    PyObject *py4pdScripts = PyUnicode_FromString(pyScripts_folder);  // Place where the py4pd scripts will be
+    PyObject *py4pdGlobalPackages = PyUnicode_FromString(pyGlobal_packages);  // Place where the py4pd global packages will be
+    PyObject *sys_path = PySys_GetObject("path");
+    PyList_Insert(sys_path, 0, home_path);
+    PyList_Insert(sys_path, 0, site_package);
+    PyList_Insert(sys_path, 0, py4pdScripts);
+    PyList_Insert(sys_path, 0, py4pdGlobalPackages);
+    Py_DECREF(home_path);
+    Py_DECREF(site_package);
+    Py_DECREF(py4pdScripts);
+    free(pyScripts_folder);
+    free(pyGlobal_packages);
+
     object_count++;
     return (x);
 }
@@ -1667,6 +1738,11 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class_VIS, (t_method)setPackages, gensym("packages"), A_GIMME, 0);  // set packages path
     class_addmethod(py4pd_classAudioOut, (t_method)setPackages, gensym("packages"), A_GIMME, 0);  // set packages path
     class_addmethod(py4pd_classAudioIn, (t_method)setPackages, gensym("packages"), A_GIMME, 0);  // set packages path
+
+
+    // py4pdPipInstall
+    class_addmethod(py4pd_class, (t_method)py4pdPipInstall, gensym("pipinstall"), A_GIMME, 0);  // on/off threading
+
 
     // Definitios for the class
     class_addmethod(py4pd_class, (t_method)py4pdThread, gensym("thread"), A_FLOAT, 0);  // on/off threading

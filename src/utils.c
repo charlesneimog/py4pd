@@ -337,22 +337,26 @@ void createPy4pdTempFolder(t_py *x) {
  * @param x is the py4pd object
  * @return the commandline to open the editor
  */
-char *getEditorCommand(t_py *x) {
+char *getEditorCommand(t_py *x, int line) {
     const char *editor = x->editorName->s_name;
     const char *home = x->pdPatchFolder->s_name;
     const char *filename = x->script_name->s_name;
     char *command = (char *)malloc(256 * sizeof(char));
     memset(command, 0, 256);
     if (strcmp(editor, "vscode") == 0) {
-        sprintf(command, "code '%s/%s.py'", home, filename);
-    } else if (strcmp(editor, "nvim") == 0) {
-        sprintf(command, "gnome-terminal -e \"nvim '%s/%s.py'\"", home,
+        sprintf(command, "code --goto '%s/%s.py:%d'", home, filename, line);
+    } 
+    else if (strcmp(editor, "nvim") == 0) {
+        sprintf(command, "gnome-terminal -e \"nvim +%d '%s/%s.py'\"", line, home,
                 filename);
-    } else if (strcmp(editor, "sublime") == 0) {
+    } 
+    else if (strcmp(editor, "sublime") == 0) {
         sprintf(command, "subl '%s/%s.py'", home, filename);
-    } else if (strcmp(editor, "emacs") == 0) {
+    } 
+    else if (strcmp(editor, "emacs") == 0) {
         sprintf(command, "emacs '%s/%s.py'", home, filename);
-    } else {
+    } 
+    else {
         pd_error(x, "[py4pd] editor %s not supported.", editor);
     }
     return command;

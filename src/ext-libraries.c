@@ -1349,6 +1349,8 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         class_addmethod(localClass, (t_method)py4pdPlay, gensym("play"), A_GIMME, 0);
         class_addmethod(localClass, (t_method)py4pdStop, gensym("stop"), 0, 0);
         class_addmethod(localClass, (t_method)py4pdClear, gensym("clear"), 0, 0);
+        // class_addmethod(localClass, (t_method)setEditor, gensym("click"), 0, 0);  // TODO: Fix this for objects
+
 
         //readGifFile(t_py *x)
         // class_addmethod(localClass, (t_method)readGifFile, gensym("test"), 0, 0); 
