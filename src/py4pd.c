@@ -534,7 +534,6 @@ void setEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     int line = PyCode_Addr2Line(code, 0);
     post("Function %s is in line %d", x->function_name->s_name, line);
         
-
     // Open VsCode in Windows
     #ifdef _WIN64
         char *command = getEditorCommand(x, line);

@@ -230,25 +230,53 @@ const char* get_filename(const char* path) {
 
 // ====================================================
 void checkPackageNameConflict(t_py *x, char *folderToCheck, t_symbol *script_file_name){
-    DIR *dir;
-    struct dirent *entry;
+    #ifdef _WIN64
+        WIN32_FIND_DATAA findData;
+        HANDLE hFind;
 
-    if ((dir = opendir(folderToCheck)) == NULL) {
-        return;
-    }
-    dir = opendir(folderToCheck);
-    while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
-            if (strcmp(entry->d_name, script_file_name->s_name) == 0) {
-                post("");
-                pd_error(x, "[py4pd] The library '%s' conflicts with a Python package name.", script_file_name->s_name);
-                pd_error(x, "[py4pd] This can cause problems related with py4pdLoadObjects.");
-                pd_error(x, "[py4pd] Rename the library.");
-                post("");
+        char searchPath[MAX_PATH];
+        snprintf(searchPath, sizeof(searchPath), "%s\\*", folderToCheck);
+
+        hFind = FindFirstFileA(searchPath, &findData);
+        if (hFind != INVALID_HANDLE_VALUE) {
+            do {
+                if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                    const char* entryName = findData.cFileName;
+                    if (strcmp(entryName, ".") != 0 && strcmp(entryName, "..") != 0) {
+                        if (strcmp(entryName, script_file_name) == 0) {
+                            // Process the conflict
+                            post("");
+                            pd_error(x, "[py4pd] The library '%s' conflicts with a Python package name.", script_file_name);
+                            pd_error(x, "[py4pd] This can cause problems related to py4pdLoadObjects.");
+                            pd_error(x, "[py4pd] Rename the library.");
+                            post("");
+                        }
+                    }
+                }
+            } while (FindNextFileA(hFind, &findData) != 0);
+            FindClose(hFind);
+        }
+    #else
+        DIR *dir;
+        struct dirent *entry;
+
+        if ((dir = opendir(folderToCheck)) == NULL) {
+            return;
+        }
+        dir = opendir(folderToCheck);
+        while ((entry = readdir(dir)) != NULL) {
+            if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 && strcmp(entry->d_name, "..") != 0) {
+                if (strcmp(entry->d_name, script_file_name->s_name) == 0) {
+                    post("");
+                    pd_error(x, "[py4pd] The library '%s' conflicts with a Python package name.", script_file_name->s_name);
+                    pd_error(x, "[py4pd] This can cause problems related with py4pdLoadObjects.");
+                    pd_error(x, "[py4pd] Rename the library.");
+                    post("");
+                }
             }
         }
-    }
-    closedir(dir);
+        closedir(dir);
+    #endif
     return;
 }
 
