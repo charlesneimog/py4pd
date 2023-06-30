@@ -294,7 +294,11 @@ void findPy4pdFolder(t_py *x){
             break;
         }
         char library_path[MAXPDSTRING];
-        snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, "py4pd"); 
+        #ifdef _WIN64
+            snprintf(library_path, MAXPDSTRING, "%s\\%s\\", pathelem, "py4pd");
+        #else
+            snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, "py4pd"); 
+        #endif
         if (access(library_path, F_OK) != -1) {
             libraryNotFound = 0;
             x->py4pdPath = gensym(library_path);
