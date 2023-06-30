@@ -287,6 +287,13 @@ void checkPackageNameConflict(t_py *x, char *folderToCheck, t_symbol *script_fil
 */
 
 void findPy4pdFolder(t_py *x){
+    #ifdef _WIN64
+        post("O problema é aqui");
+        return;
+    #endif
+
+
+
     int libraryNotFound = 1;
     for (int i = 0; 1; i++){ 
         const char *pathelem = namelist_get(STUFF->st_searchpath, i);

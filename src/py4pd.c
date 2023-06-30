@@ -1599,7 +1599,6 @@ void *py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     } 
     else if (normalMODE == 1 && visMODE == 0 && audioOUT == 0 && audioIN == 0) {
         x = (t_py *)pd_new(py4pd_class);  // create a new py4pd object
-
     } 
     else if (libraryMODE == 1 && visMODE == 0 && audioOUT == 0 && audioIN == 0) {  // library
         x = (t_py *)pd_new(py4pd_classLibrary);  
