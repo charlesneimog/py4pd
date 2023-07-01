@@ -11,7 +11,6 @@
 
 #ifdef _WIN64 
     #include <windows.h>  
-    #include <Shlwapi.h>
 #else
     #include <fcntl.h> // For pipes, TODO: Remove this
 #endif
