@@ -1,12 +1,18 @@
-# Introduction
+---
+hide:
+  - navigation
+  - toc
+---
 
-## <h2 align="center"> **What is py4pd?** </h2>
+# Introduction
 
 <p align="center"> Welcome to the <code>py4pd</code> documentation! </p>
 
+## <h2 align="center"> **What is py4pd?** </h2>
+
 ----------
 
-`py4pd` integrates the power of [Python](https://www.python.org/) into the real-time environment of [PureData](https://puredata.info/), provide means for score visualization, AI integration, audio analysis tools, SVG/drawing score handling, and various other functionalities. If you use [OpenMusic](https://openmusic-project.github.io/openmusic/), you will find some inspiration on it.
+`py4pd` integrates the power of [Python](https://www.python.org/) into the real-time environment of [PureData](https://puredata.info/). Besides providing means for score visualization, AI integration, audio analysis tools, SVG/drawing score handling, and various other functionalities, <i>you can create PureData Objects using just Python</i>. If you use [OpenMusic](https://openmusic-project.github.io/openmusic/), you will find some inspiration on it.
 
 
 
@@ -19,9 +25,6 @@
 ## <h2 align="center"> **Examples and Use Cases** </h2>
 
 Here is presented algorithm tools implemented with `py4pd`. Users are encouraged to contribute their own examples through [Github](https://github.com/charlesneimog/py4pd/discussions/categories/show-and-tell).
-
-
-### <h3 align="center"> **General purposes** </h3>
 
 === "Score In PureData"
 
@@ -108,9 +111,6 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
 
 ### <h3 align="center"> **Pieces** </h3>
 
-<hr>
-
-
 === "Eco (2023)"
 
     Eco (2023) is the first version of one under developing piece that use some concepts of the composer Ricardo Thomasi in his PhD research. The idea here, is to use smartphones/tablets putted in the performance music stand, to make realtime `FFT` and `Partial Tracking` and then, generate scores that are played. The smartphones/tablets send data to PureData, and using `py4pd`, we generate realtime scores using `neoscore`.
@@ -124,12 +124,13 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
 
     The piece Moteto aims to be a rereading of medieval motet. In addition, to overlapping independent voices, we use Just Intonation structures. With the help of technology, I aim to make the piece playable, also by amateur choirs, it is available in this website: www.charlesneimog.com/moteto/.
 
-
+-------------
 ## <h2 align="center"> **News** </h2>
+-------------
 
-!!! info "Check the news for each new version"
+!!! info "Check the news for v. 0.8.0"
 
-    <h3 align="center"> **<b>v. 0.8.0 (Not publish on Deken yet)</b>** </h3> 
+    <h3 align="center"> **<b>v. 0.8.0</b>** </h3> 
     
     * Now `py4pd` objects can have they own help-patches, they must be located inside the folder "help".
     * Add simple player embbeded (you can 'play' python objects) in the objects, in others words, put Python Objects in music time.
@@ -143,6 +144,9 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
         * Add method `pd.pipinstall` to install Python Modules.
         
     ----------------------
+
+
+??? info "Check the news for old versions"
 
     <h3 align="center"> **<b>v. 0.7.0</b>** </h3>
     

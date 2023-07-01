@@ -6,7 +6,6 @@ import platform
 try:
     from pip._internal.cli.main import main as pipmain
     addpip = True
-    pd.print("pip main loaded")
 except Exception as e:
     pd.error(str(e))
     addpip = False

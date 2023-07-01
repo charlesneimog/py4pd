@@ -11,6 +11,7 @@ theme:
   name: material
   features:
     - navigation.top
+    - navigation.sections
     - content.code.annotate 
     - content.code.copy
     - navigation.tabs

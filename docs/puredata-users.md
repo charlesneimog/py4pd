@@ -11,10 +11,10 @@ For the creation of the object, there is some options. Here I will explain each 
 -------------------------------------- 
 ### <h3 align="center"> **Load Python Libraries** </h3>
 
-It is possible to use `py4pd` to create PureData objects using Python. To load this Python objects in PureData you can use `py4pd` with the `-library` flag and then the name of the script. For example, if the script have the name `myPythonObjects.py`, you need to create an `py4pd` object with `py4pd -library myPythonObjects`. 
+It is possible to use `py4pd` to create PureData objects using Python. To load the Python objects, you use `py4pd` with the `-library` or `-lib` flag followed by the script name. For example, if the script has the name `myPythonObjects.py`, you create a py4pd object with `py4pd -lib myPythonObjects`.
 
-!!! info "Info"
-	The order of the arguments is important, `py4pd myPythonObjects -library` will not work!
+!!! warning "The order matters"
+	The order of the arguments is important, `py4pd myPythonObjects -lib` will not work!
         
 -------------------------------------- 
 ### <h3 align="center"> **Audio options** </h3>
@@ -57,10 +57,9 @@ You can `load` functions in the creation of the object. For that, you must put t
 Next, I present all methods used in `py4pd` object. But the three main `methods` are: (1)
 
 * **set**: It load the `Python` function.
-* **install**: It install `Python` libraries **(not ready yet)**.
+* **pipinstall**: It install `Python` libraries **(not ready yet)**.
 * **run**: It run the `Python` function.
 * **key**: It save `parameters` for be used inside functions.
-
 
 -------------------------------------- 
 

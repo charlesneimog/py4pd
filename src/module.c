@@ -1006,6 +1006,7 @@ PyMethodDef PdMethods[] = {
 
     // Files
     {"home", pdhome, METH_VARARGS, "Get PureData Patch Path Folder"},
+    {"homefolder", pdhome, METH_VARARGS, "Get PureData Patch Path Folder"},
     {"py4pdfolder", py4pdfolder, METH_VARARGS, "Get PureData Py4PD Folder"},
     {"tempfolder", pdtempfolder, METH_VARARGS, "Get PureData Temp Folder"},
 

@@ -2,22 +2,98 @@
 
 If you're using [Python](https://www.python.org/) and [PureData](puredata.info/) together, you can use the `pd` module within the `py4pd` package to exchange data, set configurations, inform users of errors, and use all Python things. The module is embedded in the `py4pd` code and is only accessible within the `py4pd` environment. It's similar to how Google Collab uses modules like `google.collab.drive` and `google.collab.widgets`. In the next section I present all the methods that are embedded.
 
-## <h2 style="text-align:center"> **Write Pd Objects with Python** </h2>
 
-With the `py4pd` it is possible to create new PureData objects using just Python. For that, you need to declare your Python functions and then create a function called `py4pdLoadObjects`. Inside this function we use `pd.addobject` (check the [docs](https://www.charlesneimog.com/py4pd/python-users/#pdaddobject)) to add all functions that you want to use as objects. The organization of folders in the library should follow the following standard.
+## <h2 style="text-align:center">**Functions**</h2>
+
+??? tip "Index for All functions"
+
+    <div align="center">
+        <table>
+          <tr>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Functions</th>
+          </tr>
+          <tr>
+            <td>Pd Objects</td>
+            <td>Function to add Python Objects to Pd patches.</td>
+            <td><a href="#pdaddobject">pd.addobject()</a><br></td>
+          </tr>
+          <tr>
+            <td>Data Exchange</td>
+            <td>Functions for exchanging data between Pd and Python.</td>
+            <td>
+                <a href="#pdout">pd.out()</a><br>
+                <a href="#pdsend">pd.send()</a><br>
+                <a href="#pdtabwrite">pd.tabwrite()</a><br>
+                <a href="#pdtabread">pd.tabread()</a><br>
+                <a href="#pdgetkey">pd.getkey()</a><br>
+            </td>
+          </tr>
+          <tr>
+            <td>User Information</td>
+            <td>Functions for displaying information to the user.</td>
+            <td>
+                <a href="#pdprint">pd.print()</a><br>
+                <a href="#pdlogpost">pd.logpost()</a><br>
+                <a href="#pderror">pd.error()</a><br>
+            </td>
+          </tr>
+          <tr>
+            <td>Utilities</td>
+            <td>Utility functions for various purposes.</td>
+            <td>
+                <a href="#pdgetstrpointer">pd.getstrpointer()</a><br>
+                <a href="#pdgetglobalvar">pd.getglobalvar()</a><br>
+                <a href="#pdsetglobalvar">pd.setglobalvar()</a><br>
+            </td>
+          </tr>
+          <tr>
+            <td>Images</td>
+            <td>Functions for working with images.</td>
+            <td><a href="#pdshow">pd.show()</a><br></td>
+          </tr>
+          <tr>
+            <td>File Management</td>
+            <td>Functions for managing files and directories.</td>
+            <td>
+                <a href="#pdhomefolder">pd.homefolder()</a><br>
+                <a href="#pdtempfolder">pd.tempfolder()</a><br>
+                <a href="#pdpy4pdfolder">pd.py4pdfolder()</a><br>
+            </td>
+          </tr>
+          <tr>
+            <td>Audio Information</td>
+            <td>Functions for retrieving audio-related information.</td>
+            <td>
+                <a href="#pdsamplerate">pd.samplerate()</a><br>
+                <a href="#pdvecsize">pd.vecsize()</a><br>
+            </td>
+          </tr>
+        </table>
+    </div>
+
+--------------
+## <h2 style="text-align:center">**Write Pd Objects with Python**</h2>
+--------------
+
+With the `py4pd` it is possible to create new PureData objects using just Python. For that, you need to declare your Python functions and then create a function called `py4pdLoadObjects`. Inside this function we use `pd.addobject` (check the [docs](https://www.charlesneimog.com/py4pd/python-users/#pdaddobject)) to add all functions that you want to use as objects. 
+
+<p style="text-align:center"><i>The organization of folders in the library should follow the following standard.</i></p>
+
 
 !!! info "Folder Organization"
-    <h4 style="text-align:center"> **FolderOfLibrary = libraryname** </h4>
+    The folder name must be the same the the `.py` file. In your case, it must be called `libraryname`.
     
         └── help/
             ├── myfunction1-help.pd # helpPatches
             └── myfunction2-help.pd 
         └── src/
-            ├── setoffunctions1.py # you can organize this as you want, this is just one example
+            ├── setoffunctions1.py # you can organize/name this folder as you want, this is just one example.
             └── setoffunctions2.py
 
         └── resources/
-            ├── imagetosomeVISobject.png
+            ├── imagetosomeVISobject.png # for pd.VIS objects, you can set standard images of png or gif.
             └── imagetootherVISobject.gif
         ├── libraryname.py # here we have the py4pdLoadObjects function
         ├── README.deken.pd # If you upload it on Deken, this will open immediately after installation (good to install things).
@@ -40,7 +116,7 @@ from src.setoffunctions2 import showmycollgraph
 def py4pdLoadObjects():
     pd.addobject(myfunction1, "mysumObject") # function, string with name of the object
     pd.addobject(myfunction2, "mysumObject2") # function, string with name of the object
-    pd.addobject(showmycollgraph, "graph", objtype=pd.VIS, objimage="/resources/imagetosomeVISobject.png")
+    pd.addobject(showmycollgraph, "graph", objtype=pd.VIS, objimage="./resources/imagetosomeVISobject.png")
     
 
 ```
@@ -55,7 +131,7 @@ Following this steps we have this patch:
 ### <h3 style="text-align:center"> **Types of Objects** </h3>
 --------------------
 
-In the example above we create ordinary objects. With `py4pd` we can create 5 types of objects: 
+In the example above, we create ordinary objects. With `py4pd`, we can create five types of objects: 
 
 === "Ordinary Objects" 
 
@@ -83,7 +159,7 @@ In the example above we create ordinary objects. With `py4pd` we can create 5 ty
         import numpy as np
 
         def descriptors():
-            audio_arr, sr = af.read(pd.home() + "/Hp-ord-A4-mf-N-N.wav")
+            audio_arr, sr = af.read(pd.homefolder() + "/Hp-ord-A4-mf-N-N.wav")
             bft_obj = af.BFT(num=2049, samplate=sr, radix2_exp=12, slide_length=1024,
                            data_type=SpectralDataType.MAG,
                            scale_type=SpectralFilterBankScaleType.LINEAR)
@@ -227,12 +303,14 @@ You can create your own objects with Python. For that, you define the Python Fun
     | :-----------: | :----: | :------------------------------: |
     | `objtype`   | `pd` | The type of the object: `pd.VIS`, `pd.AUDIO`, `pd.AUDIOIN`, or `pd.AUDIOOUT`. Hiding this option will create a normal object.  |
     | `figsize`   | `Tuple` | Sets the pixel size of the object. Example: `figsize=(400, 200)` creates an object with a width of 400 and height of 200. |
-    | `pyout`    | `Boolean` | Determines whether the output will be in PureData data types or Python. If set to Python, it cannot be used by PureData. |
+    | `pyout`    | `Boolean` | Determines whether the output will be in PureData data types or Python data types. If set to Python, you can not use the data before the convertion to PureData with `py2pd` object. |
     | `no_outlet`    | `Boolean` | Creates an object with no outlets if set to `True`. |
-    | `added2pd_info` | `Boolean` | Prints the message `"[py4pd]: Object {objectName} added to PureData"` when set to `True`. |
+    | `num_aux_outlets`| `int` | Set the number of auxiliar outlets. If you use 4, it means that the object will have 5 inlets, 4 auxiliar and the main outlet (0). |
+    | `added2pd_info` | `Boolean` | Prints the message `"[py4pd]: Object {objectName} added."` when set to `True`. |
     | `helppatch` | `String` | Personalized help patch, it always must be inside the `help` folder. |
     | `ignore_none_return` | `Boolean` | When `True` it ignores all things that return None. |
     | `objimage` | `String` | Set the standard image for `pd.VIS` objects. When you create the object it will load this image. |
+
 
 === "Examples"
 
@@ -277,7 +355,7 @@ You can create your own objects with Python. For that, you define the Python Fun
 These are the methods used to send data from Python to PureData. The inverse path is done mainly with `run` and `key` messages. 
 <br>
 --------------------------------------
-#### <h4 style="text-align:center"> `pd.out` </h4>
+#### <h4 id="pdout" style="text-align:center"> `pd.out` </h4>
 
 `#!python pd.out()` allows you to output data to PureData without needing to wait for the Python function to finish executing. This is different from returning data to PureData using the `#!python return` statement, which requires the function to complete before sending data. 
 
@@ -313,7 +391,7 @@ These are the methods used to send data from Python to PureData. The inverse pat
 
 ---------------------------
 
-#### <h4 style="text-align:center"> `pd.send` </h4>
+#### <h4 id="pdsend"  style="text-align:center"> `pd.send` </h4>
 
 You can use `pd.send` to send data to a receive object in your PureData patch. This method takes in two arguments: the name of the `receive` object and the value you want to send. For instance, suppose you have a receive object named "myReceiver" in your patch. To send the value 42 to this object, you could use `pd.send("myReceiver", 42)`.
 
@@ -342,7 +420,7 @@ You can use `pd.send` to send data to a receive object in your PureData patch. T
     In this example, it will send to `py4pdreceiver` the message `"hello from python!"`, then the number `1`, then the list `[1, 2, 3, 4, 5]`. 
 
 -------------------------------------- 
-#### <h4 style="text-align:center"> `pd.tabwrite` </h4>
+#### <h4 id="pdtabwrite" style="text-align:center"> `pd.tabwrite` </h4>
 
 `pd.tabwrite` is a method that is essentially a copy of the `tabwrite` object in PureData. With this method, you can write audio or any data supported to PureData array.
 
@@ -369,7 +447,7 @@ You can use `pd.send` to send data to a receive object in your PureData patch. T
 
 
 -------------------------------------- 
-#### <h4 style="text-align:center"> `pd.tabread` </h4>
+#### <h4 id="pdtabread" style="text-align:center"> `pd.tabread` </h4>
 
 `pd.tabread` is a method that is essentially a copy of the `tabread` object in PureData. With this method, you can read data from a PureData array directly from within your Python code. It will return one Numpy Array with the data of the table.
 
@@ -393,7 +471,7 @@ You can use `pd.send` to send data to a receive object in your PureData patch. T
     ```
 
 -------------------------------------- 
-#### <h4 style="text-align:center"> `pd.getkey` </h4>
+#### <h4 id="pdgetkey" style="text-align:center"> `pd.getkey` </h4>
 
 With `pd.getkey`, you can retrieve the value of a specific key that has been set by the user in a `key` message to `py4pd` objects. For example, if the user sends a key message to `py4pd` with the name "fft-size" and a value of 1024, you can retrieve this value in your Python code using `pd.getkey("fft-size")`. If the user hasn't defined a particular key, `pd.getkey` will return `None`, allowing you to set a default value if necessary.
 
@@ -429,7 +507,7 @@ There are two messages used to print info in the PureData console, they are `pd.
 <br>
 
 ------------------
-#### <h4 style="text-align:center"> `pd.print` </h4>
+#### <h4 id="pdprint" style="text-align:center"> `pd.print` </h4>
 
 The ordinary function `#!python print()` will not work in `py4pd` (unless that you open PureData from the terminal). So if you want to debug or print some info from the PureData console you need to use `#!python pd.print`. 
 
@@ -705,9 +783,9 @@ With `py4pd` you can display images inside PureData patches using Python, you ca
 ### <h3 style="text-align:center"> **File Management** </h3>
 -------------------------------------- 
 
-#### <h4 style="text-align:center"> `pd.home` </h4>
+#### <h4 style="text-align:center"> `pd.homefolder` </h4>
 
-In `py4pd`, `pd.home` is a function that returns the path to the directory where the currently-running PureData patch is located. This can be useful for accessing files and resources relative to the location of the patch. 
+In `py4pd`, `pd.homefolder` is a function that returns the path to the directory where the currently-running PureData patch is located. This can be useful for accessing files and resources relative to the location of the patch. 
 
 
 === "Parameters" 
@@ -721,7 +799,7 @@ In `py4pd`, `pd.home` is a function that returns the path to the directory where
     ``` py
     import pd
 	    
-    print(pd.home())
+    print(pd.homefolder())
 
     ```
 

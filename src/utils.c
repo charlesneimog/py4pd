@@ -293,7 +293,6 @@ void findPy4pdFolder(t_py *x){
     #endif
 
 
-
     int libraryNotFound = 1;
     for (int i = 0; 1; i++){ 
         const char *pathelem = namelist_get(STUFF->st_searchpath, i);
