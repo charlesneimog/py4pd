@@ -11,7 +11,6 @@ def pipinstall(package):
     minor = version.minor
     try:
         if isinstance(package, list):
-            pd.print('Installing ' + package[1] + ' , please wait...')
             folder = package[0]
             if folder == "local":
                 folder = pd.home()
@@ -24,7 +23,6 @@ def pipinstall(package):
         else:
             pd.error("[py.install]: bad arguments")
             return 'bang'
-        home = pd.home()
         # If linux or macos
         if platform.system() == 'Linux':
             from tkinter import Tk, LabelFrame, Label
@@ -78,14 +76,19 @@ def pipinstall(package):
             if result.returncode != 0:
                 pd.error("Some error occur with Pip.")
                 return 'bang'
+            pd.print("Installed " + package)
+            pd.error("You need to restart PureData!")
+            return 'bang'
 
         elif platform.system() == 'Darwin':
             try:
-                pipmain(['install', '--target', f'{folder}/py-modules', package, '--upgrade'])
+                value = subprocess.run([f'python{major}.{minor}', '-m', 'pip', 'install', '--target', f"{folder}/py-modules", package, '--upgrade'], check=True)
+                if value.returncode != 0:
+                    pd.error("Some error occur with Pip.")
+                    return 'bang'
                 pd.print("Installed " + package)
-                pd.print("I recommend restart PureData...")
+                pd.error("You need to restart PureData!")
                 return 'bang'
-            
             except Exception as e:
                 pd.error(str(e))
                 return 'bang'
