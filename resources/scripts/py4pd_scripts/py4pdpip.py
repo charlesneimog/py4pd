@@ -70,9 +70,12 @@ def pipinstall(package):
                 return 'bang'
         
         elif os.name == 'nt': 
+            # try to update pip
+            command = ['py', f'-{major}.{minor}', '-m', 'pip', 'install', '--upgrade', 'pip']
+            result = subprocess.run(command, check=False)
             folder = f'{folder}/py-modules'
             command = ['py', f'-{major}.{minor}', '-m', 'pip', 'install', '--target', f"{folder}", package, '--upgrade']
-            result = subprocess.run(command, check=True)
+            result = subprocess.run(command, check=False)
             if result != 0:
                 pd.error("Some error occur with Pip.")
                 return 'bang'
@@ -92,5 +95,7 @@ def pipinstall(package):
             pd.error("Your OS is not supported")
             return 'bang'
     except Exception as e:
+        pd.print("==================")
         pd.print(str(e))
+        pd.print("==================")
         return 'bang'
