@@ -31,7 +31,6 @@ def pipinstall(package):
             root = Tk()
             root.after(1, lambda: root.focus_force())
             try:
-                root.title("Installing " + package)
                 # get screen width and height
                 screen_width = root.winfo_screenwidth()
                 screen_height = root.winfo_screenheight()
@@ -56,12 +55,12 @@ def pipinstall(package):
                 # update window
                 root.update()   
                 value = subprocess.run([f'python{major}.{minor}', '-m', 'pip', 'install', '--target', f"{folder}/py-modules", package, '--upgrade'], check=True)
-                if value != 0:
+                if value.returncode != 0:
                     pd.error("Some error occur with Pip.")
                     root.destroy()
                     return 'bang'
                 pd.print("Installed " + package)
-                pd.error("You need to restart PureData")
+                pd.error("You need to restart PureData!")
                 root.destroy()
                 return 'bang'
             except Exception as e:
@@ -76,7 +75,7 @@ def pipinstall(package):
             folder = f'{folder}/py-modules'
             command = ['py', f'-{major}.{minor}', '-m', 'pip', 'install', '--target', f"{folder}", package, '--upgrade']
             result = subprocess.run(command, check=False)
-            if result != 0:
+            if result.returncode != 0:
                 pd.error("Some error occur with Pip.")
                 return 'bang'
 
@@ -95,7 +94,5 @@ def pipinstall(package):
             pd.error("Your OS is not supported")
             return 'bang'
     except Exception as e:
-        pd.print("==================")
         pd.print(str(e))
-        pd.print("==================")
         return 'bang'
