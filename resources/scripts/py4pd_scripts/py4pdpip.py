@@ -40,6 +40,8 @@ def pipinstall(package):
         if platform.system() == 'Linux':
             from tkinter import Tk, LabelFrame, Label
             root = Tk()
+            root.after(1, lambda: root.focus_force())
+
             try:
                 root.title("Installing " + package)
                 # get screen width and height
@@ -75,6 +77,20 @@ def pipinstall(package):
                 root.destroy()
                 return 'bang'
         
+        elif os.name == 'nt':
+            import subprocess
+            import sys
+            version = sys.version_info
+            major = version.major
+            minor = version.minor 
+
+            folder = f'{folder}/py-modules'
+            command = ['py', f'-{major}.{minor}', '-m', 'pip', 'install', '--target', f"{folder}", package, '--upgrade']
+            result = subprocess.run(command, check=True)
+            if result != 0:
+                pd.error("Some error occur with Pip.")
+                return 'bang'
+
         elif platform.system() == 'Darwin':
             try:
                 pipmain(['install', '--target', f'{folder}/py-modules', package, '--upgrade'])
@@ -86,20 +102,6 @@ def pipinstall(package):
                 pd.error(str(e))
                 return 'bang'
 
-        # If windows
-        elif os.name == 'nt':
-            import subprocess
-            try:
-                # change / to \\
-                home = home.replace('/', '\\')  
-                # install package from pip without opening a new window
-                subprocess.run(f'pip install --target {home}\\py-modules {package} --upgrade', shell=True, check=True)
-                pd.print("Installed " + package)
-                pd.error("You need to restart PureData")
-
-            except Exception as e:
-                pd.error(str(e))
-                return 'bang'
         else:
             pd.error("Your OS is not supported")
             return 'bang'
