@@ -2,24 +2,13 @@ import pd
 import os
 import sys
 import platform
-
-try:
-    from pip._internal.cli.main import main as pipmain
-    addpip = True
-except Exception as e:
-    pd.error(str(e))
-    addpip = False
-    if os.name == 'nt':
-        pd.error("You need to install pip for windows")
-    elif os.name == 'posix':
-        pd.error("Open one terminal window and run 'sudo apt install python3-pip', or 'sudo pacman -S python-pip', or 'sudo dnf install python3-pip'")
-        sys.exit(1)
-    elif os.name == 'darwin':
-        pd.error("Was not possible to install pip for macos, please install it manually")
-        sys.exit(1)
+import subprocess
 
 def pipinstall(package):
     """Install a Python package from Pd"""
+    version = sys.version_info
+    major = version.major
+    minor = version.minor
     try:
         if isinstance(package, list):
             pd.print('Installing ' + package[1] + ' , please wait...')
@@ -41,7 +30,6 @@ def pipinstall(package):
             from tkinter import Tk, LabelFrame, Label
             root = Tk()
             root.after(1, lambda: root.focus_force())
-
             try:
                 root.title("Installing " + package)
                 # get screen width and height
@@ -67,7 +55,11 @@ def pipinstall(package):
 
                 # update window
                 root.update()   
-                pipmain(['install', '--target', f'{folder}/py-modules', package, '--upgrade'])
+                value = subprocess.run([f'python{major}.{minor}', '-m', 'pip', 'install', '--target', f"{folder}/py-modules", package, '--upgrade'], check=True)
+                if value != 0:
+                    pd.error("Some error occur with Pip.")
+                    root.destroy()
+                    return 'bang'
                 pd.print("Installed " + package)
                 pd.error("You need to restart PureData")
                 root.destroy()
@@ -77,13 +69,7 @@ def pipinstall(package):
                 root.destroy()
                 return 'bang'
         
-        elif os.name == 'nt':
-            import subprocess
-            import sys
-            version = sys.version_info
-            major = version.major
-            minor = version.minor 
-
+        elif os.name == 'nt': 
             folder = f'{folder}/py-modules'
             command = ['py', f'-{major}.{minor}', '-m', 'pip', 'install', '--target', f"{folder}", package, '--upgrade']
             result = subprocess.run(command, check=True)
