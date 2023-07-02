@@ -1,41 +1,32 @@
 import tkinter as tk
-import threading
-import time
-import pd
+from tkinter import messagebox
 
-# Function to run in the background
-def background_task():
-    while True:
-        print("Background task is running")
-        time.sleep(2)
-        break
+def close_window():
+    root.destroy()
 
-def tkThing():
-    window = tk.Tk()
-    greeting = tk.Label(text="Hello, Tkinter")
-    greeting.pack()
+def create_window():
+    global root
 
-    # Set the window title
-    window.title("My Window")
+    root = tk.Tk()
+    root.title("Package Installation")
 
-    # Set the window size
-    window.geometry("400x300")
-
-    # Create a label widget
-    label = tk.Label(window, text="Hello, World!")
+    label = tk.Label(root, text="Installing package...")
     label.pack()
 
-    window.update()
+    root.update()
 
-    # Create a thread for the background task
-    background_thread = threading.Thread(target=background_task) 
-    background_thread.daemon = True
-    background_thread.start()
-    background_thread.join()
+    # Simulate package installation (replace this with your actual installation logic)
+    import time
+    time.sleep(5)  # Simulating a delay of 5 seconds
 
-    window.quit()
+    messagebox.showinfo("Package Installation", "Package successfully installed!")
+
+    close_window()
+
+
+# Call other code or operations after the window is closed
 
 
 
 def py4pdLoadObjects():
-    pd.addobject(tkThing, "tk")
+    pd.addobject(create_window, "tk")
