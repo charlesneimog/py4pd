@@ -4,6 +4,23 @@ import sys
 import platform
 import subprocess
 
+if platform.system() == 'Darwin':
+    import tkinter as tk
+
+    class MyWindow:
+        def __init__(self):
+            self.root = tk.Tk()
+            self.root.title("My Window")
+                        
+        def run(self):
+            self.root.mainloop()
+        
+        def close(self):
+            self.root.destroy()
+
+
+
+
 def pipinstall(package):
     """Install a Python package from Pd"""
     version = sys.version_info
