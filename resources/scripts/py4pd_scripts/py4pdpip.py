@@ -1,4 +1,5 @@
 
+
 import pd
 import os
 import sys
@@ -11,27 +12,69 @@ folder = ""
 
 class MacOSpip:
     def __init__(self, pippackage, pipfolder):
+        import tkinter as tk
         self.package = pippackage
         self.folder = pipfolder
         self.window = tk.Tk()
-        self.window.protocol("WM_DELETE_WINDOW", self.close_window)
-        self.pipinstall = self._pipinstall  # Renamed to avoid naming conflict
+        #self.window.protocol("WM_DELETE_WINDOW", self.close_window)
+        self._pipinstall()  # Renamed to avoid naming conflict
+        
+
+    def drawWarning(self):
+        from tkinter import Tk, LabelFrame, Label
+        
+        # get screen width and height
+        root = self.window
+        screen_width = root.winfo_screenwidth()
+        screen_height = root.winfo_screenheight()
+
+        # calculate x and y coordinates for the Tk root window to center it on the screen
+        x = (screen_width/2) - (300/2)
+        y = (screen_height/2) - (100/2)
+
+        root.geometry("300x100+%d+%d" % (x, y))
+        root.resizable(False, False)
+
+        # create text
+        text = LabelFrame(root, text="Installing " + package + " , please wait...",
+                                                                  padx=20, pady=20)
+        text.pack(fill="both", expand=1)
+
+                                                # add label inside the label frame
+        label = Label(text, text="Installing " + package + " , please wait...",
+                            anchor="center", justify="center")
+        label.pack(fill="both", expand=1)
+
+        # update window
+        self.window.update()
+
         
     def _pipinstall(self):
+        self.drawWarning()
+        version = sys.version_info
         major = version.major  # Assuming version is defined
         minor = version.minor  # Assuming version is defined
         folder = self.folder
         package = self.package
-        pd.print(folder)  # Assuming pd is imported and defined
-        pd.print(package)  # Assuming pd is imported and defined
         value = subprocess.run([f'/usr/local/bin/python{major}.{minor}', '-m', 'pip', 'install', '--target', f"{folder}/py-modules", package, '--upgrade'], check=True)
+        if value.returncode != 0:
+            pd.logpost(3, "pip return value" + str(value))
+            pd.error("You need to restart PureData, to check if the installation process worked")
+        else:
+            pd.print(f"{package} Installed!")
+            pd.error("You need to restart PureData")
+        self.window.protocol("WM_DELETE_WINDOW", self.close_window)
+        self.window.after(200, self.close_window)
+        self.window.mainloop()
+        
         return True
     
     def close_window(self):
+        self.window.quit()
         self.window.destroy()
     
     def run(self):
-        self.window.mainloop()
+        self.window.update()
 
 
 def pipinstall(mypackage):
