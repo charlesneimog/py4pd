@@ -1,28 +1,32 @@
+
 import pd
 import os
 import sys
 import platform
 import subprocess
 
-if platform.system() == 'Darwin':
-    import tkinter as tk
+package = ""
+folder = ""
 
-    class MyWindow:
-        def __init__(self):
-            self.root = tk.Tk()
-            self.root.title("My Window")
-                        
-        def run(self):
-            self.root.mainloop()
-        
-        def close(self):
-            self.root.destroy()
+def py4pdInstall():
+    global package
+    global folder
+    global window
+    version = sys.version_info
+    major = version.major
+    minor = version.minor
+    value = subprocess.run([f'/usr/local/bin/python{major}.{minor}', '-m', 'pip', 'install', '--target', f"{folder}/py-modules", package, '--upgrade'], check=True)
+    window.update()
+    window.quit()
+    window.destroy()
+    return "ok"
 
 
-
-
-def pipinstall(package):
+def pipinstall(mypackage):
     """Install a Python package from Pd"""
+    global folder
+    global package
+    package = mypackage
     version = sys.version_info
     major = version.major
     minor = version.minor
@@ -98,47 +102,23 @@ def pipinstall(package):
             return 'bang'
 
         elif platform.system() == 'Darwin':
-            from tkinter import Tk, LabelFrame, Label
-            root = Tk()
-            root.after(1, lambda: root.focus_force())
+            #import turtle
+            import tkinter as tk
             try:
-                # get screen width and height
-                screen_width = root.winfo_screenwidth()
-                screen_height = root.winfo_screenheight()
-
-                # calculate x and y coordinates for the Tk root window to center it on the screen
-                x = (screen_width/2) - (300/2)
-                y = (screen_height/2) - (100/2)
-
-                root.geometry("300x100+%d+%d" % (x, y))
-                root.resizable(False, False)
-
-                # create text
-                text = LabelFrame(root, text="Installing " + package + " , please wait...",
-                                  padx=20, pady=20)
-                text.pack(fill="both", expand=1)
-
-                # add label inside the label frame
-                label = Label(text, text="Installing " + package + " , please wait...",
-                              anchor="center", justify="center")
-                label.pack(fill="both", expand=1)
-
-                # update window
-                root.update()
-                value = subprocess.run([f'/usr/local/bin/python{major}.{minor}', '-m', 'pip', 'install', '--target', f"{folder}/py-modules", package, '--upgrade'], check=True)
-                if value.returncode != 0:
-                    pd.error("Some error occur with Pip.")
-                    root.destroy()
-                    return 'bang'
-                pd.print("Installed " + package)
-                pd.error("You need to restart PureData!")
-                root.destroy()
-                return 'bang'
-                
+                global window
+                window = tk.Tk()
+                window.title("Wait...")
+                window.geometry("400x300")
+                msg = tk.Label(window, text="Processing")
+                msg.pack()
+                window.after(500, py4pdInstall)
+                window.mainloop()
+                pd.print("ok")
                 
             except Exception as e:
                 pd.error(str(e))
-                return 'bang'
+
+
 
         else:
             pd.error("Your OS is not supported")
