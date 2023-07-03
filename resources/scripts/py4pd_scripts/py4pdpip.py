@@ -9,10 +9,17 @@ package = ""
 folder = ""
 
 
-class MacOSpip(package, folder):
-    def __init__(self):
-        self.package = package
-        self.folder = folder
+import pd
+import os
+import sys
+import platform
+import subprocess
+
+
+class MacOSpip(pippackage, pipfolder):
+    def __init__(self, pippackage, pipfolder):
+        self.package = pippackage
+        self.folder = pipfolder
         self.window = tk.Tk()
         self.window.protocol("WM_DELETE_WINDOW", self.close_window)
         self.pipinstall = pipinstall()
@@ -20,7 +27,11 @@ class MacOSpip(package, folder):
     def pipinstall(self):
         major = version.major
         minor = version.minor
-        value = subprocess.run([f'/usr/local/bin/python{major}.{minor}', '-m', 'pip', 'install', '--target', f"{self.folder}/py-modules", self.package, '--upgrade'], check=True)
+        folder = self.folder
+        package = self.package
+        pd.print(folder)
+        pd.print(package)
+        value = subprocess.run([f'/usr/local/bin/python{major}.{minor}', '-m', 'pip', 'install', '--target', f"{folder}/py-modules", package, '--upgrade'], check=True)
         return True
     
     def close_window(self):
