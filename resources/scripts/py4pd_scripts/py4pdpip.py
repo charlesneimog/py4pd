@@ -9,28 +9,21 @@ package = ""
 folder = ""
 
 
-import pd
-import os
-import sys
-import platform
-import subprocess
-
-
-class MacOSpip(pippackage, pipfolder):
+class MacOSpip:
     def __init__(self, pippackage, pipfolder):
         self.package = pippackage
         self.folder = pipfolder
         self.window = tk.Tk()
         self.window.protocol("WM_DELETE_WINDOW", self.close_window)
-        self.pipinstall = pipinstall()
+        self.pipinstall = self._pipinstall  # Renamed to avoid naming conflict
         
-    def pipinstall(self):
-        major = version.major
-        minor = version.minor
+    def _pipinstall(self):
+        major = version.major  # Assuming version is defined
+        minor = version.minor  # Assuming version is defined
         folder = self.folder
         package = self.package
-        pd.print(folder)
-        pd.print(package)
+        pd.print(folder)  # Assuming pd is imported and defined
+        pd.print(package)  # Assuming pd is imported and defined
         value = subprocess.run([f'/usr/local/bin/python{major}.{minor}', '-m', 'pip', 'install', '--target', f"{folder}/py-modules", package, '--upgrade'], check=True)
         return True
     
@@ -39,21 +32,6 @@ class MacOSpip(pippackage, pipfolder):
     
     def run(self):
         self.window.mainloop()
-
-def close_window():
-    window.destroy()
-
-def py4pdInstall():
-    global package
-    global folder
-    global window
-    version = sys.version_info
-    major = version.major
-    minor = version.minor
-    value = subprocess.run([f'/usr/local/bin/python{major}.{minor}', '-m', 'pip', 'install', '--target', f"{folder}/py-modules", package, '--upgrade'], check=True)
-    window.update()
-    window.quit()
-    return "ok"
 
 
 def pipinstall(mypackage):
