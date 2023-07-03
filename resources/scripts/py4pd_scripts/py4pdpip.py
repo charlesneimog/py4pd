@@ -16,6 +16,8 @@ class MacOSpip:
         self.package = pippackage
         self.folder = pipfolder
         self.window = tk.Tk()
+        #icon_file = pd.py4pdfolder() + "/resources/icons/pd.icns"
+        #self.window.iconbitmap(icon_file)
         #self.window.protocol("WM_DELETE_WINDOW", self.close_window)
         self._pipinstall()  # Renamed to avoid naming conflict
         
