@@ -8,6 +8,30 @@ import subprocess
 package = ""
 folder = ""
 
+
+class MacOSpip(package, folder):
+    def __init__(self):
+        self.package = package
+        self.folder = folder
+        self.window = tk.Tk()
+        self.window.protocol("WM_DELETE_WINDOW", self.close_window)
+        self.pipinstall = pipinstall()
+        
+    def pipinstall(self):
+        major = version.major
+        minor = version.minor
+        value = subprocess.run([f'/usr/local/bin/python{major}.{minor}', '-m', 'pip', 'install', '--target', f"{self.folder}/py-modules", self.package, '--upgrade'], check=True)
+        return True
+    
+    def close_window(self):
+        self.window.destroy()
+    
+    def run(self):
+        self.window.mainloop()
+
+def close_window():
+    window.destroy()
+
 def py4pdInstall():
     global package
     global folder
@@ -18,7 +42,6 @@ def py4pdInstall():
     value = subprocess.run([f'/usr/local/bin/python{major}.{minor}', '-m', 'pip', 'install', '--target', f"{folder}/py-modules", package, '--upgrade'], check=True)
     window.update()
     window.quit()
-    window.destroy()
     return "ok"
 
 
@@ -105,15 +128,10 @@ def pipinstall(mypackage):
             #import turtle
             import tkinter as tk
             try:
-                global window
-                window = tk.Tk()
-                window.title("Wait...")
-                window.geometry("400x300")
-                msg = tk.Label(window, text="Processing")
-                msg.pack()
-                window.after(500, py4pdInstall)
-                window.mainloop()
-                pd.print("ok")
+                my_window = MacOSpip(package, folder)
+                my_window.run()
+                
+
                 
             except Exception as e:
                 pd.error(str(e))
