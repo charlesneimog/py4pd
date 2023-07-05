@@ -1,3 +1,4 @@
+#include "m_pd.h"
 #include "py4pd.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
@@ -682,24 +683,97 @@ t_int *library_Audio_perform(t_int *w) {
 }
 
 // =====================================
-static void library_dsp(t_py *x, t_signal **sp) {
-    // int numChannels = sp[0]->s_nchans; 
+t_int *library_AudioMultiChannel_perform(t_int *w){
+    t_py *x = (t_py *)(w[1]);  // this is the object itself
+    t_sample *in = (t_sample *)(w[2]);
+    t_sample *audioOut = (t_sample *)(w[3]);
+    int n = (int)(w[4]);
 
-    // if (numChannels == 1){
-        // for mono signal    
-        if (x->audioOutput == 0) {
-            dsp_add(library_AudioIN_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
+    int numChannels = n / x->vectorSize;
+    npy_intp dims[] = {numChannels, x->vectorSize};
+    PyObject *pAudio = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, in);
+    PyTuple_SetItem(x->argsDict, 0, pAudio);
+    
+    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    if (objectCapsule == NULL){
+        pd_error(x, "[Python] Failed to add object to Python");
+        return (w + 5);
+    }
+    PyObject *pValue = PyObject_CallObject(x->function, x->argsDict);
+
+    if (pValue != NULL) {
+        if (PyArray_Check(pValue)) {
+            PyArrayObject *pArray = PyArray_GETCONTIGUOUS((PyArrayObject *)pValue); // this is the output vector
+            PyArray_Descr *pArrayType = PyArray_DESCR(pArray); // this is the type of the output vector
+            int arrayLength = PyArray_SIZE(pArray); // this is the length of the output vector
+            if (arrayLength == n){
+                if (pArrayType->type_num == NPY_FLOAT) {
+                    for (int i = 0; i < numChannels; i++) {
+                        float *audioFloat = (float*)PyArray_GETPTR2(pArray, i, 0);
+                        for (int j = 0; j < x->vectorSize; j++) {
+                            audioOut[i * x->vectorSize + j] = (t_sample)audioFloat[j];
+                        }
+                    }
+                }
+                else if (pArrayType->type_num == NPY_DOUBLE) {
+                    for (int i = 0; i < numChannels; i++) {
+                        double *audioFloat = (double *)PyArray_GETPTR2(pArray, i, 0);
+                        for (int j = 0; j < x->vectorSize; j++) {
+                            audioOut[i * x->vectorSize + j] = (t_sample)audioFloat[j];
+                        }
+                    }
+                }
+                else {
+                    pd_error(x, "[py4pd] The numpy array must be float or double, returned %d", pArrayType->type_num);
+                }
+                Py_DECREF(pArrayType);
+                Py_DECREF(pArray);
+            }
+            else {
+                pd_error(x, "[py4pd] The numpy array must have the same length of the vecsize and 1 dim. Returned: %d samples and %d dims", arrayLength, PyArray_NDIM(pArray));
+                Py_DECREF(pArrayType);
+                Py_DECREF(pArray);
+            }
         } 
-        else if ((x->audioInput == 0) && (x->audioOutput == 1)){
-            dsp_add(library_AudioOUT_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
+        else{
+            pd_error(x, "[Python] Python function must return a numpy array");
         }
-        else if ((x->audioInput == 1) && (x->audioOutput == 1)) {  // python output is audio
-            dsp_add(library_Audio_perform, 4, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
-        }
-    // }
-    // else{
-        // pd_error(x, "[py4pd] Received %d channels...", numChannels);
-    // }
+    } 
+    else {                             // if the function returns a error
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+        PyErr_Clear();
+    }
+    Py_XDECREF(pValue);
+    return (w+5);
+}
+
+// =====================================
+static void library_dsp(t_py *x, t_signal **sp) {
+    if (x->audioOutput == 0) {
+        dsp_add(library_AudioIN_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
+    } 
+    else if ((x->audioInput == 0) && (x->audioOutput == 1)){
+        dsp_add(library_AudioOUT_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
+    }
+    /*
+    else if ((x->audioInput == 1) && (x->audioOutput == 1)) {  // python output is audio
+        dsp_add(library_Audio_perform, 4, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
+    }
+    */
+
+    else if ((x->audioInput == 1) && (x->audioOutput == 1)){
+        x->vectorSize = sp[0]->s_n;
+        signal_setmultiout(&sp[1], sp[0]->s_nchans);
+        dsp_add(library_AudioMultiChannel_perform, 4, x, sp[0]->s_vec, sp[1]->s_vec, PY4PDSIGTOTAL(sp[0]));
+    }
 }
 
 // =====================================
@@ -1315,7 +1389,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
         localClass = class_new(gensym(objectName), (t_newmethod)New_AudioOUT_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
     }
     else if (strcmp(objectType, "AUDIO") == 0) {
-        localClass = class_new(gensym(objectName), (t_newmethod)New_Audio_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
+        localClass = class_new(gensym(objectName), (t_newmethod)New_Audio_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_MULTICHANNEL, A_GIMME, 0);
     }
     else{
         PyErr_SetString(PyExc_TypeError, "Object type not supported, check the spelling");
@@ -1383,6 +1457,7 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     else if (strcmp(objectType, "AUDIO") == 0) {
         class_addmethod(localClass, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
         CLASS_MAINSIGNALIN(localClass, t_py, py4pdAudio);
+        // class_setdspflags(localClass, CLASS_MULTICHANNEL);
     }
     else{
         PyErr_SetString(PyExc_TypeError, "Object type not supported, check the spelling");

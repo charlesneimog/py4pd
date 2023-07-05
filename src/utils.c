@@ -337,7 +337,9 @@ void createPy4pdTempFolder(t_py *x) {
             if (!SetFileAttributes(home, FILE_ATTRIBUTE_HIDDEN)){
                 post("Failed to set hidden attribute: %d\n", GetLastError());
             }
+            free(command);
         }
+        free(home);
     #else
         const char *home = getenv("HOME");
         char *temp_folder = (char *)malloc(256 * sizeof(char));
@@ -347,10 +349,11 @@ void createPy4pdTempFolder(t_py *x) {
         if (access(temp_folder, F_OK) == -1) {
             char *command = (char *)malloc(256 * sizeof(char));
             memset(command, 0, 256);
-            sprintf(command, "mkdir %s", temp_folder);
+            sprintf(command, "mkdir -p %s", temp_folder);
             system(command);
+            free(command);
         }
-        // free(temp_folder);
+        free(temp_folder);
 
     #endif
 }
@@ -367,7 +370,12 @@ char *getEditorCommand(t_py *x, int line) {
     const char *filename = x->script_name->s_name;
     char *command = (char *)malloc(256 * sizeof(char));
     memset(command, 0, 256);
-    if (strcmp(editor, "vscode") == 0) {
+    if (strcmp(editor, PY4PD_EDITOR) == 0) {
+        sprintf(command, "%s '%s/%s.py'", PY4PD_EDITOR, home, filename);
+        post(command);
+    } 
+
+    else if (strcmp(editor, "vscode") == 0) {
         sprintf(command, "code --goto '%s/%s.py:%d'", home, filename, line);
     } 
     else if (strcmp(editor, "nvim") == 0) {
@@ -822,8 +830,12 @@ void setPy4pdConfig(t_py *x) {
         const char *editor = PY4PD_EDITOR;
         x->editorName = gensym(editor);
     }
-    char config_path[PATH_MAX];
-    snprintf(config_path, sizeof(config_path), "%s/py4pd.cfg", x->pdPatchFolder->s_name);
+    if (x->py4pdPath == NULL){
+        findPy4pdFolder(x);
+    }
+
+    char config_path[MAXPDSTRING];
+    snprintf(config_path, sizeof(config_path), "%s/py4pd.cfg", x->py4pdPath->s_name);
     if (access(config_path, F_OK) != -1) {  // check if file exists
         FILE *file = fopen(config_path, "r");      /* should check the result */
         char line[256];                            // line buffer
@@ -855,28 +867,7 @@ void setPy4pdConfig(t_py *x) {
                 }
                 free(packages_path);  // free memory
             } 
-            else if (strstr(line, "thread =") != NULL) {
-                char *thread = (char *)malloc(sizeof(char) * (strlen(line) - strlen("thread = ") + 1));  //
-                strcpy(thread, line + strlen("thread = ")); 
-                if (strlen(thread) > 0) {  
-                    thread[strlen(thread) - 1] = '\0';  
-                    thread[strlen(thread) - 1] = '\0'; 
-                    char *i = thread;
-                    char *j = thread;
-                    while (*j != 0) {
-                        *i = *j++;
-                        if (*i != ' ') i++;
-                    }
-                    *i = 0;
-                    if (thread[0] == '1') {
-                        x->runmode = 1;
-                    } 
-                    else {
-                        x->runmode = 0;
-                    }
-                }
-                free(thread);  // free memory
-            } 
+            
             else if (strstr(line, "editor =") != NULL) {
                 char *editor = (char *)malloc(sizeof(char) * (strlen(line) - strlen("editor = ") + 1));  //
                 strcpy(editor, line + strlen("editor = "));
@@ -885,12 +876,13 @@ void setPy4pdConfig(t_py *x) {
                 removeChar(editor, ' ');
                 x->editorName = gensym(editor);
                 free(editor);  // free memory
+                logpost(x, 3, "[py4pd] Editor set to %s", x->editorName->s_name);
             }
         }
         fclose(file);  // close file
     }
-
     free(PADRAO_packages_path);  // free memory
+    createPy4pdTempFolder(x);
     return;
 }
 
@@ -926,9 +918,6 @@ PyObject *py4pd_add_pd_object(t_py *x) {
 }
 
 // ========================= GIF ==============================
-#include <stdio.h>
-#include <stdlib.h>
-
 static char* gif2base64(const unsigned char* data, size_t dataSize) {
     const char base64Chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     size_t outputSize = 4 * ((dataSize + 2) / 3);  // Calculate the output size

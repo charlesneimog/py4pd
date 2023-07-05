@@ -93,6 +93,9 @@ static void libraryLoad(t_py *x, int argc, t_atom *argv){
     Py_DECREF(site_package);
     Py_DECREF(py4pdScripts);
     Py_DECREF(globalPackages);
+    free(pyScriptsFolder);
+    free(pyGlobalFolder);
+    free(pkgPathchar);
 
     // odd code, but solve the bug
     t_py *prev_obj;
@@ -513,9 +516,9 @@ static void openScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         CloseHandle(sei.hProcess);
         return;
     #else  
-        char *command = malloc(strlen(x->pdPatchFolder->s_name) + strlen(x->script_name->s_name) + 20);
-        command = getEditorCommand(x, 0);
+        char *command = getEditorCommand(x, 0);
         executeSystemCommand(command);
+        free(command);
         return;
     #endif
 }
@@ -1611,8 +1614,6 @@ void *py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         x->pdPatchFolder = patch_dir;       
         x->pkgPath = patch_dir;  
         setPy4pdConfig(x); 
-        createPy4pdTempFolder(x); 
-        findPy4pdFolder(x); 
         libraryLoad(x, argc, argv);
         x->script_name = scriptName;
         object_count++;
@@ -1641,8 +1642,6 @@ void *py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     x->pdPatchFolder = patch_dir;         // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
     setPy4pdConfig(x);  // set the config file (in py4pd.cfg, make this be
-    createPy4pdTempFolder(x);  // create temp the py4pd folder
-    findPy4pdFolder(x);  // find the py4pd object folder
     if (argc > 1) {       // check if there are two arguments
         setFunction(x, s, argc, argv);
         importNumpyForPy4pd();

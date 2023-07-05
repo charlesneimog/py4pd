@@ -16,7 +16,7 @@ ifeq (MINGW,$(findstring MINGW,$(uname)))
 else ifeq (Linux,$(findstring Linux,$(uname)))
   	PYTHON_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
 	NUMPY_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import numpy; print(numpy.get_include())')
-	cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -g -Wno-cast-function-type -Wl,-export-dynamic -DPY4PD_EDITOR=\"nvim\"
+	cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -g -Wno-cast-function-type -Wl,-export-dynamic 
   	ldlibs = -g -l dl -l $(PYTHON_VERSION) -Xlinker -export-dynamic 
 
 # =================================== MacOS =====================================

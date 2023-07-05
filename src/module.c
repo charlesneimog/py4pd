@@ -733,7 +733,8 @@ static PyObject *pdveczise(PyObject *self, PyObject *args) {
 
     t_py *py4pd = get_py4pd_object();
     t_sample vector;
-    vector = py4pd->vectorSize;
+    vector = py4pd->vectorSize; // this is the patch vector size
+    // NOTE: Should I add someway to get the puredata's vector size? with sys_getblksize()?
 
     return PyLong_FromLong(vector);
 }
