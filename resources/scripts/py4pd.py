@@ -1,21 +1,21 @@
 import pd
 
 try:
-    from py4pd_scripts.py4pdpip import *
+    from src.pip import *
 except Exception as e:
     pd.error("Error to add py.pip: " + str(e))
 
 try:
-    from py4pd_scripts.py4pdlist import *
-    from py4pd_scripts.py4pdmath import *
-    from py4pd_scripts.py4pdconvertion import *
-    from py4pd_scripts.py4pdloop import *
-    from py4pd_scripts.py4pdinfo import *
-    from py4pd_scripts.py4pdconvertion import *
-    from py4pd_scripts.py4pdoperators import *
-    from py4pd_scripts.py4pdtree import *
-    from py4pd_scripts.py4pdshow import *
-    from py4pd_scripts.py4pd_musicconvertions import *
+    from src.list import *
+    from src.math import *
+    from src.convertion import *
+    from src.loop import *
+    from src.info import *
+    from src.convertion import *
+    from src.operators import *
+    from src.tree import *
+    from src.show import *
+    from src.musicconvertions import *
 
 except Exception as e:
     pd.error("Error loading py4pd objects: " + str(e))
@@ -50,8 +50,9 @@ def py4pdLoadObjects():
     pd.addobject(flat, "py.flat")
 
     # Loop Functions
-    pd.addobject(pyiterate, "py.iterate") # these are special objects, they don't have a pyout argument but output py data types
-    pd.addobject(pycollect, "py.collect") # these are special objects, they don't have a pyout argument but output py data types
+    # these are special objects.
+    pd.addobject(pyiterate, "py.iterate", pyout=True, num_aux_outlets=1, ignore_none_return=True) # these are special objects, they don't have a pyout argument but output py data types
+    pd.addobject(pycollect, "py.collect", pyout=True) # these are special objects, they don't have a pyout argument but output py data types
 
     # Math Functions
     pd.addobject(omsum, "py.sum")

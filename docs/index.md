@@ -129,7 +129,6 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
 -------------
 
 !!! info "Check the news for v. 0.8.0"
-
     <h3 align="center"> **<b>v. 0.8.0</b>** </h3> 
     
     * Now `py4pd` objects can have they own help-patches, they must be located inside the folder "help".
@@ -142,6 +141,8 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
         * Add method `pd.clearplayer` to clear the player.
         * Add method `pd.patchzoom` to get the zoom of patch.
         * Add method `pd.pipinstall` to install Python Modules.
+    * The options `py4pd -score`, `py4pd -audioin`, `py4pd -audioout`, and `py4pd -audio` was removed because they are unused when we can create your library. ⚠️
+    * Added multichannel support for `audio` objects.
         
     ----------------------
 

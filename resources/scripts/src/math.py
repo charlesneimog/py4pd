@@ -6,16 +6,15 @@ import pd
 
 def omsum(a, b):
     """ Sum two numbers or two lists of numbers """
-    if isinstance(a, (int, float)) and isinstance(b, (int, float)):
-        return a + b
-    elif isinstance(a, list) and isinstance(b, (int, float)):
+    if isinstance(a, list) and isinstance(b, (int, float)):
         return [x + b for x in a]
     elif isinstance(a, (int, float)) and isinstance(b, list):
         return [a + x for x in b]
     elif isinstance(a, list) and isinstance(b, list):
         return [x + y for x, y in zip(a, b)]
     else:
-        pd.error("[py.sum]: bad arguments")
+        pd.print(f"{a} + {b}")
+        return a + b
 
 
 def omminus(a, b):

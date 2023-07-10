@@ -1,15 +1,29 @@
 import pd
+import copy
 
 def pyiterate(value):
     """Iterate over a Python data type"""
+    # pd.out("clear", out_n=1)
+    # NOTE: Old way
+    """
     if isinstance(value, list):
         pd.iterate(value)
+        pd.out("output", out_n=1)
     else:
         pd.error("[py.iterate]: pyiterate only works with lists")
         return None
+    """
+    for i in value:
+        new_i = copy.deepcopy(i)
+        pd.out(new_i)
+
+
+    # pd.out("output", out_n=1)
+
 
 
 def pycollect(data):
+    """ It collects the data from pyiterate and outputs it """
     pointer = pd.getobjpointer()
     string = "py.collect_" + str(pointer)
     if data == "output":
