@@ -28,29 +28,52 @@
 // DEFINE STANDARD IDE EDITOR
 #ifndef PY4PD_EDITOR
     #ifdef _WIN64
-        #define PY4PD_EDITOR "notepad"
+        #define PY4PD_EDITOR "idle3.10"
     #else
-        #define PY4PD_EDITOR "gedit"
+        #define PY4PD_EDITOR "idle3.10"
     #endif
 #endif
 
 // FOLDER
 #include <dirent.h>
 
-// ============ OUTLETS ===============
+// ====================================
+// =============== THREADS ============
+// ====================================
+/*
+ * @brief Structure representing an outlet in the py4pd when it is detached.
+ */
+typedef struct {
+    PyObject *pDict;
+    pthread_mutex_t mutex;
+    pthread_cond_t cond;
+} py4pd_ThreadObjectInlet;
+
+// ====================================
+// ============== OUTLETS =============
+// ====================================
+/*
+ * @brief Structure representing an array of all the auxiliar outlets of py4pd.
+ */
 typedef struct _py4pd_Outlets{
     t_atomtype u_type;
     t_outlet *u_outlet;
     int u_outletNumber;
 } t_py4pd_Outlets;
 
-// ================ PLAYER =============
+// ====================================
+// =============== PLAYER =============
+// ====================================
+/*
+ * @brief Structure representing the values that are stored in the dictionary to be played for the player.
+ */
 typedef struct {
     int onset;
     int size;
     PyObject **values;
 } KeyValuePair;
 
+// ====================================
 typedef struct {
     KeyValuePair* entries;
     int size;
@@ -58,7 +81,11 @@ typedef struct {
     int isSorted;
 } Dictionary;
 
-// ================ VIS Object ========= 
+
+// ====================================
+// ========== VIS OBJECTS =============
+// ====================================
+
 typedef struct _py4pd_edit_proxy{ 
     t_object    p_obj;
     t_symbol   *p_sym;
@@ -66,33 +93,36 @@ typedef struct _py4pd_edit_proxy{
     struct      _py *p_cnv;
 }t_py4pd_edit_proxy;
 
-// =====================================
+// ====================================
+// ============== PY4PD ===============
+// ====================================
+
 typedef struct _py { // It seems that all the objects are some kind of class.
-    t_object            x_obj; // convensao no puredata source code
-    t_glist             *x_glist;
-    t_py4pd_edit_proxy  *x_proxy;
+    t_object             x_obj; // o objeto
+    t_glist              *x_glist;
+    t_py4pd_edit_proxy   *x_proxy; // para lidar com inlets auxiliares
     
-    t_int               object_number; // object number
-    t_int               runmode; // arguments
-    t_int               visMode; // 1 for canvas, 2 for picture, 3 for score
-    t_int               function_called; // flag to check if the set function was called
-    t_int               py_arg_numbers; // number of arguments
-    t_int               outPyPointer; // flag to check if is to output the python pointer
-    int                 kwargs;
+    t_int                object_number; // object number
+    t_int                runmode; // arguments
+    t_int                visMode; // 1 for canvas, 2 for picture, 3 for score
+    t_int                function_called; // flag to check if the set function was called
+    t_int                py_arg_numbers; // number of arguments
+    t_int                outPyPointer; // flag to check if is to output the python pointer
+    t_int                kwargs;
 
     // Player 
-    t_clock             *playerClock;
-    Dictionary          *playerDict;
-    int                 msOnset;
-    int                 playerRunning;
+    t_clock              *playerClock;
+    Dictionary           *playerDict;
+    t_int                  msOnset;
+    t_int                  playerRunning;
 
     // Library
     t_int                py4pd_lib; // flag to check if is to use python library
     t_int                pyObject;
-    t_int                  ignoreOnNone;
+    t_int                ignoreOnNone;
     t_atom               *inlets; // vector to store the arguments
     PyObject             *argsDict; // parameters
-    t_symbol            *objectName; // object name
+    t_symbol             *objectName; // object name
 
     
     // == PYTHON
@@ -108,22 +138,22 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int               use_NumpyArray; // flag to check if is to use numpy array in audioInput
     t_int               numpyImported; // flag to check if numpy was imported
     t_float             py4pdAudio; // audio
-    int                 vectorSize; // vector size
+    t_int               vectorSize; // vector size
+    t_int               n_channels; // number of channels
 
     // == PICTURE AND SCORE
-    int                 x_zoom; 
-    int                 x_width;
-    int                 x_height;
-    int                 x_edit; // patch is in edit mode or not
-    int                 x_init; // flag to check if the object was initialized
-    int                 x_def_img; // flag to check if the object was initialized
-    int                 x_sel; // flag to check if the object was selected
-    // int                 x_outline; 
-    int                 x_size;
-    int                 x_latch;
-    int                 x_numInlets;
-    int                 x_numOutlets;
-    int                 mouseIsOver;
+    t_int                 x_zoom; 
+    t_int                 x_width;
+    t_int                 x_height;
+    t_int                 x_edit; // patch is in edit mode or not
+    t_int                 x_init; // flag to check if the object was initialized
+    t_int                 x_def_img; // flag to check if the object was initialized
+    t_int                 x_sel; // flag to check if the object was selected
+    t_int                 x_size;
+    t_int                 x_latch;
+    t_int                 x_numInlets;
+    t_int                 x_numOutlets;
+    t_int                 mouseIsOver;
     t_symbol            *x_fullname;
     t_symbol            *x_filename;
     t_symbol            *x_x;
@@ -148,6 +178,8 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 }t_py;
 
 // =====================================
+// =========== LIBRARY OBJECT ==========
+// =====================================
 typedef struct _py4pdInlet_proxy{
     t_object     p_ob;
     t_py        *p_master;
@@ -155,29 +187,14 @@ typedef struct _py4pdInlet_proxy{
 }t_py4pdInlet_proxy;
 
 // =====================================
+// =========== PYOBJECT IN PD ==========
+// =====================================
+/*
+    * @brief this is used to store the pointer to PythonObject when we use PyObject in pd.
+*/
 typedef struct _pyObjectData {
     PyObject *pValue;
 } t_pyObjectData;
-// =====================================
-
-// TODO: REMOVE py4pd_atomtype, py4pd_atom, pd_args
-
-typedef enum{
-    PY4PD_FLOAT, // 1
-    PY4PD_SYMBOL, // 2
-} py4pd_atomtype;
-
-typedef struct _py4pdatom{
-    float floatvalue;
-    const char *symbolvalue;
-    int a_type;
-} py4pd_atom;
-
-typedef struct _pdArgs{
-    int size;
-    py4pd_atom *atoms;
-} pd_args;
-
 
 // =====================================
 extern void reloadPy4pdFunction(t_py *x);
@@ -189,6 +206,7 @@ extern void *importNumpyForPy4pd();
 extern void *py4pdFree(t_py *x);
 
 #define PY4PD_IMAGE "R0lGODlhKgAhAPAAAP///wAAACH5BAAAAAAAIf8LSW1hZ2VNYWdpY2sOZ2FtbWE9MC40NTQ1NDUALAAAAAAqACEAAAIkhI+py+0Po5y02ouz3rz7D4biSJbmiabqyrbuC8fyTNf2jTMFADs="
+#define PY4PDSIGTOTAL(s) ((t_int)((s)->s_length * (s)->s_nchans))
 
 extern int pipePy4pdNum;
 extern int object_count; 
@@ -225,7 +243,6 @@ void free_pyobject_data(void *p);
 void readGifFile(t_py *x, const char* filename);
 void readPngFile(t_py *x, const char* filename);
 // --------
-void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s);
 uint32_t py4pd_ntohl(uint32_t netlong);
 
 // ============= EMBEDDED MODULE =======
@@ -243,7 +260,7 @@ void py4pdStop(t_py *x);
 void py4pdClear(t_py *x);
 
 // ============= PIC =============
-extern t_class *py4pd_class, *py4pd_class_VIS, *pyNewObject_VIS;
+extern t_class *py4pd_class, *pyNewObject_VIS;
 extern void PY4PD_free(t_py *x);
 extern void PY4PD_zoom(t_py *x, t_floatarg f);
 extern void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index, int argc, t_atom *argv, t_class *obj_class);

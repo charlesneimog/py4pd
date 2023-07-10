@@ -1,5 +1,44 @@
 #include "py4pd.h"
 
+
+/* TODO: Rename all functions following this:
+
+https://chat.openai.com/c/9000f606-6f15-4fd3-be89-1577c2087624
+
+Py4pd_ParseLibraryArguments
+Py4pd_GetPy4pdObject
+Py4pd_ParsePy4pdArguments
+Py4pd_GetFolderName
+Py4pd_GetFilename
+Py4pd_CheckPackageNameConflict
+Py4pd_FindPy4pdFolder
+Py4pd_CreatePy4pdTempFolder
+Py4pd_GetEditorCommand
+Py4pd_ExecuteSystemCommand
+Py4pd_IsNumericOrDot
+Py4pd_RemoveChar
+Py4pd_Mtok
+Py4pd_FromSymbolSymbol
+Py4pd_PyObjectToPointer
+Py4pd_PointerToPyObject
+Py4pd_FreePyObjectData
+Py4pd_ConvertToPd
+Py4pd_ConvertToPy
+Py4pd_SetPy4pdConfig
+Py4pd_AddPdObject
+Py4pd_Gif2Base64
+Py4pd_ReadGifFile
+Py4pd_Png2Base64
+Py4pd_ReadPngFile
+Py4pd_Ntohl
+
+*/
+
+
+
+
+
+
 // ====================================================
 /*
 * @brief This function parse the arguments for pd Objects created with the library
@@ -11,29 +50,53 @@
 */
 int parseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv){
     int argsNumberDefined = 0;
-    if (code->co_flags & CO_VARARGS) {
-        x->py_arg_numbers = 1;
-        int i;
-        for (i = 0; i < argc; i++) {
-            if (argv[i].a_type == A_SYMBOL) {
-                if (strcmp(argv[i].a_w.w_symbol->s_name, "-n_args") == 0 || strcmp(argv[i].a_w.w_symbol->s_name, "-a") == 0) {
-                    if (i + 1 < argc) {
-                        if (argv[i + 1].a_type == A_FLOAT) {
-                            x->py_arg_numbers = (int)argv[i + 1].a_w.w_float;
-                            argsNumberDefined = 1;
+    x->x_numOutlets = -1;
+    x->n_channels = 1;
+    int i, j;
+    for (i = 0; i < argc; i++) {
+        if (argv[i].a_type == A_SYMBOL) {
+            if (strcmp(argv[i].a_w.w_symbol->s_name, "-n_args") == 0 || strcmp(argv[i].a_w.w_symbol->s_name, "-a") == 0) {
+                if (i + 1 < argc) {
+                    if (argv[i + 1].a_type == A_FLOAT) {
+                        x->py_arg_numbers = (int)argv[i + 1].a_w.w_float;
+                        argsNumberDefined = 1;
+                        // remove -n_args and the number of arguments from the arguments list
+                        for (j = i; j < argc; j++) {
+                            argv[j] = argv[j + 2];
                         }
-                        else {
-                            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args (-a for short) {number}", x->objectName->s_name);
-                            return 0;
-                        }
-                    }
-                    else {
-                        pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args (-a for short) {number}", x->objectName->s_name);
-                        return 0;
                     }
                 }
             }
+            else if (strcmp(argv[i].a_w.w_symbol->s_name, "-outn") == 0){
+                if (argv[i + 1].a_type == A_FLOAT) {
+                    x->x_numOutlets = (int)argv[i + 1].a_w.w_float - 1;
+                    // remove -outn and the number of outlets from the arguments list
+                    for (j = i; j < argc; j++) {
+                        argv[j] = argv[j + 2];
+                    }
+                }
+                else{
+                    x->x_numOutlets = -1; // -1 means that the number of outlets is not defined
+                }
+            }
+            else if (strcmp(argv[i].a_w.w_symbol->s_name, "-ch") == 0 || strcmp(argv[i].a_w.w_symbol->s_name, "-channels") == 0){
+                if (argv[i + 1].a_type == A_FLOAT) {
+                    x->n_channels = (int)argv[i + 1].a_w.w_float;
+                    for (j = i; j < argc; j++) {
+                        argv[j] = argv[j + 2];
+                    }
+                }
+                // else{
+                    // pd_error(NULL, "[py4pd] -ch or -channels needs a number as argument");
+                    // return 0; // TODO: Change this to -1 for consistency
+
+            }
+
+
+
         }
+    }
+    if (code->co_flags & CO_VARARGS) {
         if (argsNumberDefined == 0) {
             pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args (-a for short) {number}", x->objectName->s_name);
             return 0;
@@ -41,14 +104,13 @@ int parseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv){
     }
     if (code->co_flags & CO_VARKEYWORDS) {
         x->kwargs = 1;
-        // pd_error(x, "[%s] function use **kwargs, **kwargs are not implemented yet", x->objectName->s_name);
-        // return 0;
     }
     if (code->co_argcount != 0){
         if (x->py_arg_numbers == 0) {
             x->py_arg_numbers = code->co_argcount;
         }
         else{
+            post("Here");
             x->py_arg_numbers = x->py_arg_numbers + code->co_argcount;
         }
     }
@@ -491,7 +553,8 @@ char *py4pd_mtok(char *input, char *delimiter) {
 
 */
 
-void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){ 
+void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s, t_outlet *outlet){ 
+    (void)x;
     //new and redone - Derek Kwan
     long unsigned int seplen = strlen(" ");
     seplen++;
@@ -524,10 +587,10 @@ void py4pd_fromsymbol_symbol(t_py *x, t_symbol *s){
             ret = py4pd_mtok(NULL, sep);
         };
         if(out->a_type == A_SYMBOL){
-            outlet_anything(((t_object *)x)->ob_outlet, out->a_w.w_symbol, atompos-1, out+1);
+            outlet_anything(outlet, out->a_w.w_symbol, atompos-1, out+1);
         }
         else if(out->a_type == A_FLOAT && atompos >= 1){
-            outlet_list(((t_object *)x)->ob_outlet, &s_list, atompos, out);
+            outlet_list(outlet, &s_list, atompos, out);
         }
         t_freebytes(out, iptlen * sizeof(*out));
         t_freebytes(newstr, iptlen * sizeof(*newstr));
@@ -558,6 +621,7 @@ void *pyobject_to_pointer(PyObject *pValue) {
 
 PyObject *pointer_to_pyobject(void *p) { 
     t_pyObjectData *data = (t_pyObjectData *)p;
+    // get the type of data->pValue
     return data->pValue;
 }
 
@@ -584,11 +648,13 @@ void free_pyobject_data(void *p) {
 
 void *py4pd_convert_to_pd(t_py *x, PyObject *pValue, t_outlet *outlet) { 
     if (x->outPyPointer) {
+        // check type of pValue
+        
+
+
         if (pValue == Py_None && x->ignoreOnNone == 1) {
             return 0;
         }
-
-
         void *pData = pyobject_to_pointer(pValue);
         if (Py_REFCNT(pValue) == 1) {
             Py_INCREF(pValue);
@@ -668,7 +734,7 @@ void *py4pd_convert_to_pd(t_py *x, PyObject *pValue, t_outlet *outlet) {
         } 
         else if (PyUnicode_Check(pValue)) {
             const char *result = PyUnicode_AsUTF8(pValue); // If the function return a string
-            py4pd_fromsymbol_symbol(x, gensym(result));
+            py4pd_fromsymbol_symbol(x, gensym(result), outlet);
         } 
         else if (Py_IsNone(pValue)) {
             // Py_DECREF(pValue);
@@ -721,7 +787,6 @@ PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
                 listStarted = 1;
             }
 
-            /*    TODO: TEST THIS
             else if((strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL) && (strchr(argv[i].a_w.w_symbol->s_name, ']') != NULL)) {
                 char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
                 strcpy(str, argv[i].a_w.w_symbol->s_name);
@@ -744,7 +809,6 @@ PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv) {
                 free(str);
                 listStarted = 1;
             }
-            */
 
             // ========================================
             else if (strchr(argv[i].a_w.w_symbol->s_name, ']') != NULL) {
@@ -1004,6 +1068,13 @@ void readGifFile(t_py *x, const char* filename){
 // ==========================================================
 // ======================= PNG ==============================
 // ==========================================================
+/*
+ * @brief This convert get the png file and convert to base64, that can be readed for pd-gui
+ * @param data is the png file
+ * @param input_length is the size of the png file
+ * @param encoded_data is the base64 string
+ * @return void
+ */
 
 void png2base64(const uint8_t* data, size_t input_length, char* encoded_data) {
     const char base64_chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
