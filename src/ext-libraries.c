@@ -33,7 +33,7 @@ void create_pyObject_inlets(PyObject *function, t_py *x, int argc, t_atom *argv)
 
         // PyObject *argName = PyCode_GetVarnames(code);
         for (i = 0; i < argNumbers; i++) {
-
+            // print argv string
             if (i <= argc) {
                 if (argv[i].a_type == A_FLOAT) {
                     char pd_atom[64];
@@ -54,7 +54,6 @@ void create_pyObject_inlets(PyObject *function, t_py *x, int argc, t_atom *argv)
                         PyTuple_SetItem(x->argsDict, i, PyUnicode_FromString(argv[i].a_w.w_symbol->s_name));
                     }
                 }
-
                 else {
                     PyTuple_SetItem(x->argsDict, i, Py_None);
                 }
@@ -80,7 +79,6 @@ void setKwargs(t_py *x, t_symbol *s, int ac, t_atom *av){
         return;
     }
     key = av[0].a_w.w_symbol;
-
     if (ac == 1){
         if (av[1].a_type == A_FLOAT){
             int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
@@ -167,7 +165,7 @@ void py4pdInlets_proxy_anything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_at
         PyObject *pyInletValue = PyList_New(ac + 1);
         PyList_SetItem(pyInletValue, 0, PyUnicode_FromString(s->s_name));
         for (int i = 0; i < ac; i++){
-            if (av[i].a_type == A_FLOAT){ // TODO: check if it is an int or a float
+            if (av[i].a_type == A_FLOAT){ 
                 int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
                 if (isInt){
                     PyList_SetItem(pyInletValue, i + 1, PyLong_FromLong(av[i].a_w.w_float));
@@ -485,9 +483,6 @@ void reloadObject(t_py *x){
 
         return;
     }
-
-
-
     PyObject *pModuleReloaded = PyImport_ReloadModule(pModule);
     if (pModuleReloaded == NULL) {
         pd_error(x, "[Python] Failed to reload module");
@@ -502,6 +497,65 @@ void reloadObject(t_py *x){
         post("[Python] Function reloaded");
     }
     return;
+}
+
+
+// =====================================
+// ================ AUDIO ==============
+// =====================================
+static void PyAudio2PdAudio(t_py *x, PyObject *pValue, t_sample *audioOut, int numChannels, int n){ 
+    if (pValue != NULL) {
+        if (PyArray_Check(pValue)) {
+            PyArrayObject *pArray = PyArray_GETCONTIGUOUS((PyArrayObject *)pValue); // this is the output vector
+            PyArray_Descr *pArrayType = PyArray_DESCR(pArray); // this is the type of the output vector
+            int arrayLength = PyArray_SIZE(pArray); // this is the length of the output vector
+            if (arrayLength <= n){
+                if (pArrayType->type_num == NPY_FLOAT) {
+                    for (int i = 0; i < numChannels; i++) {
+                        float *audioFloat = (float*)PyArray_GETPTR2(pArray, i, 0);
+                        for (int j = 0; j < x->vectorSize; j++) {
+                            audioOut[i * x->vectorSize + j] = (t_sample)audioFloat[j];
+                        }
+                    }
+                }
+                else if (pArrayType->type_num == NPY_DOUBLE) {
+                    for (int i = 0; i < numChannels; i++) {
+                        double *audioFloat = (double *)PyArray_GETPTR2(pArray, i, 0);
+                        for (int j = 0; j < x->vectorSize; j++) {
+                            audioOut[i * x->vectorSize + j] = (t_sample)audioFloat[j];
+                        }
+                    }
+                }
+                else {
+                    pd_error(x, "[py4pd] The numpy array must be float or double, returned %d", pArrayType->type_num);
+                }
+                Py_DECREF(pArrayType);
+                Py_DECREF(pArray);
+            
+            }
+            else {
+                pd_error(x, "[py4pd] The numpy array return more channels that the object was created. It has %d channels returned %d channels", numChannels, (int)arrayLength / (int)x->vectorSize);
+                Py_DECREF(pArrayType);
+                Py_DECREF(pArray);
+            }
+        } 
+        else{
+            pd_error(x, "[Python] Python function must return a numpy array");
+        }
+    }
+    else {                             
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+        PyErr_Clear();
+    }
+
 }
 
 // =====================================
@@ -547,8 +601,8 @@ t_int *library_AudioOUT_perform(t_int *w) {
     t_py *x = (t_py *)(w[1]);  // this is the object itself
     t_sample *audioOut = (t_sample *)(w[2]);
     int n = (int)(w[3]);
-    x->vectorSize = n;
     PyObject *pValue; 
+    int numChannels = x->n_channels;
 
     PyObject *objectCapsule = py4pd_add_pd_object(x);
     if (objectCapsule == NULL){
@@ -556,130 +610,9 @@ t_int *library_AudioOUT_perform(t_int *w) {
         return (w + 4);
     }
     pValue = PyObject_CallObject(x->function, x->argsDict);
-
-    if (pValue != NULL) {
-        if (PyArray_Check(pValue)) {
-            PyArrayObject *pArray = PyArray_GETCONTIGUOUS((PyArrayObject *)pValue);
-            PyArray_Descr *pArrayType = PyArray_DESCR(pArray);
-            int arrayLength = PyArray_SIZE(pArray);
-            if (arrayLength == n && PyArray_NDIM(pArray) == 1) {
-                if (pArrayType->type_num == NPY_INT) {
-                    pd_error(x, "[py4pd] The numpy array must be float, returned int");
-                }
-                else if (pArrayType->type_num == NPY_FLOAT) {
-                    float *audioFloat = (float*)PyArray_DATA(pValue);
-                    for (int i = 0; i < n; i++) {
-                        audioOut[i] = (t_sample)audioFloat[i];
-                    }
-                }
-                else if (pArrayType->type_num == NPY_DOUBLE) {
-                    double *audioDouble = (double*)PyArray_DATA(pValue);
-                    for (int i = 0; i < n; i++) {
-                        audioOut[i] = (t_sample)audioDouble[i];
-                    }
-                }
-                else {
-                    pd_error(x, "[py4pd] The numpy array must be float, returned %d", pArrayType->type_num);
-                }
-                Py_DECREF(pArrayType);
-                Py_DECREF(pArray);
-            }
-            else {
-                pd_error(x, "[py4pd] The numpy array must have the same length of the vecsize and 1 dim. Returned: %d samples and %d dims", arrayLength, PyArray_NDIM(pArray));
-                Py_DECREF(pArrayType);
-                Py_DECREF(pArray);
-            }
-        } 
-        else{
-            pd_error(x, "[Python] Python function must return a numpy array");
-        }
-    } 
-    else {                             // if the function returns a error
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
-        PyErr_Clear();
-    }
+    PyAudio2PdAudio(x, pValue, audioOut, numChannels, n);
     Py_XDECREF(pValue);
     return (w + 4);
-}
-
-// =====================================
-t_int *library_Audio_perform(t_int *w) {
-    t_py *x = (t_py *)(w[1]);  // this is the object itself
-    t_sample *audioIn = (t_sample *)(w[2]);  // this is the input vector (the sound)
-    t_sample *audioOut = (t_sample *)(w[3]);
-    int n = (int)(w[4]);
-    x->vectorSize = n;
-    PyObject *pValue, *pAudio; 
-
-    const npy_intp dims = n;
-    pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
-    PyTuple_SetItem(x->argsDict, 0, pAudio);
-
-    PyObject *objectCapsule = py4pd_add_pd_object(x);
-    if (objectCapsule == NULL){
-        pd_error(x, "[Python] Failed to add object to Python");
-        return (w + 5);
-    }
-    pValue = PyObject_CallObject(x->function, x->argsDict);
-    if (pValue != NULL) {
-        if (PyArray_Check(pValue)) {
-            PyArrayObject *pArray = PyArray_GETCONTIGUOUS((PyArrayObject *)pValue);
-            PyArray_Descr *pArrayType = PyArray_DESCR(pArray);
-            int arrayLength = PyArray_SIZE(pArray);
-            if (arrayLength == n && PyArray_NDIM(pArray) == 1) {
-                if (pArrayType->type_num == NPY_INT) {
-                    pd_error(x, "[py4pd] The numpy array must be float, returned int");
-                }
-                else if (pArrayType->type_num == NPY_FLOAT) {
-                    float *audioFloat = (float*)PyArray_DATA(pValue);
-                    for (int i = 0; i < n; i++) {
-                        audioOut[i] = (t_sample)audioFloat[i];
-                    }
-                }
-                else if (pArrayType->type_num == NPY_DOUBLE) {
-                    double *audioDouble = (double*)PyArray_DATA(pValue);
-                    for (int i = 0; i < n; i++) {
-                        audioOut[i] = (t_sample)audioDouble[i];
-                    }
-                }
-                else {
-                    pd_error(x, "[py4pd] The numpy array must be float, returned %d", pArrayType->type_num);
-                }
-                Py_DECREF(pArrayType);
-                Py_DECREF(pArray);
-            }
-            else {
-                pd_error(x, "[py4pd] The numpy array must have the same length of the vecsize and 1 dim. Returned: %d samples and %d dims", arrayLength, PyArray_NDIM(pArray));
-                Py_DECREF(pArrayType);
-                Py_DECREF(pArray);
-            }
-        } 
-        else{
-            pd_error(x, "[Python] Python function must return a numpy array");
-        }
-    } 
-    else {                             // if the function returns a error
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
-        PyErr_Clear();
-    }
-    Py_XDECREF(pValue);
-    return (w + 5);
 }
 
 // =====================================
@@ -688,7 +621,6 @@ t_int *library_AudioMultiChannel_perform(t_int *w){
     t_sample *in = (t_sample *)(w[2]);
     t_sample *audioOut = (t_sample *)(w[3]);
     int n = (int)(w[4]);
-
     int numChannels = n / x->vectorSize;
     npy_intp dims[] = {numChannels, x->vectorSize};
     PyObject *pAudio = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, in);
@@ -700,75 +632,21 @@ t_int *library_AudioMultiChannel_perform(t_int *w){
         return (w + 5);
     }
     PyObject *pValue = PyObject_CallObject(x->function, x->argsDict);
-
-    if (pValue != NULL) {
-        if (PyArray_Check(pValue)) {
-            PyArrayObject *pArray = PyArray_GETCONTIGUOUS((PyArrayObject *)pValue); // this is the output vector
-            PyArray_Descr *pArrayType = PyArray_DESCR(pArray); // this is the type of the output vector
-            int arrayLength = PyArray_SIZE(pArray); // this is the length of the output vector
-            if (arrayLength == n){
-                if (pArrayType->type_num == NPY_FLOAT) {
-                    for (int i = 0; i < numChannels; i++) {
-                        float *audioFloat = (float*)PyArray_GETPTR2(pArray, i, 0);
-                        for (int j = 0; j < x->vectorSize; j++) {
-                            audioOut[i * x->vectorSize + j] = (t_sample)audioFloat[j];
-                        }
-                    }
-                }
-                else if (pArrayType->type_num == NPY_DOUBLE) {
-                    for (int i = 0; i < numChannels; i++) {
-                        double *audioFloat = (double *)PyArray_GETPTR2(pArray, i, 0);
-                        for (int j = 0; j < x->vectorSize; j++) {
-                            audioOut[i * x->vectorSize + j] = (t_sample)audioFloat[j];
-                        }
-                    }
-                }
-                else {
-                    pd_error(x, "[py4pd] The numpy array must be float or double, returned %d", pArrayType->type_num);
-                }
-                Py_DECREF(pArrayType);
-                Py_DECREF(pArray);
-            }
-            else {
-                pd_error(x, "[py4pd] The numpy array must have the same length of the vecsize and 1 dim. Returned: %d samples and %d dims", arrayLength, PyArray_NDIM(pArray));
-                Py_DECREF(pArrayType);
-                Py_DECREF(pArray);
-            }
-        } 
-        else{
-            pd_error(x, "[Python] Python function must return a numpy array");
-        }
-    } 
-    else {                             // if the function returns a error
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
-        PyErr_Clear();
-    }
+    PyAudio2PdAudio(x, pValue, audioOut, numChannels, n);
     Py_XDECREF(pValue);
-    return (w+5);
+    return (w + 5);
 }
 
 // =====================================
 static void library_dsp(t_py *x, t_signal **sp) {
     if (x->audioOutput == 0) {
-        dsp_add(library_AudioIN_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
+        dsp_add(library_AudioIN_perform, 4, x, sp[0]->s_vec, sp[1]->s_vec, PY4PDSIGTOTAL(sp[0])); // TODO: Add multichannel for audio input
     } 
     else if ((x->audioInput == 0) && (x->audioOutput == 1)){
-        dsp_add(library_AudioOUT_perform, 3, x, sp[0]->s_vec, sp[0]->s_n);
+        x->vectorSize = sp[0]->s_n;
+        signal_setmultiout(&sp[0], x->n_channels);
+        dsp_add(library_AudioOUT_perform, 3, x, sp[0]->s_vec, PY4PDSIGTOTAL(sp[0]));
     }
-    /*
-    else if ((x->audioInput == 1) && (x->audioOutput == 1)) {  // python output is audio
-        dsp_add(library_Audio_perform, 4, x, sp[0]->s_vec, sp[1]->s_vec, sp[0]->s_n);
-    }
-    */
-
     else if ((x->audioInput == 1) && (x->audioOutput == 1)){
         x->vectorSize = sp[0]->s_n;
         signal_setmultiout(&sp[1], sp[0]->s_nchans);
@@ -803,7 +681,6 @@ void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
 
     // get t_class from PY_objectClass
     t_class *object_PY4PD_Class = (t_class *)PyLong_AsVoidPtr(PY_objectClass);
-
     t_py *x = (t_py *)pd_new(object_PY4PD_Class);
     x->visMode  = 0;
     x->pyObject = 1;
@@ -813,18 +690,8 @@ void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
     x->objectName = gensym(objectName);
     // ================================
     PyObject *pyFunction = PyDict_GetItemString(PdDict, "py4pdOBJFunction");
-    if (pyFunction == NULL) {
-        pd_error(x, "Error: pyFunction is NULL");
-        return NULL;
-    }
-
     PyObject *ignoreOnNone = PyDict_GetItemString(PdDict, "py4pdOBJIgnoreNone");
-    if (ignoreOnNone == NULL) {
-        pd_error(x, "Error: ignoreOnNone is NULL");
-        return NULL;
-    }
     x->ignoreOnNone = PyLong_AsLong(ignoreOnNone);
-
     PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
     PyObject *nooutlet = PyDict_GetItemString(PdDict, "py4pdOBJnooutlet");
     int nooutlet_int = PyLong_AsLong(nooutlet);
@@ -836,13 +703,7 @@ void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
     x->py_arg_numbers = 0;
 
     setPy4pdConfig(x);  // set the config file  NOTE: I WANT to rethink this...
-    createPy4pdTempFolder(x);  // Create the py4pd temp folder
-    findPy4pdFolder(x);  // find the py4pd object folder
-        
-    // Parse args for translation between Pd and Python
     PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
-
-    // print where is the filename of the function
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
 
@@ -856,15 +717,20 @@ void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
     }
 
     PyObject *AuxOutletPy = PyDict_GetItemString(PdDict, "py4pdAuxOutlets");
-    if (AuxOutletPy == NULL) {
-        pd_error(x, "Error: pyLibraryFolder is NULL");
-        return NULL;
-    }
     int AuxOutlet = PyLong_AsLong(AuxOutletPy);
 
+    PyObject *RequireUserToSetOutletNumbers = PyDict_GetItemString(PdDict, "py4pdOBJrequireoutletn");
+    int requireNofOutlets = PyLong_AsLong(RequireUserToSetOutletNumbers);
 
-
-
+    if (requireNofOutlets){
+        if (x->x_numOutlets == -1){
+            pd_error(NULL, "[%s]: This function require that you set the number of outlets using -outn {number_of_outlets} flag", objectName);
+            return NULL;
+        }
+        else{
+            AuxOutlet = x->x_numOutlets;
+        }
+    }
     x->outAUX = (t_py4pd_Outlets *)getbytes(AuxOutlet * sizeof(*x->outAUX));
     x->outAUX->u_outletNumber = AuxOutlet;
     t_atom defarg[AuxOutlet], *ap;
@@ -874,7 +740,6 @@ void *New_NORMAL_Object(t_symbol *s, int argc, t_atom *argv) {
     for (i = 0, u = x->outAUX, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
         u->u_outlet = outlet_new(&x->x_obj, &s_anything);
     }
-
     object_count++;
     return (x);
 }
@@ -1297,6 +1162,8 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     int ignoreNoneReturn = 0;
     const char *gifImage = NULL;
     int auxOutlets = 0;
+    int require_outlet_n = 0;
+    int playableInt = 0;
 
     // get file folder where this function is called from self
     t_py *py4pd = get_py4pd_object();
@@ -1345,6 +1212,12 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
                 nooutlet = 1;
             }
         }
+        if (PyDict_Contains(keywords, PyUnicode_FromString("require_outlet_n"))) {
+            PyObject *output = PyDict_GetItemString(keywords, "require_outlet_n"); // it gets the data type output
+            if (output == Py_True) {
+                require_outlet_n = 1;
+            }
+        }
         if (PyDict_Contains(keywords, PyUnicode_FromString("added2pd_info"))) {
             PyObject *output = PyDict_GetItemString(keywords, "added2pd_info"); // it gets the data type output
             if (output == Py_True) {
@@ -1370,26 +1243,35 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
             PyObject *type = PyDict_GetItemString(keywords, "num_aux_outlets");
             auxOutlets = PyLong_AsLong(type);
         }
-
-
+        if (PyDict_Contains(keywords, PyUnicode_FromString("playable"))) {
+            PyObject *playable = PyDict_GetItemString(keywords, "playable");
+            if (playable == Py_True) {
+                playableInt = 1;
+            }
+        }
     }
 
     class_set_extern_dir(gensym(helpFolderCHAR));
     t_class *localClass;
     if ((strcmp(objectType, "NORMAL") == 0)){
         localClass = class_new(gensym(objectName), (t_newmethod)New_NORMAL_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
+        logpost(py4pd, 3, "[py4pd] Adding Object of type Normal");
     }
     else if ((strcmp(objectType, "VIS") == 0)){
         localClass = class_new(gensym(objectName), (t_newmethod)New_VIS_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
+        logpost(py4pd, 3, "[py4pd] Adding Object of type VIS");
     }
     else if ((strcmp(objectType, "AUDIOIN") == 0)){
-        localClass = class_new(gensym(objectName), (t_newmethod)New_AudioIN_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
+        localClass = class_new(gensym(objectName), (t_newmethod)New_AudioIN_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_MULTICHANNEL, A_GIMME, 0);
+        logpost(py4pd, 3, "[py4pd] Adding Object of type AudioIN");
     }
     else if ((strcmp(objectType, "AUDIOOUT") == 0)){
-        localClass = class_new(gensym(objectName), (t_newmethod)New_AudioOUT_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
+        localClass = class_new(gensym(objectName), (t_newmethod)New_AudioOUT_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_MULTICHANNEL, A_GIMME, 0);
+        logpost(py4pd, 3, "[py4pd] Adding Object of type AudioOUT");
     }
     else if (strcmp(objectType, "AUDIO") == 0) {
         localClass = class_new(gensym(objectName), (t_newmethod)New_Audio_Object, (t_method)pyObjectFree, sizeof(t_py), CLASS_MULTICHANNEL, A_GIMME, 0);
+        logpost(py4pd, 3, "[py4pd] Adding Object of type Audio");
     }
     else{
         PyErr_SetString(PyExc_TypeError, "Object type not supported, check the spelling");
@@ -1408,8 +1290,8 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
     }
     PyDict_SetItemString(nestedDict, "py4pdOBJpyout", PyLong_FromLong(objpyout));
     PyDict_SetItemString(nestedDict, "py4pdOBJnooutlet", PyLong_FromLong(nooutlet));
+    PyDict_SetItemString(nestedDict, "py4pdOBJrequireoutletn", PyLong_FromLong(require_outlet_n));
     PyDict_SetItemString(nestedDict, "py4pdAuxOutlets", PyLong_FromLong(auxOutlets));
-
 
     // auxOutlets
 
@@ -1427,31 +1309,31 @@ PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords) {
 
     // special methods
     if ((strcmp(objectType, "NORMAL") == 0)){
-        class_addmethod(localClass, (t_method)py4pdPlay, gensym("play"), A_GIMME, 0);
-        class_addmethod(localClass, (t_method)py4pdStop, gensym("stop"), 0, 0);
-        class_addmethod(localClass, (t_method)py4pdClear, gensym("clear"), 0, 0);
-        // class_addmethod(localClass, (t_method)setEditor, gensym("click"), 0, 0);  // TODO: Fix this for objects
-
-
-        //readGifFile(t_py *x)
-        // class_addmethod(localClass, (t_method)readGifFile, gensym("test"), 0, 0); 
+        if (playableInt == 1){
+            class_addmethod(localClass, (t_method)py4pdPlay, gensym("play"), A_GIMME, 0);
+            class_addmethod(localClass, (t_method)py4pdStop, gensym("stop"), 0, 0); // TODO: this conflits with pycollect
+            class_addmethod(localClass, (t_method)py4pdClear, gensym("clear"), 0, 0);
+        }
     }
     else if ((strcmp(objectType, "VIS") == 0)){
+        if (playableInt == 1){
+            class_addmethod(localClass, (t_method)py4pdPlay, gensym("play"), A_GIMME, 0);
+            class_addmethod(localClass, (t_method)py4pdStop, gensym("stop"), 0, 0); // TODO: this conflits with pycollect
+            class_addmethod(localClass, (t_method)py4pdClear, gensym("clear"), 0, 0);
+        }
         class_addmethod(localClass, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);
         class_addmethod(localClass, (t_method)setPythonPointersUsage, gensym("pointers"), A_FLOAT, 0);
-        class_addmethod(localClass, (t_method)py4pdPlay, gensym("play"), A_GIMME, 0);
-        class_addmethod(localClass, (t_method)py4pdStop, gensym("stop"), 0, 0);
-        class_addmethod(localClass, (t_method)py4pdClear, gensym("clear"), 0, 0);
         class_setsavefn(localClass, &py4pdObjPic_save);
-
     }
     // AUDIOIN
     else if ((strcmp(objectType, "AUDIOIN") == 0)){
+        class_addmethod(localClass, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
         CLASS_MAINSIGNALIN(localClass, t_py, py4pdAudio);
     }
     // AUDIOIN
     else if ((strcmp(objectType, "AUDIOOUT") == 0)){
         class_addmethod(localClass, (t_method)library_dsp, gensym("dsp"), A_CANT, 0);  // add a method to a class
+
     }
     // AUDIO
     else if (strcmp(objectType, "AUDIO") == 0) {
