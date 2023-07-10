@@ -1,0 +1,4 @@
+#N canvas 985 91 758 647 8;
+#X obj 5 23 py4pd -lib py4pd;
+#X obj 5 5 py4pd -lib orchidea;
+#X obj 67 109 orchidea.flute;
