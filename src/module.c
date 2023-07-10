@@ -40,9 +40,7 @@ static PyObject *pdout(PyObject *self, PyObject *args, PyObject *keywords){
             return Py_True;
         }
     }
-
     // check for outlet key
-
     if (keywords != NULL && py4pd->outAUX != NULL){
         PyObject *outletNumber = PyDict_GetItemString(keywords, "out_n"); // it gets the data type output
         if (outletNumber == NULL){
@@ -734,7 +732,7 @@ static PyObject *pdveczise(PyObject *self, PyObject *args) {
     t_py *py4pd = get_py4pd_object();
     t_sample vector;
     vector = py4pd->vectorSize; // this is the patch vector size
-    // NOTE: Should I add someway to get the puredata's vector size? with sys_getblksize()?
+    // THING: Should I add someway to get the puredata's vector size? with sys_getblksize()?
 
     return PyLong_FromLong(vector);
 }
@@ -979,11 +977,11 @@ static PyObject *pipInstall(PyObject *self, PyObject *args){
         PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: pipinstall function failed");
         return NULL;
     }
-
     Py_DECREF(argTuple);
     Py_DECREF(pipInstallResult);
     Py_DECREF(pipInstallFunction);
     Py_DECREF(py4pdModule);
+    sys_vgui("tk_messageBox -icon warning -type ok -title \"%s installed!\" -message \"%s installed! \nYou need to restart PureData!\"\n", pipPackage, pipPackage);
     Py_RETURN_TRUE;
 }
 
