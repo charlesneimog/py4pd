@@ -778,15 +778,14 @@ static void *Py4pdLib_NewNormalObj(t_symbol *s, int argc, t_atom *argv) {
     }
     Py4pdLib_CreateObjInlets(pyFunction, x, argc, argv);
 
-    if (x->x_numOutlets == -1){
+    // if (x->x_numOutlets == -1){
         x->out1 = outlet_new(&x->x_obj, 0);
-    }
+    // }
     PyObject *AuxOutletPy = PyDict_GetItemString(PdDict, "py4pdAuxOutlets");
     int AuxOutlet = PyLong_AsLong(AuxOutletPy);
 
     PyObject *RequireUserToSetOutletNumbers = PyDict_GetItemString(PdDict, "py4pdOBJrequireoutletn");
     int requireNofOutlets = PyLong_AsLong(RequireUserToSetOutletNumbers);
-
 
     if (requireNofOutlets){
         if (x->x_numOutlets == -1){

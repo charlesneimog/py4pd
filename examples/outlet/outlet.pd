@@ -9,11 +9,11 @@
 #X obj 14 11 py4pd -lib outlet;
 #X obj 53 107 py.out, f 27;
 #X msg 245 78 s;
-#X obj 245 169 print out0;
-#X obj 362 169 print out1;
+#X obj 245 195 print out0;
+#X obj 362 195 print out1;
 #X obj 245 148 py.setout None 1 -outn 2;
 #X msg 296 98 reload;
-#X msg 362 109 1;
+#X msg 362 109 0;
 #X connect 0 0 8 0;
 #X connect 6 0 8 0;
 #X connect 8 0 1 0;

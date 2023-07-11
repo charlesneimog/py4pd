@@ -8,5 +8,5 @@ def pyPlayer():
 
 
 def py4pdLoadObjects():
-    pd.addobject(pyPlayer, 'py.player', helppatch="myplayer", pyout=True)
+    pd.addobject(pyPlayer, 'py.player', helppatch="myplayer", pyout=True, playable=True)
 
