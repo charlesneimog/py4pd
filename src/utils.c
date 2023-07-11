@@ -470,6 +470,9 @@ char *getEditorCommand(t_py *x, int line) {
             }
         #endif
     } 
+    else if (strcmp(editor, "gvim") == 0) {
+        sprintf(command, "gvim +%d '%s/%s.py'", line, home, filename);
+    } 
     else if (strcmp(editor, "sublime") == 0) {
         sprintf(command, "subl '%s.py'", filename);
     } 
