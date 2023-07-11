@@ -48,7 +48,7 @@ int object_count = 0;
  * @return void
 */
 
-static int libraryLoad(t_py *x, int argc, t_atom *argv){
+static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
 
     if (argc > 2) {
         pd_error(x, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
@@ -270,7 +270,7 @@ static int libraryLoad(t_py *x, int argc, t_atom *argv){
 // ============================================
 // ========= PY4PD METHODS FUNCTIONS ==========
 // ============================================
-static void py4pdPipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     const char *pipPackage;
     const char *localORglobal;
@@ -341,7 +341,7 @@ static void py4pdPipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param x pointer to the object
  * @return void
 */
-static void printPy4pdVersion(t_py *x){
+static void Py4pd_PrintPy4pdVersion(t_py *x){
     int major, minor, micro;
     major = PY4PD_MAJOR_VERSION;
     minor = PY4PD_MINOR_VERSION;
@@ -372,7 +372,7 @@ static void printPy4pdVersion(t_py *x){
  * @return void, but it sets the home path
  */
 
-static void setPy4pdHomePath(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+static void Py4pd_SetPy4pdHomePath(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;  
     if (argc < 1) {
         post("[py4pd] The home path is: %s", x->pdPatchFolder->s_name);
@@ -393,7 +393,7 @@ static void setPy4pdHomePath(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @return void, but it sets the packages path
  */
 
-static void setPackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+static void Py4pd_SetPackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     if (argc < 1) {
         post("[py4pd] The packages path is: %s", x->pkgPath->s_name);
@@ -444,7 +444,7 @@ static void setPackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
 
 */
-static void printModuleFunctions(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+static void Py4pd_PrintModuleFunctions(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     (void)argc;
     (void)argv;
@@ -470,7 +470,7 @@ static void printModuleFunctions(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argv is the arguments
  * @return void, but it prints the documentation
  */
-void printDocs(t_py *x) {
+void Py4pd_PrintDocs(t_py *x) {
     if (x->function_called == 0) { 
         pd_error(x, "[py4pd] To see the documentaion you need to set the function first!");
         return;
@@ -508,7 +508,7 @@ void printDocs(t_py *x) {
  * @param argv is the arguments
  * @return void, but it opens the script in the editor
  */
-static void openScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+static void Py4pd_OpenScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     (void)argc;
 
@@ -549,7 +549,8 @@ static void openScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argv is the arguments
  * @return void, but it sets the editor
  */
-void setEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+    // TODO: Not ready yet
     (void)s;
     if (argc != 0) {
         x->editorName = atom_getsymbol(argv + 0);
@@ -597,7 +598,7 @@ void setEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argv is the arguments
  * @return void, but it sets the editor
  */
-void setParametersForFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+void Py4pd_SetParametersForFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     if (argc > 2) {
         pd_error(x, "[py4pd] For now, just one parameter at a time!");
@@ -647,7 +648,7 @@ void setParametersForFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argv is the arguments
  * @return void, but it reloads the script
  */
-void reloadPy4pdFunction(t_py *x) {
+void Py4pd_ReloadPy4pdFunction(t_py *x) {
     PyObject *pName, *pFunc, *pModule, *pReload;
     if (x->function_called == 0) {  // if the set method was not called, then we
                                     // can not run the function :)
@@ -715,7 +716,7 @@ void reloadPy4pdFunction(t_py *x) {
  * @param argv is the arguments
  * @return void, but it sets the function
  */
-void setFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     // =====================
     // check number of arguments
@@ -858,7 +859,7 @@ void setFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argv 
  */
 
-static void runFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     int OpenList_count = 0;
     int CloseList_count = 0;
@@ -960,14 +961,14 @@ static void runFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @return It will return nothing but will run the Python function
  */
 
-static void executeFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+static void Py4pd_ExecuteFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     if (x->function_called == 0) {
         pd_error(x, "[py4pd] You need to call a function before run!");
         return;
     }
     if (x->runmode == 0) {
-        runFunction(x, s, argc, argv);
+        Py4pd_RunFunction(x, s, argc, argv);
     }
     else if(x->runmode == 1) {
         pd_error(x, "[py4pd] Thread is not implemented yet, wait for Python 3.12");
@@ -981,7 +982,7 @@ static void executeFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
 // TODO: I will change this when PEP 684 is implemented
 
-static void py4pdThread(t_py *x, t_floatarg f) {
+static void Py4pd_Py4pdThread(t_py *x, t_floatarg f) {
     int mode = (int)f;
     if (mode == 0) {
         x->runmode = 0;
@@ -1003,7 +1004,7 @@ static void py4pdThread(t_py *x, t_floatarg f) {
  * @param NULL 
  * @return It will return NULL.
  */
-void *importNumpyForPy4pd() {
+void *Py4pd_ImportNumpyForPy4pd() {
     import_array();
     return NULL;
 }
@@ -1015,7 +1016,7 @@ void *importNumpyForPy4pd() {
  * @param f is the status of the numpy array support
  * @return It will return void.
  */
-void setPythonPointersUsage(t_py *x, t_floatarg f) {
+void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f) {
     int usepointers = (int)f;
     if (usepointers == 1) {
         post("[py4pd] Python Pointers enabled.");
@@ -1043,7 +1044,7 @@ void setPythonPointersUsage(t_py *x, t_floatarg f) {
  * @return It will return the py4pd object.
  */
 
-void *py4pdNew(t_symbol *s, int argc, t_atom *argv) {
+void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     int i;
     t_py *x;
     int visMODE = 0;
@@ -1126,13 +1127,13 @@ void *py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         x->pdPatchFolder = patch_dir;       
         x->pkgPath = patch_dir;  
         setPy4pdConfig(x); 
-        int libraryLoaded = libraryLoad(x, argc, argv);
+        int libraryLoaded = Py4pd_LibraryLoad(x, argc, argv);
         if (libraryLoaded == -1){
             return NULL;
         }
         x->script_name = scriptName;
         object_count++;
-        importNumpyForPy4pd();
+        Py4pd_ImportNumpyForPy4pd();
         return (x);
     }
     else {
@@ -1151,12 +1152,12 @@ void *py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     parsePy4pdArguments(x, c, argc, argv);  // parse arguments
     x->runmode = 0;
     x->object_number = object_count;  // save object number
-    x->pdPatchFolder = patch_dir;         // set name of the home path
+    x->pdPatchFolder = patch_dir; // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
-    setPy4pdConfig(x);  // set the config file (in py4pd.cfg, make this be
-    if (argc > 1) {       // check if there are two arguments
-        setFunction(x, s, argc, argv);
-        importNumpyForPy4pd();
+    setPy4pdConfig(x);          // set the config file (in py4pd.cfg, make this be
+    if (argc > 1) {             // check if there are two arguments
+        Py4pd_SetFunction(x, s, argc, argv);
+        Py4pd_ImportNumpyForPy4pd();
     }
 
     // Add additional paths to the python path
@@ -1189,7 +1190,7 @@ void *py4pdNew(t_symbol *s, int argc, t_atom *argv) {
  * @return void* 
  */
 
-void *py4pdFree(t_py *x) {
+void *Py4pd_Py4pdFree(t_py *x) {
     object_count--;
     if (object_count == 0) {
         // Py_Finalize();  BUG: This not work properly with submodules written in C
@@ -1230,33 +1231,32 @@ void *py4pdFree(t_py *x) {
 void py4pd_setup(void) {
     py4pd_class =
         class_new(gensym("py4pd"),  // cria o objeto quando escrevemos py4pd
-                  (t_newmethod)py4pdNew,  // metodo de criação do objeto
-                  (t_method)py4pdFree,    // quando voce deleta o objeto
+                  (t_newmethod)Py4pd_Py4pdNew,  // metodo de criação do objeto
+                  (t_method)Py4pd_Py4pdFree,    // quando voce deleta o objeto
                   sizeof(t_py),  // quanta memoria precisamos para esse objeto
                   0,             // nao há uma GUI especial para esse objeto???
                   A_GIMME,       // os argumentos são um símbolo
-                  0);
-    py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)py4pdNew, (t_method)py4pdFree, sizeof(t_py), CLASS_NOINLET, A_GIMME, 0);
+                  0);            // fim de argumentos
+    py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)Py4pd_Py4pdNew, (t_method)Py4pd_Py4pdFree, sizeof(t_py), CLASS_NOINLET, A_GIMME, 0);
 
     // this is like have lot of objects with the same name, add all methods for
-    class_addmethod(py4pd_class, (t_method)setPy4pdHomePath, gensym("home"), A_GIMME, 0);  // set home path
-    class_addmethod(py4pd_class, (t_method)setPackages, gensym("packages"), A_GIMME, 0);  // set packages path
-    class_addmethod(py4pd_class, (t_method)py4pdPipInstall, gensym("pipinstall"), A_GIMME, 0);  // on/off threading
-    class_addmethod(py4pd_class, (t_method)py4pdThread, gensym("thread"), A_FLOAT, 0);  // on/off threading
-    class_addmethod(py4pd_class, (t_method)setPythonPointersUsage, gensym("pointers"), A_FLOAT, 0);  // set home path
-    class_addmethod(py4pd_class, (t_method)reloadPy4pdFunction, gensym("reload"), 0, 0);  // reload python script
-    class_addmethod(py4pd_classLibrary, (t_method)reloadPy4pdFunction, gensym("reload"), 0, 0);  // run python script
+    class_addmethod(py4pd_class, (t_method)Py4pd_SetPy4pdHomePath, gensym("home"), A_GIMME, 0);  // set home path
+    class_addmethod(py4pd_class, (t_method)Py4pd_SetPackages, gensym("packages"), A_GIMME, 0);  // set packages path
+    class_addmethod(py4pd_class, (t_method)Py4pd_PipInstall, gensym("pipinstall"), A_GIMME, 0);  // on/off threading
+    class_addmethod(py4pd_class, (t_method)Py4pd_Py4pdThread, gensym("thread"), A_FLOAT, 0);  // on/off threading
+    class_addmethod(py4pd_class, (t_method)Py4pd_SetPythonPointersUsage, gensym("pointers"), A_FLOAT, 0);  // set home path
+    class_addmethod(py4pd_class, (t_method)Py4pd_ReloadPy4pdFunction, gensym("reload"), 0, 0);  // reload python script
 
     // Object INFO
-    class_addmethod(py4pd_class, (t_method)printPy4pdVersion, gensym("version"), 0, 0);  // show version
-    class_addmethod(py4pd_class, (t_method)setEditor, gensym("editor"), A_GIMME, 0);  // open code
-    class_addmethod(py4pd_class, (t_method)openScript, gensym("open"), A_GIMME, 0); 
-    class_addmethod(py4pd_class, (t_method)setEditor, gensym("click"), 0, 0);  // when click open editor
+    class_addmethod(py4pd_class, (t_method)Py4pd_PrintPy4pdVersion, gensym("version"), 0, 0);  // show version
+    class_addmethod(py4pd_class, (t_method)Py4pd_SetEditor, gensym("editor"), A_GIMME, 0);  // open code
+    class_addmethod(py4pd_class, (t_method)Py4pd_OpenScript, gensym("open"), A_GIMME, 0); 
+    class_addmethod(py4pd_class, (t_method)Py4pd_OpenScript, gensym("click"), 0, 0);  // when click open editor
     
     // User 
-    class_addmethod(py4pd_class, (t_method)printDocs, gensym("doc"), 0, 0);  // open documentation
-    class_addmethod(py4pd_class, (t_method)executeFunction, gensym("run"), A_GIMME, 0);  // run function
-    class_addmethod(py4pd_class, (t_method)setFunction, gensym("set"), A_GIMME, 0);  // set function to be called
-    class_addmethod(py4pd_class, (t_method)setParametersForFunction, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
-    class_addmethod(py4pd_class, (t_method)printModuleFunctions, gensym("functions"), A_GIMME, 0); 
+    class_addmethod(py4pd_class, (t_method)Py4pd_PrintDocs, gensym("doc"), 0, 0);  // open documentation
+    class_addmethod(py4pd_class, (t_method)Py4pd_ExecuteFunction, gensym("run"), A_GIMME, 0);  // run function
+    class_addmethod(py4pd_class, (t_method)Py4pd_SetFunction, gensym("set"), A_GIMME, 0);  // set function to be called
+    class_addmethod(py4pd_class, (t_method)Py4pd_SetParametersForFunction, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
+    class_addmethod(py4pd_class, (t_method)Py4pd_PrintModuleFunctions, gensym("functions"), A_GIMME, 0); 
 }

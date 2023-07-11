@@ -35,10 +35,6 @@ Py4pd_Ntohl
 */
 
 
-
-
-
-
 // ====================================================
 /*
 * @brief This function parse the arguments for pd Objects created with the library
@@ -428,27 +424,57 @@ void createPy4pdTempFolder(t_py *x) {
  */
 char *getEditorCommand(t_py *x, int line) {
     const char *editor = x->editorName->s_name;
-    const char *home = x->pdPatchFolder->s_name;
     const char *filename = x->script_name->s_name;
     char *command = (char *)malloc(256 * sizeof(char));
     memset(command, 0, 256);
+
+    // check if there is .py in filename
+    char *dot = strrchr(filename, '.');
+    int isPy = 0;
+    if (dot && !strcmp(dot, ".py")) {
+        isPy = 1;
+    }
+
     if (strcmp(editor, PY4PD_EDITOR) == 0) {
-        sprintf(command, "%s '%s/%s.py'", PY4PD_EDITOR, home, filename);
-        post(command);
+        if (!isPy){
+            sprintf(command, "%s '%s.py'", PY4PD_EDITOR, filename);
+        }
+        else{
+            sprintf(command, "%s '%s'", PY4PD_EDITOR, filename);
+        }
     } 
 
     else if (strcmp(editor, "vscode") == 0) {
-        sprintf(command, "code --goto '%s/%s.py:%d'", home, filename, line);
+        if (!isPy){
+            sprintf(command, "code '%s.py'", filename);
+        }
+        else{
+            sprintf(command, "code '%s'", filename);
+        }
     } 
     else if (strcmp(editor, "nvim") == 0) {
-        sprintf(command, "gnome-terminal -e \"nvim +%d '%s/%s.py'\"", line, home,
-                filename);
+        // if it is linux
+        #ifdef __linux__
+            if (!isPy){
+                sprintf(command, "gnome-terminal -e \"nvim +%d '%s.py'\"", line, filename);
+            }
+            else{
+                sprintf(command, "gnome-terminal -e \"nvim +%d '%s'\"", line, filename);
+            }
+        #else
+            if (!isPy){
+                sprintf(command, "nvim +%d '%s.py'", line, filename);
+            }
+            else{
+                sprintf(command, "nvim +%d '%s'", line, filename);
+            }
+        #endif
     } 
     else if (strcmp(editor, "sublime") == 0) {
-        sprintf(command, "subl '%s/%s.py'", home, filename);
+        sprintf(command, "subl '%s.py'", filename);
     } 
     else if (strcmp(editor, "emacs") == 0) {
-        sprintf(command, "emacs '%s/%s.py'", home, filename);
+        sprintf(command, "emacs '%s.py'", filename);
     } 
     else {
         pd_error(x, "[py4pd] editor %s not supported.", editor);

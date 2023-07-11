@@ -197,13 +197,13 @@ typedef struct _pyObjectData {
 } t_pyObjectData;
 
 // =====================================
-extern void reloadPy4pdFunction(t_py *x);
-extern void setParametersForFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
-extern void printDocs(t_py *x);
-extern void setPythonPointersUsage(t_py *x, t_floatarg f);
-extern void setFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
-extern void *importNumpyForPy4pd();
-extern void *py4pdFree(t_py *x);
+extern void Py4pd_ReloadPy4pdFunction(t_py *x);
+extern void Py4pd_SetParametersForFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
+extern void Py4pd_PrintDocs(t_py *x);
+extern void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f);
+extern void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
+extern void *Py4pd_ImportNumpyForPy4pd();
+extern void *Py4pd_Py4pdFree(t_py *x);
 
 #define PY4PD_IMAGE "R0lGODlhKgAhAPAAAP///wAAACH5BAAAAAAAIf8LSW1hZ2VNYWdpY2sOZ2FtbWE9MC40NTQ1NDUALAAAAAAqACEAAAIkhI+py+0Po5y02ouz3rz7D4biSJbmiabqyrbuC8fyTNf2jTMFADs="
 #define PY4PDSIGTOTAL(s) ((t_int)((s)->s_length * (s)->s_nchans))
@@ -275,9 +275,8 @@ extern void PY4PD_select(t_gobj *z, t_glist *glist, int state);
 extern void PY4PD_delete(t_gobj *z, t_glist *glist);
 
 // ============= EXTERNAL LIBRARIES =============
-extern void *py_newObject(t_symbol *s, int argc, t_atom *argv);
-extern void *py_freeObject(t_py *x);
-extern PyObject *pdAddPyObject(PyObject *self, PyObject *args, PyObject *keywords);
+extern void *Py4pdLib_FreeObj(t_py *x);
+extern PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords);
 
 
 // ===== TEST

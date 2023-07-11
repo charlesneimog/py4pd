@@ -1018,7 +1018,7 @@ PyMethodDef PdMethods[] = {
     {"patchzoom", pdzoom, METH_NOARGS, "Get Patch zoom"},
 
     // library methods
-    {"addobject", (PyCFunction)pdAddPyObject, METH_VARARGS | METH_KEYWORDS, "It adds python functions as objects"},
+    {"addobject", (PyCFunction)Py4pdLib_AddObj, METH_VARARGS | METH_KEYWORDS, "It adds python functions as objects"},
 
     // pip install
     {"pipinstall", pipInstall, METH_VARARGS, "It installs a pip package"},
