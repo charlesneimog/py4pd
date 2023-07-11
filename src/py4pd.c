@@ -521,8 +521,8 @@ static void Py4pd_OpenScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     // Open VsCode in Windows
     #ifdef _WIN64
-        char *command = malloc(strlen(x->pdPatchFolder->s_name) + strlen(x->script_name->s_name) + 20);
-        command = getEditorCommand(x, 0);
+        char command[MAXPDSTRING];
+        getEditorCommand(x, command, 0);
         SHELLEXECUTEINFO sei = {0};
         sei.cbSize = sizeof(sei);
         sei.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -533,9 +533,9 @@ static void Py4pd_OpenScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         CloseHandle(sei.hProcess);
         return;
     #else  
-        char *command = getEditorCommand(x, 0);
+        char command[MAXPDSTRING];
+        getEditorCommand(x, command, 0);
         executeSystemCommand(command);
-        free(command);
         return;
     #endif
 }
@@ -558,14 +558,13 @@ void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         return;
     }
     if (x->function_called == 0) {  // if the set method was not called, then we
-        pd_error(x, "[py4pd] To open vscode you need to set the function first!");
+        pd_error(x, "[py4pd] To open the editor you need to set the function first!");
         return;
     }
     post("[py4pd] Opening editor...");
 
     PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->function);
     int line = PyCode_Addr2Line(code, 0);
-    post("Function %s is in line %d", x->function_name->s_name, line);
         
     // Open VsCode in Windows
     #ifdef _WIN64
@@ -582,8 +581,8 @@ void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     // Not Windows OS
     #else  // if not windows 64bits
-        char *command = malloc(strlen(x->pdPatchFolder->s_name) + strlen(x->script_name->s_name) + 20);
-        command = getEditorCommand(x, line);
+        char command[MAXPDSTRING]; 
+        getEditorCommand(x, command, line);
         executeSystemCommand(command);
         return;
     #endif
@@ -1251,7 +1250,7 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class, (t_method)Py4pd_PrintPy4pdVersion, gensym("version"), 0, 0);  // show version
     class_addmethod(py4pd_class, (t_method)Py4pd_SetEditor, gensym("editor"), A_GIMME, 0);  // open code
     class_addmethod(py4pd_class, (t_method)Py4pd_OpenScript, gensym("open"), A_GIMME, 0); 
-    class_addmethod(py4pd_class, (t_method)Py4pd_OpenScript, gensym("click"), 0, 0);  // when click open editor
+    class_addmethod(py4pd_class, (t_method)Py4pd_SetEditor, gensym("click"), 0, 0);  // when click open editor
     
     // User 
     class_addmethod(py4pd_class, (t_method)Py4pd_PrintDocs, gensym("doc"), 0, 0);  // open documentation

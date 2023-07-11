@@ -11,7 +11,7 @@ static t_class *py4pdInlets_proxy_class;
 void Py4pdLib_Click(t_py *x) {
     PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->function);
     int line = PyCode_Addr2Line(code, 0);
-    post("Function %s is in line %d", x->function_name->s_name, line);
+    char command[MAXPDSTRING];
     #ifdef _WIN64
         char *command = malloc(strlen(x->pdPatchFolder->s_name) + strlen(x->script_name->s_name) + 20);
         command = getEditorCommand(x, 0);
@@ -25,10 +25,8 @@ void Py4pdLib_Click(t_py *x) {
         CloseHandle(sei.hProcess);
         return;
     #else  
-        char *command = getEditorCommand(x, line);
-        // post("Command: %s", command);
+        getEditorCommand(x, command, line);
         executeSystemCommand(command);
-        free(command);
         return;
     #endif
 }

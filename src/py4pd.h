@@ -221,7 +221,7 @@ void parsePy4pdArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);
 void findPy4pdFolder(t_py *x);
 void createPy4pdTempFolder(t_py *x);
 void setPy4pdConfig(t_py *x);
-char *getEditorCommand(t_py *x, int line);
+void getEditorCommand(t_py *x, char *command, int line);
 void executeSystemCommand(const char *command);
 int isNumericOrDot(const char *str);
 void removeChar(char *str, char c);
