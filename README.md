@@ -12,7 +12,7 @@
   <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml/badge.svg?branch=develop"></a>
 </p>
 
-`py4pd` allows the use of Python within PureData. It has the same goal as [py/pyext](https://github.com/grrrr/py), being simpler to keep up to date, use modules, use lists, and other things.  with Python you can:
+`py4pd` allows the use of Python within PureData. Its goal is to be simpler to keep up to date, easy to use external modules, and other things. With Python, you can:
 * Use scores inside PureData;
 * Use svg/draws as scores;
 * OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
