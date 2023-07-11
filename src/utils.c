@@ -444,6 +444,9 @@ char *getEditorCommand(t_py *x, int line) {
         sprintf(command, "gnome-terminal -e \"nvim +%d '%s/%s.py'\"", line, home,
                 filename);
     } 
+    else if (strcmp(editor, "gvim") == 0) {
+        sprintf(command, "gvim +%d '%s/%s.py'", line, home, filename);
+    } 
     else if (strcmp(editor, "sublime") == 0) {
         sprintf(command, "subl '%s/%s.py'", home, filename);
     } 
