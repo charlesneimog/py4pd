@@ -1,5 +1,0 @@
-#N canvas 529 123 450 300 8;
-#X obj 7 96 py4pd myscript myfunction;
-#X msg 7 10 reload;
-#X text 45 10 Reload the function myfunction.;
-#X connect 1 0 0 0;

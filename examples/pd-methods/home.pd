@@ -1,8 +1,0 @@
-#N canvas 529 123 450 300 8;
-#X obj 7 96 py4pd myscript myfunction;
-#X msg 7 10 home;
-#X text 35 7 Print where is the actual home folder.;
-#X msg 18 49 home ~/Downloads;
-#X text 106 45 Set HOME to ~/Downloads.;
-#X connect 1 0 0 0;
-#X connect 3 0 0 0;

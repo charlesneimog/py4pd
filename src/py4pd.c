@@ -98,8 +98,8 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
     char *pkgPathchar = malloc(strlen(x->pkgPath->s_name) + 1);
     strcpy(pkgPathchar, x->pkgPath->s_name);
 
-    checkPackageNameConflict(x, pkgPathchar, script_file_name);
-    checkPackageNameConflict(x, pyGlobalFolder, script_file_name);
+    Py4pdUtils_CheckPkgNameConflict(x, pkgPathchar, script_file_name);
+    Py4pdUtils_CheckPkgNameConflict(x, pyGlobalFolder, script_file_name);
 
     PyObject *home_path = PyUnicode_FromString(x->pdPatchFolder->s_name);  // Place where script file will probably be
     PyObject *site_package = PyUnicode_FromString(x->pkgPath->s_name);  // Place where the packages will be
@@ -135,7 +135,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
             prev_obj_exists = 0;
         }
     }
-    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
 
     if (objectCapsule == NULL){
         pd_error(x, "[Python] Failed to add object to Python");
@@ -193,7 +193,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
     // convert const char * to char *
     char *libraryFolder = malloc(strlen(PyUnicode_AsUTF8(pFilenameObj)) + 1);
     strcpy(libraryFolder, PyUnicode_AsUTF8(pFilenameObj));
-    x->libraryFolder = gensym(get_folder_name(libraryFolder));
+    x->libraryFolder = gensym(Py4pdUtils_GetFolderName(libraryFolder));
     free(libraryFolder);
 
     if (pModule == NULL) {
@@ -215,7 +215,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
         PyObject *pValue = PyObject_CallNoArgs(pFunc);  // Call the function
 
         if (prev_obj_exists == 1 && pValue != NULL) {
-            objectCapsule = py4pd_add_pd_object(prev_obj);
+            objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
             if (objectCapsule == NULL){
                 pd_error(x, "[Python] Failed to add object to Python");
                 return -1;
@@ -235,7 +235,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
         }
         // odd code, but solve the bug
         if (prev_obj_exists == 1 && pValue != NULL) {
-            objectCapsule = py4pd_add_pd_object(prev_obj);
+            objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
             if (objectCapsule == NULL){
                 pd_error(x, "[Python] Failed to add object to Python");
                 return -1;
@@ -292,7 +292,7 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
             prev_obj_exists = 0;
         }
     }
-    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
 
     PyObject *py4pdModule = PyImport_ImportModule("py4pd");
     if (py4pdModule == NULL) {
@@ -306,7 +306,7 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
 
     if (prev_obj_exists == 1){ 
-        objectCapsule = py4pd_add_pd_object(prev_obj);
+        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
         if (objectCapsule == NULL){
             pd_error(x, "[Python] Failed to add object to Python");
             return;
@@ -522,7 +522,7 @@ static void Py4pd_OpenScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     // Open VsCode in Windows
     #ifdef _WIN64
         char command[MAXPDSTRING];
-        getEditorCommand(x, command, 0);
+        Py4pdUtils_GetEditorCommand(x, command, 0);
         SHELLEXECUTEINFO sei = {0};
         sei.cbSize = sizeof(sei);
         sei.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -534,8 +534,8 @@ static void Py4pd_OpenScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         return;
     #else  
         char command[MAXPDSTRING];
-        getEditorCommand(x, command, 0);
-        executeSystemCommand(command);
+        Py4pdUtils_GetEditorCommand(x, command, 0);
+        Py4pdUtils_ExecuteSystemCommand(command);
         return;
     #endif
 }
@@ -568,7 +568,7 @@ void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         
     // Open VsCode in Windows
     #ifdef _WIN64
-        char *command = getEditorCommand(x, line);
+        char *command = Py4pdUtils_GetEditorCommand(x, line);
         SHELLEXECUTEINFO sei = {0};
         sei.cbSize = sizeof(sei);
         sei.fMask = SEE_MASK_NOCLOSEPROCESS;
@@ -582,8 +582,8 @@ void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     // Not Windows OS
     #else  // if not windows 64bits
         char command[MAXPDSTRING]; 
-        getEditorCommand(x, command, line);
-        executeSystemCommand(command);
+        Py4pdUtils_GetEditorCommand(x, command, line);
+        Py4pdUtils_ExecuteSystemCommand(command);
         return;
     #endif
 }
@@ -779,7 +779,7 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         }
     }
 
-    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
 
     // =====================
     pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file with the function
@@ -801,7 +801,7 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(pFunc);
 
         if (prev_obj_exists == 1 && pFunc != NULL) {
-            objectCapsule = py4pd_add_pd_object(prev_obj);
+            objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
             if (objectCapsule == NULL){
                 pd_error(x, "[Python] Failed to add object to Python");
                 return;
@@ -881,7 +881,7 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         }
         PyObject **lists = (PyObject **)malloc(OpenList_count * sizeof(PyObject *));
 
-        ArgsTuple = py4pd_convert_to_py(lists, argc, argv);  // convert the arguments to python
+        ArgsTuple = Py4pdUtils_ConvertToPy(lists, argc, argv);  // convert the arguments to python
         int argCount = PyTuple_Size(ArgsTuple);  // get the number of arguments
         if (argCount != x->py_arg_numbers) {
             pd_error(x, "[py4pd] Wrong number of arguments! The function %s needs %i arguments, received %i!", 
@@ -912,7 +912,7 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         }
     }
 
-    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
 
     if (objectCapsule == NULL){
         pd_error(x, "[Python] Failed to add object to Python");
@@ -923,7 +923,7 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     // odd code, but solve the bug
     if (prev_obj_exists == 1 && pValue != NULL) {
-        objectCapsule = py4pd_add_pd_object(prev_obj);
+        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
         if (objectCapsule == NULL){
             pd_error(x, "[Python] Failed to add object to Python");
             return;
@@ -931,7 +931,7 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
 
     if (pValue != NULL) { 
-        py4pd_convert_to_pd(x, pValue, x->out1);  
+        Py4pdUtils_ConvertToPd(x, pValue, x->out1);  
     } 
     else {                             
         PyObject *ptype, *pvalue, *ptraceback;
@@ -1125,7 +1125,7 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         x->object_number = object_count; 
         x->pdPatchFolder = patch_dir;       
         x->pkgPath = patch_dir;  
-        setPy4pdConfig(x); 
+        Py4pdUtils_SetObjConfig(x); 
         int libraryLoaded = Py4pd_LibraryLoad(x, argc, argv);
         if (libraryLoaded == -1){
             return NULL;
@@ -1148,12 +1148,12 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     x->editorName = NULL;
     x->pyObject = 0;
     x->vectorSize = 0;
-    parsePy4pdArguments(x, c, argc, argv);  // parse arguments
+    Py4pdUtils_ParseArguments(x, c, argc, argv);  // parse arguments
     x->runmode = 0;
     x->object_number = object_count;  // save object number
     x->pdPatchFolder = patch_dir; // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
-    setPy4pdConfig(x);          // set the config file (in py4pd.cfg, make this be
+    Py4pdUtils_SetObjConfig(x);          // set the config file (in py4pd.cfg, make this be
     if (argc > 1) {             // check if there are two arguments
         Py4pd_SetFunction(x, s, argc, argv);
         Py4pd_ImportNumpyForPy4pd();

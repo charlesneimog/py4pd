@@ -1,8 +1,0 @@
-#N canvas 529 123 450 300 8;
-#X obj 7 96 py4pd myscript myfunction;
-#X msg 7 10 open;
-#X text 36 10 It opens the myscript file;
-#X msg 13 49 open newscript;
-#X text 93 45 It opens the newscript file \, if it not exists \, the file will be created.;
-#X connect 1 0 0 0;
-#X connect 3 0 0 0;

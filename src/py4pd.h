@@ -216,39 +216,36 @@ extern int object_count;
 void setEditor(t_py *x, t_symbol *s, int argc, t_atom *argv);
 
 // ============= UTILITIES =============
-int parseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);
-void parsePy4pdArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);
-void findPy4pdFolder(t_py *x);
-void createPy4pdTempFolder(t_py *x);
-void setPy4pdConfig(t_py *x);
-void getEditorCommand(t_py *x, char *command, int line);
-void executeSystemCommand(const char *command);
-int isNumericOrDot(const char *str);
-void removeChar(char *str, char c);
-// --------
-t_py *get_py4pd_object(void);
-// --------
-char* get_folder_name(char* path);
-const char* get_filename(const char* path);
-void checkPackageNameConflict(t_py *x, char *folderToCheck, t_symbol *script_file_name);
-// --------
-void *py4pd_convert_to_pd(t_py *x, PyObject *pValue, t_outlet *outlet);
-// void *py4pd_convert_to_pd(t_py *x, PyObject *pValue);
-PyObject *py4pd_convert_to_py(PyObject *listsArrays[], int argc, t_atom *argv);
-PyObject *py4pd_add_pd_object(t_py *x);
-void *pyobject_to_pointer(PyObject *pValue);
-PyObject *pointer_to_pyobject(void *p);
-void free_pyobject_data(void *p);
-// --------
-void readGifFile(t_py *x, const char* filename);
-void readPngFile(t_py *x, const char* filename);
-// --------
-uint32_t py4pd_ntohl(uint32_t netlong);
+int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);
+t_py *Py4pdUtils_GetObject(void);
+void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);
+char* Py4pdUtils_GetFolderName(char* path);
+const char* Py4pdUtils_GetFilename(const char* path);
+void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *script_file_name);
+void Py4pdUtils_FindObjFolder(t_py *x);
+void Py4pdUtils_CreateTempFolder(t_py *x);
+void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line);
+void Py4pdUtils_ExecuteSystemCommand(const char *command);
+int Py4pdUtils_IsNumericOrDot(const char *str);
+void Py4pdUtils_RemoveChar(char *str, char c);
+char *Py4pdUtils_Mtok(char *input, char *delimiter);
+void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet);
+void *Py4pdUtils_PyObjectToPointer(PyObject *pValue);
+PyObject *Py4pdUtils_PointerToPyObject(void *p);
+void Py4pdUtils_FreePyObjectData(void *p);
+void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet);
+PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv);
+void Py4pdUtils_SetObjConfig(t_py *x);
+PyObject *Py4pdUtils_AddPdObject(t_py *x);
+void Py4pdUtils_ReadGifFile(t_py *x, const char* filename);
+void Py4pdUtils_ReadPngFile(t_py *x, const char* filename);
+uint32_t Py4pdUtils_Ntohl(uint32_t netlong);
+t_py *Py4pdUtils_GetObject(void);
+
 
 // ============= EMBEDDED MODULE =======
 extern PyMethodDef PdMethods[];
 PyMODINIT_FUNC PyInit_pd(void);
-t_py *get_py4pd_object(void);
 
 // ============= PLAYER ==========
 

@@ -25,8 +25,8 @@ void Py4pdLib_Click(t_py *x) {
         CloseHandle(sei.hProcess);
         return;
     #else  
-        getEditorCommand(x, command, line);
-        executeSystemCommand(command);
+        Py4pdUtils_GetEditorCommand(x, command, line);
+        Py4pdUtils_ExecuteSystemCommand(command);
         return;
     #endif
 }
@@ -156,7 +156,7 @@ void Py4pdLib_SetKwargs(t_py *x, t_symbol *s, int ac, t_atom *av){
             if (av[1].a_w.w_symbol == gensym("PyObject")){
                 if (av[2].a_type == A_POINTER){
                     PyObject *pValue;
-                    pValue = pointer_to_pyobject(av[2].a_w.w_gpointer);
+                    pValue = Py4pdUtils_PointerToPyObject(av[2].a_w.w_gpointer);
                     PyDict_SetItemString(x->kwargsDict, key->s_name, pValue);
                 }
             }
@@ -212,7 +212,7 @@ void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b){
 void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_atom *argv){
     t_py *py4pd = (t_py *)x->p_master;
     PyObject *pValue;
-    pValue = pointer_to_pyobject(argv);
+    pValue = Py4pdUtils_PointerToPyObject(argv);
     PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pValue);
     return;
 }
@@ -298,14 +298,14 @@ void Py4pdLib_Bang(t_py *x){
     if (x->py_arg_numbers != 0){
         post("This is not recommended when using Python functions with arguments");
     }
-    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
     if (objectCapsule == NULL){
         pd_error(x, "[py4pd] Failed to add object to Python");
         return;
     }
     PyObject *pValue = PyObject_CallObject(x->function, x->argsDict);
     if (pValue != NULL) { 
-        py4pd_convert_to_pd(x, pValue, x->out1); 
+        Py4pdUtils_ConvertToPd(x, pValue, x->out1); 
     }
     else{
         Py_XDECREF(pValue);
@@ -416,7 +416,7 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         }
     }
 
-    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
     if (objectCapsule == NULL){
         pd_error(x, "[Python] Failed to add object to Python");
         return;
@@ -431,14 +431,14 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
 
     // odd code, but solve the bug
     if (prev_obj_exists == 1 && pValue != NULL) {
-        objectCapsule = py4pd_add_pd_object(prev_obj);
+        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
         if (objectCapsule == NULL){
             pd_error(x, "[Python] Failed to add object to Python");
             return;
         }
     }
     if (pValue != NULL) { 
-        py4pd_convert_to_pd(x, pValue, x->out1); 
+        Py4pdUtils_ConvertToPd(x, pValue, x->out1); 
     }
     else{
         Py_XDECREF(pValue);
@@ -461,7 +461,7 @@ void Py4pdLib_Pointer(t_py *x, t_atom *argv){
     // convert pointer to PyObject using pointer_to_pyobject
     PyObject *pValue;
     PyObject *pArg;
-    pArg = pointer_to_pyobject(argv);
+    pArg = Py4pdUtils_PointerToPyObject(argv);
     if (pArg == NULL) {
         pd_error(x, "[py4pd] The pointer is not a PyObject!");
         return;
@@ -481,7 +481,7 @@ void Py4pdLib_Pointer(t_py *x, t_atom *argv){
         }
     }
 
-    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
     if (objectCapsule == NULL){
         pd_error(x, "[Python] Failed to add object to Python");
         return;
@@ -493,14 +493,14 @@ void Py4pdLib_Pointer(t_py *x, t_atom *argv){
     // so that when the current object is connected to a Python object, 
     // its output is sent to the right outlet.
     if (prev_obj_exists == 1 && pValue != NULL) {
-        objectCapsule = py4pd_add_pd_object(prev_obj);
+        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
         if (objectCapsule == NULL){
             pd_error(x, "[Python] Failed to add object to Python");
             return;
         }
     }
     if (pValue != NULL) { 
-        py4pd_convert_to_pd(x, pValue, x->out1); 
+        Py4pdUtils_ConvertToPd(x, pValue, x->out1); 
     }
     else{
         Py_XDECREF(pValue);
@@ -524,11 +524,11 @@ void Py4pdLib_ReloadObject(t_py *x){
     // x->script_filename->s_name is one const char *, convert to char *
     char *script_filename = strdup(x->script_name->s_name);
 
-    PyObject *ScriptFolder = PyUnicode_FromString(get_folder_name(script_filename));
+    PyObject *ScriptFolder = PyUnicode_FromString(Py4pdUtils_GetFolderName(script_filename));
     PyObject *sys_path = PySys_GetObject("path");
     PyList_Insert(sys_path, 0, ScriptFolder);
 
-    const char *ScriptFileName = get_filename(script_filename);
+    const char *ScriptFileName = Py4pdUtils_GetFilename(script_filename);
     
     PyObject *pModule = PyImport_ImportModule(ScriptFileName);
     if (pModule == NULL) {
@@ -633,7 +633,7 @@ t_int *Py4pdLib_AudioINPerform(t_int *w) {
     pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
     PyTuple_SetItem(x->argsDict, 0, pAudio);
 
-    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
     if (objectCapsule == NULL){
         pd_error(x, "[Python] Failed to add object to Python");
         return (w + 4);
@@ -641,7 +641,7 @@ t_int *Py4pdLib_AudioINPerform(t_int *w) {
     pValue = PyObject_CallObject(x->function, x->argsDict);
 
     if (pValue != NULL) {
-        py4pd_convert_to_pd(x, pValue, x->out1);  // convert the value to pd
+        Py4pdUtils_ConvertToPd(x, pValue, x->out1);  // convert the value to pd
     } 
     else {                             // if the function returns a error
         PyObject *ptype, *pvalue, *ptraceback;
@@ -667,7 +667,7 @@ t_int *Py4pdLib_AudioOUTPerform(t_int *w) {
     PyObject *pValue; 
     int numChannels = x->n_channels;
 
-    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
     if (objectCapsule == NULL){
         pd_error(x, "[Python] Failed to add object to Python");
         return (w + 4);
@@ -689,7 +689,9 @@ t_int *Py4pdLib_AudioPerform(t_int *w){
     PyObject *pAudio = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, in);
     PyTuple_SetItem(x->argsDict, 0, pAudio);
     
-    PyObject *objectCapsule = py4pd_add_pd_object(x);
+    // TODO: Add Pd Object to Python
+
+    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
     if (objectCapsule == NULL){
         pd_error(x, "[Python] Failed to add object to Python");
         return (w + 5);
@@ -765,12 +767,12 @@ static void *Py4pdLib_NewNormalObj(t_symbol *s, int argc, t_atom *argv) {
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
 
-    setPy4pdConfig(x);  // set the config file  NOTE: I WANT to rethink this...
+    Py4pdUtils_SetObjConfig(x);  // set the config file  NOTE: I WANT to rethink this...
     PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
 
-    int parseArgsRight = parseLibraryArguments(x, code, argc, argv); // NOTE: added
+    int parseArgsRight = Py4pdUtils_ParseLibraryArguments(x, code, argc, argv); // NOTE: added
     if (parseArgsRight == 0) {
         return NULL;
     }
@@ -890,10 +892,10 @@ static void *Py4pdLib_NewVisualObj(t_symbol *s, int argc, t_atom *argv) {
             sprintf(completeImagePath, "%s%s", PyUnicode_AsUTF8(pyLibraryFolder), gifFileCHAR);
             char *ext = strrchr(completeImagePath, '.');
             if (strcmp(ext, ".gif") == 0){
-                readGifFile(x, completeImagePath);
+                Py4pdUtils_ReadGifFile(x, completeImagePath);
             }
             else if (strcmp(ext, ".png") == 0) {
-                readPngFile(x, completeImagePath);
+                Py4pdUtils_ReadPngFile(x, completeImagePath);
             }
             else{
                 pd_error(x, "[%s] File extension not supported (uses just .png and .gif), using empty image.", x->objectName->s_name);
@@ -916,14 +918,12 @@ static void *Py4pdLib_NewVisualObj(t_symbol *s, int argc, t_atom *argv) {
     x->pdPatchFolder = patch_dir;         // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
-    setPy4pdConfig(x);  // set the config file (in py4pd.cfg, make this be
-    createPy4pdTempFolder(x);  // find the py4pd folder
-    findPy4pdFolder(x);  // find the py4pd object folder
+    Py4pdUtils_SetObjConfig(x);  // set the config file (in py4pd.cfg, make this be
     // check if function use *args or **kwargs
     PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_name));
-    int parseArgsRight = parseLibraryArguments(x, code, argc, argv); // NOTE: added
+    int parseArgsRight = Py4pdUtils_ParseLibraryArguments(x, code, argc, argv); // NOTE: added
     if (parseArgsRight == 0) {
         return NULL;
     }
@@ -983,15 +983,13 @@ static void *Py4pdLib_NewAudioInputObj(t_symbol *s, int argc, t_atom *argv) {
     x->pdPatchFolder = patch_dir;         // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
-    setPy4pdConfig(x);  // set the config file  TODO: I want to rethink this)
-    createPy4pdTempFolder(x);  // find the py4pd temp folder
-    findPy4pdFolder(x);  // find the py4pd object folder
+    Py4pdUtils_SetObjConfig(x);  // set the config file  TODO: I want to rethink this)
     // Parse args for translation between Pd and Python
     PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
 
-    int parseArgsRight = parseLibraryArguments(x, code, argc, argv); // NOTE: added
+    int parseArgsRight = Py4pdUtils_ParseLibraryArguments(x, code, argc, argv); // NOTE: added
     if (parseArgsRight == 0) {
         return NULL;
     }
@@ -1067,14 +1065,12 @@ static void *Py4pdLib_NewAudioOutputObj(t_symbol *s, int argc, t_atom *argv) {
     x->pdPatchFolder = patch_dir;         // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
-    setPy4pdConfig(x);  // set the config file  TODO: I want to rethink this)
-    createPy4pdTempFolder(x);  // find the py4pd temp folder
-    findPy4pdFolder(x);  // find the py4pd object folder
+    Py4pdUtils_SetObjConfig(x);  // set the config file  TODO: I want to rethink this)
     // Parse args for translation between Pd and Python
     PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
-    int parseArgsRight = parseLibraryArguments(x, code, argc, argv); // NOTE: added
+    int parseArgsRight = Py4pdUtils_ParseLibraryArguments(x, code, argc, argv); // NOTE: added
     if (parseArgsRight == 0) {
         return NULL;
     }
@@ -1147,14 +1143,12 @@ static void *Py4pdLib_NewAudioObj(t_symbol *s, int argc, t_atom *argv) {
     x->pdPatchFolder = patch_dir;         // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
-    setPy4pdConfig(x);  // set the config file  TODO: I want to rethink this)
-    createPy4pdTempFolder(x);  // find the py4pd temp folder
-    findPy4pdFolder(x);  // find the py4pd object folder
+    Py4pdUtils_SetObjConfig(x);  // set the config file  TODO: I want to rethink this)
     // Parse args for translation between Pd and Python
     PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
-    int parseArgsRight = parseLibraryArguments(x, code, argc, argv); // NOTE: added
+    int parseArgsRight = Py4pdUtils_ParseLibraryArguments(x, code, argc, argv); // NOTE: added
     if (parseArgsRight == 0) {
         return NULL;
     }
@@ -1230,7 +1224,7 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     int playableInt = 0;
 
     // get file folder where this function is called from self
-    t_py *py4pd = get_py4pd_object();
+    t_py *py4pd = Py4pdUtils_GetObject();
 
     if (py4pd->libraryFolder == NULL) {
         pd_error(py4pd, "[py4pd] Library Folder is NULL, some help patches may not be found");

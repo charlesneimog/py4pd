@@ -93,7 +93,7 @@ void py4pdPlay_tick(t_py *x){
     if (entry != NULL) {
         for (int i = 0; i < entry->size; i++) {
             PyObject* value = entry->values[i];
-            py4pd_convert_to_pd(x, value, x->out1);
+            Py4pdUtils_ConvertToPd(x, value, x->out1);
         }
     }
 }
