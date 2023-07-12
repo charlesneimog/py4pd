@@ -45,7 +45,7 @@ def py4pdLoadObjects():
     pd.addobject(pymax, "py.max")
     pd.addobject(pymin, "py.min")
     pd.addobject(pyreduce, "py.reduce", pyout=True)
-    pd.addobject(mat_trans, "py.mat_trans", pyout=True)
+    pd.addobject(mat_trans, "py.mattrans", pyout=True)
     pd.addobject(rotate, "py.rotate", pyout=True)
     pd.addobject(flat, "py.flat")
 
