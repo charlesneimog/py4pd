@@ -233,6 +233,7 @@ void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet);
 void *Py4pdUtils_PyObjectToPointer(PyObject *pValue);
 PyObject *Py4pdUtils_PointerToPyObject(void *p);
 void Py4pdUtils_FreePyObjectData(void *p);
+PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs);
 void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet);
 PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv);
 void Py4pdUtils_SetObjConfig(t_py *x);

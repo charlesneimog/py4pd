@@ -1,5 +1,6 @@
 #include "py4pd.h"
 #include "m_pd.h"
+#include "pyerrors.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
@@ -275,25 +276,6 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     const char *pipPackage;
     const char *localORglobal;
 
-
-        // odd code, but solve the bug
-    t_py *prev_obj;
-    int prev_obj_exists = 0;
-    PyObject *MainModule = PyImport_ImportModule("pd");
-    PyObject *oldObjectCapsule;
-    if (MainModule != NULL) {
-        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
-        if (oldObjectCapsule != NULL) {
-            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
-            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-            prev_obj_exists = 1;
-        }
-        else {
-            prev_obj_exists = 0;
-        }
-    }
-    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
-
     PyObject *py4pdModule = PyImport_ImportModule("py4pd");
     if (py4pdModule == NULL) {
         pd_error(x, "[Python] pipInstall: py4pd module not found");
@@ -304,14 +286,8 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: pipinstall function not found");
         return;
     }
-
-    if (prev_obj_exists == 1){ 
-        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
-        if (objectCapsule == NULL){
-            pd_error(x, "[Python] Failed to add object to Python");
-            return;
-        }
-    }
+    PyObject *ObjFunction = x->function;
+    x->function = pipInstallFunction;
 
     localORglobal = atom_getsymbolarg(0, argc, argv)->s_name;
     pipPackage = atom_getsymbolarg(1, argc, argv)->s_name;
@@ -321,11 +297,16 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     PyList_SetItem(argsList, 0, Py_BuildValue("s", localORglobal));
     PyList_SetItem(argsList, 1, Py_BuildValue("s", pipPackage));
     PyObject *argTuple = Py_BuildValue("(O)", argsList);
-    PyObject *pipInstallResult = PyObject_CallObject(pipInstallFunction, argTuple);
+    
+    PyObject *pipInstallResult = Py4pdUtils_RunPy(x, argTuple);
     if (pipInstallResult == NULL) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: pipinstall function failed");
+        pd_error(x, "[Python] pipInstall: pipinstall function failed");
+        PyErr_Clear();
+        x->function = ObjFunction;
         return;
     }
+    x->function = ObjFunction;
     Py_DECREF(argTuple);
     Py_DECREF(pipInstallResult);
     Py_DECREF(pipInstallFunction);
@@ -862,8 +843,9 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     int OpenList_count = 0;
     int CloseList_count = 0;
-
     PyObject *pValue, *ArgsTuple;
+    ArgsTuple = NULL;
+
     if (argc != 0) {
         for (int i = 0; i < argc; i++) {
             if (argv[i].a_type == A_SYMBOL) {
@@ -893,44 +875,9 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     else {
         ArgsTuple = PyTuple_New(0);
     }
+    pValue = Py4pdUtils_RunPy(x, ArgsTuple); 
 
-    // odd code, but solve the bug
-    t_py *prev_obj;
-    int prev_obj_exists = 0;
-    PyObject *MainModule = PyImport_ImportModule("pd");
-    PyObject *oldObjectCapsule;
-
-    if (MainModule != NULL) {
-        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
-        if (oldObjectCapsule != NULL) {
-            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
-            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-            prev_obj_exists = 1;
-        }
-        else {
-            prev_obj_exists = 0;
-        }
-    }
-
-    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
-
-    if (objectCapsule == NULL){
-        pd_error(x, "[Python] Failed to add object to Python");
-        return;
-    }
-
-    pValue = PyObject_CallObject(x->function, ArgsTuple);
-
-    // odd code, but solve the bug
-    if (prev_obj_exists == 1 && pValue != NULL) {
-        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
-        if (objectCapsule == NULL){
-            pd_error(x, "[Python] Failed to add object to Python");
-            return;
-        }
-    }
-
-    if (pValue != NULL) { 
+    if (pValue != NULL) {  // check if the function returned something
         Py4pdUtils_ConvertToPd(x, pValue, x->out1);  
     } 
     else {                             

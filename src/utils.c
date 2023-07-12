@@ -642,6 +642,45 @@ void Py4pdUtils_FreePyObjectData(void *p) {
 }
 
 // =====================================================================
+PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) { 
+    t_py *prev_obj;
+    int prev_obj_exists = 0;
+    PyObject *MainModule = PyImport_ImportModule("pd");
+    PyObject *oldObjectCapsule, *pValue;
+
+    if (MainModule != NULL) {
+        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        if (oldObjectCapsule != NULL) {
+            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
+            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+            prev_obj_exists = 1;
+        }
+        else {
+            prev_obj_exists = 0;
+        }
+    }
+
+    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
+
+    if (objectCapsule == NULL){
+        pd_error(x, "[Python] Failed to add object to Python");
+        return NULL;
+    }
+
+    pValue = PyObject_CallObject(x->function, pArgs);
+
+    // odd code, but solve the bug
+    if (prev_obj_exists == 1 && pValue != NULL) {
+        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
+        if (objectCapsule == NULL){
+            pd_error(x, "[Python] Failed to add object to Python");
+            return NULL;
+        }
+    }
+    return pValue;
+}
+
+// =====================================================================
 /*
 * @brief Convert and output Python Values to PureData values
 * @param x is the py4pd object

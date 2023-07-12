@@ -298,12 +298,7 @@ void Py4pdLib_Bang(t_py *x){
     if (x->py_arg_numbers != 0){
         post("This is not recommended when using Python functions with arguments");
     }
-    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
-    if (objectCapsule == NULL){
-        pd_error(x, "[py4pd] Failed to add object to Python");
-        return;
-    }
-    PyObject *pValue = PyObject_CallObject(x->function, x->argsDict);
+    PyObject *pValue = Py4pdUtils_RunPy(x, x->argsDict);
     if (pValue != NULL) { 
         Py4pdUtils_ConvertToPd(x, pValue, x->out1); 
     }
@@ -401,42 +396,14 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         return;
     }
 
-    // odd code, but solve the bug
-    t_py *prev_obj;
-    int prev_obj_exists = 0;
-    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("pd"));
-    PyObject *oldObjectCapsule;
-    if (MainModule != NULL) {
-        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
-        if (oldObjectCapsule != NULL) {
-            PyObject *pd_module = PyImport_ImportModule("pd");
-            PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-            prev_obj_exists = 1;
-        }
-    }
-
-    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
-    if (objectCapsule == NULL){
-        pd_error(x, "[Python] Failed to add object to Python");
-        return;
-    }
-
     if (x->kwargs == 1){
+        // TODO: Add object to Python
         pValue = PyObject_Call(x->function, x->argsDict, x->kwargsDict);
     }
     else{
-        pValue = PyObject_CallObject(x->function, x->argsDict);
+        pValue = Py4pdUtils_RunPy(x, x->argsDict);
     }
 
-    // odd code, but solve the bug
-    if (prev_obj_exists == 1 && pValue != NULL) {
-        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
-        if (objectCapsule == NULL){
-            pd_error(x, "[Python] Failed to add object to Python");
-            return;
-        }
-    }
     if (pValue != NULL) { 
         Py4pdUtils_ConvertToPd(x, pValue, x->out1); 
     }
@@ -467,38 +434,9 @@ void Py4pdLib_Pointer(t_py *x, t_atom *argv){
         return;
     }
     PyTuple_SetItem(x->argsDict, 0, pArg);
-    t_py *prev_obj;
-    int prev_obj_exists = 0;
-    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("pd"));
-    PyObject *oldObjectCapsule;
-    if (MainModule != NULL) {
-        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
-        if (oldObjectCapsule != NULL) {
-            PyObject *pd_module = PyImport_ImportModule("pd");
-            PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-            prev_obj_exists = 1;
-        }
-    }
 
-    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
-    if (objectCapsule == NULL){
-        pd_error(x, "[Python] Failed to add object to Python");
-        return;
-    }
-    pValue = PyObject_CallObject(x->function, x->argsDict);
+    pValue = Py4pdUtils_RunPy(x, x->argsDict);
 
-    // If there is a previous object and a value is passed, 
-    // create a Python object capsule and add the previous object to it, 
-    // so that when the current object is connected to a Python object, 
-    // its output is sent to the right outlet.
-    if (prev_obj_exists == 1 && pValue != NULL) {
-        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
-        if (objectCapsule == NULL){
-            pd_error(x, "[Python] Failed to add object to Python");
-            return;
-        }
-    }
     if (pValue != NULL) { 
         Py4pdUtils_ConvertToPd(x, pValue, x->out1); 
     }
@@ -633,12 +571,7 @@ t_int *Py4pdLib_AudioINPerform(t_int *w) {
     pAudio = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, audioIn);
     PyTuple_SetItem(x->argsDict, 0, pAudio);
 
-    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
-    if (objectCapsule == NULL){
-        pd_error(x, "[Python] Failed to add object to Python");
-        return (w + 4);
-    }
-    pValue = PyObject_CallObject(x->function, x->argsDict);
+    pValue = Py4pdUtils_RunPy(x, x->argsDict);
 
     if (pValue != NULL) {
         Py4pdUtils_ConvertToPd(x, pValue, x->out1);  // convert the value to pd
@@ -667,12 +600,7 @@ t_int *Py4pdLib_AudioOUTPerform(t_int *w) {
     PyObject *pValue; 
     int numChannels = x->n_channels;
 
-    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
-    if (objectCapsule == NULL){
-        pd_error(x, "[Python] Failed to add object to Python");
-        return (w + 4);
-    }
-    pValue = PyObject_CallObject(x->function, x->argsDict);
+    pValue = Py4pdUtils_RunPy(x, x->argsDict);
     Py4pdLib_Audio2PdAudio(x, pValue, audioOut, numChannels, n);
     Py_XDECREF(pValue);
     return (w + 4);
@@ -689,14 +617,7 @@ t_int *Py4pdLib_AudioPerform(t_int *w){
     PyObject *pAudio = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, in);
     PyTuple_SetItem(x->argsDict, 0, pAudio);
     
-    // TODO: Add Pd Object to Python
-
-    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
-    if (objectCapsule == NULL){
-        pd_error(x, "[Python] Failed to add object to Python");
-        return (w + 5);
-    }
-    PyObject *pValue = PyObject_CallObject(x->function, x->argsDict);
+    PyObject *pValue = Py4pdUtils_RunPy(x, x->argsDict);
     Py4pdLib_Audio2PdAudio(x, pValue, audioOut, numChannels, n);
     Py_XDECREF(pValue);
     return (w + 5);
