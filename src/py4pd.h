@@ -318,11 +318,11 @@ extern PyMethodDef PdMethods[];
 PyMODINIT_FUNC PyInit_pd(void);
 
 // ============= PLAYER ==========
-void PY4PD_Player_InsertThing(t_py *x, int onset, PyObject *value);
-KeyValuePair* PY4PD_Player_GetValue(Dictionary* dictionary, int onset);
-void py4pdPlay(t_py *x, t_symbol *s, int argc, t_atom *argv);
-void py4pdStop(t_py *x);
-void py4pdClear(t_py *x);
+void Py4pdLib_PlayerInsertThing(t_py *x, int onset, PyObject *value);
+KeyValuePair* Py4pdLib_PlayerGetValue(Dictionary* dictionary, int onset);
+void Py4pdLib_Play(t_py *x, t_symbol *s, int argc, t_atom *argv);
+void Py4pdLib_Stop(t_py *x);
+void Py4pdLib_Clear(t_py *x);
 
 // ============= PIC =============
 extern t_class *py4pd_class, *pyNewObject_VIS;

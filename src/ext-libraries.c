@@ -1289,16 +1289,16 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     if ((strcmp(objectType, "NORMAL") == 0)){
         class_addmethod(localClass, (t_method)Py4pdLib_Click, gensym("click"), 0, 0);
         if (playableInt == 1){
-            class_addmethod(localClass, (t_method)py4pdPlay, gensym("play"), A_GIMME, 0);
-            class_addmethod(localClass, (t_method)py4pdStop, gensym("stop"), 0, 0); // TODO: this conflits with pycollect
-            class_addmethod(localClass, (t_method)py4pdClear, gensym("clear"), 0, 0);
+            class_addmethod(localClass, (t_method)Py4pdLib_Play, gensym("play"), A_GIMME, 0);
+            class_addmethod(localClass, (t_method)Py4pdLib_Stop, gensym("stop"), 0, 0); // TODO: this conflits with pycollect
+            class_addmethod(localClass, (t_method)Py4pdLib_Clear, gensym("clear"), 0, 0);
         }
     }
     else if ((strcmp(objectType, "VIS") == 0)){
         if (playableInt == 1){
-            class_addmethod(localClass, (t_method)py4pdPlay, gensym("play"), A_GIMME, 0);
-            class_addmethod(localClass, (t_method)py4pdStop, gensym("stop"), 0, 0); // TODO: this conflits with pycollect
-            class_addmethod(localClass, (t_method)py4pdClear, gensym("clear"), 0, 0);
+            class_addmethod(localClass, (t_method)Py4pdLib_Play, gensym("play"), A_GIMME, 0);
+            class_addmethod(localClass, (t_method)Py4pdLib_Stop, gensym("stop"), 0, 0); // TODO: this conflits with pycollect
+            class_addmethod(localClass, (t_method)Py4pdLib_Clear, gensym("clear"), 0, 0);
         }
         class_addmethod(localClass, (t_method)Py4pdPic_Zoom, gensym("zoom"), A_CANT, 0);
         class_addmethod(localClass, (t_method)Py4pd_SetPythonPointersUsage, gensym("pointers"), A_FLOAT, 0);

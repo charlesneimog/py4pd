@@ -888,7 +888,7 @@ static PyObject *Py4pdMod_AddThingToPlay(PyObject *self, PyObject *args, PyObjec
         PyErr_SetString(PyExc_TypeError, "[Python] pd.add2play: wrong arguments");
         return NULL;
     }
-    PY4PD_Player_InsertThing(py4pd, onset, Py_BuildValue("O", thingToPlay)); 
+    Py4pdLib_PlayerInsertThing(py4pd, onset, Py_BuildValue("O", thingToPlay)); 
     Py_RETURN_TRUE;
 }
 
@@ -898,7 +898,7 @@ static PyObject *Py4pdMod_ClearPlayer(PyObject *self, PyObject *args){
     (void)args;
 
     t_py *py4pd = Py4pdUtils_GetObject();
-    py4pdClear(py4pd);
+    Py4pdLib_Clear(py4pd);
     Py_RETURN_TRUE;
 }
 
