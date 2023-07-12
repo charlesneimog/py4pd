@@ -825,7 +825,7 @@ static void *Py4pdLib_NewVisualObj(t_symbol *s, int argc, t_atom *argv) {
             pd_error(NULL, "Image file bad format, the file must be relative to library folder and start with './'.");
         }
     }
-    py4pd_InitVisMode(x, c, py4pdArgs, 0, argc, argv, object_PY4PD_Class);
+    Py4pdPic_InitVisMode(x, c, py4pdArgs, 0, argc, argv, object_PY4PD_Class);
 
     x->outPyPointer = PyLong_AsLong(pyOUT);
     PyObject *nooutlet = PyDict_GetItemString(PdDict, "py4pdOBJnooutlet");
@@ -1113,7 +1113,7 @@ void *Py4pdLib_FreeObj(t_py *x) {
     }
 
     if (x->visMode != 0) {
-        PY4PD_free(x);
+        Py4pdPic_Free(x);
     }
     return (void *)x;
 
@@ -1300,7 +1300,7 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
             class_addmethod(localClass, (t_method)py4pdStop, gensym("stop"), 0, 0); // TODO: this conflits with pycollect
             class_addmethod(localClass, (t_method)py4pdClear, gensym("clear"), 0, 0);
         }
-        class_addmethod(localClass, (t_method)PY4PD_zoom, gensym("zoom"), A_CANT, 0);
+        class_addmethod(localClass, (t_method)Py4pdPic_Zoom, gensym("zoom"), A_CANT, 0);
         class_addmethod(localClass, (t_method)Py4pd_SetPythonPointersUsage, gensym("pointers"), A_FLOAT, 0);
         class_setsavefn(localClass, &Py4pdLib_Py4pdObjPicSave);
     }

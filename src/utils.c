@@ -1,40 +1,5 @@
 #include "py4pd.h"
 
-
-/* TODO: Rename all functions following this:
-
-https://chat.openai.com/c/9000f606-6f15-4fd3-be89-1577c2087624
-
-Py4pd_ParseLibraryArguments
-Py4pd_GetPy4pdObject
-Py4pd_ParsePy4pdArguments
-Py4pd_GetFolderName
-Py4pd_GetFilename
-Py4pd_CheckPackageNameConflict
-Py4pd_FindPy4pdFolder
-Py4pd_CreatePy4pdTempFolder
-Py4pd_GetEditorCommand
-Py4pd_ExecuteSystemCommand
-Py4pd_IsNumericOrDot
-Py4pd_RemoveChar
-Py4pd_Mtok
-Py4pd_FromSymbolSymbol
-Py4pd_PyObjectToPointer
-Py4pd_PointerToPyObject
-Py4pd_FreePyObjectData
-Py4pd_ConvertToPd
-Py4pd_ConvertToPy
-Py4pd_SetPy4pdConfig
-Py4pd_AddPdObject
-Py4pd_Gif2Base64
-Py4pd_ReadGifFile
-Py4pd_Png2Base64
-Py4pd_ReadPngFile
-Py4pd_Ntohl
-
-*/
-
-
 // ====================================================
 /*
 * @brief This function parse the arguments for pd Objects created with the library
@@ -149,7 +114,7 @@ void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
                 py4pdArgs == gensym("-score") ||
                 py4pdArgs == gensym("-pic") ||
                 py4pdArgs == gensym("-canvas")) {
-                py4pd_InitVisMode(x, c, py4pdArgs, i, argc, argv, NULL);
+                Py4pdPic_InitVisMode(x, c, py4pdArgs, i, argc, argv, NULL);
                 int j;
                 for (j = i; j < argc; j++) {
                     argv[j] = argv[j + 1];
@@ -751,7 +716,7 @@ void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet) {
                          Py_TYPE(pValue_i)->tp_name);
                 return 0;
             }
-            // Py_DECREF(pValue_i);
+
         }
         if (list_array[0].a_type == A_SYMBOL) {
             outlet_anything(outlet, list_array[0].a_w.w_symbol, listIndex - 1, list_array + 1);

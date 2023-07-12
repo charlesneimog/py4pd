@@ -98,13 +98,14 @@ typedef struct _py4pd_edit_proxy{
 // ====================================
 
 typedef struct _py { // It seems that all the objects are some kind of class.
-    t_object             x_obj; // o objeto
+    t_object              x_obj; // o objeto
     t_glist              *x_glist;
+    t_canvas             *x_canvas; // pointer to the canvas
     t_py4pd_edit_proxy   *x_proxy; // para lidar com inlets auxiliares
     
     t_int                object_number; // object number
     t_int                runmode; // arguments
-    t_int                visMode; // 1 for canvas, 2 for picture, 3 for score
+    t_int                visMode; // is vis object
     t_int                function_called; // flag to check if the set function was called
     t_int                py_arg_numbers; // number of arguments
     t_int                outPyPointer; // flag to check if is to output the python pointer
@@ -113,8 +114,8 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     // Player 
     t_clock              *playerClock;
     Dictionary           *playerDict;
-    t_int                  msOnset;
-    t_int                  playerRunning;
+    t_int                 msOnset;
+    t_int                 playerRunning;
 
     // Library
     t_int                py4pd_lib; // flag to check if is to use python library
@@ -142,24 +143,23 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int               n_channels; // number of channels
 
     // == PICTURE AND SCORE
-    t_int                 x_zoom; 
+    t_int                 x_zoom; // zoom of the patch
     t_int                 x_width;
     t_int                 x_height;
     t_int                 x_edit; // patch is in edit mode or not
     t_int                 x_init; // flag to check if the object was initialized
     t_int                 x_def_img; // flag to check if the object was initialized
     t_int                 x_sel; // flag to check if the object was selected
-    t_int                 x_size;
-    t_int                 x_latch;
     t_int                 x_numInlets;
     t_int                 x_numOutlets;
     t_int                 mouseIsOver;
     t_symbol            *x_fullname;
     t_symbol            *x_filename;
-    t_symbol            *x_x;
+    t_symbol            *x_x; // name of the tcl variable for x
     char                *x_image;
+    t_int                 x_drawIOlets; // flag to check if the inlets and outlets were created
    
-    t_canvas            *x_canvas; // pointer to the canvas
+    
 
     t_symbol            *editorName; // editor name
 
@@ -176,6 +176,83 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_outlet            *out1; // outlet 1.
     t_inlet             *in1; // intlet 1
 }t_py;
+
+/*
+typedef struct _py {
+    t_object              obj; // the object
+    t_glist              *glist;
+    t_canvas             *canvas; // pointer to the canvas
+    t_py4pd_edit_proxy   *edit_proxy; // to handle auxiliary inlets
+    
+    t_int                 object_number; // object number
+    t_int                 run_mode; // arguments
+    t_int                 visualization_object; // 1 for canvas, 2 for picture, 3 for score
+    t_int                 function_called; // flag to check if the set function was called
+    t_int                 argument_count; // number of arguments
+    t_int                 output_py_pointer; // flag to check if it is to output the Python pointer
+    t_int                 use_kwargs;
+    
+    // Player 
+    t_clock              *player_clock;
+    Dictionary           *player_dict;
+    t_int                 milliseconds_onset;
+    t_int                 player_running;
+    
+    // Library
+    t_int                 use_py4pd_library; // flag to check if it is to use the Python library
+    t_int                 py_object;
+    t_int                 ignore_on_none;
+    t_atom               *inlet_arguments; // vector to store the arguments
+    PyObject             *args_dict; // parameters
+    t_symbol             *object_name; // object name
+    
+    // PYTHON
+    PyObject             *module; // script name
+    PyObject             *function; // function name
+    PyObject             *show_function; // function to show the function
+    PyObject             *arguments_dict; // arguments
+    PyObject             *kwargs_dict; // keyword arguments
+    
+    // AUDIO AND NUMPY
+    t_int                 use_audio_output; // flag to check if it is to use audio output
+    t_int                 use_audio_input; // flag to check if it is to use audio input
+    t_int                 use_numpy_array; // flag to check if it is to use NumPy array in audio input
+    t_int                 numpy_imported; // flag to check if NumPy was imported
+    t_float               audio_buffer; // audio
+    t_int                 vector_size; // vector size
+    t_int                 number_of_channels; // number of channels
+    
+    // PICTURE AND SCORE
+    t_int                 zoom_level; // zoom of the patch
+    t_int                 width;
+    t_int                 height;
+    t_int                 edit_mode; // patch is in edit mode or not
+    t_int                 initialized; // flag to check if the object was initialized
+    t_int                 default_image; // flag to check if the object was initialized
+    t_int                 selected; // flag to check if the object was selected
+    t_int                 num_inlets;
+    t_int                 num_outlets;
+    t_int                 mouse_over;
+    t_symbol             *full_name;
+    t_symbol             *file_name;
+    t_symbol             *tcl_variable_x; // name of the Tcl variable for x
+    char                 *image_data;
+    t_symbol             *editor_name; // editor name
+    
+    // PATHS
+    t_symbol             *package_path; // packages path, where the packages are located
+    t_symbol             *pd_patch_folder; // where the patch is located
+    t_symbol             *py4pd_path; // where Py4pd object is located
+    t_symbol             *temp_path; // temporary path located in ~/.py4pd/, always deleted when Py4pd is closed
+    t_symbol             *library_folder; // where the library is located
+    
+    t_symbol             *function_name; // function name
+    t_symbol             *script_name; // script name or pathname
+    t_py4pd_outlets      *auxiliary_outlets; // outlets
+    t_outlet             *main_outlet; // outlet 1.
+    t_inlet              *main_inlet; // inlet 1
+} t_py;
+*/
 
 // =====================================
 // =========== LIBRARY OBJECT ==========
@@ -197,13 +274,9 @@ typedef struct _pyObjectData {
 } t_pyObjectData;
 
 // =====================================
-extern void Py4pd_ReloadPy4pdFunction(t_py *x);
-extern void Py4pd_SetParametersForFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
-extern void Py4pd_PrintDocs(t_py *x);
-extern void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f);
-extern void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
-extern void *Py4pd_ImportNumpyForPy4pd();
-extern void *Py4pd_Py4pdFree(t_py *x);
+void Py4pd_SetParametersForFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
+void Py4pd_PrintDocs(t_py *x);
+void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f);
 
 #define PY4PD_IMAGE "R0lGODlhKgAhAPAAAP///wAAACH5BAAAAAAAIf8LSW1hZ2VNYWdpY2sOZ2FtbWE9MC40NTQ1NDUALAAAAAAqACEAAAIkhI+py+0Po5y02ouz3rz7D4biSJbmiabqyrbuC8fyTNf2jTMFADs="
 #define PY4PDSIGTOTAL(s) ((t_int)((s)->s_length * (s)->s_nchans))
@@ -211,11 +284,8 @@ extern void *Py4pd_Py4pdFree(t_py *x);
 extern int pipePy4pdNum;
 extern int object_count; 
 
-
-// ============= METHODS ===============
-void setEditor(t_py *x, t_symbol *s, int argc, t_atom *argv);
-
 // ============= UTILITIES =============
+
 int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);
 t_py *Py4pdUtils_GetObject(void);
 void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);
@@ -243,41 +313,35 @@ void Py4pdUtils_ReadPngFile(t_py *x, const char* filename);
 uint32_t Py4pdUtils_Ntohl(uint32_t netlong);
 t_py *Py4pdUtils_GetObject(void);
 
-
 // ============= EMBEDDED MODULE =======
 extern PyMethodDef PdMethods[];
 PyMODINIT_FUNC PyInit_pd(void);
 
 // ============= PLAYER ==========
-
 void PY4PD_Player_InsertThing(t_py *x, int onset, PyObject *value);
 KeyValuePair* PY4PD_Player_GetValue(Dictionary* dictionary, int onset);
-
 void py4pdPlay(t_py *x, t_symbol *s, int argc, t_atom *argv);
 void py4pdStop(t_py *x);
 void py4pdClear(t_py *x);
 
 // ============= PIC =============
 extern t_class *py4pd_class, *pyNewObject_VIS;
-extern void PY4PD_free(t_py *x);
-extern void PY4PD_zoom(t_py *x, t_floatarg f);
-extern void py4pd_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index, int argc, t_atom *argv, t_class *obj_class);
-extern void PY4PD_erase(t_py* x, struct _glist *glist); 
-extern void PY4PD_draw(t_py* x, struct _glist *glist, t_floatarg vis);
-extern const char* PY4PD_filepath(t_py *x, const char *filename);
-
-// widget
-extern void PY4PD_getrect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2, int *yp2);
-extern void PY4PD_displace(t_gobj *z, t_glist *glist, int dx, int dy);
-extern void PY4PD_select(t_gobj *z, t_glist *glist, int state);
-extern void PY4PD_delete(t_gobj *z, t_glist *glist);
+extern void Py4pdPic_Free(t_py *x);
+extern void Py4pdPic_Zoom(t_py *x, t_floatarg f);
+extern void Py4pdPic_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index, int argc, t_atom *argv, t_class *obj_class);
+extern void Py4pdPic_Erase(t_py* x, struct _glist *glist); 
+const char *Py4pdPic_Filepath(t_py *x, const char *filename);
+extern void Py4pdPic_Draw(t_py* x, struct _glist *glist, t_floatarg vis);
+extern void Py4pdPic_GetRect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2, int *yp2);
+extern void Py4pdPic_Displace(t_gobj *z, t_glist *glist, int dx, int dy);
+extern void Py4pdPic_Select(t_gobj *z, t_glist *glist, int state);
+extern void Py4pdPic_Delete(t_gobj *z, t_glist *glist);
 
 // ============= EXTERNAL LIBRARIES =============
 extern void *Py4pdLib_FreeObj(t_py *x);
 extern PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords);
 
 
-// ===== TEST
 
 
 #endif

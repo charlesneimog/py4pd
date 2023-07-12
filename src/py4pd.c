@@ -5,33 +5,7 @@
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
 
-
-/* TODO: Rename all functions following this:
-
-https://chat.openai.com/c/9000f606-6f15-4fd3-be89-1577c2087624
-
-Py4pd_LibraryLoad
-Py4pd_Py4pdPipInstall
-Py4pd_PrintPy4pdVersion
-Py4pd_SetPy4pdHomePath
-Py4pd_SetPackages
-Py4pd_PrintModuleFunctions
-Py4pd_PrintDocs
-Py4pd_OpenScript
-Py4pd_SetEditor
-Py4pd_SetParametersForFunction
-Py4pd_ReloadPy4pdFunction
-Py4pd_SetFunction
-Py4pd_RunFunction
-Py4pd_ExecuteFunction
-Py4pd_Py4pdThread
-Py4pd_ImportNumpyForPy4pd
-Py4pd_SetPythonPointersUsage
-Py4pd_Py4pdNew
-Py4pd_Py4pdFree
-
-*/
-
+// chat gpt chat to great name functions conventions https://chat.openai.com/c/9000f606-6f15-4fd3-be89-1577c2087624
 
 // ============================================
 t_class *py4pd_class;          // For for normal objects, almost unused
@@ -1162,8 +1136,8 @@ void *Py4pd_Py4pdFree(t_py *x) {
 
         #endif
     }
-    if (x->visMode == 1) {
-        PY4PD_free(x);
+    if (x->visMode != 1) {
+        Py4pdPic_Free(x);
     }
     return (void *)x;
 }
