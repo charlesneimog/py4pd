@@ -276,7 +276,6 @@ extern int pipePy4pdNum;
 extern int object_count; 
 
 // ============= UTILITIES =============
-
 int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);
 t_py *Py4pdUtils_GetObject(void);
 void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);
@@ -302,6 +301,7 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x);
 void Py4pdUtils_ReadGifFile(t_py *x, const char* filename);
 void Py4pdUtils_ReadPngFile(t_py *x, const char* filename);
 uint32_t Py4pdUtils_Ntohl(uint32_t netlong);
+void *Py4pdLib_FreeObj(t_py *x);
 
 // ============= EMBEDDED MODULE =======
 extern PyMethodDef PdMethods[];
@@ -328,10 +328,6 @@ extern void Py4pdPic_Select(t_gobj *z, t_glist *glist, int state);
 extern void Py4pdPic_Delete(t_gobj *z, t_glist *glist);
 
 // ============= EXTERNAL LIBRARIES =============
-extern void *Py4pdLib_FreeObj(t_py *x);
 extern PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords);
-
-
-
 
 #endif
