@@ -177,6 +177,32 @@ void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
 }
 
 // ====================================================
+// ============================================
+/**
+ * @brief Free the memory of the object
+ * @param x 
+ * @return void* 
+ */
+void *Py4pdLib_FreeObj(t_py *x) {
+    object_count--;
+    if (object_count == 0) {
+        object_count = 0;
+        char command[1000];
+        #ifdef _WIN64
+            sprintf(command, "del /q /s %s\\*", x->tempPath->s_name);
+            Py4pdUtils_ExecuteSystemCommand(command);
+        #else
+            sprintf(command, "rm -rf %s", x->tempPath->s_name);
+            Py4pdUtils_ExecuteSystemCommand(command);
+        #endif
+    }
+    if (x->visMode != 0) {
+        Py4pdPic_Free(x);
+    }
+    return NULL;
+}
+
+// ====================================================
 /*
 * @brief get the folder name of something
 * @param x is the py4pd object
@@ -394,7 +420,6 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
     else{
         sprintf(completePath, "'%s/%s.py'", home, filename);
     }
-
     // check if there is .py in filename
     if (strcmp(editor, PY4PD_EDITOR) == 0) {
         sprintf(command, "%s %s", PY4PD_EDITOR, completePath);
@@ -405,7 +430,24 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
     else if (strcmp(editor, "nvim") == 0) {
         // if it is linux
         #ifdef __linux__
-            sprintf(command, "gnome-terminal -e \"nvim +%d %s\"", line, completePath);
+            char *env_var = getenv("XDG_CURRENT_DESKTOP");
+            if (env_var == NULL) {
+                pd_error(x, "[py4pd] Your desktop environment is not supported, please report.");
+                sprintf(command, "ls ");
+            }
+            else{
+                if (strcmp(env_var, "GNOME") == 0) {
+                    sprintf(command, "gnome-terminal -e \"nvim +%d %s\"", line, completePath);
+                }
+                else if (strcmp(env_var, "KDE") == 0) {
+                    pd_error(x, "[py4pd] This is untested, please report if it works.");
+                    sprintf(command, "konsole -e \"nvim +%d %s\"", line, completePath);
+                }
+                else{
+                    pd_error(x, "[py4pd] Your desktop environment %s is not supported, please report.", env_var);
+                    sprintf(command, "ls ");
+                }
+            }
         #else
             sprintf(command, "nvim +%d %s", line, completePath);
         #endif
@@ -414,10 +456,11 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
         sprintf(command, "gvim +%d %s", line, completePath);
     } 
     else if (strcmp(editor, "sublime") == 0) {
-        sprintf(command, "subl %s", completePath);
+        sprintf(command, "subl --goto %s:%d", completePath, line);
     } 
     else if (strcmp(editor, "emacs") == 0) {
-        sprintf(command, "emacs %s", completePath);
+        sprintf(command, "emacs --eval '(progn (find-file \"%s\") (goto-line %d))'", completePath, line);
+
     } 
     else {
         pd_error(x, "[py4pd] editor %s not supported.", editor);
@@ -427,30 +470,42 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
 
 // ====================================
 /*
-
-* @brief Run command and check for errors
+* @brief Run system command and check for errors
 * @param command is the command to run
 * @return void, but it prints the error if it fails
-
 */
 
+// TODO: I need to rewrite this to make it work on windows and delete all repeated code, as in free 
 void Py4pdUtils_ExecuteSystemCommand(const char *command) {
-    int result = system(command);
-    if (result == -1) {
-        post("[py4pd] %s", command);
+    #ifdef _WIN64
+        SHELLEXECUTEINFO sei = {0};
+        sei.cbSize = sizeof(sei);
+        sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+        sei.lpFile = "cmd.exe ";
+        sei.lpParameters = command;
+        sei.nShow = SW_HIDE;
+        ShellExecuteEx(&sei);
+        CloseHandle(sei.hProcess);
+        if (sei.hProcess == NULL) {
+            pd_error(NULL, "[py4pd] Failed to execute command: %s", command);
+            return;
+        }
         return;
-    }
+    #else
+        int result = system(command);
+        if (result != 0) {
+            pd_error(NULL, "[py4pd] Failed to execute command: %s", command);
+            return;
+        }
+    #endif
 }
 
 // ============================================
 /*
-
 * @brief See if str is a number or a dot
 * @param str is the string to check
 * @return 1 if it is a number or a dot, 0 otherwise
-
 */
-
 int Py4pdUtils_IsNumericOrDot(const char *str) {
     int hasDot = 0;
     while (*str) {
@@ -468,14 +523,11 @@ int Py4pdUtils_IsNumericOrDot(const char *str) {
 
 // =====================================================================
 /*
-
 * @brief Remove some char from a string
 * @param str is the string to remove the char
 * @param c is the char to remove
 * @return the string without the char
-
 */
-
 void Py4pdUtils_RemoveChar(char *str, char c) {
     int i, j;
     for (i = 0, j = 0; str[i] != '\0'; i++) {
@@ -488,6 +540,12 @@ void Py4pdUtils_RemoveChar(char *str, char c) {
 }
 
 // =====================================================================
+/*
+ * @brief Py4pdUtils_Mtok is a function separated from the tokens of one string
+ * @param input is the string to be separated
+ * @param delimiter is the string to be separated
+ * @return the string separated by the delimiter
+*/
 char *Py4pdUtils_Mtok(char *input, char *delimiter) { 
     static char *string;
     if(input != NULL)
@@ -511,17 +569,13 @@ char *Py4pdUtils_Mtok(char *input, char *delimiter) {
     return(temp);
 }
 
-
 // =====================================================================
 /*
-
 * @brief Convert and output Python Values to PureData values
 * @param x is the py4pd object
 * @param pValue is the Python value to convert
 * @return nothing, but output the value to the outlet
-
 */
-
 void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet){ 
     (void)x;
     //new and redone - Derek Kwan
@@ -572,7 +626,6 @@ void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet){
 * @brief Convert one PyObject pointer to a PureData pointer
 * @param pValue is the PyObject pointer to convert
 * @return the PureData pointer
-
 */
 void *Py4pdUtils_PyObjectToPointer(PyObject *pValue) { 
     t_pyObjectData *data = (t_pyObjectData *)malloc(sizeof(t_pyObjectData));
@@ -585,9 +638,7 @@ void *Py4pdUtils_PyObjectToPointer(PyObject *pValue) {
 * @brief Convert one PureData pointer to a PyObject pointer
 * @param p is the PureData pointer to convert
 * @return the PyObject pointer
-
 */
-
 PyObject *Py4pdUtils_PointerToPyObject(void *p) { 
     t_pyObjectData *data = (t_pyObjectData *)p;
     // get the type of data->pValue
@@ -599,7 +650,6 @@ PyObject *Py4pdUtils_PointerToPyObject(void *p) {
 * @brief Free the memory of a PyObject pointer
 * @param p is the PureData pointer to free
 */
-
 void Py4pdUtils_FreePyObjectData(void *p) { 
     t_pyObjectData *data = (t_pyObjectData *)p;
     Py_XDECREF(data->pValue);
@@ -607,6 +657,12 @@ void Py4pdUtils_FreePyObjectData(void *p) {
 }
 
 // =====================================================================
+/*
+ * @brief Run a Python function
+ * @param x is the py4pd object
+ * @param pArgs is the arguments to pass to the function
+ * @return the return value of the function
+ */
 PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) { 
     t_py *prev_obj;
     int prev_obj_exists = 0;
@@ -651,9 +707,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
 * @param x is the py4pd object
 * @param pValue is the Python value to convert
 * @return nothing, but output the value to the outlet
-
 */
-
 void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet) { 
     if (x->outPyPointer) {
         // check type of pValue
@@ -956,9 +1010,7 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
 }
 
 // ========================= PYTHON ==============================
-
 /*
-
 * @brief add PureData Object to Python Module
 * @param x is the py4pd object
 * @param capsule is the PyObject (capsule)
@@ -987,6 +1039,13 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x) {
 }
 
 // ========================= GIF ==============================
+/*
+ * @brief This function read the gif file and return the base64 string
+ * @param x is the object
+ * @param filename is the gif file name
+ * @return void
+*/
+
 static char* Py4pdUtils_Gif2Base64(const unsigned char* data, size_t dataSize) {
     const char base64Chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     size_t outputSize = 4 * ((dataSize + 2) / 3);  // Calculate the output size
@@ -1019,6 +1078,13 @@ static char* Py4pdUtils_Gif2Base64(const unsigned char* data, size_t dataSize) {
 }
 
 // ========================= GIF ==============================
+/*
+ * @brief This function read the gif file and return the base64 string
+ * @param x is the object
+ * @param filename is the gif file name
+ * @return void
+*/
+
 void Py4pdUtils_ReadGifFile(t_py *x, const char* filename){
     (void)x;
     FILE* file = fopen(filename, "rb");
@@ -1110,6 +1176,14 @@ static void Py4pdUtils_Png2Base64(const uint8_t* data, size_t input_length, char
 }
 
 // ===============================================
+/*
+ * @brief This function read the png file and convert to base64
+ * @param x is the object
+ * @param filename is the png file
+ * @return void
+
+*/
+
 void Py4pdUtils_ReadPngFile(t_py *x, const char* filename){
     FILE* file = fopen(filename, "rb");
     if (file == NULL) {
@@ -1163,30 +1237,17 @@ void Py4pdUtils_ReadPngFile(t_py *x, const char* filename){
     return;
 }
 
-
-
-
-// ========================= PIP ==============================
-/*
-
-* @brief install a python package
-* @param x is the py4pd object
-* @param package is the name of the package
-* @return 0 if success, 1 if error
-
-*/
-
-// ========================= PNG ==============================
+// ==========================================================
 
 /* 
 
-* @brief get the size of a png file
+* @brief get the size (width and height) of the png file
 * @param pngfile is the path to the png file
-* @return the size of the png file
-
+* @return the width and height of the png file
+*
 */
 
-uint32_t Py4pdUtils_Ntohl(uint32_t netlong){ 
+inline uint32_t Py4pdUtils_Ntohl(uint32_t netlong) {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     return ((netlong & 0xff) << 24) |
            ((netlong & 0xff00) << 8) |
@@ -1196,4 +1257,3 @@ uint32_t Py4pdUtils_Ntohl(uint32_t netlong){
     return netlong;
 #endif
 }
-
