@@ -12,27 +12,10 @@ void Py4pdLib_Click(t_py *x) {
     PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->function);
     int line = PyCode_Addr2Line(code, 0);
     char command[MAXPDSTRING];
-    #ifdef _WIN64
-        char *command = malloc(strlen(x->pdPatchFolder->s_name) + strlen(x->script_name->s_name) + 20);
-        command = getEditorCommand(x, 0);
-        SHELLEXECUTEINFO sei = {0};
-        sei.cbSize = sizeof(sei);
-        sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-        sei.lpFile = "cmd.exe ";
-        sei.lpParameters = command;
-        sei.nShow = SW_HIDE;
-        ShellExecuteEx(&sei);
-        CloseHandle(sei.hProcess);
-        return;
-    #else  
-        Py4pdUtils_GetEditorCommand(x, command, line);
-        Py4pdUtils_ExecuteSystemCommand(command);
-        return;
-    #endif
+    Py4pdUtils_GetEditorCommand(x, command, line);
+    Py4pdUtils_ExecuteSystemCommand(command);
+    return;
 }
-
-
-
 
 /*
 // ====================================================
@@ -1088,35 +1071,6 @@ static void *Py4pdLib_NewAudioObj(t_symbol *s, int argc, t_atom *argv) {
     }
     object_count++;
     return (x);
-}
-
-// =====================================
-void *Py4pdLib_FreeObj(t_py *x) {
-    if (object_count == 0) {
-        object_count = 0;
-        #ifdef _WIN64
-            char command[1000];
-            sprintf(command, "del /q /s %s\\*", x->tempPath->s_name);
-            SHELLEXECUTEINFO sei = {0};
-            sei.cbSize = sizeof(SHELLEXECUTEINFO);
-            sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-            sei.lpFile = "cmd.exe";
-            sei.lpParameters = command;
-            sei.nShow = SW_HIDE;
-            ShellExecuteEx(&sei);
-            CloseHandle(sei.hProcess);
-        #else
-            char command[1000];
-            sprintf(command, "rm -rf %s", x->tempPath->s_name);
-            system(command);
-        #endif
-    }
-
-    if (x->visMode != 0) {
-        Py4pdPic_Free(x);
-    }
-    return (void *)x;
-
 }
 
 // =====================================

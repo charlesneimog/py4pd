@@ -1,7 +1,5 @@
 #include "py4pd.h"
 #include "m_pd.h"
-#include "pyerrors.h"
-
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
 
@@ -94,7 +92,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
     free(pkgPathchar);
 
     // odd code, but solve the bug
-    t_py *prev_obj;
+    t_py *prev_obj = NULL;
     int prev_obj_exists = 0;
     PyObject *MainModule = PyImport_ImportModule("pd");
     PyObject *oldObjectCapsule;
@@ -196,6 +194,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
                 return -1;
             }
         }
+        Py_DECREF(pFunc);
 
         if (pValue == NULL) {
             PyObject *ptype, *pvalue, *ptraceback;
@@ -204,8 +203,12 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
             PyObject *pstr = PyObject_Str(pvalue);
             pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
             Py_XDECREF(pstr);
+            Py_XDECREF(ptype);
+            Py_XDECREF(pvalue);
+            Py_XDECREF(ptraceback);
             Py_XDECREF(pModule);
             Py_XDECREF(pFunc);
+            Py_XDECREF(pValue);
             return -1;
         }
         // odd code, but solve the bug
@@ -275,6 +278,9 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     PyObject *pipInstallResult = Py4pdUtils_RunPy(x, argTuple);
     if (pipInstallResult == NULL) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: pipinstall function failed");
+        Py_XDECREF(pipInstallResult);
+        Py_DECREF(pipInstallFunction);
+        Py_DECREF(py4pdModule);
         pd_error(x, "[Python] pipInstall: pipinstall function failed");
         PyErr_Clear();
         x->function = ObjFunction;
@@ -471,28 +477,11 @@ static void Py4pd_OpenScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         pd_error(x, "[py4pd] The script name must be a symbol");
         return;
     }
-
     x->script_name = argv[0].a_w.w_symbol;
-
-    // Open VsCode in Windows
-    #ifdef _WIN64
-        char command[MAXPDSTRING];
-        Py4pdUtils_GetEditorCommand(x, command, 0);
-        SHELLEXECUTEINFO sei = {0};
-        sei.cbSize = sizeof(sei);
-        sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-        sei.lpFile = "cmd.exe ";
-        sei.lpParameters = command;
-        sei.nShow = SW_HIDE;
-        ShellExecuteEx(&sei);
-        CloseHandle(sei.hProcess);
-        return;
-    #else  
-        char command[MAXPDSTRING];
-        Py4pdUtils_GetEditorCommand(x, command, 0);
-        Py4pdUtils_ExecuteSystemCommand(command);
-        return;
-    #endif
+    char command[MAXPDSTRING];
+    Py4pdUtils_GetEditorCommand(x, command, 0);
+    Py4pdUtils_ExecuteSystemCommand(command);
+    return;
 }
 
 // ====================================
@@ -519,27 +508,10 @@ void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->function);
     int line = PyCode_Addr2Line(code, 0);
-        
-    // Open VsCode in Windows
-    #ifdef _WIN64
-        char *command = Py4pdUtils_GetEditorCommand(x, line);
-        SHELLEXECUTEINFO sei = {0};
-        sei.cbSize = sizeof(sei);
-        sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-        sei.lpFile = "cmd.exe ";
-        sei.lpParameters = command;
-        sei.nShow = SW_HIDE;
-        ShellExecuteEx(&sei);
-        CloseHandle(sei.hProcess);
-        return;
-
-    // Not Windows OS
-    #else  // if not windows 64bits
-        char command[MAXPDSTRING]; 
-        Py4pdUtils_GetEditorCommand(x, command, line);
-        Py4pdUtils_ExecuteSystemCommand(command);
-        return;
-    #endif
+    char command[MAXPDSTRING]; 
+    Py4pdUtils_GetEditorCommand(x, command, line);
+    Py4pdUtils_ExecuteSystemCommand(command);
+    return;
 }
 
 // ====================================
@@ -1102,61 +1074,21 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     return (x);
 }
 
-// ============================================
-/**
- * @brief Free the memory of the object
- * @param x 
- * @return void* 
- */
-
-void *Py4pd_Py4pdFree(t_py *x) {
-    object_count--;
-    if (object_count == 0) {
-        // Py_Finalize();  BUG: This not work properly with submodules written in C
-        object_count = 0;
-        #ifdef _WIN64
-            char command[1000];
-            sprintf(command, "del /q /s %s\\*", x->tempPath->s_name);
-            SHELLEXECUTEINFO sei = {0};
-            sei.cbSize = sizeof(SHELLEXECUTEINFO);
-            sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-            sei.lpFile = "cmd.exe";
-            sei.lpParameters = command;
-            sei.nShow = SW_HIDE;
-            ShellExecuteEx(&sei);
-            CloseHandle(sei.hProcess);
-        #else
-            char command[1000];
-            sprintf(command, "rm -rf %s", x->tempPath->s_name);
-            int commandValue = system(command);
-            if (commandValue != 0) {
-                pd_error(NULL, "Error to free the temp folder");
-            }
-
-        #endif
-    }
-    if (x->visMode != 1) {
-        Py4pdPic_Free(x);
-    }
-    return (void *)x;
-}
-
 // ====================================================
 /**
- * @brief Setup the class
- * 
+ * @brief Setup the py4pd object
  */
 
 void py4pd_setup(void) {
     py4pd_class =
         class_new(gensym("py4pd"),  // cria o objeto quando escrevemos py4pd
                   (t_newmethod)Py4pd_Py4pdNew,  // metodo de criação do objeto
-                  (t_method)Py4pd_Py4pdFree,    // quando voce deleta o objeto
+                  (t_method)Py4pdLib_FreeObj,    // quando voce deleta o objeto
                   sizeof(t_py),  // quanta memoria precisamos para esse objeto
                   0,             // nao há uma GUI especial para esse objeto???
                   A_GIMME,       // os argumentos são um símbolo
                   0);            // fim de argumentos
-    py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)Py4pd_Py4pdNew, (t_method)Py4pd_Py4pdFree, sizeof(t_py), CLASS_NOINLET, A_GIMME, 0);
+    py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)Py4pd_Py4pdNew, (t_method)Py4pdLib_FreeObj, sizeof(t_py), CLASS_NOINLET, A_GIMME, 0);
 
     // this is like have lot of objects with the same name, add all methods for
     class_addmethod(py4pd_class, (t_method)Py4pd_SetPy4pdHomePath, gensym("home"), A_GIMME, 0);  // set home path
