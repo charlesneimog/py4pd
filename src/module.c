@@ -580,9 +580,9 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
             py4pd->x_def_img = 1;
             // py4pd->x_width = 250;
             // py4pd->x_height = 250;
-            Py4pdPic_Erase(py4pd, py4pd->x_glist);
-            sys_vgui(".x%lx.c itemconfigure %lx_picture -image PY4PD_IMAGE_{%p}\n", py4pd->x_canvas, py4pd, py4pd);
-            Py4pdPic_Draw(py4pd, py4pd->x_glist, 1);
+            Py4pdPic_Erase(py4pd, py4pd->glist);
+            sys_vgui(".x%lx.c itemconfigure %lx_picture -image PY4PD_IMAGE_{%p}\n", py4pd->canvas, py4pd, py4pd);
+            Py4pdPic_Draw(py4pd, py4pd->glist, 1);
 
 
             Py_RETURN_TRUE;
@@ -625,7 +625,7 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
             return NULL;
         }
 
-        if (glist_isvisible(py4pd->x_glist) && gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
+        if (glist_isvisible(py4pd->glist) && gobj_shouldvis((t_gobj *)py4pd, py4pd->glist)) {
             const char *file_name_open = Py4pdPic_Filepath(py4pd, filename->s_name);
             if(access(file_name_open, F_OK) == -1) {
                 pd_error(py4pd, "[Python] pd.showimage: file not found");
@@ -640,15 +640,15 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
                     py4pd->x_def_img = 0;
                 }
 
-                if (glist_isvisible(py4pd->x_glist) && gobj_shouldvis((t_gobj *)py4pd, py4pd->x_glist)) {
-                    Py4pdPic_Erase(py4pd, py4pd->x_glist);
+                if (glist_isvisible(py4pd->glist) && gobj_shouldvis((t_gobj *)py4pd, py4pd->glist)) {
+                    Py4pdPic_Erase(py4pd, py4pd->glist);
                     sys_vgui(
                         "if {[info exists %lx_picname] == 0} {image create "
                         "photo %lx_picname -file \"%s\"\n set %lx_picname "
                         "1\n}\n",
                         py4pd->x_fullname, py4pd->x_fullname, file_name_open,
                         py4pd->x_fullname);
-                    Py4pdPic_Draw(py4pd, py4pd->x_glist, 1);
+                    Py4pdPic_Draw(py4pd, py4pd->glist, 1);
                 }
             } 
             else {
@@ -705,8 +705,8 @@ static PyObject *Py4pdMod_PdZoom(PyObject *self, PyObject *args) {
 
     t_py *py4pd = Py4pdUtils_GetObject();
     int zoom;
-    if (py4pd->x_canvas != NULL) {
-        zoom = (int)py4pd->x_canvas->gl_zoom;
+    if (py4pd->canvas != NULL) {
+        zoom = (int)py4pd->canvas->gl_zoom;
     }
     else {
         pd_error(NULL, "[Python] pd.patchzoom: canvas not found");
@@ -784,7 +784,7 @@ static PyObject *Py4pdMod_PdIterate(PyObject *self, PyObject *args){
             }
             t_atom pointer_atom;
             SETPOINTER(&pointer_atom, pData);
-            outlet_anything(py4pd->x_obj.ob_outlet, gensym("PyObject"), 1, &pointer_atom);
+            outlet_anything(py4pd->obj.ob_outlet, gensym("PyObject"), 1, &pointer_atom);
         }
     }
     Py_DECREF(iter);

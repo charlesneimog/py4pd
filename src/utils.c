@@ -150,7 +150,7 @@ void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
                 x->audioOutput = 1;
                 x->audioInput = 0;
                 x->use_NumpyArray = 0;
-                x->out1 = outlet_new(&x->x_obj, gensym("signal"));  // create a signal outlet
+                x->out1 = outlet_new(&x->obj, gensym("signal"));  // create a signal outlet
                 int j;
                 for (j = i; j < argc; j++) {
                     argv[j] = argv[j + 1];
@@ -161,7 +161,7 @@ void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
                 x->audioInput = 1;
                 x->audioOutput = 1;
                 x->out1 = outlet_new(
-                    &x->x_obj, gensym("signal"));  // create a signal outlet
+                    &x->obj, gensym("signal"));  // create a signal outlet
                 x->use_NumpyArray = 0;
                 int j;
                 for (j = i; j < argc; j++) {
@@ -172,7 +172,7 @@ void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
         }
     }
     if (x->audioOutput == 0) {
-        x->out1 = outlet_new(&x->x_obj, 0);  // cria um outlet caso o objeto nao contenha audio
+        x->out1 = outlet_new(&x->obj, 0);  // cria um outlet caso o objeto nao contenha audio
     }
 }
 
@@ -306,6 +306,7 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *scr
 
 void Py4pdUtils_FindObjFolder(t_py *x){
     int libraryNotFound = 1;
+
     for (int i = 0; 1; i++){ 
         const char *pathelem = namelist_get(STUFF->st_searchpath, i);
         if (!pathelem){
@@ -325,8 +326,7 @@ void Py4pdUtils_FindObjFolder(t_py *x){
     }
     if (libraryNotFound){
         pd_error(x, "[py4pd] py4pd was not found in Search Path, this causes instabilities.");
-        x->py4pdPath = canvas_getdir(x->x_canvas);
-        //post("Canvas is %s", x->py4pdPath->s_name);
+        x->py4pdPath = canvas_getdir(x->canvas);
         return;
     }
 }

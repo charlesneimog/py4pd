@@ -505,7 +505,6 @@ static void Py4pd_OpenScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @return void, but it sets the editor
  */
 void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
-    // TODO: Not ready yet
     (void)s;
     if (argc != 0) {
         x->editorName = atom_getsymbol(argv + 0);
@@ -1039,8 +1038,8 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     } 
     else if (libraryMODE == 1 && visMODE == 0 && audioOUT == 0 && audioIN == 0) {  // library
         x = (t_py *)pd_new(py4pd_classLibrary);  
-        x->x_canvas = canvas_getcurrent();      
-        t_canvas *c = x->x_canvas;             
+        x->canvas = canvas_getcurrent();      
+        t_canvas *c = x->canvas;             
         t_symbol *patch_dir = canvas_getdir(c);
         x->runmode = 0;
         x->object_number = object_count; 
@@ -1060,8 +1059,8 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         pd_error(NULL, "Error in py4pdNew, you can not use more than one flag at the same time.");
         return NULL;
     }
-    x->x_canvas = canvas_getcurrent();      
-    t_canvas *c = x->x_canvas;             
+    x->canvas = canvas_getcurrent();      
+    t_canvas *c = x->canvas;             
     t_symbol *patch_dir = canvas_getdir(c);
     x->audioInput = 0;
     x->audioOutput = 0;

@@ -8,8 +8,8 @@ static t_class *PY4PD_edit_proxy_class;
 
 void Py4pdPic_DrawIOLet(t_py *x){
     // check if it is on edit mode
-    t_canvas *cv = glist_getcanvas(x->x_glist);
-    int xpos = text_xpix(&x->x_obj, x->x_glist), ypos = text_ypix(&x->x_obj, x->x_glist);
+    t_canvas *cv = glist_getcanvas(x->glist);
+    int xpos = text_xpix(&x->obj, x->glist), ypos = text_ypix(&x->obj, x->glist);
     
     sys_vgui(".x%lx.c delete %lx_in\n", cv, x);
     sys_vgui(".x%lx.c delete %lx_out\n", cv, x);
@@ -52,7 +52,7 @@ void Py4pdPic_DrawIOLet(t_py *x){
 const char* Py4pdPic_Filepath(t_py *x, const char *filename){
     static char fn[MAXPDSTRING];
     char *bufptr;
-    int fd = canvas_open(glist_getcanvas(x->x_glist),
+    int fd = canvas_open(glist_getcanvas(x->glist),
         filename, "", fn, &bufptr, MAXPDSTRING, 1);
     if(fd > 0){
         fn[strlen(fn)]='/';
@@ -96,14 +96,14 @@ int Py4pdPic_Click(t_py *object, struct _glist *glist, int xpos, int ypos, int s
 // =================================================
 void Py4pdPic_GetRect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2, int *yp2){
     t_py* x = (t_py*)z;
-    int xpos = *xp1 = text_xpix(&x->x_obj, glist), ypos = *yp1 = text_ypix(&x->x_obj, glist);
+    int xpos = *xp1 = text_xpix(&x->obj, glist), ypos = *yp1 = text_ypix(&x->obj, glist);
     *xp2 = xpos + x->x_width, *yp2 = ypos + x->x_height;
 }
 
 // =================================================
 void Py4pdPic_Displace(t_gobj *z, t_glist *glist, int dx, int dy){
     t_py *obj = (t_py *)z;
-    obj->x_obj.te_xpix += dx, obj->x_obj.te_ypix += dy;
+    obj->obj.te_xpix += dx, obj->obj.te_ypix += dy;
     t_canvas *cv = glist_getcanvas(glist);
     sys_vgui(".x%lx.c move %lx_outline %d %d\n", cv, obj, dx * obj->x_zoom, dy * obj->x_zoom);
     sys_vgui(".x%lx.c move %lx_picture %d %d\n", cv, obj, dx * obj->x_zoom, dy * obj->x_zoom);
@@ -116,8 +116,8 @@ void Py4pdPic_Displace(t_gobj *z, t_glist *glist, int dx, int dy){
 // =================================================
 void Py4pdPic_Select(t_gobj *z, t_glist *glist, int state){
     t_py *x = (t_py *)z;
-    int xpos = text_xpix(&x->x_obj, glist);
-    int ypos = text_ypix(&x->x_obj, glist);
+    int xpos = text_xpix(&x->obj, glist);
+    int ypos = text_ypix(&x->obj, glist);
     t_canvas *cv = glist_getcanvas(glist);
     x->x_sel = state;
     if(state){
@@ -138,7 +138,7 @@ void Py4pdPic_Select(t_gobj *z, t_glist *glist, int state){
 void Py4pdPic_Delete(t_gobj *z, t_glist *glist){
     t_py *x = (t_py *)z;
     canvas_deletelinesfor(glist, (t_text *)z);
-    t_canvas *cv = glist_getcanvas(x->x_glist);
+    t_canvas *cv = glist_getcanvas(x->glist);
     
     sys_vgui("if {[info exists %lx_in] == 1} {delete %lx_in}\n", cv, x);
     sys_vgui("if {[info exists %lx_out] == 1} {delete %lx_out}\n", cv, x);
@@ -149,8 +149,8 @@ void Py4pdPic_Delete(t_gobj *z, t_glist *glist){
 void Py4pdPic_Draw(t_py* x, struct _glist *glist, t_floatarg vis){
 
     t_canvas *cv = glist_getcanvas(glist);
-    int xpos = text_xpix(&x->x_obj, x->x_glist), ypos = text_ypix(&x->x_obj, x->x_glist);
-    int visible = (glist_isvisible(x->x_glist) && gobj_shouldvis((t_gobj *)x, x->x_glist));
+    int xpos = text_xpix(&x->obj, x->glist), ypos = text_ypix(&x->obj, x->glist);
+    int visible = (glist_isvisible(x->glist) && gobj_shouldvis((t_gobj *)x, x->glist));
     if(x->x_def_img && (visible || vis)){ // TODO: REMOVE THIS, THERE IS JUST ONE STATIC IMAGE
         sys_vgui(".x%lx.c create image %d %d -anchor nw -tags %lx_picture\n", cv, xpos, ypos, x);
         sys_vgui(".x%lx.c itemconfigure %lx_picture -image PY4PD_IMAGE_{%p}\n", cv, x, x);
@@ -228,8 +228,8 @@ void Py4pdPic_EditProxyAny(t_py4pd_edit_proxy *p, t_symbol *s, int ac, t_atom *a
         int mouse_y = (av+1)->a_w.w_float; // vertical coordinate 
 
         // Get object position
-        int obj_x = p->p_cnv->x_obj.te_xpix * p->p_cnv->x_zoom;
-        int obj_y = p->p_cnv->x_obj.te_ypix * p->p_cnv->x_zoom;
+        int obj_x = p->p_cnv->obj.te_xpix * p->p_cnv->x_zoom;
+        int obj_y = p->p_cnv->obj.te_ypix * p->p_cnv->x_zoom;
 
         // Get object size
         int obj_width = p->p_cnv->x_width;
@@ -263,10 +263,10 @@ void Py4pdPic_EditProxyAny(t_py4pd_edit_proxy *p, t_symbol *s, int ac, t_atom *a
 
         if(p->p_cnv->x_edit != edit){
             p->p_cnv->x_edit = edit;
-            t_canvas *cv = glist_getcanvas(p->p_cnv->x_glist);
+            t_canvas *cv = glist_getcanvas(p->p_cnv->glist);
             if(edit){
-                int x = text_xpix(&p->p_cnv->x_obj, p->p_cnv->x_glist);
-                int y = text_ypix(&p->p_cnv->x_obj, p->p_cnv->x_glist);
+                int x = text_xpix(&p->p_cnv->obj, p->p_cnv->glist);
+                int y = text_ypix(&p->p_cnv->obj, p->p_cnv->glist);
                 int w = p->p_cnv->x_width;
                 int h = p->p_cnv->x_height;
                 sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline black -width %d\n",
@@ -303,7 +303,7 @@ void Py4pdPic_Free(t_py *x){ // delete if variable is unset and image is unused
 
     // check if is necessary to pd_unbind()
     if (x->x_proxy){
-        pd_unbind(&x->x_obj.ob_pd, x->x_x);
+        pd_unbind(&x->obj.ob_pd, x->x_x);
     }
     
     clock_delay(x->x_proxy->p_clock, 0);
@@ -461,8 +461,8 @@ void Py4pdPic_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
 
     class_setwidget(obj_class, &py4pd_widgetbehavior);
     t_canvas *cv = canvas_getcurrent();
-    x->x_glist = (t_glist *)cv;
-    x->x_zoom = x->x_glist->gl_zoom;
+    x->glist = (t_glist *)cv;
+    x->x_zoom = x->glist->gl_zoom;
     char buf[MAXPDSTRING];
     #ifdef _WIN64
         snprintf(buf, MAXPDSTRING - 1, ".x%llx", (uintptr_t)cv);
@@ -481,7 +481,7 @@ void Py4pdPic_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
     #endif
     x->x_x = gensym(buf);
 
-    pd_bind(&x->x_obj.ob_pd, x->x_x);
+    pd_bind(&x->obj.ob_pd, x->x_x);
 
     x->x_edit = cv->gl_edit;
     x->x_filename = &s_;

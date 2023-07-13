@@ -38,7 +38,7 @@ void Py4pdLib_Click(t_py *x) {
 // ====================================================
 void Py4pdLib_CreateObjOutlets(PyObject *function, t_py *x, int argc, t_atom *argv){
      if (nooutlet_int == 0){
-            x->out1 = outlet_new(&x->x_obj, 0);
+            x->out1 = outlet_new(&x->obj, 0);
         }
         PyObject *AuxOutletPy = PyDict_GetItemString(PdDict, "py4pdAuxOutlets");
         int AuxOutlet = PyLong_AsLong(AuxOutletPy);
@@ -62,7 +62,7 @@ void Py4pdLib_CreateObjOutlets(PyObject *function, t_py *x, int argc, t_atom *ar
         int i;
 
         for (i = 0, u = x->outAUX, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
-            u->u_outlet = outlet_new(&x->x_obj, &s_anything);
+            u->u_outlet = outlet_new(&x->obj, &s_anything);
         }
     }
 
@@ -197,9 +197,9 @@ void Py4pdLib_SetKwargs(t_py *x, t_symbol *s, int ac, t_atom *av){
 void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b){ 
     t_py *x = (t_py *)z;
     if (x->visMode){
-        binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->x_obj.te_xpix, x->x_obj.te_ypix);
-        binbuf_addbinbuf(b, ((t_py *)x)->x_obj.te_binbuf);
-        int objAtomsCount = binbuf_getnatom(((t_py *)x)->x_obj.te_binbuf);
+        binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->obj.te_xpix, x->obj.te_ypix);
+        binbuf_addbinbuf(b, ((t_py *)x)->obj.te_binbuf);
+        int objAtomsCount = binbuf_getnatom(((t_py *)x)->obj.te_binbuf);
         if (objAtomsCount == 1){
             binbuf_addv(b, "ii", x->x_width, x->x_height);
         }
@@ -670,8 +670,8 @@ static void *Py4pdLib_NewNormalObj(t_symbol *s, int argc, t_atom *argv) {
     t_py *x = (t_py *)pd_new(object_PY4PD_Class);
     x->visMode  = 0;
     x->pyObject = 1;
-    x->x_canvas = canvas_getcurrent();       // pega o canvas atual
-    t_canvas *c = x->x_canvas;
+    x->canvas = canvas_getcurrent();       // pega o canvas atual
+    t_canvas *c = x->canvas;
     t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
     x->objectName = gensym(objectName);
     // ================================
@@ -700,7 +700,7 @@ static void *Py4pdLib_NewNormalObj(t_symbol *s, int argc, t_atom *argv) {
     Py4pdLib_CreateObjInlets(pyFunction, x, argc, argv);
 
     // if (x->x_numOutlets == -1){
-        x->out1 = outlet_new(&x->x_obj, 0);
+        x->out1 = outlet_new(&x->obj, 0);
     // }
     PyObject *AuxOutletPy = PyDict_GetItemString(PdDict, "py4pdAuxOutlets");
     int AuxOutlet = PyLong_AsLong(AuxOutletPy);
@@ -724,7 +724,7 @@ static void *Py4pdLib_NewNormalObj(t_symbol *s, int argc, t_atom *argv) {
     int i;
 
     for (i = 0, u = x->outAUX, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
-        u->u_outlet = outlet_new(&x->x_obj, &s_anything);
+        u->u_outlet = outlet_new(&x->obj, &s_anything);
     }
     object_count++;
     return (x);
@@ -758,8 +758,8 @@ static void *Py4pdLib_NewVisualObj(t_symbol *s, int argc, t_atom *argv) {
 
     x->pyObject = 1;
     x->visMode  = 1;
-    x->x_canvas = canvas_getcurrent();       // pega o canvas atual
-    t_canvas *c = x->x_canvas;               // get the current canvas
+    x->canvas = canvas_getcurrent();       // pega o canvas atual
+    t_canvas *c = x->canvas;               // get the current canvas
     t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
     x->x_image = PY4PD_IMAGE;
 
@@ -849,7 +849,7 @@ static void *Py4pdLib_NewVisualObj(t_symbol *s, int argc, t_atom *argv) {
     }
     Py4pdLib_CreateObjInlets(pyFunction, x, argc, argv);
     if (nooutlet_int == 0){
-        x->out1 = outlet_new(&x->x_obj, 0);
+        x->out1 = outlet_new(&x->obj, 0);
     }
     object_count++;
     return (x);
@@ -885,8 +885,8 @@ static void *Py4pdLib_NewAudioInputObj(t_symbol *s, int argc, t_atom *argv) {
     x->pyObject = 1;
     x->visMode  = 1;
     x->objectName = gensym(objectName);
-    x->x_canvas = canvas_getcurrent();       // pega o canvas atual
-    t_canvas *c = x->x_canvas;               // get the current canvas
+    x->canvas = canvas_getcurrent();       // pega o canvas atual
+    t_canvas *c = x->canvas;               // get the current canvas
     t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
 
     PyObject *pyFunction = PyDict_GetItemString(PdDict, "py4pdOBJFunction");
@@ -915,7 +915,7 @@ static void *Py4pdLib_NewAudioInputObj(t_symbol *s, int argc, t_atom *argv) {
     }
     Py4pdLib_CreateObjInlets(pyFunction, x, argc, argv);
     if (nooutlet_int == 0){
-        x->out1 = outlet_new(&x->x_obj, 0);
+        x->out1 = outlet_new(&x->obj, 0);
     }
     // check if numpy array is imported
     int numpyArrayImported = _import_array();
@@ -961,8 +961,8 @@ static void *Py4pdLib_NewAudioOutputObj(t_symbol *s, int argc, t_atom *argv) {
     x->pyObject = 1;
     x->audioInput = 0;
     x->audioOutput = 1;
-    x->x_canvas = canvas_getcurrent();       // pega o canvas atual
-    t_canvas *c = x->x_canvas;               // get the current canvas
+    x->canvas = canvas_getcurrent();       // pega o canvas atual
+    t_canvas *c = x->canvas;               // get the current canvas
     t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
     x->objectName = gensym(objectName);
@@ -996,7 +996,7 @@ static void *Py4pdLib_NewAudioOutputObj(t_symbol *s, int argc, t_atom *argv) {
     }
     Py4pdLib_CreateObjInlets(pyFunction, x, argc, argv);
     if (nooutlet_int == 0){
-        x->out1 = outlet_new(&x->x_obj, &s_signal);
+        x->out1 = outlet_new(&x->obj, &s_signal);
     }
     // check if numpy array is imported
     int numpyArrayImported = _import_array();
@@ -1043,8 +1043,8 @@ static void *Py4pdLib_NewAudioObj(t_symbol *s, int argc, t_atom *argv) {
     x->pyObject = 1;
     x->audioOutput = 1;
     x->audioInput = 1;
-    x->x_canvas = canvas_getcurrent();       // pega o canvas atual
-    t_canvas *c = x->x_canvas;               // get the current canvas
+    x->canvas = canvas_getcurrent();       // pega o canvas atual
+    t_canvas *c = x->canvas;               // get the current canvas
     t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
     x->objectName = gensym(objectName);
@@ -1074,7 +1074,7 @@ static void *Py4pdLib_NewAudioObj(t_symbol *s, int argc, t_atom *argv) {
     }
     Py4pdLib_CreateObjInlets(pyFunction, x, argc, argv);
     if (nooutlet_int == 0){
-        x->out1 = outlet_new(&x->x_obj, &s_signal);
+        x->out1 = outlet_new(&x->obj, &s_signal);
     }
     // check if numpy array is imported
     int numpyArrayImported = _import_array();

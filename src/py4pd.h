@@ -9,17 +9,9 @@
 #define PY_SSIZE_T_CLEAN // Remove deprecated functions
 #include <Python.h>
 
-#ifdef _WIN64 
-    #include <windows.h>  
-#else
-    #include <fcntl.h> // For pipes, TODO: Remove this
-#endif
-
 #ifdef __linux__
     #define __USE_GNU
 #endif
-
-#include <dlfcn.h> // for RTLD_LAZY, RTLD_NOW, RTLD_GLOBAL (find where is the root of the object)
 
 #define PY4PD_MAJOR_VERSION 0
 #define PY4PD_MINOR_VERSION 8
@@ -98,10 +90,9 @@ typedef struct _py4pd_edit_proxy{
 // ====================================
 
 typedef struct _py { // It seems that all the objects are some kind of class.
-    t_object              x_obj; // o objeto
-    t_glist              *x_glist;
-    t_canvas             *x_canvas; // pointer to the canvas
-    t_py4pd_edit_proxy   *x_proxy; // para lidar com inlets auxiliares
+    t_object              obj; // o objeto
+    t_glist              *glist;
+    t_canvas             *canvas; // pointer to the canvas
     
     t_int                object_number; // object number
     t_int                runmode; // arguments
@@ -138,41 +129,41 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int               audioInput; // flag to check if is to use audio input
     t_int               use_NumpyArray; // flag to check if is to use numpy array in audioInput
     t_int               numpyImported; // flag to check if numpy was imported
-    t_float             py4pdAudio; // audio
+    t_float             py4pdAudio; // audio to fe used in CLASSMAINSIGIN
     t_int               vectorSize; // vector size
     t_int               n_channels; // number of channels
 
-    // == PICTURE AND SCORE
-    t_int                 x_zoom; // zoom of the patch
-    t_int                 x_width;
-    t_int                 x_height;
-    t_int                 x_edit; // patch is in edit mode or not
-    t_int                 x_init; // flag to check if the object was initialized
-    t_int                 x_def_img; // flag to check if the object was initialized
-    t_int                 x_sel; // flag to check if the object was selected
-    t_int                 x_numInlets;
-    t_int                 x_numOutlets;
-    t_int                 mouseIsOver;
+    // Pic Object
+    t_int               x_zoom; // zoom of the patch
+    t_int               x_width;
+    t_int               x_height;
+    t_int               x_edit; // patch is in edit mode or not
+    t_int               x_init; // flag to check if the object was initialized
+    t_int               x_def_img; // flag to check if the object was initialized
+    t_int               x_sel; // flag to check if the object was selected
+    t_int               x_numInlets;
+    t_int               x_numOutlets;
+    t_int               mouseIsOver;
     t_symbol            *x_fullname;
     t_symbol            *x_filename;
     t_symbol            *x_x; // name of the tcl variable for x
     char                *x_image;
-    t_int                 x_drawIOlets; // flag to check if the inlets and outlets were created
-   
-    
+    t_int               x_drawIOlets; // flag to check if the inlets and outlets were created
 
-    t_symbol            *editorName; // editor name
-
-    // == PATHS
+    // Paths
     t_symbol            *pkgPath; // packages path, where the packages are located
     t_symbol            *pdPatchFolder; // where the patch is located
     t_symbol            *py4pdPath; // where py4pd object is located
     t_symbol            *tempPath; // temp path located in ~/.py4pd/, always is deleted when py4pd is closed
     t_symbol            *libraryFolder; // where the library is located
 
+    // == EDITOR
     t_symbol            *function_name; // function name
     t_symbol            *script_name; // script name or pathname
+    t_symbol            *editorName; // editor name
     t_py4pd_Outlets     *outAUX; // outlets
+    t_py4pd_edit_proxy  *x_proxy; // para lidar com inlets auxiliares
+
     t_outlet            *out1; // outlet 1.
     t_inlet             *in1; // intlet 1
 }t_py;
@@ -195,13 +186,13 @@ typedef struct _py {
     // Player 
     t_clock              *player_clock;
     Dictionary           *player_dict;
-    t_int                 milliseconds_onset;
+    t_int                 ms_onset;
     t_int                 player_running;
     
     // Library
     t_int                 use_py4pd_library; // flag to check if it is to use the Python library
-    t_int                 py_object;
-    t_int                 ignore_on_none;
+    t_int                 is_py4pd_object; 
+    t_int                 ignore_none;
     t_atom               *inlet_arguments; // vector to store the arguments
     PyObject             *args_dict; // parameters
     t_symbol             *object_name; // object name
@@ -311,7 +302,6 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x);
 void Py4pdUtils_ReadGifFile(t_py *x, const char* filename);
 void Py4pdUtils_ReadPngFile(t_py *x, const char* filename);
 uint32_t Py4pdUtils_Ntohl(uint32_t netlong);
-t_py *Py4pdUtils_GetObject(void);
 
 // ============= EMBEDDED MODULE =======
 extern PyMethodDef PdMethods[];
