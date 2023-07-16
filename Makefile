@@ -8,7 +8,7 @@ ifeq (MINGW,$(findstring MINGW,$(uname)))
 	PYTHON_INCLUDE := $(shell cat pythonincludes.txt)
 	PYTHON_PATH := $(shell cat pythonpath.txt)
 	NUMPY_INCLUDE := $(shell cat numpyincludes.txt)
-	PYTHON_DLL := $(PYTHON_PATH)/python310.dll
+	PYTHON_DLL := $(PYTHON_PATH)/python311.dll
 	cflags = -l dl -I '$(PYTHON_INCLUDE)' -I '$(NUMPY_INCLUDE)' -Wno-cast-function-type -Wno-unused-variable -DPY4PD_EDITOR=\"nvim\"
 	ldlibs =  '$(PYTHON_DLL)' -l dl -lwinpthread -Xlinker --export-all-symbols
 
