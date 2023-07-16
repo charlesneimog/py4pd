@@ -48,7 +48,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
             }
             char library_path[MAXPDSTRING];
             snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, script_file_name->s_name); 
-            // NOTE: The library folder must have the same name as the library file
+            /* The library folder must have the same name as the library file */
             if (access(library_path, F_OK) != -1) {
                 libraryNotFound = 0;
                 PyObject *library_path_py = PyUnicode_FromString(library_path);
@@ -112,14 +112,20 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
 
     if (objectCapsule == NULL){
         pd_error(x, "[Python] Failed to add object to Python");
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyObject *ptype_str = PyObject_Str(ptype);
+        PyObject *pvalue_str = PyObject_Str(pvalue);
+        PyObject *ptraceback_str = PyObject_Str(ptraceback);
+        const char *ptype_c = PyUnicode_AsUTF8(ptype_str);
+        const char *pvalue_c = PyUnicode_AsUTF8(pvalue_str);
+        const char *ptraceback_c = PyUnicode_AsUTF8(ptraceback_str);
+        pd_error(x, "[Python] %s: %s\n%s", ptype_c, pvalue_c, ptraceback_c);
         return -1;
     }
-
     pModule = PyImport_ImportModule(script_file_name->s_name);  // Import the script file
-    
     if (pModule == NULL){
         pd_error(x, "[Python] Failed to load script file %s", script_file_name->s_name);
-        // get error
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
@@ -823,7 +829,7 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     pValue = Py4pdUtils_RunPy(x, ArgsTuple); 
 
     if (pValue != NULL) {  // check if the function returned something
-        Py4pdUtils_ConvertToPd(x, pValue, x->out1);  
+        Py4pdUtils_ConvertToPd(x, pValue, x->out1); 
     } 
     else {                             
         PyObject *ptype, *pvalue, *ptraceback;

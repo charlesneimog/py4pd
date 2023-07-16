@@ -104,13 +104,18 @@ void Py4pdLib_PlayTick(t_py *x){
     if (x->playerDict->lastOnset > x->msOnset){
         clock_delay(x->playerClock, 1);
     }
+    PyObject* copyModule = PyImport_ImportModule("copy");
+    PyObject* deepcopyFunc = PyObject_GetAttrString(copyModule, "deepcopy");
     KeyValuePair* entry = Py4pdLib_PlayerGetValue(x->playerDict, x->msOnset);
     if (entry != NULL) {
         for (int i = 0; i < entry->size; i++) {
-            PyObject* value = entry->values[i];
-            Py4pdUtils_ConvertToPd(x, value, x->out1);
+            PyObject* value = entry->values[i]; 
+            PyObject* pValue = PyObject_CallFunctionObjArgs(deepcopyFunc, value, NULL);
+            Py4pdUtils_ConvertToPd(x, pValue, x->out1);
         }
     }
+    Py_DECREF(copyModule);
+    Py_DECREF(deepcopyFunc);
 }
 
 // ====================================================== 

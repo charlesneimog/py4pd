@@ -151,7 +151,7 @@ void Py4pdPic_Draw(t_py* x, struct _glist *glist, t_floatarg vis){
     t_canvas *cv = glist_getcanvas(glist);
     int xpos = text_xpix(&x->obj, x->glist), ypos = text_ypix(&x->obj, x->glist);
     int visible = (glist_isvisible(x->glist) && gobj_shouldvis((t_gobj *)x, x->glist));
-    if(x->x_def_img && (visible || vis)){ // TODO: REMOVE THIS, THERE IS JUST ONE STATIC IMAGE
+    if(x->x_def_img && (visible || vis)){ 
         sys_vgui(".x%lx.c create image %d %d -anchor nw -tags %lx_picture\n", cv, xpos, ypos, x);
         sys_vgui(".x%lx.c itemconfigure %lx_picture -image PY4PD_IMAGE_{%p}\n", cv, x, x);
     }

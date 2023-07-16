@@ -1,5 +1,5 @@
-#include "m_pd.h"
 #include "py4pd.h"
+#include "tupleobject.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
@@ -9,38 +9,35 @@
 // ======== py4pd embbeded module =======
 // ======================================
 
-static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywords){
-    (void)keywords;
+
+// pd.get_outlet_count()
+static PyObject *Py4pdMod_PdGetOutCount(PyObject *self, PyObject *args){
     (void)self;
-    
+    (void)args;
     t_py *py4pd = Py4pdUtils_GetObject();
     if (py4pd == NULL){
-        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        pd_error(NULL, "[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
+    return PyLong_FromLong(py4pd->outAUX->u_outletNumber);
+}
+
+
+
+static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywords){
+    (void)self;
+
+    // print the python line string where this function was called
+    if (PyTuple_Size(args) == 1) {
+        args = PyTuple_GetItem(args, 0);
+    }
+
+    t_py *py4pd = Py4pdUtils_GetObject();
+    if (py4pd == NULL){
+        pd_error(NULL, "[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
         return NULL;
     }
 
-    if (keywords != NULL) { // special case for py.iterate
-        PyObject *pyiterate = PyDict_GetItemString(keywords, "pyiterate"); // it gets the data type output
-        PyObject *pycollect = PyDict_GetItemString(keywords, "pycollect"); // it gets the data type output
-        PyObject *pyout = PyDict_GetItemString(keywords, "pyout"); // it gets the data type output
-        if (pyiterate == Py_True || pycollect == Py_True || pyout == Py_True) {
-            py4pd->outPyPointer = 1;
-            PyObject *copyModule = PyImport_ImportModule("copy");
-            PyObject *deepcopyFunction = PyObject_GetAttrString(copyModule, "deepcopy");
-            PyObject *argsTuple = PyTuple_Pack(1, args);
-            PyObject *newObject = PyObject_CallObject(deepcopyFunction, argsTuple);
-            PyObject *element = PyTuple_GetItem(newObject, 0);
-            Py4pdUtils_ConvertToPd(py4pd, element, py4pd->out1);
-            py4pd->outPyPointer = 0;
-            Py_DECREF(copyModule);
-            Py_DECREF(deepcopyFunction);
-            Py_DECREF(argsTuple);
-            Py_DECREF(newObject);
-            Py_DECREF(element);
-            return Py_True;
-        }
-    }
-    // check for outlet key
     if (keywords != NULL && py4pd->outAUX != NULL){
         PyObject *outletNumber = PyDict_GetItemString(keywords, "out_n"); // it gets the data type output
         if (outletNumber == NULL){
@@ -74,8 +71,7 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
     else{
         Py4pdUtils_ConvertToPd(py4pd, args, py4pd->out1);
     }
-
-    return Py_True;
+    Py_RETURN_TRUE; 
 }
 
 // =================================
@@ -314,7 +310,7 @@ static PyObject *Py4pdMod_PdSend(PyObject *self, PyObject *args) {
                 free(list_array);
                 return NULL;
             }
-            Py_DECREF(pValue_i);
+            // Py_DECREF(pValue_i);
         }
         if (gensym(receiver)->s_thing) {
             pd_list(gensym(receiver)->s_thing, &s_list, list_size, list_array);
@@ -335,6 +331,39 @@ static PyObject *Py4pdMod_PdSend(PyObject *self, PyObject *args) {
     }
     PyErr_Clear();
     return PyLong_FromLong(0);
+}
+
+// =================================
+static void Py4pdMod_DelayTick(t_py *x){
+    if (x->msOnset == 0){
+        // clock_setunit(x->playerClock, 1, 1);
+        clock_delay(x->playerClock, 1);
+        x->msOnset = 1;
+    }
+    else{
+        PyObject* copyModule = PyImport_ImportModule("copy");
+        PyObject* deepcopyFunc = PyObject_GetAttrString(copyModule, "deepcopy");
+        PyObject* pArgsCopy = PyObject_CallFunctionObjArgs(deepcopyFunc, PyTuple_GetItem(x->delayArgs, 0), NULL);
+        void *pData = Py4pdUtils_PyObjectToPointer(pArgsCopy);
+        t_atom pointer_atom;
+        SETPOINTER(&pointer_atom, pData);
+        outlet_anything(x->out1, gensym("PyObject"), 2, &pointer_atom);
+        // Py_DECREF(copyModule);
+        // Py_DECREF(deepcopyFunc);
+    }
+}
+
+// =================================
+static PyObject *Py4pdMod_Recursive(PyObject *self, PyObject *args) {
+    (void)self;
+    t_py *x = Py4pdUtils_GetObject();
+    x->msOnset = 0;
+    // create tuple of args
+    x->delayArgs = PyTuple_New(1);
+    PyTuple_SetItem(x->delayArgs, 0, PyTuple_GetItem(args, 0));
+    x->playerClock = clock_new(x, (t_method)Py4pdMod_DelayTick);
+    Py4pdMod_DelayTick(x);
+    Py_RETURN_TRUE;
 }
 
 // =================================
@@ -419,9 +448,7 @@ static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args, PyObject *ke
     int numpy;
 
     // ================================
-    PyObject *pd_module = PyImport_ImportModule("pd");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    t_py *py4pd = Py4pdUtils_GetObject();
     // ================================
 
     if (keywords == NULL) {
@@ -748,6 +775,7 @@ static PyObject *Py4pdMod_PdKey(PyObject *self, PyObject *args) {
     return value;
 }
 
+/*
 // =================================
 static PyObject *Py4pdMod_PdIterate(PyObject *self, PyObject *args){
     (void)self;
@@ -760,26 +788,26 @@ static PyObject *Py4pdMod_PdIterate(PyObject *self, PyObject *args){
         return NULL;
     }
 
-    if (!PyTuple_Check(args)) {
-        PyErr_SetString(PyExc_TypeError, "pditerate() argument must be a tuple");
+    // check if len(args) == 1
+    if (PyTuple_Size(args) != 1) {
+        PyErr_SetString(PyExc_TypeError, "pd.iterate() takes exactly 1 argument");
         return NULL;
     }
+
+    args = PyTuple_GetItem(args, 0);
+
+
     iter = PyObject_GetIter(args);
     if (iter == NULL) {
-        PyErr_SetString(PyExc_TypeError, "pditerate() argument must be iterable");
+        PyErr_SetString(PyExc_TypeError, "pd.iterate() argument must be iterable");
         return NULL;
     }
     while ((item = PyIter_Next(iter))) {
-        if (!PyList_Check(item)) {
-            PyErr_SetString(PyExc_TypeError, "pditerate() argument must be a list");
-            return NULL;
-        }
-        // get item size
         int size = PyList_Size(item);
         for (int i = 0; i < size; i++) {
             PyObject *out_args = PyList_GetItem(item, i);
             void *pData = Py4pdUtils_PyObjectToPointer(out_args);
-            if (Py_REFCNT(out_args) == 1) { // TODO: think about how will clear this
+            if (Py_REFCNT(out_args) == 1) { 
                 Py_INCREF(out_args);
             }
             t_atom pointer_atom;
@@ -790,6 +818,7 @@ static PyObject *Py4pdMod_PdIterate(PyObject *self, PyObject *args){
     Py_DECREF(iter);
     Py_RETURN_NONE;
 }
+*/
 
 // =================================
 static PyObject *Py4pdMod_GetObjPointer(PyObject *self, PyObject *args){
@@ -976,6 +1005,7 @@ PyMethodDef PdMethods[] = {
     {"samplerate", Py4pdMod_PdSampleRate, METH_NOARGS, "Get PureData SampleRate"},
     {"vecsize", Py4pdMod_PdVecSize, METH_NOARGS, "Get PureData Vector Size"},
     {"patchzoom", Py4pdMod_PdZoom, METH_NOARGS, "Get Patch zoom"},
+    {"get_out_count", Py4pdMod_PdGetOutCount, METH_NOARGS, "Get the Number of Outlets of one object."},
 
     // library methods
     {"addobject", (PyCFunction)Py4pdLib_AddObj, METH_VARARGS | METH_KEYWORDS, "It adds python functions as objects"},
@@ -984,7 +1014,10 @@ PyMethodDef PdMethods[] = {
     {"pipinstall", Py4pdMod_PipInstall, METH_VARARGS, "It installs a pip package"},
 
     // OpenMusic Methods
-    {"iterate", Py4pdMod_PdIterate, METH_VARARGS, "It iterates throw one list of PyObjects"},
+    // {"iterate", Py4pdMod_PdIterate, METH_VARARGS, "It iterates throw one list of PyObjects"},
+
+    // Py4pdMod_Recursive
+    {"recursive", Py4pdMod_Recursive, METH_VARARGS, "It set recursive mode for the object"},
 
     // Others
     {"getobjpointer", Py4pdMod_GetObjPointer, METH_NOARGS, "Get PureData Object Pointer"},
@@ -1053,4 +1086,4 @@ PyMODINIT_FUNC PyInit_pd() {
     return py4pdmodule;
 }
 
-// ====================
+// =============================

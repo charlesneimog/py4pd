@@ -47,9 +47,6 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_at
                         argv[j] = argv[j + 2];
                     }
                 }
-                // else{
-                    // pd_error(NULL, "[py4pd] -ch or -channels needs a number as argument");
-                    // return 0; // TODO: Change this to -1 for consistency
             }
         }
     }
@@ -73,26 +70,6 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_at
     return 1; 
 }
 
-
-// ====================================================
-/*
-* @brief This function parse the arguments for the py4pd object
-* @param x is the py4pd object
-* @param c is the canvas of the object
-* @param argc is the number of arguments
-* @param argv is the arguments
-* @return return void
-*/
-
-t_py *Py4pdUtils_GetObject(void){
-    PyObject *pd_module = PyImport_ImportModule("pd");
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    if (py4pd_capsule == NULL){
-        return NULL;
-    }
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-    return py4pd;
-}
 
 // ====================================================
 /*
@@ -475,7 +452,6 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
 * @return void, but it prints the error if it fails
 */
 
-// TODO: I need to rewrite this to make it work on windows and delete all repeated code, as in free 
 void Py4pdUtils_ExecuteSystemCommand(const char *command) {
     #ifdef _WIN64
         SHELLEXECUTEINFO sei = {0};
@@ -627,10 +603,9 @@ void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet){
 * @param pValue is the PyObject pointer to convert
 * @return the PureData pointer
 */
-void *Py4pdUtils_PyObjectToPointer(PyObject *pValue) { 
-    t_pyObjectData *data = (t_pyObjectData *)malloc(sizeof(t_pyObjectData));
-    data->pValue = pValue;
-    return (void *)data;
+PyObject *Py4pdUtils_PyObjectToPointer(PyObject *pValue) {
+    PyObject *pValuePointer = PyLong_FromVoidPtr(pValue);
+    return pValuePointer;
 }
 
 // =====================================================================
@@ -639,21 +614,30 @@ void *Py4pdUtils_PyObjectToPointer(PyObject *pValue) {
 * @param p is the PureData pointer to convert
 * @return the PyObject pointer
 */
-PyObject *Py4pdUtils_PointerToPyObject(void *p) { 
-    t_pyObjectData *data = (t_pyObjectData *)p;
-    // get the type of data->pValue
-    return data->pValue;
+PyObject *Py4pdUtils_PointerToPyObject(PyObject *p) { 
+    PyObject *pValue = PyLong_AsVoidPtr(p);
+
+    return pValue;
 }
 
-// =====================================================================
+// ====================================================
 /*
-* @brief Free the memory of a PyObject pointer
-* @param p is the PureData pointer to free
+* @brief This function parse the arguments for the py4pd object
+* @param x is the py4pd object
+* @param c is the canvas of the object
+* @param argc is the number of arguments
+* @param argv is the arguments
+* @return return void
 */
-void Py4pdUtils_FreePyObjectData(void *p) { 
-    t_pyObjectData *data = (t_pyObjectData *)p;
-    Py_XDECREF(data->pValue);
-    free(data);
+
+t_py *Py4pdUtils_GetObject(void){
+    PyObject *pd_module = PyImport_ImportModule("pd");
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    if (py4pd_capsule == NULL){
+        return NULL;
+    }
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    return py4pd;
 }
 
 // =====================================================================
@@ -670,15 +654,30 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
     PyObject *oldObjectCapsule, *pValue;
 
     if (MainModule != NULL) {
-        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        oldObjectCapsule = PyObject_GetAttrString(MainModule, "py4pd"); // borrowed reference
         if (oldObjectCapsule != NULL) {
-            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
-            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd"); // borrowed reference
+            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd"); // borrowed reference
             prev_obj_exists = 1;
         }
         else {
             prev_obj_exists = 0;
         }
+    }
+    else {
+        pd_error(x, "[Python] Failed to import pd module when Running Python function");
+        PyErr_Print();
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[Python] %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+        PyErr_Clear();
+        return NULL;
     }
 
     PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
@@ -687,10 +686,9 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
         pd_error(x, "[Python] Failed to add object to Python");
         return NULL;
     }
-
+    
     pValue = PyObject_CallObject(x->function, pArgs);
 
-    // odd code, but solve the bug
     if (prev_obj_exists == 1 && pValue != NULL) {
         objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
         if (objectCapsule == NULL){
@@ -709,15 +707,15 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
 * @return nothing, but output the value to the outlet
 */
 void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet) { 
+
+
+    // pValue is Py_DECREF for the parent function, not this one
+
     if (x->outPyPointer) {
-        // check type of pValue
         if (pValue == Py_None && x->ignoreOnNone == 1) {
             return 0;
         }
         void *pData = Py4pdUtils_PyObjectToPointer(pValue);
-        if (Py_REFCNT(pValue) == 1) {
-            Py_INCREF(pValue);
-        }
         t_atom pointer_atom;
         SETPOINTER(&pointer_atom, pData);
         outlet_anything(outlet, gensym("PyObject"), 1, &pointer_atom);
@@ -726,10 +724,7 @@ void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet) {
     
     if (PyTuple_Check(pValue)){
         if (PyTuple_Size(pValue) == 1) {
-            PyObject *new_pValue = PyTuple_GetItem(pValue, 0);
-            Py_INCREF(new_pValue);
-            Py_DECREF(pValue);
-            pValue = new_pValue;
+            pValue = PyTuple_GetItem(pValue, 0);
         }
     }
     
@@ -742,7 +737,7 @@ void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet) {
         for (i = 0; i < list_size; ++i) {
             pValue_i = PyList_GetItem(pValue, i); // borrowed reference
             if (PyLong_Check(pValue_i)) {  // If the function return a list of integers
-                float result = (float)PyLong_AsLong(pValue_i); // NOTE: Necessary to change if want double precision
+                float result = (float)PyLong_AsLong(pValue_i); 
                 list_array[listIndex].a_type = A_FLOAT;
                 list_array[listIndex].a_w.w_float = result;
                 listIndex++;
@@ -761,13 +756,14 @@ void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet) {
 
             } 
             else if (Py_IsNone(pValue_i)) {
-            //  NOTE: for now, I do not  know how to represent None in Pd
+                /* not possible to represent None in Pd, so we just skip it */
             } 
             else {
                 pd_error(x,
                          "[py4pd] py4pd just convert int, float and string! "
                          "Received: %s",
                          Py_TYPE(pValue_i)->tp_name);
+                Py_DECREF(pValue);
                 return 0;
             }
 
@@ -778,13 +774,13 @@ void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet) {
         else {
             outlet_list(outlet, &s_list, listIndex, list_array);
         }
-        Py_DECREF(pValue);
         free(list_array);
     } 
     else {
         if (PyLong_Check(pValue)) {
             long result = PyLong_AsLong(pValue);  // If the function return a integer
             outlet_float(outlet, result);
+
         } 
         else if (PyFloat_Check(pValue)) {
             double result = PyFloat_AsDouble(pValue);  // If the function return a float
@@ -1028,7 +1024,7 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x) {
         }
         else{
             objectCapsule = PyCapsule_New(x, "py4pd", NULL);  // create a capsule to pass the object to the python interpreter
-            PyModule_AddObject(PyImport_AddModule("pd"), "py4pd", objectCapsule);  // add the capsule to the python interpreter
+            PyModule_AddObject(PyImport_ImportModule("pd"), "py4pd", objectCapsule);  // add the capsule to the python interpreter
         }
     }
     else{
