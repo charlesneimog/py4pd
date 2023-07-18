@@ -1,5 +1,4 @@
 #include "py4pd.h"
-#include "tupleobject.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
@@ -9,8 +8,6 @@
 // ======== py4pd embbeded module =======
 // ======================================
 
-
-// pd.get_outlet_count()
 static PyObject *Py4pdMod_PdGetOutCount(PyObject *self, PyObject *args){
     (void)self;
     (void)args;
@@ -22,15 +19,12 @@ static PyObject *Py4pdMod_PdGetOutCount(PyObject *self, PyObject *args){
     return PyLong_FromLong(py4pd->outAUX->u_outletNumber);
 }
 
-
-
+// =================================
 static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywords){
     (void)self;
 
-    // print the python line string where this function was called
-    if (PyTuple_Size(args) == 1) {
+    if (PyTuple_Size(args) == 1) 
         args = PyTuple_GetItem(args, 0);
-    }
 
     t_py *py4pd = Py4pdUtils_GetObject();
     if (py4pd == NULL){
@@ -41,19 +35,22 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
     if (keywords != NULL && py4pd->outAUX != NULL){
         PyObject *outletNumber = PyDict_GetItemString(keywords, "out_n"); // it gets the data type output
         if (outletNumber == NULL){
+            Py_INCREF(args);
             Py4pdUtils_ConvertToPd(py4pd, args, py4pd->out1);
-            return Py_True;
+            Py_DECREF(args);
+            Py_RETURN_NONE;
         }
 
         // see if out_n is an integer
         if (!PyLong_Check(outletNumber)){
             pd_error(py4pd, "[Python] pd.out: out_n must be an integer.");
+            PyErr_SetString(PyExc_TypeError, "[Python] pd.out: out_n must be an integer.");
             return NULL;
         }
         int outletNumberInt = PyLong_AsLong(outletNumber);
         if (outletNumberInt == 0){
             Py4pdUtils_ConvertToPd(py4pd, args, py4pd->out1);
-            return Py_True;
+            Py_RETURN_NONE;
         }
         else{
             outletNumberInt--;
@@ -71,7 +68,7 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
     else{
         Py4pdUtils_ConvertToPd(py4pd, args, py4pd->out1);
     }
-    Py_RETURN_TRUE; 
+    Py_RETURN_NONE;
 }
 
 // =================================
@@ -101,7 +98,7 @@ static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args, PyObject *keyw
             if (resize_value == Py_True) {
                 printPrefix = 1;
             } 
-            else if (resize_value == Py_False) {
+            else if (resize_value == Py_False) { 
                 printPrefix = 0;
             } 
             else {
@@ -333,38 +330,6 @@ static PyObject *Py4pdMod_PdSend(PyObject *self, PyObject *args) {
     return PyLong_FromLong(0);
 }
 
-// =================================
-static void Py4pdMod_DelayTick(t_py *x){
-    if (x->msOnset == 0){
-        // clock_setunit(x->playerClock, 1, 1);
-        clock_delay(x->playerClock, 1);
-        x->msOnset = 1;
-    }
-    else{
-        PyObject* copyModule = PyImport_ImportModule("copy");
-        PyObject* deepcopyFunc = PyObject_GetAttrString(copyModule, "deepcopy");
-        PyObject* pArgsCopy = PyObject_CallFunctionObjArgs(deepcopyFunc, PyTuple_GetItem(x->delayArgs, 0), NULL);
-        void *pData = Py4pdUtils_PyObjectToPointer(pArgsCopy);
-        t_atom pointer_atom;
-        SETPOINTER(&pointer_atom, pData);
-        outlet_anything(x->out1, gensym("PyObject"), 2, &pointer_atom);
-        // Py_DECREF(copyModule);
-        // Py_DECREF(deepcopyFunc);
-    }
-}
-
-// =================================
-static PyObject *Py4pdMod_Recursive(PyObject *self, PyObject *args) {
-    (void)self;
-    t_py *x = Py4pdUtils_GetObject();
-    x->msOnset = 0;
-    // create tuple of args
-    x->delayArgs = PyTuple_New(1);
-    PyTuple_SetItem(x->delayArgs, 0, PyTuple_GetItem(args, 0));
-    x->playerClock = clock_new(x, (t_method)Py4pdMod_DelayTick);
-    Py4pdMod_DelayTick(x);
-    Py_RETURN_TRUE;
-}
 
 // =================================
 static PyObject *Py4pdMod_PdTabWrite(PyObject *self, PyObject *args, PyObject *keywords) {
@@ -612,7 +577,7 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
             Py4pdPic_Draw(py4pd, py4pd->glist, 1);
 
 
-            Py_RETURN_TRUE;
+            Py_RETURN_NONE;
         }
 
         FILE *file;
@@ -691,13 +656,12 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
         }
     } 
     else {
-        post("not ok");
         pd_error(py4pd, "[Python] pd.showimage received wrong arguments");
         PyErr_Clear();
-        Py_RETURN_FALSE;
+        Py_RETURN_NONE;
     }
     PyErr_Clear();
-    Py_RETURN_TRUE;
+    Py_RETURN_NONE;
 }
 
 // =================================
@@ -771,7 +735,6 @@ static PyObject *Py4pdMod_PdKey(PyObject *self, PyObject *args) {
         PyErr_Clear();
         Py_RETURN_NONE;
     }
-    Py_INCREF(value);
     return value;
 }
 
@@ -838,8 +801,17 @@ static PyObject *Py4pdMod_GetObjPointer(PyObject *self, PyObject *args){
 static PyObject *Py4pdMod_SetGlobalVar(PyObject *self, PyObject *args){
     (void)self;
 
-    PyObject* globalsDict = PyEval_GetGlobals();
     t_py *py4pd = Py4pdUtils_GetObject();
+    if (py4pd == NULL){
+        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
+    PyObject* globalsDict = py4pd->ObjIntDict;
+    if (globalsDict == NULL) {
+        py4pd->ObjIntDict = PyDict_New();
+        globalsDict = py4pd->ObjIntDict;
+    }
+
     char varString[MAXPDSTRING];
 
     char *varName;
@@ -855,27 +827,26 @@ static PyObject *Py4pdMod_SetGlobalVar(PyObject *self, PyObject *args){
         PyDict_SetItem(globalsDict, globalVariableString, value);
     } 
     else {
-        Py_DECREF(globalValue);
         PyDict_SetItem(globalsDict, globalVariableString, value);
     }
-    Py_DECREF(globalVariableString);
-    Py_RETURN_TRUE;
+    Py_RETURN_NONE;
 }
 
 // =================================
 static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject *keywords){
     (void)self;
 
-    PyObject* globalsDict = PyEval_GetGlobals();
-    if (globalsDict == NULL) {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.getglobalvar: globalsDict is NULL");
+    t_py *py4pd = Py4pdUtils_GetObject();
+    if (py4pd == NULL){
         return NULL;
     }
+    PyObject* globalsDict = py4pd->ObjIntDict;
+    if (globalsDict == NULL) {
+        py4pd->ObjIntDict = PyDict_New();
+        globalsDict = py4pd->ObjIntDict;
+    }
 
-
-    t_py *py4pd = Py4pdUtils_GetObject();
     char varString[MAXPDSTRING];
-
     char *varName;
     if (!PyArg_ParseTuple(args, "s", &varName)) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
@@ -884,22 +855,73 @@ static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject 
 
     PyObject *initial_value;
     if (keywords != NULL) {
-        initial_value = PyDict_GetItemString(keywords, "initial_value");
+        PyObject *key_I = PyUnicode_FromString("initial_value");
+        initial_value = PyDict_GetItem(keywords, key_I);
+        if (initial_value == NULL) {
+            initial_value = Py_None;
+        }
+        Py_DECREF(key_I);
     }
     else {
         initial_value = Py_None;
     }
+    
     snprintf(varString, MAXPDSTRING, "%s_%p", varName, py4pd);
-    PyObject* globalValue = PyDict_GetItemString(globalsDict, varString);
-    if (globalValue == NULL) {
+    if (PyDict_Contains(globalsDict, PyUnicode_FromString(varString)) == 1) {
+        PyObject *globalValue = PyDict_GetItemString(globalsDict, varString);
+        if (globalValue == NULL) {
+            PyErr_SetString(PyExc_RuntimeError, "Global variable value is NULL");
+            return NULL;
+        } 
+        else {
+            return Py_BuildValue("O", globalValue);
+        }
+    }
+    else {
         PyDict_SetItemString(globalsDict, varString, initial_value);
-        globalValue = PyDict_GetItemString(globalsDict, varString);
-        Py_INCREF(globalValue);
+        PyObject *globalValue = PyDict_GetItemString(globalsDict, varString);
+        if (globalValue == NULL) {
+            PyErr_SetString(PyExc_RuntimeError, "Failed to retrieve newly created global variable");
+            return NULL;
+        } 
+        else {
+            return Py_BuildValue("O", globalValue);
+        }
+    }
+}
+
+// =================================
+static PyObject *Py4pdMod_ClearGlobalVar(PyObject *self, PyObject *args) {
+    (void)self;
+
+    t_py *py4pd = Py4pdUtils_GetObject();
+    char varString[MAXPDSTRING];
+
+    char *varName;
+    if (!PyArg_ParseTuple(args, "s", &varName)) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.clearglobalvar: wrong arguments");
+        return NULL;
+    }
+    snprintf(varString, MAXPDSTRING, "%s_%p", varName, py4pd);
+
+    if (py4pd->ObjIntDict == NULL) {
+        Py_RETURN_NONE;
+    }
+
+    PyObject *globalValue = PyDict_GetItemString(py4pd->ObjIntDict, varString);
+    if (globalValue == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "Global variable value is NULL");
+        return NULL;
     } 
     else {
-        Py_INCREF(globalValue);
+        if (py4pd->ObjIntDict != NULL){
+            PyDict_DelItemString(py4pd->ObjIntDict, varString);
+            Py_DECREF(globalValue);
+            PyErr_Clear();
+        }
+        Py_RETURN_NONE;
     }
-    return Py_BuildValue("O", globalValue);
+    Py_RETURN_NONE;
 }
 
 // =================================
@@ -918,7 +940,7 @@ static PyObject *Py4pdMod_AddThingToPlay(PyObject *self, PyObject *args, PyObjec
         return NULL;
     }
     Py4pdLib_PlayerInsertThing(py4pd, onset, Py_BuildValue("O", thingToPlay)); 
-    Py_RETURN_TRUE;
+    Py_RETURN_NONE;
 }
 
 // =================================
@@ -928,7 +950,7 @@ static PyObject *Py4pdMod_ClearPlayer(PyObject *self, PyObject *args){
 
     t_py *py4pd = Py4pdUtils_GetObject();
     Py4pdLib_Clear(py4pd);
-    Py_RETURN_TRUE;
+    Py_RETURN_NONE;
 }
 
 // =================================
@@ -1013,17 +1035,12 @@ PyMethodDef PdMethods[] = {
     // pip install
     {"pipinstall", Py4pdMod_PipInstall, METH_VARARGS, "It installs a pip package"},
 
-    // OpenMusic Methods
-    // {"iterate", Py4pdMod_PdIterate, METH_VARARGS, "It iterates throw one list of PyObjects"},
-
-    // Py4pdMod_Recursive
-    {"recursive", Py4pdMod_Recursive, METH_VARARGS, "It set recursive mode for the object"},
-
     // Others
     {"getobjpointer", Py4pdMod_GetObjPointer, METH_NOARGS, "Get PureData Object Pointer"},
     {"getstrpointer", Py4pdMod_GetObjPointer, METH_NOARGS, "Get PureData Object Pointer"},
     {"setglobalvar", Py4pdMod_SetGlobalVar, METH_VARARGS, "It sets a global variable for the Object, it is not clear after the execution of the function"},
     {"getglobalvar", (PyCFunction)Py4pdMod_GetGlobalVar, METH_VARARGS | METH_KEYWORDS, "It gets a global variable for the Object, it is not clear after the execution of the function"},
+    {"clearglobalvar", (PyCFunction)Py4pdMod_ClearGlobalVar, METH_VARARGS, "It clear the Dictionary of global variables"},
 
     // player
     {"add2player", (PyCFunction)Py4pdMod_AddThingToPlay, METH_VARARGS | METH_KEYWORDS, "It adds a thing to the player"},

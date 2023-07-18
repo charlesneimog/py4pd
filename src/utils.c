@@ -616,7 +616,6 @@ PyObject *Py4pdUtils_PyObjectToPointer(PyObject *pValue) {
 */
 PyObject *Py4pdUtils_PointerToPyObject(PyObject *p) { 
     PyObject *pValue = PyLong_AsVoidPtr(p);
-
     return pValue;
 }
 
@@ -648,10 +647,13 @@ t_py *Py4pdUtils_GetObject(void){
  * @return the return value of the function
  */
 PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) { 
-    t_py *prev_obj;
+    t_py *prev_obj = NULL;
     int prev_obj_exists = 0;
-    PyObject *MainModule = PyImport_ImportModule("pd");
-    PyObject *oldObjectCapsule, *pValue;
+    PyObject* MainModule = PyImport_ImportModule("pd"); // NOTE: create a new module py4pdObject 
+    PyObject* oldObjectCapsule = NULL;
+    PyObject* pValue = NULL;
+    PyObject *objectCapsule = NULL;
+
 
     if (MainModule != NULL) {
         oldObjectCapsule = PyObject_GetAttrString(MainModule, "py4pd"); // borrowed reference
@@ -660,12 +662,11 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
             prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd"); // borrowed reference
             prev_obj_exists = 1;
         }
-        else {
+        else 
             prev_obj_exists = 0;
-        }
     }
     else {
-        pd_error(x, "[Python] Failed to import pd module when Running Python function");
+        pd_error(x, "[%s] Failed to import pd module when Running Python function", x->function_name->s_name);
         PyErr_Print();
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
@@ -677,26 +678,29 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);
         PyErr_Clear();
+        Py_XDECREF(MainModule);
         return NULL;
     }
-
-    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
-
+    objectCapsule = Py4pdUtils_AddPdObject(x);
     if (objectCapsule == NULL){
         pd_error(x, "[Python] Failed to add object to Python");
+        Py_XDECREF(MainModule);
         return NULL;
     }
     
     pValue = PyObject_CallObject(x->function, pArgs);
+    post("refcount: %d", Py_REFCNT(pValue));
+    
 
     if (prev_obj_exists == 1 && pValue != NULL) {
         objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
         if (objectCapsule == NULL){
             pd_error(x, "[Python] Failed to add object to Python");
-            return NULL;
         }
     }
+    Py_XDECREF(MainModule);
     return pValue;
+
 }
 
 // =====================================================================
@@ -706,20 +710,17 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
 * @param pValue is the Python value to convert
 * @return nothing, but output the value to the outlet
 */
-void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet) { 
-
-
-    // pValue is Py_DECREF for the parent function, not this one
+inline void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet) { 
 
     if (x->outPyPointer) {
         if (pValue == Py_None && x->ignoreOnNone == 1) {
-            return 0;
+            return NULL;
         }
-        void *pData = Py4pdUtils_PyObjectToPointer(pValue);
         t_atom pointer_atom;
-        SETPOINTER(&pointer_atom, pData);
+        Py_INCREF(pValue);
+        SETPOINTER(&pointer_atom, (t_gpointer *)pValue);
         outlet_anything(outlet, gensym("PyObject"), 1, &pointer_atom);
-        return 0;
+        return NULL;
     }
     
     if (PyTuple_Check(pValue)){
@@ -792,7 +793,7 @@ void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet) {
             Py4pdUtils_FromSymbolSymbol(x, gensym(result), outlet);
         } 
         else if (Py_IsNone(pValue)) {
-            // Py_DECREF(pValue);
+            Py_DECREF(pValue);
         }
         else {
             pd_error(x,

@@ -13,6 +13,9 @@
     #define __USE_GNU
 #endif
 
+#define PY4PD_DEBUG 0
+
+
 #define PY4PD_MAJOR_VERSION 0
 #define PY4PD_MINOR_VERSION 8
 #define PY4PD_MICRO_VERSION 0
@@ -73,6 +76,14 @@ typedef struct {
     int isSorted;
 } Dictionary;
 
+// ====================================
+// ========== pValues Objs ============
+// ====================================
+
+typedef struct _py4pd_pValue{ 
+    PyObject* pValue;
+    int refCount;
+}t_py4pd_pValue;
 
 // ====================================
 // ========== VIS OBJECTS =============
@@ -94,6 +105,13 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_glist              *glist;
     t_canvas             *canvas; // pointer to the canvas
     
+
+    // TESTING THINGS
+  
+    
+    // ===========
+
+
     t_int                object_number; // object number
     t_int                runmode; // arguments
     t_int                visMode; // is vis object
@@ -101,11 +119,12 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int                py_arg_numbers; // number of arguments
     t_int                outPyPointer; // flag to check if is to output the python pointer
     t_int                kwargs;
-
+    
     // Player 
     t_clock              *playerClock;
     Dictionary           *playerDict;
     t_int                 msOnset;
+    t_int                 playable;
     t_int                 playerRunning;
 
     // Library
@@ -121,8 +140,11 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject            *module; // script name
     PyObject            *function; // function name
     PyObject            *showFunction; // function to show the function
-    PyObject            *Dict; // arguments
+    PyObject            *ObjIntDict; // Obj Variables Arguments
     PyObject            *kwargsDict; // arguments
+    PyObject            *delayArgs;
+    PyObject            *pdmodule;
+    PyObject            *Dict;
     
     // == AUDIO AND NUMPY
     t_int               audioOutput; // flag to check if is to use audio output
@@ -255,17 +277,10 @@ typedef struct _py4pdInlet_proxy{
 }t_py4pdInlet_proxy;
 
 // =====================================
-// =========== PYOBJECT IN PD ==========
-// =====================================
-/*
-    * @brief this is used to store the pointer to PythonObject when we use PyObject in pd.
-*/
-typedef struct _pyObjectData {
-    PyObject *pValue;
-} t_pyObjectData;
+t_py4pd_pValue *Py4pdUtils_Run(t_py *x, PyObject *pArgs, t_py4pd_pValue *pValuePointer);
 
 // =====================================
-void Py4pd_SetParametersForFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
+// void Py4pd_SetParametersForFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
 void Py4pd_PrintDocs(t_py *x);
 void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f);
 
@@ -290,9 +305,8 @@ int Py4pdUtils_IsNumericOrDot(const char *str);
 void Py4pdUtils_RemoveChar(char *str, char c);
 char *Py4pdUtils_Mtok(char *input, char *delimiter);
 void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet);
-void *Py4pdUtils_PyObjectToPointer(PyObject *pValue);
-PyObject *Py4pdUtils_PointerToPyObject(void *p);
-void Py4pdUtils_FreePyObjectData(void *p);
+// PyObject *Py4pdUtils_PyObjectToPointer(PyObject *pValue);
+// PyObject *Py4pdUtils_PointerToPyObject(PyObject *p);
 PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs);
 void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet);
 PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv);

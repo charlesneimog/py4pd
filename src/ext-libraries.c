@@ -131,8 +131,13 @@ void Py4pdLib_SetKwargs(t_py *x, t_symbol *s, int ac, t_atom *av){
             if (av[1].a_w.w_symbol == gensym("PyObject")){
                 if (av[2].a_type == A_POINTER){
                     PyObject *pValue;
-                    pValue = Py4pdUtils_PointerToPyObject((PyObject *)av[2].a_w.w_gpointer);
-                    PyDict_SetItemString(x->kwargsDict, key->s_name, pValue);
+                    pValue = (PyObject *)av[2].a_w.w_gpointer;
+                    if (pValue != NULL)
+                        PyDict_SetItemString(x->kwargsDict, key->s_name, pValue);
+                    else{
+                        pd_error(x, "The third argument of the message 'kwargs' must be a PyObject");
+                        return;
+                    }
                 }
             }
             else
@@ -182,14 +187,8 @@ void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b){
 void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_atom *argv){
     t_py *py4pd = (t_py *)x->p_master;
     PyObject *pArg;
-    pArg = Py4pdUtils_PointerToPyObject((PyObject *)argv);
-    PyObject* copyModule = PyImport_ImportModule("copy");
-    PyObject* deepcopyFunc = PyObject_GetAttrString(copyModule, "deepcopy");
-    PyObject* pArgCopy = PyObject_CallFunctionObjArgs(deepcopyFunc, pArg, NULL);
-    PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pArgCopy); // this is a borrowed reference
-    Py_DECREF(pArg);
-    Py_DECREF(copyModule);
-    Py_DECREF(deepcopyFunc);
+    pArg = (PyObject *)argv;
+    PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pArg);
     return;
 }
 
@@ -206,16 +205,13 @@ void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
         for (int i = 0; i < ac; i++){
             if (av[i].a_type == A_FLOAT){ 
                 int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
-                if (isInt){
+                if (isInt)
                     PyList_SetItem(pyInletValue, i + 1, PyLong_FromLong(av[i].a_w.w_float));
-                }
-                else{
+                else
                     PyList_SetItem(pyInletValue, i + 1, PyFloat_FromDouble(av[i].a_w.w_float));
-                }
             }
-            else if (av[i].a_type == A_SYMBOL){
+            else if (av[i].a_type == A_SYMBOL)
                 PyList_SetItem(pyInletValue, i + 1, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
-            }
         }
         PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pyInletValue);
     }
@@ -234,12 +230,10 @@ void Py4pdLib_ProxyList(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av){
     else if (ac == 1){
         if (av[0].a_type == A_FLOAT){
             int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
-            if (isInt){
+            if (isInt)
                 PyTuple_SetItem(py4pd->argsDict, x->inletIndex, PyLong_FromLong(av[0].a_w.w_float));
-            }
-            else{
+            else
                 PyTuple_SetItem(py4pd->argsDict, x->inletIndex, PyFloat_FromDouble(av[0].a_w.w_float));
-            }
         }
         else if (av[0].a_type == A_SYMBOL){
             pyInletValue = PyUnicode_FromString(av[0].a_w.w_symbol->s_name);
@@ -251,16 +245,16 @@ void Py4pdLib_ProxyList(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av){
         for (int i = 0; i < ac; i++){
             if (av[i].a_type == A_FLOAT){ 
                 int isInt = (int)av[i].a_w.w_float == av[i].a_w.w_float;
-                if (isInt){
+                if (isInt)
                     PyList_SetItem(pyInletValue, i, PyLong_FromLong(av[i].a_w.w_float));
-                }
-                else{
+                else
                     PyList_SetItem(pyInletValue, i, PyFloat_FromDouble(av[i].a_w.w_float));
-                }
             }
-
-            else if (av[i].a_type == A_SYMBOL){
+            else if (av[i].a_type == A_SYMBOL)
                 PyList_SetItem(pyInletValue, i, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
+            else{
+                pd_error(x, "[Python] Unsupported type, use just floats or symbols");
+                return;
             }
         }
         PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pyInletValue);
@@ -270,14 +264,12 @@ void Py4pdLib_ProxyList(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av){
 
 // =====================================
 void Py4pdLib_Bang(t_py *x){
-    // check if number of args is 0
     if (x->py_arg_numbers != 0){
         post("This is not recommended when using Python functions with arguments");
     }
     PyObject *pValue = Py4pdUtils_RunPy(x, x->argsDict);
     if (pValue != NULL) { 
         Py4pdUtils_ConvertToPd(x, pValue, x->out1); 
-        Py_DECREF(pValue);
     }
     else{
         Py_XDECREF(pValue);
@@ -305,7 +297,7 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         Py4pdLib_Bang(x);
         return;
     }
-    PyObject *pyInletValue;
+    PyObject *pyInletValue = NULL;
     PyObject *pValue;
     if (ac == 0){
         pyInletValue = PyUnicode_FromString(s->s_name);
@@ -325,7 +317,6 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
                 PyList_SetItem(pyInletValue, i, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
         }
         PyTuple_SetItem(x->argsDict, 0, pyInletValue);
-        Py_INCREF(x->argsDict);
     }
     else if ((s == gensym("float") || s == gensym("symbol")) && ac == 1){
         if (av[0].a_type == A_FLOAT){ 
@@ -356,19 +347,17 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         }
         PyTuple_SetItem(x->argsDict, 0, pyInletValue);
     }
-    if (x->audioOutput == 1)
-        return;
+
     if (x->kwargs == 1){
         // TODO: late work with kwargs from x->kwargsDict
         pValue = PyObject_Call(x->function, x->argsDict, x->kwargsDict);
-        post("Running with kwargs");
+        pd_error(NULL, "Running with kwargs, not implemented yet");
     }
-    else
+    else{
         pValue = Py4pdUtils_RunPy(x, x->argsDict);
-
+    }
     if (pValue != NULL){ 
         Py4pdUtils_ConvertToPd(x, pValue, x->out1); 
-        Py_DECREF(pValue);
     }
     else{
         Py_XDECREF(pValue);
@@ -390,21 +379,19 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
 void Py4pdLib_Pointer(t_py *x, t_atom *argv){
     PyObject *pValue;
     PyObject *pArg;
-    pArg = Py4pdUtils_PointerToPyObject((PyObject *)argv);
+    pArg = (PyObject *)argv;
     if (pArg == NULL) {
         pd_error(x, "[py4pd] The pointer is not a PyObject!");
         return;
     }
-    PyTuple_SetItem(x->argsDict, 0, pArg);
 
-    pValue = Py4pdUtils_RunPy(x, x->argsDict);
+    PyTuple_SetItem(x->argsDict, 0, pArg);
+    pValue = Py4pdUtils_RunPy(x, x->argsDict); // BUG: Discover where I clear this
 
     if (pValue != NULL) { 
         Py4pdUtils_ConvertToPd(x, pValue, x->out1); 
-        // Py_DECREF(pValue);
     }
     else{
-        Py_XDECREF(pValue);
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
@@ -415,6 +402,7 @@ void Py4pdLib_Pointer(t_py *x, t_atom *argv){
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);
         PyErr_Clear();
+        Py_XDECREF(pValue);
     }
     return;
 }
@@ -603,6 +591,15 @@ static void Py4pdLib_Dsp(t_py *x, t_signal **sp) {
 // =====================================
 static void *Py4pdLib_NewNormalObj(t_symbol *s, int argc, t_atom *argv) {
     const char *objectName = s->s_name;
+
+    PyObject *faulthandler = PyImport_ImportModule("tracemalloc");
+    PyObject *enable = PyObject_GetAttrString(faulthandler, "start");
+    PyObject *args = PyTuple_New(0);
+    PyObject_CallObject(enable, args);
+
+    Py_DECREF(faulthandler);
+    Py_DECREF(enable);
+    Py_DECREF(args);
 
     char py4pd_objectName[MAXPDSTRING];
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
@@ -1263,7 +1260,6 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     class_addanything(localClass, Py4pdLib_Anything);
     class_addmethod(localClass, (t_method)Py4pdLib_Pointer, gensym("PyObject"), A_POINTER, 0);
     class_addmethod(localClass, (t_method)Py4pd_PrintDocs, gensym("doc"), 0, 0);
-    class_addmethod(localClass, (t_method)Py4pd_SetParametersForFunction, gensym("key"), A_GIMME, 0);
     class_addmethod(localClass, (t_method)Py4pdLib_SetKwargs, gensym("kwargs"), A_GIMME, 0);
     class_addmethod(localClass, (t_method)Py4pd_SetPythonPointersUsage, gensym("pointers"), A_FLOAT, 0);
     class_addmethod(localClass, (t_method)Py4pdLib_ReloadObject, gensym("reload"), 0, 0);

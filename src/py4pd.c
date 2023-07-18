@@ -27,6 +27,9 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
         pd_error(x, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
         return -1;
     }
+
+    // _import_array(); // Initialize numpy
+
     t_symbol *script_file_name = atom_gensym(argv + 1);
     t_symbol *function_name = gensym("py4pdLoadObjects");
 
@@ -522,56 +525,6 @@ void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
 // ====================================
 /**
- * @brief set parameters to and PyDict from embedded module pd
- * @param x is the py4pd object
- * @param s is the symbol (message) that was sent to the object
- * @param argc is the number of arguments
- * @param argv is the arguments
- * @return void, but it sets the editor
- */
-void Py4pd_SetParametersForFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
-    (void)s;
-    if (argc > 2) {
-        pd_error(x, "[py4pd] For now, just one parameter at a time!");
-        return;
-    }
-    if (x->Dict == NULL) {
-        x->Dict = PyDict_New();
-    }
-    // Add key and value to the dictionary
-    PyObject *key = PyUnicode_FromString(argv[0].a_w.w_symbol->s_name);
-    PyObject *value = NULL;
-    if (argv[1].a_type == A_SYMBOL) {
-        const char *pyS = argv[1].a_w.w_symbol->s_name;
-        value = PyUnicode_FromString(pyS);
-    }
-    // check if the value is a float
-    else if (argv[1].a_type == A_FLOAT) {
-        float f = argv[1].a_w.w_float;
-        value = PyFloat_FromDouble(f);
-    }
-    else {
-        pd_error(x, "[py4pd] The value must be a symbol or a float!");
-        return;
-    }
-    
-    int result = PyDict_SetItem(x->Dict, key, value);
-
-    if (result == -1) {
-        pd_error(x, "[py4pd] Error setting the parameter!");
-        return;
-    }
-    else {
-        // get key from x->Dict
-        post("[py4pd] Parameter set in key %s", argv[0].a_w.w_symbol->s_name);
-
-    }
-
-    return;
-}
-
-// ====================================
-/**
  * @brief reload the Python Script
  * @param x is the py4pd object
  * @param s is the symbol (message) that was sent to the object
@@ -843,8 +796,6 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         Py_XDECREF(ptraceback);
         PyErr_Clear();
     }
-    Py_XDECREF(pValue);
-    Py_DECREF(ArgsTuple);
     return;
 }
 
@@ -1114,6 +1065,5 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class, (t_method)Py4pd_PrintDocs, gensym("doc"), 0, 0);  // open documentation
     class_addmethod(py4pd_class, (t_method)Py4pd_ExecuteFunction, gensym("run"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class, (t_method)Py4pd_SetFunction, gensym("set"), A_GIMME, 0);  // set function to be called
-    class_addmethod(py4pd_class, (t_method)Py4pd_SetParametersForFunction, gensym("key"), A_GIMME, 0);  // set parameter inside py4pd->params
     class_addmethod(py4pd_class, (t_method)Py4pd_PrintModuleFunctions, gensym("functions"), A_GIMME, 0); 
 }
