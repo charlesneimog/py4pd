@@ -1,32 +1,13 @@
-import tkinter as tk
-from tkinter import messagebox
-
-def close_window():
-    root.destroy()
-
-def create_window():
-    global root
-
-    root = tk.Tk()
-    root.title("Package Installation")
-
-    label = tk.Label(root, text="Installing package...")
-    label.pack()
-
-    root.update()
-
-    # Simulate package installation (replace this with your actual installation logic)
-    import time
-    time.sleep(5)  # Simulating a delay of 5 seconds
-
-    messagebox.showinfo("Package Installation", "Package successfully installed!")
-
-    close_window()
+import pd
+import time
 
 
-# Call other code or operations after the window is closed
+def py4pdtimer(message):
+    if (message == "start"):
+        pd.setglobalvar("py4pd_timer", time.time())
+    elif (message == "end"):
+        timer = time.time() - pd.getglobalvar("py4pd_timer")
+        pd.print("It spent " + str(int(timer * 1000)) + " ms.")
+    else:
+        pd.error("Bad args to py4pdtimer")
 
-
-
-def py4pdLoadObjects():
-    pd.addobject(create_window, "tk")

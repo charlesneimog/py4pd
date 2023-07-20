@@ -1,10 +1,9 @@
 import pd
-import copy
+import sys
+
+
 
 def pyiterate(value):
-    """Iterate over a Python data type"""
-    # pd.out("clear", out_n=1)
-    # NOTE: Old way
     """
     if isinstance(value, list):
         pd.iterate(value)
@@ -13,34 +12,52 @@ def pyiterate(value):
         pd.error("[py.iterate]: pyiterate only works with lists")
         return None
     """
+    pd.out("py4pdcollect_clear", out_n=1)
     for i in value:
-        new_i = copy.deepcopy(i)
-        pd.out(new_i)
-
-
-    # pd.out("output", out_n=1)
-
+        pd.out(i)
+    pd.out("py4pdcollect_output", out_n=1) 
 
 
 def pycollect(data):
     """ It collects the data from pyiterate and outputs it """
-    pointer = pd.getobjpointer()
-    string = "py.collect_" + str(pointer)
-    if data == "output":
-        if string in globals():
-            pd.out(globals()[string], pyiterate=True)
+    # lot of memory usage
+
+    if str(data) == "py4pdcollect_output": 
+        data = pd.getglobalvar("DATA")
+        if data is None:
+            pd.error("[py.collect]: There is no data to output")
         else:
-            pd.out(None)
-    elif data == "clear":
-        if string in globals():
-            del globals()[string]
-        else:
-            pass
+            pd.out(data)
+
+    elif str(data) == "py4pdcollect_clear":
+        pd.print("[py.collect]: Clearing data")
+        pd.clearglobalvar("DATA")
+
     else:
-        if string in globals():
-            if isinstance(globals()[string], list):
-                globals()[string].append(data)
-            else:
-                globals()[string] = [globals()[string], data]
+        olddata = pd.getglobalvar("DATA")
+        if olddata is None:
+            pd.setglobalvar("DATA", [data])
         else:
-            globals()[string] = [data]
+            pd.setglobalvar("DATA", olddata + [data])
+
+
+
+
+def pytrigger(data):
+    """ It triggers the pyiterate object """
+    # get the amount of outlets
+    outletCount = pd.get_out_count()
+    for i in range(outletCount, -1, -1):
+        pd.out(data, out_n=i)
+
+
+
+def pyrecursive(data):
+    """ It need to be used with pyiterate and pycollect in recursive patches """
+    pd.recursive(data)
+    
+
+
+def pygate(value, out):
+    """ It gates the output """
+    pd.out(value, out_n=out)

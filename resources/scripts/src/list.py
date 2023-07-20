@@ -44,6 +44,16 @@ def omlist(*args):
         thelist.append(i)
     return thelist
 
+def omappend(*args):
+    """Append a list to another list"""
+    # for example omappend([1,2,3], [4,5,6]) -> [1,2,3,4,5,6]
+    thelist = []
+    for i in args:
+        if isinstance(i, list):
+            thelist.extend(i)
+        else:
+            thelist.append(i)
+    return thelist
 
 def pylen(value):
     """Get the length of a Python data type"""

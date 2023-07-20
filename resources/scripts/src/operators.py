@@ -8,4 +8,15 @@ def pyor(*args):
     return any(args)
 
 
+def pyequal(*args):
+    """Return the logical equal of all arguments."""
+    return all(x == args[0] for x in args)
+
+def pygreater(x, y):
+    """Return the logical greater of all arguments."""
+    return x > y
+
+def pylower(x, y):
+    """Return the logical lower of all arguments."""
+    return x < y
 

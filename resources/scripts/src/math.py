@@ -7,13 +7,12 @@ import pd
 def omsum(a, b):
     """ Sum two numbers or two lists of numbers """
     if isinstance(a, list) and isinstance(b, (int, float)):
-        return [x + b for x in a]
+        return list(map(lambda x: x + b, a))
     elif isinstance(a, (int, float)) and isinstance(b, list):
-        return [a + x for x in b]
+        return list(map(lambda x: x + a, b))
     elif isinstance(a, list) and isinstance(b, list):
         return [x + y for x, y in zip(a, b)]
     else:
-        pd.print(f"{a} + {b}")
         return a + b
 
 
