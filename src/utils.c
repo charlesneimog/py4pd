@@ -176,6 +176,12 @@ void *Py4pdLib_FreeObj(t_py *x) {
     if (x->visMode != 0) {
         Py4pdPic_Free(x);
     }
+    if (x->pdcollect != NULL) {
+        free_table(x->pdcollect);
+    }
+
+
+
     return NULL;
 }
 
@@ -649,11 +655,10 @@ t_py *Py4pdUtils_GetObject(void){
 PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) { 
     t_py *prev_obj = NULL;
     int prev_obj_exists = 0;
-    PyObject* MainModule = PyImport_ImportModule("pd"); // NOTE: create a new module py4pdObject 
+    PyObject* MainModule = PyImport_ImportModule("pd"); 
     PyObject* oldObjectCapsule = NULL;
     PyObject* pValue = NULL;
     PyObject *objectCapsule = NULL;
-
 
     if (MainModule != NULL) {
         oldObjectCapsule = PyObject_GetAttrString(MainModule, "py4pd"); // borrowed reference
@@ -661,9 +666,13 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
             PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd"); // borrowed reference
             prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd"); // borrowed reference
             prev_obj_exists = 1;
+            Py_DECREF(oldObjectCapsule);
+            Py_DECREF(py4pd_capsule);
         }
-        else 
+        else{
             prev_obj_exists = 0;
+            Py_XDECREF(oldObjectCapsule);
+        }
     }
     else {
         pd_error(x, "[%s] Failed to import pd module when Running Python function", x->function_name->s_name);
@@ -689,8 +698,11 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
     }
     
     pValue = PyObject_CallObject(x->function, pArgs);
-    post("refcount: %d", Py_REFCNT(pValue));
-    
+
+    t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
+    pdPyValue->pValue = pValue;
+    pdPyValue->objectsUsing = 0;
+    pdPyValue->objOwner = x->objectName;
 
     if (prev_obj_exists == 1 && pValue != NULL) {
         objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
@@ -698,10 +710,116 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
             pd_error(x, "[Python] Failed to add object to Python");
         }
     }
-    Py_XDECREF(MainModule);
-    return pValue;
+            
+    if (x->audioOutput == 1){
+        return NULL;
+    }
 
+    if (pValue != NULL && x->audioOutput == 0) {
+        Py4pdUtils_ConvertToPd(x, pdPyValue, x->out1); 
+        Py4pdUtils_DECREF(pValue);
+        Py4pdUtils_DECREF(pArgs);
+        if (pArgs->ob_refcnt != 0)
+            post("pArgs not free, memory leak");
+        
+        Py_XDECREF(MainModule);
+        free(pdPyValue);
+        return NULL;
+    }
+    else if(pValue == NULL){
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[Python] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+        PyErr_Clear();
+        Py_XDECREF(pValue);
+        Py4pdUtils_DECREF(pArgs);
+        Py_XDECREF(MainModule);
+        free(pdPyValue);
+        return NULL;
+    }
+    else{
+        Py4pdUtils_DECREF(pArgs);
+        Py_XDECREF(MainModule);
+        free(pdPyValue);
+        return pValue;
+    }
+
+
+    
 }
+// =====================================================================
+/*
+ * @brief Run a Python function
+ * @param x is the py4pd object
+ * @param pArgs is the arguments to pass to the function
+ * @return the return value of the function
+ */
+void Py4pdUtils_DECREF(PyObject *pValue) { 
+    if (Py_IsNone(pValue)){
+        return;
+    }
+    // check if pValue is between -5 and 255
+    else if (PyLong_Check(pValue)){
+        long value = PyLong_AsLong(pValue);
+        if (value >= -5 && value <= 255){
+            return;
+        }
+    }
+    Py_DECREF(pValue);
+    if (pValue->ob_refcnt == 0){
+        pValue = NULL;
+    }
+    return; 
+}
+
+// =====================================================================
+// =====================================================================
+/*
+ * @brief Run a Python function
+ * @param x is the py4pd object
+ * @param pArgs is the arguments to pass to the function
+ * @return the return value of the function
+ */
+void Py4pdUtils_KILL(PyObject *pValue) { 
+    if (Py_IsNone(pValue)){
+        return;
+    }
+    else if (Py_IsTrue(pValue)){
+        return;
+    }
+    else if (PyLong_Check(pValue)){
+        long value = PyLong_AsLong(pValue);
+        if (value >= -5 && value <= 255){
+            return;
+        }
+    }
+    else{
+        int iter = 0;
+        while (pValue->ob_refcnt > 0){
+            Py_DECREF(pValue);
+            if (pValue->ob_refcnt == 0){
+                pValue = NULL;
+                post("[Python] Killed object");
+                break;
+            }
+            iter++;
+            if (iter > 10000){
+                pd_error(NULL, "[Python] Failed to kill object, there is a Memory Leak");
+                break;
+            }
+        }
+        return; 
+    }
+}
+
+
+
 
 // =====================================================================
 /*
@@ -710,15 +828,15 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
 * @param pValue is the Python value to convert
 * @return nothing, but output the value to the outlet
 */
-inline void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet) { 
+inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct, t_outlet *outlet) { 
+    PyObject* pValue = pValueStruct->pValue;
 
     if (x->outPyPointer) {
         if (pValue == Py_None && x->ignoreOnNone == 1) {
             return NULL;
         }
         t_atom pointer_atom;
-        Py_INCREF(pValue);
-        SETPOINTER(&pointer_atom, (t_gpointer *)pValue);
+        SETPOINTER(&pointer_atom, (t_gpointer *)pValueStruct);
         outlet_anything(outlet, gensym("PyObject"), 1, &pointer_atom);
         return NULL;
     }
@@ -764,7 +882,7 @@ inline void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet)
                          "[py4pd] py4pd just convert int, float and string! "
                          "Received: %s",
                          Py_TYPE(pValue_i)->tp_name);
-                Py_DECREF(pValue);
+                // Py_DECREF(pValue);
                 return 0;
             }
 
@@ -793,7 +911,7 @@ inline void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet)
             Py4pdUtils_FromSymbolSymbol(x, gensym(result), outlet);
         } 
         else if (Py_IsNone(pValue)) {
-            Py_DECREF(pValue);
+            // Py_DECREF(pValue);
         }
         else {
             pd_error(x,

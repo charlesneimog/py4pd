@@ -286,13 +286,11 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     
     PyObject *pipInstallResult = Py4pdUtils_RunPy(x, argTuple);
     if (pipInstallResult == NULL) {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: pipinstall function failed");
-        Py_XDECREF(pipInstallResult);
+        x->function = ObjFunction;
+        Py_DECREF(argTuple);
+        Py_DECREF(pipInstallResult);
         Py_DECREF(pipInstallFunction);
         Py_DECREF(py4pdModule);
-        pd_error(x, "[Python] pipInstall: pipinstall function failed");
-        PyErr_Clear();
-        x->function = ObjFunction;
         return;
     }
     x->function = ObjFunction;
@@ -300,7 +298,6 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     Py_DECREF(pipInstallResult);
     Py_DECREF(pipInstallFunction);
     Py_DECREF(py4pdModule);
-
     sys_vgui("tk_messageBox -icon warning -type ok -title \"%s installed!\" -message \"%s installed! \nYou need to restart PureData!\"\n", pipPackage, pipPackage);
     return;
 }
@@ -747,7 +744,7 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     int OpenList_count = 0;
     int CloseList_count = 0;
-    PyObject *pValue, *ArgsTuple;
+    PyObject *ArgsTuple;
     ArgsTuple = NULL;
 
     if (argc != 0) {
@@ -779,23 +776,8 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     else {
         ArgsTuple = PyTuple_New(0);
     }
-    pValue = Py4pdUtils_RunPy(x, ArgsTuple); 
+    Py4pdUtils_RunPy(x, ArgsTuple); 
 
-    if (pValue != NULL) {  // check if the function returned something
-        Py4pdUtils_ConvertToPd(x, pValue, x->out1); 
-    } 
-    else {                             
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[%s] Call failed: %s", x->function_name->s_name, PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
-        PyErr_Clear();
-    }
     return;
 }
 

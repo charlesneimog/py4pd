@@ -82,8 +82,25 @@ typedef struct {
 
 typedef struct _py4pd_pValue{ 
     PyObject* pValue;
-    int refCount;
+    int objectsUsing; 
+    t_symbol *objOwner;
 }t_py4pd_pValue;
+
+// ======================================
+typedef struct pdcollectItem
+{
+    char* key;
+    PyObject* pValue;
+} pdcollectItem;
+
+// ======================================
+typedef struct pdcollectHash
+{
+    // Contains an array of pointers to items.
+    pdcollectItem** items;
+    int size;
+    int count;
+} pdcollectHash;
 
 // ====================================
 // ========== VIS OBJECTS =============
@@ -107,8 +124,9 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     
 
     // TESTING THINGS
-  
-    
+    PyObject            **ObjArgs; // Obj Variables Arguments 
+    pdcollectHash        *pdcollect; // hash table to store the objects
+     
     // ===========
 
 
@@ -145,6 +163,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject            *delayArgs;
     PyObject            *pdmodule;
     PyObject            *Dict;
+   
     
     // == AUDIO AND NUMPY
     t_int               audioOutput; // flag to check if is to use audio output
@@ -290,6 +309,11 @@ void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f);
 extern int pipePy4pdNum;
 extern int object_count; 
 
+// ============= TESTES ================
+void Py4pdUtils_DECREF(PyObject *pValue);
+void Py4pdUtils_KILL(PyObject *pValue);
+void free_table(pdcollectHash* table);
+
 // ============= UTILITIES =============
 int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);
 t_py *Py4pdUtils_GetObject(void);
@@ -308,7 +332,7 @@ void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet);
 // PyObject *Py4pdUtils_PyObjectToPointer(PyObject *pValue);
 // PyObject *Py4pdUtils_PointerToPyObject(PyObject *p);
 PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs);
-void *Py4pdUtils_ConvertToPd(t_py *x, PyObject *pValue, t_outlet *outlet);
+void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValue, t_outlet *outlet);
 PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv);
 void Py4pdUtils_SetObjConfig(t_py *x);
 PyObject *Py4pdUtils_AddPdObject(t_py *x);

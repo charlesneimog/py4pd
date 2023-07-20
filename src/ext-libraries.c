@@ -74,7 +74,7 @@ void Py4pdLib_CreateObjInlets(PyObject *function, t_py *x, int argc, t_atom *arg
         }
         // ===========================
         int argNumbers = x->py_arg_numbers;
-        x->argsDict = PyTuple_New(argNumbers);
+        // x->argsDict = PyTuple_New(argNumbers);
 
         // PyObject *argName = PyCode_GetVarnames(code);
         for (i = 0; i < argNumbers; i++) {
@@ -84,27 +84,32 @@ void Py4pdLib_CreateObjInlets(PyObject *function, t_py *x, int argc, t_atom *arg
                     char pd_atom[64];
                     atom_string(&argv[i], pd_atom, 64);
                     if (strchr(pd_atom, '.') != NULL) 
-                        PyTuple_SetItem(x->argsDict, i, PyFloat_FromDouble(argv[i].a_w.w_float));
+                        // PyTuple_SetItem(x->argsDict, i, PyFloat_FromDouble(argv[i].a_w.w_float));
+                        x->ObjArgs[i] = PyFloat_FromDouble(argv[i].a_w.w_float);
                     else
-                        PyTuple_SetItem(x->argsDict, i, PyLong_FromLong(argv[i].a_w.w_float));
+                        // PyTuple_SetItem(x->argsDict, i, PyLong_FromLong(argv[i].a_w.w_float));
+                        x->ObjArgs[i] = PyLong_FromLong(argv[i].a_w.w_float);
                 }
 
                 else if (argv[i].a_type == A_SYMBOL) {
                     if (strcmp(argv[i].a_w.w_symbol->s_name, "None") == 0) 
-                        PyTuple_SetItem(x->argsDict, i, Py_None);
+                        x->ObjArgs[i] = Py_None;
                     else 
-                        PyTuple_SetItem(x->argsDict, i, PyUnicode_FromString(argv[i].a_w.w_symbol->s_name));
+                        x->ObjArgs[i] = PyUnicode_FromString(argv[i].a_w.w_symbol->s_name);
                 }
                 else 
-                    PyTuple_SetItem(x->argsDict, i, Py_None);
+                    // PyTuple_SetItem(x->argsDict, i, Py_None);
+                    x->ObjArgs[i] = Py_None;
             }
             else
-                PyTuple_SetItem(x->argsDict, i, Py_None);
+                // PyTuple_SetItem(x->argsDict, i, Py_None);
+                x->ObjArgs[i] = Py_None;
         }
     }
     else{
-        x->argsDict = PyTuple_New(1);
-        PyTuple_SetItem(x->argsDict, 0, Py_None);
+        // x->argsDict = PyTuple_New(1);
+        // PyTuple_SetItem(x->argsDict, 0, Py_None);
+        x->ObjArgs[0] = Py_None;
     }
 }
 
@@ -186,18 +191,48 @@ void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b){
 // =====================================
 void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_atom *argv){
     t_py *py4pd = (t_py *)x->p_master;
-    PyObject *pArg;
-    pArg = (PyObject *)argv;
-    PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pArg);
+    t_py4pd_pValue *pArg;
+    pArg = (t_py4pd_pValue *)argv;
+    pArg->objectsUsing++;
+    Py4pdUtils_DECREF(py4pd->ObjArgs[x->inletIndex]); // limpa o anterior 
+    if (pArg->objectsUsing > 0){
+        Py_INCREF(pArg->pValue);
+    }
+    py4pd->ObjArgs[x->inletIndex] = pArg->pValue;
     return;
 }
 
+// =============================================
+void Py4pdLib_Pointer(t_py *x, t_atom *argv){
+    t_py4pd_pValue *pArg;
+    pArg = (t_py4pd_pValue *)argv;
+    pArg->objectsUsing++;
+    if (pArg->objectsUsing > 0){
+        Py_INCREF(pArg->pValue);
+    }
+    Py4pdUtils_DECREF(x->ObjArgs[0]); // limpa o anterior
+    x->ObjArgs[0] = pArg->pValue;
+    PyObject* pArgs = PyTuple_New(x->py_arg_numbers);
+    PyTuple_SetItem(pArgs, 0, x->ObjArgs[0]);
+    for (int i = 1; i < x->py_arg_numbers; i++){
+        Py_INCREF(x->ObjArgs[i]);
+        PyTuple_SetItem(pArgs, i, x->ObjArgs[i]);
+    }
+    if (x->audioOutput){
+        return; // in audio out object, the function of dsp will call the python function
+    }
+    Py4pdUtils_RunPy(x, pArgs);
+    return;
+}
+
+/*
 // =====================================
 void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av){
+    post("ProxyAnything");
     t_py *py4pd = (t_py *)x->p_master;
     if (ac == 0){
         PyObject *pyInletValue = PyUnicode_FromString(s->s_name);
-        PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pyInletValue);
+        py4pd->ObjArgs[x->inletIndex] = pyInletValue;
     }
     else{
         PyObject *pyInletValue = PyList_New(ac + 1);
@@ -206,38 +241,39 @@ void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
             if (av[i].a_type == A_FLOAT){ 
                 int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
                 if (isInt)
-                    PyList_SetItem(pyInletValue, i + 1, PyLong_FromLong(av[i].a_w.w_float));
+                    py4pd->ObjArgs[x->inletIndex] = PyLong_FromLong(av[i].a_w.w_float);
                 else
-                    PyList_SetItem(pyInletValue, i + 1, PyFloat_FromDouble(av[i].a_w.w_float));
+                    py4pd->ObjArgs[x->inletIndex] = PyFloat_FromDouble(av[i].a_w.w_float);
             }
             else if (av[i].a_type == A_SYMBOL)
-                PyList_SetItem(pyInletValue, i + 1, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
+                py4pd->ObjArgs[x->inletIndex] = PyUnicode_FromString(av[i].a_w.w_symbol->s_name);
         }
-        PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pyInletValue);
+        py4pd->ObjArgs[x->inletIndex] = pyInletValue;
     }
     return;
 }
 
 // =====================================
 void Py4pdLib_ProxyList(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av){
+    post("ProxyList");
     (void)s;
     t_py *py4pd = (t_py *)x->p_master;
     PyObject *pyInletValue;
     if (ac == 0){
         pyInletValue = PyUnicode_FromString(s->s_name);
-        PyTuple_SetItem(py4pd->argsDict, 0, pyInletValue);
+        py4pd->ObjArgs[0] = pyInletValue;
     }
     else if (ac == 1){
         if (av[0].a_type == A_FLOAT){
             int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
             if (isInt)
-                PyTuple_SetItem(py4pd->argsDict, x->inletIndex, PyLong_FromLong(av[0].a_w.w_float));
+                py4pd->ObjArgs[x->inletIndex] = PyLong_FromLong(av[0].a_w.w_float);
             else
-                PyTuple_SetItem(py4pd->argsDict, x->inletIndex, PyFloat_FromDouble(av[0].a_w.w_float));
+                py4pd->ObjArgs[x->inletIndex] = PyFloat_FromDouble(av[0].a_w.w_float);
         }
         else if (av[0].a_type == A_SYMBOL){
             pyInletValue = PyUnicode_FromString(av[0].a_w.w_symbol->s_name);
-            PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pyInletValue);
+            py4pd->ObjArgs[x->inletIndex] = pyInletValue;
         }
     }
     else { 
@@ -257,53 +293,23 @@ void Py4pdLib_ProxyList(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av){
                 return;
             }
         }
-        PyTuple_SetItem(py4pd->argsDict, x->inletIndex, pyInletValue);
+        py4pd->ObjArgs[x->inletIndex] = pyInletValue;
     }
     return;
 }
+*/
 
 // =====================================
-void Py4pdLib_Bang(t_py *x){
-    if (x->py_arg_numbers != 0){
-        post("This is not recommended when using Python functions with arguments");
-    }
-    PyObject *pValue = Py4pdUtils_RunPy(x, x->argsDict);
-    if (pValue != NULL) { 
-        Py4pdUtils_ConvertToPd(x, pValue, x->out1); 
-    }
-    else{
-        Py_XDECREF(pValue);
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[Python] Call failed: %s", PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
-        PyErr_Clear();
-    }
-    return;
-}
-
-// =====================================
-void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
-    if (x->function == NULL){
-        pd_error(x, "[py4pd] Function not defined");
-        return;
-    }
-    if (s == gensym("bang")){
-        Py4pdLib_Bang(x);
-        return;
-    }
+void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av){
+    (void)s;
+    t_py *py4pd = (t_py *)x->p_master;
     PyObject *pyInletValue = NULL;
-    PyObject *pValue;
+
     if (ac == 0){
         pyInletValue = PyUnicode_FromString(s->s_name);
-        PyTuple_SetItem(x->argsDict, 0, pyInletValue);
+        py4pd->ObjArgs[x->inletIndex] = pyInletValue;
     }
-    else if ((s == gensym("list") || s == gensym("anything")) && ac > 0){
+    else if ((s == gensym("list") || s == gensym("anything")) && ac > 1){
         pyInletValue = PyList_New(ac);
         for (int i = 0; i < ac; i++){
             if (av[i].a_type == A_FLOAT){ 
@@ -316,19 +322,19 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
             else if (av[i].a_type == A_SYMBOL)
                 PyList_SetItem(pyInletValue, i, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
         }
-        PyTuple_SetItem(x->argsDict, 0, pyInletValue);
+        py4pd->ObjArgs[x->inletIndex] = pyInletValue;
     }
     else if ((s == gensym("float") || s == gensym("symbol")) && ac == 1){
         if (av[0].a_type == A_FLOAT){ 
             int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
             if (isInt)
-                PyTuple_SetItem(x->argsDict, 0, PyLong_FromLong(av[0].a_w.w_float));
+                py4pd->ObjArgs[x->inletIndex] = PyLong_FromLong(av[0].a_w.w_float);
             else
-                PyTuple_SetItem(x->argsDict, 0, PyFloat_FromDouble(av[0].a_w.w_float));
+                py4pd->ObjArgs[x->inletIndex] = PyFloat_FromDouble(av[0].a_w.w_float);
         }
         else if (av[0].a_type == A_SYMBOL){
             pyInletValue = PyUnicode_FromString(av[0].a_w.w_symbol->s_name);
-            PyTuple_SetItem(x->argsDict, 0, pyInletValue);
+            py4pd->ObjArgs[x->inletIndex] = pyInletValue;
         }
     }
     else{
@@ -345,64 +351,98 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
             else if (av[i].a_type == A_SYMBOL)
                 PyList_SetItem(pyInletValue, i + 1, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
         }
-        PyTuple_SetItem(x->argsDict, 0, pyInletValue);
-    }
-
-    if (x->kwargs == 1){
-        // TODO: late work with kwargs from x->kwargsDict
-        pValue = PyObject_Call(x->function, x->argsDict, x->kwargsDict);
-        pd_error(NULL, "Running with kwargs, not implemented yet");
-    }
-    else{
-        pValue = Py4pdUtils_RunPy(x, x->argsDict);
-    }
-    if (pValue != NULL){ 
-        Py4pdUtils_ConvertToPd(x, pValue, x->out1); 
-    }
-    else{
-        Py_XDECREF(pValue);
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[%s] Call failed: %s", x->objectName->s_name, PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
-        PyErr_Clear();
+        py4pd->ObjArgs[x->inletIndex] = pyInletValue;
     }
     return;
 }
 
-// =============================================
-void Py4pdLib_Pointer(t_py *x, t_atom *argv){
-    PyObject *pValue;
-    PyObject *pArg;
-    pArg = (PyObject *)argv;
-    if (pArg == NULL) {
-        pd_error(x, "[py4pd] The pointer is not a PyObject!");
+
+// =====================================
+void Py4pdLib_Bang(t_py *x){
+    if (x->py_arg_numbers != 0){
+        post("This is not recommended when using Python functions with arguments");
+    }
+    Py4pdUtils_RunPy(x, x->argsDict);
+    return;
+}
+
+// =====================================
+void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
+    if (x->function == NULL){
+        pd_error(x, "[py4pd] Function not defined");
         return;
     }
+    if (s == gensym("bang")){
+        Py4pdLib_Bang(x);
+        return;
+    }
+    Py4pdUtils_DECREF(x->ObjArgs[0]);
 
-    PyTuple_SetItem(x->argsDict, 0, pArg);
-    pValue = Py4pdUtils_RunPy(x, x->argsDict); // BUG: Discover where I clear this
-
-    if (pValue != NULL) { 
-        Py4pdUtils_ConvertToPd(x, pValue, x->out1); 
+    PyObject *pyInletValue = NULL;
+    if (ac == 0){
+        pyInletValue = PyUnicode_FromString(s->s_name);
+        x->ObjArgs[0] = pyInletValue;
+    }
+    else if ((s == gensym("list") || s == gensym("anything")) && ac > 1){
+        pyInletValue = PyList_New(ac);
+        for (int i = 0; i < ac; i++){
+            if (av[i].a_type == A_FLOAT){ 
+                int isInt = (int)av[i].a_w.w_float == av[i].a_w.w_float;
+                if (isInt)
+                    PyList_SetItem(pyInletValue, i, PyLong_FromLong(av[i].a_w.w_float));
+                else
+                    PyList_SetItem(pyInletValue, i, PyFloat_FromDouble(av[i].a_w.w_float));
+            }
+            else if (av[i].a_type == A_SYMBOL)
+                PyList_SetItem(pyInletValue, i, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
+        }
+        x->ObjArgs[0] = pyInletValue;
+    }
+    else if ((s == gensym("float") || s == gensym("symbol")) && ac == 1){
+        if (av[0].a_type == A_FLOAT){ 
+            int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
+            if (isInt)
+                x->ObjArgs[0] = PyLong_FromLong(av[0].a_w.w_float);
+            else
+                x->ObjArgs[0] = PyFloat_FromDouble(av[0].a_w.w_float);
+        }
+        else if (av[0].a_type == A_SYMBOL){
+            pyInletValue = PyUnicode_FromString(av[0].a_w.w_symbol->s_name);
+            x->ObjArgs[0] = pyInletValue;
+        }
     }
     else{
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[Python] Call failed: %s", PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
-        PyErr_Clear();
-        Py_XDECREF(pValue);
+        pyInletValue = PyList_New(ac + 1);
+        PyList_SetItem(pyInletValue, 0, PyUnicode_FromString(s->s_name));
+        for (int i = 0; i < ac; i++){
+            if (av[i].a_type == A_FLOAT){ 
+                int isInt = (int)av[i].a_w.w_float == av[i].a_w.w_float;
+                if (isInt)
+                    PyList_SetItem(pyInletValue, i + 1, PyLong_FromLong(av[i].a_w.w_float));
+                else
+                    PyList_SetItem(pyInletValue, i + 1, PyFloat_FromDouble(av[i].a_w.w_float));
+            }
+            else if (av[i].a_type == A_SYMBOL)
+                PyList_SetItem(pyInletValue, i + 1, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
+        }
+        x->ObjArgs[0] = pyInletValue;
+    }
+
+    if (x->audioOutput)
+        return; // in audio out object, the function of dsp will call the python function
+    
+    PyObject* pObj;
+    PyObject* pArgs = PyTuple_New(x->py_arg_numbers);
+    for (int i = 0; i < x->py_arg_numbers; i++){
+        pObj = Py_BuildValue("O", x->ObjArgs[i]);
+        PyTuple_SetItem(pArgs, i, pObj);
+    }
+
+    if (x->kwargs == 1){
+        pd_error(NULL, "Running with kwargs, not implemented yet");
+    }
+    else{
+        Py4pdUtils_RunPy(x, pArgs);
     }
     return;
 }
@@ -517,26 +557,9 @@ t_int *Py4pdLib_AudioINPerform(t_int *w) {
     npy_intp dims[] = {numChannels, x->vectorSize};
     PyObject *pAudio = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, in);
     PyTuple_SetItem(x->argsDict, 0, pAudio);
-    PyTuple_SetItem(x->argsDict, 0, pAudio);
 
-    PyObject *pValue = Py4pdUtils_RunPy(x, x->argsDict);
+    Py4pdUtils_RunPy(x, x->argsDict);
 
-    if (pValue != NULL) {
-        Py4pdUtils_ConvertToPd(x, pValue, x->out1); 
-    } 
-    else {                             // if the function returns a error
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
-        PyErr_Clear();
-    }
-    Py_XDECREF(pValue);
     return (w + 4);
 }
 
@@ -547,11 +570,14 @@ t_int *Py4pdLib_AudioOUTPerform(t_int *w) {
     int n = (int)(w[3]);
     PyObject *pValue; 
     int numChannels = x->n_channels;
+    return (w + 4); // BUG: Note work
 
+
+    /*
     pValue = Py4pdUtils_RunPy(x, x->argsDict);
     Py4pdLib_Audio2PdAudio(x, pValue, audioOut, numChannels, n);
-    Py_XDECREF(pValue);
     return (w + 4);
+    */
 }
 
 // =====================================
@@ -567,8 +593,8 @@ t_int *Py4pdLib_AudioPerform(t_int *w){
     
     PyObject *pValue = Py4pdUtils_RunPy(x, x->argsDict);
     Py4pdLib_Audio2PdAudio(x, pValue, audioOut, numChannels, n);
-    Py_XDECREF(pValue);
-    return (w + 5);
+    // Py_XDECREF(pValue);
+    return (w + 5);  // BUG: Note work
 }
 
 // =====================================
@@ -591,15 +617,6 @@ static void Py4pdLib_Dsp(t_py *x, t_signal **sp) {
 // =====================================
 static void *Py4pdLib_NewNormalObj(t_symbol *s, int argc, t_atom *argv) {
     const char *objectName = s->s_name;
-
-    PyObject *faulthandler = PyImport_ImportModule("tracemalloc");
-    PyObject *enable = PyObject_GetAttrString(faulthandler, "start");
-    PyObject *args = PyTuple_New(0);
-    PyObject_CallObject(enable, args);
-
-    Py_DECREF(faulthandler);
-    Py_DECREF(enable);
-    Py_DECREF(args);
 
     char py4pd_objectName[MAXPDSTRING];
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
@@ -655,6 +672,11 @@ static void *Py4pdLib_NewNormalObj(t_symbol *s, int argc, t_atom *argv) {
     if (parseArgsRight == 0) {
         return NULL;
     }
+
+    if (x->ObjArgs == NULL){
+        x->ObjArgs = malloc(sizeof(PyObject *) * x->py_arg_numbers);
+    }
+
     Py4pdLib_CreateObjInlets(pyFunction, x, argc, argv);
 
     if (!PyLong_AsLong(nooutlet)){
@@ -1276,7 +1298,6 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     if (py_args != 0){
         py4pdInlets_proxy_class = class_new(gensym("_py4pdInlets_proxy"), 0, 0, sizeof(t_py4pdInlet_proxy), CLASS_DEFAULT, 0);
         class_addanything(py4pdInlets_proxy_class, Py4pdLib_ProxyAnything);
-        class_addlist(py4pdInlets_proxy_class, Py4pdLib_ProxyList);
         class_addmethod(py4pdInlets_proxy_class, (t_method)Py4pdLib_ProxyPointer, gensym("PyObject"), A_POINTER, 0);
     }
     if (added2pd_info == 1){
