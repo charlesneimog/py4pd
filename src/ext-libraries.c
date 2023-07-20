@@ -188,19 +188,19 @@ void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b){
     return;
 }
 
+
 // =====================================
 void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_atom *argv){
     t_py *py4pd = (t_py *)x->p_master;
     t_py4pd_pValue *pArg;
     pArg = (t_py4pd_pValue *)argv;
     pArg->objectsUsing++;
-    Py4pdUtils_DECREF(py4pd->ObjArgs[x->inletIndex]); // limpa o anterior 
-    if (pArg->objectsUsing > 0){
-        Py_INCREF(pArg->pValue);
-    }
-    py4pd->ObjArgs[x->inletIndex] = pArg->pValue;
+    Py4pdUtils_DECREF(py4pd->ObjArgs[x->inletIndex]); // limpa o anterior
+    PyObject *pValue = PyObject_CallFunctionObjArgs(py4pd->py4pd_deepcopy, pArg->pValue, NULL); 
+    py4pd->ObjArgs[x->inletIndex] = pValue;
     return;
 }
+
 
 // =============================================
 void Py4pdLib_Pointer(t_py *x, t_atom *argv){
@@ -662,6 +662,11 @@ static void *Py4pdLib_NewNormalObj(t_symbol *s, int argc, t_atom *argv) {
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
     x->playable = PyLong_AsLong(playable);
+
+    PyObject *copyImportedModule = PyImport_ImportModule("copy"); 
+    PyObject *copyModule = PyObject_GetAttrString(copyImportedModule, "copy");
+    x->py4pd_deepcopy = copyModule;
+    Py_DECREF(copyImportedModule);
 
     Py4pdUtils_SetObjConfig(x);  
     PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(pyFunction);

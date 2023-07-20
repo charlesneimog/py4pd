@@ -697,7 +697,13 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
         return NULL;
     }
     
+    // clock_t start_time = clock();
     pValue = PyObject_CallObject(x->function, pArgs);
+    // clock_t end_time = clock();
+    // double time_spent = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+    // post("[Python] %s took %f microsseconds to run", x->function_name->s_name, time_spent * 1000000);
+
+
 
     t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
     pdPyValue->pValue = pValue;
@@ -721,7 +727,6 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
         Py4pdUtils_DECREF(pArgs);
         if (pArgs->ob_refcnt != 0)
             post("pArgs not free, memory leak");
-        
         Py_XDECREF(MainModule);
         free(pdPyValue);
         return NULL;
@@ -732,20 +737,20 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
         pd_error(x, "[Python] Call failed: %s", PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
+        Py_XDECREF(pstr);
         Py_XDECREF(ptype);
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);
-        PyErr_Clear();
         Py_XDECREF(pValue);
         Py4pdUtils_DECREF(pArgs);
         Py_XDECREF(MainModule);
         free(pdPyValue);
+        PyErr_Clear();
         return NULL;
     }
     else{
-        Py4pdUtils_DECREF(pArgs);
         Py_XDECREF(MainModule);
+        Py4pdUtils_DECREF(pArgs);
         free(pdPyValue);
         return pValue;
     }

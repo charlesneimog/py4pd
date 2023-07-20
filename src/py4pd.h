@@ -163,6 +163,9 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject            *delayArgs;
     PyObject            *pdmodule;
     PyObject            *Dict;
+
+    // == Internal python functions
+    PyObject            *py4pd_deepcopy;
    
     
     // == AUDIO AND NUMPY
