@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+  - toc
+---
 # Installation
 
 ## <h2 align="center"> **Setup** </h2>

@@ -1,3 +1,8 @@
+---
+hide:
+  - navigation
+  - toc
+---
 # External Libraries
 
 `py4pd` libraries contain extra tools dedicated to specific purposes. 
