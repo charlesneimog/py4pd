@@ -17,7 +17,6 @@ unsigned int hash_function(const char* str, size_t len) {
 pdcollectItem* create_item(char* key, PyObject* pValue){
     pdcollectItem* item = (pdcollectItem*) malloc(sizeof(pdcollectItem));
     item->key = (char*) malloc(strlen(key) + 1);
-    item->pValue = (PyObject*)malloc(sizeof(PyObject*));
     strcpy(item->key, key);
     item->pValue = pValue;
     return item;
@@ -35,20 +34,15 @@ pdcollectHash* create_table(int size){
 }
 
 // ======================================
-void free_item(pdcollectItem* item){
-    free(item->key);
-    Py4pdUtils_KILL(item->pValue);
-    free(item);
-}
-
-// ======================================
 void free_table(pdcollectHash* table){
     // TODO: Call this when kill the object?
-
     for (int i = 0; i < table->size; i++){
         pdcollectItem* item = table->items[i];
-        if (item != NULL)
-            free_item(item);
+        if (item != NULL){
+            free(item->key);
+            Py4pdUtils_DECREF(item->pValue);
+            free(item);
+        }
     }
     free(table->items);
     free(table);
@@ -61,22 +55,28 @@ uint32_t quadratic_probing(uint32_t index, int i, int table_size) {
 
 // ======================================
 void pdCollect_insert(pdcollectHash* table, char* key, PyObject* pValue) {
-    PyObject *newpValue = Py_BuildValue("O", pValue);
     uint32_t index = hash_function(key, table->size) % table->size;
+    PyObject *pValueNew;
     pdcollectItem* item = table->items[index];
     int i = 1;
+    t_py *py4pd = Py4pdUtils_GetObject();
     while (item != NULL) {
         if (strcmp(item->key, key) == 0) {
-            PyObject *oldpValue = item->pValue;
-            Py4pdUtils_DECREF(oldpValue); // Release the old value.
-            item->pValue = newpValue;    // Assign the new value.
+            pValueNew = PyObject_CallFunctionObjArgs(py4pd->py4pd_deepcopy, pValue, NULL);
+            Py4pdUtils_MemLeakCheck(item->pValue, 0, "pdCollect_insert");
+            item->pValue = pValueNew;    
             return;
         }
         index = quadratic_probing(index, i, table->size);
         item = table->items[index];
         i++;
     }
-    table->items[index] = create_item(key, newpValue);
+    if (pValue != Py_None){
+        pValueNew = PyObject_CallFunctionObjArgs(py4pd->py4pd_deepcopy, pValue, NULL);
+    } else {
+        pValueNew = Py_None;
+    }
+    table->items[index] = create_item(key, pValueNew);
     table->count++;
 }
 
@@ -87,9 +87,11 @@ PyObject* pdCollect_get(pdcollectHash* table, char* key) {
     int i = 1;
     while (item != NULL) {
         if (strcmp(item->key, key) == 0){
-            PyObject* pValue = Py_BuildValue("O", item->pValue);
-            Py_INCREF(pValue);
-            return pValue; 
+            t_py *py4pd = Py4pdUtils_GetObject();
+            PyObject *pValueNew = PyObject_CallFunctionObjArgs(py4pd->py4pd_deepcopy, item->pValue, NULL);
+            Py4pdUtils_DECREF(item->pValue);
+            // Py4pd_MemLeakCheck(item->pValue, 0);
+            return pValueNew;
         }
         index = quadratic_probing(index, i, table->size);
         item = table->items[index];
@@ -99,7 +101,7 @@ PyObject* pdCollect_get(pdcollectHash* table, char* key) {
 }
 
 // ======================================
-void pdCollect_clear(pdcollectHash* table, char* key) {
+static void pdCollect_clear(pdcollectHash* table, char* key) {
     uint32_t index = hash_function(key, table->size) % table->size;
     pdcollectItem* item = table->items[index];
     int i = 1;
@@ -107,7 +109,9 @@ void pdCollect_clear(pdcollectHash* table, char* key) {
         if (strcmp(item->key, key) == 0) {
             table->items[index] = NULL;
             table->count--;
-            free_item(item);
+            Py4pdUtils_DECREF(item->pValue);
+            free(item->key);
+            free(item);
             return;
         }
         index = quadratic_probing(index, i, table->size);
@@ -116,6 +120,157 @@ void pdCollect_clear(pdcollectHash* table, char* key) {
     }
 }
 
+// =================================
+// =================================
+// =================================
+static PyObject *Py4pdMod_SetGlobalVar(PyObject *self, PyObject *args){
+    (void)self;
+    t_py *py4pd = Py4pdUtils_GetObject();
+    if (py4pd == NULL){
+        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
+    char *key;
+    char *varName;
+    PyObject *pValueScript;
+    if (!PyArg_ParseTuple(args, "sO", &varName, &pValueScript)) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
+        return NULL;
+    }
+    key = malloc(strlen(varName) + 40);
+    snprintf(key, strlen(varName) + 40, "%s_%p", varName, py4pd);
+    if (py4pd->pdcollect == NULL) 
+        py4pd->pdcollect = create_table(32);
+    
+    pdCollect_insert(py4pd->pdcollect, key, pValueScript);
+    free(key);
+    Py_RETURN_TRUE;
+}
+
+// =================================
+static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject *keywords){
+    (void)self;
+
+    t_py *py4pd = Py4pdUtils_GetObject();
+    if (py4pd == NULL){
+        PyErr_SetString(PyExc_TypeError, "[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
+
+    if (py4pd->pdcollect == NULL) 
+        py4pd->pdcollect = create_table(32);
+
+    char *key;
+    char *varName;
+    if (!PyArg_ParseTuple(args, "s", &varName)) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
+        return NULL;
+    }
+    key = malloc(strlen(varName) + 40);
+    snprintf(key, strlen(varName) + 40, "%s_%p", varName, py4pd);
+
+    PyObject *oldValue = pdCollect_get(py4pd->pdcollect, key);
+    if (oldValue != NULL){
+        free(key);
+        Py4pdUtils_MemLeakCheck(oldValue, 1, "Py4pdMod_GetGlobalVar");
+        return oldValue;
+    }
+
+    PyObject* initValue = NULL;
+    if (keywords != NULL) {
+        PyObject *key_I = PyUnicode_FromString("initial_value");
+        initValue = PyDict_GetItem(keywords, key_I);
+        if (initValue == NULL){
+            initValue = Py_None;
+            Py4pdUtils_DECREF(key_I);
+            Py_RETURN_NONE;
+        }
+    }
+    if (oldValue == NULL && initValue == NULL) { 
+        free(key);
+        Py_RETURN_NONE;
+    }
+    pdCollect_insert(py4pd->pdcollect, key, initValue);
+    PyObject *pValue = pdCollect_get(py4pd->pdcollect, key);
+    free(key);
+    return pValue;
+}
+
+// =================================
+static PyObject *Py4pdMod_ClearGlobalVar(PyObject *self, PyObject *args) {
+    (void)self;
+    t_py *py4pd = Py4pdUtils_GetObject();
+    if (py4pd == NULL){
+        pd_error(NULL, "[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
+    char *key;
+    char *varName;
+    if (!PyArg_ParseTuple(args, "s", &varName)) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
+        return NULL;
+    }
+    if (py4pd->pdcollect == NULL) 
+        py4pd->pdcollect = create_table(32);
+
+    key = malloc(strlen(varName) + 40);
+    snprintf(key, strlen(varName) + 40, "%s_%p", varName, py4pd);
+
+    if (py4pd->pdcollect == NULL) {
+        free(key);
+        Py_RETURN_NONE; 
+    }
+
+    pdCollect_clear(py4pd->pdcollect, key);
+    free(key);
+    Py_RETURN_TRUE;
+}
+
+// =================================
+static PyObject *Py4pdMod_PdIterate(PyObject *self, PyObject *args){
+    (void)self;
+
+    PyObject *iter, *item;
+
+    t_py *py4pd = Py4pdUtils_GetObject();
+    if (py4pd == NULL){
+        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        return NULL;
+    }
+
+    if (!PyTuple_Check(args)) {
+        PyErr_SetString(PyExc_TypeError, "pditerate() argument must be a tuple");
+        return NULL;
+    }
+    iter = PyObject_GetIter(args);
+    if (iter == NULL) {
+        PyErr_SetString(PyExc_TypeError, "pditerate() argument must be iterable");
+        return NULL;
+    }
+    t_py4pd_pValue *PyPtrValue;
+    while ((item = PyIter_Next(iter))) {
+        if (!PyList_Check(item)) {
+            PyErr_SetString(PyExc_TypeError, "pditerate() argument must be a list");
+            return NULL;
+        }
+        int size = PyList_Size(item);
+        for (int i = 0; i < size; i++) {
+            PyObject *outArgs = PyList_GetItem(item, i);
+            PyPtrValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
+            PyPtrValue->pValue = PyObject_CallFunctionObjArgs(py4pd->py4pd_deepcopy, outArgs, NULL); 
+            Py_INCREF(PyPtrValue->pValue);
+            PyPtrValue->objectsUsing = 0;
+            PyPtrValue->objOwner = py4pd->objectName;
+            t_atom pointer_atom;
+            SETPOINTER(&pointer_atom, (t_gpointer *)PyPtrValue);
+            outlet_anything(py4pd->out1, gensym("PyObject"), 1, &pointer_atom);
+            free(PyPtrValue);
+        }
+    }
+    Py_DECREF(iter);
+    Py_DECREF(item);
+    Py_RETURN_TRUE;
+}
 
 
 // ======================================
@@ -137,8 +292,15 @@ static PyObject *Py4pdMod_PdGetOutCount(PyObject *self, PyObject *args){
 static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywords){
     (void)self;
 
-    if (PyTuple_Size(args) == 1) 
-        args = PyTuple_GetItem(args, 0);
+    // check if args[0] is one [[]] empty list
+    if (PyTuple_Size(args) == 1){
+        PyObject* pInput = PyTuple_GetItem(args, 0);
+        if (PyList_Check(pInput) && PyList_Size(pInput) == 0){
+            PyErr_SetString(PyExc_TypeError, "[Python] pd.out: empty list");
+            return NULL;
+        }
+    }
+
 
     t_py *py4pd = Py4pdUtils_GetObject();
     if (py4pd == NULL){
@@ -146,57 +308,75 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
         return NULL;
     }
 
+    PyObject* copyArgs = NULL;
+    if (PyTuple_Size(args) == 1){
+        PyObject* pInput = PyTuple_GetItem(args, 0);
+        copyArgs = PyObject_CallFunctionObjArgs(py4pd->py4pd_deepcopy, pInput, NULL); 
+    }
+    else{
+        copyArgs = PyObject_CallFunctionObjArgs(py4pd->py4pd_deepcopy, args, NULL); 
+    }
+    Py4pdUtils_MemLeakCheck(copyArgs, 1, "Py4pdMod_PdOut copyArgs");
+    if (copyArgs->ob_refcnt == 1){
+        post("it is equal 1");
+    }
+
+
     if (keywords != NULL && py4pd->outAUX != NULL){
         PyObject *outletNumber = PyDict_GetItemString(keywords, "out_n"); // it gets the data type output
         if (outletNumber == NULL){
             t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
-            pdPyValue->pValue = args;
+            pdPyValue->pValue = copyArgs;
             pdPyValue->objectsUsing = 0;
             Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->out1);
             free(pdPyValue);
-            Py_RETURN_NONE;
+            Py_RETURN_TRUE;
         }
 
-        // see if out_n is an integer
         if (!PyLong_Check(outletNumber)){
             pd_error(py4pd, "[Python] pd.out: out_n must be an integer.");
             PyErr_SetString(PyExc_TypeError, "[Python] pd.out: out_n must be an integer.");
+            Py4pdUtils_DECREF(copyArgs);
             return NULL;
         }
         int outletNumberInt = PyLong_AsLong(outletNumber);
         if (outletNumberInt == 0){
             t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
-            pdPyValue->pValue = args;
+            pdPyValue->pValue = copyArgs;
             pdPyValue->objectsUsing = 0;
             Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->out1);
             free(pdPyValue);
-            Py_RETURN_NONE;
+            Py4pdUtils_MemLeakCheck(copyArgs, 0, "Py4pdMod_PdOut - outletNumberInt == 0");
+            Py_RETURN_TRUE;
         }
         else{
             outletNumberInt--;
             if ((py4pd->outAUX->u_outletNumber > 0) && (outletNumberInt < py4pd->outAUX->u_outletNumber)){
                 t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
-                pdPyValue->pValue = args;
+                pdPyValue->pValue = copyArgs;
                 pdPyValue->objectsUsing = 0;
                 Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->outAUX[outletNumberInt].u_outlet);
                 free(pdPyValue);
+                Py4pdUtils_MemLeakCheck(copyArgs, 0, "Py4pdMod_PdOut - outletNumberInt < py4pd->outAUX->u_outletNumber");
+                Py_RETURN_TRUE;
             }
             else{
                 outletNumberInt++;
                 pd_error(py4pd, "[Python] pd.out: out_n must be an integer between 0 and %d. Received %d.", py4pd->outAUX->u_outletNumber, outletNumberInt);
                 PyErr_SetString(PyExc_TypeError, "[Python] pd.out: Please check the number of outlets."); 
+                Py4pdUtils_DECREF(copyArgs);
                 return NULL;
             }
         }
     }
     else{
         t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
-        pdPyValue->pValue = args;
+        pdPyValue->pValue = copyArgs;
         pdPyValue->objectsUsing = 0;
         Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->out1);
         free(pdPyValue);
     }
-    Py_RETURN_NONE;
+    Py_RETURN_TRUE;
 }
 
 // =================================
@@ -879,116 +1059,6 @@ static PyObject *Py4pdMod_GetObjPointer(PyObject *self, PyObject *args){
 }
 
 // =================================
-static PyObject *Py4pdMod_SetGlobalVar(PyObject *self, PyObject *args){
-    (void)self;
-
-    t_py *py4pd = Py4pdUtils_GetObject();
-    if (py4pd == NULL){
-        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
-        return NULL;
-    }
-    char *key;
-    char *varName;
-    PyObject *pValueScript;
-    if (!PyArg_ParseTuple(args, "sO", &varName, &pValueScript)) {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
-        return NULL;
-    }
-
-    key = malloc(strlen(varName) + 40);
-    snprintf(key, MAXPDSTRING, "%s_%p", varName, py4pd);
-
-    if (py4pd->pdcollect == NULL) 
-        py4pd->pdcollect = create_table(32);
-    
-    pdCollect_insert(py4pd->pdcollect, key, pValueScript);
-    free(key);
-    Py_RETURN_TRUE;
-}
-
-// =================================
-static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject *keywords){
-    (void)self;
-
-    t_py *py4pd = Py4pdUtils_GetObject();
-    if (py4pd == NULL){
-        PyErr_SetString(PyExc_TypeError, "[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
-        return NULL;
-    }
-
-    char *key;
-    char *varName;
-    if (!PyArg_ParseTuple(args, "s", &varName)) {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
-        return NULL;
-    }
-    key = malloc(strlen(varName) + 40);
-    snprintf(key, MAXPDSTRING, "%s_%p", varName, py4pd);
-
-    PyObject* initValue;
-    if (keywords != NULL) {
-        PyObject *key_I = PyUnicode_FromString("initial_value");
-        initValue = PyDict_GetItem(keywords, key_I);
-        if (initValue == NULL) 
-            initValue = Py_None;
-        Py4pdUtils_DECREF(key_I);
-    }
-    else 
-        initValue = Py_None;
-
-    if (py4pd->pdcollect == NULL) 
-        py4pd->pdcollect = create_table(32);
-
-    PyObject *oldValue = pdCollect_get(py4pd->pdcollect, key);
-    if (oldValue != NULL){
-        free(key);
-        return Py_BuildValue("O", oldValue);
-    }
-    else if (oldValue == NULL && initValue == Py_None) { 
-        free(key);
-        Py_RETURN_NONE;
-    }
-    else if (oldValue == NULL && initValue != Py_None) {
-        pdCollect_insert(py4pd->pdcollect, key, initValue);
-        free(key);
-        return initValue;
-    }
-    else {
-        pd_error(NULL, "[Python] pd.getglobalvar: something went wrong");
-        free(key);
-        Py_RETURN_NONE;
-    }
-
-}
-
-
-
-// =================================
-static PyObject *Py4pdMod_ClearGlobalVar(PyObject *self, PyObject *args) {
-    (void)self;
-    t_py *py4pd = Py4pdUtils_GetObject();
-    if (py4pd == NULL){
-        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
-        return NULL;
-    }
-    char *key;
-    char *varName;
-    if (!PyArg_ParseTuple(args, "s", &varName)) {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
-        return NULL;
-    }
-    key = malloc(strlen(varName) + 40);
-    snprintf(key, MAXPDSTRING, "%s_%p", varName, py4pd);
-
-    if (py4pd->pdcollect == NULL) {
-        Py_RETURN_FALSE;
-    }
-    pdCollect_clear(py4pd->pdcollect, key);
-    free(key);
-    Py_RETURN_TRUE;
-}
-
-// =================================
 // ============ PLAYER =============
 // =================================
 static PyObject *Py4pdMod_AddThingToPlay(PyObject *self, PyObject *args, PyObject *keywords){
@@ -1109,6 +1179,9 @@ PyMethodDef PdMethods[] = {
     // player
     {"add2player", (PyCFunction)Py4pdMod_AddThingToPlay, METH_VARARGS | METH_KEYWORDS, "It adds a thing to the player"},
     {"clearplayer", Py4pdMod_ClearPlayer, METH_NOARGS, "Get PureData Object Pointer"},
+
+    // Internal
+    {"_iterate", Py4pdMod_PdIterate, METH_VARARGS, "Special method used to pd.iterate"},
 
 
     {NULL, NULL, 0, NULL}  //

@@ -16,41 +16,6 @@ void Py4pdLib_Click(t_py *x) {
     return;
 }
 
-/*
-// ====================================================
-void Py4pdLib_CreateObjOutlets(PyObject *function, t_py *x, int argc, t_atom *argv){
-     if (nooutlet_int == 0){
-            x->out1 = outlet_new(&x->obj, 0);
-        }
-        PyObject *AuxOutletPy = PyDict_GetItemString(PdDict, "py4pdAuxOutlets");
-        int AuxOutlet = PyLong_AsLong(AuxOutletPy);
-
-        PyObject *RequireUserToSetOutletNumbers = PyDict_GetItemString(PdDict, "py4pdOBJrequireoutletn");
-        int requireNofOutlets = PyLong_AsLong(RequireUserToSetOutletNumbers);
-
-        if (requireNofOutlets){
-            if (x->x_numOutlets == -1){
-                pd_error(NULL, "[%s]: This function require that you set the number of outlets using -outn {number_of_outlets} flag", objectName);
-                return NULL;
-            }
-            else{
-                AuxOutlet = x->x_numOutlets;
-            }
-        }
-        x->outAUX = (t_py4pd_Outlets *)getbytes(AuxOutlet * sizeof(*x->outAUX));
-        x->outAUX->u_outletNumber = AuxOutlet;
-        t_atom defarg[AuxOutlet], *ap;
-        t_py4pd_Outlets *u;
-        int i;
-
-        for (i = 0, u = x->outAUX, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
-            u->u_outlet = outlet_new(&x->obj, &s_anything);
-        }
-    }
-
-*/
-
-
 // ====================================================
 void Py4pdLib_CreateObjInlets(PyObject *function, t_py *x, int argc, t_atom *argv) {
     (void)function;
@@ -62,9 +27,6 @@ void Py4pdLib_CreateObjInlets(PyObject *function, t_py *x, int argc, t_atom *arg
 
     if (pyFuncArgs != 0){
         py4pdInlet_proxies = (t_pd **)getbytes((pyFuncArgs + 1) * sizeof(*py4pdInlet_proxies));
-
-        // ===========================
-        // It creates the inlet proxies
         for (i = 0; i < pyFuncArgs; i++){
                 py4pdInlet_proxies[i] = pd_new(py4pdInlets_proxy_class);
                 t_py4pdInlet_proxy *y = (t_py4pdInlet_proxy *)py4pdInlet_proxies[i];
@@ -72,22 +34,17 @@ void Py4pdLib_CreateObjInlets(PyObject *function, t_py *x, int argc, t_atom *arg
                 y->inletIndex = i + 1;
                 inlet_new((t_object *)x, (t_pd *)y, 0, 0);
         }
-        // ===========================
         int argNumbers = x->py_arg_numbers;
-        // x->argsDict = PyTuple_New(argNumbers);
 
-        // PyObject *argName = PyCode_GetVarnames(code);
         for (i = 0; i < argNumbers; i++) {
-            // print argv string
             if (i <= argc) {
                 if (argv[i].a_type == A_FLOAT) {
+                    // TODO: fix this for consistency
                     char pd_atom[64];
                     atom_string(&argv[i], pd_atom, 64);
                     if (strchr(pd_atom, '.') != NULL) 
-                        // PyTuple_SetItem(x->argsDict, i, PyFloat_FromDouble(argv[i].a_w.w_float));
                         x->ObjArgs[i] = PyFloat_FromDouble(argv[i].a_w.w_float);
                     else
-                        // PyTuple_SetItem(x->argsDict, i, PyLong_FromLong(argv[i].a_w.w_float));
                         x->ObjArgs[i] = PyLong_FromLong(argv[i].a_w.w_float);
                 }
 
@@ -98,17 +55,13 @@ void Py4pdLib_CreateObjInlets(PyObject *function, t_py *x, int argc, t_atom *arg
                         x->ObjArgs[i] = PyUnicode_FromString(argv[i].a_w.w_symbol->s_name);
                 }
                 else 
-                    // PyTuple_SetItem(x->argsDict, i, Py_None);
                     x->ObjArgs[i] = Py_None;
             }
             else
-                // PyTuple_SetItem(x->argsDict, i, Py_None);
                 x->ObjArgs[i] = Py_None;
         }
     }
     else{
-        // x->argsDict = PyTuple_New(1);
-        // PyTuple_SetItem(x->argsDict, 0, Py_None);
         x->ObjArgs[0] = Py_None;
     }
 }
@@ -188,7 +141,6 @@ void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b){
     return;
 }
 
-
 // =====================================
 void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_atom *argv){
     t_py *py4pd = (t_py *)x->p_master;
@@ -200,7 +152,6 @@ void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_atom *argv){
     py4pd->ObjArgs[x->inletIndex] = pValue;
     return;
 }
-
 
 // =============================================
 void Py4pdLib_Pointer(t_py *x, t_atom *argv){

@@ -314,8 +314,10 @@ extern int object_count;
 
 // ============= TESTES ================
 void Py4pdUtils_DECREF(PyObject *pValue);
+void Py4pdUtils_INCREF(PyObject *pValue);
 void Py4pdUtils_KILL(PyObject *pValue);
 void free_table(pdcollectHash* table);
+void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where);
 
 // ============= UTILITIES =============
 int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);

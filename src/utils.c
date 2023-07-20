@@ -420,7 +420,7 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
             }
             else{
                 if (strcmp(env_var, "GNOME") == 0) {
-                    sprintf(command, "gnome-terminal -e \"nvim +%d %s\"", line, completePath);
+                    sprintf(command, "gnome-terminal -- nvim +%d %s", line, completePath);
                 }
                 else if (strcmp(env_var, "KDE") == 0) {
                     pd_error(x, "[py4pd] This is untested, please report if it works.");
@@ -697,18 +697,14 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
         return NULL;
     }
     
-    // clock_t start_time = clock();
     pValue = PyObject_CallObject(x->function, pArgs);
-    // clock_t end_time = clock();
-    // double time_spent = (double)(end_time - start_time) / CLOCKS_PER_SEC;
-    // post("[Python] %s took %f microsseconds to run", x->function_name->s_name, time_spent * 1000000);
 
+    t_py4pd_pValue *PyPtrValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
+    PyPtrValue->pValue = pValue;
+    PyPtrValue->objectsUsing = 0;
+    PyPtrValue->objOwner = x->objectName;
 
-
-    t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
-    pdPyValue->pValue = pValue;
-    pdPyValue->objectsUsing = 0;
-    pdPyValue->objOwner = x->objectName;
+    Py4pdUtils_MemLeakCheck(pValue, 1, "Py4pd_RunPy");
 
     if (prev_obj_exists == 1 && pValue != NULL) {
         objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
@@ -722,13 +718,13 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
     }
 
     if (pValue != NULL && x->audioOutput == 0) {
-        Py4pdUtils_ConvertToPd(x, pdPyValue, x->out1); 
+        Py4pdUtils_ConvertToPd(x, PyPtrValue, x->out1); 
         Py4pdUtils_DECREF(pValue);
         Py4pdUtils_DECREF(pArgs);
         if (pArgs->ob_refcnt != 0)
-            post("pArgs not free, memory leak");
+            pd_error(NULL, "[DEV] pArgs not free, Memory Leak, please report!");
         Py_XDECREF(MainModule);
-        free(pdPyValue);
+        free(PyPtrValue);
         return NULL;
     }
     else if(pValue == NULL){
@@ -744,20 +740,18 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
         Py_XDECREF(pValue);
         Py4pdUtils_DECREF(pArgs);
         Py_XDECREF(MainModule);
-        free(pdPyValue);
+        free(PyPtrValue);
         PyErr_Clear();
         return NULL;
     }
     else{
         Py_XDECREF(MainModule);
         Py4pdUtils_DECREF(pArgs);
-        free(pdPyValue);
+        free(PyPtrValue);
         return pValue;
     }
-
-
-    
 }
+
 // =====================================================================
 /*
  * @brief Run a Python function
@@ -765,7 +759,12 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
  * @param pArgs is the arguments to pass to the function
  * @return the return value of the function
  */
-void Py4pdUtils_DECREF(PyObject *pValue) { 
+void Py4pdUtils_INCREF(PyObject *pValue) { 
+    if (pValue->ob_refcnt < 0){
+        pd_error(NULL, "[DEV] pValue refcnt < 0, Memory Leak, please report!");
+        return;
+    }
+
     if (Py_IsNone(pValue)){
         return;
     }
@@ -776,14 +775,44 @@ void Py4pdUtils_DECREF(PyObject *pValue) {
             return;
         }
     }
-    Py_DECREF(pValue);
+    Py_INCREF(pValue);
+    return; 
+}
+
+// =====================================================================
+/*
+ * @brief Run a Python function
+ * @param x is the py4pd object
+ * @param pArgs is the arguments to pass to the function
+ * @return the return value of the function
+ */
+void Py4pdUtils_DECREF(PyObject *pValue) { 
+    if (pValue->ob_refcnt < 0){
+        pd_error(NULL, "[DEV] pValue refcnt < 0, Memory Leak, please report!");
+        return;
+    }
+
+    if (Py_IsNone(pValue)){
+        return;
+    }
+    // check if pValue is between -5 and 255
+    else if (PyLong_Check(pValue)){
+        long value = PyLong_AsLong(pValue);
+        if (value >= -5 && value <= 255){
+            return;
+        }
+    }
+    if (pValue->ob_refcnt > 0){
+        Py_DECREF(pValue);
+    }
+
+    
     if (pValue->ob_refcnt == 0){
         pValue = NULL;
     }
     return; 
 }
 
-// =====================================================================
 // =====================================================================
 /*
  * @brief Run a Python function
@@ -810,7 +839,6 @@ void Py4pdUtils_KILL(PyObject *pValue) {
             Py_DECREF(pValue);
             if (pValue->ob_refcnt == 0){
                 pValue = NULL;
-                post("[Python] Killed object");
                 break;
             }
             iter++;
@@ -823,8 +851,51 @@ void Py4pdUtils_KILL(PyObject *pValue) {
     }
 }
 
-
-
+// =====================================================================
+/*
+ * @brief It warnings if there is a memory leak
+ * @param pValue is the value to check
+ * @return nothing
+ */
+void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where) {
+    if (Py_IsNone(pValue)){
+        return;
+    }
+    else if (Py_IsTrue(pValue)){
+        return;
+    }
+    else if (PyLong_Check(pValue)){
+        long value = PyLong_AsLong(pValue);
+        if (value >= -5 && value <= 255){
+            return;
+        }
+        else{
+            if (pValue->ob_refcnt != refcnt){
+                if (refcnt < pValue->ob_refcnt){
+                    pd_error(NULL, "[DEV] Memory Leak inside %s, Ref Count should be %d but is %d", 
+                             where, refcnt, (int)pValue->ob_refcnt);
+                }
+                else{
+                    pd_error(NULL, "[DEV] Ref Count error in %s, Ref Count should be %d but is %d", 
+                             where, refcnt, (int)pValue->ob_refcnt); 
+                }
+            }
+        }
+    }
+    else{
+        if (pValue->ob_refcnt != refcnt){
+            if (refcnt < pValue->ob_refcnt){
+                pd_error(NULL, "[DEV] Memory Leak inside %s, Ref Count should be %d but is %d", 
+                         where, refcnt, (int)pValue->ob_refcnt);
+            }
+            else{
+                pd_error(NULL, "[DEV] Ref Count error in %s, Ref Count should be %d but is %d", 
+                         where, refcnt, (int)pValue->ob_refcnt); 
+            }
+        }
+}
+    return;
+}
 
 // =====================================================================
 /*
@@ -836,6 +907,11 @@ void Py4pdUtils_KILL(PyObject *pValue) {
 inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct, t_outlet *outlet) { 
     PyObject* pValue = pValueStruct->pValue;
 
+    if (pValue->ob_refcnt < 1){
+        pd_error(NULL, "[FATAL]: When converting to pd, pValue refcnt < 1");
+        return NULL;
+    }
+    
     if (x->outPyPointer) {
         if (pValue == Py_None && x->ignoreOnNone == 1) {
             return NULL;
