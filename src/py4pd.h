@@ -15,7 +15,6 @@
 
 #define PY4PD_DEBUG 0
 
-
 #define PY4PD_MAJOR_VERSION 0
 #define PY4PD_MINOR_VERSION 8
 #define PY4PD_MICRO_VERSION 0
@@ -24,6 +23,7 @@
 #ifndef PY4PD_EDITOR
     #ifdef _WIN64
         #define PY4PD_EDITOR "idle3.10"
+        #include <windows.h>
     #else
         #define PY4PD_EDITOR "idle3.10"
     #endif
@@ -84,19 +84,22 @@ typedef struct _py4pd_pValue{
     PyObject* pValue;
     int objectsUsing; 
     t_symbol *objOwner;
+    int clearAfterUse;
 }t_py4pd_pValue;
 
 // ======================================
-typedef struct pdcollectItem
-{
-    char* key;
-    PyObject* pValue;
+// ======================================
+// ======================================
+typedef struct pdcollectItem{
+    char*         key;
+    PyObject**    PyObjsArr;
+    int           PyObjsArrSize;
+    int           wasCleaned;
+    int           aCumulative;
 } pdcollectItem;
 
 // ======================================
-typedef struct pdcollectHash
-{
-    // Contains an array of pointers to items.
+typedef struct pdcollectHash{
     pdcollectItem** items;
     int size;
     int count;
@@ -105,7 +108,6 @@ typedef struct pdcollectHash
 // ====================================
 // ========== VIS OBJECTS =============
 // ====================================
-
 typedef struct _py4pd_edit_proxy{ 
     t_object    p_obj;
     t_symbol   *p_sym;
@@ -126,6 +128,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     // TESTING THINGS
     PyObject            **ObjArgs; // Obj Variables Arguments 
     pdcollectHash        *pdcollect; // hash table to store the objects
+    t_int               usingPdOut;
      
     // ===========
 
@@ -316,7 +319,6 @@ extern int object_count;
 void Py4pdUtils_DECREF(PyObject *pValue);
 void Py4pdUtils_INCREF(PyObject *pValue);
 void Py4pdUtils_KILL(PyObject *pValue);
-void free_table(pdcollectHash* table);
 void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where);
 
 // ============= UTILITIES =============

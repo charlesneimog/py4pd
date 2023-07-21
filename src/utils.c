@@ -177,7 +177,7 @@ void *Py4pdLib_FreeObj(t_py *x) {
         Py4pdPic_Free(x);
     }
     if (x->pdcollect != NULL) {
-        free_table(x->pdcollect);
+        // free_table(x->pdcollect);
     }
 
 
@@ -760,7 +760,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
  * @return the return value of the function
  */
 void Py4pdUtils_INCREF(PyObject *pValue) { 
-    if (pValue->ob_refcnt < 0){
+    if (pValue->ob_refcnt < 0 && PY4PD_DEBUG){
         pd_error(NULL, "[DEV] pValue refcnt < 0, Memory Leak, please report!");
         return;
     }
@@ -787,7 +787,7 @@ void Py4pdUtils_INCREF(PyObject *pValue) {
  * @return the return value of the function
  */
 void Py4pdUtils_DECREF(PyObject *pValue) { 
-    if (pValue->ob_refcnt < 0){
+    if (pValue->ob_refcnt < 0 && PY4PD_DEBUG){
         pd_error(NULL, "[DEV] pValue refcnt < 0, Memory Leak, please report!");
         return;
     }
@@ -858,6 +858,10 @@ void Py4pdUtils_KILL(PyObject *pValue) {
  * @return nothing
  */
 void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where) {
+    if (!PY4PD_DEBUG){
+        return;
+    }
+
     if (Py_IsNone(pValue)){
         return;
     }
@@ -907,7 +911,7 @@ void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where) {
 inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct, t_outlet *outlet) { 
     PyObject* pValue = pValueStruct->pValue;
 
-    if (pValue->ob_refcnt < 1){
+    if (pValue->ob_refcnt < 1 && PY4PD_DEBUG){
         pd_error(NULL, "[FATAL]: When converting to pd, pValue refcnt < 1");
         return NULL;
     }
