@@ -21,7 +21,7 @@
 
 // DEFINE STANDARD IDE EDITOR
 #ifndef PY4PD_EDITOR
-    #ifdef _WIN64
+    #ifdef _WIN32
         #define PY4PD_EDITOR "idle3.10"
         #include <windows.h>
     #else
