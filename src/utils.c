@@ -250,38 +250,38 @@ const char* Py4pdUtils_GetFilename(const char* path) {
         filename_without_extension[filename_length] = '\0';
         filename = filename_without_extension;
     }
+
     return filename;
 }
 
 // ====================================================
 void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *script_file_name){
-    #ifdef _WIN32
-        WIN32_FIND_DATAW findData; // Use the Unicode version of WIN32_FIND_DATA
+    #ifdef _WIN64
+        WIN32_FIND_DATAA findData;
         HANDLE hFind;
 
-        wchar_t searchPath[MAXPDSTRING];
-        swprintf(searchPath, MAXPDSTRING, L"%s\\*", folderToCheck); // Use swprintf for Unicode formatting
+        char searchPath[MAX_PATH];
+        snprintf(searchPath, sizeof(searchPath), "%s\\*", folderToCheck);
 
-        hFind = FindFirstFileW(searchPath, &findData); // Use FindFirstFileW
+        hFind = FindFirstFileA(searchPath, &findData);
         if (hFind != INVALID_HANDLE_VALUE) {
             do {
                 if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-                    const wchar_t* entryName = findData.cFileName; // Use const wchar_t* for Unicode file names
-                    if (wcscmp(entryName, L".") != 0 && wcscmp(entryName, L"..") != 0) { // Use wcscmp for Unicode string comparison
-                        if (wcscmp(entryName, script_file_name->s_name) == 0) {
+                    const char* entryName = findData.cFileName;
+                    if (strcmp(entryName, ".") != 0 && strcmp(entryName, "..") != 0) {
+                        if (strcmp(entryName, script_file_name->s_name) == 0) {
                             // Process the conflict
                             post("");
-                            pd_error(x, "[py4pd] The library '%ls' conflicts with a Python package name.", script_file_name->s_name); // Use %ls for Unicode string in pd_error
+                            pd_error(x, "[py4pd] The library '%s' conflicts with a Python package name.", script_file_name->s_name);
                             pd_error(x, "[py4pd] This can cause problems related to py4pdLoadObjects.");
                             pd_error(x, "[py4pd] Rename the library.");
                             post("");
                         }
                     }
                 }
-            } while (FindNextFileW(hFind, &findData) != 0); // Use FindNextFileW
+            } while (FindNextFileA(hFind, &findData) != 0);
             FindClose(hFind);
         }
-
     #else
         DIR *dir;
         struct dirent *entry;
@@ -704,7 +704,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
     PyPtrValue->objectsUsing = 0;
     PyPtrValue->objOwner = x->objectName;
 
-    Py4pdUtils_MemLeakCheck(pValue, 1, "Py4pd_RunPy");
+    // Py4pdUtils_MemLeakCheck(pValue, 1, "Py4pd_RunPy");
 
     if (prev_obj_exists == 1 && pValue != NULL) {
         objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
@@ -721,8 +721,6 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
         Py4pdUtils_ConvertToPd(x, PyPtrValue, x->out1); 
         Py4pdUtils_DECREF(pValue);
         Py4pdUtils_DECREF(pArgs);
-        if (pArgs->ob_refcnt != 0)
-            pd_error(NULL, "[DEV] pArgs not free, Memory Leak, please report!");
         Py_XDECREF(MainModule);
         free(PyPtrValue);
         return NULL;
@@ -760,7 +758,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
  * @return the return value of the function
  */
 void Py4pdUtils_INCREF(PyObject *pValue) { 
-    if (pValue->ob_refcnt < 0 && PY4PD_DEBUG){
+    if (pValue->ob_refcnt < 0){
         pd_error(NULL, "[DEV] pValue refcnt < 0, Memory Leak, please report!");
         return;
     }
@@ -787,10 +785,10 @@ void Py4pdUtils_INCREF(PyObject *pValue) {
  * @return the return value of the function
  */
 void Py4pdUtils_DECREF(PyObject *pValue) { 
-    if (pValue->ob_refcnt < 0 && PY4PD_DEBUG){
-        pd_error(NULL, "[DEV] pValue refcnt < 0, Memory Leak, please report!");
-        return;
-    }
+    // if (pValue->ob_refcnt < 0){
+        // pd_error(NULL, "[DEV] pValue refcnt < 0, Memory Leak, please report!");
+        // return;
+    // }
 
     if (Py_IsNone(pValue)){
         return;
@@ -858,10 +856,6 @@ void Py4pdUtils_KILL(PyObject *pValue) {
  * @return nothing
  */
 void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where) {
-    if (!PY4PD_DEBUG){
-        return;
-    }
-
     if (Py_IsNone(pValue)){
         return;
     }
@@ -911,8 +905,8 @@ void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where) {
 inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct, t_outlet *outlet) { 
     PyObject* pValue = pValueStruct->pValue;
 
-    if (pValue->ob_refcnt < 1 && PY4PD_DEBUG){
-        pd_error(NULL, "[FATAL]: When converting to pd, pValue refcnt < 1");
+    if (pValue->ob_refcnt < 1){
+        pd_error(NULL, ANSI_COLOR_RED "[FATAL]: When converting to pd, pValue refcnt < 1" ANSI_COLOR_RESET);
         return NULL;
     }
     
@@ -1199,7 +1193,7 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
                 Py4pdUtils_RemoveChar(editor, ' ');
                 x->editorName = gensym(editor);
                 free(editor);  // free memory
-                logpost(x, 3, "[py4pd] Editor set to %s", x->editorName->s_name);
+                // logpost(x, 3, "[py4pd] Editor set to %s", x->editorName->s_name);
             }
         }
         fclose(file);  // close file

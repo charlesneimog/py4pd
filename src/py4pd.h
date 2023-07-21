@@ -13,6 +13,10 @@
     #define __USE_GNU
 #endif
 
+#define ANSI_COLOR_RED "\x1b[31m"
+#define ANSI_COLOR_RESET "\x1b[0m"
+
+
 #define PY4PD_DEBUG 0
 
 #define PY4PD_MAJOR_VERSION 0
@@ -96,8 +100,8 @@ typedef struct _py4pd_pValue{
 // ======================================
 typedef struct pdcollectItem{
     char*         key;
-    PyObject**    PyObjsArr;
-    int           PyObjsArrSize;
+    PyObject*     pList;
+    PyObject*     pItem;
     int           wasCleaned;
     int           aCumulative;
 } pdcollectItem;
@@ -321,8 +325,8 @@ extern int object_count;
 
 // ============= TESTES ================
 void Py4pdUtils_DECREF(PyObject *pValue);
+// void Py4pdUtils_DECREF(PyObject *pValue);
 void Py4pdUtils_INCREF(PyObject *pValue);
-void Py4pdUtils_KILL(PyObject *pValue);
 void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where);
 
 // ============= UTILITIES =============
