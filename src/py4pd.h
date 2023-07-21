@@ -19,11 +19,14 @@
 #define PY4PD_MINOR_VERSION 8
 #define PY4PD_MICRO_VERSION 0
 
+#ifdef _WIN32
+    #include <windows.h>
+#endif
+
 // DEFINE STANDARD IDE EDITOR
 #ifndef PY4PD_EDITOR
     #ifdef _WIN32
         #define PY4PD_EDITOR "idle3.10"
-        #include <windows.h>
     #else
         #define PY4PD_EDITOR "idle3.10"
     #endif
@@ -31,6 +34,7 @@
 
 // FOLDER
 #include <dirent.h>
+
 
 // ====================================
 // =============== THREADS ============

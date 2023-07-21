@@ -250,12 +250,39 @@ const char* Py4pdUtils_GetFilename(const char* path) {
         filename_without_extension[filename_length] = '\0';
         filename = filename_without_extension;
     }
-
     return filename;
 }
 
 // ====================================================
 void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *script_file_name){
+    #ifdef _WIN32
+        WIN32_FIND_DATAW findData; // Use the Unicode version of WIN32_FIND_DATA
+        HANDLE hFind;
+
+        wchar_t searchPath[MAXPDSTRING];
+        swprintf(searchPath, MAXPDSTRING, L"%s\\*", folderToCheck); // Use swprintf for Unicode formatting
+
+        hFind = FindFirstFileW(searchPath, &findData); // Use FindFirstFileW
+        if (hFind != INVALID_HANDLE_VALUE) {
+            do {
+                if (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+                    const wchar_t* entryName = findData.cFileName; // Use const wchar_t* for Unicode file names
+                    if (wcscmp(entryName, L".") != 0 && wcscmp(entryName, L"..") != 0) { // Use wcscmp for Unicode string comparison
+                        if (wcscmp(entryName, script_file_name->s_name) == 0) {
+                            // Process the conflict
+                            post("");
+                            pd_error(x, "[py4pd] The library '%ls' conflicts with a Python package name.", script_file_name->s_name); // Use %ls for Unicode string in pd_error
+                            pd_error(x, "[py4pd] This can cause problems related to py4pdLoadObjects.");
+                            pd_error(x, "[py4pd] Rename the library.");
+                            post("");
+                        }
+                    }
+                }
+            } while (FindNextFileW(hFind, &findData) != 0); // Use FindNextFileW
+            FindClose(hFind);
+        }
+
+    #else
         DIR *dir;
         struct dirent *entry;
 
@@ -275,6 +302,7 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *scr
             }
         }
         closedir(dir);
+    #endif
     return;
 }
 
