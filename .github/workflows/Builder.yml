@@ -153,15 +153,20 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.11'       
+          
       - name: Install Build Dependencies
         run: |
-          sudo apt-get install puredata -y
+          PD_URL=$(curl -L -s https://api.github.com/repos/pure-data/pure-data/tags | grep zipball_url | grep -v latest | grep -v pd-0.52 | grep -v tagtest | head -n 1 | cut -d '"' -f 4)
+          curl -L -o pure-data.zip $PD_URL
+          unzip pure-data.zip
+          rm pure-data.zip
+          mv pure-data-* pure-data
           sudo apt-get install python3.10-dev -y
           python3.10 -m pip install numpy
 
       - name: Build
-        run: make PYTHON_VERSION=python3.10 extension=l_amd64
+        run: make PDINCLUDEDIR=./pure-data/src/ PYTHON_VERSION=python3.11 extension=l_amd64 
       
       - name: Copy files to py4pd
         run: |
