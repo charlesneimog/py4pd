@@ -1,5 +1,4 @@
 #include "py4pd.h"
-#include "tupleobject.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
@@ -41,7 +40,7 @@ static void InsertItem(pdcollectHash* hash_table, char* key, PyObject* obj) {
         return;
     }
     else if (item != NULL) {
-        Py_DECREF(item->pItem);
+        Py4pdUtils_DECREF(item->pItem); // Decrement the reference count of the object.
         item->pItem = obj;
         return;
     }
@@ -65,7 +64,9 @@ static void AccumItem(pdcollectHash* hash_table, char* key, PyObject* obj) {
     if (item->wasCleaned) {
         item->wasCleaned = 0;
     }
+    
     PyList_Append(item->pList, obj);
+    Py4pdUtils_DECREF(obj); // THIS IS NECESSARY BUT IT CAUSES A SEGFAULT
 }
 
 
@@ -80,8 +81,9 @@ static void ClearItem(pdcollectHash* hash_table, char* key) {
         return;
     }
     item->wasCleaned = 1;
-    Py_DECREF(item->pItem);
     free(item->key);
+    Py_DECREF(item->pItem);
+    Py4pdUtils_MemLeakCheck(item->pItem, 0, "ClearItem");
     free(item);
     hash_table->items[index] = NULL;
 }
@@ -98,8 +100,10 @@ static void ClearList(pdcollectHash* hash_table, char* key) {
         return;
     }
     item->wasCleaned = 1;
-    Py_DECREF(item->pList);
     free(item->key);
+
+    Py4pdUtils_MemLeakCheck(item->pList, 0, "ClearList");
+    
     free(item);
     hash_table->items[index] = NULL;
 }
@@ -145,7 +149,7 @@ static PyObject *Py4pdMod_SetGlobalVar(PyObject *self, PyObject *args){
 
 // =================================
 static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject *keywords){
-
+    post("Py4pdMod_GetGlobalVar");
     (void)self;
     t_py *py4pd = Py4pdUtils_GetObject();
     if (py4pd == NULL){
@@ -174,16 +178,17 @@ static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject 
     free(key);
     if (item->aCumulative){
         if (item->pList == Py_None){
-            return Py_None;
+            Py_RETURN_NONE;
         }
-        // Py_INCREF(item->pList); BUG: Need more tests.
+        Py4pdUtils_INCREF(item->pList);
+        // post("refcount %d", Py_REFCNT(item->pList)); 
         return item->pList;
     }
     else{
         if (item->pList == Py_None){
-            return Py_None;
+            Py_RETURN_NONE;
         }
-        // Py_INCREF(item->pItem);
+        Py4pdUtils_INCREF(item->pItem);
         return item->pItem;
     }
 }
@@ -209,7 +214,6 @@ static PyObject *Py4pdMod_AccumGlobalVar(PyObject *self, PyObject *args){
     if (py4pd->pdcollect == NULL){
         py4pd->pdcollect = CreatePdcollectHash(1);
     }
-
     AccumItem(py4pd->pdcollect, key, pValueScript);
     py4pd->pdcollect->items[HashFunction(py4pd->pdcollect, key)]->aCumulative = 1;
     free(key);
@@ -217,9 +221,14 @@ static PyObject *Py4pdMod_AccumGlobalVar(PyObject *self, PyObject *args){
 
 }
 
+static int globalClearGlobalVar = 0;
+
+
 // =================================
 static PyObject *Py4pdMod_ClearGlobalVar(PyObject *self, PyObject *args) {
     (void)self;
+    globalClearGlobalVar += 1;
+    post("=== %d ===", globalClearGlobalVar);
 
     t_py *py4pd = Py4pdUtils_GetObject();
     if (py4pd == NULL){
@@ -242,6 +251,10 @@ static PyObject *Py4pdMod_ClearGlobalVar(PyObject *self, PyObject *args) {
     }
 
     pdcollectItem* objArr = GetObjArr(py4pd->pdcollect, key);
+    if (objArr == NULL || objArr->wasCleaned){
+        free(key);
+        Py_RETURN_TRUE;
+    }
     if (objArr->aCumulative) 
         ClearList(py4pd->pdcollect, key);
     else
@@ -250,48 +263,6 @@ static PyObject *Py4pdMod_ClearGlobalVar(PyObject *self, PyObject *args) {
     free(key);
     Py_RETURN_TRUE;
 }
-
-
-// =================================
-static PyObject *Py4pdMod_PdIterate(PyObject *self, PyObject *args){
-    (void)self;
-    PyObject *iter, *item;
-    t_py *py4pd = Py4pdUtils_GetObject();
-    if (py4pd == NULL){
-        PyErr_SetString(PyExc_RuntimeError, "[Python] pd.setglobalvar: py4pd is NULL");
-        return NULL;
-    }
-
-    iter = PyObject_GetIter(args);
-    if (iter == NULL) {
-        PyErr_SetString(PyExc_TypeError, "pditerate() argument must be iterable");
-        return NULL;
-    }
-    t_py4pd_pValue *PyPtrValue;
-    while ((item = PyIter_Next(iter))) {
-        if (!PyList_Check(item)) {
-            PyErr_Format(PyExc_TypeError, "pd.iterate() argument must be a list, received something %s", Py_TYPE(item)->tp_name);
-            return NULL;
-        }
-        int size = PyList_Size(item);
-        for (int i = 0; i < size; i++) {
-            PyObject *outArgs = PyList_GetItem(item, i);
-            PyPtrValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
-            PyPtrValue->pValue = PyObject_CallObject(py4pd->py4pd_deepcopy, outArgs);
-            Py4pdUtils_MemLeakCheck(PyPtrValue->pValue, 1, "PdIterate");
-            PyPtrValue->objectsUsing = 0;
-            PyPtrValue->objOwner = py4pd->objectName;
-            t_atom pointer_atom;
-            SETPOINTER(&pointer_atom, (t_gpointer *)PyPtrValue);
-            outlet_anything(py4pd->out1, gensym("PyObject"), 1, &pointer_atom);
-            Py4pdUtils_MemLeakCheck(PyPtrValue->pValue, 0, "PdIterate");
-            free(PyPtrValue);
-        }
-        // implement for Tuple and Dict
-    }
-    Py_RETURN_TRUE;
-}
-
 
 // ======================================
 // ======== py4pd embbeded module =======
@@ -322,7 +293,6 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
     copyArgs = args;
     if (PyTuple_Size(args) == 1){
         copyArgs = PyTuple_GetItem(args, 0);
-        // Py_INCREF(copyArgs);
     }
     Py_INCREF(copyArgs);
 
@@ -334,6 +304,7 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
             pdPyValue->pValue = copyArgs;
             pdPyValue->objectsUsing = 0;
             Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->out1);
+            Py_DECREF(copyArgs);
             free(pdPyValue);
             Py_RETURN_TRUE;
         }
@@ -348,6 +319,7 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
             pdPyValue->pValue = copyArgs;
             pdPyValue->objectsUsing = 0;
             Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->out1);
+            // Py_DECREF(copyArgs);
             free(pdPyValue);
             Py_RETURN_TRUE;
         }
@@ -358,6 +330,7 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
                 pdPyValue->pValue = copyArgs;
                 pdPyValue->objectsUsing = 0;
                 Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->outAUX[outletNumberInt].u_outlet);
+                // Py_DECREF(copyArgs);
                 free(pdPyValue);
                 Py_RETURN_TRUE;
             }
@@ -371,7 +344,9 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
     else{
         t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
         pdPyValue->pValue = copyArgs;
+        pdPyValue->objectsUsing = 0;
         Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->out1);
+        // Py_DECREF(copyArgs);
         free(pdPyValue);
     }
     Py_RETURN_TRUE;
@@ -1175,7 +1150,7 @@ PyMethodDef PdMethods[] = {
     {"clearplayer", Py4pdMod_ClearPlayer, METH_NOARGS, "Get PureData Object Pointer"},
 
     // Internal
-    {"_iterate", Py4pdMod_PdIterate, METH_VARARGS, "Special method used to pd.iterate"},
+    // {"_iterate", Py4pdMod_PdIterate, METH_VARARGS, "Special method used to pd.iterate"},
 
 
     {NULL, NULL, 0, NULL}  //

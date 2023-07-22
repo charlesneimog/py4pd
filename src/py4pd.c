@@ -203,7 +203,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
                 return -1;
             }
         }
-        Py_DECREF(pFunc);
+        // Py_DECREF(pFunc);
 
         if (pValue == NULL) {
             PyObject *ptype, *pvalue, *ptraceback;
@@ -233,6 +233,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
         x->script_name = script_file_name;
         x->function_name = function_name;
         x->function_called = 1;
+        x->py4pd_lib = 1;
         logpost(x, 3, "[py4pd] Library %s loaded!", script_file_name->s_name);
     } 
     else {
@@ -510,11 +511,10 @@ void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         pd_error(x, "[py4pd] To open the editor you need to set the function first!");
         return;
     }
-    post("[py4pd] Opening editor...");
 
     PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->function);
     int line = PyCode_Addr2Line(code, 0);
-    char command[MAXPDSTRING]; 
+    char command[MAXPDSTRING];
     Py4pdUtils_GetEditorCommand(x, command, line);
     Py4pdUtils_ExecuteSystemCommand(command);
     return;
@@ -1042,6 +1042,7 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class, (t_method)Py4pd_SetEditor, gensym("editor"), A_GIMME, 0);  // open code
     class_addmethod(py4pd_class, (t_method)Py4pd_OpenScript, gensym("open"), A_GIMME, 0); 
     class_addmethod(py4pd_class, (t_method)Py4pd_SetEditor, gensym("click"), 0, 0);  // when click open editor
+    class_addmethod(py4pd_classLibrary, (t_method)Py4pd_SetEditor, gensym("click"), 0, 0);  // when click open editor
     
     // User 
     class_addmethod(py4pd_class, (t_method)Py4pd_PrintDocs, gensym("doc"), 0, 0);  // open documentation

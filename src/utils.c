@@ -400,9 +400,18 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
     if (x->pyObject){
         sprintf(completePath, "'%s'", filename);
     }
+    else if(x->py4pd_lib){
+        PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(x->function);
+        t_symbol *script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
+        sprintf(completePath, "'%s'", script_name->s_name);
+    }
     else{
         sprintf(completePath, "'%s/%s.py'", home, filename);
     }
+
+    
+
+
     // check if there is .py in filename
     if (strcmp(editor, PY4PD_EDITOR) == 0) {
         sprintf(command, "%s %s", PY4PD_EDITOR, completePath);

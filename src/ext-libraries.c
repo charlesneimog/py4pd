@@ -230,8 +230,14 @@ void Py4pdLib_Bang(t_py *x){
     if (x->py_arg_numbers != 0){
         post("This is not recommended when using Python functions with arguments");
     }
-    Py4pdUtils_RunPy(x, x->argsDict);
-    return;
+    PyObject* pArgs = PyTuple_New(x->py_arg_numbers);
+    for (int i = 0; i < x->py_arg_numbers; i++){
+        Py_INCREF(x->ObjArgs[i]);
+        PyTuple_SetItem(pArgs, i, x->ObjArgs[i]);
+    }
+
+ 
+    
 }
 
 // =====================================
@@ -299,10 +305,8 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
     if (x->audioOutput)
         return; // in audio out object, the function of dsp will call the python function
     
-    // PyObject* pObj;
     PyObject* pArgs = PyTuple_New(x->py_arg_numbers);
     for (int i = 0; i < x->py_arg_numbers; i++){
-        // pObj = Py_BuildValue("O", x->ObjArgs[i]);
         Py_INCREF(x->ObjArgs[i]);
         PyTuple_SetItem(pArgs, i, x->ObjArgs[i]);
     }
@@ -1082,31 +1086,73 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     }
 
     // Add configs to the object
-    PyObject *nestedDict = PyDict_New();
+    PyObject *nestedDict = PyDict_New(); // New
+
     PyDict_SetItemString(nestedDict, "py4pdOBJFunction", Function);
-    PyDict_SetItemString(nestedDict, "py4pdOBJLibraryFolder", PyUnicode_FromString(py4pd->libraryFolder->s_name));
-    PyDict_SetItemString(nestedDict, "py4pdOBJ_CLASS", PyLong_FromVoidPtr(localClass));
-    PyDict_SetItemString(nestedDict, "py4pdOBJwidth", PyLong_FromLong(w));
-    PyDict_SetItemString(nestedDict, "py4pdOBJheight", PyLong_FromLong(h));
-    PyDict_SetItemString(nestedDict, "py4pdOBJPlayable", PyLong_FromLong(playableInt));
+
+    PyObject* Py_LibraryFolder = PyUnicode_FromString(py4pd->libraryFolder->s_name);
+    PyDict_SetItemString(nestedDict, "py4pdOBJLibraryFolder", Py_LibraryFolder);
+    Py_DECREF(Py_LibraryFolder);
+
+    PyObject* Py_ClassLocal = PyLong_FromVoidPtr(localClass);
+    PyDict_SetItemString(nestedDict, "py4pdOBJ_CLASS", Py_ClassLocal);
+    Py_DECREF(Py_ClassLocal);
+
+    PyObject* Py_Width = PyLong_FromLong(w);
+    PyDict_SetItemString(nestedDict, "py4pdOBJwidth", Py_Width);
+    Py_DECREF(Py_Width);
+
+    PyObject* Py_Height = PyLong_FromLong(h);
+    PyDict_SetItemString(nestedDict, "py4pdOBJheight", Py_Height);
+    Py_DECREF(Py_Height);
+
+    PyObject* Py_Playable = PyLong_FromLong(playableInt);
+    PyDict_SetItemString(nestedDict, "py4pdOBJPlayable", Py_Playable);
+    Py_DECREF(Py_Playable);
+
     if (gifImage != NULL){
-        PyDict_SetItemString(nestedDict, "py4pdOBJGif", PyUnicode_FromString(gifImage));
+        PyObject* Py_GifImage = PyUnicode_FromString(gifImage);
+        PyDict_SetItemString(nestedDict, "py4pdOBJGif", Py_GifImage);
+        Py_DECREF(Py_GifImage);
     }
+
+    PyObject* Py_ObjOuts = PyLong_FromLong(objpyout);
     PyDict_SetItemString(nestedDict, "py4pdOBJpyout", PyLong_FromLong(objpyout));
-    PyDict_SetItemString(nestedDict, "py4pdOBJnooutlet", PyLong_FromLong(nooutlet));
-    PyDict_SetItemString(nestedDict, "py4pdOBJrequireoutletn", PyLong_FromLong(require_outlet_n));
-    PyDict_SetItemString(nestedDict, "py4pdAuxOutlets", PyLong_FromLong(auxOutlets));
+    Py_DECREF(Py_ObjOuts);
 
-    // auxOutlets
+    PyObject* Py_NoOutlet = PyLong_FromLong(nooutlet);
+    PyDict_SetItemString(nestedDict, "py4pdOBJnooutlet", Py_NoOutlet);
+    Py_DECREF(Py_NoOutlet);
 
-    PyDict_SetItemString(nestedDict, "py4pdOBJname", PyUnicode_FromString(objectName));
-    PyDict_SetItemString(nestedDict, "py4pdOBJIgnoreNone", PyLong_FromLong(ignoreNoneReturn));
+    PyObject* Py_RequireOutletN = PyLong_FromLong(require_outlet_n);
+    PyDict_SetItemString(nestedDict, "py4pdOBJrequireoutletn", Py_RequireOutletN);
+    Py_DECREF(Py_RequireOutletN);
+
+    PyObject* Py_auxOutlets = PyLong_FromLong(auxOutlets);
+    PyDict_SetItemString(nestedDict, "py4pdAuxOutlets", Py_auxOutlets);
+    Py_DECREF(Py_auxOutlets);
+
+    PyObject* Py_ObjName = PyUnicode_FromString(objectName);
+    PyDict_SetItemString(nestedDict, "py4pdOBJname", Py_ObjName);
+    Py_DECREF(Py_ObjName);
+
+    PyObject* Py_IgnoreNoneReturn = PyLong_FromLong(ignoreNoneReturn);
+    PyDict_SetItemString(nestedDict, "py4pdOBJIgnoreNone", Py_IgnoreNoneReturn);
+    Py_DECREF(Py_IgnoreNoneReturn);
+
+
     PyObject *objectDict = PyDict_New();
     PyDict_SetItemString(objectDict, objectName, nestedDict);
     PyObject *py4pd_capsule = PyCapsule_New(objectDict, objectName, NULL);
     char py4pd_objectName[MAXPDSTRING];
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
-    PyModule_AddObject(PyImport_ImportModule("pd"), py4pd_objectName, py4pd_capsule);
+    
+    PyObject* pdModule = PyImport_ImportModule("pd");
+    PyModule_AddObject(pdModule, py4pd_objectName, py4pd_capsule);
+    
+    Py_DECREF(pdModule);
+
+
     // =====================================
     PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(Function);
     int py_args = code->co_argcount;
@@ -1178,5 +1224,5 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
         post("[py4pd]: Object {%s} added to PureData", objectName);
     }
     class_set_extern_dir(&s_);
-    return PyLong_FromLong(1);
+    Py_RETURN_TRUE;
 }
