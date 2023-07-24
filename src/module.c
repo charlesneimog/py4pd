@@ -164,10 +164,17 @@ static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject 
         return NULL;
     }
 
+    
     key = malloc(strlen(varName) + 40);
     snprintf(key, strlen(varName) + 40, "%s_%p", varName, py4pd);
     if (py4pd->pdcollect == NULL){
         py4pd->pdcollect = CreatePdcollectHash(1);
+    }
+
+    if (keywords != NULL) {
+        PyObject *pValueInit = PyDict_GetItemString(keywords, "initial_value");
+        if (pValueInit != NULL) 
+            InsertItem(py4pd->pdcollect, key, pValueInit);
     }
 
     pdcollectItem* item = GetObjArr(py4pd->pdcollect, key); 
@@ -177,17 +184,13 @@ static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject 
     }
     free(key);
     if (item->aCumulative){
-        if (item->pList == Py_None){
+        if (item->pList == Py_None)
             Py_RETURN_NONE;
-        }
-        // Py4pdUtils_INCREF(item->pList);
         return item->pList;
     }
     else{
-        if (item->pList == Py_None){
+        if (item->pList == Py_None)
             Py_RETURN_NONE;
-        }
-        // Py4pdUtils_INCREF(item->pItem);
         return item->pItem;
     }
 }
@@ -307,7 +310,10 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
         PyErr_SetString(PyExc_TypeError, "[Python] pd.out: wrong arguments");
         return NULL;
     }
-    PyObject* pValue = Py_NewRef(pFirstArg);
+    PyObject* pValue = Py_NewRef(pFirstArg); 
+    /* if everything is ok, pValue is added to one Tuple inside Py4pdLib_Pointer
+       and Py4pdLib_Anything. Because that we not need to decref pValue.
+    */
 
     if (keywords != NULL && py4pd->outAUX != NULL){
         PyObject *outletNumber = PyDict_GetItemString(keywords, "out_n"); // it gets the data type output
@@ -316,12 +322,15 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
             pdPyValue->pValue = pValue;
             pdPyValue->objectsUsing = 0;
             Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->out1);
+            Py_DECREF(pFirstArg); // In My Understanding, this is the correct way to decref pFirstArg
             free(pdPyValue);
             Py_RETURN_TRUE;
         }
 
         if (!PyLong_Check(outletNumber)){
             PyErr_SetString(PyExc_TypeError, "[Python] pd.out: out_n must be an integer.");
+            Py_DECREF(pFirstArg);
+            // Py_DECREF(pValue);
             return NULL;
         }
         int outletNumberInt = PyLong_AsLong(outletNumber);
@@ -330,6 +339,7 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
             pdPyValue->pValue = pValue;
             pdPyValue->objectsUsing = 0;
             Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->out1);
+            Py_DECREF(pFirstArg);
             free(pdPyValue);
             Py_RETURN_TRUE;
         }
@@ -340,13 +350,15 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
                 pdPyValue->pValue = pValue;
                 pdPyValue->objectsUsing = 0;
                 Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->outAUX[outletNumberInt].u_outlet);
-                Py_DECREF(pValue);
+                // Py_DECREF(pFirstArg); // here the pFirstArg was not added to some tuple yet.
                 free(pdPyValue);
                 Py_RETURN_TRUE;
             }
             else{
                 outletNumberInt++;
                 PyErr_SetString(PyExc_TypeError, "[Python] pd.out: Please check the number of outlets."); 
+                Py_DECREF(pFirstArg);
+                // Py_DECREF(pValue);
                 return NULL;
             }
         }
@@ -357,6 +369,7 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
         pdPyValue->objectsUsing = 0;
         pdPyValue->pdout = 1;
         Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->out1);
+        Py_DECREF(pFirstArg);
         free(pdPyValue);
     }
     Py_RETURN_TRUE;
