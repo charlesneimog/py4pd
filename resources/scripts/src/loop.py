@@ -12,33 +12,29 @@ def pyiterate(value):
         pd.error("[py.iterate]: pyiterate only works with lists")
         return None
     """
-    pd.out("py4pdcollect_clear", out_n=1)
+    clearMessage = pd.CLEARLOOP
+    outputMessage = pd.OUTLOOP
+    pd.out(clearMessage, out_n=1)
     for i in value:
-        pd.out(i)
-    pd.out("py4pdcollect_output", out_n=1) 
+        pd.out(i, out_n=0)
+    pd.out(outputMessage, out_n=1)
 
 
 def pycollect(data):
     """ It collects the data from pyiterate and outputs it """
     # lot of memory usage
-
-    if str(data) == "py4pdcollect_output": 
+    if data == pd.OUTLOOP:
         data = pd.getglobalvar("DATA")
         if data is None:
             pd.error("[py.collect]: There is no data to output")
         else:
             pd.out(data)
 
-    elif str(data) == "py4pdcollect_clear":
-        pd.print("[py.collect]: Clearing data")
+    elif data == pd.CLEARLOOP:
         pd.clearglobalvar("DATA")
 
     else:
-        olddata = pd.getglobalvar("DATA")
-        if olddata is None:
-            pd.setglobalvar("DATA", [data])
-        else:
-            pd.setglobalvar("DATA", olddata + [data])
+        pd.accumglobalvar("DATA", data)
 
 
 

@@ -190,7 +190,8 @@ static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject 
         return item->pList;
     }
     else{
-        Py_INCREF(item->pItem); // NOTE: Necessary when the user whats to return the data twice.
+        if (item->pList == Py_None)
+            Py_RETURN_NONE;
         return item->pItem;
     }
 }
@@ -307,7 +308,10 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
         PyErr_SetString(PyExc_TypeError, "[Python] pd.out: wrong arguments");
         return NULL;
     }
-    Py_INCREF(pValue); // this value will be saved in another Tuple.
+    PyObject* pValue = Py_NewRef(pFirstArg); 
+    /* if everything is ok, pValue is added to one Tuple inside Py4pdLib_Pointer
+       and Py4pdLib_Anything. Because that we not need to decref pValue.
+    */
 
     if (keywords != NULL && py4pd->outAUX != NULL){
         PyObject *outletNumber = PyDict_GetItemString(keywords, "out_n"); // it gets the data type output
@@ -322,6 +326,8 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
 
         if (!PyLong_Check(outletNumber)){
             PyErr_SetString(PyExc_TypeError, "[Python] pd.out: out_n must be an integer.");
+            Py_DECREF(pFirstArg);
+            // Py_DECREF(pValue);
             return NULL;
         }
         int outletNumberInt = PyLong_AsLong(outletNumber);
@@ -336,16 +342,24 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
         else{
             outletNumberInt--;
             if ((py4pd->outAUX->u_outletNumber > 0) && (outletNumberInt < py4pd->outAUX->u_outletNumber)){
+                Py_INCREF(pValue);
+                // PyObject* copyModule = PyImport_ImportModule("copy");
+                // PyObject* deepFunc = PyObject_GetAttrString(copyModule, "deepcopy");
+                // PyObject* pValueCopy = PyObject_CallFunctionObjArgs(deepFunc, pValue, NULL);
+
                 t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
                 pdPyValue->pValue = pValue;
                 pdPyValue->objectsUsing = 0;
                 Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->outAUX[outletNumberInt].u_outlet);
+                // Py_DECREF(pFirstArg); // here the pFirstArg was not added to some tuple yet.
                 free(pdPyValue);
                 Py_RETURN_TRUE;
             }
             else{
                 outletNumberInt++;
                 PyErr_SetString(PyExc_TypeError, "[Python] pd.out: Please check the number of outlets."); 
+                Py_DECREF(pFirstArg);
+                // Py_DECREF(pValue);
                 return NULL;
             }
         }
@@ -1184,7 +1198,14 @@ PyMODINIT_FUNC PyInit_pd() {
         return NULL;
     }
     
-    PyObject *puredata_samplerate, *puredata_vecsize, *visObject, *audioINObject, *audioOUTObject, *pdAudio;
+    char* OUT_string = tempnam(NULL, "Py4PD_OUTPUT_");
+    char* CLEAR_string = tempnam(NULL, "Py4PD_CLEAR_");
+
+    PyObject *puredata_samplerate, 
+    *puredata_vecsize, *visObject, 
+    *audioINObject, *audioOUTObject, 
+    *pdAudio,
+    *Py4pd_OutLoopString, *Py4pd_ClearLoopString;
 
     puredata_samplerate = PyLong_FromLong(sys_getsr());
     puredata_vecsize = PyLong_FromLong(sys_getblksize());
@@ -1193,6 +1214,8 @@ PyMODINIT_FUNC PyInit_pd() {
     audioINObject = PyUnicode_FromString("AUDIOIN");
     audioOUTObject = PyUnicode_FromString("AUDIOOUT");
     pdAudio = PyUnicode_FromString("AUDIO");
+    Py4pd_OutLoopString = PyUnicode_FromString(OUT_string);
+    Py4pd_ClearLoopString = PyUnicode_FromString(CLEAR_string);
 
     PyModule_AddObject(py4pdmodule, "SAMPLERATE", puredata_samplerate);
     PyModule_AddObject(py4pdmodule, "VECSIZE", puredata_vecsize);
@@ -1200,6 +1223,8 @@ PyMODINIT_FUNC PyInit_pd() {
     PyModule_AddObject(py4pdmodule, "AUDIOIN", audioINObject);
     PyModule_AddObject(py4pdmodule, "AUDIOOUT", audioOUTObject);
     PyModule_AddObject(py4pdmodule, "AUDIO", pdAudio);
+    PyModule_AddObject(py4pdmodule, "OUTLOOP", Py4pd_OutLoopString);
+    PyModule_AddObject(py4pdmodule, "CLEARLOOP", Py4pd_ClearLoopString);
 
     pdmoduleError = PyErr_NewException("spam.error", NULL, NULL);
     

@@ -82,5 +82,6 @@ def py4pdLoadObjects():
 
     # test
     pd.addobject(py4pdtimer, "py.timer", no_outlet=True)
+    pd.addobject(getMemoryUse, "py.memuse")
 
     

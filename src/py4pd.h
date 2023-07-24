@@ -104,6 +104,7 @@ typedef struct {
 
 typedef struct _py4pd_pValue{ 
     PyObject* pValue;
+    int isPvalue;
     int objectsUsing; 
     t_symbol *objOwner;
     int clearAfterUse;

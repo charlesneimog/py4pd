@@ -5,7 +5,6 @@
 
 static t_class *py4pdInlets_proxy_class;
 
-
 // =====================================
 void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b){ 
     t_py *x = (t_py *)z;
@@ -30,7 +29,6 @@ void Py4pdLib_Click(t_py *x) {
     Py4pdUtils_ExecuteSystemCommand(command);
     return;
 }
-
 
 // =====================================
 void Py4pdLib_SetKwargs(t_py *x, t_symbol *s, int ac, t_atom *av){
@@ -145,14 +143,12 @@ void Py4pdLib_CreateObjInlets(PyObject *function, t_py *x, int argc, t_atom *arg
     }
 }
 
-
 // =====================================
 void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_atom *argv){
     t_py *py4pd = (t_py *)x->p_master;
     t_py4pd_pValue *pArg;
     pArg = (t_py4pd_pValue *)argv;
-    pArg->objectsUsing++;
-    Py_INCREF(pArg->pValue);
+    // Py_INCREF(pArg->pValue);
     py4pd->ObjArgs[x->inletIndex] = pArg->pValue;
     return;
 }
@@ -169,17 +165,21 @@ void Py4pdLib_Pointer(t_py *x, t_atom *argv){
 
     PyObject* pArgs = PyTuple_New(x->py_arg_numbers);
     PyTuple_SetItem(pArgs, 0, x->ObjArgs[0]);
-    for (int i = 1; i < x->py_arg_numbers; i++)
-        PyTuple_SetItem(pArgs, i, x->ObjArgs[i]);
 
-    if (x->audioOutput){ // TODO: repensar para audio
-        Py_DECREF(pArgs);
+
+    for (int i = 1; i < x->py_arg_numbers; i++){
+        PyTuple_SetItem(pArgs, i, x->ObjArgs[i]);
+        Py_INCREF(x->ObjArgs[i]);
+    }
+    // post("==============");
+    if (x->audioOutput){
         return; 
     }
     
     Py4pdUtils_RunPy(x, pArgs);
 
     Py_DECREF(pArgs);
+    
     return;
 }
 
@@ -239,13 +239,17 @@ void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
 // =====================================
 void Py4pdLib_Bang(t_py *x){
     if (x->py_arg_numbers != 0){
-        pd_error(x, "[py4pd] Bang just can be used with no arguments functions");
+        post("Bang can be used only with no arguments Function");
         return;
-
     }
-    PyObject* pArgs = PyTuple_New(0);
-    Py4pdUtils_RunPy(x, pArgs);
-    Py_DECREF(pArgs);
+    if (x->function == NULL){
+        pd_error(x, "[py4pd] Function not defined");
+        return;
+    }
+    if (x->audioOutput){
+        return; 
+    }
+    Py4pdUtils_RunPy(x, NULL);
 }
 
 // =====================================
@@ -261,7 +265,7 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         Py4pdLib_Bang(x);
         return;
     }
-    Py4pdUtils_DECREF(x->ObjArgs[0]);
+    Py_DECREF(x->ObjArgs[0]);
 
     PyObject *pyInletValue = NULL;
     if (ac == 0){
@@ -317,9 +321,13 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         return; // in audio out object, the function of dsp will call the python function
     
     PyObject* pArgs = PyTuple_New(x->py_arg_numbers);
-    for (int i = 0; i < x->py_arg_numbers; i++){
-        Py_INCREF(x->ObjArgs[i]);
+    Py_INCREF(x->ObjArgs[0]);
+    PyTuple_SetItem(pArgs, 0, x->ObjArgs[0]);
+
+
+    for (int i = 1; i < x->py_arg_numbers; i++){
         PyTuple_SetItem(pArgs, i, x->ObjArgs[i]);
+        Py_INCREF(x->ObjArgs[i]); // recorver the INCREF of the Py4pdLib_Anything
     }
 
     if (x->kwargs == 1){
