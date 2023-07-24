@@ -76,6 +76,7 @@ if __name__ == "__main__":
 
     if errorInTest != 0:
         print("\033[91m" + f'{errorInTest} Test has failed' + "\033[0m")
+        sys.exit(-1)
 
     elif errorInTest == 0:
         print("\n")

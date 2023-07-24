@@ -185,6 +185,15 @@ jobs:
           find py4pd/src -name "*.o" -type f -delete
           cp resources/README.deken.pd py4pd 
 
+      - name: Tests
+        continue-on-error: true
+        run: |
+          cp -r py4pd test
+          cd test
+          python3.11 ./runTests.py
+
+
+
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
