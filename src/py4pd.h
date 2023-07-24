@@ -14,6 +14,7 @@
 #endif
 
 #define ANSI_COLOR_RED "\x1b[31m"
+#define ANSI_COLOR_BLUE "\x1b[34m"
 #define ANSI_COLOR_RESET "\x1b[0m"
 
 
@@ -103,6 +104,7 @@ typedef struct {
 
 typedef struct _py4pd_pValue{ 
     PyObject* pValue;
+    int isPvalue;
     int objectsUsing; 
     t_symbol *objOwner;
     int clearAfterUse;

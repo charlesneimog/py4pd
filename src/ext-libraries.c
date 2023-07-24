@@ -6,67 +6,6 @@
 static t_class *py4pdInlets_proxy_class;
 
 
-// ====================================================
-void Py4pdLib_Click(t_py *x) {
-    PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->function);
-    int line = PyCode_Addr2Line(code, 0);
-    char command[MAXPDSTRING];
-    Py4pdUtils_GetEditorCommand(x, command, line);
-    Py4pdUtils_ExecuteSystemCommand(command);
-    return;
-}
-
-// ====================================================
-void Py4pdLib_CreateObjInlets(PyObject *function, t_py *x, int argc, t_atom *argv) {
-    (void)function;
-    t_pd **py4pdInlet_proxies;
-    int i;
-    int pyFuncArgs = x->py_arg_numbers - 1;
-    // TODO: Try to define standard arguments getting it from Python (def (a, b, c=4))
-    x->kwargsDict = PyDict_New();
-
-    if (pyFuncArgs != 0){
-        py4pdInlet_proxies = (t_pd **)getbytes((pyFuncArgs + 1) * sizeof(*py4pdInlet_proxies));
-        for (i = 0; i < pyFuncArgs; i++){
-                py4pdInlet_proxies[i] = pd_new(py4pdInlets_proxy_class);
-                t_py4pdInlet_proxy *y = (t_py4pdInlet_proxy *)py4pdInlet_proxies[i];
-                y->p_master = x;
-                y->inletIndex = i + 1;
-                inlet_new((t_object *)x, (t_pd *)y, 0, 0);
-        }
-        int argNumbers = x->py_arg_numbers;
-
-        for (i = 0; i < argNumbers; i++) {
-            if (i <= argc) {
-                if (argv[i].a_type == A_FLOAT) {
-                    // TODO: fix this for consistency
-                    char pd_atom[64];
-                    atom_string(&argv[i], pd_atom, 64);
-                    if (strchr(pd_atom, '.') != NULL) 
-                        x->ObjArgs[i] = PyFloat_FromDouble(argv[i].a_w.w_float);
-                    else
-                        x->ObjArgs[i] = PyLong_FromLong(argv[i].a_w.w_float);
-                }
-
-                else if (argv[i].a_type == A_SYMBOL) {
-                    if (strcmp(argv[i].a_w.w_symbol->s_name, "None") == 0) 
-                        x->ObjArgs[i] = Py_None;
-                    else 
-                        x->ObjArgs[i] = PyUnicode_FromString(argv[i].a_w.w_symbol->s_name);
-                }
-                else 
-                    x->ObjArgs[i] = Py_None;
-            }
-            else
-                x->ObjArgs[i] = Py_None;
-        }
-    }
-    else{
-        x->ObjArgs[0] = Py_None;
-    }
-}
-
-
 // =====================================
 void Py4pdLib_SetKwargs(t_py *x, t_symbol *s, int ac, t_atom *av){
     t_symbol *key;
@@ -141,13 +80,76 @@ void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b){
     return;
 }
 
+
+
+// ====================================================
+void Py4pdLib_Click(t_py *x) {
+    PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->function);
+    int line = PyCode_Addr2Line(code, 0);
+    char command[MAXPDSTRING];
+    Py4pdUtils_GetEditorCommand(x, command, line);
+    Py4pdUtils_ExecuteSystemCommand(command);
+    return;
+}
+
+// ====================================================
+void Py4pdLib_CreateObjInlets(PyObject *function, t_py *x, int argc, t_atom *argv) {
+    (void)function;
+    t_pd **py4pdInlet_proxies;
+    int i;
+    int pyFuncArgs = x->py_arg_numbers - 1;
+    // TODO: Try to define standard arguments getting it from Python (def (a, b, c=4))
+    x->kwargsDict = PyDict_New();
+
+    if (pyFuncArgs != 0){
+        py4pdInlet_proxies = (t_pd **)getbytes((pyFuncArgs + 1) * sizeof(*py4pdInlet_proxies));
+        for (i = 0; i < pyFuncArgs; i++){
+                py4pdInlet_proxies[i] = pd_new(py4pdInlets_proxy_class);
+                t_py4pdInlet_proxy *y = (t_py4pdInlet_proxy *)py4pdInlet_proxies[i];
+                y->p_master = x;
+                y->inletIndex = i + 1;
+                inlet_new((t_object *)x, (t_pd *)y, 0, 0);
+        }
+        int argNumbers = x->py_arg_numbers;
+
+        for (i = 0; i < argNumbers; i++) {
+            if (i <= argc) {
+                if (argv[i].a_type == A_FLOAT) {
+                    // TODO: fix this for consistency
+                    char pd_atom[64];
+                    atom_string(&argv[i], pd_atom, 64);
+                    if (strchr(pd_atom, '.') != NULL) 
+                        x->ObjArgs[i] = PyFloat_FromDouble(argv[i].a_w.w_float);
+                    else
+                        x->ObjArgs[i] = PyLong_FromLong(argv[i].a_w.w_float);
+                }
+
+                else if (argv[i].a_type == A_SYMBOL) {
+                    if (strcmp(argv[i].a_w.w_symbol->s_name, "None") == 0) 
+                        x->ObjArgs[i] = Py_None;
+                    else 
+                        x->ObjArgs[i] = PyUnicode_FromString(argv[i].a_w.w_symbol->s_name);
+                }
+                else 
+                    x->ObjArgs[i] = Py_None;
+            }
+            else
+                x->ObjArgs[i] = Py_None;
+        }
+    }
+    else{
+        x->ObjArgs[0] = Py_None;
+    }
+}
+
+
+// =====================================
 // =====================================
 void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_atom *argv){
     t_py *py4pd = (t_py *)x->p_master;
     t_py4pd_pValue *pArg;
     pArg = (t_py4pd_pValue *)argv;
-    pArg->objectsUsing++;
-    Py_INCREF(pArg->pValue);
+    // Py_INCREF(pArg->pValue);
     py4pd->ObjArgs[x->inletIndex] = pArg->pValue;
     return;
 }
@@ -155,6 +157,7 @@ void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_atom *argv){
 // =============================================
 void Py4pdLib_Pointer(t_py *x, t_atom *argv){
     PY4PD_FUNC_CALL();
+
     t_py4pd_pValue *pArg;
     pArg = (t_py4pd_pValue *)argv;
     pArg->objectsUsing++;
@@ -162,14 +165,18 @@ void Py4pdLib_Pointer(t_py *x, t_atom *argv){
     Py_INCREF(x->ObjArgs[0]);
     PyObject* pArgs = PyTuple_New(x->py_arg_numbers);
     PyTuple_SetItem(pArgs, 0, x->ObjArgs[0]);
+
     for (int i = 1; i < x->py_arg_numbers; i++){
         PyTuple_SetItem(pArgs, i, x->ObjArgs[i]);
+        Py_INCREF(x->ObjArgs[i]);
     }
+    // post("==============");
     if (x->audioOutput){
         return; 
     }
     Py4pdUtils_RunPy(x, pArgs);
     Py_DECREF(pArgs);
+    
     return;
 }
 
@@ -229,16 +236,17 @@ void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
 // =====================================
 void Py4pdLib_Bang(t_py *x){
     if (x->py_arg_numbers != 0){
-        post("This is not recommended when using Python functions with arguments");
+        post("Bang can be used only with no arguments Function");
+        return;
     }
-    PyObject* pArgs = PyTuple_New(x->py_arg_numbers);
-    for (int i = 0; i < x->py_arg_numbers; i++){
-        Py_INCREF(x->ObjArgs[i]);
-        PyTuple_SetItem(pArgs, i, x->ObjArgs[i]);
+    if (x->function == NULL){
+        pd_error(x, "[py4pd] Function not defined");
+        return;
     }
-
- 
-    
+    if (x->audioOutput){
+        return; 
+    }
+    Py4pdUtils_RunPy(x, NULL);
 }
 
 // =====================================
@@ -254,7 +262,7 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         Py4pdLib_Bang(x);
         return;
     }
-    Py4pdUtils_DECREF(x->ObjArgs[0]);
+    Py_DECREF(x->ObjArgs[0]);
 
     PyObject *pyInletValue = NULL;
     if (ac == 0){
@@ -310,9 +318,13 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
         return; // in audio out object, the function of dsp will call the python function
     
     PyObject* pArgs = PyTuple_New(x->py_arg_numbers);
-    for (int i = 0; i < x->py_arg_numbers; i++){
-        Py_INCREF(x->ObjArgs[i]);
+    Py_INCREF(x->ObjArgs[0]);
+    PyTuple_SetItem(pArgs, 0, x->ObjArgs[0]);
+
+
+    for (int i = 1; i < x->py_arg_numbers; i++){
         PyTuple_SetItem(pArgs, i, x->ObjArgs[i]);
+        Py_INCREF(x->ObjArgs[i]); // recorver the INCREF of the Py4pdLib_Anything
     }
 
     if (x->kwargs == 1){
