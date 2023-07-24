@@ -6,6 +6,21 @@
 static t_class *py4pdInlets_proxy_class;
 
 
+// =====================================
+void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b){ 
+    t_py *x = (t_py *)z;
+    if (x->visMode){
+        binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->obj.te_xpix, x->obj.te_ypix);
+        binbuf_addbinbuf(b, ((t_py *)x)->obj.te_binbuf);
+        int objAtomsCount = binbuf_getnatom(((t_py *)x)->obj.te_binbuf);
+        if (objAtomsCount == 1){
+            binbuf_addv(b, "ii", x->x_width, x->x_height);
+        }
+        binbuf_addsemi(b);
+    }
+    return;
+}
+
 // ====================================================
 void Py4pdLib_Click(t_py *x) {
     PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->function);
@@ -14,56 +29,6 @@ void Py4pdLib_Click(t_py *x) {
     Py4pdUtils_GetEditorCommand(x, command, line);
     Py4pdUtils_ExecuteSystemCommand(command);
     return;
-}
-
-// ====================================================
-void Py4pdLib_CreateObjInlets(PyObject *function, t_py *x, int argc, t_atom *argv) {
-    (void)function;
-    t_pd **py4pdInlet_proxies;
-    int i;
-    int pyFuncArgs = x->py_arg_numbers - 1;
-    // TODO: Try to define standard arguments getting it from Python (def (a, b, c=4))
-    x->kwargsDict = PyDict_New();
-
-    if (pyFuncArgs != 0){
-        py4pdInlet_proxies = (t_pd **)getbytes((pyFuncArgs + 1) * sizeof(*py4pdInlet_proxies));
-        for (i = 0; i < pyFuncArgs; i++){
-                py4pdInlet_proxies[i] = pd_new(py4pdInlets_proxy_class);
-                t_py4pdInlet_proxy *y = (t_py4pdInlet_proxy *)py4pdInlet_proxies[i];
-                y->p_master = x;
-                y->inletIndex = i + 1;
-                inlet_new((t_object *)x, (t_pd *)y, 0, 0);
-        }
-        int argNumbers = x->py_arg_numbers;
-
-        for (i = 0; i < argNumbers; i++) {
-            if (i <= argc) {
-                if (argv[i].a_type == A_FLOAT) {
-                    // TODO: fix this for consistency
-                    char pd_atom[64];
-                    atom_string(&argv[i], pd_atom, 64);
-                    if (strchr(pd_atom, '.') != NULL) 
-                        x->ObjArgs[i] = PyFloat_FromDouble(argv[i].a_w.w_float);
-                    else
-                        x->ObjArgs[i] = PyLong_FromLong(argv[i].a_w.w_float);
-                }
-
-                else if (argv[i].a_type == A_SYMBOL) {
-                    if (strcmp(argv[i].a_w.w_symbol->s_name, "None") == 0) 
-                        x->ObjArgs[i] = Py_None;
-                    else 
-                        x->ObjArgs[i] = PyUnicode_FromString(argv[i].a_w.w_symbol->s_name);
-                }
-                else 
-                    x->ObjArgs[i] = Py_None;
-            }
-            else
-                x->ObjArgs[i] = Py_None;
-        }
-    }
-    else{
-        x->ObjArgs[0] = Py_None;
-    }
 }
 
 
@@ -126,20 +91,60 @@ void Py4pdLib_SetKwargs(t_py *x, t_symbol *s, int ac, t_atom *av){
     return;
 }
 
-// =====================================
-void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b){ 
-    t_py *x = (t_py *)z;
-    if (x->visMode){
-        binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->obj.te_xpix, x->obj.te_ypix);
-        binbuf_addbinbuf(b, ((t_py *)x)->obj.te_binbuf);
-        int objAtomsCount = binbuf_getnatom(((t_py *)x)->obj.te_binbuf);
-        if (objAtomsCount == 1){
-            binbuf_addv(b, "ii", x->x_width, x->x_height);
+
+
+// ====================================================
+// ====================================================
+// ====================================================
+void Py4pdLib_CreateObjInlets(PyObject *function, t_py *x, int argc, t_atom *argv) {
+    (void)function;
+    t_pd **py4pdInlet_proxies;
+    int i;
+    int pyFuncArgs = x->py_arg_numbers - 1;
+    // TODO: Try to define standard arguments getting it from Python (def (a, b, c=4))
+    x->kwargsDict = PyDict_New();
+
+    if (pyFuncArgs != 0){
+        py4pdInlet_proxies = (t_pd **)getbytes((pyFuncArgs + 1) * sizeof(*py4pdInlet_proxies));
+        for (i = 0; i < pyFuncArgs; i++){
+                py4pdInlet_proxies[i] = pd_new(py4pdInlets_proxy_class);
+                t_py4pdInlet_proxy *y = (t_py4pdInlet_proxy *)py4pdInlet_proxies[i];
+                y->p_master = x;
+                y->inletIndex = i + 1;
+                inlet_new((t_object *)x, (t_pd *)y, 0, 0);
         }
-        binbuf_addsemi(b);
+        int argNumbers = x->py_arg_numbers;
+
+        for (i = 0; i < argNumbers; i++) {
+            if (i <= argc) {
+                if (argv[i].a_type == A_FLOAT) {
+                    // TODO: fix this for consistency
+                    char pd_atom[64];
+                    atom_string(&argv[i], pd_atom, 64);
+                    if (strchr(pd_atom, '.') != NULL) 
+                        x->ObjArgs[i] = PyFloat_FromDouble(argv[i].a_w.w_float);
+                    else
+                        x->ObjArgs[i] = PyLong_FromLong(argv[i].a_w.w_float);
+                }
+
+                else if (argv[i].a_type == A_SYMBOL) {
+                    if (strcmp(argv[i].a_w.w_symbol->s_name, "None") == 0) 
+                        x->ObjArgs[i] = Py_None;
+                    else 
+                        x->ObjArgs[i] = PyUnicode_FromString(argv[i].a_w.w_symbol->s_name);
+                }
+                else 
+                    x->ObjArgs[i] = Py_None;
+            }
+            else
+                x->ObjArgs[i] = Py_None;
+        }
     }
-    return;
+    else{
+        x->ObjArgs[0] = Py_None;
+    }
 }
+
 
 // =====================================
 void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_atom *argv){
@@ -155,20 +160,25 @@ void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_atom *argv){
 // =============================================
 void Py4pdLib_Pointer(t_py *x, t_atom *argv){
     PY4PD_FUNC_CALL();
+
     t_py4pd_pValue *pArg;
     pArg = (t_py4pd_pValue *)argv;
     pArg->objectsUsing++;
     x->ObjArgs[0] = pArg->pValue;
     Py_INCREF(x->ObjArgs[0]);
+
     PyObject* pArgs = PyTuple_New(x->py_arg_numbers);
     PyTuple_SetItem(pArgs, 0, x->ObjArgs[0]);
-    for (int i = 1; i < x->py_arg_numbers; i++){
+    for (int i = 1; i < x->py_arg_numbers; i++)
         PyTuple_SetItem(pArgs, i, x->ObjArgs[i]);
-    }
-    if (x->audioOutput){
+
+    if (x->audioOutput){ // TODO: repensar para audio
+        Py_DECREF(pArgs);
         return; 
     }
+    
     Py4pdUtils_RunPy(x, pArgs);
+
     Py_DECREF(pArgs);
     return;
 }
@@ -229,16 +239,13 @@ void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
 // =====================================
 void Py4pdLib_Bang(t_py *x){
     if (x->py_arg_numbers != 0){
-        post("This is not recommended when using Python functions with arguments");
-    }
-    PyObject* pArgs = PyTuple_New(x->py_arg_numbers);
-    for (int i = 0; i < x->py_arg_numbers; i++){
-        Py_INCREF(x->ObjArgs[i]);
-        PyTuple_SetItem(pArgs, i, x->ObjArgs[i]);
-    }
+        pd_error(x, "[py4pd] Bang just can be used with no arguments functions");
+        return;
 
- 
-    
+    }
+    PyObject* pArgs = PyTuple_New(0);
+    Py4pdUtils_RunPy(x, pArgs);
+    Py_DECREF(pArgs);
 }
 
 // =====================================
@@ -498,6 +505,7 @@ static void *Py4pdLib_NewNormalObj(t_symbol *s, int argc, t_atom *argv) {
 
     char py4pd_objectName[MAXPDSTRING];
     sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
+
     PyObject *pd_module = PyImport_ImportModule("pd");
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
     PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
@@ -517,22 +525,23 @@ static void *Py4pdLib_NewNormalObj(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
 
-    // get t_class from PY_objectClass
     t_class *object_PY4PD_Class = (t_class *)PyLong_AsVoidPtr(PY_objectClass);
     t_py *x = (t_py *)pd_new(object_PY4PD_Class);
     x->visMode  = 0;
     x->pyObject = 1;
-    x->canvas = canvas_getcurrent();       // pega o canvas atual
+    x->canvas = canvas_getcurrent();       
     t_canvas *c = x->canvas;
-    t_symbol *patch_dir = canvas_getdir(c);  // directory of opened patch
+    t_symbol *patch_dir = canvas_getdir(c);  
     x->objectName = gensym(objectName);
-    // ================================
+
     PyObject *pyFunction = PyDict_GetItemString(PdDict, "py4pdOBJFunction");
     PyObject *ignoreOnNone = PyDict_GetItemString(PdDict, "py4pdOBJIgnoreNone");
-    x->ignoreOnNone = PyLong_AsLong(ignoreOnNone);
     PyObject *playable = PyDict_GetItemString(PdDict, "py4pdOBJPlayable");
     PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
     PyObject *nooutlet = PyDict_GetItemString(PdDict, "py4pdOBJnooutlet");
+    PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
+
+    x->ignoreOnNone = PyLong_AsLong(ignoreOnNone);
     x->outPyPointer = PyLong_AsLong(pyOUT);
     x->function_called = 1;
     x->function = pyFunction;
@@ -540,16 +549,12 @@ static void *Py4pdLib_NewNormalObj(t_symbol *s, int argc, t_atom *argv) {
     x->pkgPath = patch_dir;     // set name of the packages path
     x->py_arg_numbers = 0;
     x->playable = PyLong_AsLong(playable);
-
-    PyObject *copyImportedModule = PyImport_ImportModule("copy"); 
-    PyObject *copyModule = PyObject_GetAttrString(copyImportedModule, "copy");
-    x->py4pd_deepcopy = copyModule;
-    Py_DECREF(copyImportedModule);
-
-    Py4pdUtils_SetObjConfig(x);  
-    PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(pyFunction);
+        
     x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
     x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
+
+    Py4pdUtils_SetObjConfig(x);  
+
 
     int parseArgsRight = Py4pdUtils_ParseLibraryArguments(x, code, argc, argv); 
     if (parseArgsRight == 0) {

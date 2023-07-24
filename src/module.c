@@ -64,9 +64,8 @@ static void AccumItem(pdcollectHash* hash_table, char* key, PyObject* obj) {
     if (item->wasCleaned) {
         item->wasCleaned = 0;
     }
-    
     PyList_Append(item->pList, obj);
-    // Py4pdUtils_DECREF(obj); // THIS IS NECESSARY BUT IT CAUSES A SEGFAULT
+    return;
 }
 
 
@@ -103,11 +102,13 @@ static void ClearList(pdcollectHash* hash_table, char* key) {
     item->wasCleaned = 1;
     free(item->key);
     Py_DECREF(item->pList);
+    Py4pdUtils_MemLeakCheck(item->pList, 0, "pList");
     free(item);
     hash_table->items[index] = NULL;
 }
 
 
+// =================================
 // =================================
 static pdcollectItem* GetObjArr(pdcollectHash* hash_table, char* key) {
     unsigned int index = HashFunction(hash_table, key);
@@ -150,6 +151,7 @@ static PyObject *Py4pdMod_SetGlobalVar(PyObject *self, PyObject *args){
 // =================================
 static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject *keywords){
     PY4PD_FUNC_CALL();
+
     (void)self;
     t_py *py4pd = Py4pdUtils_GetObject();
     if (py4pd == NULL){
@@ -184,13 +186,11 @@ static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject 
     }
     free(key);
     if (item->aCumulative){
-        if (item->pList == Py_None)
-            Py_RETURN_NONE;
+        Py_INCREF(item->pList);
         return item->pList;
     }
     else{
-        if (item->pList == Py_None)
-            Py_RETURN_NONE;
+        Py_INCREF(item->pItem); // NOTE: Necessary when the user whats to return the data twice.
         return item->pItem;
     }
 }
@@ -217,6 +217,7 @@ static PyObject *Py4pdMod_AccumGlobalVar(PyObject *self, PyObject *args){
     if (py4pd->pdcollect == NULL){
         py4pd->pdcollect = CreatePdcollectHash(1);
     }
+    Py_INCREF(pValueScript); // this will be saved inside one List of the pdcollectItem
     AccumItem(py4pd->pdcollect, key, pValueScript);
     py4pd->pdcollect->items[HashFunction(py4pd->pdcollect, key)]->aCumulative = 1;
     free(key);
@@ -224,9 +225,6 @@ static PyObject *Py4pdMod_AccumGlobalVar(PyObject *self, PyObject *args){
     Py_RETURN_TRUE;
 
 }
-
-// static int globalClearGlobalVar = 0;
-
 
 // =================================
 static PyObject *Py4pdMod_ClearGlobalVar(PyObject *self, PyObject *args) {
@@ -253,7 +251,6 @@ static PyObject *Py4pdMod_ClearGlobalVar(PyObject *self, PyObject *args) {
         PY4PD_FUNC_DONE();
         Py_RETURN_TRUE;
     }
-
     pdcollectItem* objArr = GetObjArr(py4pd->pdcollect, key);
     if (objArr != NULL){
         if (objArr->wasCleaned){
@@ -304,16 +301,13 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
         return NULL;
     }
 
-    PyObject* pFirstArg;
+    PyObject* pValue;
 
-    if (!PyArg_ParseTuple(args, "O", &pFirstArg)) {
+    if (!PyArg_ParseTuple(args, "O", &pValue)) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.out: wrong arguments");
         return NULL;
     }
-    PyObject* pValue = Py_NewRef(pFirstArg); 
-    /* if everything is ok, pValue is added to one Tuple inside Py4pdLib_Pointer
-       and Py4pdLib_Anything. Because that we not need to decref pValue.
-    */
+    Py_INCREF(pValue); // this value will be saved in another Tuple.
 
     if (keywords != NULL && py4pd->outAUX != NULL){
         PyObject *outletNumber = PyDict_GetItemString(keywords, "out_n"); // it gets the data type output
@@ -322,15 +316,12 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
             pdPyValue->pValue = pValue;
             pdPyValue->objectsUsing = 0;
             Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->out1);
-            Py_DECREF(pFirstArg); // In My Understanding, this is the correct way to decref pFirstArg
             free(pdPyValue);
             Py_RETURN_TRUE;
         }
 
         if (!PyLong_Check(outletNumber)){
             PyErr_SetString(PyExc_TypeError, "[Python] pd.out: out_n must be an integer.");
-            Py_DECREF(pFirstArg);
-            // Py_DECREF(pValue);
             return NULL;
         }
         int outletNumberInt = PyLong_AsLong(outletNumber);
@@ -339,7 +330,6 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
             pdPyValue->pValue = pValue;
             pdPyValue->objectsUsing = 0;
             Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->out1);
-            Py_DECREF(pFirstArg);
             free(pdPyValue);
             Py_RETURN_TRUE;
         }
@@ -350,15 +340,12 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
                 pdPyValue->pValue = pValue;
                 pdPyValue->objectsUsing = 0;
                 Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->outAUX[outletNumberInt].u_outlet);
-                // Py_DECREF(pFirstArg); // here the pFirstArg was not added to some tuple yet.
                 free(pdPyValue);
                 Py_RETURN_TRUE;
             }
             else{
                 outletNumberInt++;
                 PyErr_SetString(PyExc_TypeError, "[Python] pd.out: Please check the number of outlets."); 
-                Py_DECREF(pFirstArg);
-                // Py_DECREF(pValue);
                 return NULL;
             }
         }
@@ -369,12 +356,10 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
         pdPyValue->objectsUsing = 0;
         pdPyValue->pdout = 1;
         Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->out1);
-        Py_DECREF(pFirstArg);
         free(pdPyValue);
     }
     Py_RETURN_TRUE;
 }
-
 // =================================
 static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
@@ -409,7 +394,7 @@ static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args, PyObject *keyw
         else 
             printPrefix = 1;
         if (objPrefix == -1) 
-            pd_error(NULL, "[Python] pd.print: error in obj_prefix argument.");
+            post("[Python] pd.print: error in obj_prefix argument.");
         else if (objPrefix == 1) {
             PyObject *resize_value = PyDict_GetItemString(keywords, "obj_prefix");
             if (resize_value == Py_True) 
@@ -417,7 +402,7 @@ static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args, PyObject *keyw
             else if (resize_value == Py_False)
                 objPrefix = 0;
             else {
-                pd_error(NULL, "[Python] pd.print: obj_prefix argument must be True or False.");
+                post("[Python] pd.print: obj_prefix argument must be True or False.");
                 objPrefix = 0;
             }
         } 
@@ -441,10 +426,10 @@ static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args, PyObject *keyw
         }
         if (printPrefix == 1) { //
             if (py4pd->objectName == NULL){
-                pd_error(NULL, "[Python]: %s", str_value);
+                post("[Python]: %s", str_value);
             }
             else{
-                pd_error(NULL, "[%s]: %s", py4pd->objectName->s_name, str_value);
+                post("[%s]: %s", py4pd->objectName->s_name, str_value);
             }
             Py_RETURN_TRUE;
         } 
@@ -681,7 +666,7 @@ static PyObject *Py4pdMod_PdTabWrite(PyObject *self, PyObject *args, PyObject *k
         else if (!garray_getfloatwords(pdarray, &vecsize, &vec))
             pd_error(py4pd, "[Python] Bad template for tabwrite '%s'.",
                      string);
-        else {
+        else { // TODO: Add support to numpy arrays
             int i;
             if (resize == 1) {
                 garray_resize_long(pdarray, PyList_Size(PYarray));
@@ -870,8 +855,6 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
             Py4pdPic_Erase(py4pd, py4pd->glist);
             sys_vgui(".x%lx.c itemconfigure %lx_picture -image PY4PD_IMAGE_{%p}\n", py4pd->canvas, py4pd, py4pd);
             Py4pdPic_Draw(py4pd, py4pd->glist, 1);
-
-
             Py_RETURN_NONE;
         }
 
@@ -966,7 +949,6 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
 static PyObject* Py4pdMod_PdSampleRate(PyObject* self, PyObject* args) {
     (void)self;
     (void)args;
-
     float sr = sys_getsr(); // call PureData's sys_getsr function to get the current sample rate
     return PyFloat_FromDouble(sr); // return the sample rate as a Python float object
 }
@@ -979,7 +961,7 @@ static PyObject *Py4pdMod_PdVecSize(PyObject *self, PyObject *args) {
     t_py *py4pd = Py4pdUtils_GetObject();
     t_sample vector;
     vector = py4pd->vectorSize; // this is the patch vector size
-    // THING: Should I add someway to get the puredata's vector size? with sys_getblksize()?
+    // TODO: Should I add someway to get the puredata's vector size? with sys_getblksize()?
 
     return PyLong_FromLong(vector);
 }

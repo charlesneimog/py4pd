@@ -715,8 +715,6 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
     PyPtrValue->objectsUsing = 0;
     PyPtrValue->objOwner = x->objectName;
 
-    // Py4pdUtils_MemLeakCheck(pValue, 1, "Py4pd_RunPy");
-
     if (prev_obj_exists == 1 && pValue != NULL) {
         objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
         if (objectCapsule == NULL){
@@ -755,7 +753,6 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
     }
     else{
         Py_XDECREF(MainModule);
-        // Py4pdUtils_DECREF(pArgs);
         free(PyPtrValue);
         return pValue;
     }
