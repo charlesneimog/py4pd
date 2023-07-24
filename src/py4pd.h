@@ -18,6 +18,19 @@
 
 
 #define PY4PD_DEBUG 0
+#define PY4PD_FUNC_CALL() do { \
+    if (PY4PD_DEBUG) { \
+        printf("Function: %s\n", __func__); \
+    } \
+} while(0)
+
+#define PY4PD_FUNC_DONE() do { \
+    if (PY4PD_DEBUG) { \
+        printf(ANSI_COLOR_RED "Function Done: %s\n" ANSI_COLOR_RESET, __func__); \
+    } \
+} while(0)
+
+
 
 #define PY4PD_MAJOR_VERSION 0
 #define PY4PD_MINOR_VERSION 8
@@ -93,6 +106,7 @@ typedef struct _py4pd_pValue{
     int objectsUsing; 
     t_symbol *objOwner;
     int clearAfterUse;
+    int pdout;
 }t_py4pd_pValue;
 
 // ======================================

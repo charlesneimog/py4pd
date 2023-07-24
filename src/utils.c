@@ -662,6 +662,8 @@ t_py *Py4pdUtils_GetObject(void){
  * @return the return value of the function
  */
 PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) { 
+    PY4PD_FUNC_CALL();
+
     t_py *prev_obj = NULL;
     int prev_obj_exists = 0;
     PyObject* MainModule = PyImport_ImportModule("pd"); 
@@ -729,7 +731,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
     if (pValue != NULL && x->audioOutput == 0) {
         Py4pdUtils_ConvertToPd(x, PyPtrValue, x->out1); 
         Py4pdUtils_DECREF(pValue);
-        Py4pdUtils_DECREF(pArgs);
+        // Py4pdUtils_DECREF(pArgs); // RULE FOR PY4PD: How create the refcount is how you destroy it
         Py_XDECREF(MainModule);
         free(PyPtrValue);
         return NULL;
@@ -745,7 +747,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);
         Py_XDECREF(pValue);
-        Py4pdUtils_DECREF(pArgs);
+        // Py4pdUtils_DECREF(pArgs);
         Py_XDECREF(MainModule);
         free(PyPtrValue);
         PyErr_Clear();
@@ -753,7 +755,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
     }
     else{
         Py_XDECREF(MainModule);
-        Py4pdUtils_DECREF(pArgs);
+        // Py4pdUtils_DECREF(pArgs);
         free(PyPtrValue);
         return pValue;
     }

@@ -147,7 +147,6 @@ void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_atom *argv){
     t_py4pd_pValue *pArg;
     pArg = (t_py4pd_pValue *)argv;
     pArg->objectsUsing++;
-    // Py4pdUtils_DECREF(py4pd->ObjArgs[x->inletIndex]); // limpa o anterior
     Py_INCREF(pArg->pValue);
     py4pd->ObjArgs[x->inletIndex] = pArg->pValue;
     return;
@@ -155,6 +154,7 @@ void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_atom *argv){
 
 // =============================================
 void Py4pdLib_Pointer(t_py *x, t_atom *argv){
+    PY4PD_FUNC_CALL();
     t_py4pd_pValue *pArg;
     pArg = (t_py4pd_pValue *)argv;
     pArg->objectsUsing++;
@@ -169,6 +169,7 @@ void Py4pdLib_Pointer(t_py *x, t_atom *argv){
         return; 
     }
     Py4pdUtils_RunPy(x, pArgs);
+    Py_DECREF(pArgs);
     return;
 }
 
@@ -242,6 +243,9 @@ void Py4pdLib_Bang(t_py *x){
 
 // =====================================
 void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
+
+    PY4PD_FUNC_CALL();
+    
     if (x->function == NULL){
         pd_error(x, "[py4pd] Function not defined");
         return;
@@ -317,6 +321,7 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
     else{
         Py4pdUtils_RunPy(x, pArgs);
     }
+    Py4pdUtils_DECREF(pArgs);
     return;
 }
 
