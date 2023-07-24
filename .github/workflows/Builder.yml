@@ -193,11 +193,10 @@ jobs:
         continue-on-error: true
         #python3.11 ./runTests.py
         run: |
-          cp -r py4pd test
+          cp -r ./py4pd/* test
           cd test
-          ls
+          python3.11 ./runTests.py
           
-
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
