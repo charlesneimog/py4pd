@@ -28,17 +28,18 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
         return -1;
     }
 
-    // _import_array(); // Initialize numpy
+    _import_array(); // Initialize numpy
 
     t_symbol *script_file_name = atom_gensym(argv + 1);
-    t_symbol *function_name = gensym("py4pdLoadObjects");
+    t_symbol *function_name = gensym("py4pdLoadObjects"); // TODO: change this to {libraryname}_setup() 
 
     // check if script file exists
     char script_file_path[MAXPDSTRING];
     snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->pdPatchFolder->s_name, script_file_name->s_name);
 
     char script_inside_py4pd_path[MAXPDSTRING];
-    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/resources/scripts/%s.py", x->py4pdPath->s_name, script_file_name->s_name);
+    snprintf(script_inside_py4pd_path, MAXPDSTRING, 
+             "%s/resources/scripts/%s.py", x->py4pdPath->s_name, script_file_name->s_name); // TODO: Change this to other name
 
     PyObject *sys_path = PySys_GetObject("path");
     if (access(script_file_path, F_OK) == -1 && access(script_inside_py4pd_path, F_OK) == -1) {
@@ -203,7 +204,6 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
                 return -1;
             }
         }
-        // Py_DECREF(pFunc);
 
         if (pValue == NULL) {
             PyObject *ptype, *pvalue, *ptraceback;

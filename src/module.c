@@ -6,7 +6,7 @@
 
 
 // =================================
-static pdcollectHash* CreatePdcollectHash(int size) {
+static pdcollectHash* CreatePdcollectHash(int size) { // TODO: make thing to free table when object is deleted?
     pdcollectHash* hash_table = (pdcollectHash*)malloc(sizeof(pdcollectHash));
     hash_table->size = size;
     hash_table->count = 0;
@@ -28,12 +28,12 @@ static unsigned int HashFunction(pdcollectHash* hash_table, char* key) {
 static void InsertItem(pdcollectHash* hash_table, char* key, PyObject* obj) {
     unsigned int index = HashFunction(hash_table, key);
     pdcollectItem* item = hash_table->items[index];
+    hash_table->count++; // TODO: Make resizeable table. For now we have 8 items.
     if (item == NULL &&  hash_table->count <= hash_table->size) {
         item = (pdcollectItem*)malloc(sizeof(pdcollectItem));
         item->key = strdup(key);
         item->pItem = obj;
         hash_table->items[index] = item;
-        hash_table->count++;
         return;
     }
     else if (hash_table->count > hash_table->size) {
@@ -61,12 +61,9 @@ static void AccumItem(pdcollectHash* hash_table, char* key, PyObject* obj) {
         PyErr_SetString(PyExc_MemoryError, "[Python] pd.setglobalvar: memory error");
         return;
     }
-
-    if (item->wasCleaned) {
+    if (item->wasCleaned) 
         item->wasCleaned = 0;
-    }
     PyList_Append(item->pList, obj);
-    Py_DECREF(obj);
     return;
 }
 
@@ -78,9 +75,8 @@ static void ClearItem(pdcollectHash* hash_table, char* key) {
     if (item == NULL) {
         return;
     }
-    if (item->wasCleaned) {
+    if (item->wasCleaned) 
         return;
-    }
     item->wasCleaned = 1;
     free(item->key);
     Py_DECREF(item->pItem);
@@ -103,7 +99,6 @@ static void ClearList(pdcollectHash* hash_table, char* key) {
     }
     item->wasCleaned = 1;
     free(item->key);
-
     Py_DECREF(item->pList);
     Py4pdUtils_MemLeakCheck(item->pList, 0, "pList");
     free(item);
@@ -116,9 +111,8 @@ static void ClearList(pdcollectHash* hash_table, char* key) {
 static pdcollectItem* GetObjArr(pdcollectHash* hash_table, char* key) {
     unsigned int index = HashFunction(hash_table, key);
     pdcollectItem* item = hash_table->items[index];
-    if (item == NULL) {
+    if (item == NULL) 
         return NULL;
-    }
     return item;
 }
 
@@ -155,6 +149,8 @@ static PyObject *Py4pdMod_SetGlobalVar(PyObject *self, PyObject *args){
 static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject *keywords){
     PY4PD_FUNC_CALL();
 
+
+
     (void)self;
     t_py *py4pd = Py4pdUtils_GetObject();
     if (py4pd == NULL){
@@ -168,7 +164,6 @@ static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject 
         PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
         return NULL;
     }
-
     
     key = malloc(strlen(varName) + 40);
     snprintf(key, strlen(varName) + 40, "%s_%p", varName, py4pd);
@@ -220,7 +215,6 @@ static PyObject *Py4pdMod_AccumGlobalVar(PyObject *self, PyObject *args){
     if (py4pd->pdcollect == NULL){
         py4pd->pdcollect = CreatePdcollectHash(8);
     }
-    Py_INCREF(pValueScript); // this will be saved inside one List of the pdcollectItem
     AccumItem(py4pd->pdcollect, key, pValueScript);
     py4pd->pdcollect->items[HashFunction(py4pd->pdcollect, key)]->aCumulative = 1;
     free(key);
@@ -279,9 +273,62 @@ static PyObject *Py4pdMod_ClearGlobalVar(PyObject *self, PyObject *args) {
 }
 
 // ======================================
+static void Py4pdMod_RecursiveTick(t_py *x){
+    t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
+    pdPyValue->pValue = x->recursiveObject;
+    pdPyValue->objectsUsing = 0;
+    Py4pdUtils_ConvertToPd(x, pdPyValue, x->out1);
+    Py_DECREF(pdPyValue->pValue); // delete thing
+    free(pdPyValue);
+    Py_LeaveRecursiveCall();
+    // clock_unset(x->recursiveClock);
+}
+
+
+// ======================================
+static PyObject *Py4pdMod_PdRecursiveCall(PyObject *self, PyObject *args){
+    PY4PD_FUNC_CALL();
+    (void)self;
+
+    PyObject* pValue;
+    if (!PyArg_ParseTuple(args, "O", &pValue)) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
+        return NULL;
+    }
+
+    t_py *py4pd = Py4pdUtils_GetObject();
+    py4pd->recursiveCalls++;
+
+    Py_EnterRecursiveCall("[py4pd] Exceeded maximum recursion depth");
+    if (py4pd->recursiveCalls == py4pd->stackLimit){ // seems to be the limit in PureData, 
+        py4pd->recursiveObject = pValue;
+        if (py4pd->recursiveClock == NULL)
+            py4pd->recursiveClock = clock_new(py4pd, (t_method)Py4pdMod_RecursiveTick);
+        Py_INCREF(pValue); // avoid thing to be deleted
+        py4pd->recursiveCalls = 0;
+        clock_delay(py4pd->recursiveClock, 0);
+        Py_RETURN_TRUE;
+    }
+    
+    if (py4pd == NULL){
+        PyErr_SetString(PyExc_RuntimeError, "[pd._recursive] pd.recursive: py4pd is NULL");
+        return NULL;
+    }
+
+    t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
+    pdPyValue->pValue = pValue;
+    pdPyValue->objectsUsing = 0;
+    Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->out1);
+    free(pdPyValue);
+    Py_LeaveRecursiveCall();
+    py4pd->recursiveCalls = 0;
+    Py_RETURN_TRUE;
+}
+
+
+// ======================================
 // ======== py4pd embbeded module =======
 // ======================================
-
 static PyObject *Py4pdMod_PdGetOutCount(PyObject *self, PyObject *args){
     (void)self;
     (void)args;
@@ -314,7 +361,6 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
     t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
     pdPyValue->pValue = pValue;
     pdPyValue->objectsUsing = 0;
-    pdPyValue->pdout = 1;
 
     if (keywords != NULL && py4pd->outAUX != NULL){
         PyObject *outletNumber = PyDict_GetItemString(keywords, "out_n"); // it gets the data type output
@@ -338,10 +384,7 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
         else{
             outletNumberInt--;
             if ((py4pd->outAUX->u_outletNumber > 0) && (outletNumberInt < py4pd->outAUX->u_outletNumber)){
-                // Py_INCREF(pValue); // BUG: this one
-                // post("OUTPUTING refcount: %p", pValue);
                 Py4pdUtils_ConvertToPd(py4pd, pdPyValue, py4pd->outAUX[outletNumberInt].u_outlet);
-                // Py_DECREF(pValue);
                 free(pdPyValue);
                 Py_RETURN_TRUE;
             }
@@ -543,7 +586,7 @@ static PyObject *Py4pdMod_PdSend(PyObject *self, PyObject *args) {
                     "[Python] pd.send received a type 'dict', it must be a list, "
                     "string, int, or float.");
             PyErr_SetString(PyExc_TypeError,
-                            error_message);  
+                           error_message);  
             return NULL;
         }
         t_atom *list_array;
@@ -1141,11 +1184,13 @@ PyMethodDef PdMethods[] = {
     {"getobjpointer", Py4pdMod_GetObjPointer, METH_NOARGS, "Get PureData Object Pointer"},
     {"getstrpointer", Py4pdMod_GetObjPointer, METH_NOARGS, "Get PureData Object Pointer"},
     {"setglobalvar", Py4pdMod_SetGlobalVar, METH_VARARGS, "It sets a global variable for the Object, it is not clear after the execution of the function"},
+
+    // Loops
     {"getglobalvar", (PyCFunction)Py4pdMod_GetGlobalVar, METH_VARARGS | METH_KEYWORDS, "It gets a global variable for the Object, it is not clear after the execution of the function"},
     {"clearglobalvar", (PyCFunction)Py4pdMod_ClearGlobalVar, METH_VARARGS, "It clear the Dictionary of global variables"},
     {"accumglobalvar", Py4pdMod_AccumGlobalVar, METH_VARARGS, "It adds the values in the end of the list"},
+    {"_recursive", Py4pdMod_PdRecursiveCall, METH_VARARGS, "It calls a function recursively"},
 
-    // Py4pdMod_AccumGlobalVar
 
     // player
     {"add2player", (PyCFunction)Py4pdMod_AddThingToPlay, METH_VARARGS | METH_KEYWORDS, "It adds a thing to the player"},

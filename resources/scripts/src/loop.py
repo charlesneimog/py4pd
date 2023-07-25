@@ -48,10 +48,12 @@ def pytrigger(data):
         pd.out(data, out_n=i)
 
 
-
 def pyrecursive(data):
     """ It need to be used with pyiterate and pycollect in recursive patches """
-    pd.recursive(data)
+    sys.setrecursionlimit(1000000)
+
+
+    pd._recursive(data)
     
 
 

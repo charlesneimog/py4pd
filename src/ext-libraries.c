@@ -538,6 +538,7 @@ static void *Py4pdLib_NewNormalObj(t_symbol *s, int argc, t_atom *argv) {
     t_py *x = (t_py *)pd_new(object_PY4PD_Class);
     x->visMode  = 0;
     x->pyObject = 1;
+    x->stackLimit = 100;
     x->canvas = canvas_getcurrent();       
     t_canvas *c = x->canvas;
     t_symbol *patch_dir = canvas_getdir(c);  

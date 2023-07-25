@@ -151,8 +151,13 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 
     // TESTING THINGS
     PyObject            **ObjArgs; // Obj Variables Arguments 
-    pdcollectHash        *pdcollect; // hash table to store the objects
+    pdcollectHash       *pdcollect; // hash table to store the objects
     t_int               usingPdOut;
+
+    t_int               recursiveCalls; // check the number of recursive calls
+    t_int               stackLimit; // check the number of recursive calls
+    t_clock             *recursiveClock; // clock to check the number of recursive calls 
+    PyObject            *recursiveObject; // object to check the number of recursive calls
      
     // ===========
 
@@ -171,6 +176,9 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int                 msOnset;
     t_int                 playable;
     t_int                 playerRunning;
+
+    // Loops
+
 
     // Library
     t_int                py4pd_lib; // flag to check if is to use python library
