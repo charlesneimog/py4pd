@@ -1,5 +1,8 @@
 import pd
 import sys
+import faulthandler
+
+faulthandler.enable()
 
 
 
@@ -12,25 +15,23 @@ def pyiterate(value):
         pd.error("[py.iterate]: pyiterate only works with lists")
         return None
     """
-    clearMessage = pd.CLEARLOOP
-    outputMessage = pd.OUTLOOP
-    pd.out(clearMessage, out_n=1)
+    pd.out(pd.CLEARLOOP, out_n=1)
     for i in value:
         pd.out(i, out_n=0)
-    pd.out(outputMessage, out_n=1)
+    pd.out(pd.OUTLOOP, out_n=1)
 
 
 def pycollect(data):
     """ It collects the data from pyiterate and outputs it """
     # lot of memory usage
-    if data == pd.OUTLOOP:
+    if data is pd.OUTLOOP:
         data = pd.getglobalvar("DATA")
         if data is None:
             pd.error("[py.collect]: There is no data to output")
         else:
             pd.out(data)
 
-    elif data == pd.CLEARLOOP:
+    elif data is pd.CLEARLOOP:
         pd.clearglobalvar("DATA")
 
     else:

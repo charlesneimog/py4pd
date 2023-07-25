@@ -864,6 +864,11 @@ void Py4pdUtils_KILL(PyObject *pValue) {
  * @return nothing
  */
 void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where) {
+    if (PY4PD_DEBUG == 0){
+        return;
+    } 
+
+
     if (Py_IsNone(pValue)){
         return;
     }

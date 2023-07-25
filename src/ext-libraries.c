@@ -5,6 +5,9 @@
 
 static t_class *py4pdInlets_proxy_class;
 
+void Py4pdLib_Bang(t_py *x);
+
+
 // =====================================
 void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b){ 
     t_py *x = (t_py *)z;
@@ -160,24 +163,20 @@ void Py4pdLib_Pointer(t_py *x, t_atom *argv){
     t_py4pd_pValue *pArg;
     pArg = (t_py4pd_pValue *)argv;
     pArg->objectsUsing++;
-    x->ObjArgs[0] = pArg->pValue;
-    Py_INCREF(x->ObjArgs[0]);
 
     PyObject* pArgs = PyTuple_New(x->py_arg_numbers);
-    PyTuple_SetItem(pArgs, 0, x->ObjArgs[0]);
-
+    PyTuple_SetItem(pArgs, 0, pArg->pValue);
+    Py_INCREF(pArg->pValue);
 
     for (int i = 1; i < x->py_arg_numbers; i++){
         PyTuple_SetItem(pArgs, i, x->ObjArgs[i]);
         Py_INCREF(x->ObjArgs[i]);
     }
-    // post("==============");
-    if (x->audioOutput){
+
+    if (x->audioOutput)
         return; 
-    }
     
     Py4pdUtils_RunPy(x, pArgs);
-
     Py_DECREF(pArgs);
     
     return;
@@ -235,6 +234,95 @@ void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
     return;
 }
 
+// =====================================
+void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
+
+    PY4PD_FUNC_CALL();
+    
+    if (x->function == NULL){
+        pd_error(x, "[py4pd] Function not defined");
+        return;
+    }
+    if (s == gensym("bang")){
+        Py4pdLib_Bang(x);
+        return;
+    }
+    
+    // Py_DECREF(x->ObjArgs[0]); // BUG: remove this one
+    // post("refcount %d", (int)Py_REFCNT(x->ObjArgs[0]));
+
+    PyObject *pyInletValue = NULL;
+    if (ac == 0){
+        pyInletValue = PyUnicode_FromString(s->s_name);
+        // x->ObjArgs[0] = pyInletValue;
+    }
+    else if ((s == gensym("list") || s == gensym("anything")) && ac > 1){
+        pyInletValue = PyList_New(ac);
+        for (int i = 0; i < ac; i++){
+            if (av[i].a_type == A_FLOAT){ 
+                int isInt = (int)av[i].a_w.w_float == av[i].a_w.w_float;
+                if (isInt)
+                    PyList_SetItem(pyInletValue, i, PyLong_FromLong(av[i].a_w.w_float));
+                else
+                    PyList_SetItem(pyInletValue, i, PyFloat_FromDouble(av[i].a_w.w_float));
+            }
+            else if (av[i].a_type == A_SYMBOL)
+                PyList_SetItem(pyInletValue, i, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
+        }
+        // x->ObjArgs[0] = pyInletValue;
+    }
+    else if ((s == gensym("float") || s == gensym("symbol")) && ac == 1){
+        if (av[0].a_type == A_FLOAT){ 
+            int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
+            if (isInt)
+                pyInletValue = PyLong_FromLong(av[0].a_w.w_float);
+            else
+                pyInletValue = PyFloat_FromDouble(av[0].a_w.w_float);
+        }
+        else if (av[0].a_type == A_SYMBOL){
+            pyInletValue = PyUnicode_FromString(av[0].a_w.w_symbol->s_name);
+            // x->ObjArgs[0] = pyInletValue;
+        }
+    }
+    else{
+        pyInletValue = PyList_New(ac + 1);
+        PyList_SetItem(pyInletValue, 0, PyUnicode_FromString(s->s_name));
+        for (int i = 0; i < ac; i++){
+            if (av[i].a_type == A_FLOAT){ 
+                int isInt = (int)av[i].a_w.w_float == av[i].a_w.w_float;
+                if (isInt)
+                    PyList_SetItem(pyInletValue, i + 1, PyLong_FromLong(av[i].a_w.w_float));
+                else
+                    PyList_SetItem(pyInletValue, i + 1, PyFloat_FromDouble(av[i].a_w.w_float));
+            }
+            else if (av[i].a_type == A_SYMBOL)
+                PyList_SetItem(pyInletValue, i + 1, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
+        }
+        // x->ObjArgs[0] = pyInletValue;
+    }
+
+    if (x->audioOutput)
+        return; // in audio out object, the function of dsp will call the python function
+    
+    PyObject* pArgs = PyTuple_New(x->py_arg_numbers);
+    PyTuple_SetItem(pArgs, 0, pyInletValue);
+    // Py_INCREF(x->ObjArgs[0]); 
+    // post("refcount %d", (int)Py_REFCNT(x->ObjArgs[0]));
+
+    for (int i = 1; i < x->py_arg_numbers; i++){
+        PyTuple_SetItem(pArgs, i, x->ObjArgs[i]);
+        Py_INCREF(x->ObjArgs[i]); // recorver the INCREF of the Py4pdLib_Anything
+    }
+
+    if (x->kwargs == 1){
+        pd_error(NULL, "Running with kwargs, not implemented yet");
+    }
+    else{
+        Py4pdUtils_RunPy(x, pArgs);
+    }
+    Py4pdUtils_DECREF(pArgs);
+    return;
+}
 
 // =====================================
 void Py4pdLib_Bang(t_py *x){
@@ -252,93 +340,6 @@ void Py4pdLib_Bang(t_py *x){
     Py4pdUtils_RunPy(x, NULL);
 }
 
-// =====================================
-void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
-
-    PY4PD_FUNC_CALL();
-    
-    if (x->function == NULL){
-        pd_error(x, "[py4pd] Function not defined");
-        return;
-    }
-    if (s == gensym("bang")){
-        Py4pdLib_Bang(x);
-        return;
-    }
-    Py_DECREF(x->ObjArgs[0]);
-
-    PyObject *pyInletValue = NULL;
-    if (ac == 0){
-        pyInletValue = PyUnicode_FromString(s->s_name);
-        x->ObjArgs[0] = pyInletValue;
-    }
-    else if ((s == gensym("list") || s == gensym("anything")) && ac > 1){
-        pyInletValue = PyList_New(ac);
-        for (int i = 0; i < ac; i++){
-            if (av[i].a_type == A_FLOAT){ 
-                int isInt = (int)av[i].a_w.w_float == av[i].a_w.w_float;
-                if (isInt)
-                    PyList_SetItem(pyInletValue, i, PyLong_FromLong(av[i].a_w.w_float));
-                else
-                    PyList_SetItem(pyInletValue, i, PyFloat_FromDouble(av[i].a_w.w_float));
-            }
-            else if (av[i].a_type == A_SYMBOL)
-                PyList_SetItem(pyInletValue, i, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
-        }
-        x->ObjArgs[0] = pyInletValue;
-    }
-    else if ((s == gensym("float") || s == gensym("symbol")) && ac == 1){
-        if (av[0].a_type == A_FLOAT){ 
-            int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
-            if (isInt)
-                x->ObjArgs[0] = PyLong_FromLong(av[0].a_w.w_float);
-            else
-                x->ObjArgs[0] = PyFloat_FromDouble(av[0].a_w.w_float);
-        }
-        else if (av[0].a_type == A_SYMBOL){
-            pyInletValue = PyUnicode_FromString(av[0].a_w.w_symbol->s_name);
-            x->ObjArgs[0] = pyInletValue;
-        }
-    }
-    else{
-        pyInletValue = PyList_New(ac + 1);
-        PyList_SetItem(pyInletValue, 0, PyUnicode_FromString(s->s_name));
-        for (int i = 0; i < ac; i++){
-            if (av[i].a_type == A_FLOAT){ 
-                int isInt = (int)av[i].a_w.w_float == av[i].a_w.w_float;
-                if (isInt)
-                    PyList_SetItem(pyInletValue, i + 1, PyLong_FromLong(av[i].a_w.w_float));
-                else
-                    PyList_SetItem(pyInletValue, i + 1, PyFloat_FromDouble(av[i].a_w.w_float));
-            }
-            else if (av[i].a_type == A_SYMBOL)
-                PyList_SetItem(pyInletValue, i + 1, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
-        }
-        x->ObjArgs[0] = pyInletValue;
-    }
-
-    if (x->audioOutput)
-        return; // in audio out object, the function of dsp will call the python function
-    
-    PyObject* pArgs = PyTuple_New(x->py_arg_numbers);
-    Py_INCREF(x->ObjArgs[0]);
-    PyTuple_SetItem(pArgs, 0, x->ObjArgs[0]);
-
-
-    for (int i = 1; i < x->py_arg_numbers; i++){
-        PyTuple_SetItem(pArgs, i, x->ObjArgs[i]);
-        Py_INCREF(x->ObjArgs[i]); // recorver the INCREF of the Py4pdLib_Anything
-    }
-
-    if (x->kwargs == 1){
-        pd_error(NULL, "Running with kwargs, not implemented yet");
-    }
-    else{
-        Py4pdUtils_RunPy(x, pArgs);
-    }
-    Py4pdUtils_DECREF(pArgs);
-    return;
-}
 
 // =====================================
 void Py4pdLib_ReloadObject(t_py *x){
