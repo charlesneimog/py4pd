@@ -186,14 +186,24 @@ void *Py4pdLib_FreeObj(t_py *x) {
             Py4pdUtils_ExecuteSystemCommand(command);
         #endif
     }
-    if (x->visMode != 0) {
+    if (x->visMode != 0) 
         Py4pdPic_Free(x);
-    }
-    if (x->pdcollect != NULL) {
-        // free_table(x->pdcollect);
+
+    if (x->pdcollect != NULL) 
+        FreePdcollectHash(x->pdcollect);
+
+    if (x->py_arg_numbers > 1){
+        for (int i = 1; i < x->py_arg_numbers; i++){
+            if (!x->pyObjArgs[i]->pdout)
+                Py_DECREF(x->pyObjArgs[i]->pValue);
+            
+        }
+        free(x->pyObjArgs);
     }
 
-
+    if (x->pdObjArgs != NULL){
+        free(x->pdObjArgs);
+    }
 
     return NULL;
 }

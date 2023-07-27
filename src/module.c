@@ -67,7 +67,6 @@ static void AccumItem(pdcollectHash* hash_table, char* key, PyObject* obj) {
     return;
 }
 
-
 // =================================
 static void ClearItem(pdcollectHash* hash_table, char* key) {
     unsigned int index = HashFunction(hash_table, key);
@@ -84,7 +83,6 @@ static void ClearItem(pdcollectHash* hash_table, char* key) {
     free(item);
     hash_table->items[index] = NULL;
 }
-
 
 // =================================
 static void ClearList(pdcollectHash* hash_table, char* key) {
@@ -105,8 +103,6 @@ static void ClearList(pdcollectHash* hash_table, char* key) {
     hash_table->items[index] = NULL;
 }
 
-
-// =================================
 // =================================
 static pdcollectItem* GetObjArr(pdcollectHash* hash_table, char* key) {
     unsigned int index = HashFunction(hash_table, key);
@@ -114,6 +110,40 @@ static pdcollectItem* GetObjArr(pdcollectHash* hash_table, char* key) {
     if (item == NULL) 
         return NULL;
     return item;
+}
+
+// =================================
+static void FreePdcollectItem(pdcollectItem* item) {
+    if (item == NULL) {
+        return;
+    }
+    if (item->wasCleaned) {
+        return;
+    }
+    item->wasCleaned = 1;
+    free(item->key);
+    
+    // Free the appropriate object, depending on whether it's a single item or a list
+    if (item->pList) {
+        Py_DECREF(item->pList);
+        Py4pdUtils_MemLeakCheck(item->pList, 0, "pList");
+    } else if (item->pItem) {
+        Py4pdUtils_DECREF(item->pItem);
+    }
+    free(item);
+}
+
+
+// =================================
+void FreePdcollectHash(pdcollectHash* hash_table) {
+    if (hash_table == NULL) {
+        return;
+    }
+    for (int i = 0; i < hash_table->size; ++i) {
+        FreePdcollectItem(hash_table->items[i]);
+    }
+    free(hash_table->items);
+    free(hash_table);
 }
 
 // =================================
@@ -284,22 +314,22 @@ static PyObject *Py4pdMod_GetObjArgs(PyObject* self, PyObject *args){
 
     PyObject *pList = PyList_New(0);
     for (int i = 0; i < py4pd->objArgsCount; i++){
-        if (py4pd->objArgs[i].a_type == A_FLOAT){
-            int isInt = (int)py4pd->objArgs[i].a_w.w_float == py4pd->objArgs[i].a_w.w_float;
+        if (py4pd->pdObjArgs[i].a_type == A_FLOAT){
+            int isInt = (int)py4pd->pdObjArgs[i].a_w.w_float == py4pd->pdObjArgs[i].a_w.w_float;
             if (isInt){
-                PyObject *Number = PyLong_FromLong(py4pd->objArgs[i].a_w.w_float);
+                PyObject *Number = PyLong_FromLong(py4pd->pdObjArgs[i].a_w.w_float);
                 PyList_Append(pList, Number);
                 Py_DECREF(Number);
             }
             else{
-                PyObject *Number = PyFloat_FromDouble(py4pd->objArgs[i].a_w.w_float);
+                PyObject *Number = PyFloat_FromDouble(py4pd->pdObjArgs[i].a_w.w_float);
                 PyList_Append(pList, Number);
                 Py_DECREF(Number);
             }
 
         }
-        else if (py4pd->objArgs[i].a_type == A_SYMBOL){
-            PyObject *strObj = PyUnicode_FromString(py4pd->objArgs[i].a_w.w_symbol->s_name);
+        else if (py4pd->pdObjArgs[i].a_type == A_SYMBOL){
+            PyObject *strObj = PyUnicode_FromString(py4pd->pdObjArgs[i].a_w.w_symbol->s_name);
             PyList_Append(pList, strObj);
             Py_DECREF(strObj);
         }

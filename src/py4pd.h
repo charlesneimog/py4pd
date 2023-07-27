@@ -153,7 +153,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     
 
     // TESTING THINGS
-    t_py4pd_pValue      **ObjArgs; // Obj Variables Arguments 
+    t_py4pd_pValue      **pyObjArgs; // Obj Variables Arguments 
     pdcollectHash       *pdcollect; // hash table to store the objects
     t_int               usingPdOut;
 
@@ -161,7 +161,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int               stackLimit; // check the number of recursive calls
     t_clock             *recursiveClock; // clock to check the number of recursive calls 
     PyObject            *recursiveObject; // object to check the number of recursive calls
-    t_atom              *objArgs;
+    t_atom              *pdObjArgs;
     t_int               objArgsCount;
      
     // ===========
@@ -358,6 +358,7 @@ void Py4pdUtils_DECREF(PyObject *pValue);
 void Py4pdUtils_INCREF(PyObject *pValue);
 void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where);
 void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue* src, t_py4pd_pValue* dest);
+void FreePdcollectHash(pdcollectHash* hash_table);
 
 // ============= UTILITIES =============
 // int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);
