@@ -68,9 +68,11 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
                      "using -n_args (-a for short) {number}", x->objectName->s_name);
             return 0;
         }
+        x->use_pArgs = 1;
     }
     if (code->co_flags & CO_VARKEYWORDS) {
-        x->kwargs = 1;
+        post("this function uses **kwargs");
+        x->use_pKwargs = 1;
     }
     if (code->co_argcount != 0){
         if (x->py_arg_numbers == 0) {
@@ -196,6 +198,7 @@ void *Py4pdLib_FreeObj(t_py *x) {
         for (int i = 1; i < x->py_arg_numbers; i++){
             if (!x->pyObjArgs[i]->pdout)
                 Py_DECREF(x->pyObjArgs[i]->pValue);
+            free(x->pyObjArgs[i]);
             
         }
         free(x->pyObjArgs);
@@ -676,6 +679,8 @@ t_py *Py4pdUtils_GetObject(void){
         return NULL;
     }
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    Py_DECREF(py4pd_capsule);
+    Py_DECREF(pd_module);
     return py4pd;
 }
 
@@ -743,30 +748,32 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
     
     pValue = PyObject_CallObject(x->function, pArgs);
 
-    t_py4pd_pValue *PyPtrValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
-    PyPtrValue->pValue = pValue;
-    PyPtrValue->objectsUsing = 0;
-    PyPtrValue->pdout = 0;
-    PyPtrValue->objOwner = x->objectName;
+    t_py4pd_pValue *PyPtrValue = NULL;
+    if (x->objType < 3){
+        PyPtrValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
+        PyPtrValue->pValue = pValue;
+        PyPtrValue->objectsUsing = 0;
+        PyPtrValue->pdout = 0;
+        PyPtrValue->objOwner = x->objectName;
+    }
 
     if (prev_obj_exists == 1 && pValue != NULL) {
         objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
         if (objectCapsule == NULL){
             pd_error(x, "[Python] Failed to add object to Python");
+            return NULL;
         }
     }
             
     if (x->audioOutput == 1){
         return NULL;
     }
-
-    if (pValue != NULL && x->audioOutput == 0) {
+    if (pValue != NULL && (x->objType < 3)){
         Py4pdUtils_ConvertToPd(x, PyPtrValue, x->out1); 
-        Py4pdUtils_DECREF(pValue);
-        // Py4pdUtils_DECREF(pArgs); // pArgs is created py4pd Py4pdLib_Pointer, so it should not be decref
+        Py4pdUtils_DECREF(pValue);  
         Py_XDECREF(MainModule);
         free(PyPtrValue);
-         PyErr_Clear();
+        PyErr_Clear();
         return NULL;
     }
     else if(pValue == NULL){
@@ -785,11 +792,16 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
         PyErr_Clear();
         return NULL;
     }
-    else{
+
+    else if(x->objType > 2){
         Py_XDECREF(MainModule);
         free(PyPtrValue);
         PyErr_Clear();
         return pValue;
+    }
+    else{
+        pd_error(x, "[%s] Unknown error, please report", x->objectName->s_name);
+        return NULL;
     }
 }
 
@@ -1280,6 +1292,58 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x) {
     }
     return objectCapsule;
 }
+
+
+
+// ========================= GIF ==============================
+void Py4pdUtils_CreatePicObj(t_py *x, PyObject* PdDict, t_class *object_PY4PD_Class, int argc, t_atom *argv) {
+    t_canvas *c = x->canvas;
+    PyObject *pyLibraryFolder = PyDict_GetItemString(PdDict, "py4pdOBJLibraryFolder");
+
+    t_symbol *py4pdArgs = gensym("-canvas");
+    PyObject *py4pdOBJwidth = PyDict_GetItemString(PdDict, "py4pdOBJwidth");
+    x->x_width = PyLong_AsLong(py4pdOBJwidth);
+    PyObject *py4pdOBJheight = PyDict_GetItemString(PdDict, "py4pdOBJheight");
+    x->x_height = PyLong_AsLong(py4pdOBJheight);
+    if (argc > 1) {
+        if (argv[0].a_type == A_FLOAT) {
+            x->x_width = argv[0].a_w.w_float;
+        }
+        if (argv[1].a_type == A_FLOAT) {
+            x->x_height = argv[1].a_w.w_float;
+        }
+    }
+
+    PyObject *gifFile = PyDict_GetItemString(PdDict, "py4pdOBJGif");
+    if (gifFile == NULL) {
+        x->x_image = PY4PD_IMAGE;
+    }
+    else{
+        char *gifFileCHAR = (char *)PyUnicode_AsUTF8(gifFile);
+        if (gifFileCHAR[0] == '.' && gifFileCHAR[1] == '/'){
+            char completeImagePath[MAXPDSTRING];
+            gifFileCHAR++;  // remove the first dot
+            sprintf(completeImagePath, "%s%s", PyUnicode_AsUTF8(pyLibraryFolder), gifFileCHAR);
+            char *ext = strrchr(completeImagePath, '.');
+            if (strcmp(ext, ".gif") == 0){
+                Py4pdUtils_ReadGifFile(x, completeImagePath);
+            }
+            else if (strcmp(ext, ".png") == 0) {
+                Py4pdUtils_ReadPngFile(x, completeImagePath);
+            }
+            else{
+                pd_error(x, "[%s] File extension not supported (uses just .png and .gif), using empty image.", x->objectName->s_name);
+            }
+        }
+        else{
+            pd_error(NULL, "Image file bad format, the file must be relative to library folder and start with './'.");
+        }
+    }
+    Py4pdPic_InitVisMode(x, c, py4pdArgs, 0, argc, argv, object_PY4PD_Class);
+}
+
+
+
 
 // ========================= GIF ==============================
 /*

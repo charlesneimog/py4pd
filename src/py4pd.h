@@ -5,6 +5,7 @@
 #include <g_canvas.h>
 #include <s_stuff.h> // get the search paths
 #include <pthread.h>
+#include <dirent.h>
 
 #define PY_SSIZE_T_CLEAN // Remove deprecated functions
 #include <Python.h>
@@ -17,22 +18,14 @@
 #define ANSI_COLOR_BLUE "\x1b[34m"
 #define ANSI_COLOR_RESET "\x1b[0m"
 
-#ifndef PY4PD_DEBUG
-    #define PY4PD_DEBUG 0
-#endif
+#define PY4PD_DEBUG 0
 
 
-/* #define PY4PD_DEBUG 0
-#define PY4PD_FUNC_CALL() do { \
-    printf("Function: %s\n", __func__); \
-} while(0)
-
-#define PY4PD_FUNC_DONE() do { \
-    if (PY4PD_DEBUG) { \
-        printf(ANSI_COLOR_RED "Function Done: %s\n" ANSI_COLOR_RESET, __func__); \
-    } \
-} while(0)
-*/
+#define PY4PD_NORMALOBJ 0
+#define PY4PD_VISOBJ 1
+#define PY4PD_AUDIOINOBJ 2
+#define PY4PD_AUDIOOUTOBJ 3
+#define PY4PD_AUDIOOBJ 4
 
 
 #define PY4PD_MAJOR_VERSION 0
@@ -53,7 +46,7 @@
 #endif
 
 // FOLDER
-#include <dirent.h>
+
 
 
 // ====================================
@@ -173,7 +166,8 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int                function_called; // flag to check if the set function was called
     t_int                py_arg_numbers; // number of arguments
     t_int                outPyPointer; // flag to check if is to output the python pointer
-    t_int                kwargs;
+    t_int                use_pArgs;
+    t_int                use_pKwargs;
     
     // Player 
     t_clock              *playerClock;
@@ -188,6 +182,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     // Library
     t_int                py4pd_lib; // flag to check if is to use python library
     t_int                pyObject;
+    t_int                objType;
     t_int                ignoreOnNone;
     t_atom               *inlets; // vector to store the arguments
     PyObject             *argsDict; // parameters
@@ -204,8 +199,6 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject            *pdmodule;
     PyObject            *Dict;
 
-    // == Internal python functions
-    PyObject            *py4pd_deepcopy;
    
     
     // == AUDIO AND NUMPY
@@ -359,6 +352,7 @@ void Py4pdUtils_INCREF(PyObject *pValue);
 void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where);
 void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue* src, t_py4pd_pValue* dest);
 void FreePdcollectHash(pdcollectHash* hash_table);
+void Py4pdUtils_CreatePicObj(t_py *x, PyObject* PdDict, t_class *object_PY4PD_Class, int argc, t_atom *argv);
 
 // ============= UTILITIES =============
 // int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);

@@ -1312,7 +1312,7 @@ PyMODINIT_FUNC PyInit_pd() {
     const char* CLEAR_string = createUniqueConstString("py4pdClear", py4pdmodule);
 
     PyObject *puredata_samplerate, 
-    *puredata_vecsize, *visObject, 
+    *puredata_vecsize, *visObject, *normalObject,
     *audioINObject, *audioOUTObject, 
     *pdAudio,
     *Py4pd_OutLoopString, *Py4pd_ClearLoopString;
@@ -1320,19 +1320,24 @@ PyMODINIT_FUNC PyInit_pd() {
     puredata_samplerate = PyLong_FromLong(sys_getsr());
     puredata_vecsize = PyLong_FromLong(sys_getblksize());
     
-    visObject = PyUnicode_FromString("VIS");
-    audioINObject = PyUnicode_FromString("AUDIOIN");
-    audioOUTObject = PyUnicode_FromString("AUDIOOUT");
-    pdAudio = PyUnicode_FromString("AUDIO");
+    normalObject = PyLong_FromLong(PY4PD_NORMALOBJ);
+    visObject = PyLong_FromLong(PY4PD_VISOBJ);
+    audioINObject = PyLong_FromLong(PY4PD_AUDIOINOBJ);
+    audioOUTObject = PyLong_FromLong(PY4PD_AUDIOOUTOBJ);
+    pdAudio = PyLong_FromLong(PY4PD_AUDIOOBJ);
+
     Py4pd_OutLoopString = PyUnicode_FromString(OUT_string);
     Py4pd_ClearLoopString = PyUnicode_FromString(CLEAR_string);
 
     PyModule_AddObject(py4pdmodule, "SAMPLERATE", puredata_samplerate);
     PyModule_AddObject(py4pdmodule, "VECSIZE", puredata_vecsize);
+
+    PyModule_AddObject(py4pdmodule, "NORMAL", normalObject);
     PyModule_AddObject(py4pdmodule, "VIS", visObject);
     PyModule_AddObject(py4pdmodule, "AUDIOIN", audioINObject);
     PyModule_AddObject(py4pdmodule, "AUDIOOUT", audioOUTObject);
     PyModule_AddObject(py4pdmodule, "AUDIO", pdAudio);
+
     PyModule_AddObject(py4pdmodule, "OUTLOOP", Py4pd_OutLoopString);
     PyModule_AddObject(py4pdmodule, "CLEARLOOP", Py4pd_ClearLoopString);
 

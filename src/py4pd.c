@@ -28,7 +28,12 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
         return -1;
     }
 
-    _import_array(); // Initialize numpy
+    int numpyImporter = _import_array(); // import numpy
+    if (numpyImporter < 0) {
+        pd_error(x, "[py4pd] Error importing numpy!");
+        return -1;
+    }
+
 
     t_symbol *script_file_name = atom_gensym(argv + 1);
     t_symbol *function_name = gensym("py4pdLoadObjects"); // TODO: change this to {libraryname}_setup() 
@@ -215,7 +220,9 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
             Py_XDECREF(ptype);
             Py_XDECREF(pvalue);
             Py_XDECREF(ptraceback);
+            Py_XDECREF(MainModule);
             Py_XDECREF(pModule);
+            Py_XDECREF(pModuleReloaded);
             Py_XDECREF(pFunc);
             Py_XDECREF(pValue);
             return -1;
@@ -234,6 +241,9 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
         x->function_name = function_name;
         x->function_called = 1;
         x->py4pd_lib = 1;
+        Py_XDECREF(MainModule);
+        Py_XDECREF(pModuleReloaded);
+        Py_XDECREF(pValue);
         logpost(x, 3, "[py4pd] Library %s loaded!", script_file_name->s_name);
     } 
     else {
@@ -248,6 +258,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);
         Py_XDECREF(pModule);
+        Py_XDECREF(MainModule);
         Py_XDECREF(pFunc);
         PyErr_Clear();
     }
