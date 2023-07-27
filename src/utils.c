@@ -9,10 +9,15 @@
 * @param argv is the arguments
 * @return 1 if all arguments are ok, 0 if not
 */
-int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv){
+int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, t_atom **argvPtr){
     int argsNumberDefined = 0;
     x->x_numOutlets = -1;
     x->n_channels = 1;
+
+    int argc = *argcPtr;
+    t_atom *argv = *argvPtr;
+
+
     int i, j;
     for (i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
@@ -21,9 +26,10 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_at
                     if (argv[i + 1].a_type == A_FLOAT) {
                         x->py_arg_numbers = (int)argv[i + 1].a_w.w_float;
                         argsNumberDefined = 1;
-                        // remove -n_args and the number of arguments from the arguments list
                         for (j = i; j < argc; j++) {
                             argv[j] = argv[j + 2];
+                            (*argvPtr)[j] = (*argvPtr)[j + 2];
+                            // *argcPtr = *argcPtr - 2;
                         }
                     }
                 }
@@ -34,17 +40,22 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_at
                     // remove -outn and the number of outlets from the arguments list
                     for (j = i; j < argc; j++) {
                         argv[j] = argv[j + 2];
+                        (*argvPtr)[j] = (*argvPtr)[j + 2];
+                        // *argcPtr = *argcPtr - 2;
                     }
                 }
                 else{
                     x->x_numOutlets = -1; // -1 means that the number of outlets is not defined
                 }
             }
-            else if (strcmp(argv[i].a_w.w_symbol->s_name, "-ch") == 0 || strcmp(argv[i].a_w.w_symbol->s_name, "-channels") == 0){
+            else if (strcmp(argv[i].a_w.w_symbol->s_name, "-ch") == 0 
+                    || strcmp(argv[i].a_w.w_symbol->s_name, "-channels") == 0){
                 if (argv[i + 1].a_type == A_FLOAT) {
                     x->n_channels = (int)argv[i + 1].a_w.w_float;
                     for (j = i; j < argc; j++) {
                         argv[j] = argv[j + 2];
+                        (*argvPtr)[j] = (*argvPtr)[j + 2];
+                        // *argcPtr = *argcPtr - 2;
                     }
                 }
             }
@@ -52,7 +63,9 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_at
     }
     if (code->co_flags & CO_VARARGS) {
         if (argsNumberDefined == 0) {
-            pd_error(x, "[%s] this function uses *args, you need to specify the number of arguments using -n_args (-a for short) {number}", x->objectName->s_name);
+            pd_error(x, "[%s] this function uses *args, "
+                    "you need to specify the number of arguments "
+                     "using -n_args (-a for short) {number}", x->objectName->s_name);
             return 0;
         }
     }
@@ -272,8 +285,10 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *scr
                         if (strcmp(entryName, script_file_name->s_name) == 0) {
                             // Process the conflict
                             post("");
-                            pd_error(x, "[py4pd] The library '%s' conflicts with a Python package name.", script_file_name->s_name);
-                            pd_error(x, "[py4pd] This can cause problems related to py4pdLoadObjects.");
+                            pd_error(x, "[py4pd] The library '%s' "
+                                     "conflicts with a Python package name.", script_file_name->s_name);
+                            pd_error(x, "[py4pd] This can cause "
+                                     "problems related to py4pdLoadObjects.");
                             pd_error(x, "[py4pd] Rename the library.");
                             post("");
                         }
@@ -655,6 +670,15 @@ t_py *Py4pdUtils_GetObject(void){
 }
 
 // =====================================================================
+void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue* src, t_py4pd_pValue* dest){
+    dest->pValue = src->pValue;
+    dest->pdout = src->pdout;
+    dest->objOwner = src->objOwner;
+    dest->objectsUsing = src->objectsUsing;
+
+}
+
+// =====================================================================
 /*
  * @brief Run a Python function
  * @param x is the py4pd object
@@ -662,8 +686,7 @@ t_py *Py4pdUtils_GetObject(void){
  * @return the return value of the function
  */
 PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) { 
-    PY4PD_FUNC_CALL();
-
+    
     t_py *prev_obj = NULL;
     int prev_obj_exists = 0;
     PyObject* MainModule = PyImport_ImportModule("pd"); 
@@ -697,8 +720,8 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
         Py_XDECREF(ptype);
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);
-        PyErr_Clear();
         Py_XDECREF(MainModule);
+        PyErr_Clear();
         return NULL;
     }
     objectCapsule = Py4pdUtils_AddPdObject(x);
@@ -713,6 +736,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
     t_py4pd_pValue *PyPtrValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
     PyPtrValue->pValue = pValue;
     PyPtrValue->objectsUsing = 0;
+    PyPtrValue->pdout = 0;
     PyPtrValue->objOwner = x->objectName;
 
     if (prev_obj_exists == 1 && pValue != NULL) {
@@ -729,9 +753,10 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
     if (pValue != NULL && x->audioOutput == 0) {
         Py4pdUtils_ConvertToPd(x, PyPtrValue, x->out1); 
         Py4pdUtils_DECREF(pValue);
-        // Py4pdUtils_DECREF(pArgs); // RULE FOR PY4PD: How create the refcount is how you destroy it
+        // Py4pdUtils_DECREF(pArgs); // pArgs is created py4pd Py4pdLib_Pointer, so it should not be decref
         Py_XDECREF(MainModule);
         free(PyPtrValue);
+         PyErr_Clear();
         return NULL;
     }
     else if(pValue == NULL){
@@ -745,7 +770,6 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);
         Py_XDECREF(pValue);
-        // Py4pdUtils_DECREF(pArgs);
         Py_XDECREF(MainModule);
         free(PyPtrValue);
         PyErr_Clear();
@@ -754,6 +778,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
     else{
         Py_XDECREF(MainModule);
         free(PyPtrValue);
+        PyErr_Clear();
         return pValue;
     }
 }
@@ -927,9 +952,10 @@ inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct, t_out
         if (pValue == Py_None && x->ignoreOnNone == 1) {
             return NULL;
         }
-        t_atom pointer_atom;
-        SETPOINTER(&pointer_atom, (t_gpointer *)pValueStruct);
-        outlet_anything(outlet, gensym("PyObject"), 1, &pointer_atom);
+        t_atom args[2];
+        SETSYMBOL(&args[0], gensym(Py_TYPE(pValue)->tp_name));
+        SETPOINTER(&args[1], (t_gpointer *)pValueStruct);
+        outlet_anything(outlet, gensym("PyObject"), 2, args);
         return NULL;
     }
     

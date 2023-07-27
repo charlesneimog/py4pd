@@ -88,7 +88,7 @@ static void ClearItem(pdcollectHash* hash_table, char* key) {
 
 // =================================
 static void ClearList(pdcollectHash* hash_table, char* key) {
-    PY4PD_FUNC_CALL();
+    
     unsigned int index = HashFunction(hash_table, key);
     pdcollectItem* item = hash_table->items[index];
     if (item == NULL) {
@@ -120,7 +120,7 @@ static pdcollectItem* GetObjArr(pdcollectHash* hash_table, char* key) {
 // =================================
 // =================================
 static PyObject *Py4pdMod_SetGlobalVar(PyObject *self, PyObject *args){
-    PY4PD_FUNC_CALL();
+    
     (void)self;
     t_py *py4pd = Py4pdUtils_GetObject();
     if (py4pd == NULL){
@@ -147,7 +147,7 @@ static PyObject *Py4pdMod_SetGlobalVar(PyObject *self, PyObject *args){
 
 // =================================
 static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject *keywords){
-    PY4PD_FUNC_CALL();
+    
 
 
 
@@ -195,7 +195,7 @@ static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject 
 
 // =================================
 static PyObject *Py4pdMod_AccumGlobalVar(PyObject *self, PyObject *args){
-    PY4PD_FUNC_CALL();
+    
     (void)self;
 
     t_py *py4pd = Py4pdUtils_GetObject();
@@ -218,14 +218,14 @@ static PyObject *Py4pdMod_AccumGlobalVar(PyObject *self, PyObject *args){
     AccumItem(py4pd->pdcollect, key, pValueScript);
     py4pd->pdcollect->items[HashFunction(py4pd->pdcollect, key)]->aCumulative = 1;
     free(key);
-    PY4PD_FUNC_DONE();
+    
     Py_RETURN_TRUE;
 
 }
 
 // =================================
 static PyObject *Py4pdMod_ClearGlobalVar(PyObject *self, PyObject *args) {
-    PY4PD_FUNC_CALL();
+    
     (void)self;
 
     t_py *py4pd = Py4pdUtils_GetObject();
@@ -245,20 +245,20 @@ static PyObject *Py4pdMod_ClearGlobalVar(PyObject *self, PyObject *args) {
     snprintf(key, strlen(varName) + 40, "%s_%p", varName, py4pd);
     if (py4pd->pdcollect == NULL){
         free(key);
-        PY4PD_FUNC_DONE();
+        
         Py_RETURN_TRUE;
     }
     pdcollectItem* objArr = GetObjArr(py4pd->pdcollect, key);
     if (objArr != NULL){
         if (objArr->wasCleaned){
             free(key);
-            PY4PD_FUNC_DONE();
+            
             Py_RETURN_TRUE;
         }
     }
     else{
         free(key);
-        PY4PD_FUNC_DONE();
+        
         Py_RETURN_TRUE;
     }
 
@@ -268,9 +268,50 @@ static PyObject *Py4pdMod_ClearGlobalVar(PyObject *self, PyObject *args) {
         ClearItem(py4pd->pdcollect, key);
 
     free(key);
-    PY4PD_FUNC_DONE();
     Py_RETURN_TRUE;
 }
+
+// ======================================
+static PyObject *Py4pdMod_GetObjArgs(PyObject* self, PyObject *args){
+    (void)self;
+    (void)args;
+
+    t_py *py4pd = Py4pdUtils_GetObject();
+    if (py4pd == NULL){
+        PyErr_SetString(PyExc_RuntimeError, "[Python] pd.setglobalvar: py4pd is NULL");
+        return NULL;
+    }
+
+    PyObject *pList = PyList_New(0);
+    for (int i = 0; i < py4pd->objArgsCount; i++){
+        if (py4pd->objArgs[i].a_type == A_FLOAT){
+            int isInt = (int)py4pd->objArgs[i].a_w.w_float == py4pd->objArgs[i].a_w.w_float;
+            if (isInt){
+                PyObject *Number = PyLong_FromLong(py4pd->objArgs[i].a_w.w_float);
+                PyList_Append(pList, Number);
+                Py_DECREF(Number);
+            }
+            else{
+                PyObject *Number = PyFloat_FromDouble(py4pd->objArgs[i].a_w.w_float);
+                PyList_Append(pList, Number);
+                Py_DECREF(Number);
+            }
+
+        }
+        else if (py4pd->objArgs[i].a_type == A_SYMBOL){
+            PyObject *strObj = PyUnicode_FromString(py4pd->objArgs[i].a_w.w_symbol->s_name);
+            PyList_Append(pList, strObj);
+            Py_DECREF(strObj);
+        }
+        else{
+            // post("In pd.getobjargs: unknown type");
+        }
+    }
+    return pList;
+}
+
+
+
 
 // ======================================
 static void Py4pdMod_RecursiveTick(t_py *x){
@@ -281,13 +322,11 @@ static void Py4pdMod_RecursiveTick(t_py *x){
     Py_DECREF(pdPyValue->pValue); // delete thing
     free(pdPyValue);
     Py_LeaveRecursiveCall();
-    // clock_unset(x->recursiveClock);
 }
-
 
 // ======================================
 static PyObject *Py4pdMod_PdRecursiveCall(PyObject *self, PyObject *args){
-    PY4PD_FUNC_CALL();
+    
     (void)self;
 
     PyObject* pValue;
@@ -342,7 +381,7 @@ static PyObject *Py4pdMod_PdGetOutCount(PyObject *self, PyObject *args){
 
 // =================================
 static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywords){
-    PY4PD_FUNC_CALL();
+    
     (void)self;
 
     t_py *py4pd = Py4pdUtils_GetObject();
@@ -361,6 +400,7 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywor
     t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
     pdPyValue->pValue = pValue;
     pdPyValue->objectsUsing = 0;
+    pdPyValue->pdout = 1;
 
     if (keywords != NULL && py4pd->outAUX != NULL){
         PyObject *outletNumber = PyDict_GetItemString(keywords, "out_n"); // it gets the data type output
@@ -796,7 +836,7 @@ static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args, PyObject *ke
                 garray_getfloatwords(pdarray, &vecsize, &vec);
                 const npy_intp dims = vecsize;
                 // send double float array to numpy
-                PyObject *array = PyArray_SimpleNewFromData(1, &dims, NPY_FLOAT, vec);
+                PyObject *array = PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE, vec);
                 PyErr_Clear();
                 return array;
 
@@ -1173,6 +1213,7 @@ PyMethodDef PdMethods[] = {
     {"vecsize", Py4pdMod_PdVecSize, METH_NOARGS, "Get PureData Vector Size"},
     {"patchzoom", Py4pdMod_PdZoom, METH_NOARGS, "Get Patch zoom"},
     {"get_out_count", Py4pdMod_PdGetOutCount, METH_NOARGS, "Get the Number of Outlets of one object."},
+    {"getObjArgs", Py4pdMod_GetObjArgs, METH_NOARGS, "Returns list with all the args."},
 
     // library methods
     {"addobject", (PyCFunction)Py4pdLib_AddObj, METH_VARARGS | METH_KEYWORDS, "It adds python functions as objects"},

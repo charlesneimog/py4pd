@@ -17,12 +17,14 @@
 #define ANSI_COLOR_BLUE "\x1b[34m"
 #define ANSI_COLOR_RESET "\x1b[0m"
 
+#ifndef PY4PD_DEBUG
+    #define PY4PD_DEBUG 0
+#endif
 
-#define PY4PD_DEBUG 0
+
+/* #define PY4PD_DEBUG 0
 #define PY4PD_FUNC_CALL() do { \
-    if (PY4PD_DEBUG) { \
-        printf("Function: %s\n", __func__); \
-    } \
+    printf("Function: %s\n", __func__); \
 } while(0)
 
 #define PY4PD_FUNC_DONE() do { \
@@ -30,7 +32,7 @@
         printf(ANSI_COLOR_RED "Function Done: %s\n" ANSI_COLOR_RESET, __func__); \
     } \
 } while(0)
-
+*/
 
 
 #define PY4PD_MAJOR_VERSION 0
@@ -108,6 +110,7 @@ typedef struct _py4pd_pValue{
     int objectsUsing; 
     t_symbol *objOwner;
     int clearAfterUse;
+    int alreadyIncref;
     int pdout;
 }t_py4pd_pValue;
 
@@ -150,7 +153,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     
 
     // TESTING THINGS
-    PyObject            **ObjArgs; // Obj Variables Arguments 
+    t_py4pd_pValue      **ObjArgs; // Obj Variables Arguments 
     pdcollectHash       *pdcollect; // hash table to store the objects
     t_int               usingPdOut;
 
@@ -158,6 +161,8 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int               stackLimit; // check the number of recursive calls
     t_clock             *recursiveClock; // clock to check the number of recursive calls 
     PyObject            *recursiveObject; // object to check the number of recursive calls
+    t_atom              *objArgs;
+    t_int               objArgsCount;
      
     // ===========
 
@@ -352,9 +357,11 @@ void Py4pdUtils_DECREF(PyObject *pValue);
 // void Py4pdUtils_DECREF(PyObject *pValue);
 void Py4pdUtils_INCREF(PyObject *pValue);
 void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where);
+void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue* src, t_py4pd_pValue* dest);
 
 // ============= UTILITIES =============
-int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);
+// int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);
+int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argc, t_atom **argv);
 t_py *Py4pdUtils_GetObject(void);
 void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);
 char* Py4pdUtils_GetFolderName(char* path);
