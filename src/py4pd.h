@@ -372,7 +372,7 @@ char *Py4pdUtils_Mtok(char *input, char *delimiter);
 void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet);
 // PyObject *Py4pdUtils_PyObjectToPointer(PyObject *pValue);
 // PyObject *Py4pdUtils_PointerToPyObject(PyObject *p);
-PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs);
+PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject* pDict);
 void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValue, t_outlet *outlet);
 PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv);
 void Py4pdUtils_SetObjConfig(t_py *x);

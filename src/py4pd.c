@@ -296,7 +296,7 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     PyList_SetItem(argsList, 1, Py_BuildValue("s", pipPackage));
     PyObject *argTuple = Py_BuildValue("(O)", argsList);
     
-    PyObject *pipInstallResult = Py4pdUtils_RunPy(x, argTuple);
+    PyObject *pipInstallResult = Py4pdUtils_RunPy(x, argTuple, NULL);
     if (pipInstallResult == NULL) {
         x->function = ObjFunction;
         Py_DECREF(argTuple);
@@ -787,7 +787,7 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     else {
         ArgsTuple = PyTuple_New(0);
     }
-    Py4pdUtils_RunPy(x, ArgsTuple); 
+    Py4pdUtils_RunPy(x, ArgsTuple, NULL);
 
     return;
 }

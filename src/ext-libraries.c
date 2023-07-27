@@ -35,14 +35,26 @@ void Py4pdLib_Click(t_py *x) {
 
 // =====================================
 void Py4pdLib_SetKwargs(t_py *x, t_symbol *s, int ac, t_atom *av){
-    t_symbol *key;
     (void)s;
+    t_symbol *key;
+
     if (av[0].a_type != A_SYMBOL){
         pd_error(x, "The first argument of the message 'kwargs' must be a symbol");
         return;
     }
+
+    if (ac < 2){
+        pd_error(x, "You need to specify a value for the key");
+        return;
+    }
+
+
     key = av[0].a_w.w_symbol;
-    if (ac == 1){
+
+    if (x->kwargsDict == NULL)
+        x->kwargsDict = PyDict_New();
+
+    if (ac == 2){
         if (av[1].a_type == A_FLOAT){
             int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
             if (isInt)
@@ -51,44 +63,28 @@ void Py4pdLib_SetKwargs(t_py *x, t_symbol *s, int ac, t_atom *av){
                 PyDict_SetItemString(x->kwargsDict, key->s_name, PyFloat_FromDouble(av[1].a_w.w_float));
             
         }
-        else if (av[1].a_type == A_SYMBOL){
-            if (av[1].a_w.w_symbol == gensym("PyObject")){
-                if (av[2].a_type == A_POINTER){
-                    PyObject *pValue;
-                    pValue = (PyObject *)av[2].a_w.w_gpointer;
-                    if (pValue != NULL)
-                        PyDict_SetItemString(x->kwargsDict, key->s_name, pValue);
-                    else{
-                        pd_error(x, "The third argument of the message 'kwargs' must be a PyObject");
-                        return;
-                    }
-                }
-            }
-            else
-                PyDict_SetItemString(x->kwargsDict, key->s_name, PyUnicode_FromString(av[1].a_w.w_symbol->s_name));
-        }
+        else if (av[1].a_type == A_SYMBOL)
+            PyDict_SetItemString(x->kwargsDict, key->s_name, PyUnicode_FromString(av[1].a_w.w_symbol->s_name));
         else{
-            pd_error(x, "The second argument of the message 'kwargs' must be a symbol or a float");
+            pd_error(x, "The third argument of the message 'kwargs' must be a symbol or a float");
             return;
         }
     }
-    else if (ac > 1){
+    else if (ac > 2){
         PyObject *pyInletValue = PyList_New(ac - 1);
-        for (int i = 0; i < ac; i++){
+        for (int i = 1; i < ac; i++){
             if (av[i].a_type == A_FLOAT){ 
-                int isInt = (int)av[0].a_w.w_float == av[0].a_w.w_float;
+                int isInt = (int)av[i].a_w.w_float == av[i].a_w.w_float;
                 if (isInt)
-                    PyList_SetItem(pyInletValue, i, PyLong_FromLong(av[i].a_w.w_float));
+                    PyList_SetItem(pyInletValue, i - 1, PyLong_FromLong(av[i].a_w.w_float));
                 else
-                    PyList_SetItem(pyInletValue, i, PyFloat_FromDouble(av[i].a_w.w_float));
+                    PyList_SetItem(pyInletValue, i - 1, PyFloat_FromDouble(av[i].a_w.w_float));
             }
             else if (av[i].a_type == A_SYMBOL)
-                PyList_SetItem(pyInletValue, i, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
+                PyList_SetItem(pyInletValue, i - 1, PyUnicode_FromString(av[i].a_w.w_symbol->s_name));
         }
         PyDict_SetItemString(x->kwargsDict, key->s_name, pyInletValue);
     }
-    else
-        pd_error(x, "The message 'kwargs' must have at least 2 arguments");
     return;
 }
 
@@ -223,8 +219,8 @@ void Py4pdLib_Pointer(t_py *x, t_symbol *s, t_gpointer *gp){
     if (x->audioOutput)
         return; 
     
-    Py4pdUtils_RunPy(x, pArgs);
 
+    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
     Py_DECREF(pArgs);
     
     return;
@@ -352,16 +348,11 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
 
     for (int i = 1; i < x->py_arg_numbers; i++){
         PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
-        Py_INCREF(x->pyObjArgs[i]->pValue); // this must be kept in memory
+        Py_INCREF(x->pyObjArgs[i]->pValue); // This keep the reference.
     }
 
-    if (x->use_pKwargs == 1){
-        pd_error(NULL, "Running with kwargs, not implemented yet");
-        return;
-    }
-    else{
-        Py4pdUtils_RunPy(x, pArgs);
-    }
+
+    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
 
     Py4pdUtils_DECREF(pArgs);
     return;
@@ -381,7 +372,7 @@ void Py4pdLib_Bang(t_py *x){
         return; 
     }
     PyObject* pArgs = PyTuple_New(0);
-    Py4pdUtils_RunPy(x, pArgs);
+    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
     Py_DECREF(pArgs);
 }
 
@@ -497,7 +488,7 @@ t_int *Py4pdLib_AudioINPerform(t_int *w) {
     PyObject *pAudio = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, in);
     PyTuple_SetItem(x->argsDict, 0, pAudio);
 
-    Py4pdUtils_RunPy(x, x->argsDict);
+    Py4pdUtils_RunPy(x, x->argsDict, x->kwargsDict);
 
     return (w + 4);
 }
@@ -509,7 +500,7 @@ t_int *Py4pdLib_AudioOUTPerform(t_int *w) {
     int n = (int)(w[3]);
     PyObject *pValue; 
     int numChannels = x->n_channels;
-    pValue = Py4pdUtils_RunPy(x, x->argsDict);
+    pValue = Py4pdUtils_RunPy(x, x->argsDict, x->kwargsDict);
     if (pValue != NULL){
         Py4pdLib_Audio2PdAudio(x, pValue, audioOut, numChannels, n);
         Py_DECREF(pValue);
@@ -527,7 +518,7 @@ t_int *Py4pdLib_AudioPerform(t_int *w){
     npy_intp dims[] = {numChannels, x->vectorSize};
     PyObject *pAudio = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, in);
     PyTuple_SetItem(x->argsDict, 0, pAudio);
-    PyObject *pValue = Py4pdUtils_RunPy(x, x->argsDict);
+    PyObject *pValue = Py4pdUtils_RunPy(x, x->argsDict, x->kwargsDict);
     if (pValue != NULL){
         Py4pdLib_Audio2PdAudio(x, pValue, audioOut, numChannels, n);
         Py_DECREF(pValue);

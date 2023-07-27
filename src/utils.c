@@ -700,7 +700,7 @@ void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue* src, t_py4pd_pValue* dest){
  * @param pArgs is the arguments to pass to the function
  * @return the return value of the function
  */
-PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) { 
+PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) { 
     
     t_py *prev_obj = NULL;
     int prev_obj_exists = 0;
@@ -746,7 +746,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs) {
         return NULL;
     }
     
-    pValue = PyObject_CallObject(x->function, pArgs);
+    pValue = PyObject_Call(x->function, pArgs, pKwargs);
 
     t_py4pd_pValue *PyPtrValue = NULL;
     if (x->objType < 3){
