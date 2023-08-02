@@ -1243,55 +1243,53 @@ PyMethodDef PdMethods[] = {
     {"tabread", (PyCFunction)Py4pdMod_PdTabRead, METH_VARARGS | METH_KEYWORDS, "Read data from PureData tables/arrays"},
     
     // Pic
-    {"show", Py4pdMod_ShowImage, METH_VARARGS, "Show image in PureData, it must be .gif, .bmp, .ppm"},
+    {"show_image", Py4pdMod_ShowImage, METH_VARARGS, "Show image in PureData, it must be .gif, .bmp, .ppm"},
 
     // Files
-    {"home", Py4pdMod_GetPatchHome, METH_VARARGS, "Get PureData Patch Path Folder"},
-    {"homefolder", Py4pdMod_GetPatchHome, METH_VARARGS, "Get PureData Patch Path Folder"},
-    {"py4pdfolder", Py4pdMod_GetObjFolder, METH_VARARGS, "Get PureData Py4PD Folder"},
-    {"tempfolder", Py4pdMod_GetObjTmpFolder, METH_VARARGS, "Get PureData Temp Folder"},
+    {"get_patch_dir", Py4pdMod_GetPatchHome, METH_VARARGS, "Get PureData Patch Path Folder"},
+    {"get_home_folder", Py4pdMod_GetPatchHome, METH_VARARGS, "Get PureData Patch Path Folder"},
+    {"get_py4pd_dir", Py4pdMod_GetObjFolder, METH_VARARGS, "Get PureData Py4PD Folder"},
+    {"get_temp_dir", Py4pdMod_GetObjTmpFolder, METH_VARARGS, "Get PureData Temp Folder"},
 
     // User
-    {"getkey", Py4pdMod_PdKey, METH_VARARGS, "Get Object User Parameters"},
+    {"get_key", Py4pdMod_PdKey, METH_VARARGS, "Get Object User Parameters"},
 
     // pd
-    {"samplerate", Py4pdMod_PdSampleRate, METH_NOARGS, "Get PureData SampleRate"},
-    {"vecsize", Py4pdMod_PdVecSize, METH_NOARGS, "Get PureData Vector Size"}, 
-    {"nchs", Py4pdMod_ObjNChannels, METH_NOARGS, "Return the among of channels in the object"}, 
+    {"get_sample_rate", Py4pdMod_PdSampleRate, METH_NOARGS, "Get PureData SampleRate"},
+    {"get_vec_size", Py4pdMod_PdVecSize, METH_NOARGS, "Get PureData Vector Size"}, 
+    {"get_num_channels", Py4pdMod_ObjNChannels, METH_NOARGS, "Return the amount of channels in the object"}, 
 
-
-    {"patchzoom", Py4pdMod_PdZoom, METH_NOARGS, "Get Patch zoom"},
-    {"get_out_count", Py4pdMod_PdGetOutCount, METH_NOARGS, "Get the Number of Outlets of one object."},
-    {"getObjArgs", Py4pdMod_GetObjArgs, METH_NOARGS, "Returns list with all the args."},
+    {"get_patch_zoom", Py4pdMod_PdZoom, METH_NOARGS, "Get Patch zoom"},
+    {"get_outlet_count", Py4pdMod_PdGetOutCount, METH_NOARGS, "Get the Number of Outlets of one object."},
+    {"get_object_args", Py4pdMod_GetObjArgs, METH_NOARGS, "Returns list with all the args."},
 
     // library methods
-    {"addobject", (PyCFunction)Py4pdLib_AddObj, METH_VARARGS | METH_KEYWORDS, "It adds python functions as objects"},
+    {"add_object", (PyCFunction)Py4pdLib_AddObj, METH_VARARGS | METH_KEYWORDS, "It adds python functions as objects"},
 
     // pip install
-    {"pipinstall", Py4pdMod_PipInstall, METH_VARARGS, "It installs a pip package"},
+    {"pip_install", Py4pdMod_PipInstall, METH_VARARGS, "It installs a pip package"},
 
     // Others
-    {"getobjpointer", Py4pdMod_GetObjPointer, METH_NOARGS, "Get PureData Object Pointer"},
-    {"getstrpointer", Py4pdMod_GetObjPointer, METH_NOARGS, "Get PureData Object Pointer"},
-    {"setglobalvar", Py4pdMod_SetGlobalVar, METH_VARARGS, "It sets a global variable for the Object, it is not clear after the execution of the function"},
+    {"get_obj_pointer", Py4pdMod_GetObjPointer, METH_NOARGS, "Get PureData Object Pointer"},
+    {"get_str_pointer", Py4pdMod_GetObjPointer, METH_NOARGS, "Get PureData Object Pointer"},
+    {"set_global_var", Py4pdMod_SetGlobalVar, METH_VARARGS, "It sets a global variable for the Object, it is not clear after the execution of the function"},
 
     // Loops
-    {"getglobalvar", (PyCFunction)Py4pdMod_GetGlobalVar, METH_VARARGS | METH_KEYWORDS, "It gets a global variable for the Object, it is not clear after the execution of the function"},
-    {"clearglobalvar", (PyCFunction)Py4pdMod_ClearGlobalVar, METH_VARARGS, "It clear the Dictionary of global variables"},
-    {"accumglobalvar", Py4pdMod_AccumGlobalVar, METH_VARARGS, "It adds the values in the end of the list"},
-    {"_recursive", Py4pdMod_PdRecursiveCall, METH_VARARGS, "It calls a function recursively"},
-
+    {"get_global_var", (PyCFunction)Py4pdMod_GetGlobalVar, METH_VARARGS | METH_KEYWORDS, "It gets a global variable for the Object, it is not clear after the execution of the function"},
+    {"clear_global_var", (PyCFunction)Py4pdMod_ClearGlobalVar, METH_VARARGS, "It clear the Dictionary of global variables"},
+    {"accum_global_var", Py4pdMod_AccumGlobalVar, METH_VARARGS, "It adds the values in the end of the list"},
 
     // player
-    {"add2player", (PyCFunction)Py4pdMod_AddThingToPlay, METH_VARARGS | METH_KEYWORDS, "It adds a thing to the player"},
-    {"clearplayer", Py4pdMod_ClearPlayer, METH_NOARGS, "Get PureData Object Pointer"},
+    {"add_to_player", (PyCFunction)Py4pdMod_AddThingToPlay, METH_VARARGS | METH_KEYWORDS, "It adds a thing to the player"},
+    {"clear_player", Py4pdMod_ClearPlayer, METH_NOARGS, "Get PureData Object Pointer"},
 
     // Internal
-    // {"_iterate", Py4pdMod_PdIterate, METH_VARARGS, "Special method used to pd.iterate"},
+    {"_recursive", Py4pdMod_PdRecursiveCall, METH_VARARGS, "It calls a function recursively"},
 
 
     {NULL, NULL, 0, NULL}  //
 };
+
 
 // =================================
 static struct PyModuleDef pdmodule = {
