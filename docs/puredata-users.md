@@ -3,40 +3,10 @@
 ## <h2 align="center"> **`py4pd` Args** </h2>
 -------------------------------------- 
 
-For the creation of the object, there is some options. Here I will explain each one.
+For the creation of the object, there are some options. Here I will explain each one.
 
 !!! note warning
 	These arguments are an essential part of py4pd. Not understanding it can generate problems, instabilities, and crash Pd. 
-    
--------------------------------------- 
-### <h3 align="center"> **Load Python Libraries** </h3>
-
-It is possible to use `py4pd` to create PureData objects using Python. To load the Python objects, you use `py4pd` with the `-library` or `-lib` flag followed by the script name. For example, if the script has the name `myPythonObjects.py`, you create a py4pd object with `py4pd -lib myPythonObjects`.
-
-!!! warning "The order matters"
-	The order of the arguments is important, `py4pd myPythonObjects -lib` will not work!
-        
--------------------------------------- 
-### <h3 align="center"> **Audio options** </h3>
-
-
-If the Python function that you are using work with audio, you need to create the object with one of this argument `-audioin`, `-audioout` or `-audio`.
-
-* `-audioin`: It creates one object that accepts audio input but no audio output, this can be used for audio analysis. Like `sigmund~`.
-* `-audioout`: It creates one object that accepts audio output but no audio input, this can be used for create some synthesis process inside Python.
-* `-audio`: It creates one object that accepts audio input and output, this is used for create audio manipulation in Python.
-
--------------------------------------- 
-### <h3 align="center"> **Canvas options** </h3>
-
-There are options to show things inside a PureData patch. This can be used for show images, score, graphs and others.
-
-* `-canvas`: It creates one clear canvas where, from Python, you can show things inside PureData. See some examples:
-* `-score`: It creates a clear score used to show scores inside PureData. 
-
-??? Tip "Tip"
-
-	This is part of `py4pd` scripts. You can use, `py4pd -score score note` to show one single note, `py4pd -score score chord` to show chords, and 	soon will be possible to use `py4pd -score score chord-seq` to show chord-seq (yes, like OpenMusic and OM-Sharp). 
 
 ### <h3 align="center"> **Editor options** </h3>
 
@@ -46,10 +16,11 @@ For who works with Python, you can set the IDE `editor` in the creation of the `
 * `-nvim`: It sets `nvim` as the editor of `py4pd`.
 * `-emacs`: It sets `emacs` as the editor of `py4pd`.
 * `-sublime`: It sets `sublime` as the editor of `py4pd`.
+* `-gvim`: It sets `gvim` as the editor of `py4pd` ( :octicons-mark-github-16: [fferri](https://github.com/fferri)).
 
 ### <h3 align="center"> **Set function** </h3>
 
-You can `load` functions in the creation of the object. For that, you must put the script name and then the function name. The name of the script file always need be the first. You can use `py4pd -canvas score note`, `py4pd score note -canvas` but `py4pd note score -canvas` or `py4pd note -canvas score` will not work when the script name is `score.py` and `note` is the function.
+You can `load` functions in the creation of the object. For that, you must put the script name and then the function name. The name of the script file always need to be the first. You can use `py4pd -canvas score note`, `py4pd score note -canvas`, but `py4pd note score -canvas` or `py4pd note -canvas score` will not work when the script name is `score.py` and `note` is the function.
 
 -------------------------------------- 
 ## <h2 align="center"> **`py4pd` Methods** </h2>
@@ -80,7 +51,7 @@ It set/load Python Functions to `py4pd` object.
 === "Example"
     
     <p align="center">
-        <img src="../examples/pd-methods/set.png" width="40%" alt="Set method example">
+        <img src="../examples/pd-methods/set.png" width="30%" alt="Set method example">
     </p>
 
     ??? tip "Tip"
@@ -100,29 +71,12 @@ It set/load Python Functions to `py4pd` object.
 === "Example"
     
     <p align="center">
-        <img src="../examples/pd-methods/run.png" width="40%" alt="Set method example">
+        <img src="../examples/pd-methods/run.png" width="30%" alt="Set method example">
     </p>
 
     !!! info "Info"
 
 	    The function must be loaded. 
-
--------------------------------------- 
-#### <h3 align="center"> <code>key</code> </h3> 
-
-Set value for some `string` key. This value is stored inside `py4pd` object and can be used inside Python using `pd.getkey`.
-
-=== "Args"
-
-    | Parameters     | Type | Description                   | 
-    | :-----------: | :----: | :------------------------------: |
-    | `args`   | `anything` | Args for the function |
-    
-=== "Example"
-    
-    <p align="center">
-        <img src="../examples/pd-methods/key.png" width="40%" alt="Set method example">
-    </p>
 
 ----------------------------- 
 #### <h3 align="center"> <code>doc</code> </h3> 
@@ -132,10 +86,9 @@ It prints on PureData the documentation of the Python Function (if it exits).
 === "Example"
     
     <p align="center">
-        <img src="../examples/pd-methods/doc.png" width="40%" alt="Set method example">
+        <img src="../examples/pd-methods/doc.png" width="30%" alt="Set method example">
     </p>
     
---------------------------------------
 
 ### <h3 align="center"> **Developer Methods** </h3>
 

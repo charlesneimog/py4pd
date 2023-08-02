@@ -12,23 +12,20 @@ hide:
 
 ----------
 
-`py4pd` integrates the power of [Python](https://www.python.org/) into the real-time environment of [PureData](https://puredata.info/). Besides providing means for score visualization, AI integration, audio analysis tools, SVG/drawing score handling, and various other functionalities, <i>you can create PureData Objects using just Python</i>. If you use [OpenMusic](https://openmusic-project.github.io/openmusic/), you will find some inspiration on it.
+`py4pd` integrates the power of [Python](https://www.python.org/) into the real-time environment of [PureData](https://puredata.info/). Besides providing means for score visualization, AI integration, audio analysis tools, SVG/drawing score handling, and various other functionalities, <u><i>you can create PureData Objects using Python</i></u>. If you use [OpenMusic](https://openmusic-project.github.io/openmusic/) or [BachLibrary](https://www.bachproject.net/), you will find some inspiration in it.
 
 
 
 !!! info "How to install?"
-
     To check how to install go to [Installation](https://www.charlesneimog.com/py4pd/setup/).
-
 <hr>
-
 ## <h2 align="center"> **Examples and Use Cases** </h2>
 
-Here is presented algorithm tools implemented with `py4pd`. Users are encouraged to contribute their own examples through [Github](https://github.com/charlesneimog/py4pd/discussions/categories/show-and-tell).
+Here are presented tools implemented with `py4pd`. <i>Users are encouraged to contribute their examples through [Github](https://github.com/charlesneimog/py4pd/discussions/categories/show-and-tell) </i>.
 
 === "Score In PureData"
 
-    When I start to work with PureData, I miss a lot some score visualization tool, this can be solved by utilizing `py4pd`. This script is delivered along with the `py4pd` library.
+    When I started work with PureData, I missed score visualization tools. `py4pd` can easily solve this using `neoscore`.
 
     <p align="center">
         <img src="examples/score/score.gif" width="50%" loading="lazy" alt="Score GIF">
@@ -41,7 +38,7 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
 
     <p align="center">
 	    <img src="examples/ia/ia.png" width="60%"></img>
-    </p>  
+    </p> 
     
     <p align="center">
         <audio controls style="width: 60%; border-radius: 10px;">
@@ -61,8 +58,8 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
 	    import librosa # Library to load audios in Python
 
 	    def renderAudio_nn(audio, model):
-	        model = pd.home() + '/' + model # get the pathname of model.ts, that is the result of the IA trained.
-	        audio = pd.home() + '/' +  audio # The audio source
+	        model = pd.get_patch_dir() + '/' + model # get the pathname of model.ts, that is the result of the IA trained.
+	        audio = pd.get_patch_dir() + '/' +  audio # The audio source
 	        torch.set_grad_enabled(False) # config of the IA
 	        model = torch.jit.load(model).eval() # Load model of IA
 	        x = librosa.load(audio)[0] # take the audio samples of the sound (audio)
@@ -92,8 +89,8 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
         </audio>
     </p>
 
-=== "Spectral analysis"
-    In Python, there is not just one Spectral Analysis package. I mainly use `loristrck` because of the `.sdif` files. But there is `simpl`, `librosa`, [PyAudio_FFT](https://github.com/aiXander/Realtime_PyAudio_FFT), among others. If you want to spectral manipulations you can work with `pysdif3` that is fast and amazing. Here an example using `loristrck` in PureData.
+=== "Sound analysis"
+    In Python, there is not just one Spectral Analysis package. I mainly use `loristrck` because of the `.sdif` files. But there is `simpl`, `librosa`, [PyAudio_FFT](https://github.com/aiXander/Realtime_PyAudio_FFT), among others. If you want spectral manipulations you can work with `pysdif3` which is fast and amazing. Here is an example using `loristrck` in PureData.
 
     <p align="center">
 	    <img src="examples/spectral-analysis/analisys.gif" width="50%"></img>
@@ -101,7 +98,7 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
 
 === "Audio Descriptors Graphs"
 
-    You can use some of the amazing Audio Descriptors provided by `audioflux` for some analisys. 
+    You can use some of the Audio Descriptors provided by `audioflux` for some analysis. 
 
     <p align="center">
 	    <img src="examples/descriptors/descriptors.png" width="50%"></img>
@@ -133,14 +130,14 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
     
     * Now `py4pd` objects can have they own help-patches, they must be located inside the folder "help".
     * Add simple player embbeded (you can 'play' python objects) in the objects, in others words, put Python Objects in music time.
-    * Add `pd.add2player` method.
-    * Add new option `objimage` in `pd.addobject` to set default images for `VIS` objects.
+    * Add `pd.add_to_player` method.
+    * Add new option `objimage` in `pd.add_object` to set default images for `VIS` objects.
     * Remove our own Python executable.
-    * In `pd.addobject` add key `helppatch` (string contains the `.pd` file of help), for example, if the help is `myorchidea.flute-help` here I put `myorchidea.flute`.
+    * In `pd.add_object` add key `helppatch` (string contains the `.pd` file of help), for example, if the help is `myorchidea.flute-help` here I put `myorchidea.flute`.
     * Add new `pd` modules methods.
-        * Add method `pd.clearplayer` to clear the player.
-        * Add method `pd.patchzoom` to get the zoom of patch.
-        * Add method `pd.pipinstall` to install Python Modules.
+        * Add method `pd.clear_player` to clear the player.
+        * Add method `pd.get_patch_zoom` to get the zoom of patch.
+        * Add method `pd.pip_install` to install Python Modules.
     * The options `py4pd -score`, `py4pd -audioin`, `py4pd -audioout`, and `py4pd -audio` was removed because they are unused when we can create your library. ⚠️
     * Added multichannel support for `audio` objects.
         
@@ -217,5 +214,6 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
     <h3 align="center"> **<b>v. 0.0.0</b>** </h3>
 
     * First simple build for Windows;
+
 
 

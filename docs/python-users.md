@@ -2,82 +2,11 @@
 
 If you're using [Python](https://www.python.org/) and [PureData](puredata.info/) together, you can use the `pd` module within the `py4pd` package to exchange data, set configurations, inform users of errors, and use all Python things. The module is embedded in the `py4pd` code and is only accessible within the `py4pd` environment. It's similar to how Google Collab uses modules like `google.collab.drive` and `google.collab.widgets`. In the next section I present all the methods that are embedded.
 
-
-## <h2 style="text-align:center">**Functions**</h2>
-
-??? tip "Index for All functions"
-
-    <div align="center">
-        <table>
-          <tr>
-            <th>Category</th>
-            <th>Description</th>
-            <th>Functions</th>
-          </tr>
-          <tr>
-            <td>Pd Objects</td>
-            <td>Function to add Python Objects to Pd patches.</td>
-            <td><a href="#pdaddobject">pd.addobject()</a><br></td>
-          </tr>
-          <tr>
-            <td>Data Exchange</td>
-            <td>Functions for exchanging data between Pd and Python.</td>
-            <td>
-                <a href="#pdout">pd.out()</a><br>
-                <a href="#pdsend">pd.send()</a><br>
-                <a href="#pdtabwrite">pd.tabwrite()</a><br>
-                <a href="#pdtabread">pd.tabread()</a><br>
-                <a href="#pdgetkey">pd.getkey()</a><br>
-            </td>
-          </tr>
-          <tr>
-            <td>User Information</td>
-            <td>Functions for displaying information to the user.</td>
-            <td>
-                <a href="#pdprint">pd.print()</a><br>
-                <a href="#pdlogpost">pd.logpost()</a><br>
-                <a href="#pderror">pd.error()</a><br>
-            </td>
-          </tr>
-          <tr>
-            <td>Utilities</td>
-            <td>Utility functions for various purposes.</td>
-            <td>
-                <a href="#pdgetstrpointer">pd.getstrpointer()</a><br>
-                <a href="#pdgetglobalvar">pd.getglobalvar()</a><br>
-                <a href="#pdsetglobalvar">pd.setglobalvar()</a><br>
-            </td>
-          </tr>
-          <tr>
-            <td>Images</td>
-            <td>Functions for working with images.</td>
-            <td><a href="#pdshow">pd.show()</a><br></td>
-          </tr>
-          <tr>
-            <td>File Management</td>
-            <td>Functions for managing files and directories.</td>
-            <td>
-                <a href="#pdhomefolder">pd.homefolder()</a><br>
-                <a href="#pdtempfolder">pd.tempfolder()</a><br>
-                <a href="#pdpy4pdfolder">pd.py4pdfolder()</a><br>
-            </td>
-          </tr>
-          <tr>
-            <td>Audio Information</td>
-            <td>Functions for retrieving audio-related information.</td>
-            <td>
-                <a href="#pdsamplerate">pd.samplerate()</a><br>
-                <a href="#pdvecsize">pd.vecsize()</a><br>
-            </td>
-          </tr>
-        </table>
-    </div>
-
 --------------
 ## <h2 style="text-align:center">**Write Pd Objects with Python**</h2>
 --------------
 
-With the `py4pd` it is possible to create new PureData objects using just Python. For that, you need to declare your Python functions and then create a function called `py4pdLoadObjects`. Inside this function we use `pd.addobject` (check the [docs](https://www.charlesneimog.com/py4pd/python-users/#pdaddobject)) to add all functions that you want to use as objects. 
+With the `py4pd` it is possible to create new PureData objects using just Python. For that, you need to declare your Python functions and then create a function called `libraryname_setup`. Inside this function we use `pd.add_object` (check the [docs](https://www.charlesneimog.com/py4pd/python-users/#pdaddobject)) to add all functions that you want to use as objects. 
 
 <p style="text-align:center"><i>The organization of folders in the library should follow the following standard.</i></p>
 
@@ -85,7 +14,7 @@ With the `py4pd` it is possible to create new PureData objects using just Python
 !!! info "Folder Organization"
     The folder name must be the same the the `.py` file. In your case, it must be called `libraryname`.
     
-        └── help/
+        └── help-patches/
             ├── myfunction1-help.pd # helpPatches
             └── myfunction2-help.pd 
         └── src/
@@ -95,7 +24,7 @@ With the `py4pd` it is possible to create new PureData objects using just Python
         └── resources/
             ├── imagetosomeVISobject.png # for pd.VIS objects, you can set standard images of png or gif.
             └── imagetootherVISobject.gif
-        ├── libraryname.py # here we have the py4pdLoadObjects function
+        ├── libraryname.py # here we have the libraryname_setup() function
         ├── README.deken.pd # If you upload it on Deken, this will open immediately after installation (good to install things).
         └── README.md # Ordinary readme for Github.
 
@@ -113,12 +42,10 @@ from src.setoffunctions2 import myfunction2
 from src.setoffunctions2 import showmycollgraph
 
 
-def py4pdLoadObjects():
-    pd.addobject(myfunction1, "mysumObject") # function, string with name of the object
-    pd.addobject(myfunction2, "mysumObject2") # function, string with name of the object
-    pd.addobject(showmycollgraph, "graph", objtype=pd.VIS, objimage="./resources/imagetosomeVISobject.png")
-    
-
+def libraryname_setup():
+    pd.add_object(myfunction1, "mysumObject") # function, string with name of the object
+    pd.add_object(myfunction2, "mysumObject2") # function, string with name of the object
+    pd.add_object(showmycollgraph, "graph", objtype=pd.VIS, objimage="./resources/imagetosomeVISobject.png")
 ```
 
 Following this steps we have this patch:
@@ -141,8 +68,8 @@ In the example above, we create ordinary objects. With `py4pd`, we can create fi
 
     Used to create functions to show something. Like Scores, Audio descriptors, and others.
     
-    To create vis object, in `pd.addobject` we add the `objtype=pd.VIS`. Inside the function, we always need the `pd.show` method, without it, anything will be showed. 
-    For `pd.VIS` objects, we have some options in `pd.addobject`.
+    To create vis object, in `pd.add_object` we add the `objtype=pd.VIS`. Inside the function, we always need the `pd.show_image` method, without it, anything will be showed. 
+    For `pd.VIS` objects, we have some options in `pd.add_object`.
 
     * `figsize`: It set the size of the figure that will be showed, this is more for aesthetic reasons (the figure will always be resized).
 
@@ -159,7 +86,7 @@ In the example above, we create ordinary objects. With `py4pd`, we can create fi
         import numpy as np
 
         def descriptors():
-            audio_arr, sr = af.read(pd.homefolder() + "/Hp-ord-A4-mf-N-N.wav")
+            audio_arr, sr = af.read(pd.get_home_folder() + "/Hp-ord-A4-mf-N-N.wav")
             bft_obj = af.BFT(num=2049, samplate=sr, radix2_exp=12, slide_length=1024,
                            data_type=SpectralDataType.MAG,
                            scale_type=SpectralFilterBankScaleType.LINEAR)
@@ -177,27 +104,24 @@ In the example above, we create ordinary objects. With `py4pd`, we can create fi
             times = np.arange(0, len(hfc_arr)) * (bft_obj.slide_length / bft_obj.samplate)
             fill_plot(times, hfc_arr, axes=ax[1], label='hfc')
             fill_plot(times, cen_arr, axes=ax[2], label="Centroid")
-            tempfile = pd.tempfolder() + "/descritores.png"
+            tempfile = pd.get_temp_dir() + "/descritores.png"
             plt.savefig(tempfile)
-            pd.show(tempfile)
+            pd.show_image(tempfile)
             pd.print("Data plotted")
 
-        def py4pdLoadObjects():
-            pd.addobject(descriptors, "descritores", objtype=pd.VIS, figsize=(640, 480))
+        def libraryname_setup():
+            pd.add_object(descriptors, "descritores", objtype=pd.VIS, figsize=(640, 480))
         ```
         
     <p align="center">
-        <img src="../examples/descriptors/descriptors.png" width="50%" alt="Descriptors Image">
+        <img src="../examples/descriptors/descriptors.png" width="40%" alt="Descriptors Image">
     </p>
 
-    
-    
-    
 === "Audio In Objects"
 
     Used to output analised data from audio. Objects with Partial Trackings, Audio Descriptors, and others.
         
-    To create Audio In object, in `pd.addobject` we add the `objtype=pd.AUDIOIN`. 
+    To create Audio In object, in `pd.add_object` we add the `objtype=pd.AUDIOIN`. 
 
     !!! warning "The first inlet of this objects always need to be audio"
 
@@ -216,15 +140,15 @@ In the example above, we create ordinary objects. With `py4pd`, we can create fi
             fft = numpy.real(fft) 
             return fft.tolist() # numpy can just be outputed when pyout=True
 
-        def py4pdLoadObjects():
-            pd.addobject(audioin, "audioin", objtype=pd.AUDIOIN)
+        def libraryname_setup():
+            pd.add_object(audioin, "audioin", objtype=pd.AUDIOIN)
         ```
 
 === "Audio Out Objects" 
 
     Used to create audio using Python. Objects that creates sinusoids, some special noise and others.
         
-    To create Audio out object, in `pd.addobject` we add the `objtype=pd.AUDIOOUT`. 
+    To create Audio out object, in `pd.add_object` we add the `objtype=pd.AUDIOOUT`. 
 
     <p align="center">
         <img src="../examples/audioout/audioout.png" width="50%" alt="Audio Output Image">
@@ -242,8 +166,8 @@ In the example above, we create ordinary objects. With `py4pd`, we can create fi
             fft = numpy.real(fft) 
             return fft.tolist() # numpy can just be outputed when pyout=True
 
-        def py4pdLoadObjects():
-            pd.addobject(audioin, "audioin", objtype=pd.AUDIOIN)
+        def libraryname_setup():
+            pd.add_object(audioin, "audioin", objtype=pd.AUDIOIN)
         ```
         
     
@@ -251,7 +175,7 @@ In the example above, we create ordinary objects. With `py4pd`, we can create fi
 
     Used to manipulations of Audio. FFT, reverbs, and others. 
     
-    To create Audio object (audio input and output), in `pd.addobject` we add the `objtype=pd.AUDIO`. 
+    To create Audio object (audio input and output), in `pd.add_object` we add the `objtype=pd.AUDIO`. 
 
     <p align="center">
         <img src="../examples/audio/audio.png" width="50%" alt="Audio Image">
@@ -271,8 +195,8 @@ In the example above, we create ordinary objects. With `py4pd`, we can create fi
             return audio
 
 
-        def py4pdLoadObjects():
-            pd.addobject(audio, "audio", objtype=pd.AUDIO)
+        def libraryname_setup():
+            pd.add_object(audio, "audio", objtype=pd.AUDIO)
             
         ```
 
@@ -283,12 +207,12 @@ In the example above, we create ordinary objects. With `py4pd`, we can create fi
 ### <h3 style="text-align:center"> **Write PureData Objects** </h3>
 --------------------
 
-#### <h4 style="text-align:center"> `pd.addobject` </h4>
+#### <h4 style="text-align:center"> `pd.add_object` </h4>
 
-You can create your own objects with Python. For that, you define the Python Function and add it as an object using `#!python pd.addobject()`.
+You can create your own objects with Python. For that, you define the Python Function and add it as an object using `#!python pd.add_object()`.
 
 ??? danger "Breaking Changes"
-	I had change how `pd.addobject` work from version `0.6` to version `0.7`. Now, me use the function and the Pure Data object. Instead of use this, `pd.addobject("mysumObject", "NORMAL", "myNewPdObjects", "mysumObject")` we use this `pd.addobject(mysumObject, "mysumObject")`.
+	I had change how `pd.add_object` work from version `0.6` to version `0.7`. Now, me use the function and the Pure Data object. Instead of use this, `pd.add_object("mysumObject", "NORMAL", "myNewPdObjects", "mysumObject")` we use this `pd.add_object(mysumObject, "mysumObject")`.
 
 === "Parameters"
 
@@ -316,7 +240,7 @@ You can create your own objects with Python. For that, you define the Python Fun
 
     ``` python
 
-    pd.addobject(myFunction, "mypyobj", 
+    pd.add_object(myFunction, "mypyobj", 
                 objtype=pd.VIS, figsize=(400, 200), 
                 pyout=True, no_outlet=False, added2pd_info=False)
 
@@ -330,8 +254,8 @@ You can create your own objects with Python. For that, you define the Python Fun
     def mysumObject(a, b, c, d):
         return a + b + c + d
 
-    def py4pdLoadObjects():
-        pd.addobject(mysumObject, "mysumObject")
+    def libraryname_setup():
+        pd.add_object(mysumObject, "mysumObject")
 
         # My License, Name and University, others information
         pd.print("", show_prefix=False)
@@ -408,7 +332,7 @@ You can use `pd.send` to send data to a receive object in your PureData patch. T
     import pd
 
 
-    def pd_send():
+    def pd.send():
         "It sends a message to the py4pdreceiver receive."	
 	    pd.send("py4pdreceiver", "hello from python!")
 	    pd.send("py4pdreceiver", 1) 
@@ -469,35 +393,6 @@ You can use `pd.send` to send data to a receive object in your PureData patch. T
         return valuesFromArray # This code don't make any sense :), but you understand it.
 
     ```
-
--------------------------------------- 
-#### <h4 id="pdgetkey" style="text-align:center"> `pd.getkey` </h4>
-
-With `pd.getkey`, you can retrieve the value of a specific key that has been set by the user in a `key` message to `py4pd` objects. For example, if the user sends a key message to `py4pd` with the name "fft-size" and a value of 1024, you can retrieve this value in your Python code using `pd.getkey("fft-size")`. If the user hasn't defined a particular key, `pd.getkey` will return `None`, allowing you to set a default value if necessary.
-
-=== "Parameters" 
-
-    | Parameters     | Type | Description                   | 
-    | :-----------: | :----: | :------------------------------: |
-    | `arg1`   | `string` | Name of the key. |
-
-=== "Examples" 
-
-    ``` py
-    import pd
-
-    def someAudioFunction(audio): # (1)!
-        fftvalue = pd.getkey("fft-size")
-        if fftvalue is None:
-            fftvalue = 2048 # default value for fft-size key.
-        
-        # Do something with the audio.
-        
-        return myGreatAudioManipulation
-
-    ```
-
-    1. Remember, audio functions that run with `py4pd script myaudiofunction -audio` receive just one `arg` that is the audio. In Audio objects written in Python this is different.
 
 ------------------
 ### <h3 style="text-align:center"> **Info for the user** </h3>
@@ -598,9 +493,9 @@ If you want to inform errors in PureData console use `pd.error` method.
 ### <h3 style="text-align:center"> **Utilities** </h3>
 --------------------------------------
 
-#### <h4 style="text-align:center"> `pd.getstrpointer` </h4>
+#### <h4 style="text-align:center"> `pd.get_str_pointer` </h4>
 
-When working with audio objects, there are situations where we require global variables or variables that retain their values across different runs. For instance, when creating a Python function to generate a sine wave, we may need a global variable for the phase in order to generate a continuous waveform. However, using Python Global Variables can be problematic when working with multiple objects, as all functions would modify the phase value, potentially overwriting it unintentionally. To address this issue, we introduced the `pd.getobjpointer` function, which returns a unique string representing the pointer of the C object. This string is unique for each object and can be utilized in other contexts to locate and retrieve the desired global variable. 
+When working with audio objects, there are situations where we require global variables or variables that retain their values across different runs. For instance, when creating a Python function to generate a sine wave, we may need a global variable for the phase in order to generate a continuous waveform. However, using Python Global Variables can be problematic when working with multiple objects, as all functions would modify the phase value, potentially overwriting it unintentionally. To address this issue, we introduced the `pd.get_obj_pointer` function, which returns a unique string representing the pointer of the C object. This string is unique for each object and can be utilized in other contexts to locate and retrieve the desired global variable. 
 
 
 === "Parameters" 
@@ -614,15 +509,15 @@ When working with audio objects, there are situations where we require global va
     ``` py
     import pd
 	    
-    print(pd.getstrpointer())
+    print(pd.get_str_pointer())
 
     ```
 
 --------------------------------------
 
-#### <h4 style="text-align:center"> `pd.getglobalvar` </h4>
+#### <h4 style="text-align:center"> `pd.get_global_var` </h4>
 
-When working with audio objects, we have another helpful function called `pd.getglobalvar`. This function serves a similar purpose to `pd.getobjpointer`. Here, it creates the variable automatically if it doesn't exist yet.
+When working with audio objects, we have another helpful function called `pd.get_global_var`. This function serves a similar purpose to `pd.get_obj_pointer`. Here, it creates the variable automatically if it doesn't exist yet.
 
 === "Parameters" 
 
@@ -638,19 +533,19 @@ When working with audio objects, we have another helpful function called `pd.get
 
 === "Examples" 
 
-    In the code snippet below, when we use `#!python pd.getglobalvar("PHASE")`, it retrieves the value of the variable associated with the current running object. If the value hasn't been set yet, it will be initialized to `0.0`.
+    In the code snippet below, when we use `#!python pd.get_global_var("PHASE")`, it retrieves the value of the variable associated with the current running object. If the value hasn't been set yet, it will be initialized to `0.0`.
 
     ``` python
      
-    phase = pd.getglobalvar("PHASE", initial_value=0.0)
+    phase = pd.get_global_var("PHASE", initial_value=0.0)
             
     ```
 
 --------------------------------------
 
-#### <h4 style="text-align:center"> `pd.setglobalvar` </h4>
+#### <h4 style="text-align:center"> `pd.set_global_var` </h4>
 
-To set new values for the variable of the object we use `pd.setglobalvar`. In audio objects, for example, this value you be saved for the next block (next run) calculation.
+To set new values for the variable of the object we use `pd.set_global_var`. In audio objects, for example, this value you be saved for the next block (next run) calculation.
 
 === "Parameters" 
 
@@ -662,16 +557,16 @@ To set new values for the variable of the object we use `pd.setglobalvar`. In au
 === "Examples"
 
     ``` python
-    pd.setglobalvar("PHASE", phase)
+    pd.set_global_var("PHASE", phase)
     ```
 
 --------------------------------------
 ### <h3 style="text-align:center"> **Images** </h3>
 --------------------------------------
 
-#### <h4 style="text-align:center"> `pd.show` </h4>
+#### <h4 style="text-align:center"> `pd.show_image` </h4>
 
-With `py4pd` you can display images inside PureData patches using Python, you can use the `pd.show` method. This method is essentially a copy of the `else/pic` object, but with an interface that allows you to easily show images from within your Python code.
+With `py4pd` you can display images inside PureData patches using Python, you can use the `pd.show_image` method. This method is essentially a copy of the `else/pic` object, but with an interface that allows you to easily show images from within your Python code.
 
 !!! warning "Supported extensions"
 
@@ -738,7 +633,7 @@ With `py4pd` you can display images inside PureData patches using Python, you ca
             except BaseException:
                 pass
             neoscore.setup()
-            py4pdTMPfolder = pd.tempfolder()
+            py4pdTMPfolder = pd.get_temp_dir()
             for file in py4pdTMPfolder:
                 if file.endswith(".ppm"):
                     try:
@@ -769,7 +664,7 @@ With `py4pd` you can display images inside PureData patches using Python, you ca
             neoscore.shutdown()
             if os.name == 'nt':
                 notePathName = notePathName.replace("\\", "/")
-            pd.show(notePathName) ## HERE THE pd.show
+            pd.show_image(notePathName) ## HERE THE pd.show_image
             return None
 
         ```
@@ -783,9 +678,9 @@ With `py4pd` you can display images inside PureData patches using Python, you ca
 ### <h3 style="text-align:center"> **File Management** </h3>
 -------------------------------------- 
 
-#### <h4 style="text-align:center"> `pd.homefolder` </h4>
+#### <h4 style="text-align:center"> `pd.get_patch_dir` </h4>
 
-In `py4pd`, `pd.homefolder` is a function that returns the path to the directory where the currently-running PureData patch is located. This can be useful for accessing files and resources relative to the location of the patch. 
+In `py4pd`, `pd.get_home_folder` is a function that returns the path to the directory where the currently-running PureData patch is located. This can be useful for accessing files and resources relative to the location of the patch. 
 
 
 === "Parameters" 
@@ -799,16 +694,16 @@ In `py4pd`, `pd.homefolder` is a function that returns the path to the directory
     ``` py
     import pd
 	    
-    print(pd.homefolder())
+    print(pd.get_patch_dir())
 
     ```
 
 -------------------------------------- 
 
 
-#### <h4 style="text-align:center"> `pd.tempfolder` </h4>
+#### <h4 style="text-align:center"> `pd.get_temp_dir` </h4>
 
-`pd.tempfolder` returns one pathname to save stuff that won't be used more than once, all files inside this folder are deleted when the PureData patch is closed.
+`pd.get_temp_dir` returns one pathname to save stuff that won't be used more than once, all files inside this folder are deleted when the PureData patch is closed.
 
 === "Parameters" 
 
@@ -821,15 +716,15 @@ In `py4pd`, `pd.homefolder` is a function that returns the path to the directory
     ``` py
     import pd
 	    
-    print(pd.tempfolder())
+    print(pd.get_temp_dir())
 
     ```
 
 --------------------------------------
 
-#### <h4 style="text-align:center"> `pd.py4pdfolder` </h4>
+#### <h4 style="text-align:center"> `pd.get_py4pd_dir` </h4>
 
-`pd.py4pdfolder` returns the folder where the binary of `py4pd` is located.
+`pd.get_py4pd_dir` returns the folder where the binary of `py4pd` is located.
 
 === "Parameters" 
 
@@ -842,7 +737,7 @@ In `py4pd`, `pd.homefolder` is a function that returns the path to the directory
     ``` py
     import pd
 	    
-    print(pd.py4pdfolder())
+    print(pd.get_py4pd_dir())
 
     ```
 
@@ -850,7 +745,7 @@ In `py4pd`, `pd.homefolder` is a function that returns the path to the directory
 ### <h3 style="text-align:center"> **Audio Info** </h3>
 --------------------------------------
 
-#### <h4 style="text-align:center"> `pd.samplerate` </h4>
+#### <h4 style="text-align:center"> `pd.get_sample_rate` </h4>
 
 This get the current samplerate of PureData. You can use the `pd.SAMPLERATE` variable too.
 
@@ -866,16 +761,16 @@ This get the current samplerate of PureData. You can use the `pd.SAMPLERATE` var
     ``` py
     import pd
 	    
-    print(pd.samplerate())
+    print(pd.get_sample_rate())
 
     ```
     
     
 -------------------------------------- 
 
-#### <h4 style="text-align:center"> `pd.vecsize` </h4>
+#### <h4 style="text-align:center"> `pd.get_vec_size` </h4>
 
-This get the current vectorsize/blocksize of PureData. You can use the `pd.VECSIZE` variable too.
+This get the current vectorsize/blocksize of PureData. This get the vector size of the object, so it is inside some patch with `block~ 128` and the PureData is configured with `vectorsize = 64` it will return 128. To get the PureData vector size you can use `pd.VECSIZE`.
 
 
 === "Parameters" 
@@ -889,6 +784,6 @@ This get the current vectorsize/blocksize of PureData. You can use the `pd.VECSI
     ``` py
     import pd
 	    
-    print(pd.vecsize())
+    print(pd.get_vec_size())
 
     ```
