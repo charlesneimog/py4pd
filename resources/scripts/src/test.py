@@ -21,7 +21,7 @@ def getMemoryUse(programName):
     pid = subprocess.check_output(["pidof", programName])
     # convert the byte string to a string and remove the newline character
     pid = pid.decode("utf-8").strip()
-    if len(pid) > 1:
+    if isinstance(pid, list):
         pd.error("More than one pid found for " + programName)
         return 0    
     memoryUse = int(subprocess.check_output(["ps", "-o", "rss=", pid]).strip())
