@@ -1,4 +1,5 @@
 #include "py4pd.h"
+#include "m_pd.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
@@ -36,7 +37,6 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
 
 
     t_symbol *script_file_name = atom_gensym(argv + 1);
-    t_symbol *function_name = gensym("py4pdLoadObjects"); // TODO: change this to {libraryname}_setup() 
 
     // check if script file exists
     char script_file_path[MAXPDSTRING];
@@ -147,7 +147,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
         Py_XDECREF(pModule);
         return -1;
     }
-
+    
     // reload the module if it already exists
     PyObject *pModuleReloaded = PyImport_ReloadModule(pModule);
     if (pModuleReloaded != NULL){
@@ -194,7 +194,36 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
         Py_XDECREF(pModule);
         return -1;
     }
-    pFunc = PyObject_GetAttrString(pModule, function_name->s_name);  // Function name inside the script file
+
+    // check if module has the function Py4pdLoadObjects or "script_file_name + setup"
+    char *setupFuncName = malloc(strlen(script_file_name->s_name) + 7);
+    snprintf(setupFuncName, strlen(script_file_name->s_name) + 7, "%s_setup", script_file_name->s_name);
+    PyObject *pFuncName = PyUnicode_FromString(setupFuncName);
+    t_symbol *function_name = gensym(setupFuncName);
+    pFunc = PyObject_GetAttr(pModule, pFuncName);
+    if (pFunc == NULL){
+        Py_DECREF(pFuncName);
+        pFuncName = PyUnicode_FromString("py4pdLoadObjects");
+        Py_XDECREF(pFunc);
+        pFunc = PyObject_GetAttr(pModule, pFuncName);
+        if (pFunc == NULL){
+            pd_error(x, "[Python] Failed to load function %s", setupFuncName);
+            PyObject *ptype, *pvalue, *ptraceback;
+            PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+            PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+            PyObject *pstr = PyObject_Str(pvalue);
+            pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
+            Py_XDECREF(pstr);
+            Py_XDECREF(ptype);
+            Py_XDECREF(pvalue);
+            Py_XDECREF(ptraceback);
+            Py_XDECREF(pModule);
+            return -1;
+        }
+        function_name = gensym("Py4pdLoadObjects");
+    }
+    free(setupFuncName);
+
     if (pFunc && PyCallable_Check(pFunc)) {  
         if (objectCapsule == NULL){
             pd_error(x, "[Python] Failed to add object to Python, capsule not found.");

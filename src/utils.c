@@ -168,7 +168,6 @@ void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
     }
 }
 
-// ====================================================
 // ============================================
 /**
  * @brief Free the memory of the object
@@ -672,15 +671,13 @@ PyObject *Py4pdUtils_PointerToPyObject(PyObject *p) {
 * @return return void
 */
 
-t_py *Py4pdUtils_GetObject(void){
-    PyObject *pd_module = PyImport_ImportModule("pd");
+t_py *Py4pdUtils_GetObject(PyObject *pd_module){
     PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
     if (py4pd_capsule == NULL){
         return NULL;
     }
     t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
     Py_DECREF(py4pd_capsule);
-    Py_DECREF(pd_module);
     return py4pd;
 }
 

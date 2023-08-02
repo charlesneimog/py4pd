@@ -198,6 +198,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject            *delayArgs;
     PyObject            *pdmodule;
     PyObject            *Dict;
+    PyObject            *pArgTuple;
 
    
     
@@ -209,6 +210,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_float             py4pdAudio; // audio to fe used in CLASSMAINSIGIN
     t_int               vectorSize; // vector size
     t_int               n_channels; // number of channels
+    t_int               audioError;
 
     // Pic Object
     t_int               x_zoom; // zoom of the patch
@@ -357,7 +359,7 @@ void Py4pdUtils_CreatePicObj(t_py *x, PyObject* PdDict, t_class *object_PY4PD_Cl
 // ============= UTILITIES =============
 // int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);
 int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argc, t_atom **argv);
-t_py *Py4pdUtils_GetObject(void);
+t_py *Py4pdUtils_GetObject(PyObject *pd_module);
 void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);
 char* Py4pdUtils_GetFolderName(char* path);
 const char* Py4pdUtils_GetFilename(const char* path);
@@ -408,5 +410,8 @@ extern void Py4pdPic_Delete(t_gobj *z, t_glist *glist);
 
 // ============= EXTERNAL LIBRARIES =============
 extern PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords);
+
+// ============= PY4PD =============
+extern PyTypeObject Py4pdNewObj_Type;
 
 #endif
