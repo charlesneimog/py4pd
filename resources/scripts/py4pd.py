@@ -21,7 +21,7 @@ try:
 
 except Exception as e:
     pd.error("Error loading py4pd objects: " + str(e))
-    pd.addobject(pipinstall, "py.pip")
+    pd.add_object(pipinstall, "py.pip")
 
 
 def mysumarg(a=3, b=2, c=5, d=4):
@@ -31,74 +31,74 @@ def mysumarg(a=3, b=2, c=5, d=4):
 
 def py4pdLoadObjects():
     # Pip install
-    pd.addobject(pipinstall, "py.pip")
+    pd.add_object(pipinstall, "py.pip")
     
-    pd.addobject(mysumarg, "py.mysumarg")
+    pd.add_object(mysumarg, "py.mysumarg")
 
     # Utils
-    pd.addobject(getObjectArgs, "py.getargs") 
+    pd.add_object(getObjectArgs, "py.getargs") 
 
    # Logic Functions
-    pd.addobject(pyand, "py.and", pyout=True)
-    pd.addobject(pyand, "py&&", pyout=True)
-    pd.addobject(pyor, "py||", pyout=True)
-    pd.addobject(pyequal, "py==", pyout=True)
-    pd.addobject(pygreater, "py>", pyout=True)
-    pd.addobject(pylower, "py<", pyout=True)
-    pd.addobject(py4pdif, "py.if", pyout=True)
-    pd.addobject(ommod, "py//", pyout=True)
-    pd.addobject(pyisin, "pyisin") 
+    pd.add_object(pyand, "py.and", pyout=True)
+    pd.add_object(pyand, "py&&", pyout=True)
+    pd.add_object(pyor, "py||", pyout=True)
+    pd.add_object(pyequal, "py==", pyout=True)
+    pd.add_object(pygreater, "py>", pyout=True)
+    pd.add_object(pylower, "py<", pyout=True)
+    pd.add_object(py4pdif, "py.if", pyout=True)
+    pd.add_object(ommod, "py//", pyout=True)
+    pd.add_object(pyisin, "pyisin") 
     
 
     # info
-    pd.addobject(pdprint, "py.print", no_outlet=True)
+    pd.add_object(pdprint, "py.print", no_outlet=True)
     
     # Convertion Objects
-    pd.addobject(py2pd, "py2pd", ignore_none_return=True)
-    pd.addobject(pd2py, "pd2py")
-    pd.addobject(pdlist2pylist, "py.mklist", pyout=True)
+    pd.add_object(py2pd, "py2pd", ignore_none_return=True)
+    pd.add_object(pd2py, "pd2py")
+    pd.add_object(pdlist2pylist, "py.mklist", pyout=True)
 
     # List Functions
-    pd.addobject(pylen, "py.len")
-    pd.addobject(nth, "py.nth", pyout=True)
-    pd.addobject(omappend, "py.append", pyout=True)
-    pd.addobject(omlist, "py.list", pyout=True)
-    pd.addobject(pymax, "py.max")
-    pd.addobject(pymin, "py.min")
-    pd.addobject(pyreduce, "py.reduce", pyout=True)
-    pd.addobject(mat_trans, "py.mattrans", pyout=True)
-    pd.addobject(rotate, "py.rotate", pyout=True)
-    pd.addobject(flat, "py.flat")
+    pd.add_object(pylen, "py.len")
+    pd.add_object(nth, "py.nth", pyout=True)
+    pd.add_object(omappend, "py.append", pyout=True)
+    pd.add_object(omlist, "py.list", pyout=True)
+    pd.add_object(pymax, "py.max")
+    pd.add_object(pymin, "py.min")
+    pd.add_object(pyreduce, "py.reduce", pyout=True)
+    pd.add_object(mat_trans, "py.mattrans", pyout=True)
+    pd.add_object(rotate, "py.rotate", pyout=True)
+    pd.add_object(flat, "py.flat")
 
     # Loop Functions
     # these are special objects.
-    pd.addobject(pyiterate, "py.iterate", pyout=True, num_aux_outlets=1, ignore_none_return=True) # these are special objects, they don't have a pyout argument but output py data types
-    pd.addobject(pycollect, "py.collect", pyout=True, ignore_none_return=True) # these are special objects, they don't have a pyout argument but output py data types
-    pd.addobject(pyrecursive, "py.recursive", pyout=True, ignore_none_return=True)
-    pd.addobject(pytrigger, "py.trigger", pyout=True, ignore_none_return=True, require_outlet_n=True)
-    pd.addobject(pygate, "py.gate", pyout=True, require_outlet_n=True, ignore_none_return=True)
+    pd.add_object(pyiterate, "py.iterate", pyout=True, num_aux_outlets=1, ignore_none_return=True) # these are special objects, they don't have a pyout argument but output py data types
+    pd.add_object(pycollect, "py.collect", pyout=True, ignore_none_return=True) # these are special objects, they don't have a pyout argument but output py data types
+    pd.add_object(pyrecursive, "py.recursive", pyout=True, ignore_none_return=True)
+    pd.add_object(pytrigger, "py.trigger", pyout=True, ignore_none_return=True, require_outlet_n=True)
+    pd.add_object(pygate, "py.gate", pyout=True, require_outlet_n=True, ignore_none_return=True)
 
     # Math Functions
-    pd.addobject(omsum, "py+")
-    pd.addobject(omminus, "py-")
-    pd.addobject(omtimes, "py*")
-    pd.addobject(omdiv, "py/")
-    pd.addobject(omabs, "py.abs")
-    pd.addobject(py4pdListComprehension, "py.listcomp", pyout=True)
+    pd.add_object(omsum, "py+")
+    pd.add_object(omminus, "py-")
+    pd.add_object(omtimes, "py*")
+    pd.add_object(omdiv, "py/")
+    pd.add_object(omabs, "py.abs")
+    pd.add_object(py4pdListComprehension, "py.listcomp", pyout=True)
 
     # Rhythm Tree
-    pd.addobject(extract_numbers, "py.rhythm_tree")
+    pd.add_object(extract_numbers, "py.rhythm_tree")
     
     # img 
-    pd.addobject(py4pdshow, "py.show", objtype=pd.VIS)
+    pd.add_object(py4pdshow, "py.show", objtype=pd.VIS)
 
     # music convertions
-    pd.addobject(freq2midicent, "f2mc")
-    pd.addobject(midicent2freq, "mc2f")
-    pd.addobject(midicent2note, "mc2n")
+    pd.add_object(freq2midicent, "f2mc")
+    pd.add_object(midicent2freq, "mc2f")
+    pd.add_object(midicent2note, "mc2n")
 
     # test
-    pd.addobject(py4pdtimer, "py.timer", no_outlet=True)
-    pd.addobject(getMemoryUse, "py.memuse")
+    pd.add_object(py4pdtimer, "py.timer", no_outlet=True)
+    pd.add_object(getMemoryUse, "py.memuse")
 
     

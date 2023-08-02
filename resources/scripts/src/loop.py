@@ -1,19 +1,10 @@
 import pd
 import sys
-import faulthandler
-
-faulthandler.enable()
-
 
 
 def pyiterate(value):
     """
-    if isinstance(value, list):
-        pd.iterate(value)
-        pd.out("output", out_n=1)
-    else:
-        pd.error("[py.iterate]: pyiterate only works with lists")
-        return None
+    It iterates the value and outputs it.
     """
     pd.out(pd.CLEARLOOP, out_n=1)
     for i in value:
@@ -22,20 +13,20 @@ def pyiterate(value):
 
 
 def pycollect(data):
-    """ It collects the data from pyiterate and outputs it """
-    # lot of memory usage
+    """ 
+    It collects the data from pyiterate and outputs it. 
+    """
     if data is pd.OUTLOOP:
-        data = pd.getglobalvar("DATA")
+        data = pd.get_global_var("DATA")
         if data is None:
             pd.error("[py.collect]: There is no data to output")
         else:
             pd.out(data)
-
     elif data is pd.CLEARLOOP:
-        pd.clearglobalvar("DATA")
+        pd.clear_global_var("DATA")
 
     else:
-        pd.accumglobalvar("DATA", data)
+        pd.accum_global_var("DATA", data)
 
 
 
@@ -51,7 +42,6 @@ def pytrigger(data):
 def pyrecursive(data):
     """ It need to be used with pyiterate and pycollect in recursive patches """
     sys.setrecursionlimit(1000000)
-
 
     pd._recursive(data)
     

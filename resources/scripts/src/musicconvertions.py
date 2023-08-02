@@ -29,14 +29,15 @@ def freq2midicent(freq: float) -> float:
 
 
 # =============================================================================
-def midicent2note(midicent):
+def midicent2note(midicent, **kwargs):
 
     """
     Converts a midicent note number to a note name string.
     """
     if isinstance(midicent, list):
         return [midicent2note(x) for x in midicent]
-    sharpOrFlat = pd.getkey("accidentals")
+    if kwargs.get("accidentals"):
+        sharpOrFlat = kwargs.get("accidentals")
     if sharpOrFlat is None or sharpOrFlat == "sharp":
         sharpOrFlat = "sharp"
         note_names = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C']

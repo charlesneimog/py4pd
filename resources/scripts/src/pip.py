@@ -1,5 +1,3 @@
-
-
 import pd
 import os
 import sys
@@ -91,9 +89,9 @@ def pipinstall(mypackage):
         if isinstance(package, list):
             folder = package[0]
             if folder == "local":
-                folder = pd.home()
+                folder = pd.get_patch_dir()
             elif folder == "global":
-                folder = pd.py4pdfolder() + "/resources"
+                folder = pd.get_py4pd_dir() + "/resources"
             else:
                 pd.error("[py.install]: the first argument must be 'local' or 'global'")
                 return 'bang'
@@ -159,19 +157,13 @@ def pipinstall(mypackage):
             return 'bang'
 
         elif platform.system() == 'Darwin':
-            #import turtle
             import tkinter as tk
             try:
                 my_window = MacOSpip(package, folder)
                 my_window.run()
-                
-
-                
+                            
             except Exception as e:
                 pd.error(str(e))
-
-
-
         else:
             pd.error("Your OS is not supported")
             return 'bang'
