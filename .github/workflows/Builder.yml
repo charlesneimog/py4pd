@@ -14,7 +14,7 @@ on:
       justlinux:
         description: 'Just Linux'
         required: false
-        default: 'true'
+        default: 'false'
 
 jobs:  
   # ==============================================================================
@@ -22,7 +22,6 @@ jobs:
   # ==============================================================================
   windows-build:
     # if just linux is true, skip windows
-    if: ${{ github.event.inputs.justlinux == 'false' }}
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
@@ -81,10 +80,8 @@ jobs:
   # =                               MAC INTEL                                    =
   # ==============================================================================
   macos-intel-build:
-    if: ${{ github.event.inputs.justlinux == 'false' }}
     runs-on: macos-latest
     timeout-minutes: 10
-
     steps:
     - uses: actions/checkout@v3
       with:
@@ -117,7 +114,6 @@ jobs:
   # =                               MAC ARM                                      =
   # ==============================================================================
   macos-arm-build:
-    if: ${{ github.event.inputs.justlinux == 'false' }}
     runs-on: macos-latest
     timeout-minutes: 10
 
