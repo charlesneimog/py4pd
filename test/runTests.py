@@ -15,16 +15,13 @@ def runTest(pdpatch):
         # check if file exists
         if os.path.isfile(pathfile):
             cmd = f'pd -nogui -send "start-test bang" {pathfile}' 
+            # print cmd in green
+            print("Running: " + "\033[92m" + cmd + "\033[0m")
         else:
             print('PureData Object not found')
             sys.exit()
-        # os.system(cmd)
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
-        lastLine = outputLines[-2]
-        for lastLine in outputLines:
-            print(lastLine)
-        # sys.exit()
         
     elif platform.system() == 'Windows':
         scriptfile = os.path.abspath(__file__)
@@ -39,9 +36,6 @@ def runTest(pdpatch):
         os.system(f'cmd /c "\"C://Program Files//Pd//bin//pd.exe\" -send \"start-test bang\" \"{pathfile}\""')
         output = subprocess.run(f'"C:\\Program Files\\Pd\\bin\\pd.exe" -nogui -send "start-test bang" "{pathfile}"', capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
-        for lastLine in outputLines:
-            print(lastLine)
-        lastLine = outputLines[-2]
     elif platform.system() == 'Darwin':
         scriptfile = os.path.abspath(__file__)
         scriptfolder = os.path.dirname(scriptfile)
@@ -56,35 +50,42 @@ def runTest(pdpatch):
         cmd = '/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -send "start-test bang" ' + pathfile
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
-        for lastLine in outputLines:
-            print(lastLine)
-        lastLine = "Fail"
-        for line in outputLines:
-            # check if there is PASS inside some line
-            if "PASS" in line:
-                lastLine = line
-                break
     else:
         print('OS not supported')
         sys.exit()
 
     # if lastLine contains "PASS" then the test passed
-    if "PASS" in lastLine:
-        # print in green
+    passed = False
+    for line in outputLines:
+        if "PASS" in line or "Pass" in  line:
+            passed = True
+    if passed:
         print("\033[92m" + ' Test with ' + pdpatch + ' passed' + "\033[0m")
-        return "ok"
     else:
         print("\033[91m" + ' Test with ' + pdpatch + ' failed' + "\033[0m")
+        errorInTest += 1
 
     
 if __name__ == "__main__":
     # list all patches inside test folder
-    patches = os.listdir('test')
+    patches = os.listdir('.')
     patches = [patch for patch in patches if patch.endswith('.pd')]
     patches.sort()
     for patch in patches:
-        print("============= " + patch + " =============")
         runTest(patch)
+
+    if errorInTest != 0:
+        print("\033[91m" + f'{errorInTest} Test has failed' + "\033[0m")
+        sys.exit(-1)
+
+    elif errorInTest == 0:
+        print("\n")
+        print("\n")
+        print("===============================")
+        print("\033[92m" + 'All Tests passed' + "\033[0m")
+        print("===============================")
+        print("\n")
+        print("\n")
 
          
               

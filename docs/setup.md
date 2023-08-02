@@ -1,25 +1,20 @@
+---
+hide:
+  - navigation
+  - toc
+---
 # Installation
 
 ## <h2 align="center"> **Setup** </h2>
 
-We need install `py4pd` _and_ Python. 
-
-!!! warning "Python installation is required!"
+!!! danger "Python installation is required!"
 	Install just `py4pd` (no Python) will not work. 
 
-### <h3 align="center"> **Install `py4pd`** </h3>
+ <p align="center"> The process of installation is simple, first we install <code>Python</code> and then <code>py4pd</code>. </p>
 
-1. Open PureData, 
-2. Go to `Help->Find Externals->`,
-3. Search for `py4pd`,
-4. Select py4pd and click on `Install`: 
-
-<figure markdown>
-  ![Install py4pd](assets/install-py4pd.gif){ width="700" loading="lazy"}
-  <figcaption>Process of install py4pd on PureData</figcaption>
-</figure>
-
-### <h3 align="center"> **Install Python** </h3>
+-------------------
+### <h3 align="center"> **1. Install Python** </h3>
+-------------------
 
 === ":fontawesome-brands-windows: Windows"
     
@@ -32,7 +27,7 @@ We need install `py4pd` _and_ Python.
     !!! info "Click if you are a Windows User"
 	    I recommend mark the option `Add Python 3.10 to PATH`.	
 	    <figure markdown>
-	      	![Install py4pd](assets/installPython.jpg){ width="700" }
+	      	![Install py4pd](assets/installPython.jpg){ width="500" }
 	      	<figcaption>Process of install py4pd on PureData</figcaption>
 	    </figure>
 	    
@@ -52,9 +47,6 @@ We need install `py4pd` _and_ Python.
     * Open the terminal.
     * Run: `sudo dnf install python3.10` (Fedora) or `sudo apt install python3.10` (Ubuntu). 
 	
----------------------
-### <h3 align="center"> **Old versions of py4pd** </h3>
-
 ??? danger "Attention to Python Version"
     If you want to use old versions, the Python must follow the exact version of the compilation: 
  	
@@ -68,5 +60,19 @@ We need install `py4pd` _and_ Python.
     | 0.2.0       | [Python 3.10](https://www.python.org/downloads/release/python-3105/)  |
     | 0.1.0       | [Python 3.10](https://www.python.org/downloads/release/python-3103/)  |
     | 0.0.0       | [Python 3.10](https://www.python.org/downloads/release/python-3101/)  |
-	
+
+------------------
+### <h3 align="center"> **2. Install `py4pd`** </h3>
+------------------
+1. Open PureData, 
+2. Go to `Help->Find Externals->`,
+3. Search for `py4pd`,
+4. Select py4pd and click on `Install`: 
+
+<figure markdown>
+  ![Install py4pd](assets/install-py4pd.gif){ width="700" loading="lazy"}
+  <figcaption>Process of install py4pd on PureData</figcaption>
+</figure>
+
+
 

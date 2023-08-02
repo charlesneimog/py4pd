@@ -4,6 +4,7 @@
 *.dll
 *.o
 *.sh
+*.json
 .vscode/*
 Python
 bin
@@ -34,3 +35,4 @@ py-modules
 ./compile_commands.json
 .cache/
 compile_commands.json
+py4pd.cfg

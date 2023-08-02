@@ -1,29 +1,31 @@
+---
+hide:
+  - navigation
+  - toc
+---
+
 # Introduction
+
+<p align="center"> Welcome to the <code>py4pd</code> documentation! </p>
 
 ## <h2 align="center"> **What is py4pd?** </h2>
 
-<p align="center"> Welcome to the py4pd documentation! </p>
-
 ----------
 
-`py4pd` integrates the power of [Python](https://www.python.org/) into the real-time environment of [PureData](https://puredata.info/), provide means for score visualization, AI integration, audio analysis tools, SVG/drawing score handling, and various other functionalities.
+`py4pd` integrates the power of [Python](https://www.python.org/) into the real-time environment of [PureData](https://puredata.info/). Besides providing means for score visualization, AI integration, audio analysis tools, SVG/drawing score handling, and various other functionalities, <u><i>you can create PureData Objects using Python</i></u>. If you use [OpenMusic](https://openmusic-project.github.io/openmusic/) or [BachLibrary](https://www.bachproject.net/), you will find some inspiration in it.
+
+
 
 !!! info "How to install?"
-
     To check how to install go to [Installation](https://www.charlesneimog.com/py4pd/setup/).
-
 <hr>
-
 ## <h2 align="center"> **Examples and Use Cases** </h2>
 
-Here is presented algorithm tools implemented with `py4pd`. Users are encouraged to contribute their own examples through [Github](https://github.com/charlesneimog/py4pd/discussions/categories/show-and-tell).
-
-
-### <h3 align="center"> **General purposes** </h3>
+Here are presented tools implemented with `py4pd`. <i>Users are encouraged to contribute their examples through [Github](https://github.com/charlesneimog/py4pd/discussions/categories/show-and-tell) </i>.
 
 === "Score In PureData"
 
-    When I start to work with PureData, I miss a lot some score visualization tool, this can be solved by utilizing `py4pd`. This script is delivered along with the `py4pd` library.
+    When I started work with PureData, I missed score visualization tools. `py4pd` can easily solve this using `neoscore`.
 
     <p align="center">
         <img src="examples/score/score.gif" width="50%" loading="lazy" alt="Score GIF">
@@ -36,7 +38,7 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
 
     <p align="center">
 	    <img src="examples/ia/ia.png" width="60%"></img>
-    </p>  
+    </p> 
     
     <p align="center">
         <audio controls style="width: 60%; border-radius: 10px;">
@@ -56,8 +58,8 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
 	    import librosa # Library to load audios in Python
 
 	    def renderAudio_nn(audio, model):
-	        model = pd.home() + '/' + model # get the pathname of model.ts, that is the result of the IA trained.
-	        audio = pd.home() + '/' +  audio # The audio source
+	        model = pd.get_patch_dir() + '/' + model # get the pathname of model.ts, that is the result of the IA trained.
+	        audio = pd.get_patch_dir() + '/' +  audio # The audio source
 	        torch.set_grad_enabled(False) # config of the IA
 	        model = torch.jit.load(model).eval() # Load model of IA
 	        x = librosa.load(audio)[0] # take the audio samples of the sound (audio)
@@ -87,8 +89,8 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
         </audio>
     </p>
 
-=== "Spectral analysis"
-    In Python, there is not just one Spectral Analysis package. I mainly use `loristrck` because of the `.sdif` files. But there is `simpl`, `librosa`, [PyAudio_FFT](https://github.com/aiXander/Realtime_PyAudio_FFT), among others. If you want to spectral manipulations you can work with `pysdif3` that is fast and amazing. Here an example using `loristrck` in PureData.
+=== "Sound analysis"
+    In Python, there is not just one Spectral Analysis package. I mainly use `loristrck` because of the `.sdif` files. But there is `simpl`, `librosa`, [PyAudio_FFT](https://github.com/aiXander/Realtime_PyAudio_FFT), among others. If you want spectral manipulations you can work with `pysdif3` which is fast and amazing. Here is an example using `loristrck` in PureData.
 
     <p align="center">
 	    <img src="examples/spectral-analysis/analisys.gif" width="50%"></img>
@@ -96,7 +98,7 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
 
 === "Audio Descriptors Graphs"
 
-    You can use some of the amazing Audio Descriptors provided by `audioflux` for some analisys. 
+    You can use some of the Audio Descriptors provided by `audioflux` for some analysis. 
 
     <p align="center">
 	    <img src="examples/descriptors/descriptors.png" width="50%"></img>
@@ -105,9 +107,6 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
 ----------
 
 ### <h3 align="center"> **Pieces** </h3>
-
-<hr>
-
 
 === "Eco (2023)"
 
@@ -121,6 +120,100 @@ Here is presented algorithm tools implemented with `py4pd`. Users are encouraged
 === "Moteto (2023)"
 
     The piece Moteto aims to be a rereading of medieval motet. In addition, to overlapping independent voices, we use Just Intonation structures. With the help of technology, I aim to make the piece playable, also by amateur choirs, it is available in this website: www.charlesneimog.com/moteto/.
+
+-------------
+## <h2 align="center"> **News** </h2>
+-------------
+
+!!! info "Check the news for v. 0.8.0"
+    <h3 align="center"> **<b>v. 0.8.0</b>** </h3> 
+    
+    * Now `py4pd` objects can have they own help-patches, they must be located inside the folder "help".
+    * Add simple player embbeded (you can 'play' python objects) in the objects, in others words, put Python Objects in music time.
+    * Add `pd.add_to_player` method.
+    * Add new option `objimage` in `pd.add_object` to set default images for `VIS` objects.
+    * Remove our own Python executable.
+    * In `pd.add_object` add key `helppatch` (string contains the `.pd` file of help), for example, if the help is `myorchidea.flute-help` here I put `myorchidea.flute`.
+    * Add new `pd` modules methods.
+        * Add method `pd.clear_player` to clear the player.
+        * Add method `pd.get_patch_zoom` to get the zoom of patch.
+        * Add method `pd.pip_install` to install Python Modules.
+    * The options `py4pd -score`, `py4pd -audioin`, `py4pd -audioout`, and `py4pd -audio` was removed because they are unused when we can create your library. ⚠️
+    * Added multichannel support for `audio` objects.
+        
+    ----------------------
+
+
+??? info "Check the news for old versions"
+
+    <h3 align="center"> **<b>v. 0.7.0</b>** </h3>
+    
+    * Add possibility to write Python Objects (like PureData Libraries) in add to PureData as standart Objects.
+    * Add support to detach (It runs I separete Python executable (probably will be uncessary with [PEP 684](https://peps.python.org/pep-0684/)).
+    * Add way to work with Python Types inside PureData. It requires to send message `pointers 1`, or from Python Object, set `pyout = True`.
+    * Now `py4pd -library` are added in the begin of the patch, we not have problem with Py Objects not exits.
+    * Add new `pd` modules:
+	    * `getobjpointer`: It returns the string pointer to the object. Can be used to create global variables per object.
+	    * `iterate`: It is one copy of the OpenMusic iterate.
+	    * `show`: It works exactly as `pic` object, but no require the `open` message.
+
+    ----------------------
+    <h3 align="center"> **<b>v. 0.6.0</b>** </h3>
+    
+    * Add `audio` support.
+      * For audioout you need to create the object with the `-audioout` flag. 
+      * For audioint you need to create the object with the `-audioint` flag.
+    * Add `vis` support.
+      * Add support to score (using neoscore).
+      * Add support to anothers visualizations (anothers like matplotlib, vispy, and others).
+    * Create this beautil docs website :).
+
+    ----------------------
+    <h3 align="center"> **<b>v. 0.5.0</b>** </h3>
+    
+    * Add support to list inside PureData using brackts.
+      * 💡 `run [1 2 3 4 5]` from `pd`message is equivalent to run `my_function([1, 2, 3, 4, 5])` in `Python`.
+    * Add better README and Wiki.
+    * Add support to new Editor [sublime, nvim, code, vim].
+
+    ----------------------
+    <h3 align="center"> **<b>v. 0.4.0</b>** </h3>
+    
+    * 🤖 Add Github Actions for Windows, Linux, MacOS (Intel);
+    * 🛠️ Format the code and lot of fixes related with memory leaks.
+
+    ----------------------
+    <h3 align="center"> **<b>v. 0.3.0</b>** </h3>
+    
+    * add list support (Python to PureData);
+    * add reload support;
+    * add better error messages;
+    * Add embedded module `pd` (just print module work for now);
+    * Open vscode from puredata;
+    * Remove thread for now;
+
+    ----------------------
+    <h3 align="center"> **<b>v. 0.2.0</b>** </h3>
+    
+    * ⚠️`Incompatible versions`, now the functions are always in memory;
+    * Add support to Linux;
+    * Set functions;
+    * Try to add support to threads;
+    * First build for MacOS;
+    * 🛠️ Format the code;
+
+    ----------------------
+    <h3 align="center"> **<b>v. 0.1.0</b>** </h3>
+
+    * Possible to run code (without libraries);
+    * Save Function in Memory;
+    * Create scripts from PureData;
+    * Two ways to run Python (Clearing memory or making compiled code ready);
+
+    ----------------------
+    <h3 align="center"> **<b>v. 0.0.0</b>** </h3>
+
+    * First simple build for Windows;
 
 
 

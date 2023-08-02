@@ -1,3 +1,14 @@
+#### py4pd version 0.8.0
+
+* Now `py4pd` objects can have they own help-pathes, they must be located inside the folder "help".
+* Add simple player embbeded (you can 'play' python objects).
+* Add `pd.add2player` method.
+* In `pd.addobject` add key `helppatch` (string contains the `.pd` file of help), for example, if the help is `myorchidea.flute-help` here I put `myorchidea.flute`.
+* Add method `pd.clearplayer` to clear the player.
+* Add method `pd.patchzoom` to get the zoom of patch.
+* Add method `pd.pipinstall` to install Python Modules.
+
+
 #### py4pd version 0.7.0
 * * Add possibility to write Python Objects (like PureData Libraries) in add to PureData as standart Objects.
 * Add support to detach (It runs I separete Python executable (probably will be uncessary with PEP 684).
@@ -7,7 +18,6 @@
 	* `getobjpointer`: It returns the string pointer to the object. Can be used to create global variables per object.
 	* `iterate`: It is one copy of the OpenMusic iterate.
 	* `show`: It works exactly as `pic` object, but no require the `open` message.
-
 
 #### py4pd version 0.6.0
 * Add audio support
@@ -54,3 +64,4 @@
 #### py4pd version 0.0.0
 
 * First simple build for Windows;
+
