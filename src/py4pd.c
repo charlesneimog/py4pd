@@ -552,6 +552,10 @@ void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         return;
     }
 
+    // TODO: Save the editor in the py4pd.cfg file, then once saved, 
+    //      we can just read the editor from the file
+
+
     PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->function);
     int line = PyCode_Addr2Line(code, 0);
     char command[MAXPDSTRING];
