@@ -281,7 +281,6 @@ static void Py4pdLib_Audio2PdAudio(t_py *x, PyObject *pValue, t_sample *audioOut
         Py_XDECREF(pvalue);
         Py_XDECREF(ptraceback);
         PyErr_Clear();
-        // full output with 0
         for (int i = 0; i < numChannels; i++) {
             for (int j = 0; j < x->vectorSize; j++) 
                 audioOut[i * x->vectorSize + j] = 0;
@@ -404,6 +403,13 @@ void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
     py4pd->pyObjArgs[x->inletIndex]->pdout = 0;
     py4pd->pyObjArgs[x->inletIndex]->objOwner = py4pd->objectName;
     py4pd->pyObjArgs[x->inletIndex]->pValue = pyInletValue;
+
+    if (py4pd->objType == PY4PD_AUDIOOBJ || py4pd->objType == PY4PD_AUDIOINOBJ){
+        py4pd->audioError = 0;
+        return;
+    }
+
+
     return;
 }
 
@@ -411,7 +417,7 @@ void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
 void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av){
 
     if (x->function == NULL){
-        pd_error(x, "[py4pd] Function not defined");
+        pd_error(x, "[%s]: No function defined", x->objectName->s_name);
         return;
     }
     if (s == gensym("bang")){
@@ -576,7 +582,7 @@ t_int *Py4pdLib_AudioOUTPerform(t_int *w) {
         return (w + 4);
     }
     Py4pdLib_Audio2PdAudio(x, pValue, audioOut, numChannels, n); // handle if pValue is NULL, Decref it.
-    Py_DECREF(pValue);
+    Py_XDECREF(pValue);
     return (w + 4);
 }
 
@@ -615,7 +621,7 @@ t_int *Py4pdLib_AudioPerform(t_int *w){
         return (w + 5);
     }
     Py4pdLib_Audio2PdAudio(x, pValue, audioOut, numChannels, n); // handle if pValue is NULL, Decref it.
-    Py_DECREF(pValue);
+    Py_XDECREF(pValue);
     return (w + 5);
 }
 
@@ -630,7 +636,7 @@ static void Py4pdLib_Dsp(t_py *x, t_signal **sp) {
         x->vectorSize = sp[0]->s_n;
         signal_setmultiout(&sp[0], x->n_channels);
         dsp_add(Py4pdLib_AudioOUTPerform, 3, x, sp[0]->s_vec, PY4PDSIGTOTAL(sp[0]));
-        x->n_channels = sp[0]->s_nchans;
+        // x->n_channels = sp[0]->s_nchans;
     }
     else if (x->objType == PY4PD_AUDIOOBJ) {
         x->n_channels = sp[0]->s_nchans;

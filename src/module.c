@@ -1036,19 +1036,19 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
                 }
             } 
             else {
-                pd_error(py4pd, "[Python]: Error displaying image, file not found");
+                pd_error(py4pd, "Error displaying image, file not found");
                 PyErr_Clear();
                 Py_RETURN_NONE;
             }
         } 
         else {
-            pd_error(py4pd, "[Python]: Error displaying image");
+            pd_error(py4pd, "Error displaying image");
             PyErr_Clear();
             Py_RETURN_NONE;
         }
     } 
     else {
-        pd_error(py4pd, "[Python] pd.showimage received wrong arguments");
+        pd_error(py4pd, "pd.showimage received wrong arguments");
         PyErr_Clear();
         Py_RETURN_NONE;
     }
@@ -1104,7 +1104,7 @@ static PyObject *Py4pdMod_PdZoom(PyObject *self, PyObject *args) {
         zoom = (int)py4pd->canvas->gl_zoom;
     }
     else {
-        pd_error(NULL, "[Python] pd.patchzoom: canvas not found");
+        pd_error(NULL, "pd.patchzoom: canvas not found");
         zoom = 1;
     }
     return PyLong_FromLong(zoom);
@@ -1125,7 +1125,6 @@ static PyObject *Py4pdMod_PdKey(PyObject *self, PyObject *args) {
     
     t_py *py4pd = Py4pdUtils_GetObject(self);
     if (py4pd == NULL){
-        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
         return NULL;
     }
 
@@ -1149,7 +1148,7 @@ static PyObject *Py4pdMod_GetObjPointer(PyObject *self, PyObject *args){
     
     t_py *py4pd = Py4pdUtils_GetObject(self);
     if (py4pd == NULL){
-        post("[Python] py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
+        PyErr_SetString(PyExc_TypeError, "py4pd capsule not found. The module pd must be used inside py4pd object or functions.");
         return NULL;
     }
     
@@ -1168,7 +1167,7 @@ static PyObject *Py4pdMod_AddThingToPlay(PyObject *self, PyObject *args, PyObjec
     t_py *py4pd = Py4pdUtils_GetObject(self);
 
     if (!PyArg_ParseTuple(args, "iO", &onset, &thingToPlay)) {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.add2play: wrong arguments");
+        PyErr_SetString(PyExc_TypeError, "pd.add2play: wrong arguments, it should be: pd.add2play(onset, thingToPlay)");
         return NULL;
     }
     Py4pdLib_PlayerInsertThing(py4pd, onset, Py_BuildValue("O", thingToPlay)); 
