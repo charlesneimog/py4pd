@@ -17,22 +17,38 @@ try:
     from src.show import *
     from src.musicconvertions import *
     from src.test import *
+    from src.utils import *
 
 except Exception as e:
     pd.error("Error loading py4pd objects: " + str(e))
     pd.addobject(pipinstall, "py.pip")
 
 
+def mysumarg(a=3, b=2, c=5, d=4):
+    pd.print(f"mysumarg: {a} + {b} + {c} + {d}")
+    return a + b + c + d 
+
+
 def py4pdLoadObjects():
     # Pip install
     pd.addobject(pipinstall, "py.pip")
+    
+    pd.addobject(mysumarg, "py.mysumarg")
+
+    # Utils
+    pd.addobject(getObjectArgs, "py.getargs") 
 
    # Logic Functions
-    pd.addobject(pyand, "py.and")
-    pd.addobject(pyor, "py.or")
-    pd.addobject(pyequal, "py.equal")
-    pd.addobject(pygreater, "py.>")
-    pd.addobject(pylower, "py.<")
+    pd.addobject(pyand, "py.and", pyout=True)
+    pd.addobject(pyand, "py&&", pyout=True)
+    pd.addobject(pyor, "py||", pyout=True)
+    pd.addobject(pyequal, "py==", pyout=True)
+    pd.addobject(pygreater, "py>", pyout=True)
+    pd.addobject(pylower, "py<", pyout=True)
+    pd.addobject(py4pdif, "py.if", pyout=True)
+    pd.addobject(ommod, "py//", pyout=True)
+    pd.addobject(pyisin, "pyisin") 
+    
 
     # info
     pd.addobject(pdprint, "py.print", no_outlet=True)
@@ -63,11 +79,12 @@ def py4pdLoadObjects():
     pd.addobject(pygate, "py.gate", pyout=True, require_outlet_n=True, ignore_none_return=True)
 
     # Math Functions
-    pd.addobject(omsum, "py.sum")
-    pd.addobject(omminus, "py.minus")
-    pd.addobject(omtimes, "py.times")
-    pd.addobject(omdiv, "py.div")
+    pd.addobject(omsum, "py+")
+    pd.addobject(omminus, "py-")
+    pd.addobject(omtimes, "py*")
+    pd.addobject(omdiv, "py/")
     pd.addobject(omabs, "py.abs")
+    pd.addobject(py4pdListComprehension, "py.listcomp", pyout=True)
 
     # Rhythm Tree
     pd.addobject(extract_numbers, "py.rhythm_tree")
