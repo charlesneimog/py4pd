@@ -5,26 +5,27 @@ try:
     import numpy as np
     numpyIsInstalled = True
 except Exception as e:
-    import platform
-    py4pdObjectFolder = pd.py4pdfolder()
-    if platform.system() != "Darwin":
-        pd.error("=== Numpy not installed, to solve this... ===")
-        pd.print("\n", show_prefix=False)
-        pd.print("    1º Create new object with 'py4pd -lib py4pd'", show_prefix=False)
-        pd.print("\n", show_prefix=False)
-        pd.print("    2º Create new object 'py.pip'", show_prefix=False)
-        pd.print("\n", show_prefix=False)
-        pd.print("    3º Send the message 'global numpy' and wait for the installation", show_prefix=False)
-        pd.print("\n", show_prefix=False)
-        pd.error("==================================")
-    else:
-        pd.error("=== Numpy not installed, to solve this... ===")
-        pd.print("    Open the terminal and run this line:", show_prefix=False)
-        pd.print("\n")
-        pd.print("cd '" + py4pdObjectFolder + "' && pip install numpy -t ./resources/py-modules", show_prefix=False)
-        pd.print("\n", show_prefix=False)
-
+    py4pdObjectFolder = pd.get_py4pd_dir()
+    pd.error("=== Numpy not installed, to solve this... ===")
+    pd.print("\n", show_prefix=False)
+    pd.print("    1º Create new object with 'py4pd'", show_prefix=False)
+    pd.print("\n", show_prefix=False)
+    pd.print("    2º Send the message 'pipinstall local numpy' and wait for the installation", show_prefix=False)
+    pd.print("\n", show_prefix=False)
+    pd.error("==================================")
     numpyIsInstalled = False
+
+try:
+    from numba import jit 
+
+
+except Exception as e:
+    pd.pip_install("local", "numba")
+
+
+
+
+
 
 # ================================================
 # ==============  Functions  =====================
@@ -125,43 +126,45 @@ def printall(x, y):
 # ================================================
 # ================ Audio =========================
 # ================================================
+@jit(nopython=True, cache=True, fastmath=True)
+def generate_sine_wave(frequency, amplitude, phase, num_samples, sampling_rate):
+    angular_frequency = 2 * np.pi * frequency
+    t = np.arange(num_samples) / sampling_rate
+    sine_wave = amplitude * np.sin(angular_frequency * t + phase)
+    last_phase = phase + angular_frequency * t[-1]
+    return sine_wave, last_phase
 
 
-def audioin(audio):
-    length = len(audio)
-    return length
+@jit(nopython=True, cache=True, fastmath=True)
+def mksenoide(freqs, amps, phases, vectorsize, samplerate):
+    n = len(freqs) 
+    nframes = vectorsize
+    out = np.zeros((n, nframes), dtype=np.float64)  # Modify the shape of the output array
+    new_phases = np.zeros(n, dtype=np.float64)  # Array to store the new phases
+    for i in range(n):
+        out[i], new_phases[i] = generate_sine_wave(freqs[i], amps[i], phases[i], nframes, samplerate)
+        if new_phases[i] > 2 * np.pi:
+            new_phases[i] -= 2 * np.pi
+    return out, new_phases
 
-def audioout(freq, amplitude):
-    if freq is None: 
-        return np.zeros(pd.vecsize())
-    else:
-        phase = pd.getglobalvar("PHASE")
-        if phase is None:
-            phase = 0.0 # set the initial value of phase in the first call of the function
-        output = np.zeros(pd.vecsize())
-        increment = (freq * 2.0 * np.pi) / pd.samplerate()
-        for i in range(pd.vecsize()):
-            output[i] = np.sin(phase) * amplitude
-            phase += increment 
-            if phase > 2 * np.pi:
-                phase -= 2 * np.pi
-        # ---------
-        pd.setglobalvar("PHASE", phase) 
-        # it saves the value of phase for the next call of the function
-        # without this, we will not have a continuous sine wave.
-        return output
 
-def audio(audio, amplitude):
-    if amplitude is None:
-        amplitude = 0.2
-    audio = np.multiply(audio, amplitude)
-    return audio
+def sinusoids(freqs, amps):  
+    vectorsize = pd.get_vec_size()
+    samplerate = pd.get_sample_rate()
+    if freqs is None or amps is None:
+        return None
+    if len(freqs) != len(amps):
+        return None
+    phases = pd.get_global_var("PHASE", initial_value=np.zeros(len(freqs)))
+    freqs = np.array(freqs, dtype=np.float64)
+    amps = np.array(amps, dtype=np.float64)
+    out, new_phases = mksenoide(freqs, amps, phases, vectorsize, samplerate)
+    pd.set_global_var("PHASE", new_phases)
+    return out
+
+
 
 
 def py4pdLoadObjects():
-    global numpyIsInstalled
-    if numpyIsInstalled:
-        pd.addobject(audioin, "audioin", objtype="AUDIOIN")
-        pd.addobject(audioout, "audioout", objtype="AUDIOOUT")
-        pd.addobject(audio, "audio", objtype="AUDIO")
+    pd.add_object(sinusoids, 'sinusoids~', objtype=pd.AUDIOOUT) 
     

@@ -1218,12 +1218,10 @@ static PyObject *Py4pdMod_PipInstall(PyObject *self, PyObject *args){
         PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: pipinstall function failed");
         return NULL;
     }
-    Py_DECREF(argTuple);
-    Py_DECREF(argsList);
-    Py_DECREF(pipInstallResult);
-    Py_DECREF(pipInstallFunction);
-    Py_DECREF(py4pdModule);
-    sys_vgui("tk_messageBox -icon warning -type ok -title \"%s installed!\" -message \"%s installed! \nYou need to restart PureData!\"\n", pipPackage, pipPackage);
+    // Py_DECREF(argsList);
+    // Py_DECREF(pipInstallResult);
+    // Py_DECREF(pipInstallFunction);
+    // Py_DECREF(py4pdModule);
     Py_RETURN_TRUE;
 }
 
@@ -1368,14 +1366,12 @@ PyMODINIT_FUNC PyInit_pd() {
         return NULL;
     }
 
-    /*
 
     if (PyType_Ready(&Py4pdNewObj_Type) < 0)
         return NULL;
 
     Py_INCREF(&Py4pdNewObj_Type);
     PyModule_AddObject(py4pdmodule, "NewObject", (PyObject *)&Py4pdNewObj_Type);
-    */
 
 
 
