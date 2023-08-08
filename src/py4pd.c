@@ -545,16 +545,18 @@ void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     if (argc != 0) {
         x->editorName = atom_getsymbol(argv + 0);
         post("[py4pd] Editor set to: %s", x->editorName->s_name);
+        char cfgFile[MAXPDSTRING];
+        const char *py4pdDir = x->py4pdPath->s_name;
+        snprintf(cfgFile, MAXPDSTRING, "%s/py4pd.cfg", py4pdDir);
+        FILE* file = fopen(cfgFile, "w");
+        fprintf(file, "editor = %s", x->editorName->s_name);
+        fclose(file);
         return;
     }
     if (x->function_called == 0) {  // if the set method was not called, then we
         pd_error(x, "[py4pd] To open the editor you need to set the function first!");
         return;
     }
-
-    // TODO: Save the editor in the py4pd.cfg file, then once saved, 
-    //      we can just read the editor from the file
-
 
     PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->function);
     int line = PyCode_Addr2Line(code, 0);
@@ -609,18 +611,10 @@ void Py4pd_ReloadPy4pdFunction(t_py *x) {
         if (pFunc && PyCallable_Check(pFunc)) {  // Check if the function exists and is callable
             x->function = pFunc;
             x->function_called = 1;
-            // get new number of python function
-            PyObject *inspect = NULL, *getfullargspec = NULL;
-            PyObject *argspec = NULL, *args = NULL;
-            inspect = PyImport_ImportModule("inspect");
-            getfullargspec = PyObject_GetAttrString(inspect, "getfullargspec");
-            argspec = PyObject_CallFunctionObjArgs(getfullargspec, pFunc, NULL);
-            args = PyObject_GetAttrString(argspec, "args");
-            x->py_arg_numbers = PyList_Size(args);
+            PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->function);
+            int argCount = code->co_argcount;
+            x->py_arg_numbers = argCount;
             post("The module was reloaded!");
-            Py_DECREF(inspect);
-            Py_DECREF(getfullargspec);
-            Py_DECREF(argspec);
             return;
         } 
         else {
@@ -1093,4 +1087,5 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class, (t_method)Py4pd_ExecuteFunction, gensym("run"), A_GIMME, 0);  // run function
     class_addmethod(py4pd_class, (t_method)Py4pd_SetFunction, gensym("set"), A_GIMME, 0);  // set function to be called
     class_addmethod(py4pd_class, (t_method)Py4pd_PrintModuleFunctions, gensym("functions"), A_GIMME, 0); 
+
 }

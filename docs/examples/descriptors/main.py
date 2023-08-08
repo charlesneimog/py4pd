@@ -6,7 +6,7 @@ from audioflux.type import SpectralFilterBankScaleType, SpectralDataType
 import numpy as np
 
 def descriptors():
-    audio_arr, sr = af.read(pd.home() + "/flute.wav")
+    audio_arr, sr = af.read(pd.get_patch_dir() + "/flute.wav")
     bft_obj = af.BFT(num=2049, samplate=sr, radix2_exp=12, slide_length=1024,
                    data_type=SpectralDataType.MAG,
                    scale_type=SpectralFilterBankScaleType.LINEAR)
@@ -24,11 +24,11 @@ def descriptors():
     times = np.arange(0, len(hfc_arr)) * (bft_obj.slide_length / bft_obj.samplate)
     fill_plot(times, hfc_arr, axes=ax[1], label='hfc')
     fill_plot(times, cen_arr, axes=ax[2], label="Centroid")
-    tempfile = pd.tempfolder() + "/descritores.png"
+    tempfile = pd.get_temp_dir() + "/descritores.png"
     plt.savefig(tempfile)
-    pd.show(tempfile)
+    pd.show_image(tempfile)
     pd.print("Data plotted")
 
 def py4pdLoadObjects():
-    pd.addobject(descriptors, "descritores", objtype="VIS", figsize=(640, 480))
+    pd.add_object(descriptors, "descritores", objtype=pd.VIS, figsize=(640, 480))
 
