@@ -3,6 +3,9 @@ import os
 import sys
 import platform
 import subprocess
+import faulthandler
+
+faulthandler.enable()
 
 package = ""
 folder = ""
@@ -146,8 +149,13 @@ def pipinstall(mypackage):
             # try to update pip
             command = ['py', f'-{major}.{minor}', '-m', 'pip', 'install', '--upgrade', 'pip']
             result = subprocess.run(command, check=False)
-            folder = f'{folder}/py-modules'
+            folder = f'{folder}/py-modules/'
+            # change all / to \
+            folder = folder.replace('/', '\\')
+
+
             command = ['py', f'-{major}.{minor}', '-m', 'pip', 'install', '--target', f"{folder}", package, '--upgrade']
+            pd.print(command)
             result = subprocess.run(command, check=False)
             if result.returncode != 0:
                 pd.error("Some error occur with Pip.")
