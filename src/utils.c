@@ -1200,8 +1200,9 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv
 */
 
 void Py4pdUtils_SetObjConfig(t_py *x) {
-    char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->pdPatchFolder->s_name) + strlen("/py-modules") + 1));  //
-    snprintf(PADRAO_packages_path, strlen(x->pdPatchFolder->s_name) + strlen("/py-modules") + 1, "%s/py-modules", x->pdPatchFolder->s_name);
+    int folderLen = strlen("/py-modules/") + 1;
+    char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->pdPatchFolder->s_name) + folderLen));  //
+    snprintf(PADRAO_packages_path, strlen(x->pdPatchFolder->s_name) + folderLen, "%s/py-modules/", x->pdPatchFolder->s_name);
     x->pkgPath = gensym(PADRAO_packages_path);
     x->runmode = 0;
     if (x->editorName == NULL){

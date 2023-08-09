@@ -1058,6 +1058,7 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     snprintf(pyGlobal_packages, strlen(x->py4pdPath->s_name) + 20, "%s/resources/py-modules", x->py4pdPath->s_name);
     PyObject *home_path = PyUnicode_FromString(x->pdPatchFolder->s_name);  // Place where script file will probably be
     PyObject *site_package = PyUnicode_FromString(x->pkgPath->s_name);  // Place where the packages will be
+    post("Package path: %s", x->pkgPath->s_name);
     PyObject *py4pdScripts = PyUnicode_FromString(pyScripts_folder);  // Place where the py4pd scripts will be
     PyObject *py4pdGlobalPackages = PyUnicode_FromString(pyGlobal_packages);  // Place where the py4pd global packages will be
     PyObject *sys_path = PySys_GetObject("path");
