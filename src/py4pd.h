@@ -335,6 +335,7 @@ typedef struct _py4pdInlet_proxy{
 
 // =====================================
 t_py4pd_pValue *Py4pdUtils_Run(t_py *x, PyObject *pArgs, t_py4pd_pValue *pValuePointer);
+void *Py4pd_ImportNumpyForPy4pd();
 
 // =====================================
 // void Py4pd_SetParametersForFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);

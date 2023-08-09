@@ -1,5 +1,8 @@
 #include "py4pd.h"
 
+#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
+#include <numpy/arrayobject.h>
+
 // ====================================================
 /*
 * @brief This function parse the arguments for pd Objects created with the library
@@ -1259,6 +1262,18 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
     free(PADRAO_packages_path);  // free memory
     Py4pdUtils_CreateTempFolder(x);
     return;
+}
+
+
+// ============================================
+/**
+ * @brief This function import the numpy module. We can not use import_array() directly, because it is a macro.
+ * @param NULL 
+ * @return It will return NULL.
+ */
+void *Py4pd_ImportNumpyForPy4pd() {
+    import_array();
+    return NULL;
 }
 
 // ========================= PYTHON ==============================

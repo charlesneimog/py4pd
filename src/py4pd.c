@@ -1,10 +1,7 @@
 #include "py4pd.h"
-#include "m_pd.h"
 
-#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
-#include <numpy/arrayobject.h>
-
-// chat gpt chat to great name functions conventions https://chat.openai.com/c/9000f606-6f15-4fd3-be89-1577c2087624
+// chat gpt chat to name functions conventions https://chat.openai.com/c/9000f606-6f15-4fd3-be89-1577c2087624
+// sorry, I do not know how to name functions
 
 // ============================================
 t_class *py4pd_class;          // For for normal objects, almost unused
@@ -28,13 +25,6 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
         pd_error(x, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
         return -1;
     }
-
-    int numpyImporter = _import_array(); // import numpy
-    if (numpyImporter < 0) {
-        pd_error(x, "[py4pd] Error importing numpy!");
-        return -1;
-    }
-
 
     t_symbol *script_file_name = atom_gensym(argv + 1);
 
@@ -908,17 +898,6 @@ static void Py4pd_Py4pdThread(t_py *x, t_floatarg f) {
     else {
         pd_error(x, "[py4pd] Invalid runmode, use 0 for normal mode and 1 for threading mode");
     }
-}
-
-// ============================================
-/**
- * @brief This function import the numpy module. We can not use import_array() directly, because it is a macro.
- * @param NULL 
- * @return It will return NULL.
- */
-void *Py4pd_ImportNumpyForPy4pd() {
-    import_array();
-    return NULL;
 }
 
 // ============================================
