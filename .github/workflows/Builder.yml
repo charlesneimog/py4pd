@@ -1,4 +1,4 @@
-name: Make Release Folder
+name: Builder
 on:
   # just one develop commit
   push:
@@ -10,11 +10,7 @@ on:
       - '**/*.yml'
 
   workflow_dispatch:
-    inputs:
-      justlinux:
-        description: 'Just Linux'
-        required: false
-        default: 'false'
+
 
 jobs:  
   # ==============================================================================
@@ -88,21 +84,31 @@ jobs:
         submodules: recursive
         fetch-depth: 0
 
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
     - name: set Enviroment
       run: |
         brew install --cask pd
-        python3.10 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
-        python3.10 -m pip install numpy
+        python3.11 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
+        python3.11 -m pip install numpy
         mkdir py4pd
 
     - name: Build
-      run: make PYTHON_VERSION=python3.10 extension=d_amd64
+      run: make PYTHON_VERSION=python3.11 extension=d_amd64
 
     - name: Copy files to py4pd
       run: |
         cp py4pd.d_amd64 py4pd
+        cp py4pd.d_amd64 test
 
-
+    - name: Simples Tests
+      run: |
+        cd test
+        python3.11 ./runTests.py
+    
     - name: Upload Object
       uses: actions/upload-artifact@v3
       with:
@@ -123,20 +129,23 @@ jobs:
         submodules: recursive
         fetch-depth: 0
 
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
     - name: set Enviroment
       run: |
         brew install --cask pd
-        python3.10 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
-        python3.10 -m pip install numpy
+        python3.11 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
+        python3.11 -m pip install numpy
         mkdir py4pd
 
     - name: Build
-      run: make PYTHON_VERSION=python3.10 extension=d_arm64
+      run: make PYTHON_VERSION=python3.11 extension=d_arm64
 
     - name: Copy files to py4pd
       run: |
         cp py4pd.d_arm64 py4pd
-
 
     - name: Upload Object
       uses: actions/upload-artifact@v3
@@ -193,7 +202,6 @@ jobs:
 
       - name: Tests
         continue-on-error: true
-        #python3.11 ./runTests.py
         run: |
           cp -r ./py4pd/* test
           cd test
