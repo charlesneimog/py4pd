@@ -1045,6 +1045,7 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     x->object_number = object_count;  // save object number
     x->pdPatchFolder = patch_dir; // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
+
     Py4pdUtils_SetObjConfig(x);          // set the config file (in py4pd.cfg, make this be
     if (argc > 1) {             // check if there are two arguments
         Py4pd_SetFunction(x, s, argc, argv);
