@@ -30,7 +30,7 @@
 
 #define PY4PD_MAJOR_VERSION 0
 #define PY4PD_MINOR_VERSION 8
-#define PY4PD_MICRO_VERSION 0
+#define PY4PD_MICRO_VERSION 1
 
 #ifdef _WIN32
     #include <windows.h>

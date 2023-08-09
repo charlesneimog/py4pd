@@ -1,4 +1,3 @@
-#include "m_pd.h"
 #include "py4pd.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
@@ -318,8 +317,7 @@ void Py4pdLib_Pointer(t_py *x, t_symbol *s, t_gpointer *gp){
     pArg = (t_py4pd_pValue *)gp;
     pArg->objectsUsing++;
 
-    if (x->objType == PY4PD_AUDIOOUTOBJ){
-        // The thing my be copied
+    if (x->objType > PY4PD_AUDIOINOBJ){
         pArg = (t_py4pd_pValue *)gp;
         if (!pArg->pdout)
             Py_DECREF(x->pyObjArgs[0]->pValue);
@@ -568,7 +566,7 @@ t_int *Py4pdLib_AudioOUTPerform(t_int *w) {
     }
     pValue = Py4pdUtils_RunPy(x, x->pArgTuple, NULL);
     if (Py_IsNone(pValue)){
-        Py_DECREF(pValue);
+        Py_XDECREF(pValue);
         return (w + 4);
     }
     Py4pdLib_Audio2PdAudio(x, pValue, audioOut, numChannels, n); 

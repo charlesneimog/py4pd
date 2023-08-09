@@ -21,6 +21,7 @@ try:
 
 except Exception as e:
     pd.pip_install("local", "numba")
+    from numba import jit
 
 
 

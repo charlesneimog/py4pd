@@ -239,6 +239,8 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
             }
         }
 
+
+
         if (pValue == NULL) {
             PyObject *ptype, *pvalue, *ptraceback;
             PyErr_Fetch(&ptype, &pvalue, &ptraceback);
@@ -323,20 +325,62 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     PyObject *argsList = PyList_New(2);
     PyList_SetItem(argsList, 0, Py_BuildValue("s", localORglobal));
     PyList_SetItem(argsList, 1, Py_BuildValue("s", pipPackage));
-    PyObject *argTuple = Py_BuildValue("(O)", argsList);
+    PyObject *argTuple = PyTuple_New(1);
+    PyTuple_SetItem(argTuple, 0, argsList);
     
-    PyObject *pipInstallResult = Py4pdUtils_RunPy(x, argTuple, NULL);
-    if (pipInstallResult == NULL) {
-        x->function = ObjFunction;
-        Py_DECREF(argTuple);
-        Py_DECREF(pipInstallResult);
-        Py_DECREF(pipInstallFunction);
-        Py_DECREF(py4pdModule);
+    t_py *prev_obj = NULL;
+    int prev_obj_exists = 0;
+    PyObject *MainModule = PyImport_ImportModule("pd");
+    PyObject *oldObjectCapsule;
+
+    if (MainModule != NULL) {
+        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        if (oldObjectCapsule != NULL) {
+            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
+            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+            prev_obj_exists = 1;
+        }
+        else {
+            prev_obj_exists = 0;
+        }
+    }
+
+    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
+
+    if (objectCapsule == NULL){
+        pd_error(x, "[Python] Failed to add object to Python");
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyObject *ptype_str = PyObject_Str(ptype);
+        PyObject *pvalue_str = PyObject_Str(pvalue);
+        PyObject *ptraceback_str = PyObject_Str(ptraceback);
+        const char *ptype_c = PyUnicode_AsUTF8(ptype_str);
+        const char *pvalue_c = PyUnicode_AsUTF8(pvalue_str);
+        const char *ptraceback_c = PyUnicode_AsUTF8(ptraceback_str);
+        pd_error(x, "[Python] %s: %s\n%s", ptype_c, pvalue_c, ptraceback_c);
+        return;
+    }
+
+
+    PyObject *pValue = PyObject_CallObject(pipInstallFunction, argTuple);
+    
+    if (prev_obj_exists == 1 && pValue != NULL) {
+        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
+        if (objectCapsule == NULL){
+            pd_error(x, "[Python] Failed to add object to Python");
+            return;
+        }
+    }
+
+
+
+    if (pValue == NULL) {
+        pd_error(x, "[Python] pipInstall: pipinstall function failed");
         return;
     }
     x->function = ObjFunction;
     Py_DECREF(argTuple);
-    Py_DECREF(pipInstallResult);
+    Py_DECREF(pValue);
     Py_DECREF(pipInstallFunction);
     Py_DECREF(py4pdModule);
     sys_vgui("tk_messageBox -icon warning -type ok -title \"%s installed!\" -message \"%s installed! \nYou need to restart PureData!\"\n", pipPackage, pipPackage);
