@@ -20,7 +20,7 @@ def runTest(pdpatch):
         else:
             print('PureData Object not found')
             sys.exit()
-        output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+        output = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=60)
         outputLines = str(output).split('\\n')
         
     elif platform.system() == 'Windows':
@@ -48,7 +48,7 @@ def runTest(pdpatch):
             sys.exit()
 
         cmd = '/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -send "start-test bang" ' + pathfile
-        output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+        output = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=60)
         outputLines = str(output).split('\\n')
     else:
         print('OS not supported')
