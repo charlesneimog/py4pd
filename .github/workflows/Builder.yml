@@ -233,8 +233,8 @@ jobs:
       - name: Tests
         continue-on-error: true
         run: |
-          
-          cp -r ./py4pd/* test/py4pd
+          mkdir -p test/py4pd
+          cp -r ./py4pd/* test/
           cd test
           ls -l
           
