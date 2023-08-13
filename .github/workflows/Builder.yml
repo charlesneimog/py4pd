@@ -16,7 +16,7 @@ on:
         description: 'Build for Windows'
         required: false
         type: boolean
-        default: true
+        default: false
         
       macos-intel:
         description: 'Build for Mac Intel'
@@ -187,7 +187,8 @@ jobs:
   # ==============================================================================
 
   linux-build:
-    if: ${{ github.event.inputs.linux == true }}
+    # true or not set
+    if: ${{ github.event.inputs.linux == true || github.event.inputs.linux == null }} 
     runs-on: ubuntu-latest
     timeout-minutes: 5 
     steps:
