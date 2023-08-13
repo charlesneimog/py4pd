@@ -241,7 +241,6 @@ jobs:
           
           cp -r py4pd test
           cd test
-          pip install numpy numba --target ./py-modules
           python ./runTests.py
                     
       - name: Upload Object

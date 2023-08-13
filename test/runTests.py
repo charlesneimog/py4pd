@@ -20,6 +20,14 @@ def runTest(pdpatch):
         else:
             print('PureData Object not found')
             sys.exit()
+        
+        value_of_os = os.system(cmd)
+        if value_of_os == 0:
+            print("\033[92m" + ' Test with ' + pdpatch + ' passed' + "\033[0m")
+        else:
+            print("\033[91m" + ' Test with ' + pdpatch + ' failed' + "\033[0m")
+            sys.exit()
+        
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
         
