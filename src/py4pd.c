@@ -990,18 +990,6 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         }
     }
     
-    // INIT PYTHON
-    if (!Py_IsInitialized()) {
-        object_count = 0; 
-        post("");
-        post("[py4pd] by Charles K. Neimog");
-        post("[py4pd] Version %d.%d.%d", PY4PD_MAJOR_VERSION, PY4PD_MINOR_VERSION, PY4PD_MICRO_VERSION);
-        post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
-        post("");
-        PyImport_AppendInittab("pd", PyInit_pd);  
-        Py_Initialize();  
-    }
-
     // =================
     // INIT PY4PD OBJECT
     // =================
@@ -1088,7 +1076,7 @@ void py4pd_setup(void) {
                   (t_method)Py4pdLib_FreeObj,    // quando voce deleta o objeto
                   sizeof(t_py),  // quanta memoria precisamos para esse objeto
                   0,             // nao há uma GUI especial para esse objeto???
-                  A_GIMME,       // os argumentos são um símbolo
+                  A_GIMME,       // os podem ser qualquer coisa
                   0);            // fim de argumentos
     py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)Py4pd_Py4pdNew, (t_method)Py4pdLib_FreeObj, sizeof(t_py), CLASS_NOINLET, A_GIMME, 0);
 
@@ -1113,4 +1101,20 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class, (t_method)Py4pd_SetFunction, gensym("set"), A_GIMME, 0);  // set function to be called
     class_addmethod(py4pd_class, (t_method)Py4pd_PrintModuleFunctions, gensym("functions"), A_GIMME, 0); 
 
+    // test functions
+    #if PYTHON_REQUIRED_VERSION(3, 12)
+        class_addmethod(py4pd_class, (t_method)Py4pdUtils_CreatePythonInterpreter, gensym("detach"), 0); 
+    #endif
+
+    // INIT PYTHON
+    if (!Py_IsInitialized()) {
+        object_count = 0; 
+        post("");
+        post("[py4pd] by Charles K. Neimog");
+        post("[py4pd] Version %d.%d.%d", PY4PD_MAJOR_VERSION, PY4PD_MINOR_VERSION, PY4PD_MICRO_VERSION);
+        post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
+        post("");
+        PyImport_AppendInittab("pd", PyInit_pd);  
+        Py_Initialize();  
+    }
 }

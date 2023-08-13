@@ -33,7 +33,6 @@ def runTest(pdpatch):
         else:
             print(f'Patch {pathfile} not found')
             sys.exit()
-        os.system(f'cmd /c "\"C://Program Files//Pd//bin//pd.exe\" -send \"start-test bang\" \"{pathfile}\""')
         output = subprocess.run(f'"C:\\Program Files\\Pd\\bin\\pd.exe" -nogui -send "start-test bang" "{pathfile}"', capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
     elif platform.system() == 'Darwin':

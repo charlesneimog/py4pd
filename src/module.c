@@ -1111,6 +1111,14 @@ static PyObject *Py4pdMod_PdZoom(PyObject *self, PyObject *args) {
 }
 
 // =================================
+static PyObject *Py4pdMod_PdHasGui(PyObject *self, PyObject *args) {
+    (void)self;
+    (void)args;
+
+    return PyLong_FromLong(sys_havegui());
+}
+
+// =================================
 // ========== Utilities ============
 // =================================
 
@@ -1275,6 +1283,38 @@ static PyObject *Py4pdMod_PipInstall(PyObject *self, PyObject *args){
     
 }
 
+
+// =================================
+// ========= MODULE INIT ===========
+// =================================
+
+
+#if PYTHON_REQUIRED_VERSION(3, 12)
+
+static int _pd_create(PyObject *m){
+    (void)m;
+    return 0;
+}
+
+
+static int _pd_modexec(PyObject *m){
+    (void)m;
+    return 0;
+}
+
+
+static PyModuleDef_Slot _memoryboard_slots[] = {
+    {Py_mod_create, _pd_create},
+    {Py_mod_exec, _pd_modexec},
+    {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
+    {0, NULL}
+};
+
+
+#endif
+
+
+
 // =================================
 static PyObject *pdmoduleError;
 
@@ -1306,6 +1346,7 @@ PyMethodDef PdMethods[] = {
     {"get_sample_rate", Py4pdMod_PdSampleRate, METH_NOARGS, "Get PureData SampleRate"},
     {"get_vec_size", Py4pdMod_PdVecSize, METH_NOARGS, "Get PureData Vector Size"}, 
     {"get_num_channels", Py4pdMod_ObjNChannels, METH_NOARGS, "Return the amount of channels in the object"}, 
+    {"pd_has_gui", Py4pdMod_PdHasGui, METH_NOARGS, "Return True of False if pd has or no gui"},
 
     {"get_patch_zoom", Py4pdMod_PdZoom, METH_NOARGS, "Get Patch zoom"},
     {"get_outlet_count", Py4pdMod_PdGetOutCount, METH_NOARGS, "Get the Number of Outlets of one object."},
@@ -1329,7 +1370,7 @@ PyMethodDef PdMethods[] = {
 
     // player
     {"add_to_player", (PyCFunction)Py4pdMod_AddThingToPlay, METH_VARARGS | METH_KEYWORDS, "It adds a thing to the player"},
-    {"clear_player", Py4pdMod_ClearPlayer, METH_NOARGS, "Get PureData Object Pointer"},
+    {"clear_player", Py4pdMod_ClearPlayer, METH_NOARGS, "Remove all Python Objects of the player."},
 
     // Internal
     {"_recursive", Py4pdMod_PdRecursiveCall, METH_VARARGS, "It calls a function recursively"},
@@ -1346,7 +1387,14 @@ static struct PyModuleDef pdmodule = {
     .m_doc = "pd module provide function to interact with PureData, see the docs in www.charlesneimog.com/py4pd",
     .m_size = 0,   /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
     .m_methods = PdMethods,  // Methods of the module
-    .m_slots = NULL, /* m_slots, that is the slots for multi-phase initialization */
+
+
+    #if PYTHON_REQUIRED_VERSION(3, 12)
+        .m_slots = _memoryboard_slots,
+    #endif
+
+
+
     .m_traverse = NULL, /* m_traverse, that is the traverse function for GC */
     .m_clear = NULL, /* m_free, that is the free function for GC */
 };
@@ -1423,10 +1471,7 @@ PyMODINIT_FUNC PyInit_pd() {
     Py_INCREF(&Py4pdNewObj_Type);
     PyModule_AddObject(py4pdmodule, "NewObject", (PyObject *)&Py4pdNewObj_Type);
 
-
-
-
     return py4pdmodule;
 }
 
-// =============================
+// ============================

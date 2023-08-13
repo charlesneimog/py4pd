@@ -17,7 +17,6 @@ on:
         required: false
         type: boolean
         default: false
-        
       macos-intel:
         description: 'Build for Mac Intel'
         required: false

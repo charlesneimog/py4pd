@@ -53,6 +53,7 @@ void Py4pdLib_ReloadObject(t_py *x){
 
 // ===========================================
 void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b){ 
+
     t_py *x = (t_py *)z;
     if (x->visMode){
         binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->obj.te_xpix, x->obj.te_ypix);
@@ -1002,7 +1003,7 @@ PyObject* Py4pdLib_AddObj(PyObject* self, PyObject* args, PyObject* keywords) {
         }
         class_addmethod(localClass, (t_method)Py4pdPic_Zoom, gensym("zoom"), A_CANT, 0);
         class_addmethod(localClass, (t_method)Py4pd_SetPythonPointersUsage, gensym("pointers"), A_FLOAT, 0);
-        class_setsavefn(localClass, &Py4pdLib_Py4pdObjPicSave);
+        // class_setsavefn(localClass, &Py4pdLib_Py4pdObjPicSave);
     }
     // AUDIOIN
     else if (objectType == PY4PD_AUDIOINOBJ){

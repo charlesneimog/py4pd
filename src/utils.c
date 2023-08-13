@@ -1306,9 +1306,90 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x) {
     return objectCapsule;
 }
 
+// ========================= THREAD INTERPRETER ====================
+
+// just if python version if 3.12 or higher
+#if PYTHON_REQUIRED_VERSION(3, 12)
+
+struct ThreadArgs {
+    int start;
+    int sleep_time;
+    PyObject *pFunc;
+    PyObject *pArgs;
+    PyObject *pValue;
+};
+
+// =================================================================
+void *thread_function(void *arg) {
+    (void)arg;
+
+    post("ok");
+    PyRun_SimpleString("import time");
+    PyRun_SimpleString("time.sleep(10)");
+    post("ok");
 
 
+    return NULL;
+}
+
+
+// ===============================================================
+/* 
+ * @brief This function will create a new Python interpreter and initialize it.
+ * @param x is the py4pd object
+ * @return It will return 0 if the interpreter was created successfully, otherwise it will return 1.
+ */
+void Py4pdUtils_CreatePythonInterpreter(t_py* x) {
+    
+    if (x->function == NULL) {
+        pd_error(x, "[Python] No function defined");
+        return;
+    }
+
+    PyInterpreterConfig config = {
+        .check_multi_interp_extensions = 0,
+        .gil = PyInterpreterConfig_OWN_GIL,
+    };
+
+    PyThreadState *tstate = NULL;
+
+    post("before new interpreter");
+    PyStatus status = Py_NewInterpreterFromConfig(&tstate, &config);
+    post("after new interpreter");
+    if (PyStatus_Exception(status)) {
+        _PyErr_SetFromPyStatus(status);
+        PyObject *exc = PyErr_GetRaisedException();
+        PyErr_SetString(PyExc_RuntimeError, "interpreter creation failed");
+        _PyErr_ChainExceptions1(exc);
+        return;
+    }
+    else{
+        post("ok");
+    }
+    
+
+    // create thread_function
+    pthread_t thread_id;
+    pthread_create(&thread_id, NULL, thread_function, NULL);
+
+
+
+
+
+
+
+
+
+
+
+    return;
+}
+
+#endif
+
+// ============================================================
 // ========================= GIF ==============================
+// ============================================================
 void Py4pdUtils_CreatePicObj(t_py *x, PyObject* PdDict, t_class *object_PY4PD_Class, int argc, t_atom *argv) {
     t_canvas *c = x->canvas;
     PyObject *pyLibraryFolder = PyDict_GetItemString(PdDict, "py4pdOBJLibraryFolder");
