@@ -10,22 +10,28 @@ on:
       - '**/*.yml'
 
   workflow_dispatch:
+    # make one checkbox for each platform
     inputs:
-      windows: 
+      windows:
         description: 'Build for Windows'
         required: false
-        default: false
+        type: boolean
+        default: true
+        
       macos-intel:
         description: 'Build for Mac Intel'
         required: false
+        type: boolean
         default: false
       macos-arm:
         description: 'Build for Mac ARM'
         required: false
+        type: boolean
         default: false
       linux:
         description: 'Build for Linux'
         required: false
+        type: boolean
         default: true
 
 jobs:  
@@ -34,7 +40,7 @@ jobs:
   # ==============================================================================
   windows-build:
     # if just linux is true, skip windows
-    if: ${{ github.event.inputs.windows == 'true' || github.event.inputs.windows == 'True' }}
+    if: ${{ github.event.inputs.windows == true }}
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
@@ -96,7 +102,7 @@ jobs:
   # =                               MAC INTEL                                    =
   # ==============================================================================
   macos-intel-build:
-    if: ${{ github.event.inputs.macos-intel == 'true' || github.event.inputs.macos-intel == 'True' }}
+    if: ${{ github.event.inputs.macos-intel == true }}
     runs-on: macos-latest
     timeout-minutes: 15
     steps:
@@ -141,7 +147,7 @@ jobs:
   # =                               MAC ARM                                      =
   # ==============================================================================
   macos-arm-build:
-    if: ${{ github.event.inputs.macos-arm == 'true' || github.event.inputs.macos-arm == 'True' }}
+    if: ${{ github.event.inputs.macos-arm == true }}
     runs-on: macos-latest
     timeout-minutes: 10
 
@@ -181,7 +187,7 @@ jobs:
   # ==============================================================================
 
   linux-build:
-    if: ${{ github.event.inputs.linux == 'true' || github.event.inputs.linux == 'True' }}
+    if: ${{ github.event.inputs.linux == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 5 
     steps:
