@@ -228,19 +228,17 @@ jobs:
         run: |
           mkdir py4pd
           cp py4pd.l_amd64 resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd
-          mkdir py4pd/resources
-          mkdir py4pd/src
-          cp resources/* py4pd/resources -r
-          cp src/* py4pd/src -r
+          cp -r resources py4pd 
+          cp -r src py4pd
           find py4pd/src -name "*.o" -type f -delete
           cp resources/README.deken.pd py4pd 
 
       - name: Tests
         continue-on-error: true
         run: |
-          
           cp -r py4pd test
           cd test
+          ls -l py4pd/resources/scripts/
           python ./runTests.py
                     
       - name: Upload Object
