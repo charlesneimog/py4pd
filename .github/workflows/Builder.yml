@@ -188,7 +188,6 @@ jobs:
 
   linux-build:
     # true or not set
-    if: ${{ github.event.inputs.linux == true || github.event.inputs.linux == null }} 
     runs-on: ubuntu-latest
     timeout-minutes: 5 
     steps:
