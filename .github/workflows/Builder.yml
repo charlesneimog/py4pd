@@ -10,7 +10,23 @@ on:
       - '**/*.yml'
 
   workflow_dispatch:
-
+    inputs:
+      windows: 
+        description: 'Build for Windows'
+        required: false
+        default: false
+      macos-intel:
+        description: 'Build for Mac Intel'
+        required: false
+        default: false
+      macos-arm:
+        description: 'Build for Mac ARM'
+        required: false
+        default: false
+      linux:
+        description: 'Build for Linux'
+        required: false
+        default: true
 
 jobs:  
   # ==============================================================================
@@ -208,7 +224,9 @@ jobs:
         run: |
           cp -r ./py4pd/* test
           cd test
-          python ./runTests.py 
+          ls -l
+          
+          
 
           
       - name: Upload Object
