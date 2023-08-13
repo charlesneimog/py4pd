@@ -235,7 +235,7 @@ jobs:
         run: |
           cp -r py4pd test
           cd test
-          ls -l
+          python ./runTests.py
           
           
 
