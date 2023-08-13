@@ -199,7 +199,14 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'       
-          
+         
+      - name: print github.event.inputs.linux
+        run: |
+          echo ${{ github.event.inputs.linux }}
+          echo ${{ github.event.inputs.linux == true }}
+          echo ${{ github.event.inputs.linux == null }}
+          echo ${{ github.event.inputs.linux == false }}
+
       - name: Install Build Dependencies
         run: |
           PD_URL=$(curl -L -s https://api.github.com/repos/pure-data/pure-data/tags | grep zipball_url | grep -v latest | grep -v pd-0.52 | grep -v tagtest | head -n 1 | cut -d '"' -f 4)
@@ -236,10 +243,7 @@ jobs:
           cp -r py4pd test
           cd test
           python ./runTests.py
-          
-          
-
-          
+                    
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
