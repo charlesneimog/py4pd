@@ -47,7 +47,7 @@ def runTest(pdpatch):
             print(f'Patch {pathfile} not found')
             sys.exit()
 
-        cmd = '/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -send "start-test bang" ' + pathfile
+        cmd = '/Applications/Pd-*.app/Contents/Resources/bin/pd -nogui -stderr -send "start-test bang" ' + pathfile
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=60)
         outputLines = str(output).split('\\n')
     else:

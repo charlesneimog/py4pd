@@ -208,7 +208,8 @@ jobs:
         run: |
           cp -r ./py4pd/* test
           cd test
-          pd -nogui -send "start-test bang" /home/runner/work/py4pd/py4pd/test/01-Install-modules.pd
+          python ./runTests.py 
+
           
       - name: Upload Object
         uses: actions/upload-artifact@v3

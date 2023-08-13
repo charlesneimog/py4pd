@@ -29,12 +29,12 @@ def sinusoids(freqs, amps):
     if len(freqs) != len(amps):
         return None
 
-    phases = pd.getglobalvar("PHASE", initial_value=np.zeros(len(freqs)))
+    phases = pd.get_global_var("PHASE", initial_value=np.zeros(len(freqs)))
     freqs = np.array(freqs, dtype=np.float64)
     amps = np.array(amps, dtype=np.float64)
-    out, new_phases = mksenoide(freqs, amps, phases, 64, pd.samplerate())
+    out, new_phases = mksenoide(freqs, amps, phases, 64, pd.get_sample_rate())
     pd.print("Shape: %f | Dim: %f" % (out.shape[0], out.ndim))
-    pd.setglobalvar("PHASE", new_phases)
+    pd.set_global_var("PHASE", new_phases)
     return out
 
 # ============================================
@@ -42,5 +42,5 @@ def sinusoids(freqs, amps):
 # ============================================
 
 def py4pdLoadObjects():
-    pd.addobject(sinusoids, 'sinusoids~', objtype=pd.AUDIOOUT) 
+    pd.add_object(sinusoids, 'sinusoids~', objtype=pd.AUDIOOUT) 
 
