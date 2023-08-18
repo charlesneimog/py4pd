@@ -207,7 +207,6 @@ static int Py4pdLib_CreateObjInlets(PyObject* function, t_py *x, int argc, t_ato
                 // else{
                 //     Py_INCREF(Py_None);
                 //     x->pyObjArgs[i]->pValue = Py_None;
-                
                 // }
                 
             }
