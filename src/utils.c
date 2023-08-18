@@ -21,21 +21,29 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
     t_atom *argv = *argvPtr;
 
     int i, j;
+
+    int skipNext = 0;
+
     for (i = 0; i < argc; i++) {
+        if (skipNext) {
+            skipNext = 0; // Reset the flag
+            continue; // Skip the current iteration of the loop
+        }
+
         if (argv[i].a_type == A_SYMBOL) {
             if (strcmp(argv[i].a_w.w_symbol->s_name, "-n_args") == 0 || strcmp(argv[i].a_w.w_symbol->s_name, "-a") == 0) {
                 if (i + 1 < argc) {
                     if (argv[i + 1].a_type == A_FLOAT) {
                         x->py_arg_numbers = (int)argv[i + 1].a_w.w_float;
                         argsNumberDefined = 1;
-                        i++;
+                        skipNext = 1;
                     }
                 }
             }
             else if (strcmp(argv[i].a_w.w_symbol->s_name, "-outn") == 0){
                 if (argv[i + 1].a_type == A_FLOAT) {
                     x->x_numOutlets = (int)argv[i + 1].a_w.w_float - 1;
-                    i++;
+                    skipNext = 1;
                 }
                 else{
                     x->x_numOutlets = -1; // -1 means that the number of outlets is not defined
@@ -45,7 +53,7 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
                     || strcmp(argv[i].a_w.w_symbol->s_name, "-channels") == 0){
                 if (argv[i + 1].a_type == A_FLOAT) {
                     x->n_channels = (int)argv[i + 1].a_w.w_float;
-                    i++;
+                    skipNext = 1;
                 }
             }
         }
