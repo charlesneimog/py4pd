@@ -27,7 +27,7 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
             if (strcmp(argv[i].a_w.w_symbol->s_name, "-n_args") == 0 || strcmp(argv[i].a_w.w_symbol->s_name, "-a") == 0) {
                 if (i + 1 < argc) {
                     if (argv[i + 1].a_type == A_FLOAT) {
-                        x->py_arg_numbers = (int)argv[i + 1].a_w.w_float;
+                        x->py_arg_numbers = atom_getintarg(i + 1, argc, argv);
                         argsNumberDefined = 1;
                         for (j = i; j < argc; j++) {
                             argv[j] = argv[j + 2];
@@ -39,7 +39,7 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
             }
             else if (strcmp(argv[i].a_w.w_symbol->s_name, "-outn") == 0){
                 if (argv[i + 1].a_type == A_FLOAT) {
-                    x->x_numOutlets = (int)argv[i + 1].a_w.w_float - 1;
+                    x->x_numOutlets = atom_getintarg(i + 1, argc, argv);
                     // remove -outn and the number of outlets from the arguments list
                     for (j = i; j < argc; j++) {
                         argv[j] = argv[j + 2];
@@ -54,7 +54,7 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
             else if (strcmp(argv[i].a_w.w_symbol->s_name, "-ch") == 0 
                     || strcmp(argv[i].a_w.w_symbol->s_name, "-channels") == 0){
                 if (argv[i + 1].a_type == A_FLOAT) {
-                    x->n_channels = (int)argv[i + 1].a_w.w_float;
+                    x->n_channels = atom_getintarg(i + 1, argc, argv);
                     for (j = i; j < argc; j++) {
                         argv[j] = argv[j + 2];
                         (*argvPtr)[j] = (*argvPtr)[j + 2];
@@ -997,6 +997,7 @@ inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct, t_out
             pValue_i = PyList_GetItem(pValue, i); // borrowed reference
             if (PyLong_Check(pValue_i)) {  // If the function return a list of integers
                 float result = (float)PyLong_AsLong(pValue_i); 
+                // TODO: Fix this with SETFLOAT
                 list_array[listIndex].a_type = A_FLOAT;
                 list_array[listIndex].a_w.w_float = result;
                 listIndex++;
@@ -1131,6 +1132,7 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv
                 Py4pdUtils_RemoveChar(str, ']');
                 int isNumeric = Py4pdUtils_IsNumericOrDot(str);
                 _PyTuple_Resize(&ArgsTuple, argCount + 1);
+                 // TODO: This is old code, fix it!
                 if (isNumeric == 1) {
                     if (strchr(str, '.') != NULL) {
                         PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atof(str)));
@@ -1155,6 +1157,7 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv
                 if (listStarted == 1) {
                     char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
                     strcpy(str, argv[i].a_w.w_symbol->s_name);
+                    // TODO: This is old code, fix it!
                     int isNumeric = Py4pdUtils_IsNumericOrDot(str);
                     if (isNumeric == 1) {
                         if (strchr(str, '.') != NULL) {
@@ -1178,11 +1181,11 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv
         } 
         else {
             if (listStarted == 1) {
-                PyList_Append(listsArrays[listCount], PyFloat_FromDouble(argv[i].a_w.w_float));
+                PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atom_getfloatarg(i, argc, argv)));
             } 
             else {
                 _PyTuple_Resize(&ArgsTuple, argCount + 1);
-                PyTuple_SetItem(ArgsTuple, argCount, PyFloat_FromDouble(argv[i].a_w.w_float));
+                PyTuple_SetItem(ArgsTuple, argCount, PyFloat_FromDouble(atom_getfloatarg(i, argc, argv)));
                 argCount++;
             }
         }
@@ -1401,10 +1404,10 @@ void Py4pdUtils_CreatePicObj(t_py *x, PyObject* PdDict, t_class *object_PY4PD_Cl
     x->x_height = PyLong_AsLong(py4pdOBJheight);
     if (argc > 1) {
         if (argv[0].a_type == A_FLOAT) {
-            x->x_width = argv[0].a_w.w_float;
+            x->x_width = atom_getfloatarg(0, argc, argv);
         }
         if (argv[1].a_type == A_FLOAT) {
-            x->x_height = argv[1].a_w.w_float;
+            x->x_height = atom_getfloatarg(1, argc, argv);
         }
     }
 
