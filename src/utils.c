@@ -20,30 +20,32 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
     int argc = *argcPtr;
     t_atom *argv = *argvPtr;
 
+
     int i, j;
-
-    int skipNext = 0;
-
     for (i = 0; i < argc; i++) {
-        if (skipNext) {
-            skipNext = 0; // Reset the flag
-            continue; // Skip the current iteration of the loop
-        }
-
         if (argv[i].a_type == A_SYMBOL) {
             if (strcmp(argv[i].a_w.w_symbol->s_name, "-n_args") == 0 || strcmp(argv[i].a_w.w_symbol->s_name, "-a") == 0) {
                 if (i + 1 < argc) {
                     if (argv[i + 1].a_type == A_FLOAT) {
                         x->py_arg_numbers = (int)argv[i + 1].a_w.w_float;
                         argsNumberDefined = 1;
-                        skipNext = 1;
+                        for (j = i; j < argc; j++) {
+                            argv[j] = argv[j + 2];
+                            (*argvPtr)[j] = (*argvPtr)[j + 2];
+                            // *argcPtr = *argcPtr - 2;
+                        }
                     }
                 }
             }
             else if (strcmp(argv[i].a_w.w_symbol->s_name, "-outn") == 0){
                 if (argv[i + 1].a_type == A_FLOAT) {
                     x->x_numOutlets = (int)argv[i + 1].a_w.w_float - 1;
-                    skipNext = 1;
+                    // remove -outn and the number of outlets from the arguments list
+                    for (j = i; j < argc; j++) {
+                        argv[j] = argv[j + 2];
+                        (*argvPtr)[j] = (*argvPtr)[j + 2];
+                        // *argcPtr = *argcPtr - 2;
+                    }
                 }
                 else{
                     x->x_numOutlets = -1; // -1 means that the number of outlets is not defined
@@ -53,12 +55,13 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
                     || strcmp(argv[i].a_w.w_symbol->s_name, "-channels") == 0){
                 if (argv[i + 1].a_type == A_FLOAT) {
                     x->n_channels = (int)argv[i + 1].a_w.w_float;
-                    skipNext = 1;
+                    for (j = i; j < argc; j++) {
+                        argv[j] = argv[j + 2];
+                        (*argvPtr)[j] = (*argvPtr)[j + 2];
+                        // *argcPtr = *argcPtr - 2;
+                    }
                 }
             }
-        }
-        else{
-            
         }
     }
     if (code->co_flags & CO_VARARGS) {
@@ -426,31 +429,22 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
 
     if (x->pyObject){
         sprintf(completePath, "'%s'", filename);
-        
     }
     else if(x->py4pd_lib){
         PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(x->function);
         t_symbol *script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
         sprintf(completePath, "'%s'", script_name->s_name);
-       
-
     }
     else{
-        #ifdef _WIN64
-            sprintf(completePath, "'%s\\%s.py'", home, filename);
-        #else
-            sprintf(completePath, "'%s/%s.py'", home, filename);
-        #endif
+        sprintf(completePath, "'%s/%s.py'", home, filename);
     }
 
     
+
+
     // check if there is .py in filename
     if (strcmp(editor, PY4PD_EDITOR) == 0) {
-        #ifdef _WIN64
-            sprintf(command, "py -%d.%d -m idlelib %s", PY_MAJOR_VERSION, PY_MINOR_VERSION, completePath);
-        #else
-            sprintf(command, "idle%d.%d %s", PY_MAJOR_VERSION, PY_MINOR_VERSION, completePath);
-        #endif
+        sprintf(command, "%s %s", PY4PD_EDITOR, completePath);
     } 
     else if (strcmp(editor, "vscode") == 0) {
         sprintf(command, "code -g '%s:%d'", completePath, line);
@@ -517,20 +511,6 @@ void Py4pdUtils_ExecuteSystemCommand(const char *command) {
             pd_error(NULL, "[py4pd] Failed to execute command: %s", command);
             return;
         }
-        else{
-            DWORD exitCode;
-            GetExitCodeProcess(sei.hProcess, &exitCode);
-            if (exitCode != 0) {
-                pd_error(NULL, "[py4pd] Failed to execute command: %s", command);
-                return;
-            }
-            else{
-                post("[py4pd] Command executed successfully: %s", command);
-                return;
-            }
-        }
-
-
         return;
     #else
         int result = system(command);
