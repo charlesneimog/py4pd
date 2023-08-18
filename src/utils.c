@@ -18,8 +18,8 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
     x->n_channels = 1;
 
     int argc = *argcPtr;
+    post("argc is %d", argc);
     t_atom *argv = *argvPtr;
-
 
     int i, j;
     for (i = 0; i < argc; i++) {
@@ -29,24 +29,14 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
                     if (argv[i + 1].a_type == A_FLOAT) {
                         x->py_arg_numbers = (int)argv[i + 1].a_w.w_float;
                         argsNumberDefined = 1;
-                        for (j = i; j < argc; j++) {
-                            argv[j] = argv[j + 2];
-                            i++;
-                            // (*argvPtr)[j] = (*argvPtr)[j + 2];
-                            // *argcPtr = *argcPtr - 2;
-                        }
+                        argc -= 2; argv += 2;
                     }
                 }
             }
             else if (strcmp(argv[i].a_w.w_symbol->s_name, "-outn") == 0){
                 if (argv[i + 1].a_type == A_FLOAT) {
                     x->x_numOutlets = (int)argv[i + 1].a_w.w_float - 1;
-                    // remove -outn and the number of outlets from the arguments list
-                    for (j = i; j < argc; j++) {
-                        argv[j] = argv[j + 2];
-                        i++;
-                        // (*argvPtr)[j] = (*argvPtr)[j + 2];
-                    }
+                    argc -= 2; argv += 2;
                 }
                 else{
                     x->x_numOutlets = -1; // -1 means that the number of outlets is not defined
@@ -56,13 +46,12 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
                     || strcmp(argv[i].a_w.w_symbol->s_name, "-channels") == 0){
                 if (argv[i + 1].a_type == A_FLOAT) {
                     x->n_channels = (int)argv[i + 1].a_w.w_float;
-                    for (j = i; j < argc; j++) {
-                        argv[j] = argv[j + 2];
-                        i++;
-                        // (*argvPtr)[j] = (*argvPtr)[j + 2];
-                    }
+                    argc -= 2; argv += 2;
                 }
             }
+        }
+        else{
+            
         }
     }
     if (code->co_flags & CO_VARARGS) {

@@ -1,0 +1,15 @@
+#N canvas 731 169 729 393 12;
+#X obj 265 216 py.print;
+#X msg 266 60 1 2 3 4;
+#X msg 347 140 5 6 7 8;
+#X msg 87 95 54 241;
+#X obj 99 179 py.list -a 2;
+#X obj 266 189 py.list -a 2;
+#X obj 467 41 py;
+#X obj 22 24 py4pd -lib py4pd;
+#X connect 1 0 4 0;
+#X connect 1 0 5 0;
+#X connect 2 0 5 1;
+#X connect 3 0 4 1;
+#X connect 4 0 0 0;
+#X connect 5 0 0 0;
