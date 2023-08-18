@@ -20,6 +20,7 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
     int argc = *argcPtr;
     t_atom *argv = *argvPtr;
 
+
     int i, j;
     for (i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
@@ -29,10 +30,10 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
                         x->py_arg_numbers = (int)argv[i + 1].a_w.w_float;
                         argsNumberDefined = 1;
                         for (j = i; j < argc; j++) {
-                            argv[j].a_type = argv[j + 2].a_type;
-                            argv[j].a_w = argv[j + 2].a_w;
-                            (*argvPtr)[j].a_type = (*argvPtr)[j + 2].a_type;
-                            (*argvPtr)[j].a_w = (*argvPtr)[j + 2].a_w;
+                            argv[j] = argv[j + 2];
+                            i++;
+                            // (*argvPtr)[j] = (*argvPtr)[j + 2];
+                            // *argcPtr = *argcPtr - 2;
                         }
                     }
                 }
@@ -42,10 +43,9 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
                     x->x_numOutlets = (int)argv[i + 1].a_w.w_float - 1;
                     // remove -outn and the number of outlets from the arguments list
                     for (j = i; j < argc; j++) {
-                        argv[j].a_type = argv[j + 2].a_type;
-                        argv[j].a_w = argv[j + 2].a_w;
-                        (*argvPtr)[j].a_type = (*argvPtr)[j + 2].a_type;
-                        (*argvPtr)[j].a_w = (*argvPtr)[j + 2].a_w;
+                        argv[j] = argv[j + 2];
+                        i++;
+                        // (*argvPtr)[j] = (*argvPtr)[j + 2];
                     }
                 }
                 else{
@@ -57,10 +57,9 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
                 if (argv[i + 1].a_type == A_FLOAT) {
                     x->n_channels = (int)argv[i + 1].a_w.w_float;
                     for (j = i; j < argc; j++) {
-                        argv[j].a_type = argv[j + 2].a_type;
-                        argv[j].a_w = argv[j + 2].a_w;
-                        (*argvPtr)[j].a_type = (*argvPtr)[j + 2].a_type;
-                        (*argvPtr)[j].a_w = (*argvPtr)[j + 2].a_w;
+                        argv[j] = argv[j + 2];
+                        i++;
+                        // (*argvPtr)[j] = (*argvPtr)[j + 2];
                     }
                 }
             }
