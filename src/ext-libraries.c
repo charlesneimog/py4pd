@@ -144,6 +144,8 @@ static int Py4pdLib_CreateObjInlets(PyObject* function, t_py *x, int argc, t_ato
     
     PyObject* defaults = PyObject_GetAttrString(function, "__defaults__"); // TODO:, WHERE CLEAR THIS?
     int defaultsCount = PyTuple_Size(defaults);
+    post("create inlet ok");
+
 
     if (x->use_pArgs && defaultsCount > 0){
         pd_error(x, "[py4pd] You can't use *args and defaults at the same time");
@@ -183,7 +185,7 @@ static int Py4pdLib_CreateObjInlets(PyObject* function, t_py *x, int argc, t_ato
         int argNumbers = x->py_arg_numbers;
 
         for (i = 0; i < argNumbers; i++) {
-            if (i <= argc) {
+            if (i < argc) {
                 if (argv[i].a_type == A_FLOAT) {
                     int isInt = (int)argv[i].a_w.w_float == argv[i].a_w.w_float;
                     if (isInt){
@@ -193,7 +195,6 @@ static int Py4pdLib_CreateObjInlets(PyObject* function, t_py *x, int argc, t_ato
                         x->pyObjArgs[i]->pValue = PyFloat_FromDouble(argv[i].a_w.w_float);
                     }
                 }
-
                 else if (argv[i].a_type == A_SYMBOL) {
                     if (strcmp(argv[i].a_w.w_symbol->s_name, "None") == 0){
                         Py_INCREF(Py_None);
@@ -203,10 +204,12 @@ static int Py4pdLib_CreateObjInlets(PyObject* function, t_py *x, int argc, t_ato
                         x->pyObjArgs[i]->pValue = PyUnicode_FromString(argv[i].a_w.w_symbol->s_name);
                     }
                 }
-                else if(x->pyObjArgs[i]->pValue == NULL){
-                    Py_INCREF(Py_None);
-                    x->pyObjArgs[i]->pValue = Py_None;
-                }
+                // else{
+                //     Py_INCREF(Py_None);
+                //     x->pyObjArgs[i]->pValue = Py_None;
+                
+                // }
+                
             }
             else if(x->pyObjArgs[i]->pValue == NULL){
                 Py_INCREF(Py_None);
@@ -661,6 +664,7 @@ static void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
 
+    // post("All important things work!");
     PyObject* ignoreOnNone = PyDict_GetItemString(PdDict, "py4pdOBJIgnoreNone");
     PyObject* playable = PyDict_GetItemString(PdDict, "py4pdOBJPlayable");
     PyObject* pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
@@ -701,6 +705,7 @@ static void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
 
     // Args, Inlets, and Outlets
     x->py_arg_numbers = 0;
+    // post("start pass lib args");
     int parseArgsRight = Py4pdUtils_ParseLibraryArguments(x, code, &argc, &argv); 
     if (parseArgsRight == 0) {
         pd_error(NULL, "[%s] Error to parse arguments.", objectName);
@@ -716,12 +721,14 @@ static void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     if (x->pyObjArgs == NULL){
         x->pyObjArgs = malloc(sizeof(t_py4pd_pValue *) * x->py_arg_numbers);
     }
+    // post("create inlets");
     int inlets = Py4pdLib_CreateObjInlets(pyFunction, x, argc, argv);
     if (inlets != 0) {
         free(x->pdObjArgs);
         free(x->pyObjArgs);
         return NULL;
     }
+    // post("create inlets ok");
 
     if (x->objType > 1)
         x->pArgTuple = PyTuple_New(x->py_arg_numbers);

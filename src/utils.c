@@ -28,6 +28,7 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
                 if (i + 1 < argc) {
                     if (argv[i + 1].a_type == A_FLOAT) {
                         x->py_arg_numbers = (int)argv[i + 1].a_w.w_float;
+                        // post("args number is equal %d", x->py_arg_numbers);
                         argsNumberDefined = 1;
                         for (j = i; j < argc; j++) {
                             argv[j] = argv[j + 2];
@@ -429,22 +430,31 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
 
     if (x->pyObject){
         sprintf(completePath, "'%s'", filename);
+        
     }
     else if(x->py4pd_lib){
         PyCodeObject *code = (PyCodeObject*)PyFunction_GetCode(x->function);
         t_symbol *script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
         sprintf(completePath, "'%s'", script_name->s_name);
+       
+
     }
     else{
-        sprintf(completePath, "'%s/%s.py'", home, filename);
+        #ifdef _WIN64
+            sprintf(completePath, "'%s\\%s.py'", home, filename);
+        #else
+            sprintf(completePath, "'%s/%s.py'", home, filename);
+        #endif
     }
 
     
-
-
     // check if there is .py in filename
     if (strcmp(editor, PY4PD_EDITOR) == 0) {
-        sprintf(command, "%s %s", PY4PD_EDITOR, completePath);
+        #ifdef _WIN64
+            sprintf(command, "py -%d.%d -m idlelib %s", PY_MAJOR_VERSION, PY_MINOR_VERSION, completePath);
+        #else
+            sprintf(command, "idle%d.%d %s", PY_MAJOR_VERSION, PY_MINOR_VERSION, completePath);
+        #endif
     } 
     else if (strcmp(editor, "vscode") == 0) {
         sprintf(command, "code -g '%s:%d'", completePath, line);
@@ -511,6 +521,20 @@ void Py4pdUtils_ExecuteSystemCommand(const char *command) {
             pd_error(NULL, "[py4pd] Failed to execute command: %s", command);
             return;
         }
+        else{
+            DWORD exitCode;
+            GetExitCodeProcess(sei.hProcess, &exitCode);
+            if (exitCode != 0) {
+                pd_error(NULL, "[py4pd] Failed to execute command: %s", command);
+                return;
+            }
+            else{
+                post("[py4pd] Command executed successfully: %s", command);
+                return;
+            }
+        }
+
+
         return;
     #else
         int result = system(command);
