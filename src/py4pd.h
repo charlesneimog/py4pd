@@ -37,14 +37,15 @@
 
 #ifdef _WIN32
     #include <windows.h>
+    #include <limits.h>
 #endif
 
 // DEFINE STANDARD IDE EDITOR
 #ifndef PY4PD_EDITOR
     #ifdef _WIN32
-        #define PY4PD_EDITOR "idle3.10"
+        #define PY4PD_EDITOR "idle3.11"
     #else
-        #define PY4PD_EDITOR "idle3.10"
+        #define PY4PD_EDITOR "idle3.11"
     #endif
 #endif
 
