@@ -709,7 +709,6 @@ static void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     }
     x->objArgsCount = argc;
     if (x->pyObjArgs == NULL){
-        post("malloc for pyObjArgs OBJNAME = %s x->py_arg_numbers: %d", objectName, x->py_arg_numbers);
         x->pyObjArgs = malloc(sizeof(t_py4pd_pValue *) * x->py_arg_numbers);
     }
     // post("create inlets");
