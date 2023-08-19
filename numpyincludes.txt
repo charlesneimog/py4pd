@@ -1,0 +1,1 @@
+C:/Users/neimog/AppData/Local/Programs/Python/Python311/Lib/site-packages/numpy/core/include

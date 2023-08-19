@@ -16,9 +16,9 @@ def runTest(pdpatch):
         if os.path.isfile(pathfile):
             cmd = f'pd -nogui -send "start-test bang" {pathfile}' 
             # print cmd in green
-            print("Running: " + "\033[92m" + cmd + "\033[0m")
+            print("Running: " + "\033[92m" + cmd + "\033[0m", end='\r')
         else:
-            print('PureData Object not found')
+            print('PureData Patch not found')
             sys.exit()
         output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
@@ -33,9 +33,9 @@ def runTest(pdpatch):
         else:
             print(f'Patch {pathfile} not found')
             sys.exit()
-        os.system(f'cmd /c "\"C://Program Files//Pd//bin//pd.exe\" -send \"start-test bang\" \"{pathfile}\""')
         output = subprocess.run(f'"C:\\Program Files\\Pd\\bin\\pd.exe" -nogui -send "start-test bang" "{pathfile}"', capture_output=True, text=True, shell=True)
         outputLines = str(output).split('\\n')
+
     elif platform.system() == 'Darwin':
         scriptfile = os.path.abspath(__file__)
         scriptfolder = os.path.dirname(scriptfile)
@@ -46,9 +46,8 @@ def runTest(pdpatch):
         else:
             print(f'Patch {pathfile} not found')
             sys.exit()
-
-        cmd = '/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -send "start-test bang" ' + pathfile
-        output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+        cmd = '/Applications/Pd-*.app/Contents/Resources/bin/pd -nogui -stderr -send "start-test bang" ' + pathfile
+        output = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=60)
         outputLines = str(output).split('\\n')
     else:
         print('OS not supported')
@@ -59,6 +58,7 @@ def runTest(pdpatch):
     for line in outputLines:
         if "PASS" in line or "Pass" in  line:
             passed = True
+    print("\033[K", end='\r')                           
     if passed:
         print("\033[92m" + ' Test with ' + pdpatch + ' passed' + "\033[0m")
     else:
@@ -73,18 +73,15 @@ if __name__ == "__main__":
     patches.sort()
     for patch in patches:
         runTest(patch)
-
     if errorInTest != 0:
         print("\033[91m" + f'{errorInTest} Test has failed' + "\033[0m")
         sys.exit(-1)
 
     elif errorInTest == 0:
         print("\n")
-        print("\n")
         print("===============================")
         print("\033[92m" + 'All Tests passed' + "\033[0m")
         print("===============================")
-        print("\n")
         print("\n")
 
          

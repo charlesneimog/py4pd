@@ -1,4 +1,4 @@
-name: Make Release Folder
+name: Builder
 on:
   # just one develop commit
   push:
@@ -10,11 +10,28 @@ on:
       - '**/*.yml'
 
   workflow_dispatch:
+    # make one checkbox for each platform
     inputs:
-      justlinux:
-        description: 'Just Linux'
+      windows:
+        description: 'Build for Windows'
         required: false
-        default: 'false'
+        type: boolean
+        default: false
+      macos-intel:
+        description: 'Build for Mac Intel'
+        required: false
+        type: boolean
+        default: false
+      macos-arm:
+        description: 'Build for Mac ARM'
+        required: false
+        type: boolean
+        default: false
+      linux:
+        description: 'Build for Linux'
+        required: false
+        type: boolean
+        default: true
 
 jobs:  
   # ==============================================================================
@@ -22,6 +39,7 @@ jobs:
   # ==============================================================================
   windows-build:
     # if just linux is true, skip windows
+    if: ${{ github.event.inputs.windows == true }}
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
@@ -41,26 +59,29 @@ jobs:
           install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git mingw-w64-x86_64-dlfcn mingw-w64-x86_64-grep  mingw-w64-x86_64-curl unzip
           update: false
 
+
+    - if: runner.os == 'Windows'
+      name: Get Pd
+      shell: msys2 {0}
+      run: | 
+        curl -L -o pure-data.zip http://msp.ucsd.edu/Software/pd-0.54-0.msw.zip
+        unzip pure-data.zip
+        rm pure-data.zip
+        rename  pd-0.54-0 pd pd-0.54-0
+
     - name: Configure Environment
       run: |
         mkdir py4pd
-        choco install puredata --yes
         python -m pip install numpy
         python -c "import sysconfig; f = open('pythonincludes.txt', 'w'); print(sysconfig.get_paths()['include'].replace('\\', '/'), file=f); f.close()"
         python -c "import os; import sys; f = open('pythonpath.txt', 'w'); print(os.path.dirname(sys.executable).replace('\\', '/'), file=f); f.close()"
         python -c "import os; import sys; import numpy.distutils.misc_util as np_utils; f = open('numpyincludes.txt', 'w'); print(np_utils.get_numpy_include_dirs()[0].replace('\\', '/'), file=f); f.close()"
         
-
     - if: runner.os == 'Windows'
       name: Build py4pd
       shell: msys2 {0}
       run: |
-        PD_URL=$(curl -L -s https://api.github.com/repos/pure-data/pure-data/tags | grep zipball_url | grep -v latest | grep -v pd-0.54 | grep -v tagtest | head -n 1 | cut -d '"' -f 4)
-        curl -L -o pure-data.zip $PD_URL
-        unzip pure-data.zip
-        rm pure-data.zip
-        mv pure-data-* pure-data
-        make PYTHON_VERSION=python3.11 PDINCLUDEDIR=./pure-data/src/ extension=m_amd64
+        make PYTHON_VERSION=python3.11 PDDIR=./pd extension=m_amd64
     
     - name: Copy Files and Set for Tests
       run: |
@@ -80,29 +101,40 @@ jobs:
   # =                               MAC INTEL                                    =
   # ==============================================================================
   macos-intel-build:
+    if: ${{ github.event.inputs.macos-intel == true }}
     runs-on: macos-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
     - uses: actions/checkout@v3
       with:
         submodules: recursive
         fetch-depth: 0
 
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
     - name: set Enviroment
       run: |
         brew install --cask pd
-        python3.10 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
-        python3.10 -m pip install numpy
+        python3.11 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
+        python3.11 -m pip install numpy
         mkdir py4pd
 
     - name: Build
-      run: make PYTHON_VERSION=python3.10 extension=d_amd64
+      run: make PYTHON_VERSION=python3.11 extension=d_amd64
 
     - name: Copy files to py4pd
       run: |
         cp py4pd.d_amd64 py4pd
+        cp py4pd.d_amd64 test
 
-
+    - name: Simples Tests
+      run: |
+        cd test
+        python3.11 ./runTests.py
+    
     - name: Upload Object
       uses: actions/upload-artifact@v3
       with:
@@ -114,6 +146,7 @@ jobs:
   # =                               MAC ARM                                      =
   # ==============================================================================
   macos-arm-build:
+    if: ${{ github.event.inputs.macos-arm == true }}
     runs-on: macos-latest
     timeout-minutes: 10
 
@@ -123,20 +156,23 @@ jobs:
         submodules: recursive
         fetch-depth: 0
 
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
     - name: set Enviroment
       run: |
         brew install --cask pd
-        python3.10 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
-        python3.10 -m pip install numpy
+        python3.11 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
+        python3.11 -m pip install numpy
         mkdir py4pd
 
     - name: Build
-      run: make PYTHON_VERSION=python3.10 extension=d_arm64
+      run: make PYTHON_VERSION=python3.11 extension=d_arm64
 
     - name: Copy files to py4pd
       run: |
         cp py4pd.d_arm64 py4pd
-
 
     - name: Upload Object
       uses: actions/upload-artifact@v3
@@ -150,6 +186,7 @@ jobs:
   # ==============================================================================
 
   linux-build:
+    # true or not set
     runs-on: ubuntu-latest
     timeout-minutes: 5 
     steps:
@@ -160,7 +197,14 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'       
-          
+         
+      - name: print github.event.inputs.linux
+        run: |
+          echo ${{ github.event.inputs.linux }}
+          echo ${{ github.event.inputs.linux == true }}
+          echo ${{ github.event.inputs.linux == null }}
+          echo ${{ github.event.inputs.linux == false }}
+
       - name: Install Build Dependencies
         run: |
           PD_URL=$(curl -L -s https://api.github.com/repos/pure-data/pure-data/tags | grep zipball_url | grep -v latest | grep -v pd-0.52 | grep -v tagtest | head -n 1 | cut -d '"' -f 4)
@@ -184,21 +228,19 @@ jobs:
         run: |
           mkdir py4pd
           cp py4pd.l_amd64 resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd
-          mkdir py4pd/resources
-          mkdir py4pd/src
-          cp resources/* py4pd/resources -r
-          cp src/* py4pd/src -r
+          cp -r resources py4pd 
+          cp -r src py4pd
           find py4pd/src -name "*.o" -type f -delete
           cp resources/README.deken.pd py4pd 
 
       - name: Tests
         continue-on-error: true
-        #python3.11 ./runTests.py
         run: |
-          cp -r ./py4pd/* test
+          cp -r py4pd test
           cd test
-          pd -nogui -send "start-test bang" /home/runner/work/py4pd/py4pd/test/01-Install-modules.pd
-          
+          ls -l py4pd/resources/scripts/
+          python ./runTests.py
+                    
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:

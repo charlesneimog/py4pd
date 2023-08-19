@@ -30,18 +30,22 @@
 
 #define PY4PD_MAJOR_VERSION 0
 #define PY4PD_MINOR_VERSION 8
-#define PY4PD_MICRO_VERSION 0
+#define PY4PD_MICRO_VERSION 1
+
+
+#define PYTHON_REQUIRED_VERSION(major, minor) ((major < PY_MAJOR_VERSION) || (major == PY_MAJOR_VERSION && minor <= PY_MINOR_VERSION))
 
 #ifdef _WIN32
     #include <windows.h>
+    #include <limits.h>
 #endif
 
 // DEFINE STANDARD IDE EDITOR
 #ifndef PY4PD_EDITOR
     #ifdef _WIN32
-        #define PY4PD_EDITOR "idle3.10"
+        #define PY4PD_EDITOR "idle3.11"
     #else
-        #define PY4PD_EDITOR "idle3.10"
+        #define PY4PD_EDITOR "idle3.11"
     #endif
 #endif
 
@@ -200,8 +204,9 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject            *Dict;
     PyObject            *pArgTuple;
 
-   
-    
+    // == save new Thread stuff
+    pthread_t          pyInterpThread;
+
     // == AUDIO AND NUMPY
     t_int               audioOutput; // flag to check if is to use audio output
     t_int               audioInput; // flag to check if is to use audio input
@@ -335,6 +340,7 @@ typedef struct _py4pdInlet_proxy{
 
 // =====================================
 t_py4pd_pValue *Py4pdUtils_Run(t_py *x, PyObject *pArgs, t_py4pd_pValue *pValuePointer);
+void *Py4pd_ImportNumpyForPy4pd();
 
 // =====================================
 // void Py4pd_SetParametersForFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
@@ -349,12 +355,14 @@ extern int object_count;
 
 // ============= TESTES ================
 void Py4pdUtils_DECREF(PyObject *pValue);
-// void Py4pdUtils_DECREF(PyObject *pValue);
-void Py4pdUtils_INCREF(PyObject *pValue);
 void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where);
 void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue* src, t_py4pd_pValue* dest);
 void FreePdcollectHash(pdcollectHash* hash_table);
 void Py4pdUtils_CreatePicObj(t_py *x, PyObject* PdDict, t_class *object_PY4PD_Class, int argc, t_atom *argv);
+
+#if PYTHON_REQUIRED_VERSION(3, 12)
+    void Py4pdUtils_CreatePythonInterpreter(t_py* x);
+#endif
 
 // ============= UTILITIES =============
 // int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int argc, t_atom *argv);

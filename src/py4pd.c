@@ -1,10 +1,7 @@
 #include "py4pd.h"
-#include "m_pd.h"
 
-#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
-#include <numpy/arrayobject.h>
-
-// chat gpt chat to great name functions conventions https://chat.openai.com/c/9000f606-6f15-4fd3-be89-1577c2087624
+// chat gpt chat to name functions conventions https://chat.openai.com/c/9000f606-6f15-4fd3-be89-1577c2087624
+// sorry, I do not know how to name functions
 
 // ============================================
 t_class *py4pd_class;          // For for normal objects, almost unused
@@ -28,13 +25,6 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
         pd_error(x, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
         return -1;
     }
-
-    int numpyImporter = _import_array(); // import numpy
-    if (numpyImporter < 0) {
-        pd_error(x, "[py4pd] Error importing numpy!");
-        return -1;
-    }
-
 
     t_symbol *script_file_name = atom_gensym(argv + 1);
 
@@ -239,6 +229,8 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
             }
         }
 
+
+
         if (pValue == NULL) {
             PyObject *ptype, *pvalue, *ptraceback;
             PyErr_Fetch(&ptype, &pvalue, &ptraceback);
@@ -323,20 +315,62 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     PyObject *argsList = PyList_New(2);
     PyList_SetItem(argsList, 0, Py_BuildValue("s", localORglobal));
     PyList_SetItem(argsList, 1, Py_BuildValue("s", pipPackage));
-    PyObject *argTuple = Py_BuildValue("(O)", argsList);
+    PyObject *argTuple = PyTuple_New(1);
+    PyTuple_SetItem(argTuple, 0, argsList);
     
-    PyObject *pipInstallResult = Py4pdUtils_RunPy(x, argTuple, NULL);
-    if (pipInstallResult == NULL) {
-        x->function = ObjFunction;
-        Py_DECREF(argTuple);
-        Py_DECREF(pipInstallResult);
-        Py_DECREF(pipInstallFunction);
-        Py_DECREF(py4pdModule);
+    t_py *prev_obj = NULL;
+    int prev_obj_exists = 0;
+    PyObject *MainModule = PyImport_ImportModule("pd");
+    PyObject *oldObjectCapsule;
+
+    if (MainModule != NULL) {
+        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        if (oldObjectCapsule != NULL) {
+            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
+            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+            prev_obj_exists = 1;
+        }
+        else {
+            prev_obj_exists = 0;
+        }
+    }
+
+    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
+
+    if (objectCapsule == NULL){
+        pd_error(x, "[Python] Failed to add object to Python");
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyObject *ptype_str = PyObject_Str(ptype);
+        PyObject *pvalue_str = PyObject_Str(pvalue);
+        PyObject *ptraceback_str = PyObject_Str(ptraceback);
+        const char *ptype_c = PyUnicode_AsUTF8(ptype_str);
+        const char *pvalue_c = PyUnicode_AsUTF8(pvalue_str);
+        const char *ptraceback_c = PyUnicode_AsUTF8(ptraceback_str);
+        pd_error(x, "[Python] %s: %s\n%s", ptype_c, pvalue_c, ptraceback_c);
+        return;
+    }
+
+
+    PyObject *pValue = PyObject_CallObject(pipInstallFunction, argTuple);
+    
+    if (prev_obj_exists == 1 && pValue != NULL) {
+        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
+        if (objectCapsule == NULL){
+            pd_error(x, "[Python] Failed to add object to Python");
+            return;
+        }
+    }
+
+
+
+    if (pValue == NULL) {
+        pd_error(x, "[Python] pipInstall: pipinstall function failed");
         return;
     }
     x->function = ObjFunction;
     Py_DECREF(argTuple);
-    Py_DECREF(pipInstallResult);
+    Py_DECREF(pValue);
     Py_DECREF(pipInstallFunction);
     Py_DECREF(py4pdModule);
     sys_vgui("tk_messageBox -icon warning -type ok -title \"%s installed!\" -message \"%s installed! \nYou need to restart PureData!\"\n", pipPackage, pipPackage);
@@ -868,17 +902,6 @@ static void Py4pd_Py4pdThread(t_py *x, t_floatarg f) {
 
 // ============================================
 /**
- * @brief This function import the numpy module. We can not use import_array() directly, because it is a macro.
- * @param NULL 
- * @return It will return NULL.
- */
-void *Py4pd_ImportNumpyForPy4pd() {
-    import_array();
-    return NULL;
-}
-
-// ============================================
-/**
  * @brief This will enable or disable the numpy array support and start numpy import if it is not imported.
  * @param x is the py4pd object
  * @param f is the status of the numpy array support
@@ -967,18 +990,6 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         }
     }
     
-    // INIT PYTHON
-    if (!Py_IsInitialized()) {
-        object_count = 0; 
-        post("");
-        post("[py4pd] by Charles K. Neimog");
-        post("[py4pd] Version %d.%d.%d", PY4PD_MAJOR_VERSION, PY4PD_MINOR_VERSION, PY4PD_MICRO_VERSION);
-        post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
-        post("");
-        PyImport_AppendInittab("pd", PyInit_pd);  
-        Py_Initialize();  
-    }
-
     // =================
     // INIT PY4PD OBJECT
     // =================
@@ -1022,6 +1033,7 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     x->object_number = object_count;  // save object number
     x->pdPatchFolder = patch_dir; // set name of the home path
     x->pkgPath = patch_dir;     // set name of the packages path
+
     Py4pdUtils_SetObjConfig(x);          // set the config file (in py4pd.cfg, make this be
     if (argc > 1) {             // check if there are two arguments
         Py4pd_SetFunction(x, s, argc, argv);
@@ -1035,6 +1047,7 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     snprintf(pyGlobal_packages, strlen(x->py4pdPath->s_name) + 20, "%s/resources/py-modules", x->py4pdPath->s_name);
     PyObject *home_path = PyUnicode_FromString(x->pdPatchFolder->s_name);  // Place where script file will probably be
     PyObject *site_package = PyUnicode_FromString(x->pkgPath->s_name);  // Place where the packages will be
+    post("Package path: %s", x->pkgPath->s_name);
     PyObject *py4pdScripts = PyUnicode_FromString(pyScripts_folder);  // Place where the py4pd scripts will be
     PyObject *py4pdGlobalPackages = PyUnicode_FromString(pyGlobal_packages);  // Place where the py4pd global packages will be
     PyObject *sys_path = PySys_GetObject("path");
@@ -1063,7 +1076,7 @@ void py4pd_setup(void) {
                   (t_method)Py4pdLib_FreeObj,    // quando voce deleta o objeto
                   sizeof(t_py),  // quanta memoria precisamos para esse objeto
                   0,             // nao há uma GUI especial para esse objeto???
-                  A_GIMME,       // os argumentos são um símbolo
+                  A_GIMME,       // os podem ser qualquer coisa
                   0);            // fim de argumentos
     py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)Py4pd_Py4pdNew, (t_method)Py4pdLib_FreeObj, sizeof(t_py), CLASS_NOINLET, A_GIMME, 0);
 
@@ -1088,4 +1101,20 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class, (t_method)Py4pd_SetFunction, gensym("set"), A_GIMME, 0);  // set function to be called
     class_addmethod(py4pd_class, (t_method)Py4pd_PrintModuleFunctions, gensym("functions"), A_GIMME, 0); 
 
+    // test functions
+    #if PYTHON_REQUIRED_VERSION(3, 12)
+        class_addmethod(py4pd_class, (t_method)Py4pdUtils_CreatePythonInterpreter, gensym("detach"), 0); 
+    #endif
+
+    // INIT PYTHON
+    if (!Py_IsInitialized()) {
+        object_count = 0; 
+        post("");
+        post("[py4pd] by Charles K. Neimog");
+        post("[py4pd] Version %d.%d.%d", PY4PD_MAJOR_VERSION, PY4PD_MINOR_VERSION, PY4PD_MICRO_VERSION);
+        post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION, PY_MICRO_VERSION);
+        post("");
+        PyImport_AppendInittab("pd", PyInit_pd);  
+        Py_Initialize();  
+    }
 }

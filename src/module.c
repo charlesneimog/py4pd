@@ -1111,6 +1111,14 @@ static PyObject *Py4pdMod_PdZoom(PyObject *self, PyObject *args) {
 }
 
 // =================================
+static PyObject *Py4pdMod_PdHasGui(PyObject *self, PyObject *args) {
+    (void)self;
+    (void)args;
+
+    return PyLong_FromLong(sys_havegui());
+}
+
+// =================================
 // ========== Utilities ============
 // =================================
 
@@ -1191,6 +1199,11 @@ static PyObject *Py4pdMod_PipInstall(PyObject *self, PyObject *args){
     (void)self;
     char *pipPackage;
     char *localORglobal;
+
+    t_py *x = Py4pdUtils_GetObject(self);
+
+    PyErr_Clear(); // this is probably called after an error, so we clear it
+
     if (!PyArg_ParseTuple(args, "ss", &localORglobal, &pipPackage)) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: wrong arguments");
         return NULL;
@@ -1198,7 +1211,7 @@ static PyObject *Py4pdMod_PipInstall(PyObject *self, PyObject *args){
 
     PyObject *py4pdModule = PyImport_ImportModule("py4pd");
     if (py4pdModule == NULL) {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: py4pd module not found");
+        pd_error(x, "[Python] pipInstall: py4pd module not found");
         return NULL;
     }
     PyObject *pipInstallFunction = PyObject_GetAttrString(py4pdModule, "pipinstall");
@@ -1206,24 +1219,101 @@ static PyObject *Py4pdMod_PipInstall(PyObject *self, PyObject *args){
         PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: pipinstall function not found");
         return NULL;
     }
+    x->function = pipInstallFunction;
 
-    // the function is executed using pipinstall([localORglobal, pipPackage])
     PyObject *argsList = PyList_New(2);
     PyList_SetItem(argsList, 0, Py_BuildValue("s", localORglobal));
     PyList_SetItem(argsList, 1, Py_BuildValue("s", pipPackage));
-    PyObject *argTuple = Py_BuildValue("(O)", argsList);
-    PyObject *pipInstallResult = PyObject_CallObject(pipInstallFunction, argTuple);
+    PyObject *argTuple = PyTuple_New(1);
+    PyTuple_SetItem(argTuple, 0, argsList);
+    
+    t_py *prev_obj = NULL;
+    int prev_obj_exists = 0;
+    PyObject *MainModule = PyImport_ImportModule("pd");
+    PyObject *oldObjectCapsule;
 
-    if (pipInstallResult == NULL) {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: pipinstall function failed");
+    if (MainModule != NULL) {
+        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        if (oldObjectCapsule != NULL) {
+            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
+            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+            prev_obj_exists = 1;
+        }
+        else {
+            prev_obj_exists = 0;
+        }
+    }
+
+    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
+
+    if (objectCapsule == NULL){
+        pd_error(x, "[Python] Failed to add object to Python");
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyObject *ptype_str = PyObject_Str(ptype);
+        PyObject *pvalue_str = PyObject_Str(pvalue);
+        PyObject *ptraceback_str = PyObject_Str(ptraceback);
+        const char *ptype_c = PyUnicode_AsUTF8(ptype_str);
+        const char *pvalue_c = PyUnicode_AsUTF8(pvalue_str);
+        const char *ptraceback_c = PyUnicode_AsUTF8(ptraceback_str);
+        pd_error(x, "[Python] %s: %s\n%s", ptype_c, pvalue_c, ptraceback_c);
         return NULL;
     }
-    // Py_DECREF(argsList);
-    // Py_DECREF(pipInstallResult);
-    // Py_DECREF(pipInstallFunction);
-    // Py_DECREF(py4pdModule);
-    Py_RETURN_TRUE;
+
+    PyObject *pValue = PyObject_CallObject(pipInstallFunction, argTuple);
+    
+    if (prev_obj_exists == 1 && pValue != NULL) {
+        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
+        if (objectCapsule == NULL){
+            pd_error(x, "[Python] Failed to add object to Python");
+            return NULL;
+        }
+    }
+
+    if (pValue == NULL) {
+        pd_error(x, "[Python] pipInstall: pipinstall function failed");
+        return NULL;
+    }
+    else{
+        pd_error(x, "[Python] %s is installed, but you need to restart pd.", pipPackage);
+        PyErr_SetString(PyExc_TypeError, "[Python] Installed, but you need to restart pd.");
+        return NULL;
+    }
+    return NULL;
+    
 }
+
+
+// =================================
+// ========= MODULE INIT ===========
+// =================================
+
+
+#if PYTHON_REQUIRED_VERSION(3, 12)
+
+static int _pd_create(PyObject *m){
+    (void)m;
+    return 0;
+}
+
+
+static int _pd_modexec(PyObject *m){
+    (void)m;
+    return 0;
+}
+
+
+static PyModuleDef_Slot _memoryboard_slots[] = {
+    {Py_mod_create, _pd_create},
+    {Py_mod_exec, _pd_modexec},
+    {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
+    {0, NULL}
+};
+
+
+#endif
+
+
 
 // =================================
 static PyObject *pdmoduleError;
@@ -1256,6 +1346,7 @@ PyMethodDef PdMethods[] = {
     {"get_sample_rate", Py4pdMod_PdSampleRate, METH_NOARGS, "Get PureData SampleRate"},
     {"get_vec_size", Py4pdMod_PdVecSize, METH_NOARGS, "Get PureData Vector Size"}, 
     {"get_num_channels", Py4pdMod_ObjNChannels, METH_NOARGS, "Return the amount of channels in the object"}, 
+    {"pd_has_gui", Py4pdMod_PdHasGui, METH_NOARGS, "Return True of False if pd has or no gui"},
 
     {"get_patch_zoom", Py4pdMod_PdZoom, METH_NOARGS, "Get Patch zoom"},
     {"get_outlet_count", Py4pdMod_PdGetOutCount, METH_NOARGS, "Get the Number of Outlets of one object."},
@@ -1279,7 +1370,7 @@ PyMethodDef PdMethods[] = {
 
     // player
     {"add_to_player", (PyCFunction)Py4pdMod_AddThingToPlay, METH_VARARGS | METH_KEYWORDS, "It adds a thing to the player"},
-    {"clear_player", Py4pdMod_ClearPlayer, METH_NOARGS, "Get PureData Object Pointer"},
+    {"clear_player", Py4pdMod_ClearPlayer, METH_NOARGS, "Remove all Python Objects of the player."},
 
     // Internal
     {"_recursive", Py4pdMod_PdRecursiveCall, METH_VARARGS, "It calls a function recursively"},
@@ -1296,7 +1387,14 @@ static struct PyModuleDef pdmodule = {
     .m_doc = "pd module provide function to interact with PureData, see the docs in www.charlesneimog.com/py4pd",
     .m_size = 0,   /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables. */
     .m_methods = PdMethods,  // Methods of the module
-    .m_slots = NULL, /* m_slots, that is the slots for multi-phase initialization */
+
+
+    #if PYTHON_REQUIRED_VERSION(3, 12)
+        .m_slots = _memoryboard_slots,
+    #endif
+
+
+
     .m_traverse = NULL, /* m_traverse, that is the traverse function for GC */
     .m_clear = NULL, /* m_free, that is the free function for GC */
 };
@@ -1373,10 +1471,7 @@ PyMODINIT_FUNC PyInit_pd() {
     Py_INCREF(&Py4pdNewObj_Type);
     PyModule_AddObject(py4pdmodule, "NewObject", (PyObject *)&Py4pdNewObj_Type);
 
-
-
-
     return py4pdmodule;
 }
 
-// =============================
+// ============================

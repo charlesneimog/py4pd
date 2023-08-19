@@ -1,5 +1,8 @@
 #include "py4pd.h"
 
+#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
+#include <numpy/arrayobject.h>
+
 // ====================================================
 /*
 * @brief This function parse the arguments for pd Objects created with the library
@@ -24,7 +27,7 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
             if (strcmp(argv[i].a_w.w_symbol->s_name, "-n_args") == 0 || strcmp(argv[i].a_w.w_symbol->s_name, "-a") == 0) {
                 if (i + 1 < argc) {
                     if (argv[i + 1].a_type == A_FLOAT) {
-                        x->py_arg_numbers = (int)argv[i + 1].a_w.w_float;
+                        x->py_arg_numbers = atom_getintarg(i + 1, argc, argv);
                         argsNumberDefined = 1;
                         for (j = i; j < argc; j++) {
                             argv[j] = argv[j + 2];
@@ -36,7 +39,7 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
             }
             else if (strcmp(argv[i].a_w.w_symbol->s_name, "-outn") == 0){
                 if (argv[i + 1].a_type == A_FLOAT) {
-                    x->x_numOutlets = (int)argv[i + 1].a_w.w_float - 1;
+                    x->x_numOutlets = atom_getintarg(i + 1, argc, argv);
                     // remove -outn and the number of outlets from the arguments list
                     for (j = i; j < argc; j++) {
                         argv[j] = argv[j + 2];
@@ -51,7 +54,7 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
             else if (strcmp(argv[i].a_w.w_symbol->s_name, "-ch") == 0 
                     || strcmp(argv[i].a_w.w_symbol->s_name, "-channels") == 0){
                 if (argv[i + 1].a_type == A_FLOAT) {
-                    x->n_channels = (int)argv[i + 1].a_w.w_float;
+                    x->n_channels = atom_getintarg(i + 1, argc, argv);
                     for (j = i; j < argc; j++) {
                         argv[j] = argv[j + 2];
                         (*argvPtr)[j] = (*argvPtr)[j + 2];
@@ -994,6 +997,7 @@ inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct, t_out
             pValue_i = PyList_GetItem(pValue, i); // borrowed reference
             if (PyLong_Check(pValue_i)) {  // If the function return a list of integers
                 float result = (float)PyLong_AsLong(pValue_i); 
+                // TODO: Fix this with SETFLOAT
                 list_array[listIndex].a_type = A_FLOAT;
                 list_array[listIndex].a_w.w_float = result;
                 listIndex++;
@@ -1128,6 +1132,7 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv
                 Py4pdUtils_RemoveChar(str, ']');
                 int isNumeric = Py4pdUtils_IsNumericOrDot(str);
                 _PyTuple_Resize(&ArgsTuple, argCount + 1);
+                 // TODO: This is old code, fix it!
                 if (isNumeric == 1) {
                     if (strchr(str, '.') != NULL) {
                         PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atof(str)));
@@ -1152,6 +1157,7 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv
                 if (listStarted == 1) {
                     char *str = (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
                     strcpy(str, argv[i].a_w.w_symbol->s_name);
+                    // TODO: This is old code, fix it!
                     int isNumeric = Py4pdUtils_IsNumericOrDot(str);
                     if (isNumeric == 1) {
                         if (strchr(str, '.') != NULL) {
@@ -1175,11 +1181,11 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv
         } 
         else {
             if (listStarted == 1) {
-                PyList_Append(listsArrays[listCount], PyFloat_FromDouble(argv[i].a_w.w_float));
+                PyList_Append(listsArrays[listCount], PyFloat_FromDouble(atom_getfloatarg(i, argc, argv)));
             } 
             else {
                 _PyTuple_Resize(&ArgsTuple, argCount + 1);
-                PyTuple_SetItem(ArgsTuple, argCount, PyFloat_FromDouble(argv[i].a_w.w_float));
+                PyTuple_SetItem(ArgsTuple, argCount, PyFloat_FromDouble(atom_getfloatarg(i, argc, argv)));
                 argCount++;
             }
         }
@@ -1197,8 +1203,9 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv
 */
 
 void Py4pdUtils_SetObjConfig(t_py *x) {
-    char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->pdPatchFolder->s_name) + strlen("/py-modules") + 1));  //
-    snprintf(PADRAO_packages_path, strlen(x->pdPatchFolder->s_name) + strlen("/py-modules") + 1, "%s/py-modules", x->pdPatchFolder->s_name);
+    int folderLen = strlen("/py-modules/") + 1;
+    char *PADRAO_packages_path = (char *)malloc(sizeof(char) * (strlen(x->pdPatchFolder->s_name) + folderLen));  //
+    snprintf(PADRAO_packages_path, strlen(x->pdPatchFolder->s_name) + folderLen, "%s/py-modules/", x->pdPatchFolder->s_name);
     x->pkgPath = gensym(PADRAO_packages_path);
     x->runmode = 0;
     if (x->editorName == NULL){
@@ -1261,6 +1268,18 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
     return;
 }
 
+
+// ============================================
+/**
+ * @brief This function import the numpy module. We can not use import_array() directly, because it is a macro.
+ * @param NULL 
+ * @return It will return NULL.
+ */
+void *Py4pd_ImportNumpyForPy4pd() {
+    import_array();
+    return NULL;
+}
+
 // ========================= PYTHON ==============================
 /*
 * @brief add PureData Object to Python Module
@@ -1290,9 +1309,90 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x) {
     return objectCapsule;
 }
 
+// ========================= THREAD INTERPRETER ====================
+
+// just if python version if 3.12 or higher
+#if PYTHON_REQUIRED_VERSION(3, 12)
+
+struct ThreadArgs {
+    int start;
+    int sleep_time;
+    PyObject *pFunc;
+    PyObject *pArgs;
+    PyObject *pValue;
+};
+
+// =================================================================
+void *thread_function(void *arg) {
+    (void)arg;
+
+    post("ok");
+    PyRun_SimpleString("import time");
+    PyRun_SimpleString("time.sleep(10)");
+    post("ok");
 
 
+    return NULL;
+}
+
+
+// ===============================================================
+/* 
+ * @brief This function will create a new Python interpreter and initialize it.
+ * @param x is the py4pd object
+ * @return It will return 0 if the interpreter was created successfully, otherwise it will return 1.
+ */
+void Py4pdUtils_CreatePythonInterpreter(t_py* x) {
+    
+    if (x->function == NULL) {
+        pd_error(x, "[Python] No function defined");
+        return;
+    }
+
+    PyInterpreterConfig config = {
+        .check_multi_interp_extensions = 0,
+        .gil = PyInterpreterConfig_OWN_GIL,
+    };
+
+    PyThreadState *tstate = NULL;
+
+    post("before new interpreter");
+    PyStatus status = Py_NewInterpreterFromConfig(&tstate, &config);
+    post("after new interpreter");
+    if (PyStatus_Exception(status)) {
+        _PyErr_SetFromPyStatus(status);
+        PyObject *exc = PyErr_GetRaisedException();
+        PyErr_SetString(PyExc_RuntimeError, "interpreter creation failed");
+        _PyErr_ChainExceptions1(exc);
+        return;
+    }
+    else{
+        post("ok");
+    }
+    
+
+    // create thread_function
+    pthread_t thread_id;
+    pthread_create(&thread_id, NULL, thread_function, NULL);
+
+
+
+
+
+
+
+
+
+
+
+    return;
+}
+
+#endif
+
+// ============================================================
 // ========================= GIF ==============================
+// ============================================================
 void Py4pdUtils_CreatePicObj(t_py *x, PyObject* PdDict, t_class *object_PY4PD_Class, int argc, t_atom *argv) {
     t_canvas *c = x->canvas;
     PyObject *pyLibraryFolder = PyDict_GetItemString(PdDict, "py4pdOBJLibraryFolder");
@@ -1304,10 +1404,10 @@ void Py4pdUtils_CreatePicObj(t_py *x, PyObject* PdDict, t_class *object_PY4PD_Cl
     x->x_height = PyLong_AsLong(py4pdOBJheight);
     if (argc > 1) {
         if (argv[0].a_type == A_FLOAT) {
-            x->x_width = argv[0].a_w.w_float;
+            x->x_width = atom_getfloatarg(0, argc, argv);
         }
         if (argv[1].a_type == A_FLOAT) {
-            x->x_height = argv[1].a_w.w_float;
+            x->x_height = atom_getfloatarg(1, argc, argv);
         }
     }
 
