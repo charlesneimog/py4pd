@@ -15,11 +15,9 @@
 #X msg 157 192 local numba;
 #X obj 157 209 py.pip;
 #X obj 238 31 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
-#X obj 299 23 loa2dbang;
-#X obj 299 44 delay 60000 1 msec;
 #X obj 157 146 py.pip;
 #X msg 157 98 local numpy;
-#X connect 1 0 19 0;
+#X connect 1 0 17 0;
 #X connect 2 0 3 0;
 #X connect 2 1 1 0;
 #X connect 3 0 4 0;
@@ -34,7 +32,5 @@
 #X connect 13 0 14 0;
 #X connect 14 0 10 0;
 #X connect 15 0 1 0;
-#X connect 16 0 17 0;
-#X connect 17 0 2 0;
-#X connect 18 0 13 0;
-#X connect 19 0 18 0;
+#X connect 16 0 13 0;
+#X connect 17 0 16 0;
