@@ -37,7 +37,7 @@ jobs:
   # ==============================================================================
   windows-build:
     # if just linux is true, skip windows
-    if: ${{ inputs.windows }} 
+    if: ${{ github.event.inputs.windows }}
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
@@ -130,6 +130,7 @@ jobs:
     - name: Simples Tests
       run: |
         cd test
+        python3.11 -m pip install numba numpy -t ./py-modules/
         python3.11 ./runTests.py
     
     - name: Upload Object
@@ -143,7 +144,7 @@ jobs:
   # =                               MAC ARM                                      =
   # ==============================================================================
   macos-arm-build:
-    if: ${{ inputs.macos-arm }}
+    if: ${{ github.event.inputs.macos-arm }}
     runs-on: macos-latest
     timeout-minutes: 15
 
