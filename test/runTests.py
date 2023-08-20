@@ -20,8 +20,15 @@ def runTest(pdpatch):
         else:
             print('PureData Patch not found')
             sys.exit()
-        output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
-        outputLines = str(output).split('\\n')
+        # output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, timeout=(60 * 5)) # timeout in seconds (60 * 5 = 5 minutes)
+        try:
+            output = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=60)
+            outputLines = str(output).split('\\n')
+        except subprocess.TimeoutExpired:
+            print("\033[K", end='\r')
+            print("\033[91m" + ' Test with ' + pdpatch + ' failed' + "\033[0m")
+            errorInTest += 1
+            return
         
     elif platform.system() == 'Windows':
         scriptfile = os.path.abspath(__file__)
