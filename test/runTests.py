@@ -75,6 +75,8 @@ def runTest(pdpatch):
     if passed:
         print("\033[92m" + ' Test with ' + pdpatch + ' passed' + "\033[0m")
     else:
+        for line in outputLines:
+            print("\033[93m" + line + "\033[0m")
         print("\033[91m" + ' Test with ' + pdpatch + ' failed' + "\033[0m")
         errorInTest += 1
 
