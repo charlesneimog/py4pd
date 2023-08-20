@@ -1,6 +1,5 @@
 name: Builder
 on:
-  # just one develop commit
   push:
     branches:
       - develop    
@@ -39,7 +38,7 @@ jobs:
   # ==============================================================================
   windows-build:
     # if just linux is true, skip windows
-    if: ${{ github.event.inputs.windows == true }}
+    if: ${{ inputs.windows }} 
     runs-on: windows-latest
     timeout-minutes: 15
     steps:
@@ -58,7 +57,6 @@ jobs:
       with:
           install: make autoconf automake libtool mingw-w64-x86_64-gcc libtool mingw-w64-x86_64-libwinpthread-git mingw-w64-x86_64-dlfcn mingw-w64-x86_64-grep  mingw-w64-x86_64-curl unzip
           update: false
-
 
     - if: runner.os == 'Windows'
       name: Get Pd
@@ -101,7 +99,7 @@ jobs:
   # =                               MAC INTEL                                    =
   # ==============================================================================
   macos-intel-build:
-    if: ${{ github.event.inputs.macos-intel == true }}
+    if: ${{ inputs.macos-intel }}
     runs-on: macos-latest
     timeout-minutes: 15
     steps:
@@ -146,7 +144,7 @@ jobs:
   # =                               MAC ARM                                      =
   # ==============================================================================
   macos-arm-build:
-    if: ${{ github.event.inputs.macos-arm == true }}
+    if: ${{ inputs.macos-arm }}
     runs-on: macos-latest
     timeout-minutes: 15
 
@@ -186,7 +184,7 @@ jobs:
   # ==============================================================================
 
   linux-build:
-    # true or not set
+    if: ${{ inputs.linux }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
