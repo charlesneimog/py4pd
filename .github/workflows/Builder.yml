@@ -148,7 +148,7 @@ jobs:
   macos-arm-build:
     if: ${{ github.event.inputs.macos-arm == true }}
     runs-on: macos-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
 
     steps:
     - uses: actions/checkout@v3
@@ -188,7 +188,7 @@ jobs:
   linux-build:
     # true or not set
     runs-on: ubuntu-latest
-    timeout-minutes: 5 
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v3
         with:
