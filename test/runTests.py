@@ -5,37 +5,44 @@ import platform
 
 errorInTest = 0
 
-
 def runTest(pdpatch):
     global errorInTest
     if platform.system() == 'Linux':
         scriptfile = os.path.abspath(__file__)
         scriptfolder = os.path.dirname(scriptfile)
         pathfile = scriptfolder + "/" + pdpatch
-        # check if file exists
         if os.path.isfile(pathfile):
             cmd = f'pd -nogui -send "start-test bang" {pathfile}' 
-            # print cmd in green
             print("Running: " + "\033[92m" + cmd + "\033[0m", end='\r')
         else:
             print('PureData Patch not found')
             sys.exit()
-        output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
-        outputLines = str(output).split('\\n')
-        
+        try:
+            output = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=60)
+            outputLines = str(output).split('\\n')
+        except subprocess.TimeoutExpired:
+            print("\033[K", end='\r')
+            print("\033[91m" + ' Test with ' + pdpatch + ' failed, TIMEOUT' + "\033[0m")
+            errorInTest += 1
+            return
     elif platform.system() == 'Windows':
         scriptfile = os.path.abspath(__file__)
         scriptfolder = os.path.dirname(scriptfile)
         pathfile = scriptfolder + pdpatch
-        # check if file exists
         if os.path.isfile(pathfile):
             pass
         else:
             print(f'Patch {pathfile} not found')
             sys.exit()
-        output = subprocess.run(f'"C:\\Program Files\\Pd\\bin\\pd.exe" -nogui -send "start-test bang" "{pathfile}"', capture_output=True, text=True, shell=True)
-        outputLines = str(output).split('\\n')
-
+        cmd = f'"C:\\Program Files\\Pd\\bin\\pd.exe" -nogui -send "start-test bang" "{pathfile}"'
+        try:
+            output = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=60)
+            outputLines = str(output).split('\\n')
+        except subprocess.TimeoutExpired:
+            print("\033[K", end='\r')
+            print("\033[91m" + ' Test with ' + pdpatch + ' failed, TIMEOUT' + "\033[0m")
+            errorInTest += 1
+            return
     elif platform.system() == 'Darwin':
         scriptfile = os.path.abspath(__file__)
         scriptfolder = os.path.dirname(scriptfile)
@@ -47,8 +54,14 @@ def runTest(pdpatch):
             print(f'Patch {pathfile} not found')
             sys.exit()
         cmd = '/Applications/Pd-*.app/Contents/Resources/bin/pd -nogui -stderr -send "start-test bang" ' + pathfile
-        output = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=60)
-        outputLines = str(output).split('\\n')
+        try:
+            output = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=60)
+            outputLines = str(output).split('\\n')
+        except subprocess.TimeoutExpired:
+            print("\033[K", end='\r')
+            print("\033[91m" + ' Test with ' + pdpatch + ' failed, TIMEOUT' + "\033[0m")
+            errorInTest += 1
+            return
     else:
         print('OS not supported')
         sys.exit()
@@ -62,13 +75,16 @@ def runTest(pdpatch):
     if passed:
         print("\033[92m" + ' Test with ' + pdpatch + ' passed' + "\033[0m")
     else:
+        for line in outputLines:
+            print("\033[93m" + line + "\033[0m")
         print("\033[91m" + ' Test with ' + pdpatch + ' failed' + "\033[0m")
         errorInTest += 1
 
     
 if __name__ == "__main__":
     # list all patches inside test folder
-    patches = os.listdir('.')
+    scriptFolder = os.path.dirname(os.path.abspath(__file__))
+    patches = os.listdir(scriptFolder)
     patches = [patch for patch in patches if patch.endswith('.pd')]
     patches.sort()
     for patch in patches:
@@ -76,7 +92,6 @@ if __name__ == "__main__":
     if errorInTest != 0:
         print("\033[91m" + f'{errorInTest} Test has failed' + "\033[0m")
         sys.exit(-1)
-
     elif errorInTest == 0:
         print("\n")
         print("===============================")

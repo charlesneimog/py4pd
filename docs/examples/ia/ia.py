@@ -4,11 +4,13 @@ for library in ['torch', 'librosa']:
         exec('import ' + library)
     except:
         pd.error('Please install ' + library + ' library')
+        import sys
+        sys.exit(1)
         
 
 def renderAudio_nn(audio, model):
-    model = pd.home() + '/' + model
-    audio = pd.home() + '/' +  audio
+    model = pd.get_patch_dir() + '/' + model
+    audio = pd.get_patch_dir() + '/' +  audio
     torch.set_grad_enabled(False)
     model = torch.jit.load(model).eval()
     x = librosa.load(audio)[0]
@@ -22,5 +24,5 @@ def renderAudio_nn(audio, model):
 
 
 def py4pdLoadObjects():
-    pd.addobject(renderAudio_nn, "py4pd-nn")
+    pd.add_object(renderAudio_nn, "py4pd-nn")
 
