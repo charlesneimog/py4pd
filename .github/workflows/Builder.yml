@@ -7,9 +7,8 @@ on:
       - '**/*.c'
       - '**/*.h'
       - '**/*.yml'
-
+    
   workflow_dispatch:
-    # make one checkbox for each platform
     inputs:
       windows:
         description: 'Build for Windows'
@@ -184,7 +183,7 @@ jobs:
   # ==============================================================================
 
   linux-build:
-    if: ${{ inputs.linux || inputs.linux == null }}
+    if: ${{ github.event.inputs.linux }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -199,9 +198,9 @@ jobs:
       - name: print github.event.inputs.linux
         run: |
           echo ${{ github.event.inputs.linux }}
-          echo ${{ github.event.inputs.linux == true }}
-          echo ${{ github.event.inputs.linux == null }}
-          echo ${{ github.event.inputs.linux == false }}
+          echo ${{ github.event.inputs.windows }}
+          echo ${{ github.event.inputs.macos-intel }}
+          echo ${{ github.event.inputs.macos-arm }}
 
       - name: Install Build Dependencies
         run: |
@@ -236,7 +235,7 @@ jobs:
         run: |
           cp -r py4pd test
           cd test
-          ls -l py4pd/resources/scripts/
+          python3.11 -m pip install numba numpy -t ./py-modules/
           python ./runTests.py
                     
       - name: Upload Object
