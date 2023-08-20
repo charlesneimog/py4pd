@@ -184,7 +184,7 @@ jobs:
   # ==============================================================================
 
   linux-build:
-    if: ${{ inputs.linux }}
+    if: ${{ inputs.linux || inputs.linux == null }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
