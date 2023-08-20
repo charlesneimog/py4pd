@@ -515,9 +515,9 @@ When working with audio objects, there are situations where we require global va
 
 --------------------------------------
 
-#### <h4 style="text-align:center"> `pd.get_global_var` </h4>
+#### <h4 style="text-align:center"> `pd.get_obj_var` </h4>
 
-When working with audio objects, we have another helpful function called `pd.get_global_var`. This function serves a similar purpose to `pd.get_obj_pointer`. Here, it creates the variable automatically if it doesn't exist yet.
+When working with audio objects, we have another helpful function called `pd.get_obj_var`. This function serves a similar purpose to `pd.get_obj_pointer`. Here, it creates the variable automatically if it doesn't exist yet.
 
 === "Parameters" 
 
@@ -533,19 +533,19 @@ When working with audio objects, we have another helpful function called `pd.get
 
 === "Examples" 
 
-    In the code snippet below, when we use `#!python pd.get_global_var("PHASE")`, it retrieves the value of the variable associated with the current running object. If the value hasn't been set yet, it will be initialized to `0.0`.
+    In the code snippet below, when we use `#!python pd.get_obj_var("PHASE")`, it retrieves the value of the variable associated with the current running object. If the value hasn't been set yet, it will be initialized to `0.0`.
 
     ``` python
      
-    phase = pd.get_global_var("PHASE", initial_value=0.0)
+    phase = pd.get_obj_var("PHASE", initial_value=0.0)
             
     ```
 
 --------------------------------------
 
-#### <h4 style="text-align:center"> `pd.set_global_var` </h4>
+#### <h4 style="text-align:center"> `pd.set_obj_var` </h4>
 
-To set new values for the variable of the object we use `pd.set_global_var`. In audio objects, for example, this value you be saved for the next block (next run) calculation.
+To set new values for the variable of the object we use `pd.set_obj_var`. In audio objects, for example, this value you be saved for the next block (next run) calculation.
 
 === "Parameters" 
 
@@ -557,7 +557,7 @@ To set new values for the variable of the object we use `pd.set_global_var`. In 
 === "Examples"
 
     ``` python
-    pd.set_global_var("PHASE", phase)
+    pd.set_obj_var("PHASE", phase)
     ```
 
 --------------------------------------

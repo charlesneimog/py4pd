@@ -1361,12 +1361,12 @@ PyMethodDef PdMethods[] = {
     // Others
     {"get_obj_pointer", Py4pdMod_GetObjPointer, METH_NOARGS, "Get PureData Object Pointer"},
     {"get_str_pointer", Py4pdMod_GetObjPointer, METH_NOARGS, "Get PureData Object Pointer"},
-    {"set_global_var", Py4pdMod_SetGlobalVar, METH_VARARGS, "It sets a global variable for the Object, it is not clear after the execution of the function"},
+    {"set_obj_var", Py4pdMod_SetGlobalVar, METH_VARARGS, "It sets a global variable for the Object, it is not clear after the execution of the function"},
 
     // Loops
-    {"get_global_var", (PyCFunction)Py4pdMod_GetGlobalVar, METH_VARARGS | METH_KEYWORDS, "It gets a global variable for the Object, it is not clear after the execution of the function"},
-    {"clear_global_var", (PyCFunction)Py4pdMod_ClearGlobalVar, METH_VARARGS, "It clear the Dictionary of global variables"},
-    {"accum_global_var", Py4pdMod_AccumGlobalVar, METH_VARARGS, "It adds the values in the end of the list"},
+    {"get_obj_var", (PyCFunction)Py4pdMod_GetGlobalVar, METH_VARARGS | METH_KEYWORDS, "It gets a global variable for the Object, it is not clear after the execution of the function"},
+    {"clear_obj_var", (PyCFunction)Py4pdMod_ClearGlobalVar, METH_VARARGS, "It clear the Dictionary of global variables"},
+    {"accum_obj_var", Py4pdMod_AccumGlobalVar, METH_VARARGS, "It adds the values in the end of the list"},
 
     // player
     {"add_to_player", (PyCFunction)Py4pdMod_AddThingToPlay, METH_VARARGS | METH_KEYWORDS, "It adds a thing to the player"},

@@ -9,4 +9,4 @@ def audio(audio, amplitude):
 
 
 def py4pdLoadObjects():
-    pd.addobject(audio, "audio", objtype=pd.AUDIO)
+    pd.add_object(audio, "audio", objtype=pd.AUDIO)
