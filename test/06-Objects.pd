@@ -72,6 +72,7 @@
 #X restore 48 70 pd notpassed;
 #X obj 135 41 t b b;
 #X obj 204 7 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
+#X obj 212 42 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
 #X connect 1 0 25 0;
 #X connect 3 0 4 0;
 #X connect 3 1 14 0;
@@ -100,3 +101,4 @@
 #X connect 25 0 23 0;
 #X connect 25 1 8 0;
 #X connect 26 0 25 0;
+#X connect 27 0 8 0;
