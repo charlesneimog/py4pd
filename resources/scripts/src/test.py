@@ -5,9 +5,9 @@ import subprocess
 
 def py4pdtimer(message):
     if (message == "start"):
-        pd.set_global_var("py4pd_timer", time.time())
+        pd.set_obj_var("py4pd_timer", time.time())
     elif (message == "end"):
-        timer = time.time() - pd.get_global_var("py4pd_timer")
+        timer = time.time() - pd.get_obj_var("py4pd_timer")
         pd.print("It spent " + str(int(timer * 1000)) + " ms.")
     else:
         pd.error("Bad args to py4pdtimer")

@@ -17,16 +17,16 @@ def pycollect(data):
     It collects the data from pyiterate and outputs it. 
     """
     if data is pd.OUTLOOP:
-        data = pd.get_global_var("DATA")
+        data = pd.get_obj_var("DATA")
         if data is None:
             pd.error("[py.collect]: There is no data to output")
         else:
             pd.out(data)
     elif data is pd.CLEARLOOP:
-        pd.clear_global_var("DATA")
+        pd.clear_obj_var("DATA")
 
     else:
-        pd.accum_global_var("DATA", data)
+        pd.accum_obj_var("DATA", data)
 
 
 
