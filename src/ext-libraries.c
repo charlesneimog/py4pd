@@ -227,23 +227,33 @@ static int Py4pdLib_CreateObjInlets(PyObject* function, t_py *x, int argc, t_ato
 static void Py4pdLib_Audio2PdAudio(t_py *x, PyObject* pValue, t_sample *audioOut, int numChannels, int n){ 
     if (pValue != NULL) {
         if (PyArray_Check(pValue)) {
+
             PyArrayObject *pArray = PyArray_GETCONTIGUOUS((PyArrayObject *)pValue); 
             PyArray_Descr *pArrayType = PyArray_DESCR(pArray); // double or float
             int arrayLength = PyArray_SIZE(pArray); 
-            int arrayChannels = PyArray_DIM(pArray, 0); 
+            int returnedChannels = PyArray_DIM(pArray, 0);
+
+            if (x->n_channels < returnedChannels){
+                pd_error(x, "[%s] Returned %d channels, but the object has just %d channels",
+                         x->objectName->s_name, returnedChannels, (int)x->n_channels);
+                x->audioError = 1;
+                return;
+            }
+
             if (arrayLength <= n){
                 if (pArrayType->type_num == NPY_FLOAT) {
-                    for (int i = 0; i < arrayChannels; i++) {
-                        float *audioFloat = (float*)PyArray_GETPTR2(pArray, i, 0);
-                        for (int j = 0; j < x->vectorSize; j++) 
-                            audioOut[i * x->vectorSize + j] = (t_sample)audioFloat[j];
+                    float *pArrayData = (float *)PyArray_DATA(pArray);
+                    int i;
+                    for (i = 0; i < arrayLength; i++){
+                        audioOut[i] = pArrayData[i];
                     }
+
                 }
                 else if (pArrayType->type_num == NPY_DOUBLE) {
-                    for (int i = 0; i < arrayChannels; i++) {
-                        double *audioFloat = (double *)PyArray_GETPTR2(pArray, i, 0);
-                        for (int j = 0; j < x->vectorSize; j++) 
-                            audioOut[i * x->vectorSize + j] = (t_sample)audioFloat[j];
+                    double *pArrayData = (double *)PyArray_DATA(pArray);
+                    int i;
+                    for (i = 0; i < arrayLength; i++){
+                        audioOut[i] = pArrayData[i];
                     }
                 }
                 else {
@@ -277,8 +287,9 @@ static void Py4pdLib_Audio2PdAudio(t_py *x, PyObject* pValue, t_sample *audioOut
         Py_XDECREF(ptraceback);
         PyErr_Clear();
         for (int i = 0; i < numChannels; i++) {
-            for (int j = 0; j < x->vectorSize; j++) 
+            for (int j = 0; j < x->vectorSize; j++){ 
                 audioOut[i * x->vectorSize + j] = 0;
+            }
         }
         x->audioError = 1;
     }
@@ -515,10 +526,11 @@ void Py4pdLib_Bang(t_py *x){
     Py_DECREF(pArgs);
 }
 
-
-// +++++++++++
-// ++ AUDIO ++
-// +++++++++++
+// =====================================
+//             +++++++++++            //
+//             ++ AUDIO ++            //
+//             +++++++++++            //
+// =====================================
 t_int *Py4pdLib_AudioINPerform(t_int *w) {
     t_py *x = (t_py *)(w[1]);  
     if (x->audioError){
@@ -546,23 +558,22 @@ t_int *Py4pdLib_AudioOUTPerform(t_int *w) {
     t_py *x = (t_py *)(w[1]);  
     if (x->audioError)
         return (w + 4);
+
     t_sample *audioOut = (t_sample *)(w[2]);
     int n = (int)(w[3]);
     PyObject* pValue; 
     int numChannels = x->n_channels;
+
     if (x->pArgTuple == NULL){
         x->pArgTuple = PyTuple_New(x->py_arg_numbers);
         return (w + 4);
     }
     for (int i = 0; i < x->py_arg_numbers; i++){
         PyTuple_SetItem(x->pArgTuple, i, x->pyObjArgs[i]->pValue);
-        Py_INCREF(x->pyObjArgs[i]->pValue); // This keep the reference.
+        Py_INCREF(x->pyObjArgs[i]->pValue); 
     }
-    pValue = Py4pdUtils_RunPy(x, x->pArgTuple, NULL);
-    if (Py_IsNone(pValue)){
-        Py_XDECREF(pValue);
-        return (w + 4);
-    }
+
+    pValue = Py4pdUtils_RunPyAudioOut(x, x->pArgTuple, NULL);
     Py4pdLib_Audio2PdAudio(x, pValue, audioOut, numChannels, n); 
     Py_XDECREF(pValue);
     return (w + 4);
@@ -591,13 +602,15 @@ t_int *Py4pdLib_AudioPerform(t_int *w){
         PyTuple_SetItem(x->pArgTuple, i, x->pyObjArgs[i]->pValue);
         Py_INCREF(x->pyObjArgs[i]->pValue); 
     }
-    pValue = Py4pdUtils_RunPy(x, x->pArgTuple, NULL);
-    if (Py_IsNone(pValue)){
-        Py_DECREF(pValue);
+    pValue = Py4pdUtils_RunPyAudioOut(x, x->pArgTuple, NULL);
+    if (pValue == NULL){
+        x->audioError = 1;
         return (w + 5);
     }
     Py4pdLib_Audio2PdAudio(x, pValue, audioOut, numChannels, n); 
+
     Py_XDECREF(pValue);
+
     return (w + 5);
 }
 

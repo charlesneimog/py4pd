@@ -212,17 +212,15 @@ static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args, PyObject 
         }
     }
 
+    free(key);
     if (item == NULL) {
-        free(key);
         Py_RETURN_NONE;
     }
-    free(key);
+    
     if (item->aCumulative){
         return item->pList;
     }
     else{
-        if (item->pList == Py_None)
-            Py_RETURN_NONE;
         return item->pItem;
     }
 }
