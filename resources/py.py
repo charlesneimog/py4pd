@@ -1,32 +1,15 @@
 import pd
+import sys
 from random import randint
 
 try:
     import numpy as np
     numpyIsInstalled = True
 except Exception as e:
-    py4pdObjectFolder = pd.get_py4pd_dir()
-    pd.error("=== Numpy not installed, to solve this... ===")
-    pd.print("\n", show_prefix=False)
-    pd.print("    1º Create new object with 'py4pd'", show_prefix=False)
-    pd.print("\n", show_prefix=False)
-    pd.print("    2º Send the message 'pipinstall local numpy' and wait for the installation", show_prefix=False)
-    pd.print("\n", show_prefix=False)
-    pd.error("==================================")
+    pd.pip_install("local", "numpy")
     numpyIsInstalled = False
-
-try:
-    from numba import jit 
-
-
-except Exception as e:
-    pd.pip_install("local", "numba")
-    from numba import jit
-
-
-
-
-
+    pd.error("You must restart Pure Data to use numpy.")
+    sys.exit()
 
 # ================================================
 # ==============  Functions  =====================
@@ -127,7 +110,6 @@ def printall(x, y):
 # ================================================
 # ================ Audio =========================
 # ================================================
-@jit(nopython=True, cache=True, fastmath=True)
 def generate_sine_wave(frequency, amplitude, phase, num_samples, sampling_rate):
     angular_frequency = 2 * np.pi * frequency
     t = np.arange(num_samples) / sampling_rate
@@ -136,7 +118,6 @@ def generate_sine_wave(frequency, amplitude, phase, num_samples, sampling_rate):
     return sine_wave, last_phase
 
 
-@jit(nopython=True, cache=True, fastmath=True)
 def mksenoide(freqs, amps, phases, vectorsize, samplerate):
     n = len(freqs) 
     nframes = vectorsize
