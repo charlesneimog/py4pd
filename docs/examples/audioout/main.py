@@ -1,5 +1,8 @@
 import pd
 import numpy
+import faulthandler
+
+faulthandler.enable()
 
 def audioout(freq, amplitude):
     if freq is None: 

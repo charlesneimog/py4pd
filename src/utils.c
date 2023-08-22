@@ -694,6 +694,64 @@ void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue* src, t_py4pd_pValue* dest){
 }
 
 // =====================================================================
+PyObject *Py4pdUtils_RunPyAudioOut(t_py *x, PyObject *pArgs, PyObject *pKwargs) { 
+ t_py *prev_obj = NULL;
+    int prev_obj_exists = 0;
+    PyObject* MainModule = PyImport_ImportModule("pd"); 
+    PyObject* oldObjectCapsule = NULL;
+    PyObject* pValue;
+    PyObject *objectCapsule = NULL;
+
+    if (MainModule != NULL) {
+        oldObjectCapsule = PyObject_GetAttrString(MainModule, "py4pd"); // borrowed reference
+        if (oldObjectCapsule != NULL) {
+            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd"); // borrowed reference
+            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd"); // borrowed reference
+            prev_obj_exists = 1;
+            Py_DECREF(oldObjectCapsule);
+            Py_DECREF(py4pd_capsule);
+        }
+        else{
+            prev_obj_exists = 0;
+            Py_XDECREF(oldObjectCapsule);
+        }
+    }
+    else {
+        pd_error(x, "[%s] Failed to import pd module when Running Python function", x->function_name->s_name);
+        PyErr_Print();
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[Python] %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+        Py_XDECREF(MainModule);
+        PyErr_Clear();
+        return NULL;
+    }
+    objectCapsule = Py4pdUtils_AddPdObject(x);
+    if (objectCapsule == NULL){
+        pd_error(x, "[Python] Failed to add object to Python");
+        Py_XDECREF(MainModule);
+        return NULL;
+    }
+    pValue = PyObject_Call(x->function, pArgs, pKwargs);
+    if (prev_obj_exists == 1 && pValue != NULL) {
+        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
+        if (objectCapsule == NULL){
+            pd_error(x, "[Python] Failed to add object to Python");
+            return NULL;
+        }
+    }
+    Py_XDECREF(MainModule);
+    return pValue;
+
+}
+
+// =====================================================================
 /*
  * @brief Run a Python function
  * @param x is the py4pd object
