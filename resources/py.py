@@ -156,11 +156,11 @@ def sinusoids(freqs, amps):
         return None
     if len(freqs) != len(amps):
         return None
-    phases = pd.get_global_var("PHASE", initial_value=np.zeros(len(freqs)))
+    phases = pd.get_obj_var("PHASE", initial_value=np.zeros(len(freqs)))
     freqs = np.array(freqs, dtype=np.float64)
     amps = np.array(amps, dtype=np.float64)
     out, new_phases = mksenoide(freqs, amps, phases, vectorsize, samplerate)
-    pd.set_global_var("PHASE", new_phases)
+    pd.set_obj_var("PHASE", new_phases)
     return out
 
 
