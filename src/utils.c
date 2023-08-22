@@ -74,7 +74,6 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
         x->use_pArgs = 1;
     }
     if (code->co_flags & CO_VARKEYWORDS) {
-        post("this function uses **kwargs");
         x->use_pKwargs = 1;
     }
     if (code->co_argcount != 0){
