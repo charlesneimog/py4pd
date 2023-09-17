@@ -36,6 +36,8 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
     snprintf(script_inside_py4pd_path, MAXPDSTRING, 
              "%s/resources/scripts/%s.py", x->py4pdPath->s_name, script_file_name->s_name); // TODO: Change this to other name
 
+    int thereIsRequirements = 0;
+
     PyObject *sys_path = PySys_GetObject("path");
     if (access(script_file_path, F_OK) == -1 && access(script_inside_py4pd_path, F_OK) == -1) {
         Py_XDECREF(x->function);
@@ -45,20 +47,39 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv){
             if (!pathelem){
                 break;
             }
-            char library_path[MAXPDSTRING];
+            char *library_path = malloc(strlen(pathelem) + strlen(script_file_name->s_name) + 2);
             snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, script_file_name->s_name); 
-            /* The library folder must have the same name as the library file */
             if (access(library_path, F_OK) != -1) {
                 libraryNotFound = 0;
                 PyObject *library_path_py = PyUnicode_FromString(library_path);
                 PyList_Insert(sys_path, 0, library_path_py);
+                Py_DECREF(library_path_py);
+                // check if there is requirements.txt file inside the library folder
+                int requirementsSize = strlen(library_path) + strlen("/requirements.txt") + 1;
+                char *requirements_path = malloc(requirementsSize);
+                snprintf(requirements_path, requirementsSize, "%s/requirements.txt", library_path);
+                if (access(requirements_path, F_OK) != -1) {
+                    post("There is a requirements.txt file inside the library folder");
+                    thereIsRequirements = 1;
+                }
+                free(requirements_path);
             }
+            free(library_path);
         }
         if (libraryNotFound){
             pd_error(x, "[py4pd] Library file '%s.py' not found!", script_file_name->s_name);
             return -1;
         }
     }
+    if (!thereIsRequirements){
+        int localRequirementsSize = strlen(x->pdPatchFolder->s_name) + strlen("/requirements.txt") + 1;
+        char *localRequirements = malloc(localRequirementsSize);
+        snprintf(localRequirements, localRequirementsSize, "%s/requirements.txt", x->pdPatchFolder->s_name);
+        if (access(localRequirements, F_OK) != -1) {
+            thereIsRequirements = 1;
+        }
+    }
+
 
     PyObject *pModule, *pFunc;  // Create the variables of the python objects
     char *pyScriptsFolder = malloc(strlen(x->py4pdPath->s_name) + 40); // allocate extra space
@@ -361,8 +382,6 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
             return;
         }
     }
-
-
 
     if (pValue == NULL) {
         pd_error(x, "[Python] pipInstall: pipinstall function failed");

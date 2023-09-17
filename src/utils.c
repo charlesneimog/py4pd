@@ -489,6 +489,98 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
     return; 
 }
 
+
+// ============================================
+// ========= PY4PD METHODS FUNCTIONS ==========
+// ============================================
+void Py4pd_PipInstallRequirements(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+    (void)s;
+    const char *pipPackage;
+    const char *localORglobal;
+
+    PyObject *py4pdModule = PyImport_ImportModule("py4pd");
+    if (py4pdModule == NULL) {
+        pd_error(x, "[Python] pipInstall: py4pd module not found");
+        return;
+    }
+    PyObject *pipInstallFunction = PyObject_GetAttrString(py4pdModule, "pipinstallRequirements");
+    if (pipInstallFunction == NULL) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: pipinstall function not found");
+        return;
+    }
+    PyObject *ObjFunction = x->function;
+    x->function = pipInstallFunction;
+
+    localORglobal = atom_getsymbolarg(0, argc, argv)->s_name;
+    pipPackage = atom_getsymbolarg(1, argc, argv)->s_name;
+
+    // the function is executed using pipinstall([localORglobal, pipPackage])
+    PyObject *argsList = PyList_New(2);
+    PyList_SetItem(argsList, 0, Py_BuildValue("s", localORglobal));
+    PyList_SetItem(argsList, 1, Py_BuildValue("s", pipPackage));
+    PyObject *argTuple = PyTuple_New(1);
+    PyTuple_SetItem(argTuple, 0, argsList);
+    
+    t_py *prev_obj = NULL;
+    int prev_obj_exists = 0;
+    PyObject *MainModule = PyImport_ImportModule("pd");
+    PyObject *oldObjectCapsule;
+
+    if (MainModule != NULL) {
+        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        if (oldObjectCapsule != NULL) {
+            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
+            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+            prev_obj_exists = 1;
+        }
+        else {
+            prev_obj_exists = 0;
+        }
+    }
+
+    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
+
+    if (objectCapsule == NULL){
+        pd_error(x, "[Python] Failed to add object to Python");
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyObject *ptype_str = PyObject_Str(ptype);
+        PyObject *pvalue_str = PyObject_Str(pvalue);
+        PyObject *ptraceback_str = PyObject_Str(ptraceback);
+        const char *ptype_c = PyUnicode_AsUTF8(ptype_str);
+        const char *pvalue_c = PyUnicode_AsUTF8(pvalue_str);
+        const char *ptraceback_c = PyUnicode_AsUTF8(ptraceback_str);
+        pd_error(x, "[Python] %s: %s\n%s", ptype_c, pvalue_c, ptraceback_c);
+        return;
+    }
+
+
+    PyObject *pValue = PyObject_CallObject(pipInstallFunction, argTuple);
+    
+    if (prev_obj_exists == 1 && pValue != NULL) {
+        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
+        if (objectCapsule == NULL){
+            pd_error(x, "[Python] Failed to add object to Python");
+            return;
+        }
+    }
+
+    if (pValue == NULL) {
+        pd_error(x, "[Python] pipInstall: pipinstall function failed");
+        return;
+    }
+    x->function = ObjFunction;
+    Py_DECREF(argTuple);
+    Py_DECREF(pValue);
+    Py_DECREF(pipInstallFunction);
+    Py_DECREF(py4pdModule);
+    sys_vgui("tk_messageBox -icon warning -type ok -title \"%s installed!\" -message \"%s installed! \nYou need to restart PureData!\"\n", pipPackage, pipPackage);
+    return;
+}
+
+
+
+
 // ====================================
 /*
 * @brief Run system command and check for errors
@@ -838,7 +930,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
         PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[Python] Call failed: %s", PyUnicode_AsUTF8(pstr));
+        pd_error(x, "[%s] Call failed: %s", x->objectName->s_name, PyUnicode_AsUTF8(pstr));
         Py_XDECREF(pstr);
         Py_XDECREF(ptype);
         Py_XDECREF(pvalue);
