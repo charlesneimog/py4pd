@@ -117,10 +117,10 @@
 #X text 263 97 !!! Start dsp!;
 #X msg 247 127 \; pd dsp \$1;
 #X obj 247 97 tgl 15 0 empty empty empty 0 -8 0 8 #fcfcfc #ff0400 #000000 0 1;
-#X obj 18 86 hsl 100 10 100 2000 0 0 empty empty empty -2 -8 0 8 #fcfcfc #000000 #000000 0 1;
-#X obj 33 100 hsl 100 10 100 2000 0 0 empty empty empty -2 -8 0 8 #fcfcfc #000000 #000000 0 1;
-#X obj 49 114 hsl 100 10 100 2000 0 0 empty empty empty -2 -8 0 8 #fcfcfc #000000 #000000 0 1;
-#X obj 65 128 hsl 100 10 100 2000 0 0 empty empty empty -2 -8 0 8 #fcfcfc #000000 #000000 0 1;
+#X obj 18 73 hsl 100 10 100 2000 0 1 empty empty empty -2 -8 0 8 #fcfcfc #000000 #000000 1750 1;
+#X obj 33 87 hsl 100 10 100 2000 0 1 empty empty empty -2 -8 0 8 #fcfcfc #000000 #000000 4350 1;
+#X obj 49 101 hsl 100 10 100 2000 0 1 empty empty empty -2 -8 0 8 #fcfcfc #000000 #000000 4050 1;
+#X obj 65 115 hsl 100 10 100 2000 0 1 empty empty empty -2 -8 0 8 #fcfcfc #000000 #000000 2650 1;
 #N canvas 131 169 450 359 (subpatch) 0;
 #X obj 50 18 inlet;
 #X obj 50 69 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
@@ -145,8 +145,10 @@
 #X connect 9 0 10 0;
 #X connect 10 0 1 0;
 #X connect 10 1 4 3;
-#X restore 15 141 pd;
+#X restore 15 128 pd;
 #X f 10;
+#X obj 92 139 loadbang;
+#X text 92 270 !!!!!!!!!THIS IS VERY INSTABLE YET!!!!!!!!!!!!!!;
 #X connect 5 0 7 1;
 #X connect 6 0 1 0;
 #X connect 6 1 1 1;
@@ -159,6 +161,7 @@
 #X connect 13 0 15 2;
 #X connect 14 0 15 3;
 #X connect 15 0 7 0;
+#X connect 16 0 5 0;
 #X restore 14 233 pd Libraries;
 #X text 292 160 IMPORTANT: This is just simple example \, the exaustive Docs are avaible in www.charlesneimog.com/py4pd;
 #X text 80 232 <= Share your Python code as pd objects.;
