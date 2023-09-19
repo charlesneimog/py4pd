@@ -1228,7 +1228,7 @@ void *thread_function(void *arg) {
     #ifdef __APPLE__
         // macOS command
         char command[MAXPDSTRING];
-        snprintf(command, sizeof(command), "/usr/local/bin/python%d.%d -m pip install %s --target %s --upgrade", PY_MAJOR_VERSION, PY_MINOR_VERSION, pipArgs->package, install_path);
+        snprintf(command, sizeof(command), "open -a Terminal /usr/local/bin/python%d.%d -m pip install %s --target %s --upgrade", PY_MAJOR_VERSION, PY_MINOR_VERSION, pipArgs->package, install_path);
         system(command);
     #endif
 
