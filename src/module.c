@@ -1,4 +1,6 @@
+#include "m_pd.h"
 #include "py4pd.h"
+#include "s_stuff.h"
 
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
@@ -1190,94 +1192,114 @@ static PyObject *Py4pdMod_ClearPlayer(PyObject *self, PyObject *args){
     Py_RETURN_NONE;
 }
 
+
+// =================================
+// ============ THREADS ============
+// =================================
+struct pipArgs {
+        
+    t_py *x;
+    int globalInstall;
+    int detachInstall;
+    char *package;
+};
+
+// =================================
+
+void *thread_function(void *arg) {
+    struct pipArgs *pipArgs = (struct pipArgs *)arg;
+
+    char install_path[MAXPDSTRING];
+        
+    if (pipArgs->globalInstall == 1){
+        snprintf(install_path, MAXPDSTRING, "%s/py-modules", pipArgs->x->py4pdPath->s_name);
+    }
+    else{
+        snprintf(install_path, MAXPDSTRING, "%s/py-modules", pipArgs->x->pdPatchFolder->s_name);
+    }
+
+    #ifdef __linux__
+        char command[2048];
+        snprintf(command, sizeof(command), "python%d.%d -m pip install %s --target %s --upgrade", PY_MAJOR_VERSION, PY_MINOR_VERSION, pipArgs->package, install_path);
+        post(command);
+        system(command);
+    #endif
+
+    #ifdef __APPLE__
+        // macOS command
+        char command[MAXPDSTRING];
+        snprintf(command, sizeof(command), "/usr/local/bin/python%d.%d -m pip install %s --target %s --upgrade", PY_MAJOR_VERSION, PY_MINOR_VERSION, pipArgs->package, install_path);
+        system(command);
+    #endif
+
+    #ifdef _WIN32
+        // Windows command
+        char command[MAXPDSTRING];
+        snprintf(command, sizeof(command), "py -%d.%d -m pip install --target %s --upgrade %s", PY_MAJOR_VERSION, PY_MINOR_VERSION, install_path, pipArgs->package);
+        system(command);
+    #endif
+
+    post("[py4pd] Installation of %s finished\n", pipArgs->package);
+    pd_error(NULL, "You must restart PureData to use the new module");
+    free(pipArgs);
+    return NULL;
+}
+
+
 // =================================
 // ============= PIP ===============
 // =================================
-static PyObject *Py4pdMod_PipInstall(PyObject *self, PyObject *args){
+static PyObject *Py4pdMod_PipInstall(PyObject *self, PyObject *args, PyObject *keywords){
     (void)self;
     char *pipPackage;
-    char *localORglobal;
+    int global = 0;
+    int detach = 0;
 
     t_py *x = Py4pdUtils_GetObject(self);
 
-    PyErr_Clear(); // this is probably called after an error, so we clear it
-
-    if (!PyArg_ParseTuple(args, "ss", &localORglobal, &pipPackage)) {
+    if (keywords == NULL) {
+        PyErr_Clear();
+    } 
+    else{
+        
+        if (PyDict_Contains(keywords, PyUnicode_FromString("global_install"))){
+            PyObject *global_value = PyDict_GetItemString(keywords, "global_install");
+            if (global_value == Py_True) {
+                global = 1;
+            } 
+        }
+        if (PyDict_Contains(keywords, PyUnicode_FromString("detach_install"))){
+            PyObject *detach_value = PyDict_GetItemString(keywords, "detach_install");
+            if (detach_value == Py_True) {
+                detach = 1;
+            } 
+        }
+    }
+    if (!PyArg_ParseTuple(args, "s", &pipPackage)) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: wrong arguments");
         return NULL;
     }
 
-    PyObject *py4pdModule = PyImport_ImportModule("py4pd");
-    if (py4pdModule == NULL) {
-        pd_error(x, "[Python] pipInstall: py4pd module not found");
-        return NULL;
-    }
-    PyObject *pipInstallFunction = PyObject_GetAttrString(py4pdModule, "pipinstall");
-    if (pipInstallFunction == NULL) {
-        PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: pipinstall function not found");
-        return NULL;
-    }
-    x->function = pipInstallFunction;
+    struct pipArgs *pipArgs = malloc(sizeof(struct pipArgs));
+    pipArgs->globalInstall = 0;
+    pipArgs->x = x;
+    pipArgs->detachInstall = detach;
+    pipArgs->package = pipPackage;
 
-    PyObject *argsList = PyList_New(2);
-    PyList_SetItem(argsList, 0, Py_BuildValue("s", localORglobal));
-    PyList_SetItem(argsList, 1, Py_BuildValue("s", pipPackage));
-    PyObject *argTuple = PyTuple_New(1);
-    PyTuple_SetItem(argTuple, 0, argsList);
-    
-    t_py *prev_obj = NULL;
-    int prev_obj_exists = 0;
-    PyObject *MainModule = PyImport_ImportModule("pd");
-    PyObject *oldObjectCapsule;
+    post("[py4pd] Installing %s, wait!", pipArgs->package);
 
-    if (MainModule != NULL) {
-        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
-        if (oldObjectCapsule != NULL) {
-            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
-            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-            prev_obj_exists = 1;
-        }
-        else {
-            prev_obj_exists = 0;
-        }
-    }
+    pthread_t thread_id;
+    pthread_create(&thread_id, NULL, thread_function, (void *)pipArgs);
 
-    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
-
-    if (objectCapsule == NULL){
-        pd_error(x, "[Python] Failed to add object to Python");
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyObject *ptype_str = PyObject_Str(ptype);
-        PyObject *pvalue_str = PyObject_Str(pvalue);
-        PyObject *ptraceback_str = PyObject_Str(ptraceback);
-        const char *ptype_c = PyUnicode_AsUTF8(ptype_str);
-        const char *pvalue_c = PyUnicode_AsUTF8(pvalue_str);
-        const char *ptraceback_c = PyUnicode_AsUTF8(ptraceback_str);
-        pd_error(x, "[Python] %s: %s\n%s", ptype_c, pvalue_c, ptraceback_c);
-        return NULL;
-    }
-
-    PyObject *pValue = PyObject_CallObject(pipInstallFunction, argTuple);
-    
-    if (prev_obj_exists == 1 && pValue != NULL) {
-        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
-        if (objectCapsule == NULL){
-            pd_error(x, "[Python] Failed to add object to Python");
-            return NULL;
-        }
-    }
-
-    if (pValue == NULL) {
-        pd_error(x, "[Python] pipInstall: pipinstall function failed");
-        return NULL;
+    if (detach == 1){
+        pthread_detach(thread_id);
     }
     else{
-        pd_error(x, "[Python] %s is installed, but you need to restart pd.", pipPackage);
-        PyErr_SetString(PyExc_TypeError, "[Python] Installed, but you need to restart pd.");
-        return NULL;
+        pthread_join(thread_id, NULL);
     }
-    return NULL;
+
+
+    return PyLong_FromLong(0);
     
 }
 
@@ -1354,7 +1376,7 @@ PyMethodDef PdMethods[] = {
     {"add_object", (PyCFunction)Py4pdLib_AddObj, METH_VARARGS | METH_KEYWORDS, "It adds python functions as objects"},
 
     // pip install
-    {"pip_install", Py4pdMod_PipInstall, METH_VARARGS, "It installs a pip package"},
+    {"pip_install", (PyCFunction)Py4pdMod_PipInstall, METH_VARARGS | METH_KEYWORDS, "It installs a pip package"},
 
     // Others
     {"get_obj_pointer", Py4pdMod_GetObjPointer, METH_NOARGS, "Get PureData Object Pointer"},
