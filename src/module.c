@@ -1235,7 +1235,7 @@ void *thread_function(void *arg) {
     #ifdef _WIN32
         // Windows command
         char command[MAXPDSTRING];
-        snprintf(command, sizeof(command), "py -%d.%d -m pip install --target %s --upgrade %s", PY_MAJOR_VERSION, PY_MINOR_VERSION, install_path, pipArgs->package);
+        snprintf(command, sizeof(command), "py -%d.%d -m pip install %s --target %s --upgrade", PY_MAJOR_VERSION, PY_MINOR_VERSION,  pipArgs->package, install_path);
         system(command);
     #endif
 
