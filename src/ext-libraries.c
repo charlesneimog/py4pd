@@ -812,6 +812,8 @@ PyObject* Py4pdLib_AddObj(PyObject* self, PyObject* args, PyObject* keywords) {
         pd_error(py4pd, "[py4pd] Library Folder is NULL, some help patches may not be found");
     } 
 
+    post("Start add object");
+
     const char *helpFolder = "/help/";
 
     size_t totalLength = strlen(py4pd->libraryFolder->s_name) + strlen(helpFolder) + 1;
@@ -891,6 +893,7 @@ PyObject* Py4pdLib_AddObj(PyObject* self, PyObject* args, PyObject* keywords) {
         }
     }
 
+    post("Start add object 2");
     class_set_extern_dir(gensym(helpFolderCHAR));
     t_class *localClass;
 
@@ -921,9 +924,7 @@ PyObject* Py4pdLib_AddObj(PyObject* self, PyObject* args, PyObject* keywords) {
 
     // Add configs to the object
     PyObject* nestedDict = PyDict_New(); // New
-
     PyDict_SetItemString(nestedDict, "py4pdOBJFunction", Function);
-
 
     PyObject* Py_ObjType = PyLong_FromLong(objectType);
     PyDict_SetItemString(nestedDict, "py4pdOBJType", Py_ObjType);
@@ -991,6 +992,7 @@ PyObject* Py4pdLib_AddObj(PyObject* self, PyObject* args, PyObject* keywords) {
     
     Py_DECREF(pdModule);
 
+    post("Start add object 3");
 
     // =====================================
     PyCodeObject* code = (PyCodeObject*)PyFunction_GetCode(Function);
@@ -1063,6 +1065,7 @@ PyObject* Py4pdLib_AddObj(PyObject* self, PyObject* args, PyObject* keywords) {
         post("[py4pd]: Object {%s} added to PureData", objectName);
     }
     class_set_extern_dir(&s_);
+    post("done");
     Py_RETURN_TRUE;
 }
 
