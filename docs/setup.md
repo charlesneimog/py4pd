@@ -20,7 +20,7 @@ hide:
     
     On `Windows` you can install Python like and ordirary software.
 
-    * Go to [Python.org](https://www.python.org/downloads/release/python-31011/),
+    * Go to [Python.org](https://www.python.org/downloads/release/python-3115/),
     * Go to the bottom of the page and download: `Windows installer (64-bit)`.
     * Install it as an ordinary program.
 
@@ -35,7 +35,7 @@ hide:
 
     On `MacOS` you can install Python like and ordirary software.
 
-    * Go to [Python.org](https://www.python.org/downloads/release/python-31011/),
+    * Go to [Python.org](https://www.python.org/downloads/release/python-3115/),
     * Go to the bottom of the page and download: `macOS 64-bit universal2 installer`.
     * Install it as an ordinary program.
     
@@ -45,7 +45,7 @@ hide:
     On `Linux` you can install Python like and ordirary software.
 
     * Open the terminal.
-    * Run: `sudo dnf install python3.10` (Fedora) or `sudo apt install python3.10` (Ubuntu). 
+    * Run: `sudo dnf install python3.11 python3-pip` (Fedora) or `sudo apt install python3.11 python3-pip` (Ubuntu) or `sudo pacman -S python3.11 python3.pip` (Arch).
 	
 ??? danger "Attention to Python Version"
     If you want to use old versions, the Python must follow the exact version of the compilation: 
