@@ -1385,7 +1385,7 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
  * @return It will return NULL.
  */
 void *Py4pd_ImportNumpyForPy4pd() {
-    import_array();
+    _import_array();
     return NULL;
 }
 
