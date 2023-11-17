@@ -861,7 +861,16 @@ static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args,
     // ================================
 
     if (keywords == NULL) {
-        numpy = 0;
+        numpy = 1;
+        int numpyArrayImported = _import_array();
+        if (numpyArrayImported == 0) {
+            py4pd->numpyImported = 1;
+        } else {
+            py4pd->numpyImported = 0;
+            pd_error(py4pd, "[py4pd] Not possible to import numpy array");
+            return NULL;
+        }
+
         PyErr_Clear();
     } else {
         numpy = PyDict_Contains(keywords, PyUnicode_FromString("numpy"));
@@ -872,15 +881,6 @@ static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args,
             PyObject *numpy_value = PyDict_GetItemString(keywords, "numpy");
             if (numpy_value == Py_True) {
                 numpy = 1;
-                int numpyArrayImported = _import_array();
-                if (numpyArrayImported == 0) {
-                    py4pd->numpyImported = 1;
-                } else {
-                    py4pd->numpyImported = 0;
-                    pd_error(py4pd,
-                             "[py4pd] Not possible to import numpy array");
-                    return NULL;
-                }
             } else if (numpy_value == Py_False) {
                 numpy = 0;
             } else {
@@ -901,20 +901,31 @@ static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args,
             int i;
             if (numpy == 0) {
                 garray_getfloatwords(pdarray, &vecsize, &vec);
-                PyObject *list = PyList_New(vecsize);
+                PyObject *pAudio = PyList_New(vecsize);
                 for (i = 0; i < vecsize; i++) {
-                    PyList_SetItem(list, i, PyFloat_FromDouble(vec[i].w_float));
+                    PyList_SetItem(pAudio, i,
+                                   PyFloat_FromDouble(vec[i].w_float));
                 }
                 PyErr_Clear();
-                return list;
+                return pAudio;
             } else if (numpy == 1) {
                 garray_getfloatwords(pdarray, &vecsize, &vec);
-                const npy_intp dims = vecsize;
-                // send double float array to numpy
-                PyObject *array =
-                    PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE, vec);
+                // create numpy array for vec, must return equivalent of
+                // np.array(pAudio) when pAudio is a list
+                npy_intp dims[1] = {vecsize};
+                PyObject *pAudio = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+                double *pArrayData =
+                    (double *)PyArray_DATA((PyArrayObject *)pAudio);
+                if (pArrayData == NULL) {
+                    pd_error(py4pd, "[Python] pd.tabread: error creating "
+                                    "numpy array for vec");
+                    return NULL;
+                }
+                for (i = 0; i < vecsize; i++) {
+                    pArrayData[i] = vec[i].w_float;
+                }
                 PyErr_Clear();
-                return array;
+                return pAudio;
 
             } else {
                 pd_error(py4pd, "[Python] Check the keyword arguments.");
