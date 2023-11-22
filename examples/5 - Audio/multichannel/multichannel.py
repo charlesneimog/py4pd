@@ -7,14 +7,7 @@ except Exception as e:
     pd.print("", show_prefix=False)
     
 
-try:
-    from numba import jit 
-except Exception as e:
-    pd.error("Numba not installed, trying to install it...")
-    pd.pip_install("local", "numba")
-    pd.print("", show_prefix=False)
 
-@jit(nopython=True, cache=True, fastmath=True)
 def generate_sine_wave(frequency, amplitude, phase, num_samples, sampling_rate):
     angular_frequency = 2 * np.pi * frequency
     t = np.arange(num_samples) / sampling_rate
@@ -23,7 +16,7 @@ def generate_sine_wave(frequency, amplitude, phase, num_samples, sampling_rate):
     return sine_wave, last_phase
 
 
-@jit(nopython=True, cache=True, fastmath=True)
+
 def mksenoide(freqs, amps, phases, vectorsize, samplerate):
     n = len(freqs) 
     nframes = vectorsize
@@ -43,11 +36,11 @@ def sinusoids(freqs, amps):
         return None
     if len(freqs) != len(amps):
         return None
-    phases = pd.get_global_var("PHASE", initial_value=np.zeros(len(freqs)))
+    phases = pd.get_obj_var("PHASE", initial_value=np.zeros(len(freqs)))
     freqs = np.array(freqs, dtype=np.float64)
     amps = np.array(amps, dtype=np.float64)
     out, new_phases = mksenoide(freqs, amps, phases, vectorsize, samplerate)
-    pd.set_global_var("PHASE", new_phases)
+    pd.set_obj_var("PHASE", new_phases)
     return out
 
 
