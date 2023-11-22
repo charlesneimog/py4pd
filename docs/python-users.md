@@ -1,6 +1,6 @@
 # Python Embedded Module
 
-If you're using [Python](https://www.python.org/) and [PureData](puredata.info/) together, you can use the `pd` module within the `py4pd` package to exchange data, set configurations, inform users of errors, and use all Python things. The module is embedded in the `py4pd` code and is only accessible within the `py4pd` environment. It's similar to how Google Collab uses modules like `google.collab.drive` and `google.collab.widgets`. In the next section I present all the methods that are embedded.
+If you're using [Python](https://www.python.org/) and [PureData](https://puredata.info/) together, you can use the `pd` module within the `py4pd` package to exchange data, set configurations, inform users of errors, and use all Python things. The module is embedded in the `py4pd` code and is only accessible within the `py4pd` environment. It's similar to how Google Collab uses modules like `google.collab.drive` and `google.collab.widgets`. In the next section I present all the methods that are embedded.
 
 --------------
 ## <h2 style="text-align:center">**Write Pd Objects with Python**</h2>
