@@ -30,7 +30,7 @@ __pycache__/py.cpython-310.pyc
 *.analyzerinfo
 *.snalyzerinfo
 *.count
-*.png
+#*.png
 *.vscode
 
 py-modules

@@ -48,11 +48,11 @@ def libraryname_setup():
     pd.add_object(showmycollgraph, "graph", objtype=pd.VIS, objimage="./resources/imagetosomeVISobject.png")
 ```
 
-Following this steps we have this patch:
-
 <p align="center">
+    Following this steps we have this patch:
     <img src="../examples/createobj/mynewpdobject.png" width="50%"</img>
 </p>
+
 
 --------------------
 ### <h3 style="text-align:center"> **Types of Objects** </h3>
@@ -398,7 +398,7 @@ You can use `pd.send` to send data to a receive object in your PureData patch. T
 ### <h3 style="text-align:center"> **Info for the user** </h3>
 --------------------
 
-There are two messages used to print info in the PureData console, they are `pd.print` and `pd.error`.
+There are three messages used to print info in the PureData console, `pd.print`, `pd.logpost` and `pd.error`.
 <br>
 
 ------------------
@@ -435,7 +435,7 @@ The ordinary function `#!python print()` will not work in `py4pd` (unless that y
 This function uses `logpost` in C PureData API to log messages using levels. For example, if you use `#!python logpost(4, "PureData message in level 4")`, the message will appear in console just if the user had selected to show the messages of level 4 in PureData Console.
 
 <p align="center">
-    <img src="../assets/logpost.png" width="30%"</img>
+    <img src="../assets/logpost.png" width="55%"</img>
 </p>
 
 === "Parameters" 

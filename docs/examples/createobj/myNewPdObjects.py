@@ -4,7 +4,7 @@ def mysumObject(a, b, c, d):
     return a + b + c + d
 
 def py4pdLoadObjects():
-    pd.addobject(mysumObject, "mysumObject") # function, string with name of the object
+    pd.add_object(mysumObject, "mysumObject") # function, string with name of the object
     
     # My License, Name and University, others information
     pd.print("", show_prefix=False)
