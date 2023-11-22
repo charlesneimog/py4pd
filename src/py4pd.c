@@ -716,6 +716,12 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     t_symbol *script_file_name = atom_gensym(argv + 0);
     t_symbol *function_name = atom_gensym(argv + 1);
 
+    // PyObject *site_package = PyUnicode_FromString(
+    //     x->pkgPath->s_name); // Place where the packages will be
+    // PyObject *sys_path = PySys_GetObject("path");
+    // PyList_Insert(sys_path, 0, site_package);
+    // Py_DECREF(site_package);
+
     if (x->function_called == 1) {
         int function_is_equal = strcmp(
             function_name->s_name,
@@ -1097,11 +1103,7 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     x->pkgPath = patch_dir;          // set name of the packages path
 
     Py4pdUtils_SetObjConfig(
-        x);         // set the config file (in py4pd.cfg, make this be
-    if (argc > 1) { // check if there are two arguments
-        Py4pd_SetFunction(x, s, argc, argv);
-        Py4pd_ImportNumpyForPy4pd();
-    }
+        x); // set the config file (in py4pd.cfg, make this be
 
     // Add additional paths to the python path
     char *pyScripts_folder =
@@ -1131,6 +1133,11 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     free(pyScripts_folder);
     free(pyGlobal_packages);
     object_count++;
+
+    if (argc > 1) { // check if there are two arguments
+        Py4pd_SetFunction(x, s, argc, argv);
+        Py4pd_ImportNumpyForPy4pd();
+    }
     return (x);
 }
 
