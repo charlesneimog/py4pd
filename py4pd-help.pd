@@ -1,4 +1,4 @@
-#N canvas 494 62 1206 635 8;
+#N canvas 494 62 1202 670 8;
 #X msg 25 46 doc, f 6;
 #N canvas 282 97 1541 723 embedded 0;
 #X obj 9 192 py4pd;
@@ -128,7 +128,6 @@
 #X connect 11 0 10 0;
 #X connect 12 0 8 0;
 #X restore 14 233 pd Libraries;
-#X text 292 160 IMPORTANT: This is just simple example \, the exaustive Docs are avaible in www.charlesneimog.com/py4pd;
 #X text 80 232 <= Share your Python code as pd objects.;
 #X text 109 210 <= Interact with Python from PureData.;
 #X text 42 116 <= Click to open the script.;
@@ -161,12 +160,13 @@
 #X restore 13 261 pd py4pd extra objects;
 #X text 131 260 py4pd come with object to use pip inside pd \, and minor others things. Check the subpatch.;
 #X obj 13 117 py4pd;
-#N canvas 538 32 988 300 MAINFUNCTIONS 1;
+#N canvas 538 32 988 300 MAINFUNCTIONS 0;
 #X restore 74 160 pd MAINFUNCTIONS;
 #X obj 17 17;
-#X connect 0 0 28 0;
-#X connect 6 0 28 0;
-#X connect 7 0 28 0;
-#X connect 20 0 3 0;
-#X connect 24 0 28 0;
-#X connect 28 0 20 0;
+#X text 292 160 IMPORTANT: This is just simple example \, the exaustive Docs are avaible in www.charlesneimog.github.io/py4pd;
+#X connect 0 0 27 0;
+#X connect 6 0 27 0;
+#X connect 7 0 27 0;
+#X connect 19 0 3 0;
+#X connect 23 0 27 0;
+#X connect 27 0 19 0;

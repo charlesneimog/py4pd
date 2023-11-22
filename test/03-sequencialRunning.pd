@@ -137,8 +137,8 @@
 #X obj 210 208 tgl 20 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000 0 1;
 #X obj 126 217 r delay;
 #X obj 267 27 bng 20 250 50 0 empty empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
-#X obj 94 273 delay 3000 1 msec;
 #X obj 104 9 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
+#X obj 94 273 delay 1000 1 msec;
 #X connect 0 0 13 0;
 #X connect 2 0 0 0;
 #X connect 2 1 21 0;
@@ -151,7 +151,7 @@
 #X connect 7 0 8 0;
 #X connect 9 0 11 0;
 #X connect 11 0 10 0;
-#X connect 12 0 28 0;
+#X connect 12 0 29 0;
 #X connect 12 1 9 0;
 #X connect 13 0 3 0;
 #X connect 14 0 2 0;
@@ -163,7 +163,7 @@
 #X connect 23 0 24 0;
 #X connect 24 0 25 0;
 #X connect 25 0 22 1;
-#X connect 26 0 28 1;
+#X connect 26 0 29 1;
 #X connect 27 0 17 0;
-#X connect 28 0 22 0;
-#X connect 29 0 2 0;
+#X connect 28 0 2 0;
+#X connect 29 0 22 0;
