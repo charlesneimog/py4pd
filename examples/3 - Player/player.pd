@@ -1,4 +1,4 @@
-#N canvas 688 117 874 630 8;
+#N canvas 129 133 637 395 8;
 #X obj 14 11 py4pd -lib player;
 #X obj 53 136 py.player;
 #X obj 53 37 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
@@ -6,8 +6,8 @@
 #X msg 104 63 stop;
 #X msg 109 86 clear;
 #X obj 53 157 print;
-#X msg 247 80 pointers 0;
-#X obj 247 43 loadbang;
+#X msg 152 86 pointers 0;
+#X obj 152 49 loadbang;
 #X connect 1 0 6 0;
 #X connect 2 0 1 0;
 #X connect 3 0 1 0;

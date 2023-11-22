@@ -1317,6 +1317,7 @@ static PyModuleDef_Slot _memoryboard_slots[] = {
     {Py_mod_exec, _pd_modexec},
     {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
     {0, NULL}};
+    {0, NULL}};
 
 #endif
 
@@ -1345,8 +1346,18 @@ PyMethodDef PdMethods[] = {
     // Pic
     {"show_image", Py4pdMod_ShowImage, METH_VARARGS,
      "Show image in PureData, it must be .gif, .bmp, .ppm"},
+    {"show_image", Py4pdMod_ShowImage, METH_VARARGS,
+     "Show image in PureData, it must be .gif, .bmp, .ppm"},
 
     // Files
+    {"get_patch_dir", Py4pdMod_GetPatchHome, METH_VARARGS,
+     "Get PureData Patch Path Folder"},
+    {"get_home_folder", Py4pdMod_GetPatchHome, METH_VARARGS,
+     "Get PureData Patch Path Folder"},
+    {"get_py4pd_dir", Py4pdMod_GetObjFolder, METH_VARARGS,
+     "Get PureData Py4PD Folder"},
+    {"get_temp_dir", Py4pdMod_GetObjTmpFolder, METH_VARARGS,
+     "Get PureData Temp Folder"},
     {"get_patch_dir", Py4pdMod_GetPatchHome, METH_VARARGS,
      "Get PureData Patch Path Folder"},
     {"get_home_folder", Py4pdMod_GetPatchHome, METH_VARARGS,
@@ -1368,8 +1379,20 @@ PyMethodDef PdMethods[] = {
      "Return the amount of channels in the object"},
     {"pd_has_gui", Py4pdMod_PdHasGui, METH_NOARGS,
      "Return True of False if pd has or no gui"},
+    {"get_sample_rate", Py4pdMod_PdSampleRate, METH_NOARGS,
+     "Get PureData SampleRate"},
+    {"get_vec_size", Py4pdMod_PdVecSize, METH_NOARGS,
+     "Get PureData Vector Size"},
+    {"get_num_channels", Py4pdMod_ObjNChannels, METH_NOARGS,
+     "Return the amount of channels in the object"},
+    {"pd_has_gui", Py4pdMod_PdHasGui, METH_NOARGS,
+     "Return True of False if pd has or no gui"},
 
     {"get_patch_zoom", Py4pdMod_PdZoom, METH_NOARGS, "Get Patch zoom"},
+    {"get_outlet_count", Py4pdMod_PdGetOutCount, METH_NOARGS,
+     "Get the Number of Outlets of one object."},
+    {"get_object_args", Py4pdMod_GetObjArgs, METH_NOARGS,
+     "Returns list with all the args."},
     {"get_outlet_count", Py4pdMod_PdGetOutCount, METH_NOARGS,
      "Get the Number of Outlets of one object."},
     {"get_object_args", Py4pdMod_GetObjArgs, METH_NOARGS,
@@ -1378,12 +1401,21 @@ PyMethodDef PdMethods[] = {
     // library methods
     {"add_object", (PyCFunction)Py4pdLib_AddObj, METH_VARARGS | METH_KEYWORDS,
      "It adds python functions as objects"},
+    {"add_object", (PyCFunction)Py4pdLib_AddObj, METH_VARARGS | METH_KEYWORDS,
+     "It adds python functions as objects"},
 
     // pip install
     {"pip_install", (PyCFunction)Py4pdMod_PipInstall,
      METH_VARARGS | METH_KEYWORDS, "It installs a pip package"},
 
     // Others
+    {"get_obj_pointer", Py4pdMod_GetObjPointer, METH_NOARGS,
+     "Get PureData Object Pointer"},
+    {"get_str_pointer", Py4pdMod_GetObjPointer, METH_NOARGS,
+     "Get PureData Object Pointer"},
+    {"set_obj_var", Py4pdMod_SetGlobalVar, METH_VARARGS,
+     "It sets a global variable for the Object, it is not clear after the "
+     "execution of the function"},
     {"get_obj_pointer", Py4pdMod_GetObjPointer, METH_NOARGS,
      "Get PureData Object Pointer"},
     {"get_str_pointer", Py4pdMod_GetObjPointer, METH_NOARGS,
@@ -1401,8 +1433,20 @@ PyMethodDef PdMethods[] = {
      "It clear the Dictionary of global variables"},
     {"accum_obj_var", Py4pdMod_AccumGlobalVar, METH_VARARGS,
      "It adds the values in the end of the list"},
+    {"get_obj_var", (PyCFunction)Py4pdMod_GetGlobalVar,
+     METH_VARARGS | METH_KEYWORDS,
+     "It gets a global variable for the Object, it is not clear after the "
+     "execution of the function"},
+    {"clear_obj_var", (PyCFunction)Py4pdMod_ClearGlobalVar, METH_VARARGS,
+     "It clear the Dictionary of global variables"},
+    {"accum_obj_var", Py4pdMod_AccumGlobalVar, METH_VARARGS,
+     "It adds the values in the end of the list"},
 
     // player
+    {"add_to_player", (PyCFunction)Py4pdMod_AddThingToPlay,
+     METH_VARARGS | METH_KEYWORDS, "It adds a thing to the player"},
+    {"clear_player", Py4pdMod_ClearPlayer, METH_NOARGS,
+     "Remove all Python Objects of the player."},
     {"add_to_player", (PyCFunction)Py4pdMod_AddThingToPlay,
      METH_VARARGS | METH_KEYWORDS, "It adds a thing to the player"},
     {"clear_player", Py4pdMod_ClearPlayer, METH_NOARGS,
@@ -1411,7 +1455,10 @@ PyMethodDef PdMethods[] = {
     // Internal
     {"_recursive", Py4pdMod_PdRecursiveCall, METH_VARARGS,
      "It calls a function recursively"},
+    {"_recursive", Py4pdMod_PdRecursiveCall, METH_VARARGS,
+     "It calls a function recursively"},
 
+    {NULL, NULL, 0, NULL} //
     {NULL, NULL, 0, NULL} //
 };
 
@@ -1428,8 +1475,12 @@ static struct PyModuleDef pdmodule = {
 #if PYTHON_REQUIRED_VERSION(3, 12)
     .m_slots = _memoryboard_slots,
 #endif
+#if PYTHON_REQUIRED_VERSION(3, 12)
+    .m_slots = _memoryboard_slots,
+#endif
 
     .m_traverse = NULL, /* m_traverse, that is the traverse function for GC */
+    .m_clear = NULL,    /* m_free, that is the free function for GC */
     .m_clear = NULL,    /* m_free, that is the free function for GC */
 };
 

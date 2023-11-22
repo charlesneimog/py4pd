@@ -3,6 +3,8 @@
 // ============================================
 t_class *py4pd_class;        // For for normal objects, almost unused
 t_class *py4pd_classLibrary; // For libraries
+t_class *py4pd_class;        // For for normal objects, almost unused
+t_class *py4pd_classLibrary; // For libraries
 int object_count = 0;
 
 // ============================================
@@ -15,10 +17,12 @@ int object_count = 0;
  * @param argv array of arguments
  * @return void
  */
+ */
 
-static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
+static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv)  {
   if (argc > 2) {
-    pd_error(x, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
+    pd_error(
+            x, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
     return -1;
   }
 
@@ -26,7 +30,8 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
 
   // check if script file exists
   char script_file_path[MAXPDSTRING];
-  snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->pdPatchFolder->s_name,
+  snprintf(script_file_path, MAXPDSTRING, "%s/%s.py",
+             x->pdPatchFolder->s_name,
            script_file_name->s_name);
 
   char script_inside_py4pd_path[MAXPDSTRING];
@@ -338,10 +343,13 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     return;
   }
   PyObject *pipInstallFunction =
-      PyObject_GetAttrString(py4pdModule, "pipinstall");
+     
+        PyObject_GetAttrString(py4pdModule, "pipinstall");
   if (pipInstallFunction == NULL) {
-    PyErr_SetString(PyExc_TypeError,
-                    "[Python] pd.pipInstall: pipinstall function not found");
+    PyErr_SetString(
+            PyExc_TypeError,
+                   
+            "[Python] pd.pipInstall: pipinstall function not found");
     return;
   }
   PyObject *ObjFunction = x->function;
@@ -466,6 +474,8 @@ static void Py4pd_SetPy4pdHomePath(t_py *x, t_symbol *s, int argc,
 
 // ============================================
 /**
+ * @brief set the packages path to py4pd, if start with . then build the
+ * complete path
  * @brief set the packages path to py4pd, if start with . then build the
  * complete path
  * @param x is the py4pd object
@@ -879,6 +889,10 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param s
  * @param argc
  * @param argv
+ * @param x
+ * @param s
+ * @param argc
+ * @param argv
  */
 
 static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
@@ -931,6 +945,12 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param s
  * @param argc
  * @param argv
+ * @brief This function will control were the Python will run, with PEP 684, I
+ * want to make possible using parallelism in Python
+ * @param x
+ * @param s
+ * @param argc
+ * @param argv
  * @return It will return nothing but will run the Python function
  */
 
@@ -972,6 +992,8 @@ static void Py4pd_Py4pdThread(t_py *x, t_floatarg f) {
 
 // ============================================
 /**
+ * @brief This will enable or disable the numpy array support and start numpy
+ * import if it is not imported.
  * @brief This will enable or disable the numpy array support and start numpy
  * import if it is not imported.
  * @param x is the py4pd object

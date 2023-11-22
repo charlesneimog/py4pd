@@ -27,8 +27,10 @@ __pycache__/py.cpython-310.pyc
 # Files for test
 *.tex
 *.texi
+*.analyzerinfo
+*.snalyzerinfo
 *.count
-*.png
+#*.png
 *.vscode
 
 py-modules
