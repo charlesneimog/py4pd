@@ -1,0 +1,13 @@
+#N canvas 615 281 817 558 8;
+#X obj 5 8 py4pd -lib py4pd;
+#X obj 8 110 py.chord 250 250;
+#X obj 155 75 py.pip;
+#X msg 155 53 local neoscore;
+#X msg 8 50 c5 c+4 c3 g-5 a#3;
+#X text 237 52 <= Install score Python Library.;
+#X text 91 8 <= Load objects from py4pd.;
+#X text 133 107 <= py.chord object.;
+#X msg 21 74 6000 6500 4900 3500 7550;
+#X connect 3 0 2 0;
+#X connect 4 0 1 0;
+#X connect 8 0 1 0;

@@ -4,7 +4,7 @@
 #X obj 4 125 py4pd;
 #X obj 3 285 bng 20 250 50 0 nutelaOS empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
 #X obj 3 310 bng 20 250 50 0 linux empty empty 0 -10 0 12 #fcfcfc #000000 #000000;
-#N canvas 0 32 1375 516 links 1;
+#N canvas 0 32 1375 516 links 0;
 #X obj 36 176 pdcontrol;
 #X obj 119 83 r linux;
 #X msg 119 103 browse https://www.charlesneimog.com/py4pd/setup/#install-python;

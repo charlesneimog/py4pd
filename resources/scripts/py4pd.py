@@ -18,8 +18,7 @@ try:
     from src.test import *
     from src.tree import *
     from src.utils import *
-    from src.om import *
-    
+
 except Exception as e:
     pd.error("Error loading py4pd objects: " + str(e))
     pd.add_object(pipinstall, "py.pip")
@@ -33,9 +32,7 @@ def mysumarg(a=3, b=2, c=5, d=4):
 def py4pdLoadObjects():
     # Pip install
     pd.add_object(pipinstall, "py.pip")
-    pd.add_object(pipinstallRequirements, "py.pipreq")
 
-    
     pd.add_object(mysumarg, "py.mysumarg")
 
     # Utils
@@ -71,10 +68,6 @@ def py4pdLoadObjects():
     pd.add_object(mat_trans, "py.mattrans", pyout=True)
     pd.add_object(rotate, "py.rotate", pyout=True)
     pd.add_object(flat, "py.flat")
-
-    # OpenMusic
-    pd.add_object(arithm_Series, "arithm-ser", pyout=True)
-
 
     # Loop Functions
     # these are special objects.
