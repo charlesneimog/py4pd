@@ -481,7 +481,7 @@ static void Py4pd_SetPackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     post("[py4pd] The packages path is: %s", x->pkgPath->s_name);
     return;
   } else {
-    if (argc < 2 && argc > 0) {
+    if (argc == 1) {
       if (argv[0].a_type == A_SYMBOL) {
         t_symbol *path = atom_getsymbol(argv);
         // It checks relative path
@@ -490,13 +490,23 @@ static void Py4pd_SetPackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                                   strlen(path->s_name) + 1);
           strcpy(new_path, x->pdPatchFolder->s_name);
           strcat(new_path, path->s_name + 1);
-          post("[py4pd] The packages path set to: %s", new_path);
+          post("[py4pd] Packages path set to: %s", new_path);
           x->pkgPath = gensym(new_path);
           free(new_path);
         } else {
           x->pkgPath = atom_getsymbol(argv);
-          post("[py4pd] The packages path set to: %s", x->pkgPath->s_name);
+          post("[py4pd] Packages path set to: %s", x->pkgPath->s_name);
         }
+        char cfgFile[MAXPDSTRING];
+        const char *py4pdDir = x->py4pdPath->s_name;
+        snprintf(cfgFile, MAXPDSTRING, "%s/py4pd.cfg", py4pdDir);
+        FILE *file = fopen(cfgFile, "w");
+
+        if (x->editorName != NULL) {
+          fprintf(file, "editor = %s\n", x->editorName->s_name);
+        }
+        fprintf(file, "packages = %s", x->pkgPath->s_name);
+        fclose(file);
       } else {
         pd_error(x, "[py4pd] The packages path must be a string");
         return;
@@ -627,7 +637,8 @@ void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     const char *py4pdDir = x->py4pdPath->s_name;
     snprintf(cfgFile, MAXPDSTRING, "%s/py4pd.cfg", py4pdDir);
     FILE *file = fopen(cfgFile, "w");
-    fprintf(file, "editor = %s", x->editorName->s_name);
+    fprintf(file, "editor = %s\n", x->editorName->s_name);
+    fprintf(file, "packages = %s", x->pkgPath->s_name);
     fclose(file);
     return;
   }
