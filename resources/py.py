@@ -6,7 +6,7 @@ try:
     import numpy as np
     numpyIsInstalled = True
 except Exception as e:
-    pd.pip_install("local", "numpy")
+    pd.pip_install("numpy")
     numpyIsInstalled = False
     pd.error("You must restart Pure Data to use numpy.")
     sys.exit()

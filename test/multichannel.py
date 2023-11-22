@@ -1,6 +1,4 @@
 import numpy as np
-import pd
-
 
 def generate_sine_wave(frequency, amplitude, phase, num_samples, sampling_rate):
     angular_frequency = 2 * np.pi * frequency
