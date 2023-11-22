@@ -1,6 +1,6 @@
 import pd
 from random import randint
-import numba
+
 try:
     import numpy as np
     numpyIsInstalled = True

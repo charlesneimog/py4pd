@@ -1,9 +1,6 @@
 import pd
 import numpy as np
-from numba import jit
 
-
-@jit(nopython=True)
 def generate_sine_wave(frequency, amplitude, phase, num_samples, sampling_rate):
     angular_frequency = 2 * np.pi * frequency
     t = np.arange(num_samples) / sampling_rate
@@ -12,7 +9,6 @@ def generate_sine_wave(frequency, amplitude, phase, num_samples, sampling_rate):
     return sine_wave, last_phase
 
 
-@jit(nopython=True)
 def mksenoide(freqs, amps, phases, vectorsize, samplerate):
     n = len(freqs) 
     nframes = vectorsize

@@ -1,3 +1,4 @@
+// clang-format off
 #ifndef PY4PD_H
 #define PY4PD_H
 
