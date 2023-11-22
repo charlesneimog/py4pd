@@ -807,88 +807,7 @@ static PyObject *Py4pdMod_PdTabWrite(PyObject *self, PyObject *args,
     Py_RETURN_TRUE;
 }
 
-// =================================
-static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args,
-                                    PyObject *keywords) {
-    (void)self;
-    int vecsize;
-    t_garray *pdarray;
-    t_word *vec;
-    char *string;
-    int numpy;
-
-    // ================================
-    t_py *py4pd = Py4pdUtils_GetObject(self);
-    // ================================
-
-    if (keywords == NULL) {
-        numpy = 0;
-        PyErr_Clear();
-    } else {
-        numpy = PyDict_Contains(keywords, PyUnicode_FromString("numpy"));
-        if (numpy == -1) {
-            pd_error(NULL, "[Python] Check the keyword arguments.");
-            return NULL;
-        } else if (numpy == 1) {
-            PyObject *numpy_value = PyDict_GetItemString(keywords, "numpy");
-            if (numpy_value == Py_True) {
-                numpy = 1;
-                int numpyArrayImported = _import_array();
-                if (numpyArrayImported == 0) {
-                    py4pd->numpyImported = 1;
-                } else {
-                    py4pd->numpyImported = 0;
-                    pd_error(py4pd,
-                             "[py4pd] Not possible to import numpy array");
-                    return NULL;
-                }
-            } else if (numpy_value == Py_False) {
-                numpy = 0;
-            } else {
-                numpy = 0;
-            }
-        } else {
-            numpy = 0;
-        }
-    }
-
-    if (PyArg_ParseTuple(args, "s", &string)) {
-        t_symbol *pd_symbol = gensym(string);
-        if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class))) {
-            pd_error(py4pd, "[Python] Array %s not found.", string);
-            PyErr_SetString(PyExc_TypeError,
-                            "[Python] pd.tabread: array not found");
-        } else {
-            int i;
-            if (numpy == 0) {
-                garray_getfloatwords(pdarray, &vecsize, &vec);
-                PyObject *list = PyList_New(vecsize);
-                for (i = 0; i < vecsize; i++) {
-                    PyList_SetItem(list, i, PyFloat_FromDouble(vec[i].w_float));
-                }
-                PyErr_Clear();
-                return list;
-            } else if (numpy == 1) {
-                garray_getfloatwords(pdarray, &vecsize, &vec);
-                const npy_intp dims = vecsize;
-                // send double float array to numpy
-                PyObject *array =
-                    PyArray_SimpleNewFromData(1, &dims, NPY_DOUBLE, vec);
-                PyErr_Clear();
-                return array;
-
-            } else {
-                pd_error(py4pd, "[Python] Check the keyword arguments.");
-                return NULL;
-            }
-        }
-    } else {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.tabread: wrong arguments");
-        return NULL;
-    }
-    return NULL;
-}
+// ================================
 
 // =================================
 static PyObject *Py4pdMod_GetPatchHome(PyObject *self, PyObject *args) {
@@ -1379,18 +1298,8 @@ PyMethodDef PdMethods[] = {
     // Pic
     {"show_image", Py4pdMod_ShowImage, METH_VARARGS,
      "Show image in PureData, it must be .gif, .bmp, .ppm"},
-    {"show_image", Py4pdMod_ShowImage, METH_VARARGS,
-     "Show image in PureData, it must be .gif, .bmp, .ppm"},
 
     // Files
-    {"get_patch_dir", Py4pdMod_GetPatchHome, METH_VARARGS,
-     "Get PureData Patch Path Folder"},
-    {"get_home_folder", Py4pdMod_GetPatchHome, METH_VARARGS,
-     "Get PureData Patch Path Folder"},
-    {"get_py4pd_dir", Py4pdMod_GetObjFolder, METH_VARARGS,
-     "Get PureData Py4PD Folder"},
-    {"get_temp_dir", Py4pdMod_GetObjTmpFolder, METH_VARARGS,
-     "Get PureData Temp Folder"},
     {"get_patch_dir", Py4pdMod_GetPatchHome, METH_VARARGS,
      "Get PureData Patch Path Folder"},
     {"get_home_folder", Py4pdMod_GetPatchHome, METH_VARARGS,
@@ -1404,14 +1313,6 @@ PyMethodDef PdMethods[] = {
     {"get_key", Py4pdMod_PdKey, METH_VARARGS, "Get Object User Parameters"},
 
     // pd
-    {"get_sample_rate", Py4pdMod_PdSampleRate, METH_NOARGS,
-     "Get PureData SampleRate"},
-    {"get_vec_size", Py4pdMod_PdVecSize, METH_NOARGS,
-     "Get PureData Vector Size"},
-    {"get_num_channels", Py4pdMod_ObjNChannels, METH_NOARGS,
-     "Return the amount of channels in the object"},
-    {"pd_has_gui", Py4pdMod_PdHasGui, METH_NOARGS,
-     "Return True of False if pd has or no gui"},
     {"get_sample_rate", Py4pdMod_PdSampleRate, METH_NOARGS,
      "Get PureData SampleRate"},
     {"get_vec_size", Py4pdMod_PdVecSize, METH_NOARGS,
@@ -1434,8 +1335,6 @@ PyMethodDef PdMethods[] = {
     // library methods
     {"add_object", (PyCFunction)Py4pdLib_AddObj, METH_VARARGS | METH_KEYWORDS,
      "It adds python functions as objects"},
-    {"add_object", (PyCFunction)Py4pdLib_AddObj, METH_VARARGS | METH_KEYWORDS,
-     "It adds python functions as objects"},
 
     // pip install
     {"pip_install", (PyCFunction)Py4pdMod_PipInstall,
@@ -1449,21 +1348,8 @@ PyMethodDef PdMethods[] = {
     {"set_obj_var", Py4pdMod_SetGlobalVar, METH_VARARGS,
      "It sets a global variable for the Object, it is not clear after the "
      "execution of the function"},
-    {"get_obj_pointer", Py4pdMod_GetObjPointer, METH_NOARGS,
-     "Get PureData Object Pointer"},
-    {"get_str_pointer", Py4pdMod_GetObjPointer, METH_NOARGS,
-     "Get PureData Object Pointer"},
-    {"set_obj_var", Py4pdMod_SetGlobalVar, METH_VARARGS,
-     "It sets a global variable for the Object, it is not clear after the "
-     "execution of the function"},
 
     // Loops
-    {"get_obj_var", (PyCFunction)Py4pdMod_GetGlobalVar,
-     METH_VARARGS | METH_KEYWORDS,
-     "It gets a global variable for the Object, it is not clear after the "
-     "execution of the function"},
-    {"clear_obj_var", (PyCFunction)Py4pdMod_ClearGlobalVar, METH_VARARGS,
-     "It clear the Dictionary of global variables"},
     {"accum_obj_var", Py4pdMod_AccumGlobalVar, METH_VARARGS,
      "It adds the values in the end of the list"},
     {"get_obj_var", (PyCFunction)Py4pdMod_GetGlobalVar,
@@ -1472,22 +1358,14 @@ PyMethodDef PdMethods[] = {
      "execution of the function"},
     {"clear_obj_var", (PyCFunction)Py4pdMod_ClearGlobalVar, METH_VARARGS,
      "It clear the Dictionary of global variables"},
-    {"accum_obj_var", Py4pdMod_AccumGlobalVar, METH_VARARGS,
-     "It adds the values in the end of the list"},
 
     // player
     {"add_to_player", (PyCFunction)Py4pdMod_AddThingToPlay,
      METH_VARARGS | METH_KEYWORDS, "It adds a thing to the player"},
     {"clear_player", Py4pdMod_ClearPlayer, METH_NOARGS,
      "Remove all Python Objects of the player."},
-    {"add_to_player", (PyCFunction)Py4pdMod_AddThingToPlay,
-     METH_VARARGS | METH_KEYWORDS, "It adds a thing to the player"},
-    {"clear_player", Py4pdMod_ClearPlayer, METH_NOARGS,
-     "Remove all Python Objects of the player."},
 
     // Internal
-    {"_recursive", Py4pdMod_PdRecursiveCall, METH_VARARGS,
-     "It calls a function recursively"},
     {"_recursive", Py4pdMod_PdRecursiveCall, METH_VARARGS,
      "It calls a function recursively"},
 
