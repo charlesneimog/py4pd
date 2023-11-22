@@ -12,12 +12,11 @@
 #X obj 157 229 t b b;
 #X obj 87 261 delay 1000 1 msec;
 #X obj 135 10 r start-test;
-#X msg 157 192 local numba;
-#X obj 157 209 py.pip;
 #X obj 238 31 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
 #X obj 157 146 py.pip;
 #X msg 157 98 local numpy;
-#X connect 1 0 17 0;
+#X obj 218 12 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
+#X connect 1 0 15 0;
 #X connect 2 0 3 0;
 #X connect 2 1 1 0;
 #X connect 3 0 4 0;
@@ -29,8 +28,7 @@
 #X connect 10 1 8 0;
 #X connect 11 0 7 0;
 #X connect 12 0 2 0;
-#X connect 13 0 14 0;
+#X connect 13 0 1 0;
 #X connect 14 0 10 0;
-#X connect 15 0 1 0;
-#X connect 16 0 13 0;
-#X connect 17 0 16 0;
+#X connect 15 0 14 0;
+#X connect 16 0 2 0;

@@ -248,14 +248,12 @@ static void Py4pdLib_Audio2PdAudio(t_py *x, PyObject *pValue,
                                    t_sample *audioOut, int numChannels, int n) {
     if (pValue != NULL) {
         if (PyArray_Check(pValue)) {
-
             PyArrayObject *pArray =
                 PyArray_GETCONTIGUOUS((PyArrayObject *)pValue);
             PyArray_Descr *pArrayType =
                 PyArray_DESCR(pArray); // double or float
             int arrayLength = PyArray_SIZE(pArray);
             int returnedChannels = PyArray_DIM(pArray, 0);
-
             if (x->n_channels < returnedChannels) {
                 pd_error(x,
                          "[%s] Returned %d channels, but the object has just "
@@ -270,6 +268,7 @@ static void Py4pdLib_Audio2PdAudio(t_py *x, PyObject *pValue,
                 if (pArrayType->type_num == NPY_FLOAT) {
                     float *pArrayData = (float *)PyArray_DATA(pArray);
                     int i;
+                    return;
                     for (i = 0; i < arrayLength; i++) {
                         audioOut[i] = pArrayData[i];
                     }
@@ -613,13 +612,17 @@ t_int *Py4pdLib_AudioOUTPerform(t_int *w) {
     int numChannels = x->n_channels;
 
     if (x->pArgTuple == NULL) {
-        x->pArgTuple = PyTuple_New(x->py_arg_numbers);
+        x->audioError = 1;
+        pd_error(x, "[%s] Error: pArgTuple is NULL, please report!",
+                 x->objectName->s_name);
         return (w + 4);
     }
     for (int i = 0; i < x->py_arg_numbers; i++) {
         PyTuple_SetItem(x->pArgTuple, i, x->pyObjArgs[i]->pValue);
         Py_INCREF(x->pyObjArgs[i]->pValue);
     }
+
+    // return (w + 4);
 
     pValue = Py4pdUtils_RunPyAudioOut(x, x->pArgTuple, NULL);
     Py4pdLib_Audio2PdAudio(x, pValue, audioOut, numChannels, n);

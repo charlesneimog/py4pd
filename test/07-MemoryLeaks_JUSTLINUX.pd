@@ -15,7 +15,7 @@
 #X msg 10 373 \; pd quit;
 #X obj 10 258 t b f;
 #X obj 102 106 mem/problem1;
-#X obj 102 127 nbx 5 14 -1e+37 1e+37 0 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 256;
+#X obj 102 127 nbx 7 14 -1e+37 1e+37 0 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 256;
 #X obj 194 124 nbx 5 14 -1e+37 1e+37 0 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 256;
 #X obj 194 106 mem/problem2;
 #X obj 286 124 nbx 5 14 -1e+37 1e+37 0 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 256;
@@ -59,5 +59,4 @@
 #X connect 25 0 28 0;
 #X connect 26 0 25 0;
 #X connect 27 0 26 0;
-#X connect 29 0 13 0;
 #X connect 31 0 4 0;
