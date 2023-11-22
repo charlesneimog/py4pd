@@ -1,4 +1,4 @@
-#N canvas 342 30 1368 844 8;
+#N canvas 342 32 1368 844 8;
 #X obj 8 6 py4pd -lib py4pd;
 #X obj 10 48 bng 25 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
 #X obj 10 79 t b b b b b b b, f 111;
@@ -59,4 +59,5 @@
 #X connect 25 0 28 0;
 #X connect 26 0 25 0;
 #X connect 27 0 26 0;
+#X connect 29 0 13 0;
 #X connect 31 0 4 0;
