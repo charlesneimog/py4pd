@@ -1076,11 +1076,18 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     x->pdPatchFolder = patch_dir;
     x->pkgPath = patch_dir;
     Py4pdUtils_SetObjConfig(x);
+    if (object_count == 0) {
+      Py4pdUtils_AddPathsToPythonPath(x);
+    }
     int libraryLoaded = Py4pd_LibraryLoad(x, argc, argv);
     if (libraryLoaded == -1) {
       return NULL;
     }
     x->script_name = scriptName;
+
+    if (object_count == 0) {
+      Py4pdUtils_AddPathsToPythonPath(x);
+    }
     object_count++;
     Py4pd_ImportNumpyForPy4pd();
     return (x);
