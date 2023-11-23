@@ -732,7 +732,7 @@ static PyObject *Py4pdMod_PdTabWrite(PyObject *self, PyObject *args,
   t_garray *pdarray;
   t_word *vec;
   char *string;
-  PyObject *PYarray;
+  PyObject *samples;
 
   if (keywords == NULL) {
     resize = 0;
@@ -764,25 +764,64 @@ static PyObject *Py4pdMod_PdTabWrite(PyObject *self, PyObject *args,
     return NULL;
   }
 
-  // ================================
-
-  if (PyArg_ParseTuple(args, "sO", &string, &PYarray)) {
+  if (PyArg_ParseTuple(args, "sO", &string, &samples)) {
     t_symbol *pd_symbol = gensym(string);
-    if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class)))
+    if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class))) {
       pd_error(py4pd, "[Python] Array %s not found.", string);
-    else if (!garray_getfloatwords(pdarray, &vecsize, &vec))
+      return NULL;
+    } else if (!garray_getfloatwords(pdarray, &vecsize, &vec)) {
       pd_error(py4pd, "[Python] Bad template for tabwrite '%s'.", string);
-    else { // TODO: Add support to numpy arrays
+      return NULL;
+    } else {
       int i;
-      if (resize == 1) {
-        garray_resize_long(pdarray, PyList_Size(PYarray));
-        vecsize = PyList_Size(PYarray);
-        garray_getfloatwords(pdarray, &vecsize, &vec);
+      _import_array();
+      if (samples == NULL) {
+        pd_error(py4pd, "[Python] pd.tabwrite: wrong arguments");
+        return NULL;
       }
-      for (i = 0; i < vecsize; i++) {
-        double result = PyFloat_AsDouble(PyList_GetItem(PYarray, i));
-        float result_float = (float)result;
-        vec[i].w_float = result_float;
+      if (PyList_Check(samples)) {
+        if (resize == 1) {
+          garray_resize_long(pdarray, PyList_Size(samples));
+          vecsize = PyList_Size(samples);
+          garray_getfloatwords(pdarray, &vecsize, &vec);
+        }
+        for (i = 0; i < vecsize; i++) {
+          float result_float =
+              (float)PyFloat_AsDouble(PyList_GetItem(samples, i));
+          vec[i].w_float = result_float;
+        }
+      } else if (PyArray_Check(samples)) {
+        PyArrayObject *pArray = PyArray_GETCONTIGUOUS((PyArrayObject *)samples);
+        PyArray_Descr *pArrayType = PyArray_DESCR(pArray); // double or float
+        vecsize = PyArray_SIZE(pArray);
+        if (resize == 1) {
+          garray_resize_long(pdarray, vecsize);
+          garray_getfloatwords(pdarray, &vecsize, &vec);
+        }
+        if (pArrayType->type_num == NPY_FLOAT) {
+          float *pArrayData = (float *)PyArray_DATA(pArray);
+          for (i = 0; i < vecsize; i++) {
+            vec[i].w_float = pArrayData[i];
+          }
+
+        } else if (pArrayType->type_num == NPY_DOUBLE) {
+          double *pArrayData = (double *)PyArray_DATA(pArray);
+          for (i = 0; i < vecsize; i++) {
+            vec[i].w_float = pArrayData[i];
+          }
+        } else {
+          pd_error(NULL,
+                   "[%s] The numpy array must be float or "
+                   "double, returned %d",
+                   py4pd->objectName->s_name, pArrayType->type_num);
+          py4pd->audioError = 1;
+        }
+
+      }
+
+      else {
+        pd_error(py4pd, "[Python] pd.tabwrite: wrong arguments");
+        return NULL;
       }
       garray_redraw(pdarray);
       PyErr_Clear();
@@ -790,7 +829,6 @@ static PyObject *Py4pdMod_PdTabWrite(PyObject *self, PyObject *args,
   }
   Py_RETURN_TRUE;
 }
-
 // ================================
 // =================================
 static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args,
@@ -865,7 +903,6 @@ static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args,
         for (i = 0; i < vecsize; i++) {
           pArrayData[i] = vec[i].w_float;
         }
-        PyErr_Clear();
         return pAudio;
 
       } else {
