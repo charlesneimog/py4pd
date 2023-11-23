@@ -389,6 +389,7 @@ PyObject *Py4pdUtils_RunPyAudioOut(t_py *x, PyObject *pArgs, PyObject *pKwargs);
 void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValue, t_outlet *outlet);
 PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv);
 void Py4pdUtils_SetObjConfig(t_py *x);
+void Py4pdUtils_AddPathsToPythonPath(t_py *x);
 PyObject *Py4pdUtils_AddPdObject(t_py *x);
 void Py4pdUtils_ReadGifFile(t_py *x, const char* filename);
 void Py4pdUtils_ReadPngFile(t_py *x, const char* filename);

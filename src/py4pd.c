@@ -38,7 +38,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
 
   int thereIsRequirements = 0;
 
-  PyObject *sys_path = PySys_GetObject("path");
+  // PyObject *sys_path = PySys_GetObject("path");
   if (access(script_file_path, F_OK) == -1 &&
       access(script_inside_py4pd_path, F_OK) == -1) {
     Py_XDECREF(x->function);
@@ -55,9 +55,9 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
                script_file_name->s_name);
       if (access(library_path, F_OK) != -1) {
         libraryNotFound = 0;
-        PyObject *library_path_py = PyUnicode_FromString(library_path);
-        PyList_Insert(sys_path, 0, library_path_py);
-        Py_DECREF(library_path_py);
+        // PyObject *library_path_py = PyUnicode_FromString(library_path);
+        // PyList_Insert(sys_path, 0, library_path_py);
+        // Py_DECREF(library_path_py);
         // check if there is requirements.txt file inside the library
         // folder
         int requirementsSize =
@@ -107,27 +107,6 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
 
   Py4pdUtils_CheckPkgNameConflict(x, pkgPathchar, script_file_name);
   Py4pdUtils_CheckPkgNameConflict(x, pyGlobalFolder, script_file_name);
-
-  PyObject *home_path = PyUnicode_FromString(
-      x->pdPatchFolder->s_name); // Place where script file will probably be
-  PyObject *site_package = PyUnicode_FromString(
-      x->pkgPath->s_name); // Place where the packages will be
-  PyObject *globalPackages = PyUnicode_FromString(
-      pyGlobalFolder); // Place where the py4pd scripts will be
-  PyObject *py4pdScripts = PyUnicode_FromString(
-      pyScriptsFolder); // Place where the py4pd scripts will be
-
-  PyList_Insert(sys_path, 0, home_path);
-  PyList_Insert(sys_path, 0, site_package);
-  PyList_Insert(sys_path, 0, py4pdScripts);
-  PyList_Insert(sys_path, 0, globalPackages);
-  Py_DECREF(home_path);
-  Py_DECREF(site_package);
-  Py_DECREF(py4pdScripts);
-  Py_DECREF(globalPackages);
-  free(pyScriptsFolder);
-  free(pyGlobalFolder);
-  free(pkgPathchar);
 
   // odd code, but solve the bug
   t_py *prev_obj = NULL;
@@ -1126,38 +1105,16 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
   x->pkgPath = patch_dir;          // set name of the packages path
 
   Py4pdUtils_SetObjConfig(x); // set the config file (in py4pd.cfg, make this be
-  if (argc > 1) {             // check if there are two arguments
+
+  if (object_count == 0) {
+    Py4pdUtils_AddPathsToPythonPath(x);
+  }
+
+  if (argc > 1) { // check if there are two arguments
     Py4pd_SetFunction(x, s, argc, argv);
     Py4pd_ImportNumpyForPy4pd();
   }
 
-  // Add additional paths to the python path
-  char *pyScripts_folder =
-      malloc(strlen(x->py4pdPath->s_name) + 20); // allocate extra space
-  snprintf(pyScripts_folder, strlen(x->py4pdPath->s_name) + 20,
-           "%s/resources/scripts", x->py4pdPath->s_name);
-  char *pyGlobal_packages =
-      malloc(strlen(x->py4pdPath->s_name) + 20); // allocate extra space
-  snprintf(pyGlobal_packages, strlen(x->py4pdPath->s_name) + 20,
-           "%s/resources/py-modules", x->py4pdPath->s_name);
-  PyObject *home_path = PyUnicode_FromString(
-      x->pdPatchFolder->s_name); // Place where script file will probably be
-  PyObject *site_package = PyUnicode_FromString(
-      x->pkgPath->s_name); // Place where the packages will be
-  PyObject *py4pdScripts = PyUnicode_FromString(
-      pyScripts_folder); // Place where the py4pd scripts will be
-  PyObject *py4pdGlobalPackages = PyUnicode_FromString(
-      pyGlobal_packages); // Place where the py4pd global packages will be
-  PyObject *sys_path = PySys_GetObject("path");
-  PyList_Insert(sys_path, 0, home_path);
-  PyList_Insert(sys_path, 0, site_package);
-  PyList_Insert(sys_path, 0, py4pdScripts);
-  PyList_Insert(sys_path, 0, py4pdGlobalPackages);
-  Py_DECREF(home_path);
-  Py_DECREF(site_package);
-  Py_DECREF(py4pdScripts);
-  free(pyScripts_folder);
-  free(pyGlobal_packages);
   object_count++;
   return (x);
 }
