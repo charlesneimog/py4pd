@@ -1,4 +1,5 @@
 #include "py4pd.h"
+#include <s_stuff.h>
 
 // ============================================
 t_class *py4pd_class;        // For for normal objects, almost unused
@@ -373,6 +374,9 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     return;
   }
 
+  pd_error(x, "Installing %s, this will block the GUI for a while...",
+           pipPackage);
+  sys_pollgui();
   PyObject *pValue = PyObject_CallObject(pipInstallFunction, argTuple);
 
   if (prev_obj_exists == 1 && pValue != NULL) {
@@ -392,9 +396,6 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
   Py_DECREF(pValue);
   Py_DECREF(pipInstallFunction);
   Py_DECREF(py4pdModule);
-  sys_vgui("tk_messageBox -icon warning -type ok -title \"%s installed!\" "
-           "-message \"%s installed! \nYou need to restart PureData!\"\n",
-           pipPackage, pipPackage);
   return;
 }
 

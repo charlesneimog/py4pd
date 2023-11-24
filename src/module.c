@@ -6,6 +6,11 @@
 #include <numpy/arrayobject.h>
 
 // =================================
+/**
+ * @brief Dict to save data for object varibles.
+ * @param size Size of the hash table.
+ * @return Pointer to the hash table.
+ */
 static pdcollectHash *CreatePdcollectHash(
     int size) { // TODO: make thing to free table when object is deleted?
   pdcollectHash *hash_table = (pdcollectHash *)malloc(sizeof(pdcollectHash));
@@ -16,6 +21,13 @@ static pdcollectHash *CreatePdcollectHash(
 }
 
 // =================================
+/**
+ * @brief Hash function to get the index of the hash table.
+ * @param hash_table Pointer to the hash table.
+ * @param key Key to be hashed.
+ * @return Index of the hash table.
+ */
+
 static unsigned int HashFunction(pdcollectHash *hash_table, char *key) {
   unsigned long hash = 5381;
   int c;
@@ -26,6 +38,13 @@ static unsigned int HashFunction(pdcollectHash *hash_table, char *key) {
 }
 
 // =================================
+/**
+ * @brief Insert item in the hash table.
+ * @param hash_table Pointer to the hash table.
+ * @param key Key to be hashed.
+ * @param obj Object to be inserted.
+ * @return return void.
+ */
 static void InsertItem(pdcollectHash *hash_table, char *key,
                        PyObject *obj) { // TODO: make it return something
   unsigned int index = HashFunction(hash_table, key);
@@ -36,8 +55,7 @@ static void InsertItem(pdcollectHash *hash_table, char *key,
     item->pItem = obj;
     hash_table->items[index] = item;
     item->aCumulative = 0;
-    hash_table
-        ->count++; // TODO: Make resizeable table. For now we have 8 items.
+    hash_table->count++; // TODO: Make resizeable table.
     return;
   } else if (hash_table->count > hash_table->size) {
     PyErr_SetString(PyExc_MemoryError,
@@ -559,9 +577,12 @@ static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args,
       } else {
         post("[%s]: %s", py4pd->objectName->s_name, str_value);
       }
+      sys_pollgui();
       Py_RETURN_TRUE;
     } else {
       post("%s", str_value);
+      sys_pollgui();
+      Py_RETURN_TRUE;
     }
     Py_DECREF(str);
   } else {
@@ -671,7 +692,7 @@ static PyObject *Py4pdMod_PdSend(PyObject *self, PyObject *args) {
     int list_size = PyList_Size(listargs);
     list_array = (t_atom *)malloc(list_size * sizeof(t_atom));
     int i;
-    for (i = 0; i < list_size; ++i) {
+    for (i = 0; i < list_size; i++) {
       PyObject *pValue_i = PyList_GetItem(listargs, i);
       if (PyLong_Check(pValue_i)) {
         long result = PyLong_AsLong(pValue_i);
@@ -985,16 +1006,16 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
   }
   if (PyArg_ParseTuple(args, "s", &string)) {
     t_symbol *filename = gensym(string);
-    if (py4pd->x_def_img) {
-      py4pd->x_def_img = 0;
+    if (py4pd->def_img) {
+      py4pd->def_img = 0;
     }
     if (access(filename->s_name, F_OK) == -1) {
       pd_error(py4pd, "[Python] File %s not found.", filename->s_name);
 
       // reset image to default
-      py4pd->x_def_img = 1;
-      // py4pd->x_width = 250;
-      // py4pd->x_height = 250;
+      py4pd->def_img = 1;
+      // py4pd->width = 250;
+      // py4pd->height = 250;
       Py4pdPic_Erase(py4pd, py4pd->glist);
       sys_vgui(".x%lx.c itemconfigure %lx_picture -image PY4PD_IMAGE_{%p}\n",
                py4pd->canvas, py4pd, py4pd);
@@ -1010,14 +1031,14 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
       file = fopen(filename->s_name, "r");
       fscanf(file, "%s\n%d %d\n%d\n", magic_number, &width, &height,
              &max_color_value);
-      py4pd->x_width = width;
-      py4pd->x_height = height;
+      py4pd->width = width;
+      py4pd->height = height;
       fclose(file);
     } else if (strcmp(ext, ".gif") == 0) {
       file = fopen(filename->s_name, "rb");
       fseek(file, 6, SEEK_SET);
-      fread(&py4pd->x_width, 2, 1, file);
-      fread(&py4pd->x_height, 2, 1, file);
+      fread(&py4pd->width, 2, 1, file);
+      fread(&py4pd->height, 2, 1, file);
       fclose(file);
     } else if (strcmp(ext, ".png") == 0) {
       file = fopen(filename->s_name, "rb");
@@ -1028,8 +1049,8 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
       fclose(file);
       width = Py4pdUtils_Ntohl(width);
       height = Py4pdUtils_Ntohl(height);
-      py4pd->x_width = width;
-      py4pd->x_height = height;
+      py4pd->width = width;
+      py4pd->height = height;
     }
 
     else {
@@ -1049,11 +1070,11 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
         return NULL;
       }
       if (file_name_open) {
-        py4pd->x_filename = filename;
-        py4pd->x_fullname = gensym(file_name_open);
+        py4pd->filename = filename;
+        py4pd->fullname = gensym(file_name_open);
 
-        if (py4pd->x_def_img) {
-          py4pd->x_def_img = 0;
+        if (py4pd->def_img) {
+          py4pd->def_img = 0;
         }
 
         if (glist_isvisible(py4pd->glist) &&
@@ -1062,8 +1083,8 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
           sys_vgui("if {[info exists %lx_picname] == 0} {image create "
                    "photo %lx_picname -file \"%s\"\n set %lx_picname "
                    "1\n}\n",
-                   py4pd->x_fullname, py4pd->x_fullname, file_name_open,
-                   py4pd->x_fullname);
+                   py4pd->fullname, py4pd->fullname, file_name_open,
+                   py4pd->fullname);
           Py4pdPic_Draw(py4pd, py4pd->glist, 1);
         }
       } else {

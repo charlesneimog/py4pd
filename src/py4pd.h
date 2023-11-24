@@ -181,9 +181,6 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int                 playable;
     t_int                 playerRunning;
 
-    // Loops
-
-
     // Library
     t_int                py4pd_lib; // flag to check if is to use python library
     t_int                pyObject;
@@ -219,21 +216,21 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int               audioError;
 
     // Pic Object
-    t_int               x_zoom; // zoom of the patch
-    t_int               x_width;
-    t_int               x_height;
-    t_int               x_edit; // patch is in edit mode or not
+    t_int               zoom; // zoom of the patch
+    t_int               width; // width of image
+    t_int               height; // height of image
+    t_int               edit; // patch is in edit mode or not
     t_int               x_init; // flag to check if the object was initialized
-    t_int               x_def_img; // flag to check if the object was initialized
-    t_int               x_sel; // flag to check if the object was selected
-    t_int               x_numInlets;
-    t_int               x_numOutlets;
-    t_int               mouseIsOver;
-    t_symbol            *x_fullname;
-    t_symbol            *x_filename;
-    t_symbol            *x_x; // name of the tcl variable for x
-    char                *x_image;
-    t_int               x_drawIOlets; // flag to check if the inlets and outlets were created
+    t_int               def_img; // flag to check if the object was initialized
+    t_int               selected; // flag to check if the object was selected
+    t_int               numInlets; // number of inlets
+    t_int               numOutlets; // number of outlets
+    t_int               mouseIsOver; // flag to check if the mouse is over the object
+    t_symbol            *fullname;
+    t_symbol            *filename;
+    t_symbol            *canvasName; // name of the tcl variable for x
+    char                *image; // image data in base64
+    t_int               drawIOlets; // flag to check if the inlets and outlets were created
 
     // Paths
     t_symbol            *pkgPath; // packages path, where the packages are located
@@ -251,6 +248,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 
     t_outlet            *out1; // outlet 1.
     t_inlet             *in1; // intlet 1
+
 }t_py;
 
 /*

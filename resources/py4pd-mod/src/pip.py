@@ -125,32 +125,32 @@ def pipinstall(mypackage):
         if platform.system() == "Linux":
             root = None
             try:
-                if pd.pd_has_gui():
-                    from tkinter import Label, LabelFrame, Tk
-
-                    root = Tk()
-                    root.after(1, lambda: root.focus_force())
-                    screen_width = root.winfo_screenwidth()
-                    screen_height = root.winfo_screenheight()
-                    x = (screen_width / 2) - (300 / 2)
-                    y = (screen_height / 2) - (100 / 2)
-                    root.geometry("300x100+%d+%d" % (x, y))
-                    root.resizable(False, False)
-                    text = LabelFrame(
-                        root,
-                        text="Installing " + package + " , please wait...",
-                        padx=20,
-                        pady=20,
-                    )
-                    text.pack(fill="both", expand=1)
-                    label = Label(
-                        text,
-                        text="Installing " + package + " , please wait...",
-                        anchor="center",
-                        justify="center",
-                    )
-                    label.pack(fill="both", expand=1)
-                    root.update()
+                # if pd.pd_has_gui():
+                # from tkinter import Label, LabelFrame, Tk
+                #
+                # root = Tk()
+                # root.after(1, lambda: root.focus_force())
+                # screen_width = root.winfo_screenwidth()
+                # screen_height = root.winfo_screenheight()
+                # x = (screen_width / 2) - (300 / 2)
+                # y = (screen_height / 2) - (100 / 2)
+                # root.geometry("300x100+%d+%d" % (x, y))
+                # root.resizable(False, False)
+                # text = LabelFrame(
+                #     root,
+                #     text="Installing " + package + " , please wait...",
+                #     padx=20,
+                #     pady=20,
+                # )
+                # text.pack(fill="both", expand=1)
+                # label = Label(
+                #     text,
+                #     text="Installing " + package + " , please wait...",
+                #     anchor="center",
+                #     justify="center",
+                # )
+                # label.pack(fill="both", expand=1)
+                # root.update()
                 value = subprocess.run(
                     [
                         f"python{major}.{minor}",

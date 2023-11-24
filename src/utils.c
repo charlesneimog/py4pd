@@ -16,7 +16,7 @@
 int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr,
                                      t_atom **argvPtr) {
   int argsNumberDefined = 0;
-  x->x_numOutlets = -1;
+  x->numOutlets = -1;
   x->n_channels = 1;
 
   int argc = *argcPtr;
@@ -40,7 +40,7 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr,
         }
       } else if (strcmp(argv[i].a_w.w_symbol->s_name, "-outn") == 0) {
         if (argv[i + 1].a_type == A_FLOAT) {
-          x->x_numOutlets = atom_getintarg(i + 1, argc, argv);
+          x->numOutlets = atom_getintarg(i + 1, argc, argv);
           // remove -outn and the number of outlets from the arguments
           // list
           for (j = i; j < argc; j++) {
@@ -49,8 +49,8 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr,
             // *argcPtr = *argcPtr - 2;
           }
         } else {
-          x->x_numOutlets = -1; // -1 means that the number of outlets
-                                // is not defined
+          x->numOutlets = -1; // -1 means that the number of outlets
+                              // is not defined
         }
       } else if (strcmp(argv[i].a_w.w_symbol->s_name, "-ch") == 0 ||
                  strcmp(argv[i].a_w.w_symbol->s_name, "-channels") == 0) {
@@ -249,7 +249,7 @@ const char *Py4pdUtils_GetFilename(const char *path) {
   // Find the last occurrence of a path separator
   const char *last_separator = strrchr(path, '/');
 
-#ifdef _WIN32
+#ifdef _WIN64
   const char *last_separator_win = strrchr(path, '\\');
   if (last_separator_win != NULL && last_separator_win > last_separator) {
     last_separator = last_separator_win;
@@ -427,6 +427,8 @@ void Py4pdUtils_CreateTempFolder(t_py *x) {
 /*
  * @brief It creates the commandline to open the editor
  * @param x is the py4pd object
+ * @param command is the commandline to open the editor
+ * @param line is the line to open the editor
  * @return the commandline to open the editor
  */
 void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
@@ -503,8 +505,15 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
 // ============================================
 // ========= PY4PD METHODS FUNCTIONS ==========
 // ============================================
-void Py4pd_PipInstallRequirements(t_py *x, t_symbol *s, int argc,
-                                  t_atom *argv) {
+/*
+ * @brief It creates the commandline to open the editor
+ * @param x is the py4pd object
+ * @param command is the commandline to open the editor
+ * @param line is the line to open the editor
+ * @return the commandline to open the editor
+ */
+void Py4pdUtils_PipInstallRequirements(t_py *x, t_symbol *s, int argc,
+                                       t_atom *argv) {
   (void)s;
   const char *pipPackage;
   const char *localORglobal;
@@ -586,9 +595,6 @@ void Py4pd_PipInstallRequirements(t_py *x, t_symbol *s, int argc,
   Py_DECREF(pValue);
   Py_DECREF(pipInstallFunction);
   Py_DECREF(py4pdModule);
-  sys_vgui("tk_messageBox -icon warning -type ok -title \"%s installed!\" "
-           "-message \"%s installed! \nYou need to restart PureData!\"\n",
-           pipPackage, pipPackage);
   return;
 }
 
@@ -1598,21 +1604,21 @@ void Py4pdUtils_CreatePicObj(t_py *x, PyObject *PdDict,
 
   t_symbol *py4pdArgs = gensym("-canvas");
   PyObject *py4pdOBJwidth = PyDict_GetItemString(PdDict, "py4pdOBJwidth");
-  x->x_width = PyLong_AsLong(py4pdOBJwidth);
+  x->width = PyLong_AsLong(py4pdOBJwidth);
   PyObject *py4pdOBJheight = PyDict_GetItemString(PdDict, "py4pdOBJheight");
-  x->x_height = PyLong_AsLong(py4pdOBJheight);
+  x->height = PyLong_AsLong(py4pdOBJheight);
   if (argc > 1) {
     if (argv[0].a_type == A_FLOAT) {
-      x->x_width = atom_getfloatarg(0, argc, argv);
+      x->width = atom_getfloatarg(0, argc, argv);
     }
     if (argv[1].a_type == A_FLOAT) {
-      x->x_height = atom_getfloatarg(1, argc, argv);
+      x->height = atom_getfloatarg(1, argc, argv);
     }
   }
 
   PyObject *gifFile = PyDict_GetItemString(PdDict, "py4pdOBJGif");
   if (gifFile == NULL) {
-    x->x_image = PY4PD_IMAGE;
+    x->image = PY4PD_IMAGE;
   } else {
     char *gifFileCHAR = (char *)PyUnicode_AsUTF8(gifFile);
     if (gifFileCHAR[0] == '.' && gifFileCHAR[1] == '/') {
@@ -1697,8 +1703,8 @@ void Py4pdUtils_ReadGifFile(t_py *x, const char *filename) {
 
   // pixel size
   fseek(file, 6, SEEK_SET);
-  fread(&x->x_width, 2, 1, file);
-  fread(&x->x_height, 2, 1, file);
+  fread(&x->width, 2, 1, file);
+  fread(&x->height, 2, 1, file);
 
   fseek(file, 0, SEEK_END);
   size_t fileSize = ftell(file);
@@ -1726,11 +1732,11 @@ void Py4pdUtils_ReadGifFile(t_py *x, const char *filename) {
   char *base64Data = Py4pdUtils_Gif2Base64(fileContents, fileSize);
   free(fileContents);
 
-  x->x_image = base64Data;
+  x->image = base64Data;
 
   if (!base64Data) {
     free(base64Data);
-    x->x_image = PY4PD_IMAGE;
+    x->image = PY4PD_IMAGE;
     post("Base64 encoding failed.\n");
   }
 
@@ -1801,8 +1807,8 @@ void Py4pdUtils_ReadPngFile(t_py *x, const char *filename) {
   fread(&height, 4, 1, file);
   width = Py4pdUtils_Ntohl(width);
   height = Py4pdUtils_Ntohl(height);
-  x->x_width = width;
-  x->x_height = height;
+  x->width = width;
+  x->height = height;
 
   // Determine the file size
   fseek(file, 0, SEEK_END);
@@ -1836,7 +1842,7 @@ void Py4pdUtils_ReadPngFile(t_py *x, const char *filename) {
     return;
   }
   Py4pdUtils_Png2Base64(file_data, bytes_read, base64_data);
-  x->x_image = base64_data;
+  x->image = base64_data;
   free(file_data);
   return;
 }

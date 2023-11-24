@@ -13,13 +13,8 @@ void Py4pdLib_Bang(t_py *x);
 // ===========================================
 void Py4pdLib_ReloadObject(t_py *x) {
   char *script_filename = strdup(x->script_name->s_name);
-
-  // PyObject *ScriptFolder =
-  // PyUnicode_FromString(Py4pdUtils_GetFolderName(script_filename));
-  // PyObject *sys_path = PySys_GetObject("path");
-  // PyList_Insert(sys_path, 0, ScriptFolder);
-
   const char *ScriptFileName = Py4pdUtils_GetFilename(script_filename);
+  free(script_filename);
 
   PyObject *pModule = PyImport_ImportModule(ScriptFileName);
   if (pModule == NULL) {
@@ -62,7 +57,7 @@ void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b) {
     binbuf_addbinbuf(b, ((t_py *)x)->obj.te_binbuf);
     int objAtomsCount = binbuf_getnatom(((t_py *)x)->obj.te_binbuf);
     if (objAtomsCount == 1) {
-      binbuf_addv(b, "ii", x->x_width, x->x_height);
+      binbuf_addv(b, "ii", x->width, x->height);
     }
     binbuf_addsemi(b);
   }
@@ -765,11 +760,11 @@ static void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
       x->out1 = outlet_new(&x->obj, 0);
     else {
       x->out1 = outlet_new(&x->obj, &s_signal);
-      x->x_numOutlets = 1;
+      x->numOutlets = 1;
     }
   }
   if (requireNofOutlets) {
-    if (x->x_numOutlets == -1) {
+    if (x->numOutlets == -1) {
       pd_error(NULL,
                "[%s]: This function require that you set the number of "
                "outlets "
@@ -779,7 +774,7 @@ static void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
       Py_DECREF(py4pd_capsule);
       return NULL;
     } else
-      AuxOutlet = x->x_numOutlets;
+      AuxOutlet = x->numOutlets;
   }
   x->outAUX = (t_py4pd_Outlets *)getbytes(AuxOutlet * sizeof(*x->outAUX));
   x->outAUX->u_outletNumber = AuxOutlet;
