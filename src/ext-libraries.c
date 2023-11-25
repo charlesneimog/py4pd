@@ -12,7 +12,7 @@ void Py4pdLib_Bang(t_py *x);
 
 // ===========================================
 void Py4pdLib_ReloadObject(t_py *x) {
-  char *script_filename = strdup(x->script_name->s_name);
+  char *script_filename = strdup(x->pScriptName->s_name);
   const char *ScriptFileName = Py4pdUtils_GetFilename(script_filename);
   free(script_filename);
 
@@ -35,8 +35,7 @@ void Py4pdLib_ReloadObject(t_py *x) {
     pd_error(x, "[Python] Failed to reload module");
     return;
   }
-  x->function =
-      PyObject_GetAttrString(pModuleReloaded, x->function_name->s_name);
+  x->function = PyObject_GetAttrString(pModuleReloaded, x->pFuncName->s_name);
   if (x->function == NULL) {
     pd_error(x, "[Python] Failed to get function");
     return;
@@ -435,7 +434,6 @@ void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac,
 
 // =====================================
 void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av) {
-
   if (x->function == NULL) {
     pd_error(x, "[%s]: No function defined", x->objectName->s_name);
     return;
@@ -522,6 +520,7 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av) {
 
   Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
   Py4pdUtils_DECREF(pArgs);
+  PyErr_Clear();
   return;
 }
 
@@ -714,11 +713,11 @@ static void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
   x->outPyPointer = PyLong_AsLong(pyOUT);
   x->function_called = 1;
   x->function = pyFunction;
-  x->pdPatchFolder = patch_dir; // set name of the home path
-  x->pkgPath = patch_dir;       // set name of the packages path
+  x->pdPatchPath = patch_dir; // set name of the home path
+  x->pkgPath = patch_dir;     // set name of the packages path
   x->playable = PyLong_AsLong(playable);
-  x->function_name = gensym(PyUnicode_AsUTF8(code->co_name));
-  x->script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
+  x->pFuncName = gensym(PyUnicode_AsUTF8(code->co_name));
+  x->pScriptName = gensym(PyUnicode_AsUTF8(code->co_filename));
   x->objType = PyLong_AsLong(Py_ObjType);
   Py4pdUtils_SetObjConfig(x);
 

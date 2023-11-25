@@ -634,10 +634,10 @@ static PyObject *Py4pdMod_PdError(PyObject *self, PyObject *args) {
     if (py4pd->pyObject == 1) {
       pd_error(py4pd, "[%s]: %s", py4pd->objectName->s_name, string);
     } else {
-      if (py4pd->function_name == NULL) {
+      if (py4pd->pFuncName == NULL) {
         pd_error(py4pd, "%s", string);
       } else {
-        pd_error(py4pd, "[%s]: %s", py4pd->function_name->s_name, string);
+        pd_error(py4pd, "[%s]: %s", py4pd->pFuncName->s_name, string);
       }
     }
     PyErr_Clear();
@@ -692,25 +692,21 @@ static PyObject *Py4pdMod_PdSend(PyObject *self, PyObject *args) {
     int list_size = PyList_Size(listargs);
     list_array = (t_atom *)malloc(list_size * sizeof(t_atom));
     int i;
-    for (i = 0; i < list_size; i++) {
+    for (i = 0; i < list_size; ++i) {
       PyObject *pValue_i = PyList_GetItem(listargs, i);
       if (PyLong_Check(pValue_i)) {
         long result = PyLong_AsLong(pValue_i);
         float result_float = (float)result;
-        list_array[i].a_type = A_FLOAT;
-        list_array[i].a_w.w_float = result_float;
+        SETFLOAT(&list_array[i], result_float);
       } else if (PyFloat_Check(pValue_i)) {
-
         double result = PyFloat_AsDouble(pValue_i);
         float result_float = (float)result;
-        list_array[i].a_type = A_FLOAT;
-        list_array[i].a_w.w_float = result_float;
+        SETFLOAT(&list_array[i], result_float);
       } else if (PyUnicode_Check(pValue_i)) {
         const char *result = PyUnicode_AsUTF8(pValue_i);
-        list_array[i].a_type = A_SYMBOL;
-        list_array[i].a_w.w_symbol = gensym(result);
+        SETSYMBOL(&list_array[i], gensym(result));
       } else if (Py_IsNone(pValue_i)) {
-        // post("None");
+        // Not possible represent None in PureData
       } else {
         char error_message[100];
         sprintf(error_message,
@@ -723,12 +719,13 @@ static PyObject *Py4pdMod_PdSend(PyObject *self, PyObject *args) {
         free(list_array);
         return NULL;
       }
-      // Py_DECREF(pValue_i);
     }
     if (gensym(receiver)->s_thing) {
       pd_list(gensym(receiver)->s_thing, &s_list, list_size, list_array);
+      free(list_array);
     } else {
       pd_error(NULL, "[Python] object [r %s] not found", receiver);
+      free(list_array);
     }
   } else {
     char error_message[100];
@@ -954,7 +951,7 @@ static PyObject *Py4pdMod_GetPatchHome(PyObject *self, PyObject *args) {
     PyErr_SetString(PyExc_TypeError, "[Python] pd.home: no argument expected");
     return NULL;
   }
-  return PyUnicode_FromString(py4pd->pdPatchFolder->s_name);
+  return PyUnicode_FromString(py4pd->pdPatchPath->s_name);
 }
 
 // =================================
@@ -1263,7 +1260,7 @@ struct pipArgs {
 
 // =================================
 
-void *thread_function(void *arg) {
+void *Py4pdMod_PipInstallDetached(void *arg) {
   struct pipArgs *pipArgs = (struct pipArgs *)arg;
 
   char install_path[MAXPDSTRING];
@@ -1273,7 +1270,7 @@ void *thread_function(void *arg) {
              pipArgs->x->py4pdPath->s_name);
   } else {
     snprintf(install_path, MAXPDSTRING, "%s/py-modules",
-             pipArgs->x->pdPatchFolder->s_name);
+             pipArgs->x->pdPatchPath->s_name);
   }
 
 #ifdef __linux__
@@ -1353,7 +1350,8 @@ static PyObject *Py4pdMod_PipInstall(PyObject *self, PyObject *args,
   post("[py4pd] Installing %s, wait!", pipArgs->package);
 
   pthread_t thread_id;
-  pthread_create(&thread_id, NULL, thread_function, (void *)pipArgs);
+  pthread_create(&thread_id, NULL, Py4pdMod_PipInstallDetached,
+                 (void *)pipArgs);
 
   if (detach == 1) {
     pthread_detach(thread_id);
@@ -1370,24 +1368,18 @@ static PyObject *Py4pdMod_PipInstall(PyObject *self, PyObject *args,
 
 #if PYTHON_REQUIRED_VERSION(3, 12)
 
-static int _pd_create(PyObject *m) {
-  (void)m;
-  return 0;
-}
-
-static int _pd_modexec(PyObject *m) {
-  (void)m;
-  return 0;
-}
+static int _memoryboard_modexec(PyObject *m) { return 0; }
 
 static PyModuleDef_Slot _memoryboard_slots[] = {
-    {Py_mod_create, _pd_create},
-    {Py_mod_exec, _pd_modexec},
+    {Py_mod_exec, _memoryboard_modexec},
     {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
     {0, NULL}};
-{ 0, NULL }
+
+static int _memoryboard_traverse(PyObject *module, visitproc visit, void *arg) {
+  return 0;
 }
-;
+
+static int _memoryboard_clear(PyObject *module) { return 0; }
 
 #endif
 
@@ -1495,25 +1487,19 @@ static struct PyModuleDef pdmodule = {
     PyModuleDef_HEAD_INIT,
     .m_name = "pd", /* name of module */
     .m_doc = "pd module provide function to interact with PureData, see the "
-             "docs in www.charlesneimog.com/py4pd",
-    .m_size = 0, /* size of per-interpreter state of the module, or -1 if the
-                    module keeps state in global variables. */
+             "docs in www.charlesneimog.github.io/py4pd",
+    .m_size = 0,
     .m_methods = PdMethods, // Methods of the module
-
 #if PYTHON_REQUIRED_VERSION(3, 12)
     .m_slots = _memoryboard_slots,
+    .m_traverse = _memoryboard_traverse,
+    .m_clear = _memoryboard_clear,
 #endif
-#if PYTHON_REQUIRED_VERSION(3, 12)
-    .m_slots = _memoryboard_slots,
-#endif
-
-    .m_traverse = NULL, /* m_traverse, that is the traverse function for GC */
-    .m_clear = NULL,    /* m_free, that is the free function for GC */
 };
 
 // =================================
 const char *createUniqueConstString(const char *prefix, const void *pointer) {
-  char buffer[32]; // Adjust the buffer size as per your requirement
+  char buffer[32];
   snprintf(buffer, sizeof(buffer), "%s_%p", prefix, pointer);
   char *uniqueConstString = (char *)malloc(strlen(buffer) + 1);
   if (uniqueConstString != NULL) {

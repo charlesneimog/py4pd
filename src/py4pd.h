@@ -234,14 +234,16 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 
     // Paths
     t_symbol            *pkgPath; // packages path, where the packages are located
-    t_symbol            *pdPatchFolder; // where the patch is located
+    t_symbol            *pdPatchPath; // where the patch is located
     t_symbol            *py4pdPath; // where py4pd object is located
     t_symbol            *tempPath; // temp path located in ~/.py4pd/, always is deleted when py4pd is closed
     t_symbol            *libraryFolder; // where the library is located
 
     // == EDITOR
-    t_symbol            *function_name; // function name
-    t_symbol            *script_name; // script name or pathname
+    t_symbol            *pFuncName; // function_name; // function name
+    t_symbol            *pScriptName; // script name or pathname
+
+    // script_name; // script name or pathname
     t_symbol            *editorName; // editor name
     t_py4pd_Outlets     *outAUX; // outlets
     t_py4pd_edit_proxy  *x_proxy; // para lidar com inlets auxiliares

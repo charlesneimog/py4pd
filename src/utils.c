@@ -433,16 +433,16 @@ void Py4pdUtils_CreateTempFolder(t_py *x) {
  */
 void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
   const char *editor = x->editorName->s_name;
-  const char *filename = x->script_name->s_name;
-  const char *home = x->pdPatchFolder->s_name;
+  const char *filename = x->pScriptName->s_name;
+  const char *home = x->pdPatchPath->s_name;
   char completePath[MAXPDSTRING];
 
   if (x->pyObject) {
     sprintf(completePath, "'%s'", filename);
   } else if (x->py4pd_lib) {
     PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->function);
-    t_symbol *script_name = gensym(PyUnicode_AsUTF8(code->co_filename));
-    sprintf(completePath, "'%s'", script_name->s_name);
+    t_symbol *pScriptName = gensym(PyUnicode_AsUTF8(code->co_filename));
+    sprintf(completePath, "'%s'", pScriptName->s_name);
   } else {
     sprintf(completePath, "'%s/%s.py'", home, filename);
   }
@@ -828,7 +828,7 @@ PyObject *Py4pdUtils_RunPyAudioOut(t_py *x, PyObject *pArgs,
     }
   } else {
     pd_error(x, "[%s] Failed to import pd module when Running Python function",
-             x->function_name->s_name);
+             x->pFuncName->s_name);
     PyErr_Print();
     PyObject *ptype, *pvalue, *ptraceback;
     PyErr_Fetch(&ptype, &pvalue, &ptraceback);
@@ -894,7 +894,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
     }
   } else {
     pd_error(x, "[%s] Failed to import pd module when Running Python function",
-             x->function_name->s_name);
+             x->pFuncName->s_name);
     PyErr_Print();
     PyObject *ptype, *pvalue, *ptraceback;
     PyErr_Fetch(&ptype, &pvalue, &ptraceback);
@@ -970,6 +970,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
     return pValue;
   } else {
     pd_error(x, "[%s] Unknown error, please report", x->objectName->s_name);
+    PyErr_Clear();
     return NULL;
   }
 }
@@ -1164,34 +1165,26 @@ inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct,
     PyObject *pValue_i;
     for (i = 0; i < list_size; ++i) {
       pValue_i = PyList_GetItem(pValue, i); // borrowed reference
-      if (PyLong_Check(pValue_i)) {         // If the function return a list
-                                            // of integers
+      if (PyLong_Check(pValue_i)) {
         float result = (float)PyLong_AsLong(pValue_i);
-        // TODO: Fix this with SETFLOAT
-        list_array[listIndex].a_type = A_FLOAT;
-        list_array[listIndex].a_w.w_float = result;
+        SETFLOAT(&list_array[listIndex], result);
         listIndex++;
-      } else if (PyFloat_Check(pValue_i)) { // If the function return
-                                            // a list of floats
+      } else if (PyFloat_Check(pValue_i)) {
         float result = PyFloat_AsDouble(pValue_i);
-        list_array[listIndex].a_type = A_FLOAT;
-        list_array[listIndex].a_w.w_float = result;
+        SETFLOAT(&list_array[listIndex], result);
         listIndex++;
       } else if (PyUnicode_Check(pValue_i)) { // If the function return a
         const char *result = PyUnicode_AsUTF8(pValue_i);
-        list_array[listIndex].a_type = A_SYMBOL;
-        list_array[i].a_w.w_symbol = gensym(result);
+        SETSYMBOL(&list_array[listIndex], gensym(result));
         listIndex++;
 
       } else if (Py_IsNone(pValue_i)) {
-        /* not possible to represent None in Pd, so we just skip it
-         */
+        // not possible to represent None in Pd, so we just skip it
       } else {
         pd_error(x,
                  "[py4pd] py4pd just convert int, float and string! "
                  "Received: %s",
                  Py_TYPE(pValue_i)->tp_name);
-        // Py_DECREF(pValue);
         return 0;
       }
     }
@@ -1217,7 +1210,7 @@ inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct,
           PyUnicode_AsUTF8(pValue); // If the function return a string
       Py4pdUtils_FromSymbolSymbol(x, gensym(result), outlet);
     } else if (Py_IsNone(pValue)) {
-      // Py_DECREF(pValue);
+      // Not possible to represent None in Pd, so we just skip it
     } else {
       pd_error(x,
                "[py4pd] py4pd just convert int, float and string or list "
@@ -1252,7 +1245,6 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc,
         listsArrays[listCount] = PyList_New(0);
         int isNumeric = Py4pdUtils_IsNumericOrDot(str);
         if (isNumeric == 1) {
-          // check if is a float or int
           if (strchr(str, '.') != NULL) {
             PyList_Append(listsArrays[listCount],
                           PyFloat_FromDouble(atof(str)));
@@ -1275,7 +1267,6 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc,
         listsArrays[listCount] = PyList_New(0);
         int isNumeric = Py4pdUtils_IsNumericOrDot(str);
         if (isNumeric == 1) {
-          // check if is a float or int
           if (strchr(str, '.') != NULL) {
             PyList_Append(listsArrays[listCount],
                           PyFloat_FromDouble(atof(str)));
@@ -1367,9 +1358,9 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc,
 void Py4pdUtils_SetObjConfig(t_py *x) {
   int folderLen = strlen("/py-modules/") + 1;
   char *PADRAO_packages_path = (char *)malloc(
-      sizeof(char) * (strlen(x->pdPatchFolder->s_name) + folderLen)); //
-  snprintf(PADRAO_packages_path, strlen(x->pdPatchFolder->s_name) + folderLen,
-           "%s/py-modules/", x->pdPatchFolder->s_name);
+      sizeof(char) * (strlen(x->pdPatchPath->s_name) + folderLen)); //
+  snprintf(PADRAO_packages_path, strlen(x->pdPatchPath->s_name) + folderLen,
+           "%s/py-modules/", x->pdPatchPath->s_name);
   x->pkgPath = gensym(PADRAO_packages_path);
   x->runmode = 0;
   if (x->editorName == NULL) {
@@ -1413,12 +1404,12 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
           // *i = 0;
           // if packages_path start with . add the home_path
           if (packages_path[0] == '.') {
-            char *new_packages_path = (char *)malloc(
-                sizeof(char) * (strlen(x->pdPatchFolder->s_name) +
-                                strlen(packages_path) + 1)); //
+            char *new_packages_path =
+                (char *)malloc(sizeof(char) * (strlen(x->pdPatchPath->s_name) +
+                                               strlen(packages_path) + 1)); //
             strcpy(new_packages_path,
-                   x->pdPatchFolder->s_name); // copy string one
-                                              // into the result.
+                   x->pdPatchPath->s_name); // copy string one
+                                            // into the result.
             strcat(new_packages_path,
                    packages_path + 1); // append string two to the result.
             x->pkgPath = gensym(new_packages_path);
@@ -1460,7 +1451,7 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
   snprintf(pyGlobal_packages, MAXPDSTRING, "%sresources/py-modules",
            x->py4pdPath->s_name);
   PyObject *home_path = PyUnicode_FromString(
-      x->pdPatchFolder->s_name); // Place where script file will probably be
+      x->pdPatchPath->s_name); // Place where script file will probably be
   PyObject *site_package = PyUnicode_FromString(
       x->pkgPath->s_name); // Place where the packages will be
   PyObject *py4pdScripts = PyUnicode_FromString(

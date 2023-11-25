@@ -29,7 +29,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
 
   // check if script file exists
   char script_file_path[MAXPDSTRING];
-  snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->pdPatchFolder->s_name,
+  snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->pdPatchPath->s_name,
            script_file_name->s_name);
 
   char script_inside_py4pd_path[MAXPDSTRING];
@@ -83,10 +83,10 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
   }
   if (!thereIsRequirements) {
     int localRequirementsSize =
-        strlen(x->pdPatchFolder->s_name) + strlen("/requirements.txt") + 1;
+        strlen(x->pdPatchPath->s_name) + strlen("/requirements.txt") + 1;
     char *localRequirements = malloc(localRequirementsSize);
     snprintf(localRequirements, localRequirementsSize, "%s/requirements.txt",
-             x->pdPatchFolder->s_name);
+             x->pdPatchPath->s_name);
     if (access(localRequirements, F_OK) != -1) {
       thereIsRequirements = 1; // TODO: Add requirments
     }
@@ -211,7 +211,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
   snprintf(setupFuncName, strlen(script_file_name->s_name) + 7, "%s_setup",
            script_file_name->s_name);
   PyObject *pFuncName = PyUnicode_FromString(setupFuncName);
-  t_symbol *function_name = gensym(setupFuncName);
+  t_symbol *pFuncNameSymbol = gensym(setupFuncName);
   pFunc = PyObject_GetAttr(pModule, pFuncName);
   if (pFunc == NULL) {
     Py_DECREF(pFuncName);
@@ -232,7 +232,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
       Py_XDECREF(pModule);
       return -1;
     }
-    function_name = gensym("Py4pdLoadObjects");
+    pFuncNameSymbol = gensym("Py4pdLoadObjects");
   }
   free(setupFuncName);
 
@@ -279,8 +279,8 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     }
     x->module = pModule;
     x->function = pFunc;
-    x->script_name = script_file_name;
-    x->function_name = function_name;
+    x->pScriptName = script_file_name;
+    x->pFuncName = pFuncNameSymbol;
     x->function_called = 1;
     x->py4pd_lib = 1;
     Py_XDECREF(MainModule);
@@ -440,10 +440,10 @@ static void Py4pd_SetPy4pdHomePath(t_py *x, t_symbol *s, int argc,
                                    t_atom *argv) {
   (void)s;
   if (argc < 1) {
-    post("[py4pd] The home path is: %s", x->pdPatchFolder->s_name);
+    post("[py4pd] The home path is: %s", x->pdPatchPath->s_name);
   } else {
-    x->pdPatchFolder = atom_getsymbol(argv);
-    post("[py4pd] The home path set to: %s", x->pdPatchFolder->s_name);
+    x->pdPatchPath = atom_getsymbol(argv);
+    post("[py4pd] The home path set to: %s", x->pdPatchPath->s_name);
   }
   return;
 }
@@ -472,9 +472,9 @@ static void Py4pd_SetPackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         t_symbol *path = atom_getsymbol(argv);
         // It checks relative path
         if (path->s_name[0] == '.' && path->s_name[1] == '/') {
-          char *new_path = malloc(strlen(x->pdPatchFolder->s_name) +
+          char *new_path = malloc(strlen(x->pdPatchPath->s_name) +
                                   strlen(path->s_name) + 1);
-          strcpy(new_path, x->pdPatchFolder->s_name);
+          strcpy(new_path, x->pdPatchPath->s_name);
           strcat(new_path, path->s_name + 1);
           post("[py4pd] Packages path set to: %s", new_path);
           x->pkgPath = gensym(new_path);
@@ -530,7 +530,7 @@ static void Py4pd_PrintModuleFunctions(t_py *x, t_symbol *s, int argc,
   Py_ssize_t pos = 0;
   PyObject *key, *value;
 
-  post("[py4pd] Functions in module %s:", x->script_name->s_name);
+  post("[py4pd] Functions in module %s:", x->pScriptName->s_name);
   while (PyDict_Next(module_dict, &pos, &key, &value)) {
     if (PyCallable_Check(value)) {
       post("[py4pd] Function: %s", PyUnicode_AsUTF8(key));
@@ -562,11 +562,11 @@ void Py4pd_PrintDocs(t_py *x) {
       const char *Doc = PyUnicode_AsUTF8(pDoc);
       if (Doc != NULL) {
         post("");
-        post("==== %s documentation ====", x->function_name->s_name);
+        post("==== %s documentation ====", x->pFuncName->s_name);
         post("");
         post("%s", Doc);
         post("");
-        post("==== %s documentation ====", x->function_name->s_name);
+        post("==== %s documentation ====", x->pFuncName->s_name);
         post("");
         return;
       } else {
@@ -597,7 +597,7 @@ static void Py4pd_OpenScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     pd_error(x, "[py4pd] The script name must be a symbol");
     return;
   }
-  x->script_name = argv[0].a_w.w_symbol;
+  x->pScriptName = argv[0].a_w.w_symbol;
   char command[MAXPDSTRING];
   Py4pdUtils_GetEditorCommand(x, command, 0);
   Py4pdUtils_ExecuteSystemCommand(command);
@@ -661,7 +661,7 @@ void Py4pd_ReloadPy4pdFunction(t_py *x) {
 
   // reload the module
   pName =
-      PyUnicode_DecodeFSDefault(x->script_name->s_name); // Name of script file
+      PyUnicode_DecodeFSDefault(x->pScriptName->s_name); // Name of script file
   pModule = PyImport_Import(pName);
   if (pModule == NULL) {
     pd_error(x, "Error importing the module!");
@@ -681,7 +681,7 @@ void Py4pd_ReloadPy4pdFunction(t_py *x) {
   } else {
     pFunc = PyObject_GetAttrString(
         pModule,
-        x->function_name->s_name); // Function name inside the script file
+        x->pFuncName->s_name); // Function name inside the script file
     Py_DECREF(pName);
     Py_DECREF(pReload);
     if (pFunc && PyCallable_Check(
@@ -722,12 +722,12 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
   }
 
   t_symbol *script_file_name = atom_gensym(argv + 0);
-  t_symbol *function_name = atom_gensym(argv + 1);
+  t_symbol *pFuncNameSymbol = atom_gensym(argv + 1);
 
   if (x->function_called == 1) {
     int function_is_equal =
-        strcmp(function_name->s_name,
-               x->function_name->s_name); // if string is equal strcmp returns 0
+        strcmp(pFuncNameSymbol->s_name,
+               x->pFuncName->s_name); // if string is equal strcmp returns 0
     if (function_is_equal == 0) {
       pd_error(x, "[py4pd] The function was already set!");
       return;
@@ -747,7 +747,7 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
   // check if script file exists
   char script_file_path[MAXPDSTRING];
-  snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->pdPatchFolder->s_name,
+  snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->pdPatchPath->s_name,
            script_file_name->s_name);
 
   char script_inside_py4pd_path[MAXPDSTRING];
@@ -800,7 +800,7 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     return;
   }
   pFunc = PyObject_GetAttrString(
-      pModule, function_name->s_name); // Function name inside the script file
+      pModule, pFuncNameSymbol->s_name); // Function name inside the script file
   if (pFunc &&
       PyCallable_Check(pFunc)) { // Check if the function exists and is callable
     PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(pFunc);
@@ -815,7 +815,7 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     if (code->co_flags & CO_VARARGS) {
       pd_error(x, "[py4pd] The '%s' function has variable arguments (*args)!",
-               function_name->s_name);
+               pFuncNameSymbol->s_name);
       Py_XDECREF(pFunc);
       Py_XDECREF(pModule);
       return;
@@ -823,23 +823,23 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
       pd_error(x,
                "[py4pd] The '%s' function has variable keyword arguments "
                "(**kwargs)!",
-               function_name->s_name);
+               pFuncNameSymbol->s_name);
       Py_XDECREF(pFunc);
       Py_XDECREF(pModule);
       return;
     }
     x->py_arg_numbers = code->co_argcount;
     if (x->py4pd_lib == 0) {
-      post("[py4pd] The '%s' function has %d arguments!", function_name->s_name,
+      post("[py4pd] The '%s' function has %d arguments!", pFuncNameSymbol->s_name,
            x->py_arg_numbers);
     }
     x->module = pModule;
     x->function = pFunc;
-    x->script_name = script_file_name;
-    x->function_name = function_name;
+    x->pScriptName = script_file_name;
+    x->pFuncName = pFuncNameSymbol;
     x->function_called = 1;
   } else {
-    pd_error(x, "[py4pd] Function %s not loaded!", function_name->s_name);
+    pd_error(x, "[py4pd] Function %s not loaded!", pFuncNameSymbol->s_name);
     x->function_called = 0;
     PyObject *ptype, *pvalue, *ptraceback;
     PyErr_Fetch(&ptype, &pvalue, &ptraceback);
@@ -901,7 +901,7 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
       pd_error(x,
                "[py4pd] Wrong number of arguments! The function %s needs %i "
                "arguments, received %i!",
-               x->function_name->s_name, (int)x->py_arg_numbers, argCount);
+               x->pFuncName->s_name, (int)x->py_arg_numbers, argCount);
       return;
     }
   } else {
@@ -1074,7 +1074,7 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     t_symbol *patch_dir = canvas_getdir(c);
     x->runmode = 0;
     x->object_number = object_count;
-    x->pdPatchFolder = patch_dir;
+    x->pdPatchPath = patch_dir;
     x->pkgPath = patch_dir;
     Py4pdUtils_SetObjConfig(x);
     if (object_count == 0) {
@@ -1084,7 +1084,7 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     if (libraryLoaded == -1) {
       return NULL;
     }
-    x->script_name = scriptName;
+    x->pScriptName = scriptName;
 
     if (object_count == 0) {
       Py4pdUtils_AddPathsToPythonPath(x);
@@ -1109,7 +1109,7 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
   Py4pdUtils_ParseArguments(x, c, argc, argv); // parse arguments
   x->runmode = 0;
   x->object_number = object_count; // save object number
-  x->pdPatchFolder = patch_dir;    // set name of the home path
+  x->pdPatchPath = patch_dir;    // set name of the home path
   x->pkgPath = patch_dir;          // set name of the packages path
 
   Py4pdUtils_SetObjConfig(x); // set the config file (in py4pd.cfg, make this be
