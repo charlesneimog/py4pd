@@ -99,8 +99,8 @@ void Py4pdLib_PlayTick(t_py *x) {
           (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
       pdPyValue->pValue = pValue;
       pdPyValue->objectsUsing = 0;
-      pdPyValue->objOwner = x->objectName;
-      Py4pdUtils_ConvertToPd(x, pdPyValue, x->out1);
+      pdPyValue->objOwner = x->objName;
+      Py4pdUtils_ConvertToPd(x, pdPyValue, x->mainOut);
       free(pdPyValue);
     }
   }
@@ -112,7 +112,7 @@ void Py4pdLib_Play(t_py *x, t_symbol *s, int ac, t_atom *av) {
 
   x->msOnset = 0;
   if (x->playerDict == NULL) {
-    pd_error(x, "[%s]: Nothing to play.", x->objectName->s_name);
+    pd_error(x, "[%s]: Nothing to play.", x->objName->s_name);
     return;
   }
   if (ac != 0 && av[0].a_type == A_FLOAT) {
@@ -127,7 +127,7 @@ void Py4pdLib_Play(t_py *x, t_symbol *s, int ac, t_atom *av) {
 void Py4pdLib_Stop(t_py *x) {
 
   if (x->playerClock == NULL) {
-    pd_error(x, "[%s]: Nothing to stop.", x->objectName->s_name);
+    pd_error(x, "[%s]: Nothing to stop.", x->objName->s_name);
     return;
   }
   clock_unset(x->playerClock);

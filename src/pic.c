@@ -122,7 +122,6 @@ void Py4pdPic_Select(t_gobj *z, t_glist *glist, int state) {
   int xpos = text_xpix(&x->obj, glist);
   int ypos = text_ypix(&x->obj, glist);
   t_canvas *cv = glist_getcanvas(glist);
-  x->selected = state;
   if (state) {
     // sys_vgui(".x%lx.c delete %lx_outline\n", cv, x);
     sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline "
@@ -154,7 +153,7 @@ void Py4pdPic_Draw(t_py *x, struct _glist *glist, t_floatarg vis) {
   int xpos = text_xpix(&x->obj, x->glist), ypos = text_ypix(&x->obj, x->glist);
   int visible =
       (glist_isvisible(x->glist) && gobj_shouldvis((t_gobj *)x, x->glist));
-  if (x->def_img && (visible || vis)) {
+  if (x->defImg && (visible || vis)) {
     sys_vgui(".x%lx.c create image %d %d -anchor nw -tags %lx_picture\n", cv,
              xpos, ypos, x);
     sys_vgui(".x%lx.c itemconfigure %lx_picture -image PY4PD_IMAGE_{%p}\n", cv,
@@ -163,15 +162,14 @@ void Py4pdPic_Draw(t_py *x, struct _glist *glist, t_floatarg vis) {
     if (visible || vis) {
       sys_vgui("if { [info exists %lx_picname] == 1 } { .x%lx.c create image "
                "%d %d -anchor nw -image %lx_picname -tags %lx_picture\n} \n",
-               x->fullname, cv, xpos, ypos, x->fullname, x);
+               x->picFilePath, cv, xpos, ypos, x->picFilePath, x);
     }
-    if (!x->x_init) {
-      x->x_init = 1;
-    } else if ((visible || vis)) {
+
+    if ((visible || vis)) {
       sys_vgui("if { [info exists %lx_picname] == 1 } {.x%lx.c create "
                "rectangle %d %d %d %d -tags %lx_outline -outline black "
                "-width %d}\n",
-               x->fullname, cv, xpos, ypos, xpos + x->width, ypos + x->height,
+               x->picFilePath, cv, xpos, ypos, xpos + x->width, ypos + x->height,
                x, x->zoom);
     }
   }
@@ -208,7 +206,9 @@ void Py4pdPic_Zoom(t_py *x, t_floatarg zoom) { x->zoom = (int)zoom; }
 // =================================================
 void Py4pdPic_EditProxyAny(t_py4pd_edit_proxy *p, t_symbol *s, int ac,
                            t_atom *av) {
-  int edit = ac = 0;
+
+  (void)ac;
+  int edit = 0;
 
   if (p->p_cnv->drawIOlets) {
     Py4pdPic_DrawIOLet(p->p_cnv);
@@ -220,12 +220,12 @@ void Py4pdPic_EditProxyAny(t_py4pd_edit_proxy *p, t_symbol *s, int ac,
       if ((av + 1)->a_w.w_float == 80 ||
           (av + 1)->a_w.w_float == 112) { // p or P will play the object
         post("Playing Object %p", p->p_cnv);
-        // TODO: Add function to play object, Scores, for example, must
+        // TODO: FUTURE - Add function to play object, Scores, for example, must
         // send to the outputs some datas...
       } else if ((av + 1)->a_w.w_float == 83 ||
                  (av + 1)->a_w.w_float == 115) { // s or S will show the object
         post("Show Object %p", p->p_cnv);
-        // TODO: This function must show the object, open some Python
+        // TODO: FUTURE - This function must show the object, open some Python
         // Window, for example...
       }
     }
@@ -246,8 +246,18 @@ void Py4pdPic_EditProxyAny(t_py4pd_edit_proxy *p, t_symbol *s, int ac,
     if (mouse_x >= obj_x && mouse_x <= (obj_x + obj_width) &&
         mouse_y >= obj_y && mouse_y <= (obj_y + obj_height)) {
       p->p_cnv->mouseIsOver = 1;
+      // create a rectangle around the object blue
+      // sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline "
+      //          "-outline blue -width %d\n",
+      //          p->p_cnv->glist, obj_x, obj_y, obj_x + obj_width,
+      //          obj_y + obj_height, p->p_cnv, p->p_cnv->zoom);
     } else {
       p->p_cnv->mouseIsOver = 0;
+      // TODO: FUTURE - Implement subinterpreters first
+      // sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline "
+      //          "-outline black -width %d\n",
+      //          p->p_cnv->glist, obj_x, obj_y, obj_x + obj_width,
+      //          obj_y + obj_height, p->p_cnv, p->p_cnv->zoom);
     }
     return;
   }
@@ -304,17 +314,14 @@ t_py4pd_edit_proxy *Py4pdPic_EditProxyNew(t_py *x, t_symbol *s) {
 void Py4pdPic_Free(t_py *x) { // delete if variable is unset and image is unused
   sys_vgui("if { [info exists %lx_picname] == 1 && [image inuse %lx_picname] "
            "== 0} { image delete %lx_picname \n unset %lx_picname\n}\n",
-           x->fullname, x->fullname, x->fullname, x->fullname);
+           x->picFilePath, x->picFilePath, x->picFilePath, x->picFilePath);
 
-  if (strcmp(x->image, PY4PD_IMAGE) != 0) {
-    freebytes(x->image, strlen(x->image));
+  if (strcmp(x->imageBase64, PY4PD_IMAGE) != 0) {
+    freebytes(x->imageBase64, strlen(x->imageBase64));
   }
-
-  // check if is necessary to pd_unbind()
   if (x->x_proxy) {
     pd_unbind(&x->obj.ob_pd, x->canvasName);
   }
-
   clock_delay(x->x_proxy->p_clock, 0);
   gfxstub_deleteforkey(x);
 }
@@ -322,7 +329,7 @@ void Py4pdPic_Free(t_py *x) { // delete if variable is unset and image is unused
 // =====================================
 void Py4pdPic_PicDefinition(t_py *x) {
   x->visMode = 1;
-  sys_vgui("image create photo PY4PD_IMAGE_{%p} -data {%s} \n", x, x->image);
+  sys_vgui("image create photo PY4PD_IMAGE_{%p} -data {%s} \n", x, x->imageBase64);
 
   sys_vgui("if {[catch {pd}]} {\n");
   sys_vgui("}\n");
@@ -480,17 +487,14 @@ void Py4pdPic_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
   snprintf(buf, MAXPDSTRING - 1, ".x%lx.c", (unsigned long)cv);
 #endif
   x->canvasName = gensym(buf);
-
-  pd_bind(&x->obj.ob_pd, x->canvasName);
-
+  pd_bind(&x->obj.ob_pd, gensym(buf));
   x->edit = cv->gl_edit;
-  x->filename = &s_;
-  int loaded = x->def_img = x->x_init = 0;
-  x->fullname = NULL;
+  int loaded = x->defImg = 0;
+  x->picFilePath = NULL;
   x->edit = c->gl_edit;
 
   if (!loaded) { // default image
-    x->def_img = 1;
+    x->defImg = 1;
   }
   x->drawIOlets = 1;
   if (x->width == 0 && x->height == 0) {
