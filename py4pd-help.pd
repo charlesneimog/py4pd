@@ -162,7 +162,6 @@
 #X obj 13 117 py4pd;
 #N canvas 538 32 988 300 MAINFUNCTIONS 0;
 #X restore 74 160 pd MAINFUNCTIONS;
-#X obj 17 17;
 #X text 292 160 IMPORTANT: This is just simple example \, the exaustive Docs are avaible in www.charlesneimog.github.io/py4pd;
 #X connect 0 0 27 0;
 #X connect 6 0 27 0;

@@ -13,7 +13,7 @@ def runTest(pdpatch):
         scriptfolder = os.path.dirname(scriptfile)
         pathfile = scriptfolder + "/" + pdpatch
         if os.path.isfile(pathfile):
-            cmd = f'pd -nogui -send "start-test bang" {pathfile}'
+            cmd = f'pd -nogui -batch -send "start-test bang" {pathfile}'
             print("Running: " + "\033[92m" + cmd + "\033[0m", end="\r")
         else:
             print("PureData Patch not found")
@@ -42,7 +42,7 @@ def runTest(pdpatch):
         else:
             print(f"Patch {pathfile} not found")
             sys.exit()
-        cmd = f'"C:\\Program Files\\Pd\\bin\\pd.exe" -nogui -send "start-test bang" "{pathfile}"'
+        cmd = f'"C:\\Program Files\\Pd\\bin\\pd.exe" -nogui -batch -send "start-test bang" "{pathfile}"'
         try:
             output = subprocess.run(
                 cmd, capture_output=True, text=True, shell=True, timeout=60
@@ -113,7 +113,7 @@ if __name__ == "__main__":
         sys.exit(-1)
     elif errorInTest == 0:
         print("\n")
-        print("===============================")
-        print("\033[92m" + "All Tests passed" + "\033[0m")
-        print("===============================")
+        print("==============================")
+        print("\033[92m" + (" " * 7) + "All Tests passed" + "\033[0m")
+        print("==============================")
         print("\n")
