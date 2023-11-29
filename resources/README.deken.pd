@@ -32,5 +32,5 @@
 #X text 107 427 <-- Click on this bang for Linux.;
 #X obj 59 44 cnv 5 5 22 empty empty Thanks\ for\ downloading\ [py4pd]\ by\ Charles\ K.\ Neimog! 10 12 0 15 #000000 #202020 0;
 #X text 66 185 [py4pd] is used by third-party libraries. I already upload some objects to deken. You can search for pd-ji (Just Intonation Tools) \, Orchidea (load the free Orchidea samples using midi data) and others. Check the complete list in., f 70;
-#X msg 266 239 www.charlesneimog.com/py4pd;
+#X msg 266 239 charlesneimog.github.io/py4pd;
 #X connect 13 0 3 0;
