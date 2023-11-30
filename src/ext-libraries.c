@@ -548,9 +548,10 @@ void Py4pdLib_Bang(t_py *x) {
 // =====================================
 t_int *Py4pdLib_AudioINPerform(t_int *w) {
   t_py *x = (t_py *)(w[1]);
-  if (x->audioError) {
+
+  if (x->audioError || x->numpyImported == 0)
     return (w + 4);
-  }
+
   t_sample *in = (t_sample *)(w[2]);
   int n = (int)(w[3]);
   x->vectorSize = n;
@@ -572,7 +573,8 @@ t_int *Py4pdLib_AudioINPerform(t_int *w) {
 // =====================================
 t_int *Py4pdLib_AudioOUTPerform(t_int *w) {
   t_py *x = (t_py *)(w[1]);
-  if (x->audioError)
+
+  if (x->audioError || x->numpyImported == 0)
     return (w + 4);
 
   t_sample *audioOut = (t_sample *)(w[2]);
@@ -598,7 +600,7 @@ t_int *Py4pdLib_AudioOUTPerform(t_int *w) {
 // =====================================
 t_int *Py4pdLib_AudioPerform(t_int *w) {
   t_py *x = (t_py *)(w[1]);
-  if (x->audioError)
+  if (x->audioError || x->numpyImported == 0)
     return (w + 5);
   t_sample *audioIn = (t_sample *)(w[2]);
   t_sample *audioOut = (t_sample *)(w[3]);
@@ -632,29 +634,28 @@ t_int *Py4pdLib_AudioPerform(t_int *w) {
 
 // =====================================
 static void Py4pdLib_Dsp(t_py *x, t_signal **sp) {
-  int numpyArrayImported = Py4pd_ImportNumpyForPy4pd();
-  if (numpyArrayImported == 1) {
-      x->numpyImported = 1;
-      logpost(NULL, 3, "Numpy Loaded");
-    if (x->objType == PY4PD_AUDIOINOBJ) {
-      x->nChs = sp[0]->s_nchans;
-      x->vectorSize = sp[0]->s_n;
-      dsp_add(Py4pdLib_AudioINPerform, 3, x, sp[0]->s_vec, PY4PDSIGTOTAL(sp[0]));
-    } else if (x->objType == PY4PD_AUDIOOUTOBJ) {
-      x->vectorSize = sp[0]->s_n;
-      signal_setmultiout(&sp[0], x->nChs);
-      dsp_add(Py4pdLib_AudioOUTPerform, 3, x, sp[0]->s_vec, PY4PDSIGTOTAL(sp[0]));
-    } else if (x->objType == PY4PD_AUDIOOBJ) {
-      x->nChs = sp[0]->s_nchans;
-      x->vectorSize = sp[0]->s_n;
-      signal_setmultiout(&sp[1], sp[0]->s_nchans);
-      dsp_add(Py4pdLib_AudioPerform, 4, x, sp[0]->s_vec, sp[1]->s_vec,
-              PY4PDSIGTOTAL(sp[0]));
-    }
+  if (_import_array() != 0) {
+    x->numpyImported = 0;
+    pd_error(x, "[py4pd] Failed to import numpy");
   } else {
-      x->numpyImported = 0;
-      pd_error(NULL, "[%s] Numpy was not imported!", x->objName->s_name);
-    }
+    x->numpyImported = 1;
+  }
+
+  if (x->objType == PY4PD_AUDIOINOBJ) {
+    x->nChs = sp[0]->s_nchans;
+    x->vectorSize = sp[0]->s_n;
+    dsp_add(Py4pdLib_AudioINPerform, 3, x, sp[0]->s_vec, PY4PDSIGTOTAL(sp[0]));
+  } else if (x->objType == PY4PD_AUDIOOUTOBJ) {
+    x->vectorSize = sp[0]->s_n;
+    signal_setmultiout(&sp[0], x->nChs);
+    dsp_add(Py4pdLib_AudioOUTPerform, 3, x, sp[0]->s_vec, PY4PDSIGTOTAL(sp[0]));
+  } else if (x->objType == PY4PD_AUDIOOBJ) {
+    x->nChs = sp[0]->s_nchans;
+    x->vectorSize = sp[0]->s_n;
+    signal_setmultiout(&sp[1], sp[0]->s_nchans);
+    dsp_add(Py4pdLib_AudioPerform, 4, x, sp[0]->s_vec, sp[1]->s_vec,
+            PY4PDSIGTOTAL(sp[0]));
+  }
 }
 
 // ================

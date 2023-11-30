@@ -1,3 +1,4 @@
+#define NO_IMPORT_ARRAY
 #include "py4pd.h"
 
 // ====================================================
@@ -1472,7 +1473,7 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
  * @return It will return NULL.
  */
 int Py4pd_ImportNumpyForPy4pd() {
-  //import_array();
+  // import_array();
   return 1;
 }
 

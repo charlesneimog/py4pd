@@ -11,7 +11,6 @@
 #define PY_SSIZE_T_CLEAN // Remove deprecated functions
 #include <Python.h>
 
-#define PY_ARRAY_UNIQUE_SYMBOL PY4PD_ARRAY_API
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
 
@@ -36,7 +35,7 @@
 
 #define PY4PD_MAJOR_VERSION 0
 #define PY4PD_MINOR_VERSION 8
-#define PY4PD_MICRO_VERSION 2
+#define PY4PD_MICRO_VERSION 3
 
 
 #define PYTHON_REQUIRED_VERSION(major, minor) ((major < PY_MAJOR_VERSION) || (major == PY_MAJOR_VERSION && minor <= PY_MINOR_VERSION))

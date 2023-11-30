@@ -1,3 +1,4 @@
+#define NO_IMPORT_ARRAY
 #include "py4pd.h"
 
 t_widgetbehavior py4pd_widgetbehavior;
@@ -168,8 +169,8 @@ void Py4pdPic_Draw(t_py *x, struct _glist *glist, t_floatarg vis) {
       sys_vgui("if { [info exists %lx_picname] == 1 } {.x%lx.c create "
                "rectangle %d %d %d %d -tags %lx_outline -outline black "
                "-width %d}\n",
-               x->picFilePath, cv, xpos, ypos, xpos + x->width, ypos + x->height,
-               x, x->zoom);
+               x->picFilePath, cv, xpos, ypos, xpos + x->width,
+               ypos + x->height, x, x->zoom);
     }
   }
   sys_vgui(".x%lx.c create rectangle %d %d %d %d -tags %lx_outline -outline "
@@ -328,7 +329,8 @@ void Py4pdPic_Free(t_py *x) { // delete if variable is unset and image is unused
 // =====================================
 void Py4pdPic_PicDefinition(t_py *x) {
   x->visMode = 1;
-  sys_vgui("image create photo PY4PD_IMAGE_{%p} -data {%s} \n", x, x->imageBase64);
+  sys_vgui("image create photo PY4PD_IMAGE_{%p} -data {%s} \n", x,
+           x->imageBase64);
 
   sys_vgui("if {[catch {pd}]} {\n");
   sys_vgui("}\n");

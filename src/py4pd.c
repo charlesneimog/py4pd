@@ -1,3 +1,4 @@
+#define PY_ARRAY_UNIQUE_SYMBOL py4pd_ARRAY_API
 #include "py4pd.h"
 
 // ============================================
@@ -400,6 +401,7 @@ static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
   Py_DECREF(pValue);
   Py_DECREF(pipInstallFunction);
   Py_DECREF(py4pdModule);
+  outlet_bang(x->mainOut);
   return;
 }
 
@@ -1026,19 +1028,21 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     x->pdPatchPath = patch_dir;                  // set name of the home path
     x->pkgPath = patch_dir; // set name of the packages path
     x->pArgsCount = 0;
-    Py4pdUtils_SetObjConfig(x); 
+    Py4pdUtils_SetObjConfig(x);
 
     if (object_count == 0) {
       Py4pdUtils_AddPathsToPythonPath(x);
     }
-    return x;
-
     if (argc > 1) { // check if there are two arguments
-      if (_import_array() < 0) {
-          pd_error(NULL, "\n!!!!!!\n [py4pd] Unable to import NumPy! Send [pipinstall global numpy] to py4pd object to install it.] \n!!!!!!\n");
-          return (x);
+      if (_import_array() != 0) {
+        pd_error(NULL,
+                 "\n!!!!!!\n [py4pd] Unable to import NumPy! Send [pipinstall "
+                 "global numpy] to py4pd object to install it.] \n!!!!!!\n");
+        x->numpyImported = 0;
+        return (x);
       }
       Py4pd_SetFunction(x, s, argc, argv);
+      x->numpyImported = 1;
     }
     object_count++;
     return (x);
@@ -1053,11 +1057,15 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     Py4pdUtils_SetObjConfig(x);
     if (object_count == 0) {
       Py4pdUtils_AddPathsToPythonPath(x);
-      if (_import_array() < 0) {
-          pd_error(NULL, "\n!!!!!!\n [py4pd] Unable to import NumPy! Send [pipinstall global numpy] to py4pd object to install it.] \n!!!!!!\n");
-          return NULL;
+      if (_import_array() != 0) {
+        pd_error(NULL,
+                 "\n!!!!!!\n [py4pd] Unable to import NumPy! Send [pipinstall "
+                 "global numpy] to py4pd object to install it.] \n!!!!!!\n");
+        x->numpyImported = 0;
+        return NULL;
       }
     }
+    x->numpyImported = 1;
     int libraryLoaded = Py4pd_LibraryLoad(x, argc, argv);
     if (libraryLoaded == -1) {
       return NULL;
@@ -1082,8 +1090,8 @@ void py4pd_setup(void) {
     object_count = 0;
     post("");
     post("[py4pd] by Charles K. Neimog");
-    post("[py4pd] Version %d.%d.%d", PY4PD_MAJOR_VERSION,
-         PY4PD_MINOR_VERSION, PY4PD_MICRO_VERSION);
+    post("[py4pd] Version %d.%d.%d", PY4PD_MAJOR_VERSION, PY4PD_MINOR_VERSION,
+         PY4PD_MICRO_VERSION);
     post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION,
          PY_MICRO_VERSION);
     post("");
@@ -1103,7 +1111,6 @@ void py4pd_setup(void) {
   py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)Py4pd_Py4pdNew,
                                  (t_method)Py4pdLib_FreeObj, sizeof(t_py),
                                  CLASS_NOINLET, A_GIMME, 0);
-
 
   // this is like have lot of objects with the same name, add all methods for
   class_addmethod(py4pd_class, (t_method)Py4pd_SetPy4pdHomePath, gensym("home"),
@@ -1146,6 +1153,4 @@ void py4pd_setup(void) {
   class_addmethod(py4pd_class, (t_method)Py4pdUtils_CreatePythonInterpreter,
                   gensym("detach"), 0);
 #endif
-
-  
 }
