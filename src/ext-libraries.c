@@ -1,8 +1,5 @@
 #include "py4pd.h"
 
-#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
-#include <numpy/arrayobject.h>
-
 // ===========================================
 // ================= PUREDATA ================
 // ===========================================
@@ -635,21 +632,29 @@ t_int *Py4pdLib_AudioPerform(t_int *w) {
 
 // =====================================
 static void Py4pdLib_Dsp(t_py *x, t_signal **sp) {
-  if (x->objType == PY4PD_AUDIOINOBJ) {
-    x->nChs = sp[0]->s_nchans;
-    x->vectorSize = sp[0]->s_n;
-    dsp_add(Py4pdLib_AudioINPerform, 3, x, sp[0]->s_vec, PY4PDSIGTOTAL(sp[0]));
-  } else if (x->objType == PY4PD_AUDIOOUTOBJ) {
-    x->vectorSize = sp[0]->s_n;
-    signal_setmultiout(&sp[0], x->nChs);
-    dsp_add(Py4pdLib_AudioOUTPerform, 3, x, sp[0]->s_vec, PY4PDSIGTOTAL(sp[0]));
-  } else if (x->objType == PY4PD_AUDIOOBJ) {
-    x->nChs = sp[0]->s_nchans;
-    x->vectorSize = sp[0]->s_n;
-    signal_setmultiout(&sp[1], sp[0]->s_nchans);
-    dsp_add(Py4pdLib_AudioPerform, 4, x, sp[0]->s_vec, sp[1]->s_vec,
-            PY4PDSIGTOTAL(sp[0]));
-  }
+  int numpyArrayImported = Py4pd_ImportNumpyForPy4pd();
+  if (numpyArrayImported == 1) {
+      x->numpyImported = 1;
+      logpost(NULL, 3, "Numpy Loaded");
+    if (x->objType == PY4PD_AUDIOINOBJ) {
+      x->nChs = sp[0]->s_nchans;
+      x->vectorSize = sp[0]->s_n;
+      dsp_add(Py4pdLib_AudioINPerform, 3, x, sp[0]->s_vec, PY4PDSIGTOTAL(sp[0]));
+    } else if (x->objType == PY4PD_AUDIOOUTOBJ) {
+      x->vectorSize = sp[0]->s_n;
+      signal_setmultiout(&sp[0], x->nChs);
+      dsp_add(Py4pdLib_AudioOUTPerform, 3, x, sp[0]->s_vec, PY4PDSIGTOTAL(sp[0]));
+    } else if (x->objType == PY4PD_AUDIOOBJ) {
+      x->nChs = sp[0]->s_nchans;
+      x->vectorSize = sp[0]->s_n;
+      signal_setmultiout(&sp[1], sp[0]->s_nchans);
+      dsp_add(Py4pdLib_AudioPerform, 4, x, sp[0]->s_vec, sp[1]->s_vec,
+              PY4PDSIGTOTAL(sp[0]));
+    }
+  } else {
+      x->numpyImported = 0;
+      pd_error(NULL, "[%s] Numpy was not imported!", x->objName->s_name);
+    }
 }
 
 // ================
@@ -781,14 +786,13 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
   int i;
 
   if (x->objType > 1) {
-    int numpyArrayImported = _import_array();
-    if (numpyArrayImported == 0) {
+    int numpyArrayImported = Py4pd_ImportNumpyForPy4pd();
+    if (numpyArrayImported == 1) {
       x->numpyImported = 1;
       logpost(NULL, 3, "Numpy Loaded");
-
     } else {
       x->numpyImported = 0;
-      pd_error(x, "[%s] Not possible to import numpy array", objectName);
+      pd_error(NULL, "[%s] Numpy was not imported!", objectName);
       Py_DECREF(pd_module);
       Py_DECREF(py4pd_capsule);
       return NULL;
@@ -1120,5 +1124,6 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     post("[py4pd]: Object {%s} added to PureData", objectName);
   }
   class_set_extern_dir(&s_);
+  post("Object {%s} added to PureData", objectName);
   Py_RETURN_TRUE;
 }

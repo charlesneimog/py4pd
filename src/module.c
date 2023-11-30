@@ -1,9 +1,4 @@
-#include "m_pd.h"
 #include "py4pd.h"
-#include "s_stuff.h"
-
-#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
-#include <numpy/arrayobject.h>
 
 // =================================
 /**
@@ -1396,7 +1391,6 @@ const char *createUniqueConstString(const char *prefix, const void *pointer) {
 // =================================
 PyMODINIT_FUNC PyInit_pd() {
   PyObject *py4pdmodule;
-
   py4pdmodule = PyModule_Create(&pdmodule);
 
   if (py4pdmodule == NULL) {

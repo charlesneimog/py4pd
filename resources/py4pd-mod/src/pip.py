@@ -1,4 +1,3 @@
-import faulthandler
 import os
 import platform
 import subprocess
@@ -6,7 +5,6 @@ import sys
 
 import pd
 
-faulthandler.enable()
 
 package = ""
 folder = ""

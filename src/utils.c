@@ -1,8 +1,5 @@
 #include "py4pd.h"
 
-#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
-#include <numpy/arrayobject.h>
-
 // ====================================================
 /*
  * @brief This function parse the arguments for pd Objects created with the
@@ -1474,9 +1471,9 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
  * @param NULL
  * @return It will return NULL.
  */
-void *Py4pd_ImportNumpyForPy4pd() {
-  _import_array();
-  return NULL;
+int Py4pd_ImportNumpyForPy4pd() {
+  //import_array();
+  return 1;
 }
 
 // ========================= PYTHON ==============================

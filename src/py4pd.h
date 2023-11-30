@@ -11,6 +11,11 @@
 #define PY_SSIZE_T_CLEAN // Remove deprecated functions
 #include <Python.h>
 
+#define PY_ARRAY_UNIQUE_SYMBOL PY4PD_ARRAY_API
+#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
+#include <numpy/arrayobject.h>
+
+
 #ifdef __linux__
     #define __USE_GNU
 #endif
@@ -228,7 +233,7 @@ typedef struct _py4pdInlet_proxy{
 
 // =====================================
 t_py4pd_pValue *Py4pdUtils_Run(t_py *x, PyObject *pArgs, t_py4pd_pValue *pValuePointer);
-void *Py4pd_ImportNumpyForPy4pd();
+int Py4pd_ImportNumpyForPy4pd();
 
 // =====================================
 // void Py4pd_SetParametersForFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);

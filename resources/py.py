@@ -1,14 +1,7 @@
 import pd
 import sys
 from random import randint
-
-try:
-    import numpy as np
-    numpyIsInstalled = True
-except Exception as e:
-    import py4pd
-    py4pd.pipinstall(["global", "numpy"])
-    sys.exit()
+import numpy as np
 
 # ================================================
 # ==============  Functions  =====================

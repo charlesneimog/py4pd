@@ -25,12 +25,13 @@ else ifeq (Darwin,$(findstring Darwin,$(uname)))
   	PYTHON_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
 	NUMPY_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import numpy; print(numpy.get_include())')
 	ifeq ($(extension),d_arm64)
-		cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -mmacosx-version-min=12 
+		cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-bad-function-cast -mmacosx-version-min=12 
 	else
-  		cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -mmacosx-version-min=10.9 
+  		cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-bad-function-cast -mmacosx-version-min=10.9 
 	endif
   	PYTHON_LIB := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
   	ldlibs = -l dl -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wno-null-pointer-subtraction
+	
 else
   $(error "Unknown system type: $(uname)")
   $(shell exit 1)
