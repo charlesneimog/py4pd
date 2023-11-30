@@ -295,6 +295,8 @@ KeyValuePair* Py4pdLib_PlayerGetValue(Dictionary* dictionary, int onset);
 void Py4pdLib_Play(t_py *x, t_symbol *s, int argc, t_atom *argv);
 void Py4pdLib_Stop(t_py *x);
 void Py4pdLib_Clear(t_py *x);
+void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv);
+
 
 // ============= PIC =============
 extern t_class *py4pd_class, *pyNewObject_VIS;

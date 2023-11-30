@@ -654,7 +654,7 @@ void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 void Py4pd_ReloadPy4pdFunction(t_py *x) {
   PyObject *pName, *pFunc, *pModule, *pReload;
   if (x->funcCalled == 0) { // if the set method was not called, then we
-                                 // can not run the function :)
+                            // can not run the function :)
     pd_error(x, "To reload the script you need to set the function first!");
     return;
   }
@@ -905,11 +905,11 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                x->pFuncName->s_name, (int)x->pArgsCount, argCount);
       return;
     }
+    free(lists);
   } else {
     ArgsTuple = PyTuple_New(0);
   }
   Py4pdUtils_RunPy(x, ArgsTuple, NULL);
-
   return;
 }
 
@@ -937,13 +937,9 @@ static void Py4pd_ExecuteFunction(t_py *x, t_symbol *s, int argc,
     pd_error(x, "[py4pd] You need to call a function before run!");
     return;
   }
-  
   Py4pd_RunFunction(x, s, argc, argv); // Implement here the functions
-
   return;
 }
-
-
 
 // ============================================
 /**
@@ -984,9 +980,6 @@ void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f) {
 void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
   int i;
   t_py *x;
-  int visMODE = 0;
-  int audioOUT = 0;
-  int audioIN = 0;
   int libraryMODE = 0;
   int normalMODE = 1;
   t_symbol *scriptName = NULL;
@@ -1002,38 +995,7 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
   for (i = 0; i < argc; i++) {
     if (argv[i].a_type == A_SYMBOL) {
       t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
-      if (py4pdArgs == gensym("-picture") || py4pdArgs == gensym("-score") ||
-          py4pdArgs == gensym("-pic") || py4pdArgs == gensym("-canvas")) {
-        visMODE = 1;
-        if (argv[i + 1].a_type == A_FLOAT && argv[i + 2].a_type == A_FLOAT) {
-          pd_error(NULL, "[py4pd] -picture, -score, -pic and -canvas was "
-                         "removed in version 0.8.0");
-          pd_error(NULL, "[py4pd] Please transfor your code in one Pd Object, "
-                         "it is simple");
-          pd_error(NULL, "[py4pd] Check: "
-                         "https://py4pd.readthedocs.io/en/latest/python-users/"
-                         "#pdaddobject");
-          return NULL;
-        }
-      } else if (py4pdArgs == gensym("-audio") ||
-                 py4pdArgs == gensym("-audioout")) {
-        pd_error(NULL, "[py4pd] -audio option was removed in version 0.8.0");
-        pd_error(NULL, "[py4pd] Please transfor your code in one Pd "
-                       "Object, it is simple");
-        pd_error(NULL, "[py4pd] Check: "
-                       "https://py4pd.readthedocs.io/en/latest/"
-                       "python-users/#pdaddobject");
-        return NULL;
-      } else if (py4pdArgs == gensym("-audioin")) {
-        pd_error(NULL, "[py4pd] -audioin was removed in version 0.8.0");
-        pd_error(NULL, "[py4pd] Please transfor your code in one Pd "
-                       "Object, it is simple");
-        pd_error(NULL, "[py4pd] Check: "
-                       "https://py4pd.readthedocs.io/en/latest/"
-                       "python-users/#pdaddobject");
-        return NULL;
-      } else if (py4pdArgs == gensym("-library") ||
-                 py4pdArgs == gensym("-lib")) {
+      if (py4pdArgs == gensym("-library") || py4pdArgs == gensym("-lib")) {
         libraryMODE = 1;
         normalMODE = 0;
         scriptName = atom_getsymbolarg(i + 1, argc, argv);
@@ -1044,16 +1006,43 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
   // =================
   // INIT PY4PD OBJECT
   // =================
-  if (normalMODE == 1 && visMODE == 0 && audioOUT == 0 && audioIN == 0) {
+  if (normalMODE == 1) {
     x = (t_py *)pd_new(py4pd_class); // create a new py4pd object
-  } else if (libraryMODE == 1 && visMODE == 0 && audioOUT == 0 &&
-             audioIN == 0) { // library
+    x->canvas = canvas_getcurrent();
+    t_canvas *c = x->canvas;
+    t_symbol *patch_dir = canvas_getdir(c);
+    x->audioInput = 0;
+    x->audioOutput = 0;
+    x->visMode = 0;
+    x->editorName = NULL;
+    x->pyObject = 0;
+    x->vectorSize = 0;
+    Py4pdUtils_ParseArguments(x, c, argc, argv); // parse arguments
+    x->pdPatchPath = patch_dir;                  // set name of the home path
+    x->pkgPath = patch_dir; // set name of the packages path
+    x->pArgsCount = 0;
+
+    Py4pdUtils_SetObjConfig(
+        x); // set the config file (in py4pd.cfg, make this be
+
+    if (object_count == 0) {
+      Py4pdUtils_AddPathsToPythonPath(x);
+    }
+
+    if (argc > 1) { // check if there are two arguments
+      Py4pd_SetFunction(x, s, argc, argv);
+      Py4pd_ImportNumpyForPy4pd();
+    }
+    object_count++;
+    return (x);
+  } else if (libraryMODE == 1) { // library
     x = (t_py *)pd_new(py4pd_classLibrary);
     x->canvas = canvas_getcurrent();
     t_canvas *c = x->canvas;
     t_symbol *patch_dir = canvas_getdir(c);
     x->pdPatchPath = patch_dir;
     x->pkgPath = patch_dir;
+    x->visMode = 0;
     Py4pdUtils_SetObjConfig(x);
     if (object_count == 0) {
       Py4pdUtils_AddPathsToPythonPath(x);
@@ -1075,32 +1064,6 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
                    "the same time.");
     return NULL;
   }
-  x->canvas = canvas_getcurrent();
-  t_canvas *c = x->canvas;
-  t_symbol *patch_dir = canvas_getdir(c);
-  x->audioInput = 0;
-  x->audioOutput = 0;
-  x->visMode = 0;
-  x->editorName = NULL;
-  x->pyObject = 0;
-  x->vectorSize = 0;
-  Py4pdUtils_ParseArguments(x, c, argc, argv); // parse arguments
-  x->pdPatchPath = patch_dir;      // set name of the home path
-  x->pkgPath = patch_dir;          // set name of the packages path
-
-  Py4pdUtils_SetObjConfig(x); // set the config file (in py4pd.cfg, make this be
-
-  if (object_count == 0) {
-    Py4pdUtils_AddPathsToPythonPath(x);
-  }
-
-  if (argc > 1) { // check if there are two arguments
-    Py4pd_SetFunction(x, s, argc, argv);
-    Py4pd_ImportNumpyForPy4pd();
-  }
-
-  object_count++;
-  return (x);
 }
 
 // ====================================================
@@ -1168,8 +1131,13 @@ void py4pd_setup(void) {
     object_count = 0;
     post("");
     post("[py4pd] by Charles K. Neimog");
-    post("[py4pd] Version %d.%d.%d", PY4PD_MAJOR_VERSION, PY4PD_MINOR_VERSION,
-         PY4PD_MICRO_VERSION);
+#ifdef PD_FLAVOR
+    post("[py4pd] Version %d.%d.%d | %s", PY4PD_MAJOR_VERSION,
+         PY4PD_MINOR_VERSION, PY4PD_MICRO_VERSION, PD_FLAVOR);
+#else
+    post("[py4pd] Version %d.%d.%d | %s", PY4PD_MAJOR_VERSION,
+         PY4PD_MINOR_VERSION, PY4PD_MICRO_VERSION, "Pd Vanilla");
+#endif
     post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION,
          PY_MICRO_VERSION);
     post("");
