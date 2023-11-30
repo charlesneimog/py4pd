@@ -1,4 +1,4 @@
-#N canvas 494 62 1202 670 8;
+#N canvas 545 31 1202 670 8;
 #X msg 25 46 doc, f 6;
 #N canvas 282 97 1541 723 embedded 0;
 #X obj 9 192 py4pd;
@@ -105,10 +105,10 @@
 #X text 320 74 Click on this bang for MacOS | Bottom of page;
 #X text 320 101 Click on this bang for Windows | Bottom of page;
 #X text 320 124 Click on this bang for Linux;
-#N canvas 861 110 853 614 Libraries 0;
+#N canvas 861 110 853 614 Libraries 1;
 #X text 83 6 <= Load the library of the script called py.py. The script must be located in the patch folder or inside one folder with same of the script that are in the PureData Search patches. For example \, If I have ~/Documents/Pd/pd-ji/pd-ji.py you can use py4pd -lib pd-ji to load the library., f 66;
 #X text 96 118 Freqs in Hz.;
-#X obj 16 281 dac~;
+#X obj 15 281 dac~;
 #X text 104 222 The Python objects do not support Help Patches yet! But inside both libraries there is some Helps patches.;
 #X text 103 177 I already upload some Python Libraries for py4pd. Go to Help->Find Externals then "pd-ji" or "orchidea".;
 #X obj 10 7 py4pd -lib py;
