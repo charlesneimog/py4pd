@@ -12,48 +12,6 @@ package = ""
 folder = ""
 
 
-    def _pipinstall(self):
-        self.drawWarning()
-        version = sys.version_info
-        major = version.major  # Assuming version is defined
-        minor = version.minor  # Assuming version is defined
-        folder = self.folder
-        package = self.package
-        value = subprocess.run(
-            [
-                f"/usr/local/bin/python{major}.{minor}",
-                "-m",
-                "pip",
-                "install",
-                "--target",
-                f"{folder}/py-modules",
-                package,
-                "--upgrade",
-            ],
-            check=True,
-        )
-        if value.returncode != 0:
-            pd.logpost(3, "pip return value" + str(value))
-            pd.error(
-                "You need to restart PureData, to check if the installation process worked"
-            )
-        else:
-            pd.print(f"{package} Installed!")
-            pd.error("You need to restart PureData")
-        self.window.protocol("WM_DELETE_WINDOW", self.close_window)
-        self.window.after(200, self.close_window)
-        self.window.mainloop()
-
-        return True
-
-    def close_window(self):
-        self.window.quit()
-        self.window.destroy()
-
-    def run(self):
-        self.window.update()
-
-
 def pipinstall(mypackage):
     """Install a Python package from Pd"""
     global folder

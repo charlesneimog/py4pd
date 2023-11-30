@@ -5,6 +5,8 @@ try:
 except Exception as e:
     pd.error("Error to add py.pip: " + str(e))
 
+from src.pip import *
+
 try:
     from src.convertion import *
     from src.info import *
@@ -23,6 +25,20 @@ except Exception as e:
     pd.error("Error loading py4pd objects: " + str(e))
     pd.add_object(pipinstall, "py.pip")
 
+from src.convertion import *
+from src.info import *
+from src.list import *
+from src.loop import *
+from src.math import *
+from src.musicconvertions import *
+from src.openmusic import *
+from src.operators import *
+from src.pip import *
+from src.show import *
+from src.test import *
+from src.tree import *
+from src.utils import *
+
 
 def mysumarg(a=3, b=2, c=5, d=4):
     pd.print(f"mysumarg: {a} + {b} + {c} + {d}")
@@ -39,15 +55,16 @@ def py4pdLoadObjects():
     pd.add_object(getObjectArgs, "py.getargs")
 
     # Logic Functions
-    pd.add_object(pyand, "py.and", pyout=True)
-    pd.add_object(pyand, "py&&", pyout=True)
-    pd.add_object(pyor, "py||", pyout=True)
-    pd.add_object(pyequal, "py==", pyout=True)
-    pd.add_object(pygreater, "py>", pyout=True)
-    pd.add_object(pylower, "py<", pyout=True)
-    pd.add_object(py4pdif, "py.if", pyout=True)
-    pd.add_object(ommod, "py//", pyout=True)
-    pd.add_object(pyisin, "pyisin")
+    pd.add_object(pyand, "py.and", pyout=True, helppatch="py.logic-help.pd")
+    pd.add_object(pyand, "py&&", pyout=True, helppatch="py.logic-help.pd")
+    pd.add_object(pyor, "py.or", pyout=True, helppatch="py.logic-help.pd")
+    pd.add_object(pyor, "py||", pyout=True, helppatch="py.logic-help.pd")
+    pd.add_object(pyequal, "py.equal", pyout=True, helppatch="py.logic-help.pd")
+    pd.add_object(pyequal, "py==", pyout=True, helppatch="py.logic-help.pd")
+    pd.add_object(pygreater, "py>", pyout=True, helppatch="py.logic-help.pd")
+    pd.add_object(pylower, "py<", pyout=True, helppatch="py.logic-help.pd")
+    pd.add_object(py4pdif, "py.if", pyout=True, helppatch="py.logic-help.pd")
+    pd.add_object(pyisin, "pyisin", pyout=True, helppatch="py.logic-help.pd")
 
     # info
     pd.add_object(pdprint, "py.print", no_outlet=True)
@@ -95,6 +112,8 @@ def py4pdLoadObjects():
     pd.add_object(omtimes, "py*")
     pd.add_object(omdiv, "py/")
     pd.add_object(omabs, "py.abs")
+    pd.add_object(ommod, "py//", pyout=True)
+
     pd.add_object(py4pdListComprehension, "py.listcomp", pyout=True)
 
     # Rhythm Tree
