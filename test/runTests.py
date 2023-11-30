@@ -68,7 +68,7 @@ def runTest(pdpatch):
             print(f"Patch {pathfile} not found")
             sys.exit()
         cmd = (
-            '/Applications/Pd-*.app/Contents/Resources/bin/pd -nogui -stderr -send "start-test bang" '
+            '/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -nogui -send "start-test bang" '
             + pathfile
         )
         try:
