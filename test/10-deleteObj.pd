@@ -1,9 +1,0 @@
-#N canvas 667 314 523 414 8;
-#X obj 3 5 namecanvas py4pd-test;
-#X obj 135 10 r start-test;
-#X obj 218 12 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
-#X obj 135 95 py4pd py sumlist;
-#X msg 135 63 run [1 2 3 4 5 6] 20;
-#N canvas 30 68 450 300 (subpatch) 0;
-#X restore 56 83 pd;
-#X connect 4 0 3 0;
