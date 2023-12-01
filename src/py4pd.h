@@ -109,6 +109,7 @@ typedef struct pdcollectItem{
     PyObject*     pItem;
     int           wasCleaned;
     int           aCumulative;
+    int           id;
 } pdcollectItem;
 
 // ======================================

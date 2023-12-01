@@ -24,12 +24,25 @@ static pdcollectHash *Py4pdMod_CreatePdcollectHash(int size) {
 
 static unsigned int Py4pdMod_HashFunction(pdcollectHash *hash_table,
                                           char *key) {
-  unsigned long hash = 5381;
-  int c;
-  while ((c = *key++)) {
-    hash = ((hash << 5) + hash) + c;
+  // FAKE HASH FUNCTION
+  int keyAlreadyExists = 0;
+  for (int i = 0; i < hash_table->size; i++) {
+    if (hash_table->items[i] != NULL) {
+      if (strcmp(hash_table->items[i]->key, key) == 0) {
+        keyAlreadyExists = 1;
+        return i;
+      }
+    }
   }
-  return hash % hash_table->size;
+  if (keyAlreadyExists == 0) {
+    for (int i = 0; i < hash_table->size; i++) {
+      if (hash_table->items[i] == NULL) {
+        return i;
+      }
+    }
+  }
+  PyErr_SetString(PyExc_MemoryError, "[Python] pd.setglobalvar: memory error");
+  return 0;
 }
 
 // =================================
@@ -80,6 +93,7 @@ static void Py4pdMod_InsertItem(pdcollectHash *hash_table, char *key,
 // =================================
 static void Py4pdMod_AccumItem(pdcollectHash *hash_table, char *key,
                                PyObject *obj) {
+
   unsigned int index = Py4pdMod_HashFunction(hash_table, key);
   pdcollectItem *item = hash_table->items[index];
   if (item == NULL && hash_table->count <= hash_table->size) {
@@ -94,6 +108,8 @@ static void Py4pdMod_AccumItem(pdcollectHash *hash_table, char *key,
   }
   if (item->wasCleaned)
     item->wasCleaned = 0;
+
+  // print str representation of obj
   PyList_Append(item->pList, obj);
   return;
 }
@@ -154,8 +170,6 @@ static void Py4pdMod_FreePdcollectItem(pdcollectItem *item) {
   item->wasCleaned = 1;
   free(item->key);
 
-  // Free the appropriate object, depending on whether it's a single item or a
-  // list
   if (item->pList) {
     Py_DECREF(item->pList);
     Py4pdUtils_MemLeakCheck(item->pList, 0, "pList");
@@ -253,8 +267,10 @@ static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args,
   }
 
   if (item->aCumulative) {
+    Py_INCREF(item->pList);
     return item->pList;
   } else {
+    Py_INCREF(item->pItem);
     return item->pItem;
   }
 }
@@ -263,14 +279,12 @@ static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args,
 static PyObject *Py4pdMod_AccumGlobalVar(PyObject *self, PyObject *args) {
 
   (void)self;
-
   t_py *x = Py4pdUtils_GetObject(self);
   if (x == NULL) {
     PyErr_SetString(PyExc_RuntimeError,
                     "[Python] pd.setglobalvar: py4pd is NULL");
     return NULL;
   }
-  char *key;
   char *varName;
   PyObject *pValueScript;
   if (!PyArg_ParseTuple(args, "sO", &varName, &pValueScript)) {
@@ -278,7 +292,7 @@ static PyObject *Py4pdMod_AccumGlobalVar(PyObject *self, PyObject *args) {
                     "[Python] pd.setglobalvar: wrong arguments");
     return NULL;
   }
-  key = malloc(strlen(varName) + 40);
+  char *key = malloc(strlen(varName) + 40);
   snprintf(key, strlen(varName) + 40, "%s_%p", varName, x);
   if (x->pdcollect == NULL) {
     x->pdcollect = Py4pdMod_CreatePdcollectHash(8);
@@ -287,7 +301,6 @@ static PyObject *Py4pdMod_AccumGlobalVar(PyObject *self, PyObject *args) {
   x->pdcollect->items[Py4pdMod_HashFunction(x->pdcollect, key)]->aCumulative =
       1;
   free(key);
-
   Py_RETURN_TRUE;
 }
 
