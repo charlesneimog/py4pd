@@ -60,8 +60,6 @@
 #X obj 135 113 del 1 1 sec;
 #X obj 268 91 del 300 1 msec;
 #X obj 135 55 t b b b, f 54;
-#N canvas 130 168 450 300 new_patch 0;
-#X restore 430 5 pd new_patch;
 #X msg 135 160 1;
 #X connect 1 0 8 0;
 #X connect 2 0 8 0;
@@ -72,9 +70,9 @@
 #X connect 8 0 15 0;
 #X connect 10 0 9 0;
 #X connect 12 0 11 0;
-#X connect 13 0 17 0;
+#X connect 13 0 16 0;
 #X connect 14 0 12 0;
 #X connect 15 0 13 0;
 #X connect 15 1 14 0;
 #X connect 15 2 10 0;
-#X connect 17 0 7 0;
+#X connect 16 0 7 0;
