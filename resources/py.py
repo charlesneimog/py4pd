@@ -1,15 +1,7 @@
 import pd
 import sys
 from random import randint
-
-try:
-    import numpy as np
-    numpyIsInstalled = True
-except Exception as e:
-    pd.pip_install("numpy")
-    numpyIsInstalled = False
-    pd.error("You must restart Pure Data to use numpy.")
-    sys.exit()
+import numpy as np
 
 # ================================================
 # ==============  Functions  =====================

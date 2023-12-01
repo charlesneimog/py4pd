@@ -1,12 +1,15 @@
-import pd
 import sys
 from random import randint
 
+import pd
+
 try:
     import numpy as np
+
     numpyIsInstalled = True
 except Exception as e:
-    pd.pip_install("local", "numpy")
+    import py4pd
+    py4pd.pipinstall(["local", "numpy"])
     numpyIsInstalled = False
     pd.error("You must restart Pure Data to use numpy.")
     sys.exit()
@@ -14,6 +17,14 @@ except Exception as e:
 # ================================================
 # ==============  Functions  =====================
 # ================================================
+
+
+def sumlist(x, valuetimes):
+    mylist = []
+    for i in x:
+        print(i)
+        mylist.append(i * valuetimes)
+    return mylist
 
 
 def pdsum(x, y):
@@ -48,6 +59,7 @@ def fibonacci(n):
 # ================== AUDIO  ======================
 # ================================================
 
+
 def pd_tempfolder():
     "It returns the temp folder path."
     tempfolder = pd.tempfolder()
@@ -59,6 +71,7 @@ def pd_output():
     for x in range(10):
         pd.out(x)
 
+
 def example_pdout():
     for x in range(2):
         pd.out(x, symbol="myloop")
@@ -66,10 +79,12 @@ def example_pdout():
         pd.out(x, symbol="myloop2")
     return None
 
+
 def pdout(x):
     pd.out(x, symbol="myloop")
     pd.out(x, symbol="myloop2")
     return None
+
 
 def pd_print():
     "It sends a message to the py4pd message box."
@@ -84,7 +99,7 @@ def pd_error():
 
 
 def pd_send():
-    "It sends a message to the py4pdreceiver receive."	
+    "It sends a message to the py4pdreceiver receive."
     pd.send("py4pdreceiver", "hello from python!")
     pd.send("py4pdreceiver", 1)
     pd.send("py4pdreceiver", [1, 2, 3, 4, 5])
@@ -107,6 +122,7 @@ def printall(x, y):
     "It sends a message to the py4pd message box."
     pd.print(str(x + y))
 
+
 # ================================================
 # ================ Audio =========================
 # ================================================
@@ -119,18 +135,22 @@ def generate_sine_wave(frequency, amplitude, phase, num_samples, sampling_rate):
 
 
 def mksenoide(freqs, amps, phases, vectorsize, samplerate):
-    n = len(freqs) 
+    n = len(freqs)
     nframes = vectorsize
-    out = np.zeros((n, nframes), dtype=np.float64)  # Modify the shape of the output array
+    out = np.zeros(
+        (n, nframes), dtype=np.float64
+    )  # Modify the shape of the output array
     new_phases = np.zeros(n, dtype=np.float64)  # Array to store the new phases
     for i in range(n):
-        out[i], new_phases[i] = generate_sine_wave(freqs[i], amps[i], phases[i], nframes, samplerate)
+        out[i], new_phases[i] = generate_sine_wave(
+            freqs[i], amps[i], phases[i], nframes, samplerate
+        )
         if new_phases[i] > 2 * np.pi:
             new_phases[i] -= 2 * np.pi
     return out, new_phases
 
 
-def sinusoids(freqs, amps):  
+def sinusoids(freqs, amps):
     vectorsize = pd.get_vec_size()
     samplerate = pd.get_sample_rate()
     if freqs is None or amps is None:
@@ -145,8 +165,10 @@ def sinusoids(freqs, amps):
     return out
 
 
+# ================================================
+# ================ SETUP =========================
+# ================================================
 
 
 def py4pdLoadObjects():
-    pd.add_object(sinusoids, 'sinusoids~', objtype=pd.AUDIOOUT) 
-    
+    pd.add_object(sinusoids, "sinusoids~", objtype=pd.AUDIOOUT)

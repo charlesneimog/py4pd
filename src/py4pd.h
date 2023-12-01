@@ -11,6 +11,10 @@
 #define PY_SSIZE_T_CLEAN // Remove deprecated functions
 #include <Python.h>
 
+#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
+#include <numpy/arrayobject.h>
+
+
 #ifdef __linux__
     #define __USE_GNU
 #endif
@@ -28,10 +32,9 @@
 #define PY4PD_AUDIOOUTOBJ 3
 #define PY4PD_AUDIOOBJ 4
 
-
 #define PY4PD_MAJOR_VERSION 0
 #define PY4PD_MINOR_VERSION 8
-#define PY4PD_MICRO_VERSION 2
+#define PY4PD_MICRO_VERSION 3
 
 
 #define PYTHON_REQUIRED_VERSION(major, minor) ((major < PY_MAJOR_VERSION) || (major == PY_MAJOR_VERSION && minor <= PY_MINOR_VERSION))
@@ -44,7 +47,11 @@
 // DEFINE STANDARD IDE EDITOR
 #ifndef PY4PD_EDITOR
     #ifdef _WIN32
+        // Windows
         #define PY4PD_EDITOR "idle3.11"
+    #elif defined(__APPLE__) || defined(__MACH__)
+        // macOS
+        #define PY4PD_EDITOR "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -m idlelib.idle"
     #else
         #define PY4PD_EDITOR "idle3.11"
     #endif
@@ -105,6 +112,7 @@ typedef struct pdcollectItem{
     PyObject*     pItem;
     int           wasCleaned;
     int           aCumulative;
+    int           id;
 } pdcollectItem;
 
 // ======================================
@@ -228,7 +236,7 @@ typedef struct _py4pdInlet_proxy{
 
 // =====================================
 t_py4pd_pValue *Py4pdUtils_Run(t_py *x, PyObject *pArgs, t_py4pd_pValue *pValuePointer);
-void *Py4pd_ImportNumpyForPy4pd();
+int Py4pd_ImportNumpyForPy4pd();
 
 // =====================================
 // void Py4pd_SetParametersForFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
@@ -295,6 +303,8 @@ KeyValuePair* Py4pdLib_PlayerGetValue(Dictionary* dictionary, int onset);
 void Py4pdLib_Play(t_py *x, t_symbol *s, int argc, t_atom *argv);
 void Py4pdLib_Stop(t_py *x);
 void Py4pdLib_Clear(t_py *x);
+void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv);
+
 
 // ============= PIC =============
 extern t_class *py4pd_class, *pyNewObject_VIS;

@@ -1,9 +1,4 @@
-#include "m_pd.h"
 #include "py4pd.h"
-#include "s_stuff.h"
-
-#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
-#include <numpy/arrayobject.h>
 
 // =================================
 /**
@@ -29,12 +24,25 @@ static pdcollectHash *Py4pdMod_CreatePdcollectHash(int size) {
 
 static unsigned int Py4pdMod_HashFunction(pdcollectHash *hash_table,
                                           char *key) {
-  unsigned long hash = 5381;
-  int c;
-  while ((c = *key++)) {
-    hash = ((hash << 5) + hash) + c;
+  // FAKE HASH FUNCTION
+  int keyAlreadyExists = 0;
+  for (int i = 0; i < hash_table->size; i++) {
+    if (hash_table->items[i] != NULL) {
+      if (strcmp(hash_table->items[i]->key, key) == 0) {
+        keyAlreadyExists = 1;
+        return i;
+      }
+    }
   }
-  return hash % hash_table->size;
+  if (keyAlreadyExists == 0) {
+    for (int i = 0; i < hash_table->size; i++) {
+      if (hash_table->items[i] == NULL) {
+        return i;
+      }
+    }
+  }
+  PyErr_SetString(PyExc_MemoryError, "[Python] pd.setglobalvar: memory error");
+  return 0;
 }
 
 // =================================
@@ -85,6 +93,7 @@ static void Py4pdMod_InsertItem(pdcollectHash *hash_table, char *key,
 // =================================
 static void Py4pdMod_AccumItem(pdcollectHash *hash_table, char *key,
                                PyObject *obj) {
+
   unsigned int index = Py4pdMod_HashFunction(hash_table, key);
   pdcollectItem *item = hash_table->items[index];
   if (item == NULL && hash_table->count <= hash_table->size) {
@@ -99,6 +108,8 @@ static void Py4pdMod_AccumItem(pdcollectHash *hash_table, char *key,
   }
   if (item->wasCleaned)
     item->wasCleaned = 0;
+
+  // print str representation of obj
   PyList_Append(item->pList, obj);
   return;
 }
@@ -159,8 +170,6 @@ static void Py4pdMod_FreePdcollectItem(pdcollectItem *item) {
   item->wasCleaned = 1;
   free(item->key);
 
-  // Free the appropriate object, depending on whether it's a single item or a
-  // list
   if (item->pList) {
     Py_DECREF(item->pList);
     Py4pdUtils_MemLeakCheck(item->pList, 0, "pList");
@@ -258,8 +267,10 @@ static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args,
   }
 
   if (item->aCumulative) {
+    Py_INCREF(item->pList);
     return item->pList;
   } else {
+    Py_INCREF(item->pItem);
     return item->pItem;
   }
 }
@@ -268,14 +279,12 @@ static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args,
 static PyObject *Py4pdMod_AccumGlobalVar(PyObject *self, PyObject *args) {
 
   (void)self;
-
   t_py *x = Py4pdUtils_GetObject(self);
   if (x == NULL) {
     PyErr_SetString(PyExc_RuntimeError,
                     "[Python] pd.setglobalvar: py4pd is NULL");
     return NULL;
   }
-  char *key;
   char *varName;
   PyObject *pValueScript;
   if (!PyArg_ParseTuple(args, "sO", &varName, &pValueScript)) {
@@ -283,16 +292,15 @@ static PyObject *Py4pdMod_AccumGlobalVar(PyObject *self, PyObject *args) {
                     "[Python] pd.setglobalvar: wrong arguments");
     return NULL;
   }
-  key = malloc(strlen(varName) + 40);
+  char *key = malloc(strlen(varName) + 40);
   snprintf(key, strlen(varName) + 40, "%s_%p", varName, x);
   if (x->pdcollect == NULL) {
     x->pdcollect = Py4pdMod_CreatePdcollectHash(8);
   }
   Py4pdMod_AccumItem(x->pdcollect, key, pValueScript);
-  x->pdcollect->items[Py4pdMod_HashFunction(x->pdcollect, key)]
-      ->aCumulative = 1;
+  x->pdcollect->items[Py4pdMod_HashFunction(x->pdcollect, key)]->aCumulative =
+      1;
   free(key);
-
   Py_RETURN_TRUE;
 }
 
@@ -356,8 +364,8 @@ static PyObject *Py4pdMod_GetObjArgs(PyObject *self, PyObject *args) {
   PyObject *pList = PyList_New(0);
   for (int i = 0; i < x->objArgsCount; i++) {
     if (x->pdObjArgs[i].a_type == A_FLOAT) {
-      int isInt = (int)x->pdObjArgs[i].a_w.w_float ==
-                  x->pdObjArgs[i].a_w.w_float;
+      int isInt =
+          (int)x->pdObjArgs[i].a_w.w_float == x->pdObjArgs[i].a_w.w_float;
       if (isInt) {
         PyObject *Number = PyLong_FromLong(x->pdObjArgs[i].a_w.w_float);
         PyList_Append(pList, Number);
@@ -411,8 +419,7 @@ static PyObject *Py4pdMod_PdRecursiveCall(PyObject *self, PyObject *args) {
       x->stackLimit) { // seems to be the limit in PureData,
     x->recursiveObject = pValue;
     if (x->recursiveClock == NULL)
-      x->recursiveClock =
-          clock_new(x, (t_method)Py4pdMod_RecursiveTick);
+      x->recursiveClock = clock_new(x, (t_method)Py4pdMod_RecursiveTick);
     Py_INCREF(pValue); // avoid thing to be deleted
     x->recursiveCalls = 0;
     clock_delay(x->recursiveClock, 0);
@@ -934,7 +941,7 @@ static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args,
         double *pArrayData = (double *)PyArray_DATA((PyArrayObject *)pAudio);
         if (pArrayData == NULL) {
           pd_error(x, "[Python] pd.tabread: error creating "
-                          "numpy array for vec");
+                      "numpy array for vec");
           return NULL;
         }
         for (i = 0; i < vecsize; i++) {
@@ -1063,26 +1070,23 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
       height = Py4pdUtils_Ntohl(height);
       x->width = width;
       x->height = height;
-    }
-
-    else {
-      pd_error(x, "[Python] pd.showimage: file format not supported");
-      PyErr_SetString(PyExc_TypeError,
-                      "[Python] pd.showimage: file format not supported");
+    } else {
+      PyErr_SetString(
+          PyExc_TypeError,
+          "pd.showimage: file format not supported, use .ppm, .gif, or .png");
       return NULL;
     }
 
-    if (glist_isvisible(x->glist) &&
-        gobj_shouldvis((t_gobj *)x, x->glist)) {
-      const char *file_name_open = Py4pdPic_Filepath(x, filename->s_name);
-      if (access(file_name_open, F_OK) == -1) {
+    if (glist_isvisible(x->glist) && gobj_shouldvis((t_gobj *)x, x->glist)) {
+      const char *fileNameOpen = Py4pdPic_Filepath(x, filename->s_name);
+      if (access(fileNameOpen, F_OK) == -1) {
         pd_error(x, "[Python] pd.showimage: file not found");
         PyErr_SetString(PyExc_TypeError,
                         "[Python] pd.showimage: file not found");
         return NULL;
       }
-      if (file_name_open) {
-        x->picFilePath = gensym(file_name_open);
+      if (fileNameOpen) {
+        x->picFilePath = gensym(fileNameOpen);
         if (x->defImg) {
           x->defImg = 0;
         }
@@ -1093,7 +1097,7 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
           sys_vgui("if {[info exists %lx_picname] == 0} {image create "
                    "photo %lx_picname -file \"%s\"\n set %lx_picname "
                    "1\n}\n",
-                   x->picFilePath, x->picFilePath, file_name_open,
+                   x->picFilePath, x->picFilePath, fileNameOpen,
                    x->picFilePath);
           Py4pdPic_Draw(x, x->glist, 1);
         }
@@ -1255,121 +1259,6 @@ static PyObject *Py4pdMod_ClearPlayer(PyObject *self, PyObject *args) {
 }
 
 // =================================
-// ============ THREADS ============
-// =================================
-struct pipArgs {
-
-  t_py *x;
-  int globalInstall;
-  int detachInstall;
-  char *package;
-};
-
-// =================================
-
-void *Py4pdMod_PipInstallDetached(void *arg) {
-  struct pipArgs *pipArgs = (struct pipArgs *)arg;
-
-  char install_path[MAXPDSTRING];
-
-  if (pipArgs->globalInstall == 1) {
-    snprintf(install_path, MAXPDSTRING, "%s/py-modules",
-             pipArgs->x->py4pdPath->s_name);
-  } else {
-    snprintf(install_path, MAXPDSTRING, "%s/py-modules",
-             pipArgs->x->pdPatchPath->s_name);
-  }
-
-#ifdef __linux__
-  char command[2048];
-  snprintf(command, sizeof(command),
-           "python%d.%d -m pip install %s --target %s --upgrade",
-           PY_MAJOR_VERSION, PY_MINOR_VERSION, pipArgs->package, install_path);
-  post(command);
-  system(command);
-#endif
-
-#ifdef __APPLE__
-  // macOS command
-  char command[MAXPDSTRING];
-  snprintf(command, sizeof(command),
-           "open -a Terminal /usr/local/bin/python%d.%d -m pip install %s "
-           "--target %s --upgrade",
-           PY_MAJOR_VERSION, PY_MINOR_VERSION, pipArgs->package, install_path);
-  system(command);
-#endif
-
-#ifdef _WIN32
-  // Windows command
-  char command[MAXPDSTRING];
-  snprintf(command, sizeof(command),
-           "py -%d.%d -m pip install %s --target %s --upgrade",
-           PY_MAJOR_VERSION, PY_MINOR_VERSION, pipArgs->package, install_path);
-  system(command);
-#endif
-
-  post("[py4pd] Installation of %s finished\n", pipArgs->package);
-  pd_error(NULL, "You must restart PureData to use the new module");
-  free(pipArgs);
-  return NULL;
-}
-
-// =================================
-// ============= PIP ===============
-// =================================
-static PyObject *Py4pdMod_PipInstall(PyObject *self, PyObject *args,
-                                     PyObject *keywords) {
-  (void)self;
-  char *pipPackage;
-  int global = 0;
-  int detach = 0;
-
-  t_py *x = Py4pdUtils_GetObject(self);
-
-  if (keywords == NULL) {
-    PyErr_Clear();
-  } else {
-
-    if (PyDict_Contains(keywords, PyUnicode_FromString("global_install"))) {
-      PyObject *global_value = PyDict_GetItemString(keywords, "global_install");
-      if (global_value == Py_True) {
-        global = 1;
-      }
-    }
-    if (PyDict_Contains(keywords, PyUnicode_FromString("detach_install"))) {
-      PyObject *detach_value = PyDict_GetItemString(keywords, "detach_install");
-      if (detach_value == Py_True) {
-        detach = 1;
-      }
-    }
-  }
-  if (!PyArg_ParseTuple(args, "s", &pipPackage)) {
-    PyErr_SetString(PyExc_TypeError, "[Python] pd.pipInstall: wrong arguments");
-    return NULL;
-  }
-
-  struct pipArgs *pipArgs = malloc(sizeof(struct pipArgs));
-  pipArgs->globalInstall = 0;
-  pipArgs->x = x;
-  pipArgs->detachInstall = detach;
-  pipArgs->package = pipPackage;
-
-  post("[py4pd] Installing %s, wait!", pipArgs->package);
-
-  pthread_t thread_id;
-  pthread_create(&thread_id, NULL, Py4pdMod_PipInstallDetached,
-                 (void *)pipArgs);
-
-  if (detach == 1) {
-    pthread_detach(thread_id);
-  } else {
-    pthread_join(thread_id, NULL);
-  }
-
-  return PyLong_FromLong(0);
-}
-
-// =================================
 // ========= MODULE INIT ===========
 // =================================
 
@@ -1400,7 +1289,8 @@ PyMethodDef PdMethods[] = {
     {"out", (PyCFunction)Py4pdMod_PdOut, METH_VARARGS | METH_KEYWORDS,
      "Output in out0 from PureData"},
     {"send", Py4pdMod_PdSend, METH_VARARGS,
-     "Send message to PureData, it can be received with the object [receive]"},
+     "Send message to PureData, it can be received with the object "
+     "[receive]"},
     {"print", (PyCFunction)Py4pdMod_PdPrint, METH_VARARGS | METH_KEYWORDS,
      "Print informations in PureData Console"},
     {"logpost", Py4pdMod_PdLogPost, METH_VARARGS,
@@ -1452,10 +1342,6 @@ PyMethodDef PdMethods[] = {
     // library methods
     {"add_object", (PyCFunction)Py4pdLib_AddObj, METH_VARARGS | METH_KEYWORDS,
      "It adds python functions as objects"},
-
-    // pip install
-    {"pip_install", (PyCFunction)Py4pdMod_PipInstall,
-     METH_VARARGS | METH_KEYWORDS, "It installs a pip package"},
 
     // Others
     {"get_obj_pointer", Py4pdMod_GetObjPointer, METH_NOARGS,
@@ -1518,7 +1404,6 @@ const char *createUniqueConstString(const char *prefix, const void *pointer) {
 // =================================
 PyMODINIT_FUNC PyInit_pd() {
   PyObject *py4pdmodule;
-
   py4pdmodule = PyModule_Create(&pdmodule);
 
   if (py4pdmodule == NULL) {

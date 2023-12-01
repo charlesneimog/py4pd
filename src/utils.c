@@ -1,7 +1,5 @@
+#define NO_IMPORT_ARRAY
 #include "py4pd.h"
-
-#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
-#include <numpy/arrayobject.h>
 
 // ====================================================
 /*
@@ -162,8 +160,9 @@ void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
     }
   }
   if (x->audioOutput == 0) {
-    x->mainOut = outlet_new(&x->obj,
-                         0); // cria um outlet caso o objeto nao contenha audio
+    x->mainOut =
+        outlet_new(&x->obj,
+                   0); // cria um outlet caso o objeto nao contenha audio
   }
 }
 
@@ -192,7 +191,7 @@ void *Py4pdLib_FreeObj(t_py *x) {
   if (x->pdcollect != NULL)
     Py4pdMod_FreePdcollectHash(x->pdcollect);
 
-  if (x->pArgsCount > 1) {
+  if (x->pArgsCount > 1 && x->pyObjArgs != NULL) {
     for (int i = 1; i < x->pArgsCount; i++) {
       if (!x->pyObjArgs[i]->pdout)
         Py_DECREF(x->pyObjArgs[i]->pValue);
@@ -200,11 +199,9 @@ void *Py4pdLib_FreeObj(t_py *x) {
     }
     free(x->pyObjArgs);
   }
-
   if (x->pdObjArgs != NULL) {
     free(x->pdObjArgs);
   }
-
   return NULL;
 }
 
@@ -1181,8 +1178,8 @@ inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct,
         // not possible to represent None in Pd, so we just skip it
       } else {
         pd_error(x,
-                 "[py4pd] py4pd just convert int, float and string! "
-                 "Received: %s",
+                 "[py4pd] py4pd just convert int, float, string, and lists! "
+                 "Received: list of %ss",
                  Py_TYPE(pValue_i)->tp_name);
         return 0;
       }
@@ -1299,7 +1296,7 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc,
           PyList_Append(listsArrays[listCount], PyUnicode_FromString(str));
           PyTuple_SetItem(ArgsTuple, argCount, listsArrays[listCount]);
         }
-        // free(str);
+        free(str);
         listStarted = 0;
         listCount++;
         argCount++;
@@ -1322,7 +1319,7 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc,
           } else {
             PyList_Append(listsArrays[listCount], PyUnicode_FromString(str));
           }
-          // free(str);
+          free(str);
         } else {
           _PyTuple_Resize(&ArgsTuple, argCount + 1);
           PyTuple_SetItem(ArgsTuple, argCount,
@@ -1475,9 +1472,9 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
  * @param NULL
  * @return It will return NULL.
  */
-void *Py4pd_ImportNumpyForPy4pd() {
-  _import_array();
-  return NULL;
+int Py4pd_ImportNumpyForPy4pd() {
+  // import_array();
+  return 1;
 }
 
 // ========================= PYTHON ==============================

@@ -1,4 +1,4 @@
-#N canvas 131 169 645 770 8;
+#N canvas 131 169 393 577 8;
 #X obj 6 11 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
 #X obj 6 70 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
 #X msg 6 90 [1 2 3 4 5];

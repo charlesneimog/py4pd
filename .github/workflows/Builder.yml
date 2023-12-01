@@ -129,7 +129,7 @@ jobs:
         continue-on-error: true
         run: |
           cd test
-          python3.11 -m pip install numba numpy -t ./py-modules/
+          python3.11 -m pip install numpy -t ./py-modules/
           python3.11 ./runTests.py
 
       - name: Upload Object
