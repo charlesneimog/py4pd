@@ -741,6 +741,19 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     return NULL;
   }
 
+  if (x->objType > 1) {
+    int numpyArrayImported = _import_array();
+    if (numpyArrayImported == 1) {
+      x->numpyImported = 1;
+      logpost(NULL, 3, "Numpy Loaded");
+    } else {
+      x->numpyImported = 0;
+      pd_error(NULL, "[%s] Numpy was not imported!", objectName);
+      if (x->objType == PY4PD_AUDIOOUTOBJ)
+        x->audioError = 1;
+    }
+  }
+
   x->pdObjArgs = malloc(sizeof(t_atom) * argc);
   for (int i = 0; i < argc; i++) {
     x->pdObjArgs[i] = argv[i];
@@ -777,34 +790,26 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
       Py_DECREF(pd_module);
       Py_DECREF(py4pd_capsule);
       return NULL;
-    } else
-      AuxOutlet = x->numOutlets;
-  }
-  x->outAUX = (py4pdOuts *)getbytes(AuxOutlet * sizeof(*x->outAUX));
-  x->outAUX->u_outletNumber = AuxOutlet;
-  t_atom defarg[AuxOutlet], *ap;
-  py4pdOuts *u;
-  int i;
-
-  if (x->objType > 1) {
-    int numpyArrayImported = Py4pd_ImportNumpyForPy4pd();
-    if (numpyArrayImported == 1) {
-      x->numpyImported = 1;
-      logpost(NULL, 3, "Numpy Loaded");
     } else {
-      x->numpyImported = 0;
-      pd_error(NULL, "[%s] Numpy was not imported!", objectName);
-      Py_DECREF(pd_module);
-      Py_DECREF(py4pd_capsule);
-      return NULL;
+      post("[%s]: Number of outlets set to %d", objectName, x->numOutlets);
+      AuxOutlet = x->numOutlets;
     }
-    if (x->objType == PY4PD_AUDIOOUTOBJ)
-      x->audioError = 1;
   }
 
-  for (i = 0, u = x->outAUX, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
-    u->u_outlet = outlet_new(&x->obj, &s_anything);
-  }
+  
+  if (AuxOutlet > 0) {
+    x->outAUX = (py4pdOuts *)getbytes(AuxOutlet * sizeof(py4pdOuts));
+    x->outAUX->u_outletNumber = AuxOutlet;
+     t_atom defarg[AuxOutlet];
+    t_atom *ap;
+    py4pdOuts *u;
+    int i;
+    for (i = 0, u = x->outAUX, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
+      u->u_outlet = outlet_new(&x->obj, &s_anything);
+    }
+  } 
+ 
+  
   object_count++; // To clear memory when closing the patch
   Py_DECREF(pd_module);
   Py_DECREF(py4pd_capsule);
