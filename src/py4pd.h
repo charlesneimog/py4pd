@@ -32,7 +32,6 @@
 #define PY4PD_AUDIOOUTOBJ 3
 #define PY4PD_AUDIOOBJ 4
 
-
 #define PY4PD_MAJOR_VERSION 0
 #define PY4PD_MINOR_VERSION 8
 #define PY4PD_MICRO_VERSION 3
@@ -48,7 +47,11 @@
 // DEFINE STANDARD IDE EDITOR
 #ifndef PY4PD_EDITOR
     #ifdef _WIN32
+        // Windows
         #define PY4PD_EDITOR "idle3.11"
+    #elif defined(__APPLE__) || defined(__MACH__)
+        // macOS
+        #define PY4PD_EDITOR "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -m idlelib.idle"
     #else
         #define PY4PD_EDITOR "idle3.11"
     #endif
