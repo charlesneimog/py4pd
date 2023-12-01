@@ -1125,6 +1125,5 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     post("[py4pd]: Object {%s} added to PureData", objectName);
   }
   class_set_extern_dir(&s_);
-  post("Object {%s} added to PureData", objectName);
   Py_RETURN_TRUE;
 }
