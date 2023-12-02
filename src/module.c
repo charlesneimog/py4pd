@@ -455,7 +455,7 @@ static PyObject *Py4pdMod_PdGetOutCount(PyObject *self, PyObject *args) {
                     "be used inside py4pd object or functions.");
     return NULL;
   }
-  return PyLong_FromLong(x->outAUX->u_outletNumber);
+  return PyLong_FromLong(x->extrasOuts->outCount);
 }
 
 // =================================
@@ -484,7 +484,7 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args,
   pdPyValue->objectsUsing = 0;
   pdPyValue->pdout = 1;
 
-  if (keywords != NULL && x->outAUX != NULL) {
+  if (keywords != NULL && x->extrasOuts != NULL) {
     PyObject *outletNumber =
         PyDict_GetItemString(keywords, "out_n"); // it gets the data type output
     if (outletNumber == NULL) {
@@ -507,10 +507,10 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args,
       Py_RETURN_TRUE;
     } else {
       outletNumberInt--;
-      if ((x->outAUX->u_outletNumber > 0) &&
-          (outletNumberInt < x->outAUX->u_outletNumber)) {
+      if ((x->extrasOuts->outCount > 0) &&
+          (outletNumberInt < x->extrasOuts->outCount)) {
         Py4pdUtils_ConvertToPd(x, pdPyValue,
-                               x->outAUX[outletNumberInt].u_outlet);
+                               x->extrasOuts[outletNumberInt].u_outlet);
         free(pdPyValue);
         Py_RETURN_TRUE;
       } else {

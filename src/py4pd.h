@@ -19,12 +19,7 @@
     #define __USE_GNU
 #endif
 
-#define ANSI_COLOR_RED "\x1b[31m"
-#define ANSI_COLOR_BLUE "\x1b[34m"
-#define ANSI_COLOR_RESET "\x1b[0m"
-
 #define PY4PD_DEBUG 0
-
 
 #define PY4PD_NORMALOBJ 0
 #define PY4PD_VISOBJ 1
@@ -63,11 +58,11 @@
 /*
  * @brief Structure representing an array of all the auxiliar outlets of py4pd.
  */
-typedef struct _py4pdOuts{
+typedef struct _py4pdExtraOuts{
     t_atomtype u_type;
     t_outlet *u_outlet;
-    int u_outletNumber;
-} py4pdOuts;
+    int outCount;
+} py4pdExtraOuts;
 
 // ====================================
 // =============== PLAYER =============
@@ -201,7 +196,6 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int               width; // width of image
     t_int               height; // height of image
     t_int               edit; // patch is in edit mode or not
-    // t_int               picWasInit; // flag to check if the object was initialized
     t_int               defImg; // flag to check if the object was initialized
     t_int               numInlets; // number of inlets
     t_int               numOutlets; // number of outlets
@@ -220,7 +214,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 
     // script_name; // script name or pathname
     t_symbol            *editorName; // editor name
-    py4pdOuts           *outAUX; // outlets
+    py4pdExtraOuts      *extrasOuts; // outlets
     t_py4pd_edit_proxy  *x_proxy; // para lidar com inlets auxiliares
 
 }t_py;

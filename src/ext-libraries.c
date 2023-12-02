@@ -796,20 +796,19 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     }
   }
 
-  
   if (AuxOutlet > 0) {
-    x->outAUX = (py4pdOuts *)getbytes(AuxOutlet * sizeof(py4pdOuts));
-    x->outAUX->u_outletNumber = AuxOutlet;
-     t_atom defarg[AuxOutlet];
+    x->extrasOuts =
+        (py4pdExtraOuts *)getbytes(AuxOutlet * sizeof(py4pdExtraOuts));
+    x->extrasOuts->outCount = AuxOutlet;
+    t_atom defarg[AuxOutlet];
     t_atom *ap;
-    py4pdOuts *u;
+    py4pdExtraOuts *u;
     int i;
-    for (i = 0, u = x->outAUX, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
+    for (i = 0, u = x->extrasOuts, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
       u->u_outlet = outlet_new(&x->obj, &s_anything);
     }
-  } 
- 
-  
+  }
+
   object_count++; // To clear memory when closing the patch
   Py_DECREF(pd_module);
   Py_DECREF(py4pd_capsule);

@@ -1131,8 +1131,8 @@ inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct,
   PyObject *pValue = pValueStruct->pValue;
 
   if (pValue->ob_refcnt < 1) {
-    pd_error(NULL, ANSI_COLOR_RED "[FATAL]: When converting to pd, pValue "
-                                  "refcnt < 1" ANSI_COLOR_RESET);
+    pd_error(NULL, "[FATAL]: When converting to pd, pValue "
+                   "refcnt < 1");
     return NULL;
   }
 
