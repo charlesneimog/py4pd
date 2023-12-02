@@ -49,7 +49,7 @@ static int Py4pd_LibraryLoad(t_py* x, int argc, t_atom* argv)
             snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem,
                 scriptFileName->s_name);
 
-            if (access(library_path, F_OK) != -1) {
+            if (access(library_path, F_OK) != -1) { // Library founded
                 libraryNotFound = 0;
                 PyList_Append(sysPath, PyUnicode_FromString(library_path));
                 int requirementsSize = strlen(library_path) + strlen("/requirements.txt") + 1;

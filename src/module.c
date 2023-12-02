@@ -126,7 +126,6 @@ static void Py4pdMod_ClearItem(pdcollectHash *hash_table, char *key) {
   item->wasCleaned = 1;
   free(item->key);
   Py_DECREF(item->pItem);
-  Py4pdUtils_MemLeakCheck(item->pItem, 0, "ClearItem");
   free(item);
   hash_table->items[index] = NULL;
 }
@@ -145,7 +144,6 @@ static void Py4pdMod_ClearList(pdcollectHash *hash_table, char *key) {
   item->wasCleaned = 1;
   free(item->key);
   Py_DECREF(item->pList);
-  Py4pdUtils_MemLeakCheck(item->pList, 0, "pList");
   free(item);
   hash_table->items[index] = NULL;
 }
@@ -172,7 +170,6 @@ static void Py4pdMod_FreePdcollectItem(pdcollectItem *item) {
 
   if (item->pList) {
     Py_DECREF(item->pList);
-    Py4pdUtils_MemLeakCheck(item->pList, 0, "pList");
   } else if (item->pItem) {
     Py_DECREF(item->pItem);
   }
