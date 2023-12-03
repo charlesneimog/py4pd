@@ -284,7 +284,6 @@ void *Py4pd_PipInstallDetach(void *Args) {
                                       PY_MAJOR_VERSION, PY_MINOR_VERSION,
                                       x->py4pdPath->s_name, pipPackage) +
                              1;
-
 #elif defined __WIN32
         size_t commandSize = snprintf(NULL, 0,
                                       "py -%d.%d -m pip install --target "
@@ -293,7 +292,6 @@ void *Py4pd_PipInstallDetach(void *Args) {
                                       x->py4pdPath->s_name, pipPackage) +
                              1;
 #elif defined(__APPLE__) || defined(__MACH__)
-        if (x->pipGlobalInstall) {
             size_t commandSize =
                 snprintf(NULL, 0,
                          "/usr/local/bin/python%d.%d -m pip install --target "
@@ -302,7 +300,6 @@ void *Py4pd_PipInstallDetach(void *Args) {
                          x->py4pdPath->s_name, pipPackage) +
                 1;
 #endif
-
         char *COMMAND = malloc(commandSize);
 #ifdef __linux__
         snprintf(COMMAND, commandSize,
