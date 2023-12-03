@@ -142,15 +142,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     if (pModule == NULL) {
         pd_error(x, "[Python] Failed to load script file %s",
                  scriptFileName->s_name);
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
-        Py_XDECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
+        Py4pdUtils_PrintError(x);
         Py_XDECREF(pModule);
         Py_XDECREF(MainModule);
         return -1;
@@ -162,12 +154,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         Py_DECREF(pModule);
         pModule = pModuleReloaded;
     } else {
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
-        Py_XDECREF(pstr);
+        Py4pdUtils_PrintError(x);
         Py_XDECREF(pModule);
         Py_XDECREF(MainModule);
         return -1;
@@ -194,12 +181,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     free(libraryFolder);
 
     if (pModule == NULL) {
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
-        Py_XDECREF(pstr);
+        Py4pdUtils_PrintError(x);
         Py_XDECREF(pModule);
         Py_XDECREF(MainModule);
         return -1;
@@ -220,17 +202,9 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         pFunc = PyObject_GetAttr(pModule, pFuncName);
         if (pFunc == NULL) {
             pd_error(x, "[Python] Failed to load function %s", setupFuncName);
-            PyObject *ptype, *pvalue, *ptraceback;
-            PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-            PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-            PyObject *pstr = PyObject_Str(pvalue);
-            pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
-            free(setupFuncName);
-            Py_XDECREF(pstr);
-            Py_XDECREF(ptype);
-            Py_XDECREF(pvalue);
-            Py_XDECREF(ptraceback);
+            Py4pdUtils_PrintError(x);
             Py_XDECREF(pModule);
+            free(setupFuncName);
             return -1;
         }
         pFuncNameSymbol = gensym("Py4pdLoadObjects");
@@ -254,15 +228,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         }
 
         if (pValue == NULL) {
-            PyObject *ptype, *pvalue, *ptraceback;
-            PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-            PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-            PyObject *pstr = PyObject_Str(pvalue);
-            pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
-            Py_XDECREF(pstr);
-            Py_XDECREF(ptype);
-            Py_XDECREF(pvalue);
-            Py_XDECREF(ptraceback);
+            Py4pdUtils_PrintError(x);
             Py_XDECREF(MainModule);
             Py_XDECREF(pModule);
             Py_XDECREF(pModuleReloaded);
@@ -290,121 +256,112 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         logpost(x, 3, "[py4pd] Library %s loaded!", scriptFileName->s_name);
     } else {
         x->funcCalled = 1; // set the flag to 0 because it crash Pd if
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[%s] %s.", scriptFileName->s_name, PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
+        Py4pdUtils_PrintError(x);
         Py_XDECREF(pModule);
         Py_XDECREF(MainModule);
         Py_XDECREF(pFunc);
-        PyErr_Clear();
     }
     return 0;
 }
 
+// ========================================
+struct pipInstallArgs {
+    t_py *x;
+    t_symbol *pipPackage;
+};
+
+// ========================================
+void *Py4pd_PipInstallDetach(void *Args) {
+    struct pipInstallArgs *args = (struct pipInstallArgs *)Args;
+    t_py *x = args->x;
+    char const *pipPackage = args->pipPackage->s_name;
+
+    if (x->pipGlobalInstall) {
+#ifdef __linux__
+        size_t commandSize = snprintf(NULL, 0,
+                                      "python%d.%d -m pip install --target "
+                                      "%sresources/py-modules %s --upgrade",
+                                      PY_MAJOR_VERSION, PY_MINOR_VERSION,
+                                      x->py4pdPath->s_name, pipPackage) +
+                             1;
+
+#elif defined __WIN32
+        size_t commandSize = snprintf(NULL, 0,
+                                      "py -%d.%d -m pip install --target "
+                                      "%sresources/py-modules %s --upgrade",
+                                      PY_MAJOR_VERSION, PY_MINOR_VERSION,
+                                      x->py4pdPath->s_name, pipPackage) +
+                             1;
+#elif defined(__APPLE__) || defined(__MACH__)
+        if (x->pipGlobalInstall) {
+            size_t commandSize =
+                snprintf(NULL, 0,
+                         "/usr/local/bin/python%d.%d -m pip install --target "
+                         "%sresources/py-modules %s --upgrade",
+                         PY_MAJOR_VERSION, PY_MINOR_VERSION,
+                         x->py4pdPath->s_name, pipPackage) +
+                1;
+#endif
+
+        char *COMMAND = malloc(commandSize);
+#ifdef __linux__
+        snprintf(COMMAND, commandSize,
+                 "python%d.%d -m pip install --target %sresources/py-modules "
+                 "%s --upgrade",
+                 PY_MAJOR_VERSION, PY_MINOR_VERSION, x->py4pdPath->s_name,
+                 pipPackage);
+
+#elif defined __WIN32
+        snprintf(COMMAND, commandSize,
+                 "py -%d.%d -m pip install --target %sresources/py-modules "
+                 "%s --upgrade",
+                 PY_MAJOR_VERSION, PY_MINOR_VERSION, x->py4pdPath->s_name,
+                 pipPackage);
+
+#elif defined(__APPLE__) || defined(__MACH__)
+            snprintf(COMMAND, commandSize,
+                     "/usr/local/bin/python%d.%d -m pip install --target "
+                     "%sresources/py-modules %s --upgrade",
+                     PY_MAJOR_VERSION, PY_MINOR_VERSION, x->py4pdPath->s_name,
+                     pipPackage);
+#endif
+        pd_error(NULL, "Installing %s in background, please WAIT ...",
+                 pipPackage);
+        int result = system(COMMAND);
+        if (result == -1) {
+            pd_error(NULL, "The instalation seems to have failed. Restart "
+                           "PureData and try again.\n");
+            free(COMMAND);
+            return NULL;
+        } else {
+            pd_error(NULL, "The installation has been completed.\n");
+            free(COMMAND);
+            return NULL;
+        }
+    }
+    return NULL;
+}
+
 // ============================================
-// ========= PY4PD METHODS FUNCTIONS ==========
-// ============================================
+/**
+ * @brief it installs a package using pip
+ * @param x pointer to the object
+ * @param s symbol
+ * @param argc number of arguments
+ * @param argv array of arguments
+ * @return void
+ */
 static void Py4pd_PipInstall(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
-    char const *pipPackage;
-    char const *localORglobal;
 
-    PyObject *py4pdModule = PyImport_ImportModule("py4pd");
-    if (py4pdModule == NULL) {
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Pip failed: %s", PyUnicode_AsUTF8(pstr));
-        Py_XDECREF(pstr);
-        return;
-    }
-    PyObject *pipInstallFunction =
+    struct pipInstallArgs pipArgs;
+    pipArgs.x = x;
+    pipArgs.pipPackage = atom_getsymbolarg(0, argc, argv);
 
-        PyObject_GetAttrString(py4pdModule, "pipinstall");
-    if (pipInstallFunction == NULL) {
-        PyErr_SetString(
-            PyExc_TypeError,
-
-            "[Python] pd.pipInstall: pipinstall function not found");
-        return;
-    }
-    PyObject *ObjFunction = x->pFunction;
-    x->pFunction = pipInstallFunction;
-
-    localORglobal = atom_getsymbolarg(0, argc, argv)->s_name;
-    pipPackage = atom_getsymbolarg(1, argc, argv)->s_name;
-
-    // the function is executed using pipinstall([localORglobal, pipPackage])
-    PyObject *argsList = PyList_New(2);
-    PyList_SetItem(argsList, 0, Py_BuildValue("s", localORglobal));
-    PyList_SetItem(argsList, 1, Py_BuildValue("s", pipPackage));
-    PyObject *argTuple = PyTuple_New(1);
-    PyTuple_SetItem(argTuple, 0, argsList);
-
-    t_py *prev_obj = NULL;
-    int prev_obj_exists = 0;
-    PyObject *MainModule = PyImport_ImportModule("pd");
-    PyObject *oldObjectCapsule;
-
-    if (MainModule != NULL) {
-        oldObjectCapsule =
-            PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
-        if (oldObjectCapsule != NULL) {
-            PyObject *py4pd_capsule =
-                PyObject_GetAttrString(MainModule, "py4pd");
-            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-            prev_obj_exists = 1;
-        } else {
-            prev_obj_exists = 0;
-        }
-    }
-
-    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
-
-    if (objectCapsule == NULL) {
-        pd_error(x, "[Python] Failed to add object to Python");
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyObject *ptype_str = PyObject_Str(ptype);
-        PyObject *pvalue_str = PyObject_Str(pvalue);
-        PyObject *ptraceback_str = PyObject_Str(ptraceback);
-        char const *ptype_c = PyUnicode_AsUTF8(ptype_str);
-        char const *pvalue_c = PyUnicode_AsUTF8(pvalue_str);
-        char const *ptraceback_c = PyUnicode_AsUTF8(ptraceback_str);
-        pd_error(x, "[Python] %s: %s\n%s", ptype_c, pvalue_c, ptraceback_c);
-        return;
-    }
-
-    pd_error(x, "Installing %s, this will block the GUI for a while...",
-             pipPackage);
-    sys_pollgui();
-    PyObject *pValue = PyObject_CallObject(pipInstallFunction, argTuple);
-
-    if (prev_obj_exists == 1 && pValue != NULL) {
-        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
-        if (objectCapsule == NULL) {
-            pd_error(x, "[Python] Failed to add object to Python");
-            return;
-        }
-    }
-
-    if (pValue == NULL) {
-        pd_error(x, "[Python] pipInstall: pipinstall function failed");
-        return;
-    }
-    x->pFunction = ObjFunction;
-    Py_DECREF(argTuple);
-    Py_DECREF(pValue);
-    Py_DECREF(pipInstallFunction);
-    Py_DECREF(py4pdModule);
-    outlet_bang(x->mainOut);
+    // run using pthread
+    pthread_t threadId;
+    pthread_create(&threadId, NULL, Py4pd_PipInstallDetach, &pipArgs);
+    pthread_detach(threadId);
     return;
 }
 
@@ -567,7 +524,8 @@ void Py4pd_PrintDocs(t_py *x) {
         PyCallable_Check(
             x->pFunction)) { // Check if the function exists and is callable
         PyObject *pDoc = PyObject_GetAttrString(
-            x->pFunction, "__doc__"); // Get the documentation of the function
+            x->pFunction,
+            "__doc__"); // Get the documentation of the function
         if (pDoc != NULL) {
             char const *Doc = PyUnicode_AsUTF8(pDoc);
             if (Doc != NULL) {
@@ -640,9 +598,8 @@ void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         return;
     }
     if (x->funcCalled == 0) { // if the set method was not called, then we
-        pd_error(
-            x,
-            "[py4pd] To open the editor you need to set the function first!");
+        pd_error(x, "[py4pd] To open the editor you need to set the "
+                    "function first!");
         return;
     }
 
@@ -808,12 +765,7 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     // check if the module was loaded
     if (pModule == NULL) {
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Call failed: %s", PyUnicode_AsUTF8(pstr));
-        Py_XDECREF(pstr);
+        Py4pdUtils_PrintError(x);
         Py_XDECREF(pModule);
         return;
     }
@@ -861,19 +813,9 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     } else {
         pd_error(x, "[py4pd] Function %s not loaded!", pFuncNameSymbol->s_name);
         x->funcCalled = 0;
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[py4pd] Set function had failed: %s",
-                 PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
+        Py4pdUtils_PrintError(x);
         Py_XDECREF(pModule);
         Py_XDECREF(pFunc);
-        PyErr_Clear();
     }
     return;
 }
@@ -938,14 +880,14 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
 // ============================================
 /**
- * @brief This function will control were the Python will run, with PEP 684, I
- * want to make possible using parallelism in Python
+ * @brief This function will control were the Python will run, with PEP 684,
+ * I want to make possible using parallelism in Python
  * @param x
  * @param s
  * @param argc
  * @param argv
- * @brief This function will control were the Python will run, with PEP 684, I
- * want to make possible using parallelism in Python
+ * @brief This function will control were the Python will run, with PEP 684,
+ * I want to make possible using parallelism in Python
  * @param x
  * @param s
  * @param argc
@@ -966,10 +908,10 @@ static void Py4pd_ExecuteFunction(t_py *x, t_symbol *s, int argc,
 
 // ============================================
 /**
- * @brief This will enable or disable the numpy array support and start numpy
- * import if it is not imported.
- * @brief This will enable or disable the numpy array support and start numpy
- * import if it is not imported.
+ * @brief This will enable or disable the numpy array support and start
+ * numpy import if it is not imported.
+ * @brief This will enable or disable the numpy array support and start
+ * numpy import if it is not imported.
  * @param x is the py4pd object
  * @param f is the status of the numpy array support
  * @return It will return void.
@@ -1006,7 +948,6 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     int libraryMODE = 0;
     int normalMODE = 1;
     t_symbol *scriptName = NULL;
-
     int major, minor, micro;
     sys_getversion(&major, &minor, &micro);
     if (major < 0 && minor < 54) {
@@ -1027,18 +968,17 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         }
     }
 
-    // =================
-    // INIT PY4PD OBJECT
-    // =================
     if (normalMODE == 1) {
         x = (t_py *)pd_new(py4pd_class); // create a new py4pd object
         x->canvas = canvas_getcurrent();
         t_canvas *c = x->canvas;
         t_symbol *patch_dir = canvas_getdir(c);
+        x->zoom = (int)x->canvas->gl_zoom;
         x->audioInput = 0;
         x->audioOutput = 0;
         x->visMode = 0;
         x->editorName = NULL;
+        x->pipGlobalInstall = 1;
         x->pyObject = 0;
         x->vectorSize = 0;
         Py4pdUtils_ParseArguments(x, c, argc, argv); // parse arguments
@@ -1069,6 +1009,7 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         x = (t_py *)pd_new(py4pd_classLibrary);
         x->canvas = canvas_getcurrent();
         t_canvas *c = x->canvas;
+        x->zoom = (int)x->canvas->gl_zoom;
         t_symbol *patch_dir = canvas_getdir(c);
         x->pdPatchPath = patch_dir;
         x->pkgPath = patch_dir;
@@ -1134,7 +1075,8 @@ void py4pd_setup(void) {
                                    (t_method)Py4pdLib_FreeObj, sizeof(t_py),
                                    CLASS_NOINLET, A_GIMME, 0);
 
-    // this is like have lot of objects with the same name, add all methods for
+    // this is like have lot of objects with the same name, add all methods
+    // for
     class_addmethod(py4pd_class, (t_method)Py4pd_SetPy4pdHomePath,
                     gensym("home"), A_GIMME,
                     0); // set home path
