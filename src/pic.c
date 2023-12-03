@@ -5,17 +5,17 @@ t_widgetbehavior py4pd_widgetbehavior;
 static t_class *PY4PD_edit_proxy_class;
 
 // =================================================
-
+/**
+ * @brief It draws the inlets and outlets of the object.
+ * @param x is the py4pd object
+ * @return void
+ */
 void Py4pdPic_DrawIOLet(t_py *x) {
     t_canvas *cv = glist_getcanvas(x->glist);
-    int xpos = text_xpix(&x->obj, x->glist),
-        ypos = text_ypix(&x->obj, x->glist);
+    int xpos = text_xpix(&x->obj, x->glist);
+    int ypos = text_ypix(&x->obj, x->glist);
     sys_vgui(".x%lx.c delete %lx_in\n", cv, x);
     sys_vgui(".x%lx.c delete %lx_out\n", cv, x);
-
-    // =============
-    // CREATE INLETS
-    // =============
     sys_vgui(".x%lx.c create rectangle %d %d %d %d -fill black -tags %lx_in\n",
              cv, xpos, ypos, xpos + (IOWIDTH * x->zoom),
              ypos + (IHEIGHT * x->zoom), x); // inlet 1
@@ -46,13 +46,18 @@ void Py4pdPic_DrawIOLet(t_py *x) {
             ypos + IHEIGHT * x->zoom, x);
     }
 
-    // ==============
-    // CREATE OUTLETS
-    // ==============
     sys_vgui(".x%lx.c create rectangle %d %d %d %d -fill black -tags %lx_out\n",
              cv, xpos, ypos + x->height, xpos + IOWIDTH * x->zoom,
              ypos + x->height - IHEIGHT * x->zoom, x);
 }
+
+// =================================================
+/**
+ * @brief It returns the filepath for the figure
+ * @param x is the py4pd object
+ * @param filename is the name of the file
+ * @return char*
+ */
 const char *Py4pdPic_Filepath(t_py *x, const char *filename) {
     static char fn[MAXPDSTRING];
     char *bufptr;
@@ -70,6 +75,10 @@ const char *Py4pdPic_Filepath(t_py *x, const char *filename) {
 }
 
 // =================================================
+/**
+ * @brief It can configure the object when it is clicked
+ * @return int not used
+ */
 int Py4pdPic_Click(t_py *object, struct _glist *glist, int xpos, int ypos,
                    int shift, int alt, int dbl, int doit) {
     (void)object;
@@ -92,10 +101,19 @@ int Py4pdPic_Click(t_py *object, struct _glist *glist, int xpos, int ypos,
         // post("[py4pd] Click on object");
     }
 
-    return (1);
+    return 1;
 }
 
 // =================================================
+/**
+ * @brief It returns the position of the object
+ * @param z is the py4pd object
+ * @param glist is the glist
+ * @param xp1 is the x position
+ * @param yp1 is the y position
+ * @param xp2 is the x position
+ * @param yp2 is the y position
+ */
 void Py4pdPic_GetRect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2,
                       int *yp2) {
     t_py *x = (t_py *)z;
@@ -105,6 +123,13 @@ void Py4pdPic_GetRect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2,
 }
 
 // =================================================
+/**
+ * @brief It displace the object
+ * @param z is the py4pd object
+ * @param glist is the glist
+ * @param dx is the x position
+ * @param dy is the y position
+ */
 void Py4pdPic_Displace(t_gobj *z, t_glist *glist, int dx, int dy) {
     t_py *obj = (t_py *)z;
     obj->obj.te_xpix += dx, obj->obj.te_ypix += dy;
@@ -121,6 +146,12 @@ void Py4pdPic_Displace(t_gobj *z, t_glist *glist, int dx, int dy) {
 }
 
 // =================================================
+/**
+ * @brief Runned when the object is selected
+ * @param z is the py4pd object
+ * @param glist is the glist
+ * @param state is the state
+ */
 void Py4pdPic_Select(t_gobj *z, t_glist *glist, int state) {
     t_py *x = (t_py *)z;
     int xpos = text_xpix(&x->obj, glist);
@@ -142,16 +173,26 @@ void Py4pdPic_Select(t_gobj *z, t_glist *glist, int state) {
 }
 
 // =================================================
+/**
+ * @brief It deletes the object GUI (rects)
+ * @param z is the py4pd object
+ * @param glist is the glist
+ */
 void Py4pdPic_Delete(t_gobj *z, t_glist *glist) {
     t_py *x = (t_py *)z;
     canvas_deletelinesfor(glist, (t_text *)z);
     t_canvas *cv = glist_getcanvas(x->glist);
-
     sys_vgui("if {[info exists %lx_in] == 1} {delete %lx_in}\n", cv, x);
     sys_vgui("if {[info exists %lx_out] == 1} {delete %lx_out}\n", cv, x);
 }
 
 // =================================================
+/**
+ * @brief It draws the object, called when the object is created
+ * @param z is the py4pd object
+ * @param glist is the glist
+ * @param vis is the visibility
+ */
 void Py4pdPic_Draw(t_py *x, struct _glist *glist, t_floatarg vis) {
 
     t_canvas *cv = glist_getcanvas(glist);
@@ -188,7 +229,12 @@ void Py4pdPic_Draw(t_py *x, struct _glist *glist, t_floatarg vis) {
 }
 
 // =================================================
-void Py4pdPic_Erase(t_py *x, struct _glist *glist) {
+/**
+ * @brief It deletes the object GUI when create new or resize
+ * @param z is the py4pd object
+ * @param glist is the glist
+ */
+void Py4pdPic_ErasePic(t_py *x, struct _glist *glist) {
     t_canvas *cv = glist_getcanvas(glist);
     sys_vgui(".x%lx.c delete %lx_picture\n", cv, x); // ERASE
     sys_vgui(".x%lx.c delete %lx_in\n", cv, x);
@@ -197,20 +243,33 @@ void Py4pdPic_Erase(t_py *x, struct _glist *glist) {
 }
 
 // =================================================
+/**
+ * @brief It check if we need or not to draw the object
+ */
 void Py4pdPic_Vis(t_gobj *z, t_glist *glist, int vis) {
     t_py *x = (t_py *)z;
     if (vis) {
         Py4pdPic_Draw(x, glist, 1);
     } else {
-        Py4pdPic_Erase(x, glist);
+        Py4pdPic_ErasePic(x, glist);
     }
     return;
 }
 
 // ==========================================================
+/**
+ * @brief It set the zoom when it is changed
+ */
 void Py4pdPic_Zoom(t_py *x, t_floatarg zoom) { x->zoom = (int)zoom; }
 
 // =================================================
+/**
+ * @brief This function is called for keys, motions, etc.
+ * @param p is the py4pd object
+ * @param s is the symbol
+ * @param ac is the number of arguments
+ * @param av is the array of arguments
+ */
 void Py4pdPic_EditProxyAny(t_py4pd_edit_proxy *p, t_symbol *s, int ac,
                            t_atom *av) {
 
@@ -305,6 +364,10 @@ void Py4pdPic_EditProxyAny(t_py4pd_edit_proxy *p, t_symbol *s, int ac,
 }
 
 // ==================== PY4PD_edit_proxy ====================
+/**
+ * @brief Function to free the edit proxy object
+ * @param p The edit proxy object
+ */
 void Py4pdPic_EditProxyFree(t_py4pd_edit_proxy *p) {
     pd_unbind(&p->p_obj.ob_pd, p->p_sym);
     clock_free(p->p_clock);
@@ -312,6 +375,12 @@ void Py4pdPic_EditProxyFree(t_py4pd_edit_proxy *p) {
 }
 
 // ==========================================================
+/**
+ * @brief Function to create the edit proxy object
+ * @param x The canvas object
+ * @param s The name of the symbol
+ * @return The edit proxy object
+ */
 t_py4pd_edit_proxy *Py4pdPic_EditProxyNew(t_py *x, t_symbol *s) {
     t_py4pd_edit_proxy *p =
         (t_py4pd_edit_proxy *)pd_new(PY4PD_edit_proxy_class);
@@ -322,6 +391,10 @@ t_py4pd_edit_proxy *Py4pdPic_EditProxyNew(t_py *x, t_symbol *s) {
 }
 
 // ==========================================================
+/**
+ * @brief Function to free the object
+ * @param x The object
+ */
 void Py4pdPic_Free(t_py *x) { // delete if variable is unset and image is unused
     sys_vgui("if { [info exists %lx_picname] == 1 && [image inuse %lx_picname] "
              "== 0} { image delete %lx_picname \n unset %lx_picname\n}\n",
@@ -338,6 +411,10 @@ void Py4pdPic_Free(t_py *x) { // delete if variable is unset and image is unused
 }
 
 // =====================================
+/*
+ * @brief This function creates the variables for Tk
+ * @param x The object
+ */
 void Py4pdPic_PicDefinition(t_py *x) {
     x->visMode = 1;
     sys_vgui("image create photo PY4PD_IMAGE_{%p} -data {%s} \n", x,
@@ -460,6 +537,9 @@ void Py4pdPic_PicDefinition(t_py *x) {
 }
 
 // ================================================
+/**
+ * @brief set vis mode and call all functions to init the vis mode
+ */
 void Py4pdPic_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
                           int argc, t_atom *argv, t_class *obj_class) {
     if (py4pdArgs == gensym("-canvas")) {

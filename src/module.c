@@ -3,8 +3,6 @@
 // =================================
 /**
  * @brief Dict to save data for object varibles.
- * @param size Size of the hash table.
- * @return Pointer to the hash table.
  */
 static pdcollectHash *Py4pdMod_CreatePdcollectHash(int size) {
     pdcollectHash *hash_table = (pdcollectHash *)malloc(sizeof(pdcollectHash));
@@ -17,11 +15,7 @@ static pdcollectHash *Py4pdMod_CreatePdcollectHash(int size) {
 // =================================
 /**
  * @brief Hash function to get the index of the hash table.
- * @param hash_table Pointer to the hash table.
- * @param key Key to be hashed.
- * @return Index of the hash table.
  */
-
 static unsigned int Py4pdMod_HashFunction(pdcollectHash *hash_table,
                                           char *key) {
     // FAKE HASH FUNCTION
@@ -49,10 +43,6 @@ static unsigned int Py4pdMod_HashFunction(pdcollectHash *hash_table,
 // =================================
 /**
  * @brief Insert item in the hash table.
- * @param hash_table Pointer to the hash table.
- * @param key Key to be hashed.
- * @param obj Object to be inserted.
- * @return return void.
  */
 static void Py4pdMod_InsertItem(pdcollectHash *hash_table, char *key,
                                 PyObject *obj) {
@@ -92,6 +82,9 @@ static void Py4pdMod_InsertItem(pdcollectHash *hash_table, char *key,
 }
 
 // =================================
+/**
+ * @brief Insert item in the hash table, add to the end of a list.
+ */
 static void Py4pdMod_AccumItem(pdcollectHash *hash_table, char *key,
                                PyObject *obj) {
 
@@ -116,6 +109,9 @@ static void Py4pdMod_AccumItem(pdcollectHash *hash_table, char *key,
 }
 
 // =================================
+/**
+ * @brief Clear/free item in the hash table.
+ */
 static void Py4pdMod_ClearItem(pdcollectHash *hash_table, char *key) {
     unsigned int index = Py4pdMod_HashFunction(hash_table, key);
     pdcollectItem *item = hash_table->items[index];
@@ -132,6 +128,9 @@ static void Py4pdMod_ClearItem(pdcollectHash *hash_table, char *key) {
 }
 
 // =================================
+/**
+ * @brief Clear/free item in the hash table.
+ */
 static void Py4pdMod_ClearList(pdcollectHash *hash_table, char *key) {
 
     unsigned int index = Py4pdMod_HashFunction(hash_table, key);
@@ -150,6 +149,9 @@ static void Py4pdMod_ClearList(pdcollectHash *hash_table, char *key) {
 }
 
 // =================================
+/**
+ * @brief Get item in the hash table.
+ */
 static pdcollectItem *Py4pdMod_GetObjArr(pdcollectHash *hash_table, char *key) {
     unsigned int index = Py4pdMod_HashFunction(hash_table, key);
     pdcollectItem *item = hash_table->items[index];
@@ -159,6 +161,9 @@ static pdcollectItem *Py4pdMod_GetObjArr(pdcollectHash *hash_table, char *key) {
 }
 
 // =================================
+/**
+ * @brief Free item in the hash table.
+ */
 static void Py4pdMod_FreePdcollectItem(pdcollectItem *item) {
     if (item == NULL) {
         return;
@@ -178,6 +183,9 @@ static void Py4pdMod_FreePdcollectItem(pdcollectItem *item) {
 }
 
 // =================================
+/**
+ * @brief Free the hash table
+ */
 void Py4pdMod_FreePdcollectHash(pdcollectHash *hash_table) {
     if (hash_table == NULL) {
         return;
@@ -190,9 +198,12 @@ void Py4pdMod_FreePdcollectHash(pdcollectHash *hash_table) {
 }
 
 // =================================
+// ========== pd module ============
 // =================================
-// =================================
-static PyObject *Py4pdMod_SetGlobalVar(PyObject *self, PyObject *args) {
+/**
+ * @brief Funcion to set a obj variable
+ */
+static PyObject *Py4pdMod_SetObjVar(PyObject *self, PyObject *args) {
     (void)self;
     t_py *x = Py4pdUtils_GetObject(self);
     if (x == NULL) {
@@ -220,8 +231,11 @@ static PyObject *Py4pdMod_SetGlobalVar(PyObject *self, PyObject *args) {
 }
 
 // =================================
-static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args,
-                                       PyObject *keywords) {
+/**
+ * @brief Funcion to get a obj variable
+ */
+static PyObject *Py4pdMod_GetObjVar(PyObject *self, PyObject *args,
+                                    PyObject *keywords) {
     (void)self;
 
     t_py *x = Py4pdUtils_GetObject(self);
@@ -274,7 +288,10 @@ static PyObject *Py4pdMod_GetGlobalVar(PyObject *self, PyObject *args,
 }
 
 // =================================
-static PyObject *Py4pdMod_AccumGlobalVar(PyObject *self, PyObject *args) {
+/**
+ * @brief Funcion to accumulate a obj variable
+ */
+static PyObject *Py4pdMod_AccumObjVar(PyObject *self, PyObject *args) {
 
     (void)self;
     t_py *x = Py4pdUtils_GetObject(self);
@@ -303,7 +320,10 @@ static PyObject *Py4pdMod_AccumGlobalVar(PyObject *self, PyObject *args) {
 }
 
 // =================================
-static PyObject *Py4pdMod_ClearGlobalVar(PyObject *self, PyObject *args) {
+/**
+ * @brief Funcion to clear a obj variable
+ */
+static PyObject *Py4pdMod_ClearObjVar(PyObject *self, PyObject *args) {
     (void)self;
 
     t_py *x = Py4pdUtils_GetObject(self);
@@ -348,6 +368,10 @@ static PyObject *Py4pdMod_ClearGlobalVar(PyObject *self, PyObject *args) {
 }
 
 // ======================================
+/**
+ * @brief Function that get the args for the obj (for example [py4pd -lib py4pd]
+ * will return ['-lib', 'py4pd'])
+ */
 static PyObject *Py4pdMod_GetObjArgs(PyObject *self, PyObject *args) {
     (void)self;
     (void)args;
@@ -388,6 +412,9 @@ static PyObject *Py4pdMod_GetObjArgs(PyObject *self, PyObject *args) {
 }
 
 // ======================================
+/**
+ * @brief This allows bypass the recursive calls in PureData
+ */
 static void Py4pdMod_RecursiveTick(t_py *x) {
     t_py4pd_pValue *pdPyValue =
         (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
@@ -400,6 +427,9 @@ static void Py4pdMod_RecursiveTick(t_py *x) {
 }
 
 // ======================================
+/**
+ * @brief This is the Python part to bypass the recursive calls in PureData
+ */
 static PyObject *Py4pdMod_PdRecursiveCall(PyObject *self, PyObject *args) {
 
     (void)self;
@@ -444,9 +474,10 @@ static PyObject *Py4pdMod_PdRecursiveCall(PyObject *self, PyObject *args) {
 }
 
 // ======================================
-// ======== py4pd embbeded module =======
-// ======================================
-static PyObject *Py4pdMod_PdGetOutCount(PyObject *self, PyObject *args) {
+/**
+ * @brief Get the number of outlets of a object
+ */
+static PyObject *Py4pdMod_PdGetOutletsCount(PyObject *self, PyObject *args) {
     (void)self;
     (void)args;
     t_py *x = Py4pdUtils_GetObject(self);
@@ -460,6 +491,9 @@ static PyObject *Py4pdMod_PdGetOutCount(PyObject *self, PyObject *args) {
 }
 
 // =================================
+/**
+ * @brief allows output data before return in Python Code.
+ */
 static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args,
                                 PyObject *keywords) {
 
@@ -531,6 +565,9 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args,
     Py_RETURN_TRUE;
 }
 // =================================
+/**
+ * @brief Prints messages to pd console
+ */
 static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args,
                                   PyObject *keywords) {
     (void)self;
@@ -578,7 +615,8 @@ static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args,
             else if (resize_value == Py_False)
                 objPrefix = 0;
             else {
-                post("[Python] pd.print: obj_prefix argument must be True or "
+                post("[Python] pd.print: obj_prefix argument must be True "
+                     "or "
                      "False.");
                 objPrefix = 0;
             }
@@ -598,9 +636,9 @@ static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args,
         }
         const char *str_value = PyUnicode_AsUTF8(str);
         if (str_value == NULL) {
-            PyErr_SetString(
-                PyExc_TypeError,
-                "[Python] pd.print failed to convert string object to UTF-8.");
+            PyErr_SetString(PyExc_TypeError,
+                            "[Python] pd.print failed to convert string "
+                            "object to UTF-8.");
             Py_DECREF(str);
             return NULL;
         }
@@ -630,6 +668,9 @@ static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args,
 }
 
 // =================================
+/**
+ * @brief Prints logs to pd console
+ */
 static PyObject *Py4pdMod_PdLogPost(PyObject *self, PyObject *args) {
     (void)self;
     int postlevel;
@@ -646,6 +687,9 @@ static PyObject *Py4pdMod_PdLogPost(PyObject *self, PyObject *args) {
 }
 
 // =================================
+/**
+ * @brief Prints errors to pd console
+ */
 static PyObject *Py4pdMod_PdError(PyObject *self, PyObject *args) {
     (void)self;
 
@@ -683,6 +727,9 @@ static PyObject *Py4pdMod_PdError(PyObject *self, PyObject *args) {
 }
 
 // =================================
+/**
+ * @brief Same that use the object [send] or [s] in pd
+ */
 static PyObject *Py4pdMod_PdSend(PyObject *self, PyObject *args) {
     (void)self;
     char *receiver;
@@ -718,10 +765,9 @@ static PyObject *Py4pdMod_PdSend(PyObject *self, PyObject *args) {
     } else if (PyArg_ParseTuple(args, "sO", &receiver, &listargs)) {
         if (PyDict_Check(listargs)) {
             char error_message[100];
-            sprintf(
-                error_message,
-                "[Python] pd.send received a type 'dict', it must be a list, "
-                "string, int, or float.");
+            sprintf(error_message, "[Python] pd.send received a type "
+                                   "'dict', it must be a list, "
+                                   "string, int, or float.");
             PyErr_SetString(PyExc_TypeError, error_message);
             return NULL;
         }
@@ -779,6 +825,9 @@ static PyObject *Py4pdMod_PdSend(PyObject *self, PyObject *args) {
 }
 
 // =================================
+/**
+ * @brief Same that use the [tabwrite] in pd
+ */
 static PyObject *Py4pdMod_PdTabWrite(PyObject *self, PyObject *args,
                                      PyObject *keywords) {
     (void)self;
@@ -886,8 +935,10 @@ static PyObject *Py4pdMod_PdTabWrite(PyObject *self, PyObject *args,
     }
     Py_RETURN_TRUE;
 }
-// ================================
 // =================================
+/**
+ * @brief Same that use the [tabread] in pd
+ */
 static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args,
                                     PyObject *keywords) {
     (void)self;
@@ -979,6 +1030,9 @@ static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args,
 }
 
 // =================================
+/**
+ * @brief Same that use the [home] in pd
+ */
 static PyObject *Py4pdMod_GetPatchHome(PyObject *self, PyObject *args) {
     (void)self;
 
@@ -988,8 +1042,6 @@ static PyObject *Py4pdMod_GetPatchHome(PyObject *self, PyObject *args) {
              "inside py4pd object or functions.");
         return NULL;
     }
-
-    // check if there is no argument
     if (!PyArg_ParseTuple(args, "")) {
         PyErr_SetString(PyExc_TypeError,
                         "[Python] pd.home: no argument expected");
@@ -999,7 +1051,10 @@ static PyObject *Py4pdMod_GetPatchHome(PyObject *self, PyObject *args) {
 }
 
 // =================================
-static PyObject *Py4pdMod_GetObjFolder(PyObject *self, PyObject *args) {
+/**
+ * @brief Returns where py4pd is installed
+ */
+static PyObject *Py4pdMod_GetPy4pdFolder(PyObject *self, PyObject *args) {
     (void)self;
 
     t_py *x = Py4pdUtils_GetObject(self);
@@ -1019,7 +1074,10 @@ static PyObject *Py4pdMod_GetObjFolder(PyObject *self, PyObject *args) {
 }
 
 // =================================
-static PyObject *Py4pdMod_GetObjTmpFolder(PyObject *self, PyObject *args) {
+/**
+ * @brief Returns the tmp folder for py4pd (normally in ~/.py4pd)
+ */
+static PyObject *Py4pdMod_GetPy4pdTmpFolder(PyObject *self, PyObject *args) {
     (void)self;
     if (!PyArg_ParseTuple(args, "")) {
         PyErr_SetString(PyExc_TypeError,
@@ -1037,6 +1095,9 @@ static PyObject *Py4pdMod_GetObjTmpFolder(PyObject *self, PyObject *args) {
 }
 
 // =================================
+/**
+ * @brief Shows an image using something similar to else/pic
+ */
 static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
     (void)self;
     char *string;
@@ -1053,10 +1114,10 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
         if (access(filename->s_name, F_OK) == -1) {
             pd_error(x, "[Python] File %s not found.", filename->s_name);
             x->defImg = 1;
-            Py4pdPic_Erase(x, x->glist);
-            sys_vgui(
-                ".x%lx.c itemconfigure %lx_picture -image PY4PD_IMAGE_{%p}\n",
-                x->canvas, x, x);
+            Py4pdPic_ErasePic(x, x->glist);
+            sys_vgui(".x%lx.c itemconfigure %lx_picture -image "
+                     "PY4PD_IMAGE_{%p}\n",
+                     x->canvas, x, x);
             Py4pdPic_Draw(x, x->glist, 1);
             Py_RETURN_NONE;
         }
@@ -1113,7 +1174,7 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
 
                 if (glist_isvisible(x->glist) &&
                     gobj_shouldvis((t_gobj *)x, x->glist)) {
-                    Py4pdPic_Erase(x, x->glist);
+                    Py4pdPic_ErasePic(x, x->glist);
                     sys_vgui(
                         "if {[info exists %lx_picname] == 0} {image create "
                         "photo %lx_picname -file \"%s\"\n set %lx_picname "
@@ -1142,19 +1203,20 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
 }
 
 // =================================
-// ========== AUDIO CONFIG =========
-// =================================
-
+/**
+ * @brief Get the current sample rate
+ */
 static PyObject *Py4pdMod_PdSampleRate(PyObject *self, PyObject *args) {
     (void)self;
     (void)args;
     float sr = sys_getsr(); // call PureData's sys_getsr function to get the
-                            // current sample rate
-    return PyFloat_FromDouble(
-        sr); // return the sample rate as a Python float object
+    return PyFloat_FromDouble(sr);
 }
 
 // =================================
+/**
+ * @brief Get the current patch vector size
+ */
 static PyObject *Py4pdMod_PdVecSize(PyObject *self, PyObject *args) {
     (void)self;
     (void)args;
@@ -1166,6 +1228,9 @@ static PyObject *Py4pdMod_PdVecSize(PyObject *self, PyObject *args) {
 }
 
 // =================================
+/**
+ * @brief Get the number of channels of the object
+ */
 static PyObject *Py4pdMod_ObjNChannels(PyObject *self, PyObject *args) {
     (void)self;
     (void)args;
@@ -1177,6 +1242,9 @@ static PyObject *Py4pdMod_ObjNChannels(PyObject *self, PyObject *args) {
 }
 
 // =================================
+/**
+ * @brief Get the current patch zoom
+ */
 static PyObject *Py4pdMod_PdZoom(PyObject *self, PyObject *args) {
     (void)self;
     (void)args;
@@ -1184,7 +1252,7 @@ static PyObject *Py4pdMod_PdZoom(PyObject *self, PyObject *args) {
     t_py *x = Py4pdUtils_GetObject(self);
     int zoom;
     if (x->canvas != NULL) {
-        zoom = (int)x->canvas->gl_zoom;
+        zoom = (int)x->zoom;
     } else {
         pd_error(NULL, "pd.patchzoom: canvas not found");
         zoom = 1;
@@ -1193,6 +1261,9 @@ static PyObject *Py4pdMod_PdZoom(PyObject *self, PyObject *args) {
 }
 
 // =================================
+/**
+ * @brief Check if there is a GUI (mainly for testing purposes)
+ */
 static PyObject *Py4pdMod_PdHasGui(PyObject *self, PyObject *args) {
     (void)self;
     (void)args;
@@ -1201,9 +1272,9 @@ static PyObject *Py4pdMod_PdHasGui(PyObject *self, PyObject *args) {
 }
 
 // =================================
-// ========== Utilities ============
-// =================================
-
+/**
+ * @brief You can save values for an object with this function.
+ */
 static PyObject *Py4pdMod_PdKey(PyObject *self, PyObject *args) {
     // get values from Dict salved in x->param
     (void)self;
@@ -1233,6 +1304,10 @@ static PyObject *Py4pdMod_PdKey(PyObject *self, PyObject *args) {
 }
 
 // =================================
+/**
+ * @brief Returns a string with the address of the object (good for obj only
+ * variables)
+ */
 static PyObject *Py4pdMod_GetObjPointer(PyObject *self, PyObject *args) {
     (void)self;
     (void)args;
@@ -1249,8 +1324,9 @@ static PyObject *Py4pdMod_GetObjPointer(PyObject *self, PyObject *args) {
 }
 
 // =================================
-// ============ PLAYER =============
-// =================================
+/**
+ * @brief Add a thing to the player, you can use play to play it
+ */
 static PyObject *Py4pdMod_AddThingToPlay(PyObject *self, PyObject *args,
                                          PyObject *keywords) {
     (void)self;
@@ -1271,6 +1347,9 @@ static PyObject *Py4pdMod_AddThingToPlay(PyObject *self, PyObject *args,
 }
 
 // =================================
+/**
+ * @brief Clear the player values
+ */
 static PyObject *Py4pdMod_ClearPlayer(PyObject *self, PyObject *args) {
     (void)self;
     (void)args;
@@ -1333,9 +1412,9 @@ PyMethodDef PdMethods[] = {
      "Get PureData Patch Path Folder"},
     {"get_home_folder", Py4pdMod_GetPatchHome, METH_VARARGS,
      "Get PureData Patch Path Folder"},
-    {"get_py4pd_dir", Py4pdMod_GetObjFolder, METH_VARARGS,
+    {"get_py4pd_dir", Py4pdMod_GetPy4pdFolder, METH_VARARGS,
      "Get PureData Py4PD Folder"},
-    {"get_temp_dir", Py4pdMod_GetObjTmpFolder, METH_VARARGS,
+    {"get_temp_dir", Py4pdMod_GetPy4pdTmpFolder, METH_VARARGS,
      "Get PureData Temp Folder"},
 
     // User
@@ -1352,11 +1431,7 @@ PyMethodDef PdMethods[] = {
      "Return True of False if pd has or no gui"},
 
     {"get_patch_zoom", Py4pdMod_PdZoom, METH_NOARGS, "Get Patch zoom"},
-    {"get_outlet_count", Py4pdMod_PdGetOutCount, METH_NOARGS,
-     "Get the Number of Outlets of one object."},
-    {"get_object_args", Py4pdMod_GetObjArgs, METH_NOARGS,
-     "Returns list with all the args."},
-    {"get_outlet_count", Py4pdMod_PdGetOutCount, METH_NOARGS,
+    {"get_outlet_count", Py4pdMod_PdGetOutletsCount, METH_NOARGS,
      "Get the Number of Outlets of one object."},
     {"get_object_args", Py4pdMod_GetObjArgs, METH_NOARGS,
      "Returns list with all the args."},
@@ -1370,18 +1445,18 @@ PyMethodDef PdMethods[] = {
      "Get PureData Object Pointer"},
     {"get_str_pointer", Py4pdMod_GetObjPointer, METH_NOARGS,
      "Get PureData Object Pointer"},
-    {"set_obj_var", Py4pdMod_SetGlobalVar, METH_VARARGS,
+    {"set_obj_var", Py4pdMod_SetObjVar, METH_VARARGS,
      "It sets a global variable for the Object, it is not clear after the "
      "execution of the function"},
 
     // Loops
-    {"accum_obj_var", Py4pdMod_AccumGlobalVar, METH_VARARGS,
+    {"accum_obj_var", Py4pdMod_AccumObjVar, METH_VARARGS,
      "It adds the values in the end of the list"},
-    {"get_obj_var", (PyCFunction)Py4pdMod_GetGlobalVar,
+    {"get_obj_var", (PyCFunction)Py4pdMod_GetObjVar,
      METH_VARARGS | METH_KEYWORDS,
      "It gets a global variable for the Object, it is not clear after the "
      "execution of the function"},
-    {"clear_obj_var", (PyCFunction)Py4pdMod_ClearGlobalVar, METH_VARARGS,
+    {"clear_obj_var", (PyCFunction)Py4pdMod_ClearObjVar, METH_VARARGS,
      "It clear the Dictionary of global variables"},
 
     // player
@@ -1413,17 +1488,6 @@ static struct PyModuleDef pdmodule = {
 };
 
 // =================================
-const char *createUniqueConstString(const char *prefix, const void *pointer) {
-    char buffer[32];
-    snprintf(buffer, sizeof(buffer), "%s_%p", prefix, pointer);
-    char *uniqueConstString = (char *)malloc(strlen(buffer) + 1);
-    if (uniqueConstString != NULL) {
-        strcpy(uniqueConstString, buffer);
-    }
-    return uniqueConstString;
-}
-
-// =================================
 PyMODINIT_FUNC PyInit_pd() {
     PyObject *py4pdmodule;
     py4pdmodule = PyModule_Create(&pdmodule);
@@ -1431,11 +1495,12 @@ PyMODINIT_FUNC PyInit_pd() {
     if (py4pdmodule == NULL) {
         return NULL;
     }
+    char OUT_string[MAXPDSTRING];
+    snprintf(OUT_string, sizeof(OUT_string), "py4pdOut_%p", py4pdmodule);
+    post(OUT_string);
 
-    // create one string from py4pdmodule
-    const char *OUT_string = createUniqueConstString("py4pdOut", py4pdmodule);
-    const char *CLEAR_string =
-        createUniqueConstString("py4pdClear", py4pdmodule);
+    char CLEAR_string[MAXPDSTRING];
+    snprintf(CLEAR_string, sizeof(CLEAR_string), "py4pdClear_%p", py4pdmodule);
 
     PyObject *puredata_samplerate, *puredata_vecsize, *visObject, *normalObject,
         *audioINObject, *audioOUTObject, *pdAudio, *Py4pd_OutLoopString,
