@@ -31,7 +31,6 @@
 #define PY4PD_MINOR_VERSION 8
 #define PY4PD_MICRO_VERSION 4
 
-
 #define PYTHON_REQUIRED_VERSION(major, minor) ((major < PY_MAJOR_VERSION) || (major == PY_MAJOR_VERSION && minor <= PY_MINOR_VERSION))
 
 #ifdef _WIN32
@@ -171,6 +170,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 
     // == AUDIO AND NUMPY
     t_int               audioOutput; // flag to check if is to use audio output
+    t_int               pipGlobalInstall;
     t_int               audioInput; // flag to check if is to use audio input
     t_int               useNumpyArray; // flag to check if is to use numpy array in audioInput
     t_int               numpyImported; // flag to check if numpy was imported
@@ -243,6 +243,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pDict);
 t_py4pd_pValue *Py4pdUtils_Run(t_py *x, PyObject *pArgs, t_py4pd_pValue *pValuePointer);
 PyObject *Py4pdUtils_RunPyAudioOut(t_py *x, PyObject *pArgs, PyObject *pKwargs);
 void Py4pdUtils_DECREF(PyObject *pValue);
+void Py4pdUtils_PrintError(t_py *x);
 void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValue, t_outlet *outlet);
 PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv);
 void Py4pdUtils_SetObjConfig(t_py *x);
@@ -274,7 +275,7 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv);
 extern void Py4pdPic_Free(t_py *x);
 extern void Py4pdPic_Zoom(t_py *x, t_floatarg f);
 extern void Py4pdPic_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index, int argc, t_atom *argv, t_class *obj_class);
-extern void Py4pdPic_Erase(t_py* x, struct _glist *glist); 
+extern void Py4pdPic_ErasePic(t_py* x, struct _glist *glist); 
 const  char *Py4pdPic_Filepath(t_py *x, const char *filename);
 extern void Py4pdPic_Draw(t_py* x, struct _glist *glist, t_floatarg vis);
 extern void Py4pdPic_GetRect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2, int *yp2);

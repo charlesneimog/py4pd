@@ -877,6 +877,26 @@ PyObject *Py4pdUtils_RunPyAudioOut(t_py *x, PyObject *pArgs,
  * @param pArgs is the arguments to pass to the function
  * @return the return value of the function
  */
+void Py4pdUtils_PrintError(t_py *x) {
+    PyObject *ptype, *pvalue, *ptraceback;
+    PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+    PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+    PyObject *pstr = PyObject_Str(pvalue);
+    pd_error(x, "[py4pd] Set function had failed: %s", PyUnicode_AsUTF8(pstr));
+    Py_DECREF(pstr);
+    Py_XDECREF(ptype);
+    Py_XDECREF(pvalue);
+    Py_XDECREF(ptraceback);
+    PyErr_Clear();
+}
+
+// =====================================================================
+/*
+ * @brief Run a Python function
+ * @param x is the py4pd object
+ * @param pArgs is the arguments to pass to the function
+ * @return the return value of the function
+ */
 PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
 
     t_py *prev_obj = NULL;
@@ -906,18 +926,8 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
         pd_error(x,
                  "[%s] Failed to import pd module when Running Python function",
                  x->pFuncName->s_name);
-        PyErr_Print();
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[Python] %s", PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
+        Py4pdUtils_PrintError(x);
         Py_XDECREF(MainModule);
-        PyErr_Clear();
         return NULL;
     }
     objectCapsule = Py4pdUtils_AddPdObject(x);
@@ -957,20 +967,10 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
         PyErr_Clear();
         return NULL;
     } else if (pValue == NULL) {
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[%s] Call failed: %s", x->objName->s_name,
-                 PyUnicode_AsUTF8(pstr));
-        Py_XDECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
+        Py4pdUtils_PrintError(x);
         Py_XDECREF(pValue);
         Py_XDECREF(MainModule);
         free(PyPtrValue);
-        PyErr_Clear();
         return NULL;
     }
 
@@ -1500,18 +1500,6 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
     return;
 }
 
-// ============================================
-/**
- * @brief This function import the numpy module. We can not use
- * import_array() directly, because it is a macro.
- * @param NULL
- * @return It will return NULL.
- */
-int Py4pd_ImportNumpyForPy4pd() {
-    // import_array();
-    return 1;
-}
-
 // ========================= PYTHON ==============================
 /*
 * @brief add PureData Object to Python Module
@@ -1680,7 +1668,7 @@ static char *Py4pdUtils_Gif2Base64(const unsigned char *data, size_t dataSize) {
     size_t outputSize = 4 * ((dataSize + 2) / 3); // Calculate the output size
     char *encodedData = (char *)malloc(outputSize + 1);
     if (!encodedData) {
-        printf("Memory allocation failed.\n");
+        pd_error(NULL, "Memory allocation failed.\n");
         return NULL;
     }
 
@@ -1718,7 +1706,7 @@ void Py4pdUtils_ReadGifFile(t_py *x, const char *filename) {
     (void)x;
     FILE *file = fopen(filename, "rb");
     if (!file) {
-        post("Unable to open file.\n");
+        pd_error(NULL, "Unable to open file.\n");
         return;
     }
 
@@ -1733,7 +1721,7 @@ void Py4pdUtils_ReadGifFile(t_py *x, const char *filename) {
     // Allocate memory to store file contents
     unsigned char *fileContents = (unsigned char *)malloc(fileSize);
     if (!fileContents) {
-        post("Memory allocation failed.\n");
+        pd_error(NULL, "Memory allocation failed.\n");
         fclose(file);
         return;
     }
@@ -1741,24 +1729,19 @@ void Py4pdUtils_ReadGifFile(t_py *x, const char *filename) {
     // Read file contents
     size_t bytesRead = fread(fileContents, 1, fileSize, file);
     if (bytesRead != fileSize) {
-        post("Failed to read file.\n");
+        pd_error(NULL, "Failed to read file.\n");
         free(fileContents);
         fclose(file);
         return;
     }
-
     fclose(file);
-
-    // Base64 encoding
     char *base64Data = Py4pdUtils_Gif2Base64(fileContents, fileSize);
     free(fileContents);
-
     x->imageBase64 = base64Data;
-
     if (!base64Data) {
         free(base64Data);
         x->imageBase64 = PY4PD_IMAGE;
-        post("Base64 encoding failed.\n");
+        pd_error(NULL, "Base64 encoding failed.\n");
     }
 
     return;
