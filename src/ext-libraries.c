@@ -9,39 +9,48 @@ void Py4pdLib_Bang(t_py *x);
 
 // ===========================================
 void Py4pdLib_ReloadObject(t_py *x) {
-    char *script_filename = strdup(x->pScriptName->s_name);
-    const char *ScriptFileName = Py4pdUtils_GetFilename(script_filename);
-    free(script_filename);
-
-    PyObject *pModule = PyImport_ImportModule(ScriptFileName);
-    if (pModule == NULL) {
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[Python] %s", PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
-        PyErr_Clear();
-        return;
-    }
-    PyObject *pModuleReloaded = PyImport_ReloadModule(pModule);
-    if (pModuleReloaded == NULL) {
-        pd_error(x, "[Python] Failed to reload module");
-        return;
-    }
-    x->pFunction =
-        PyObject_GetAttrString(pModuleReloaded, x->pFuncName->s_name);
-    if (x->pFunction == NULL) {
-        pd_error(x, "[Python] Failed to get function");
+    if (x->pFunction != NULL && PyFunction_Check(x->pFunction)) {
+        PyObject *pFunctionModule =
+            PyObject_GetAttrString(x->pFunction, "__module__");
+        if (pFunctionModule != NULL) {
+            const char *pModuleStr = PyUnicode_AsUTF8(pFunctionModule);
+            PyObject *pModule = PyImport_ImportModule(pModuleStr);
+            if (pModule == NULL) {
+                pd_error(x, "[Python] Failed to load module");
+                return;
+            }
+            PyObject *pModuleReloaded = PyImport_ReloadModule(pModule);
+            if (pModuleReloaded != NULL) {
+                Py_DECREF(pModule);
+                pModule = pModuleReloaded;
+            } else {
+                Py4pdUtils_PrintError(x);
+                Py_XDECREF(pModule);
+                Py_XDECREF(pFunctionModule);
+                x->pFunction = NULL;
+                x->pModule = NULL;
+                return;
+            }
+            x->pFunction =
+                PyObject_GetAttrString(pModule, x->pFuncName->s_name);
+            if (x->pFunction == NULL) {
+                Py4pdUtils_PrintError(x);
+                Py_XDECREF(pModule);
+                Py_XDECREF(pFunctionModule);
+                x->pFunction = NULL;
+                x->pModule = NULL;
+                return;
+            }
+            Py_XDECREF(x->pModule);
+            x->pModule = pModule;
+            Py_XDECREF(pFunctionModule);
+            post("[py4pd] Function reloaded: %s", x->pFuncName->s_name);
+        }
         return;
     } else {
-        post("[Python] Function reloaded");
-        x->audioError = 0;
+        pd_error(x, "[py4pd] The function is not set");
+        return;
     }
-    return;
 }
 
 // ===========================================
@@ -744,6 +753,7 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     t_canvas *c = x->canvas;
     t_symbol *patch_dir = canvas_getdir(c);
     x->objName = gensym(objectName);
+    x->zoom = (int)x->canvas->gl_zoom;
     x->ignoreOnNone = PyLong_AsLong(ignoreOnNone);
     x->outPyPointer = PyLong_AsLong(pyOUT);
     x->funcCalled = 1;
