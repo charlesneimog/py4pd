@@ -881,9 +881,39 @@ void Py4pdUtils_PrintError(t_py *x) {
     PyObject *ptype, *pvalue, *ptraceback;
     PyErr_Fetch(&ptype, &pvalue, &ptraceback);
     PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-    PyObject *pstr = PyObject_Str(pvalue);
-    pd_error(x, "[py4pd] Set function had failed: %s", PyUnicode_AsUTF8(pstr));
-    Py_DECREF(pstr);
+
+    if (pvalue == NULL) {
+        pd_error(x, "[py4pd] Call failed, unknown error");
+    } else {
+        // Extracting the traceback information
+        if (ptraceback != NULL) {
+            PyObject *tracebackModule = PyImport_ImportModule("traceback");
+            if (tracebackModule != NULL) {
+                PyObject *formatException =
+                    PyObject_GetAttrString(tracebackModule, "format_exception");
+                if (formatException != NULL) {
+                    PyObject *formattedException = PyObject_CallFunctionObjArgs(
+                        formatException, ptype, pvalue, ptraceback, NULL);
+                    if (formattedException != NULL) {
+                        for (int i = 0; i < PyList_Size(formattedException);
+                             i++) {
+                            pd_error(x, "\n%s",
+                                     PyUnicode_AsUTF8(PyList_GetItem(
+                                         formattedException, i)));
+                        }
+                        Py_DECREF(formattedException);
+                    }
+                    Py_DECREF(formatException);
+                }
+                Py_DECREF(tracebackModule);
+            }
+        } else {
+            PyObject *pstr = PyObject_Str(pvalue);
+            pd_error(x, "[py4pd] %s", PyUnicode_AsUTF8(pstr));
+            Py_DECREF(pstr);
+        }
+    }
+
     Py_XDECREF(ptype);
     Py_XDECREF(pvalue);
     Py_XDECREF(ptraceback);
