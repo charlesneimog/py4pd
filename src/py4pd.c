@@ -6,6 +6,10 @@ t_class *py4pd_class;        // For for normal objects, almost unused
 t_class *py4pd_classLibrary; // For libraries
 int object_count = 0;
 
+static void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv) {
+    pd_error(NULL, "This is just for internal tests, don't use it");
+    return NULL;
+}
 // ============================================
 // =========== PY4PD LOAD LIBRARIES ===========
 // ============================================
@@ -23,7 +27,14 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
             x, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
         return -1;
     }
-    t_symbol *scriptFileName = atom_gensym(argv + 1);
+    const char *oldName = atom_gensym(argv + 1)->s_name;
+    char newName[MAXPDSTRING];
+    int j;
+    for (j = 0; oldName[j] != '\0'; j++) {
+        newName[j] = (oldName[j] == '-') ? '_' : oldName[j];
+    }
+    newName[j] = '\0';
+    t_symbol *scriptFileName = gensym(newName);
 
     char script_file_path[MAXPDSTRING];
     snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->pdPatchPath->s_name,
@@ -32,7 +43,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     char script_inside_py4pd_path[MAXPDSTRING];
     snprintf(script_inside_py4pd_path, MAXPDSTRING,
              "%s/resources/scripts/%s.py", x->py4pdPath->s_name,
-             scriptFileName->s_name);
+             atom_gensym(argv + 1)->s_name);
 
     int thereIsRequirements = 0;
     PyObject *sysPath = PySys_GetObject("path");
@@ -48,7 +59,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
             char *library_path =
                 malloc(strlen(pathelem) + strlen(scriptFileName->s_name) + 1);
             snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem,
-                     scriptFileName->s_name);
+                     atom_gensym(argv + 1)->s_name);
 
             if (access(library_path, F_OK) != -1) { // Library founded
                 libraryNotFound = 0;
@@ -119,6 +130,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
 
     if (objectCapsule == NULL) {
         pd_error(x, "[Python] Failed to add object to Python");
+        // TODO: Fix this
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyObject *ptype_str = PyObject_Str(ptype);
@@ -137,8 +149,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         Py_XDECREF(MainModule);
         return -1;
     }
-    pModule =
-        PyImport_ImportModule(scriptFileName->s_name); // Import the script file
+    pModule = PyImport_ImportModule(atom_gensym(argv + 1)->s_name);
     if (pModule == NULL) {
         pd_error(x, "[Python] Failed to load script file %s",
                  scriptFileName->s_name);
@@ -292,13 +303,13 @@ void *Py4pd_PipInstallDetach(void *Args) {
                                       x->py4pdPath->s_name, pipPackage) +
                              1;
 #elif defined(__APPLE__) || defined(__MACH__)
-            size_t commandSize =
-                snprintf(NULL, 0,
-                         "/usr/local/bin/python%d.%d -m pip install --target "
-                         "%sresources/py-modules %s --upgrade",
-                         PY_MAJOR_VERSION, PY_MINOR_VERSION,
-                         x->py4pdPath->s_name, pipPackage) +
-                1;
+        size_t commandSize =
+            snprintf(NULL, 0,
+                     "/usr/local/bin/python%d.%d -m pip install --target "
+                     "%sresources/py-modules %s --upgrade",
+                     PY_MAJOR_VERSION, PY_MINOR_VERSION, x->py4pdPath->s_name,
+                     pipPackage) +
+            1;
 #endif
         char *COMMAND = malloc(commandSize);
 #ifdef __linux__
@@ -316,11 +327,11 @@ void *Py4pd_PipInstallDetach(void *Args) {
                  pipPackage);
 
 #elif defined(__APPLE__) || defined(__MACH__)
-            snprintf(COMMAND, commandSize,
-                     "/usr/local/bin/python%d.%d -m pip install --target "
-                     "%sresources/py-modules %s --upgrade",
-                     PY_MAJOR_VERSION, PY_MINOR_VERSION, x->py4pdPath->s_name,
-                     pipPackage);
+        snprintf(COMMAND, commandSize,
+                 "/usr/local/bin/python%d.%d -m pip install --target "
+                 "%sresources/py-modules %s --upgrade",
+                 PY_MAJOR_VERSION, PY_MINOR_VERSION, x->py4pdPath->s_name,
+                 pipPackage);
 #endif
         pd_error(NULL, "Installing %s in background, please WAIT ...",
                  pipPackage);
@@ -333,6 +344,7 @@ void *Py4pd_PipInstallDetach(void *Args) {
         } else {
             pd_error(NULL, "The installation has been completed.\n");
             free(COMMAND);
+            outlet_bang(x->mainOut);
             return NULL;
         }
     }
@@ -1116,6 +1128,10 @@ void py4pd_setup(void) {
                     0); // set function to be called
     class_addmethod(py4pd_class, (t_method)Py4pd_PrintModuleFunctions,
                     gensym("functions"), A_GIMME, 0);
+
+    // Test
+    class_addmethod(py4pd_class, (t_method)Py4pd_TestCode, gensym("_test"),
+                    A_GIMME, 0);
 
 // test functions
 #if PYTHON_REQUIRED_VERSION(3, 12)
