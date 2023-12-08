@@ -885,7 +885,6 @@ void Py4pdUtils_PrintError(t_py *x) {
     if (pvalue == NULL) {
         pd_error(x, "[py4pd] Call failed, unknown error");
     } else {
-        // Extracting the traceback information
         if (ptraceback != NULL) {
             PyObject *tracebackModule = PyImport_ImportModule("traceback");
             if (tracebackModule != NULL) {
@@ -913,7 +912,6 @@ void Py4pdUtils_PrintError(t_py *x) {
             Py_DECREF(pstr);
         }
     }
-
     Py_XDECREF(ptype);
     Py_XDECREF(pvalue);
     Py_XDECREF(ptraceback);
@@ -987,6 +985,9 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
     }
 
     if (x->audioOutput == 1) {
+        if (x->objType < 3) {
+            free(PyPtrValue);
+        }
         return NULL;
     }
     if (pValue != NULL && (x->objType < 3)) {
