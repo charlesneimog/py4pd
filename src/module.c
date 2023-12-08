@@ -75,8 +75,8 @@ static void Py4pdMod_InsertItem(pdcollectHash *hash_table, char *key,
         }
         return;
     } else if (item != NULL) {
-
-        item->pItem = Py_BuildValue("O", obj);
+        Py_INCREF(obj);
+        item->pItem = obj;
         return;
     }
 }
@@ -100,10 +100,10 @@ static void Py4pdMod_AccumItem(pdcollectHash *hash_table, char *key,
                         "[Python] pd.setglobalvar: memory error");
         return;
     }
-    if (item->wasCleaned)
+    if (item->wasCleaned) {
         item->wasCleaned = 0;
-
-    // print str representation of obj
+    }
+    // Py_INCREF(obj);
     PyList_Append(item->pList, obj);
     return;
 }
@@ -143,7 +143,7 @@ static void Py4pdMod_ClearList(pdcollectHash *hash_table, char *key) {
     }
     item->wasCleaned = 1;
     free(item->key);
-    Py_DECREF(item->pList);
+    // Py_DECREF(item->pList);
     free(item);
     hash_table->items[index] = NULL;
 }
@@ -279,10 +279,8 @@ static PyObject *Py4pdMod_GetObjVar(PyObject *self, PyObject *args,
     }
 
     if (item->aCumulative) {
-        Py_INCREF(item->pList);
         return item->pList;
     } else {
-        Py_INCREF(item->pItem);
         return item->pItem;
     }
 }
@@ -625,6 +623,7 @@ static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args,
     }
 
     PyObject *obj;
+
     if (PyArg_ParseTuple(args, "O", &obj)) {
         PyObject *str = PyObject_Str(obj);
         if (str == NULL) {
@@ -657,9 +656,9 @@ static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args,
         }
         Py_DECREF(str);
     } else {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.print works with strings, numbers, and "
-                        "any other valid Python object.");
+        const char *tupletStr = PyUnicode_AsUTF8(PyObject_Str(args));
+        // TODO: memory leak,
+        post(tupletStr);
         Py_DECREF(obj);
         return NULL;
     }
@@ -1332,17 +1331,17 @@ static PyObject *Py4pdMod_AddThingToPlay(PyObject *self, PyObject *args,
     (void)self;
     (void)keywords;
 
-    int onset;
+    float onset;
     PyObject *thingToPlay;
     t_py *x = Py4pdUtils_GetObject(self);
 
-    if (!PyArg_ParseTuple(args, "iO", &onset, &thingToPlay)) {
+    if (!PyArg_ParseTuple(args, "fO", &onset, &thingToPlay)) {
         PyErr_SetString(PyExc_TypeError,
-                        "pd.add2play: wrong arguments, it should be: "
-                        "pd.add2play(onset, thingToPlay)");
+                        "pd.add_to_player: wrong arguments, it should be: "
+                        "pd.add_to_player(onset, thing2Output)");
         return NULL;
     }
-    Py4pdLib_PlayerInsertThing(x, onset, Py_BuildValue("O", thingToPlay));
+    Py4pdLib_PlayerInsertThing(x, (int)onset, Py_BuildValue("O", thingToPlay));
     Py_RETURN_NONE;
 }
 
@@ -1497,7 +1496,6 @@ PyMODINIT_FUNC PyInit_pd() {
     }
     char OUT_string[MAXPDSTRING];
     snprintf(OUT_string, sizeof(OUT_string), "py4pdOut_%p", py4pdmodule);
-    post(OUT_string);
 
     char CLEAR_string[MAXPDSTRING];
     snprintf(CLEAR_string, sizeof(CLEAR_string), "py4pdClear_%p", py4pdmodule);
