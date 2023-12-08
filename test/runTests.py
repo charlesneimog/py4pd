@@ -1,3 +1,4 @@
+import argparse
 import os
 import platform
 import subprocess
@@ -13,14 +14,14 @@ def runTest(pdpatch):
         scriptfolder = os.path.dirname(scriptfile)
         pathfile = scriptfolder + "/" + pdpatch
         if os.path.isfile(pathfile):
-            cmd = f'pd -nogui -batch -send "start-test bang" {pathfile}'
+            cmd = f'pd -nogui -nodac -batch -send "start-test bang" {pathfile}'
             print("Running: " + "\033[92m" + cmd + "\033[0m", end="\r")
         else:
             print("PureData Patch not found")
             sys.exit()
         try:
             output = subprocess.run(
-                cmd, capture_output=True, text=True, shell=True, timeout=60
+                cmd, capture_output=True, text=True, shell=True, timeout=30
             )
             outputLines = str(output).split("\\n")
         except subprocess.TimeoutExpired:
@@ -92,24 +93,46 @@ def runTest(pdpatch):
             passed = True
     print("\033[K", end="\r")
     if passed:
-        print("\033[92m" + " Test with " + pdpatch + " passed" + "\033[0m")
+        print("\033[92m" + " ✅️ Test with " + pdpatch + " passed" + "\033[0m")
     else:
+        print("\033[91m" + " ❌️ Test with " + pdpatch + " failed" + "\033[0m\n")
         for line in outputLines:
             print("\033[93m" + line + "\033[0m")
-        print("\033[91m" + " Test with " + pdpatch + " failed" + "\033[0m")
+
         errorInTest += 1
 
 
 if __name__ == "__main__":
     # list all patches inside test folder
+    args = argparse.ArgumentParser()
+    # create an argument where I can set -rt 6 7 11, then we will run the pates with the given rt values
+    args.add_argument("-tn", type=str, nargs="+", required=False)
+    args = args.parse_args()
+    testNumbers = args.tn
+
     scriptFolder = os.path.dirname(os.path.abspath(__file__))
     patches = os.listdir(scriptFolder)
     patches = [patch for patch in patches if patch.endswith(".pd")]
     patches.sort()
     for patch in patches:
-        runTest(patch)
+        # get patch file name
+        patchName = os.path.basename(patch)
+        patchNumber = int(patchName.split("-")[0])
+        if testNumbers:
+            for testNumber in testNumbers:
+                if patchNumber == int(testNumber):
+                    runTest(patch)
+        else:
+            runTest(patch)
+        # get the test number
+
     if errorInTest != 0:
-        print("\033[91m" + f"{errorInTest} Test has failed" + "\033[0m")
+        print("\n")
+        print("==============================")
+        print("\033[91m" + (" " * 7) + f"{errorInTest} Test has failed" + "\033[0m")
+        print("==============================")
+        print("\n")
+
         sys.exit(-1)
     elif errorInTest == 0:
         print("\n")

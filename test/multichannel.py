@@ -2,6 +2,10 @@ import numpy as np
 import pd
 
 
+def randomNumpyArray():
+    return np.random.rand(1, 64).tolist()[0]
+
+
 def generate_sine_wave(frequency, amplitude, phase, num_samples, sampling_rate):
     angular_frequency = 2 * np.pi * frequency
     t = np.arange(num_samples) / sampling_rate
@@ -36,6 +40,35 @@ def sinusoids(freqs, amps):
     return out
 
 
+def audioin(audio):
+    num_channels = audio.shape[0]
+    fftresult = []
+    for channel in range(num_channels):
+        channel_data = audio[channel, :]
+        fft_result = np.fft.fft(channel_data)
+        first_real_number = np.real(fft_result[0])
+        fftresult.append(first_real_number)
+    return fftresult
+
+
+def generate_audio_noise():
+    noise_array = np.random.rand(5, 64)
+    return noise_array
+
+
+def audioInOut(audio):
+    num_channels = audio.shape[0]
+    transformed_audio = np.empty_like(audio, dtype=np.float64)
+
+    for channel in range(num_channels):
+        channel_data = audio[channel, :]
+        fft_result = np.fft.fft(channel_data)
+        ifft_result = np.fft.ifft(fft_result).real
+        transformed_audio[channel, :] = ifft_result
+
+    return transformed_audio
+
+
 # ============================================
 # ==================== PD ====================
 # ============================================
@@ -43,3 +76,7 @@ def sinusoids(freqs, amps):
 
 def py4pdLoadObjects():
     pd.add_object(sinusoids, "sinusoids~", objtype=pd.AUDIOOUT)
+    pd.add_object(audioin, "audioin~", objtype=pd.AUDIOIN)
+    pd.add_object(audioInOut, "audio~", objtype=pd.AUDIO)
+    pd.add_object(generate_audio_noise, "pynoise~", objtype=pd.AUDIOOUT)
+    pd.add_object(randomNumpyArray, "random-array", pyout=True)
