@@ -1,9 +1,6 @@
 #include "py4pd.h"
 
-// ===========================================
 // ================= PUREDATA ================
-// ===========================================
-
 static t_class *py4pdInlets_proxy_class;
 void Py4pdLib_Bang(t_py *x);
 
@@ -582,23 +579,26 @@ void Py4pdLib_Bang(t_py *x) {
 t_int *Py4pdLib_AudioINPerform(t_int *w) {
     t_py *x = (t_py *)(w[1]);
 
-    if (x->audioError || x->numpyImported == 0)
+    if (x->audioError || !x->numpyImported) {
         return (w + 4);
+    }
 
     t_sample *in = (t_sample *)(w[2]);
     int n = (int)(w[3]);
-    x->vectorSize = n;
     int numChannels = n / x->vectorSize;
     npy_intp dims[] = {numChannels, x->vectorSize};
     PyObject *pAudio = PyArray_SimpleNewFromData(
-        2, dims, NPY_FLOAT, in); // TODO: this should be DOUBLE in pd64
-    if (x->pArgTuple == NULL)
+        2, dims, NPY_FLOAT, in); // NOTE: this should be DOUBLE in pd64
+    if (x->pArgTuple == NULL) {
+        x->pArgTuple = PyTuple_New(x->pArgsCount);
         return (w + 4);
+    }
     PyTuple_SetItem(x->pArgTuple, 0, pAudio);
     for (int i = 1; i < x->pArgsCount; i++) {
         PyTuple_SetItem(x->pArgTuple, i, x->pyObjArgs[i]->pValue);
         Py_INCREF(x->pyObjArgs[i]->pValue);
     }
+
     Py4pdUtils_RunPy(x, x->pArgTuple, x->kwargsDict);
     return (w + 4);
 }
@@ -672,6 +672,7 @@ static void Py4pdLib_Dsp(t_py *x, t_signal **sp) {
         pd_error(x, "[py4pd] Failed to import numpy");
     } else {
         x->numpyImported = 1;
+        post("[py4pd] numpy imported");
     }
 
     if (x->objType == PY4PD_AUDIOINOBJ) {
@@ -756,6 +757,8 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     x->zoom = (int)x->canvas->gl_zoom;
     x->ignoreOnNone = PyLong_AsLong(ignoreOnNone);
     x->outPyPointer = PyLong_AsLong(pyOUT);
+    x->audioError = 0;
+
     x->funcCalled = 1;
     x->pFunction = pyFunction;
     x->pdPatchPath = patch_dir; // set name of the home path
@@ -781,17 +784,14 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
 
     if (x->objType > 1) {
         int numpyArrayImported = _import_array();
-        if (numpyArrayImported == 1) {
+        if (numpyArrayImported == 0) {
             x->numpyImported = 1;
-            logpost(NULL, 3, "Numpy Loaded");
         } else {
             x->numpyImported = 0;
+            Py4pdUtils_PrintError(x);
             pd_error(NULL, "[%s] Numpy was not imported!", objectName);
-            if (x->objType == PY4PD_AUDIOOUTOBJ)
-                x->audioError = 1;
         }
     }
-
     x->pdObjArgs = malloc(sizeof(t_atom) * argc);
     for (int i = 0; i < argc; i++) {
         x->pdObjArgs[i] = argv[i];
