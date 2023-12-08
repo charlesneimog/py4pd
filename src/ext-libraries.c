@@ -445,7 +445,8 @@ void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac,
     py4pd->pyObjArgs[x->inletIndex]->pValue = pyInletValue;
 
     if (py4pd->objType == PY4PD_AUDIOOBJ ||
-        py4pd->objType == PY4PD_AUDIOINOBJ) {
+        py4pd->objType == PY4PD_AUDIOINOBJ ||
+        py4pd->objType == PY4PD_AUDIOOUTOBJ) {
         py4pd->audioError = 0;
         return;
     }
@@ -672,7 +673,6 @@ static void Py4pdLib_Dsp(t_py *x, t_signal **sp) {
         pd_error(x, "[py4pd] Failed to import numpy");
     } else {
         x->numpyImported = 1;
-        post("[py4pd] numpy imported");
     }
 
     if (x->objType == PY4PD_AUDIOINOBJ) {
@@ -757,8 +757,6 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     x->zoom = (int)x->canvas->gl_zoom;
     x->ignoreOnNone = PyLong_AsLong(ignoreOnNone);
     x->outPyPointer = PyLong_AsLong(pyOUT);
-    x->audioError = 0;
-
     x->funcCalled = 1;
     x->pFunction = pyFunction;
     x->pdPatchPath = patch_dir; // set name of the home path
@@ -805,6 +803,12 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
         free(x->pdObjArgs);
         free(x->pyObjArgs);
         return NULL;
+    }
+
+    if (x->pdObjArgs == 0) {
+        x->audioError = 0;
+    } else {
+        x->audioError = 1;
     }
 
     if (x->objType > 1)
