@@ -1,5 +1,6 @@
-import pd
 import sys
+
+import pd
 
 
 def pyiterate(value):
@@ -13,8 +14,8 @@ def pyiterate(value):
 
 
 def pycollect(data):
-    """ 
-    It collects the data from pyiterate and outputs it. 
+    """
+    It collects the data from pyiterate and outputs it.
     """
     if data is pd.OUTLOOP:
         data = pd.get_obj_var("DATA")
@@ -29,10 +30,8 @@ def pycollect(data):
         pd.accum_obj_var("DATA", data)
 
 
-
-
 def pytrigger(data):
-    """ It triggers the pyiterate object """
+    """It triggers the pyiterate object"""
     # get the amount of outlets
     outletCount = pd.get_out_count()
     for i in range(outletCount, -1, -1):
@@ -40,13 +39,12 @@ def pytrigger(data):
 
 
 def pyrecursive(data):
-    """ It need to be used with pyiterate and pycollect in recursive patches """
+    """It need to be used with pyiterate and pycollect in recursive patches"""
     sys.setrecursionlimit(1000000)
 
     pd._recursive(data)
-    
 
 
 def pygate(value, out):
-    """ It gates the output """
+    """It gates the output"""
     pd.out(value, out_n=out)
