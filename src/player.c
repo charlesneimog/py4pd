@@ -88,10 +88,12 @@ void Py4pdLib_FreeDictionary(Dictionary *dictionary) {
 
 // ================== PLAYER ======================
 void Py4pdLib_PlayTick(t_py *x) {
-    x->msOnset++;
     if (x->playerDict->lastOnset > x->msOnset) {
         clock_delay(x->playerClock, 1);
+    } else {
+        clock_unset(x->playerClock);
     }
+    x->msOnset++;
     KeyValuePair *entry = Py4pdLib_PlayerGetValue(x->playerDict, x->msOnset);
     if (entry != NULL) {
         for (int i = 0; i < entry->size; i++) {
@@ -110,7 +112,6 @@ void Py4pdLib_PlayTick(t_py *x) {
 // ======================================================
 void Py4pdLib_Play(t_py *x, t_symbol *s, int ac, t_atom *av) {
     (void)s;
-
     x->msOnset = 0;
     if (x->playerDict == NULL) {
         pd_error(x, "[%s]: Nothing to play.", x->objName->s_name);
@@ -126,7 +127,6 @@ void Py4pdLib_Play(t_py *x, t_symbol *s, int ac, t_atom *av) {
 
 // ======================================================
 void Py4pdLib_Stop(t_py *x) {
-
     if (x->playerClock == NULL) {
         pd_error(x, "[%s]: Nothing to stop.", x->objName->s_name);
         return;
