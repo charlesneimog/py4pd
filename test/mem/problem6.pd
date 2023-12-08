@@ -1,4 +1,4 @@
-#N canvas 156 10 979 894 8;
+#N canvas 156 10 979 946 8;
 #X obj 272 271 py.recursive;
 #X obj 272 234 py.gate -outn 1;
 #X obj 272 118 t a a;
@@ -23,8 +23,7 @@
 #X msg 344 293 1;
 #X obj 99 372 &&;
 #X obj 344 314 t b f;
-#X obj 99 393 tgl 15 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 1;
-#X obj 99 413 outlet;
+#X obj 99 434 outlet;
 #X obj 22 6 inlet;
 #X obj 22 107 loop 10000;
 #X connect 0 0 20 0;
@@ -48,13 +47,12 @@
 #X connect 15 0 12 0;
 #X connect 16 0 17 0;
 #X connect 17 0 22 0;
-#X connect 18 0 27 0;
+#X connect 18 0 26 0;
 #X connect 18 1 4 0;
 #X connect 19 0 5 0;
 #X connect 21 0 23 0;
 #X connect 22 0 24 0;
 #X connect 23 0 22 0;
 #X connect 23 1 22 1;
-#X connect 24 0 25 0;
-#X connect 26 0 18 0;
-#X connect 27 0 8 0;
+#X connect 25 0 18 0;
+#X connect 26 0 8 0;

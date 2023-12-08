@@ -19,7 +19,7 @@
 #X obj 359 123 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
 #X obj 143 34 t b b b b b;
 #X obj 39 18 inlet;
-#X obj 8 330 outlet;
+#X obj 8 392 outlet;
 #X obj 8 163 py+ None 9;
 #X obj 8 205 py+ None 9;
 #X obj 8 185 py+ None 9;
@@ -28,13 +28,13 @@
 #X obj 281 192 pd2py;
 #X obj 359 222 pd2py;
 #X obj 8 248 py2pd;
-#X obj 48 330 sel 30000;
+#X obj 8 330 sel 30000;
 #X obj 48 353 print PROBLEM-5-DONE;
 #X obj 8 290 count;
 #X obj 8 40 loop 30001;
+#X msg 8 351 1;
 #X connect 0 0 32 0;
 #X connect 1 0 31 0;
-#X connect 2 0 20 0;
 #X connect 2 0 29 0;
 #X connect 3 0 8 0;
 #X connect 3 1 5 0;
@@ -67,5 +67,7 @@
 #X connect 27 0 24 1;
 #X connect 28 0 1 0;
 #X connect 29 0 30 0;
+#X connect 29 0 33 0;
 #X connect 31 0 2 0;
 #X connect 32 0 3 0;
+#X connect 33 0 20 0;

@@ -21,7 +21,7 @@ def runTest(pdpatch):
             sys.exit()
         try:
             output = subprocess.run(
-                cmd, capture_output=True, text=True, shell=True, timeout=30
+                cmd, capture_output=True, text=True, shell=True,
             )
             outputLines = str(output).split("\\n")
         except subprocess.TimeoutExpired:

@@ -1,11 +1,11 @@
-#N canvas 131 169 393 577 8;
+#N canvas 131 169 393 683 8;
 #X obj 6 11 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
 #X obj 6 70 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
 #X msg 6 90 [1 2 3 4 5];
 #X obj 6 148 b;
 #X obj 6 186 nbx 5 14 -1e+37 1e+37 0 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 256;
 #X obj 41 13 inlet;
-#X obj 6 253 outlet;
+#X obj 6 313 outlet;
 #X obj 6 111 py.mklist;
 #X obj 102 18 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
 #X obj 50 229 sel 49999;
@@ -14,6 +14,8 @@
 #X obj 6 129 py+ 2 2;
 #X obj 6 167 count;
 #X obj 6 49 loop 50000;
+#X obj 6 271 sel 49999;
+#X msg 6 292 1;
 #X connect 0 0 14 0;
 #X connect 1 0 2 0;
 #X connect 2 0 7 0;
@@ -23,8 +25,10 @@
 #X connect 7 0 12 0;
 #X connect 8 0 14 0;
 #X connect 9 0 10 0;
-#X connect 11 0 6 0;
+#X connect 11 0 15 0;
 #X connect 11 1 9 0;
 #X connect 12 0 3 0;
 #X connect 13 0 4 0;
 #X connect 14 0 1 0;
+#X connect 15 0 16 0;
+#X connect 16 0 6 0;
