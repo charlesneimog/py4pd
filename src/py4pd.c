@@ -45,7 +45,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
 
     char script_inside_py4pd_path[MAXPDSTRING];
     snprintf(script_inside_py4pd_path, MAXPDSTRING,
-             "%s/resources/scripts/%s.py", x->py4pdPath->s_name,
+             "%s/resources/py4pd-mod/%s.py", x->py4pdPath->s_name,
              atom_gensym(argv + 1)->s_name);
 
     int thereIsRequirements = 0;

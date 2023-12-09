@@ -445,8 +445,7 @@ void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac,
     py4pd->pyObjArgs[x->inletIndex]->pValue = pyInletValue;
 
     if (py4pd->objType == PY4PD_AUDIOOBJ ||
-        py4pd->objType == PY4PD_AUDIOINOBJ ||
-        py4pd->objType == PY4PD_AUDIOOUTOBJ) {
+        py4pd->objType == PY4PD_AUDIOINOBJ) {
         py4pd->audioError = 0;
         return;
     }
@@ -805,7 +804,7 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
 
-    if (x->pdObjArgs == 0) {
+    if (x->pArgsCount < 2) {
         x->audioError = 0;
     } else {
         x->audioError = 1;

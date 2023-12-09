@@ -347,31 +347,39 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck,
  */
 
 void Py4pdUtils_FindObjFolder(t_py *x) {
-    int libraryNotFound = 1;
+    const char *pathelem;
+    char library_path[MAXPDSTRING];
 
     for (int i = 0; 1; i++) {
-        const char *pathelem = namelist_get(STUFF->st_searchpath, i);
+        pathelem = namelist_get(STUFF->st_searchpath, i);
         if (!pathelem) {
             break;
         }
-        char library_path[MAXPDSTRING];
 #ifdef _WIN64
         snprintf(library_path, MAXPDSTRING, "%s\\%s\\", pathelem, "py4pd");
 #else
         snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, "py4pd");
 #endif
         if (access(library_path, F_OK) != -1) {
-            libraryNotFound = 0;
             x->py4pdPath = gensym(library_path);
             return;
         }
     }
-    if (libraryNotFound) {
-        pd_error(x, "[py4pd] py4pd was not found in Search Path, this causes "
-                    "instabilities.");
-        x->py4pdPath = canvas_getdir(x->canvas);
+
+    pathelem = canvas_getdir(x->canvas)->s_name;
+#ifdef _WIN64
+    snprintf(library_path, MAXPDSTRING, "%s\\%s\\", pathelem, "py4pd");
+#else
+    snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, "py4pd");
+#endif
+    if (access(library_path, F_OK) != -1) {
+        x->py4pdPath = gensym(library_path);
         return;
     }
+    pd_error(x, "[py4pd] py4pd was not found in Search Path, this causes "
+                "instabilities.");
+    x->py4pdPath = canvas_getdir(x->canvas);
+    return;
 }
 
 // ===================================================================
@@ -618,7 +626,8 @@ int Py4pdUtils_ExecuteSystemCommand(const char *command) {
     ZeroMemory(&si, sizeof(STARTUPINFO));
     si.cb = sizeof(STARTUPINFO);
     ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
-    if (CreateProcess(NULL, (LPSTR)command, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+    if (CreateProcess(NULL, (LPSTR)command, NULL, NULL, FALSE, CREATE_NO_WINDOW,
+                      NULL, NULL, &si, &pi)) {
         WaitForSingleObject(pi.hProcess, INFINITE);
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
