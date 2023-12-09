@@ -87,6 +87,10 @@ jobs:
           Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd\ -Recurse
           cp py4pd.m_amd64 py4pd\
 
+      - name: Run tests
+        run: |
+          python test/runTests.py
+
       - name: Upload Object ZIP
         uses: actions/upload-artifact@v3
         with:
@@ -233,7 +237,7 @@ jobs:
         run: |
           cp -r py4pd test
           cd test
-          python3.11 -m pip install numba numpy -t ./py-modules/
+          python3.11 -m pip install numpy -t ./py-modules/
           python ./runTests.py
 
       - name: Upload Object
