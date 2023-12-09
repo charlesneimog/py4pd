@@ -1007,7 +1007,7 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
                 pd_error(NULL,
                          "\n!!!!!!\n [py4pd] Unable to import NumPy! Send "
                          "[pipinstall "
-                         "global numpy] to py4pd object to install it.] "
+                         "numpy] to py4pd object to install it.] "
                          "\n!!!!!!\n");
                 x->numpyImported = 0;
                 return (x);

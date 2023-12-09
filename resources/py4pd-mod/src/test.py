@@ -38,16 +38,19 @@ def getMemoryUse():
             return result
         except subprocess.CalledProcessError:
             return None
-    
-    elif platform.system() == 'Windows':
+
+    elif platform.system() == "Windows":
         try:
-            command = 'tasklist | findstr pd'
+            command = "tasklist | findstr pd"
             result = subprocess.check_output(command, shell=True, text=True)
-            kbytes = float(result.split()[4]) * 1000
+            try:
+                kbytes = float(result.split()[4]) * 1000
+            except:
+                kbytes = float(result.split()[4].replace(",", ".")) * 1000
             mb = kbytes / 1024
-            return mb            
+            return mb
         except subprocess.CalledProcessError:
             return None
-        
+
     else:
         return 1

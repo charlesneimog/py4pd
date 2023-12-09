@@ -29,7 +29,7 @@ on:
         description: "Build for Linux"
         required: false
         type: boolean
-        default: true
+        default: false
 
 jobs:
   # ==============================================================================
@@ -39,7 +39,7 @@ jobs:
     # if just linux is true, skip windows
     runs-on: windows-latest
     if: ${{ inputs.windows }}
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v3
         with:
@@ -85,27 +85,18 @@ jobs:
           $pythonpath = Get-Content pythonpath.txt
           Copy-Item -Path "$pythonpath\python311.dll" -Destination py4pd\ -Recurse
           Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd\ -Recurse
+          Copy-Item -Path "py4pd" -Destination "test" -Recurse
+          Copy-Item -Path "resources" -Destination "test/py4pd/" -Recurse
           cp py4pd.m_amd64 py4pd\
+          cp py4pd.m_amd64 test\py4pd\py4pd.m_amd64
 
       - name: Run tests
         continue-on-error: true
+        shell: cmd
         run: |
-          "..\pd\bin\pd.com" -nogui -send "start-test bang" 01-Install-modules.pd
-
-      - name: Run tests
-        continue-on-error: true
-        run: |
-          "..\pd\bin\pd.exe" -nogui -send "start-test bang" 01-Install-modules.pd
-
-      - name: Run tests
-        continue-on-error: true
-        run: |
-          "..\pd\bin\pd.com" --nogui --send "start-test bang" 01-Install-modules.pd
-
-      - name: Run tests
-        continue-on-error: true
-        run: |
-          "..\pd\bin\pd.exe" --nogui --send "start-test bang" 01-Install-modules.pd
+          cd test
+          python3 -m pip install numpy -t py4pd/resources/py-modules
+          python3 runTests.py
 
       - name: Upload Object ZIP
         uses: actions/upload-artifact@v3
