@@ -32,7 +32,7 @@ def runTest(pdpatch):
     elif platform.system() == "Windows":
         scriptfile = os.path.abspath(__file__)
         scriptfolder = os.path.dirname(scriptfile)
-        pathfile = scriptfolder + pdpatch
+        pathfile = scriptfolder + "\\" + pdpatch
         # check if pathfile has JUSTLINUX in it
         if "JUSTLINUX" in pathfile:
             print("Test not supported on Windows")
