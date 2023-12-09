@@ -46,7 +46,7 @@ def runTest(pdpatch):
             print(f"Patch {pathfile} not found")
             sys.exit()
         py4pdPath = os.path.dirname(scriptfolder)
-        cmd = f'"./pd/bin/pd.com" -nogui -path {py4pdPath} -send "start-test bang" "{pathfile}"'
+        cmd = f'"../pd/bin/pd.com" -nogui -path {py4pdPath} -send "start-test bang" "{pathfile}"'
         try:
             # result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout_seconds)
             print("Running: " + cmd)

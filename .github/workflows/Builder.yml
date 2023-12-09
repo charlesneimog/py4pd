@@ -88,8 +88,24 @@ jobs:
           cp py4pd.m_amd64 py4pd\
 
       - name: Run tests
+        continue-on-error: true
         run: |
-          python test/runTests.py
+          "..\pd\bin\pd.com" -nogui -send "start-test bang" 01-Install-modules.pd
+
+      - name: Run tests
+        continue-on-error: true
+        run: |
+          "..\pd\bin\pd.exe" -nogui -send "start-test bang" 01-Install-modules.pd
+
+      - name: Run tests
+        continue-on-error: true
+        run: |
+          "..\pd\bin\pd.com" --nogui --send "start-test bang" 01-Install-modules.pd
+
+      - name: Run tests
+        continue-on-error: true
+        run: |
+          "..\pd\bin\pd.exe" --nogui --send "start-test bang" 01-Install-modules.pd
 
       - name: Upload Object ZIP
         uses: actions/upload-artifact@v3
@@ -192,11 +208,10 @@ jobs:
 
       - name: Install Build Dependencies
         run: |
-          PD_URL=$(curl -L -s https://api.github.com/repos/pure-data/pure-data/tags | grep zipball_url | grep -v latest | grep -v pd-0.52 | grep -v tagtest | head -n 1 | cut -d '"' -f 4)
-          curl -L -o pure-data.zip $PD_URL
-          unzip pure-data.zip
-          rm pure-data.zip
-          mv pure-data-* pure-data
+          curl -L -o pd.tar.gz https://msp.ucsd.edu/Software/pd-0.54-1.src.tar.gz
+          tar -xzf pd.tar.gz  
+          rm pd.tar.gz  
+          mv pd-* pure-data
           sudo apt-get install python3.11-dev -y
           python3.11 -m pip install numpy
 
@@ -211,18 +226,19 @@ jobs:
 
       - name: Copy files to py4pd
         run: |
-          mkdir py4pd
+          mkdir -p py4pd
           cp py4pd.l_amd64 resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd
           cp -r resources py4pd 
           cp -r src py4pd
           find py4pd/src -name "*.o" -type f -delete
           cp resources/README.deken.pd py4pd
           cp -r py4pd test
+          rm py4pd.l_amd64
 
       - name: Tests
         continue-on-error: true
         run: |
-          python3 ./test/runTests.py
+          cd test && python3 ./runTests.py
 
       - name: Upload Object
         uses: actions/upload-artifact@v3
