@@ -180,10 +180,10 @@ void *Py4pdLib_FreeObj(t_py *x) {
         char command[1000];
 #ifdef _WIN64
         sprintf(command, "del /q /s %s\\*", x->tempPath->s_name);
-        Py4pdUtils_ExecuteSystemCommand(command);
+        (void)Py4pdUtils_ExecuteSystemCommand(command);
 #else
         sprintf(command, "rm -rf %s", x->tempPath->s_name);
-        Py4pdUtils_ExecuteSystemCommand(command);
+        (void)Py4pdUtils_ExecuteSystemCommand(command);
 #endif
     }
     if (x->visMode != 0)
@@ -611,27 +611,28 @@ void Py4pdUtils_PipInstallRequirements(t_py *x, t_symbol *s, int argc,
  * @return void, but it prints the error if it fails
  */
 
-void Py4pdUtils_ExecuteSystemCommand(const char *command) {
+int Py4pdUtils_ExecuteSystemCommand(const char *command) {
 #ifdef _WIN64
-    SHELLEXECUTEINFO sei = {0};
-    sei.cbSize = sizeof(sei);
-    sei.fMask = SEE_MASK_NOCLOSEPROCESS;
-    sei.lpFile = "cmd.exe ";
-    sei.lpParameters = command;
-    sei.nShow = SW_HIDE;
-    ShellExecuteEx(&sei);
-    CloseHandle(sei.hProcess);
-    if (sei.hProcess == NULL) {
-        pd_error(NULL, "[py4pd] Failed to execute command: %s", command);
-        return;
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    ZeroMemory(&si, sizeof(STARTUPINFO));
+    si.cb = sizeof(STARTUPINFO);
+    ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+    if (CreateProcess(NULL, (LPSTR)command, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, NULL, &si, &pi)) {
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+    } else {
+        return -1;
     }
-    return;
+    return 0;
 #else
     int result = system(command);
     if (result != 0) {
         pd_error(NULL, "[py4pd] Failed to execute command: %s", command);
-        return;
+        return -1;
     }
+    return 0;
 #endif
 }
 
