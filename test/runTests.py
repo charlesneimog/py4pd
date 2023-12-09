@@ -43,10 +43,12 @@ def runTest(pdpatch):
         else:
             print(f"Patch {pathfile} not found")
             sys.exit()
-        cmd = f'"C:\\Program Files\\Pd\\bin\\pd.exe" -nogui -batch -send "start-test bang" "{pathfile}"'
+        cmd = f'"C:/Program Files/Pd/bin/pd.com" -nogui -batch -send "start-test bang" "{pathfile}"'
         try:
+            #result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout_seconds)
+            print("Running: " + "\033[92m" + cmd + "\033[0m", end="\r")
             output = subprocess.run(
-                cmd, capture_output=True, text=True, shell=True, timeout=60
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, shell=True, timeout=60
             )
             outputLines = str(output).split("\\n")
         except subprocess.TimeoutExpired:
