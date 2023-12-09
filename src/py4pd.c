@@ -7,6 +7,9 @@ t_class *py4pd_classLibrary; // For libraries
 int object_count = 0;
 
 static void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv) {
+    (void)x;
+    (void)argc;
+    (void)argv;
     pd_error(NULL, "This is just for internal tests, don't use it");
     return NULL;
 }
@@ -295,7 +298,7 @@ void *Py4pd_PipInstallDetach(void *Args) {
                                       PY_MAJOR_VERSION, PY_MINOR_VERSION,
                                       x->py4pdPath->s_name, pipPackage) +
                              1;
-#elif defined __WIN32
+#elif defined __WIN64
         size_t commandSize = snprintf(NULL, 0,
                                       "py -%d.%d -m pip install --target "
                                       "%sresources/py-modules %s --upgrade",
@@ -319,7 +322,7 @@ void *Py4pd_PipInstallDetach(void *Args) {
                  PY_MAJOR_VERSION, PY_MINOR_VERSION, x->py4pdPath->s_name,
                  pipPackage);
 
-#elif defined __WIN32
+#elif defined __WIN64
         snprintf(COMMAND, commandSize,
                  "py -%d.%d -m pip install --target %sresources/py-modules "
                  "%s --upgrade",
@@ -335,7 +338,7 @@ void *Py4pd_PipInstallDetach(void *Args) {
 #endif
         pd_error(NULL, "Installing %s in background, please WAIT ...",
                  pipPackage);
-        int result = system(COMMAND);
+        int result = Py4pdUtils_ExecuteSystemCommand(COMMAND);
         if (result == -1) {
             pd_error(NULL, "The instalation seems to have failed. Restart "
                            "PureData and try again.\n");
