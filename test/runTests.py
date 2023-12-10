@@ -37,11 +37,10 @@ def runTest(pdpatch):
             print(f"Patch {pathfile} not found")
             sys.exit()
         py4pdPath = os.path.dirname(scriptfolder)
-        cmd = ["..\\pd\\bin\\pd.exe", "-nogui", "-noaudio", "-send", "start-test bang", pathfile]
+        cmd = ["..\\pd\\bin\\pd.exe", "-nogui", "-noaudio", pathfile]
         os.system(" ".join(cmd))
         sys.exit()
         try:
-            
             process = subprocess.run(
                 cmd,
                 stdout=subprocess.PIPE,
