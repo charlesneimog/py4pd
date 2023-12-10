@@ -94,18 +94,29 @@ def runTest(pdpatch):
             passed = True
 
     try:
+        try:
+            if passed:
+                print("\033[92m" + " ✅️ Test with " + pdpatch + " passed" + "\033[0m")
+            else:
+                print("\033[91m" + " ❌️ Test with " + pdpatch + " failed" + "\033[0m\n")
+                for line in outputLines:
+                    print("\033[93m" + line + "\033[0m")
+                errorInTest += 1
+        except Exception as e:
+            print(e)
+            if passed:
+                print(f" ✅️ Test with {pdpatch} passed")
+            else:
+                print(f" ❌️ Test with {pdpatch} failed")
+                for line in outputLines:
+                    print(line)
+                errorInTest += 1
+    except Exception as e:
+        print(e)
         if passed:
-            print("\033[92m" + " ✅️ Test with " + pdpatch + " passed" + "\033[0m")
+            print(f" Test with {pdpatch} passed")
         else:
-            print("\033[91m" + " ❌️ Test with " + pdpatch + " failed" + "\033[0m\n")
-            for line in outputLines:
-                print("\033[93m" + line + "\033[0m")
-            errorInTest += 1
-    except:
-        if passed:
-            print(f"Test with {pdpatch} passed")
-        else:
-            print(f"Test with {pdpatch} failed")
+            print(f" Test with {pdpatch} failed")
             for line in outputLines:
                 print(line)
             errorInTest += 1
