@@ -22,6 +22,7 @@ __pycache__/py.cpython-310.pyc
 
 # PureData Binaries
 *.pd_linux
+*.l_amd64
 *.m_amd64
 
 # Files for test
