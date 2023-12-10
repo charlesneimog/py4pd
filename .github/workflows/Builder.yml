@@ -91,8 +91,9 @@ jobs:
           cp py4pd.m_amd64 test\py4pd\py4pd.m_amd64
 
       - name: Tests
-        run: cd test | python ./runTests.py
-
+        run: | 
+          cd test 
+          python ./runTests.py
 
       - name: Upload Object ZIP
         uses: actions/upload-artifact@v3
