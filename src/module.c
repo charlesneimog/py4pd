@@ -1189,7 +1189,7 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
                 Py_RETURN_NONE;
             }
         } else {
-            pd_error(x, "Error displaying image");
+            // No Gui Visible
             PyErr_Clear();
             Py_RETURN_NONE;
         }
