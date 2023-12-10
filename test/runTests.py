@@ -46,18 +46,24 @@ def runTest(pdpatch):
             print(f"Patch {pathfile} not found")
             sys.exit()
         py4pdPath = os.path.dirname(scriptfolder)
-        cmd = ["..\\pd\\bin\\pd.com", "-nogui", "-send", "start-test bang", pathfile]
+        cmd = ["..\\pd\\bin\\pd.exe", "-nogui", "-send", "start-test bang", pathfile]
         try:
-            # result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout_seconds)
-            output = subprocess.run(
+            process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True,
-                shell=True,
-                timeout=60,
+                universal_newlines=True,
             )
-            outputLines = str(output.stderr).split("\\n")
+            _, stderr = process.communicate()
+            if isinstance(stderr, str):
+                stderrTOKENS = stderr.split("\n")
+            process.wait()
+            outputLines = []
+            for line in stderrTOKENS:
+                if "error:" in line:
+                    outputLines.append(line.replace("error:", ""))
+                else:
+                    outputLines.append(line)
         except subprocess.TimeoutExpired:
             print("\033[K", end="\r")
             print("Test with " + pdpatch + " failed")
