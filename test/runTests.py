@@ -54,6 +54,8 @@ def runTest(pdpatch):
                     outputLines.append(line.replace("error:", ""))
                 else:
                     outputLines.append(line)
+                print(line.replace("error:", ""))
+            
             sys.exit()
         except subprocess.TimeoutExpired:
             print("\033[K", end="\r")
