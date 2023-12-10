@@ -72,11 +72,11 @@ def runTest(pdpatch):
 
         py4pdPath = os.path.abspath(scriptfolder)
         cmd = (
-            f'/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -path {py4pdPath} -send "start-test bang" '
+            f'/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -nogui -noaudio -path {py4pdPath} -send "start-test bang" '
             + pathfile
         )
         try:
-            output = subprocess.run(cmd, capture_output=True, text=True, shell=True)
+            output = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=45)
             outputLines = str(output).split("\\n")
         except subprocess.TimeoutExpired:
             print("\033[K", end="\r")

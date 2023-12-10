@@ -122,17 +122,24 @@ jobs:
       - name: set Enviroment
         run: |
           brew install --cask pd
-          python3.11 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
           python3.11 -m pip install numpy
-          mkdir py4pd
+          
 
       - name: Build
         run: make PYTHON_VERSION=python3.11 extension=d_amd64
 
+      - name: Copy Files and Set for Tests
+        run: |
+          mkdir py4pd
+          mv py4pd.d_amd64 py4pd
+          cp -r py4pd test
+          cp -r resources test/py4pd
+
       - name: Run Tests
         continue-on-error: true
         run: |
-          python3.11 ./test/runTests.py
+          cd test
+          python3.11 ./runTests.py
 
       - name: Upload Object
         uses: actions/upload-artifact@v3
@@ -161,7 +168,6 @@ jobs:
       - name: set Enviroment
         run: |
           brew install --cask pd
-          python3.11 -c 'import sysconfig;print(sysconfig.get_config_var("LINKFORSHARED"))'
           python3.11 -m pip install numpy
           mkdir py4pd
 
