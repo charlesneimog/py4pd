@@ -93,6 +93,7 @@ jobs:
 
       - name: Tests
         run: | 
+          chcp 65001
           cd test 
           python ./runTests.py
 
