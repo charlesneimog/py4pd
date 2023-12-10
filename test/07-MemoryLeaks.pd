@@ -7,7 +7,7 @@
 #X obj 562 99 py.memuse;
 #X obj 562 139 s mem;
 #X obj 10 79 t b b b b b b b b, f 111;
-#X obj 99 6 py4pd -lib multichannel;
+#X obj 99 6 py4pd -lib py;
 #X obj 220 6 declare -path mem;
 #X obj 89 101 problem1;
 #X obj 167 102 problem2;

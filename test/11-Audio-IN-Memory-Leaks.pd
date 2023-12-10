@@ -1,5 +1,5 @@
 #N canvas 693 21 1081 825 8;
-#X obj 12 7 py4pd -lib multichannel;
+#X obj 12 7 py4pd -lib py;
 #X obj 135 7 r start-test;
 #X msg 211 54 \; pd dsp 1;
 #X obj 135 35 t b b b, f 31;
