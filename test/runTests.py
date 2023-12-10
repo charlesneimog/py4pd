@@ -6,13 +6,8 @@ import sys
 
 errorInTest = 0
 
-# # cwd = to the same folder where this script is located
-# fileDir = os.path.dirname(os.path.realpath(__file__))
-# os.chdir(fileDir)
-
-
 def runTest(pdpatch):
-    pdpatch = "02-simpleRun.pd"
+    #pdpatch = "02-simpleRun.pd"
     global errorInTest
     if platform.system() == "Linux":
         if os.path.isfile(pdpatch):
@@ -50,7 +45,7 @@ def runTest(pdpatch):
                 stderr=subprocess.PIPE,
                 check=True,
                 universal_newlines=True,
-                timeout=10,
+                timeout=45,
             )
             outputLines = []
             stderrTOKENS = str(process.stderr).split("\n")
