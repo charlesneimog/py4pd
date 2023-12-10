@@ -61,6 +61,7 @@ def runTest(pdpatch):
             print("\033[K", end="\r")
             print("Test with " + pdpatch + " failed")
             errorInTest += 1
+            sys.exit()
             return
     elif platform.system() == "Darwin":
         scriptfile = os.path.abspath(__file__)
