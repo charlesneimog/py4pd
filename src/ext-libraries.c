@@ -832,8 +832,6 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
             Py_DECREF(py4pd_capsule);
             return NULL;
         } else {
-            post("[%s]: Number of outlets set to %d", objectName,
-                 x->numOutlets);
             AuxOutlet = x->numOutlets;
         }
     }
