@@ -1142,3 +1142,7 @@ void py4pd_setup(void) {
                     gensym("detach"), 0);
 #endif
 }
+
+#ifdef __WIN64
+    __declspec(dllexport) void py4pd_setup(void);
+#endif
