@@ -56,12 +56,12 @@ def runTest(pdpatch):
                     outputLines.append(line)
                 print(line.replace("error:", ""))
             
-            sys.exit()
+            #sys.exit()
         except subprocess.TimeoutExpired:
             print("\033[K", end="\r")
             print("Test with " + pdpatch + " failed")
             errorInTest += 1
-            sys.exit()
+            #sys.exit()
             return
     elif platform.system() == "Darwin":
         scriptfile = os.path.abspath(__file__)
