@@ -9,8 +9,8 @@ ifeq (MINGW,$(findstring MINGW,$(uname)))
 	PYTHON_PATH := $(shell cat pythonpath.txt)
 	NUMPY_INCLUDE := $(shell cat numpyincludes.txt)
 	PYTHON_DLL := $(PYTHON_PATH)/python311.dll
-	cflags = -l dl -I '$(PYTHON_INCLUDE)' -I '$(NUMPY_INCLUDE)' -Wno-cast-function-type -Wno-unused-variable 
-	ldlibs =  '$(PYTHON_DLL)' -lwinpthread -Xlinker --export-all-symbols
+	cflags = -I '$(PYTHON_INCLUDE)' -I '$(NUMPY_INCLUDE)' -Wno-cast-function-type -Wno-unused-variable 
+	ldlibs =  '$(PYTHON_DLL)' -lwinpthread 
 
 # =================================== Linux =====================================
 else ifeq (Linux,$(findstring Linux,$(uname)))
@@ -18,7 +18,7 @@ else ifeq (Linux,$(findstring Linux,$(uname)))
   	PYTHON_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
 	NUMPY_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import numpy; print(numpy.get_include())')
 	cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type
-  	ldlibs = -l dl -l $(PYTHON_VERSION) 
+  	ldlibs = -l $(PYTHON_VERSION) 
 
 # =================================== MacOS =====================================
 else ifeq (Darwin,$(findstring Darwin,$(uname)))
@@ -30,7 +30,7 @@ else ifeq (Darwin,$(findstring Darwin,$(uname)))
   		cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-bad-function-cast -mmacosx-version-min=10.9 
 	endif
   	PYTHON_LIB := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
-  	ldlibs = -l dl -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wno-null-pointer-subtraction
+  	ldlibs = -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wno-null-pointer-subtraction
 	
 else
   $(error "Unknown system type: $(uname)")

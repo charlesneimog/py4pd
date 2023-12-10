@@ -6,12 +6,8 @@ import sys
 
 errorInTest = 0
 
-# # cwd = to the same folder where this script is located
-# fileDir = os.path.dirname(os.path.realpath(__file__))
-# os.chdir(fileDir)
-
-
 def runTest(pdpatch):
+    #pdpatch = "02-simpleRun.pd"
     global errorInTest
     if platform.system() == "Linux":
         if os.path.isfile(pdpatch):
@@ -35,29 +31,30 @@ def runTest(pdpatch):
         scriptfile = os.path.abspath(__file__)
         scriptfolder = os.path.dirname(scriptfile)
         pathfile = scriptfolder + "\\" + pdpatch
-        # check if pathfile has JUSTLINUX in it
-        if "JUSTLINUX" in pathfile:
-            print("Test not supported on Windows")
-            return
-
         if os.path.isfile(pathfile):
             pass
         else:
             print(f"Patch {pathfile} not found")
             sys.exit()
         py4pdPath = os.path.dirname(scriptfolder)
-        cmd = ["..\\pd\\bin\\pd.com", "-nogui", "-send", "start-test bang", pathfile]
+        cmd = ["..\\pd\\bin\\pd.exe", "-nogui", "-noaudio", "-send", "start-test bang", pathfile]
         try:
-            # result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout_seconds)
-            output = subprocess.run(
+            process = subprocess.run(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True,
-                shell=True,
-                timeout=60,
+                check=True,
+                universal_newlines=True,
+                timeout=45,
             )
-            outputLines = str(output).split("\\n")
+            outputLines = []
+            stderrTOKENS = str(process.stderr).split("\n")
+            for line in stderrTOKENS:
+                if "error:" in line:
+                    outputLines.append(line.replace("error:", ""))
+                else:
+                    outputLines.append(line)
+            sys.exit()
         except subprocess.TimeoutExpired:
             print("\033[K", end="\r")
             print("Test with " + pdpatch + " failed")
@@ -144,7 +141,6 @@ if __name__ == "__main__":
         print("\033[91m" + (" " * 7) + f"{errorInTest} Test has failed" + "\033[0m")
         print("==============================")
         print("\n")
-
         sys.exit(-1)
     elif errorInTest == 0:
         print("\n")

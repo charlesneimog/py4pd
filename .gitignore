@@ -8,11 +8,17 @@
 .vscode/*
 Python
 bin
+pd/
 py4pd.zip
 DLLs/*
 Lib/*
 scripts/*
 build
+test/py4pd
+numpyincludes.txt
+pythonincludes.txt
+pythonpath.txt
+
 
 *.bat
 *.eps

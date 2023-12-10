@@ -90,13 +90,10 @@ jobs:
           cp py4pd.m_amd64 py4pd\
           cp py4pd.m_amd64 test\py4pd\py4pd.m_amd64
 
-      - name: Run tests
-        continue-on-error: true
-        shell: cmd
-        run: |
-          cd test
-          python3 -m pip install numpy -t py4pd/resources/py-modules
-          python3 runTests.py
+      - name: Tests
+        run: | 
+          cd test 
+          python ./runTests.py
 
       - name: Upload Object ZIP
         uses: actions/upload-artifact@v3
