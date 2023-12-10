@@ -103,13 +103,11 @@ def runTest(pdpatch):
                     print("\033[93m" + line + "\033[0m")
                 errorInTest += 1
         except Exception as e:
-           #print(e)
+            sys.stdout.reconfigure(encoding='utf-8')
             if passed:
-                string = " ✅️ Test with " + pdpatch + " passed"
-                print(string.encode("utf-8"))
+                print(f" ✅️ Test with {pdpatch} passed")
             else:
-                string = " ❌️ Test with " + pdpatch + " failed" 
-                print(string.encode("utf-8"))
+                print(f" ❌️ Test with {pdpatch} failed")
                 for line in outputLines:
                     print(line)
                 errorInTest += 1
