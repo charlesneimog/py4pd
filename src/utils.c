@@ -626,15 +626,25 @@ int Py4pdUtils_ExecuteSystemCommand(const char *command) {
     ZeroMemory(&si, sizeof(STARTUPINFO));
     si.cb = sizeof(STARTUPINFO);
     ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+   
+   DWORD exitCode;
     if (CreateProcess(NULL, (LPSTR)command, NULL, NULL, FALSE, CREATE_NO_WINDOW,
                       NULL, NULL, &si, &pi)) {
         WaitForSingleObject(pi.hProcess, INFINITE);
-        CloseHandle(pi.hProcess);
-        CloseHandle(pi.hThread);
+        if (GetExitCodeProcess(pi.hProcess, &exitCode)) {
+            if (exitCode != 0) {
+                post("HELP: Try to run: '%s' from the terminal/cmd", command);
+            }
+        } else {
+            pd_error(NULL, "[py4pd] Unable to retrieve exit code for pip command");
+        }
     } else {
-        return -1;
+        pd_error(NULL, "Error: Unable to create Pip process\n");
+        return -1; 
     }
-    return 0;
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    return exitCode; 
 #else
     int result = system(command);
     if (result != 0) {

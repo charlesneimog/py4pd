@@ -133,7 +133,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
 
     if (objectCapsule == NULL) {
         pd_error(x, "[Python] Failed to add object to Python");
-        // TODO: Fix this
+        // TODO: Replace to Py4pdPrint Error
         PyObject *ptype, *pvalue, *ptraceback;
         PyErr_Fetch(&ptype, &pvalue, &ptraceback);
         PyObject *ptype_str = PyObject_Str(ptype);
@@ -339,15 +339,15 @@ void *Py4pd_PipInstallDetach(void *Args) {
         pd_error(NULL, "Installing %s in background, please WAIT ...",
                  pipPackage);
         int result = Py4pdUtils_ExecuteSystemCommand(COMMAND);
-        if (result == -1) {
-            pd_error(NULL, "The instalation seems to have failed. Restart "
-                           "PureData and try again.\n");
+        if (result != 0) {
+            pd_error(NULL, "The instalation failed with error code %d", result);
             free(COMMAND);
+            outlet_float(x->mainOut, 0);
             return NULL;
         } else {
             pd_error(NULL, "The installation has been completed.\n");
             free(COMMAND);
-            outlet_bang(x->mainOut);
+            outlet_float(x->mainOut, 1);
             return NULL;
         }
     }
