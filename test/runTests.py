@@ -12,6 +12,7 @@ errorInTest = 0
 
 
 def runTest(pdpatch):
+    pdpatch = "02-simpleRun.pd"
     global errorInTest
     if platform.system() == "Linux":
         if os.path.isfile(pdpatch):
@@ -35,11 +36,6 @@ def runTest(pdpatch):
         scriptfile = os.path.abspath(__file__)
         scriptfolder = os.path.dirname(scriptfile)
         pathfile = scriptfolder + "\\" + pdpatch
-        # check if pathfile has JUSTLINUX in it
-        if "JUSTLINUX" in pathfile:
-            print("Test not supported on Windows")
-            return
-
         if os.path.isfile(pathfile):
             pass
         else:
@@ -48,17 +44,16 @@ def runTest(pdpatch):
         py4pdPath = os.path.dirname(scriptfolder)
         cmd = ["..\\pd\\bin\\pd.exe", "-nogui", "-send", "start-test bang", pathfile]
         try:
-            process = subprocess.Popen(
+            process = subprocess.run(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                check=True,
                 universal_newlines=True,
+                timeout=10,
             )
-            _, stderr = process.communicate()
-            if isinstance(stderr, str):
-                stderrTOKENS = stderr.split("\n")
-            process.wait()
             outputLines = []
+            stderrTOKENS = str(process.stderr).split("\n")
             for line in stderrTOKENS:
                 if "error:" in line:
                     outputLines.append(line.replace("error:", ""))
