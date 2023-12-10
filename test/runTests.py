@@ -37,7 +37,7 @@ def runTest(pdpatch):
             print(f"Patch {pathfile} not found")
             sys.exit()
         py4pdPath = os.path.dirname(scriptfolder)
-        cmd = ["..\\pd\\bin\\pd.exe", "-nogui", "-send", "start-test bang", pathfile]
+        cmd = ["..\\pd\\bin\\pd.exe", "-nogui", "-noaudio", "-send", "start-test bang", pathfile]
         try:
             process = subprocess.run(
                 cmd,
@@ -140,7 +140,6 @@ if __name__ == "__main__":
         print("\033[91m" + (" " * 7) + f"{errorInTest} Test has failed" + "\033[0m")
         print("==============================")
         print("\n")
-
         sys.exit(-1)
     elif errorInTest == 0:
         print("\n")
