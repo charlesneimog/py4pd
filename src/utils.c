@@ -179,7 +179,7 @@ void *Py4pdLib_FreeObj(t_py *x) {
         object_count = 0;
         char command[1000];
 #ifdef _WIN64
-        sprintf(command, "del /q /s %s\\*", x->tempPath->s_name);
+        sprintf(command, "cmd /C del /Q /S %s*.*", x->tempPath->s_name);
         (void)Py4pdUtils_ExecuteSystemCommand(command);
 #else
         sprintf(command, "rm -rf %s", x->tempPath->s_name);
@@ -636,10 +636,10 @@ int Py4pdUtils_ExecuteSystemCommand(const char *command) {
                 post("HELP: Try to run: '%s' from the terminal/cmd", command);
             }
         } else {
-            pd_error(NULL, "[py4pd] Unable to retrieve exit code for pip command");
+            pd_error(NULL, "[py4pd] Unable to retrieve exit code from command!");
         }
     } else {
-        pd_error(NULL, "Error: Unable to create Pip process\n");
+        pd_error(NULL, "Error: Process creation failed!");
         return -1; 
     }
     CloseHandle(pi.hProcess);
