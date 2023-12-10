@@ -6,9 +6,9 @@ import sys
 
 errorInTest = 0
 
-# cwd = to the same folder where this script is located
-fileDir = os.path.dirname(os.path.realpath(__file__))
-os.chdir(fileDir)
+# # cwd = to the same folder where this script is located
+# fileDir = os.path.dirname(os.path.realpath(__file__))
+# os.chdir(fileDir)
 
 
 def runTest(pdpatch):
@@ -46,14 +46,13 @@ def runTest(pdpatch):
             print(f"Patch {pathfile} not found")
             sys.exit()
         py4pdPath = os.path.dirname(scriptfolder)
-        # cmd = f'"..\\pd\\bin\\pd.com" -nogui -send "start-test bang" "{pathfile}"'
         cmd = ["..\\pd\\bin\\pd.com", "-nogui", "-send", "start-test bang", pathfile]
         try:
             # result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=timeout_seconds)
             output = subprocess.run(
                 cmd,
-                # stdout=subprocess.PIPE,
-                # stderr=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
                 text=True,
                 shell=True,
                 timeout=60,
@@ -75,7 +74,6 @@ def runTest(pdpatch):
             sys.exit()
 
         py4pdPath = os.path.abspath(scriptfolder)
-        print("py4pdPath: " + py4pdPath)
         cmd = (
             f'/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -path {py4pdPath} -send "start-test bang" '
             + pathfile
@@ -98,31 +96,22 @@ def runTest(pdpatch):
         if "PASS" in line or "Pass" in line:
             passed = True
 
-    if platform.system() != "Linux":
-        try:
-            if passed:
-                print("\033[92m" + " ✅️ Test with " + pdpatch + " passed" + "\033[0m")
-            else:
-                print("\033[91m" + " ❌️ Test with " + pdpatch + " failed" + "\033[0m\n")
-                for line in outputLines:
-                    print("\033[93m" + line + "\033[0m")
-                errorInTest += 1
-        except:
-            if passed:
-                print(f"Test with {pdpatch} passed")
-            else:
-                print(f"Test with {pdpatch} failed")
-                for line in outputLines:
-                    print(line)
-                errorInTest += 1
-    else:
+    try:
+        if passed:
+            print("\033[92m" + " ✅️ Test with " + pdpatch + " passed" + "\033[0m")
+        else:
+            print("\033[91m" + " ❌️ Test with " + pdpatch + " failed" + "\033[0m\n")
+            for line in outputLines:
+                print("\033[93m" + line + "\033[0m")
+            errorInTest += 1
+    except:
         if passed:
             print(f"Test with {pdpatch} passed")
         else:
             print(f"Test with {pdpatch} failed")
             for line in outputLines:
                 print(line)
-                errorInTest += 1
+            errorInTest += 1
 
 
 if __name__ == "__main__":
