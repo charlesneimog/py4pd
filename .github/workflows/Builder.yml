@@ -4,6 +4,7 @@ on:
     branches:
       - develop
     paths:
+      - "**/*.py"
       - "**/*.c"
       - "**/*.h"
       - "**/*.yml"
