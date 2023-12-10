@@ -1,3 +1,4 @@
+import os
 import platform
 import subprocess
 import time
@@ -18,12 +19,13 @@ def py4pdtimer(message):
 def getMemoryUse():
     if platform.system() == "Linux":
         try:
-            pid = subprocess.check_output(["pidof", "pd"])
-            pid = pid.decode("utf-8").strip()
+            pid = os.getpid()
             if isinstance(pid, list):
                 pd.error("More than one pid found for " + "pd")
                 return 0
-            memoryUse = int(subprocess.check_output(["ps", "-o", "rss=", pid]).strip())
+            memoryUse = int(
+                subprocess.check_output(["ps", "-o", "rss=", str(pid)]).strip()
+            )
             memoryUse = int(memoryUse / 1024)
             return memoryUse
         except subprocess.CalledProcessError as e:
@@ -31,11 +33,10 @@ def getMemoryUse():
             return 0
     elif platform.system() == "Darwin":
         try:
-            command = "top -l 1 -stats pid,command,cpu,mem | grep Pd"
+            command = "ps -o rss -p " + str(os.getpid())
             result = subprocess.check_output(command, shell=True, text=True)
-            result = result.split()[3]
-            result = result[:-1]
-            return result
+            memory = int(int(result.split("\n")[1]) / 1024)
+            return memory
         except subprocess.CalledProcessError:
             return None
 

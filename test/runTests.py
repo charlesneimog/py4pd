@@ -6,12 +6,16 @@ import sys
 
 errorInTest = 0
 
+
 def runTest(pdpatch):
-    #pdpatch = "02-simpleRun.pd"
     global errorInTest
     if platform.system() == "Linux":
+        thisSCRIPT = os.path.abspath(__file__)
+        thisFOLDER = os.path.dirname(thisSCRIPT)
+        completPathPatch = thisFOLDER + "/" + pdpatch
+        os.chdir(thisFOLDER)
         if os.path.isfile(pdpatch):
-            cmd = f'pd -nogui -send "start-test bang" {pdpatch}'
+            cmd = f'pd -nogui -send "start-test bang" {completPathPatch}'
         else:
             print("PureData Patch not found")
             sys.exit()
@@ -37,7 +41,14 @@ def runTest(pdpatch):
             print(f"Patch {pathfile} not found")
             sys.exit()
         py4pdPath = os.path.dirname(scriptfolder)
-        cmd = ["..\\pd\\bin\\pd.exe", "-nogui", "-noaudio", "-send", "start-test bang", pathfile]
+        cmd = [
+            "..\\pd\\bin\\pd.exe",
+            "-nogui",
+            "-noaudio",
+            "-send",
+            "start-test bang",
+            pathfile,
+        ]
         try:
             process = subprocess.run(
                 cmd,
@@ -54,7 +65,7 @@ def runTest(pdpatch):
                     outputLines.append(line.replace("error:", ""))
                 else:
                     outputLines.append(line)
-        
+
         except subprocess.TimeoutExpired:
             print("\033[K", end="\r")
             print("Test with " + pdpatch + " failed")
@@ -76,7 +87,9 @@ def runTest(pdpatch):
             + pathfile
         )
         try:
-            output = subprocess.run(cmd, capture_output=True, text=True, shell=True, timeout=45)
+            output = subprocess.run(
+                cmd, capture_output=True, text=True, shell=True, timeout=45
+            )
             outputLines = str(output).split("\\n")
         except subprocess.TimeoutExpired:
             print("\033[K", end="\r")
@@ -103,7 +116,7 @@ def runTest(pdpatch):
                     print("\033[93m" + line + "\033[0m")
                 errorInTest += 1
         except Exception as e:
-            sys.stdout.reconfigure(encoding='utf-8')
+            sys.stdout.reconfigure(encoding="utf-8")
             if passed:
                 print(f" ✅️ Test with {pdpatch} passed")
             else:
