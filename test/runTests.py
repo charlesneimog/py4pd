@@ -57,7 +57,7 @@ def runTest(pdpatch):
                 shell=True,
                 timeout=60,
             )
-            outputLines = str(output).split("\\n")
+            outputLines = str(output.stderr).split("\\n")
         except subprocess.TimeoutExpired:
             print("\033[K", end="\r")
             print("Test with " + pdpatch + " failed")
