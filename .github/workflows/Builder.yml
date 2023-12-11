@@ -92,7 +92,7 @@ jobs:
           cp py4pd.m_amd64 test\py4pd\py4pd.m_amd64
 
       - name: Tests
-        run: | 
+        run: |
           cd test 
           python ./runTests.py
 
@@ -123,7 +123,6 @@ jobs:
         run: |
           brew install --cask pd
           python3.11 -m pip install numpy
-          
 
       - name: Build
         run: make PYTHON_VERSION=python3.11 extension=d_amd64
@@ -136,7 +135,6 @@ jobs:
           cp -r resources test/py4pd
 
       - name: Run Tests
-        continue-on-error: true
         run: |
           cd test
           python3.11 ./runTests.py
@@ -240,3 +238,31 @@ jobs:
         with:
           name: py4pd
           path: py4pd
+
+  # ==============================================================================
+  # =                               DEKEN                                        =
+  # ==============================================================================
+
+  deken-upload:
+    # if: github.event_name == 'release'
+    needs: [windows-build, macos-intel-build, macos-arm-build, linux-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download py4pd Object
+        uses: actions/download-artifact@v3
+        with:
+          name: py4pd
+          path: deken/py4pd
+
+      - name: Install and run Deken 1ª time
+        continue-on-error: true
+        run: |
+          sudo apt-get install deken -y
+          deken --help
+
+      - name: Install Python
+        run: |
+          deken package py4pd --name py4pd --default-floatsize 32 --version 0.8.4-beta
+          deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version 0.8.4-beta
