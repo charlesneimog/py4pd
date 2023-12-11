@@ -1,8 +1,7 @@
-name: Build and Test [Dev]
+name: "[Dev] Tests"
 on:
   release:
     types: [published]
-
   push:
     branches:
       - develop
@@ -11,7 +10,6 @@ on:
       - "**/*.c"
       - "**/*.h"
       - "**/*.yml"
-
   workflow_dispatch:
     inputs:
       windows:
