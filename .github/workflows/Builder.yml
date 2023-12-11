@@ -245,13 +245,8 @@ jobs:
   # ==============================================================================
 
   deken-upload:
-    # if: github.event_name == 'release'
-<<<<<<<<< Temporary merge branch 1
+    if: github.event_name == 'release'
     needs: [windows-build, macos-intel-build, macos-arm-build, linux-build]
-=========
-    # needs: [windows-build, macos-intel-build, macos-arm-build, linux-build]
-    needs: [linux-build]
->>>>>>>>> Temporary merge branch 2
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -270,13 +265,9 @@ jobs:
 
       - name: Install Python
         run: |
-          git clone https://github.com/pure-data/deken.git
-          sudo cp ./deken/developer/deken /usr/local/bin
-          sudo chmod +x /usr/local/bin/deken
-          deken --version
+          ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version 0.8.4-beta
+          ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version 0.8.4-beta
 
-      - name: Create Package
->>>>>>>>> Temporary merge branch 2
-        run: |
-          deken package py4pd --name py4pd --default-floatsize 32 --version 0.8.4-beta
-          deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version 0.8.4-beta
+
+
+
