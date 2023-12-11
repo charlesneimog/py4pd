@@ -3,8 +3,8 @@
   <h4 align="center">Python in the PureData environment.</h4>
 </p>
 <p align="center">
-    <a href="https://github.com/charlesneimog/py4pd/releases/latest"><img src="https://img.shields.io/github/release/charlesneimog/py4pd.svg?include_prereleases" alt="Release"></a>
     <a href="https://github.com/plugdata-team/plugdata/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-GPL--v3-blue.svg" alt="License"></a>
+    <a href="https://github.com/charlesneimog/py4pd/releases/latest"><img src="https://img.shields.io/github/release/charlesneimog/py4pd.svg?include_prereleases" alt="Release"></a>
     <a href="https://doi.org/10.5281/zenodo.10247117"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.10247117.svg" alt="DOI"></a>
 </p>
     
