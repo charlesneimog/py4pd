@@ -1,5 +1,8 @@
 name: Builder
 on:
+  release:
+    types: [published]
+
   push:
     branches:
       - develop
@@ -37,9 +40,8 @@ jobs:
   # =                               WINDOWS                                      =
   # ==============================================================================
   windows-build:
-    # if just linux is true, skip windows
     runs-on: windows-latest
-    if: ${{ inputs.windows }}
+    if: ${{ inputs.windows }} || github.event_name == 'release'
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v3
@@ -107,7 +109,7 @@ jobs:
   # ==============================================================================
   macos-intel-build:
     runs-on: macos-latest
-    if: ${{ inputs.macos-intel }}
+    if: ${{ inputs.macos-intel }} || github.event_name == 'release'
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v3
@@ -135,7 +137,6 @@ jobs:
           cp -r resources test/py4pd
 
       - name: Run Tests
-        continue-on-error: true
         run: |
           cd test
           python3.11 ./runTests.py
@@ -151,7 +152,7 @@ jobs:
   # ==============================================================================
   macos-arm-build:
     runs-on: macos-latest
-    if: ${{ inputs.macos-arm }}
+    if: ${{ inputs.macos-arm }} || github.event_name == 'release'
     timeout-minutes: 15
 
     steps:
@@ -189,7 +190,7 @@ jobs:
 
   linux-build:
     runs-on: ubuntu-latest
-    if: ${{ inputs.linux }}
+    if: ${{ inputs.linux }} || github.event_name == 'release'
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v3
@@ -230,7 +231,6 @@ jobs:
           rm py4pd.l_amd64
 
       - name: Tests
-        continue-on-error: true
         run: |
           cd test && python3 ./runTests.py
 
@@ -254,20 +254,31 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: py4pd
-          path: deken/py4pd
+          path: py4pd
 
-      - name: Install and run Deken 1ª time
+      - name: Install Deken
         continue-on-error: true
         run: |
           git clone https://github.com/pure-data/deken
           chmod +x ./deken/developer/deken
-          ./deken/developer/deken --help
+          ./deken/developer/deken install --self
 
-      - name: Install Python
+      - name: Config Deken
         run: |
-          ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version 0.8.4-beta
-          ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version 0.8.4-beta
+          echo "username = ${DEKEN_USERNAME}" > $HOME/.deken/config
+          echo "password = ${PASSWORD}" >> $HOME/.deken/config
+        env:
+          DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
+          PASSWORD: ${{ secrets.DEKEN_PASSWORD }}
 
+      - name: Fix problem with easywebdav2
+        continue-on-error: true
+        run: |
+          ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
+          ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
 
-
+      - name: Upload deken Package
+        run: |
+          ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
+          ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
 
