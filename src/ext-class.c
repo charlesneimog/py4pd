@@ -5,217 +5,218 @@
 // ===================== PDOBJECT CLASS =======================
 // ============================================================
 typedef struct {
-  PyObject_HEAD const char *objName;
-  int objType;
-  int objIsPlayable;
-  PyObject *objFigSize;
-  int objOutPyObjs;
-  int noOutlets;
-  int auxOutlets;
-  int requireNofOutlets;
-  int ignoreNoneOutputs;
-  const char *objImage;
+    PyObject_HEAD const char *objName;
+    int objType;
+    int objIsPlayable;
+    PyObject *objFigSize;
+    int objOutPyObjs;
+    int noOutlets;
+    int auxOutlets;
+    int requireNofOutlets;
+    int ignoreNoneOutputs;
+    const char *objImage;
 } py4pdNewObject;
 
 // ============================================================
 static int Py4pdNewObj_init(py4pdNewObject *self, PyObject *args,
                             PyObject *kwds) {
-  (void)self;
-  static char *keywords[] = {"param_str", NULL};
-  char *param_str;
-  if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", keywords, &param_str)) {
-    return -1;
-  }
-  PyObject *objectName = PyUnicode_FromString(param_str);
-  if (!objectName) {
-    PyErr_SetString(PyExc_TypeError, "Object name not valid");
-    return -1;
-  }
-  self->objName = PyUnicode_AsUTF8(objectName);
-  self->objType = PY4PD_NORMALOBJ;
-  return 0;
+    (void)self;
+    static char *keywords[] = {"param_str", NULL};
+    char *param_str;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", keywords, &param_str)) {
+        return -1;
+    }
+    PyObject *objectName = PyUnicode_FromString(param_str);
+    if (!objectName) {
+        PyErr_SetString(PyExc_TypeError, "Object name not valid");
+        return -1;
+    }
+    self->objName = PyUnicode_AsUTF8(objectName);
+    self->objType = PY4PD_NORMALOBJ;
+    return 0;
 }
 
 // ============================================================
 static PyObject *Py4pdNewObj_GetType(py4pdNewObject *self) {
-  return PyLong_FromLong(self->objType);
+    return PyLong_FromLong(self->objType);
 }
 
 static int Py4pdNewObj_SetType(py4pdNewObject *self, PyObject *value) {
-  int typeValue = PyLong_AsLong(value);
-  if (typeValue < 0 || typeValue > 3) {
-    PyErr_SetString(PyExc_TypeError,
-                    "Object type not supported, check the value");
-    return -1;
-  }
-  self->objType = typeValue;
-  return 0;
+    int typeValue = PyLong_AsLong(value);
+    if (typeValue < 0 || typeValue > 3) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Object type not supported, check the value");
+        return -1;
+    }
+    self->objType = typeValue;
+    return 0;
 }
 // ============================================================
 static PyObject *Py4pdNewObj_GetName(py4pdNewObject *self) {
-  return PyUnicode_FromString(self->objName);
+    return PyUnicode_FromString(self->objName);
 }
 
 // ++++++++++
 static int Py4pdNewObj_SetName(py4pdNewObject *self, PyObject *value) {
-  PyObject *objectName = PyUnicode_FromString(PyUnicode_AsUTF8(value));
-  if (!objectName) {
-    PyErr_SetString(PyExc_TypeError, "Object name not valid");
-    return -1;
-  }
-  self->objName = PyUnicode_AsUTF8(objectName);
-  Py_DECREF(objectName);
-  return 0;
+    PyObject *objectName = PyUnicode_FromString(PyUnicode_AsUTF8(value));
+    if (!objectName) {
+        PyErr_SetString(PyExc_TypeError, "Object name not valid");
+        return -1;
+    }
+    self->objName = PyUnicode_AsUTF8(objectName);
+    Py_DECREF(objectName);
+    return 0;
 }
 
 // ============================================================
 static PyObject *Py4pdNewObj_GetPlayable(py4pdNewObject *self) {
-  return PyLong_FromLong(self->objIsPlayable);
+    return PyLong_FromLong(self->objIsPlayable);
 }
 
 // ++++++++++
 static int Py4pdNewObj_SetPlayable(py4pdNewObject *self, PyObject *value) {
-  int playableValue = PyObject_IsTrue(value);
-  if (playableValue < 0 || playableValue > 1) {
-    PyErr_SetString(PyExc_TypeError,
-                    "Playable value not supported, check the value");
-    return -1;
-  }
-  self->objIsPlayable = playableValue;
-  return 0;
+    int playableValue = PyObject_IsTrue(value);
+    if (playableValue < 0 || playableValue > 1) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Playable value not supported, check the value");
+        return -1;
+    }
+    self->objIsPlayable = playableValue;
+    return 0;
 }
 
 // ============================================================
 static PyObject *Py4pdNewObj_GetImage(py4pdNewObject *self) {
-  return PyUnicode_FromString(self->objImage);
+    return PyUnicode_FromString(self->objImage);
 }
 
 // ++++++++++
 static int Py4pdNewObj_SetImage(py4pdNewObject *self, PyObject *value) {
-  const char *imageValue = PyUnicode_AsUTF8(value);
-  if (!imageValue) {
-    PyErr_SetString(PyExc_TypeError, "Image path not valid");
-    return -1;
-  }
-  self->objImage = imageValue;
-  return 0;
+    const char *imageValue = PyUnicode_AsUTF8(value);
+    if (!imageValue) {
+        PyErr_SetString(PyExc_TypeError, "Image path not valid");
+        return -1;
+    }
+    self->objImage = imageValue;
+    return 0;
 }
 
 // ============================================================
 static PyObject *Py4pdNewObj_GetOutputPyObjs(py4pdNewObject *self) {
-  return PyLong_FromLong(self->objOutPyObjs);
+    return PyLong_FromLong(self->objOutPyObjs);
 }
 
 // ++++++++++
 static int Py4pdNewObj_SetOutputPyObjs(py4pdNewObject *self, PyObject *value) {
-  int outputPyObjsValue = PyObject_IsTrue(value);
-  if (!outputPyObjsValue) {
-    PyErr_SetString(PyExc_TypeError, "Image path not valid");
-    return -1;
-  }
-  self->objOutPyObjs = outputPyObjsValue;
-  return 0;
+    int outputPyObjsValue = PyObject_IsTrue(value);
+    if (!outputPyObjsValue) {
+        PyErr_SetString(PyExc_TypeError, "Image path not valid");
+        return -1;
+    }
+    self->objOutPyObjs = outputPyObjsValue;
+    return 0;
 }
 
 // ============================================================
 static PyObject *Py4pdNewObj_GetFigSize(py4pdNewObject *self) {
-  return PyLong_FromLong(self->objIsPlayable);
+    return PyLong_FromLong(self->objIsPlayable);
 }
 
 // ++++++++++
 static int Py4pdNewObj_SetFigSize(py4pdNewObject *self, PyObject *value) {
-  // see if object value is a tuple with two integers
-  if (!PyTuple_Check(value)) {
-    PyErr_SetString(PyExc_TypeError,
-                    "Figure size must be a tuple with two integers");
-    return -1; // Error handling
-  }
-  if (PyTuple_Size(value) != 2) {
-    PyErr_SetString(PyExc_TypeError,
-                    "Figure size must be a tuple with two integers");
-    return -1; // Error handling
-  }
-  PyObject *width = PyTuple_GetItem(value, 0);
-  PyObject *height = PyTuple_GetItem(value, 1);
-  if (!PyLong_Check(width) || !PyLong_Check(height)) {
-    PyErr_SetString(PyExc_TypeError,
-                    "Figure size must be a tuple with two integers");
-    return -1; // Error handling
-  }
-  self->objFigSize = value;
+    // see if object value is a tuple with two integers
+    if (!PyTuple_Check(value)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Figure size must be a tuple with two integers");
+        return -1; // Error handling
+    }
+    if (PyTuple_Size(value) != 2) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Figure size must be a tuple with two integers");
+        return -1; // Error handling
+    }
+    PyObject *width = PyTuple_GetItem(value, 0);
+    PyObject *height = PyTuple_GetItem(value, 1);
+    if (!PyLong_Check(width) || !PyLong_Check(height)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Figure size must be a tuple with two integers");
+        return -1; // Error handling
+    }
+    self->objFigSize = value;
 
-  return 0; // Success
+    return 0; // Success
 }
 
 // ============================================================
 static PyObject *Py4pdNewObj_GetNoOutlets(py4pdNewObject *self) {
-  if (self->noOutlets) {
-    Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
-  }
+    if (self->noOutlets) {
+        Py_RETURN_TRUE;
+    } else {
+        Py_RETURN_FALSE;
+    }
 }
 
 // ++++++++++
 static int Py4pdNewObj_SetNoOutlets(
     py4pdNewObject *self,
     PyObject *value) { // see if object value is a tuple with two integers
-  int outpuNoOutlets = PyObject_IsTrue(value);
-  self->noOutlets = outpuNoOutlets;
-  return 0; // Success
+    int outpuNoOutlets = PyObject_IsTrue(value);
+    self->noOutlets = outpuNoOutlets;
+    return 0; // Success
 }
 
 // ============================================================
 static PyObject *Py4pdNewObj_GetRequireNofOuts(py4pdNewObject *self) {
-  if (self->requireNofOutlets) {
-    Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
-  }
+    if (self->requireNofOutlets) {
+        Py_RETURN_TRUE;
+    } else {
+        Py_RETURN_FALSE;
+    }
 }
 
 // ++++++++++
 static int Py4pdNewObj_SetRequireNofOuts(
     py4pdNewObject *self,
     PyObject *value) { // see if object value is a tuple with two integers
-  int outpuNoOutlets = PyObject_IsTrue(value);
-  self->requireNofOutlets = outpuNoOutlets;
-  return 0; // Success
+    int outpuNoOutlets = PyObject_IsTrue(value);
+    self->requireNofOutlets = outpuNoOutlets;
+    return 0; // Success
 }
 
 // ============================================================
 static PyObject *Py4pdNewObj_GetAuxOutNumbers(py4pdNewObject *self) {
-  return PyLong_FromLong(self->auxOutlets);
+    return PyLong_FromLong(self->auxOutlets);
 }
 
 // ++++++++++
 static int Py4pdNewObj_SetAuxOutNumbers(
     py4pdNewObject *self,
     PyObject *value) { // see if object value is a tuple with two integers
-  if (!PyLong_Check(value)) {
-    PyErr_SetString(PyExc_TypeError, "Auxiliary outlets must be an integer");
-    return -1; // Error handling
-  }
-  self->auxOutlets = PyLong_AsLong(value);
-  return 0; // Success
+    if (!PyLong_Check(value)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "Auxiliary outlets must be an integer");
+        return -1; // Error handling
+    }
+    self->auxOutlets = PyLong_AsLong(value);
+    return 0; // Success
 }
 
 // ============================================================
 static PyObject *Py4pdNewObj_GetIgnoreNone(py4pdNewObject *self) {
-  if (self->ignoreNoneOutputs) {
-    Py_RETURN_TRUE;
-  } else {
-    Py_RETURN_FALSE;
-  }
+    if (self->ignoreNoneOutputs) {
+        Py_RETURN_TRUE;
+    } else {
+        Py_RETURN_FALSE;
+    }
 }
 
 // ++++++++++
 static int Py4pdNewObj_SetIgnoreNone(
     py4pdNewObject *self,
     PyObject *value) { // see if object value is a tuple with two integers
-  int ignoreNone = PyObject_IsTrue(value);
-  self->ignoreNoneOutputs = ignoreNone;
-  return 0; // Success
+    int ignoreNone = PyObject_IsTrue(value);
+    self->ignoreNoneOutputs = ignoreNone;
+    return 0; // Success
 }
 
 // ========================== GET/SET ==========================
@@ -246,110 +247,110 @@ static PyGetSetDef Py4pdNewObj_GetSet[] = {
 // =============================================================
 static PyObject *Py4pdNewObj_Method_AddObj(py4pdNewObject *self,
                                            PyObject *args) {
-  (void)args;
+    (void)args;
 
-  PyObject *objConfigDict = PyDict_New();
-  const char *objectName;
-  objectName = self->objName;
+    PyObject *objConfigDict = PyDict_New();
+    const char *objectName;
+    objectName = self->objName;
 
-  PyObject *Py_ObjType = PyLong_FromLong(self->objType);
-  PyDict_SetItemString(objConfigDict, "py4pdOBJType", Py_ObjType);
-  Py_DECREF(Py_ObjType);
-  t_class *objClass;
+    PyObject *Py_ObjType = PyLong_FromLong(self->objType);
+    PyDict_SetItemString(objConfigDict, "py4pdOBJType", Py_ObjType);
+    Py_DECREF(Py_ObjType);
+    t_class *objClass;
 
-  if (self->objType == PY4PD_NORMALOBJ) {
-    objClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                         (t_method)Py4pdLib_FreeObj, sizeof(t_py),
-                         CLASS_DEFAULT, A_GIMME, 0);
-  } else if (self->objType == PY4PD_VISOBJ) {
-    objClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                         (t_method)Py4pdLib_FreeObj, sizeof(t_py),
-                         CLASS_DEFAULT, A_GIMME, 0);
-  } else if (self->objType == PY4PD_AUDIOINOBJ) {
-    objClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                         (t_method)Py4pdLib_FreeObj, sizeof(t_py),
-                         CLASS_MULTICHANNEL, A_GIMME, 0);
-  } else if (self->objType == PY4PD_AUDIOOUTOBJ) {
-    objClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                         (t_method)Py4pdLib_FreeObj, sizeof(t_py),
-                         CLASS_MULTICHANNEL, A_GIMME, 0);
-  } else if (self->objType == PY4PD_AUDIOOBJ) {
-    objClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                         (t_method)Py4pdLib_FreeObj, sizeof(t_py),
-                         CLASS_MULTICHANNEL, A_GIMME, 0);
-  } else {
-    PyErr_SetString(PyExc_TypeError,
-                    "Object type not supported, check the spelling");
-    return NULL;
-  }
+    if (self->objType == PY4PD_NORMALOBJ) {
+        objClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
+                             (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                             CLASS_DEFAULT, A_GIMME, 0);
+    } else if (self->objType == PY4PD_VISOBJ) {
+        objClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
+                             (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                             CLASS_DEFAULT, A_GIMME, 0);
+    } else if (self->objType == PY4PD_AUDIOINOBJ) {
+        objClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
+                             (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                             CLASS_MULTICHANNEL, A_GIMME, 0);
+    } else if (self->objType == PY4PD_AUDIOOUTOBJ) {
+        objClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
+                             (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                             CLASS_MULTICHANNEL, A_GIMME, 0);
+    } else if (self->objType == PY4PD_AUDIOOBJ) {
+        objClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
+                             (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                             CLASS_MULTICHANNEL, A_GIMME, 0);
+    } else {
+        PyErr_SetString(PyExc_TypeError,
+                        "Object type not supported, check the spelling");
+        return NULL;
+    }
 
-  PyObject *Py_ClassLocal = PyLong_FromVoidPtr(objClass);
-  PyDict_SetItemString(objConfigDict, "py4pdOBJ_CLASS", Py_ClassLocal);
-  Py_DECREF(Py_ClassLocal);
+    PyObject *Py_ClassLocal = PyLong_FromVoidPtr(objClass);
+    PyDict_SetItemString(objConfigDict, "py4pdOBJ_CLASS", Py_ClassLocal);
+    Py_DECREF(Py_ClassLocal);
 
-  if (self->objFigSize != NULL) {
-    PyObject *Py_Width = PyTuple_GetItem(self->objFigSize, 0);
-    PyDict_SetItemString(objConfigDict, "py4pdOBJwidth", Py_Width);
-    Py_DECREF(Py_Width);
-    PyObject *Py_Height = PyTuple_GetItem(self->objFigSize, 1);
-    PyDict_SetItemString(objConfigDict, "py4pdOBJheight", Py_Height);
-    Py_DECREF(Py_Height);
-  } else {
-    PyObject *Py_Width = PyLong_FromLong(250);
-    PyDict_SetItemString(objConfigDict, "py4pdOBJwidth", Py_Width);
-    Py_DECREF(Py_Width);
-    PyObject *Py_Height = PyLong_FromLong(250);
-    PyDict_SetItemString(objConfigDict, "py4pdOBJheight", Py_Height);
-    Py_DECREF(Py_Height);
-  }
+    if (self->objFigSize != NULL) {
+        PyObject *Py_Width = PyTuple_GetItem(self->objFigSize, 0);
+        PyDict_SetItemString(objConfigDict, "py4pdOBJwidth", Py_Width);
+        Py_DECREF(Py_Width);
+        PyObject *Py_Height = PyTuple_GetItem(self->objFigSize, 1);
+        PyDict_SetItemString(objConfigDict, "py4pdOBJheight", Py_Height);
+        Py_DECREF(Py_Height);
+    } else {
+        PyObject *Py_Width = PyLong_FromLong(250);
+        PyDict_SetItemString(objConfigDict, "py4pdOBJwidth", Py_Width);
+        Py_DECREF(Py_Width);
+        PyObject *Py_Height = PyLong_FromLong(250);
+        PyDict_SetItemString(objConfigDict, "py4pdOBJheight", Py_Height);
+        Py_DECREF(Py_Height);
+    }
 
-  PyObject *Py_Playable = PyLong_FromLong(self->objIsPlayable);
-  PyDict_SetItemString(objConfigDict, "py4pdOBJPlayable", Py_Playable);
-  Py_DECREF(Py_Playable);
+    PyObject *Py_Playable = PyLong_FromLong(self->objIsPlayable);
+    PyDict_SetItemString(objConfigDict, "py4pdOBJPlayable", Py_Playable);
+    Py_DECREF(Py_Playable);
 
-  if (self->objImage != NULL) {
-    PyObject *Py_GifImage = PyUnicode_FromString(self->objImage);
-    PyDict_SetItemString(objConfigDict, "py4pdOBJGif", Py_GifImage);
-    Py_DECREF(Py_GifImage);
-  }
+    if (self->objImage != NULL) {
+        PyObject *Py_GifImage = PyUnicode_FromString(self->objImage);
+        PyDict_SetItemString(objConfigDict, "py4pdOBJGif", Py_GifImage);
+        Py_DECREF(Py_GifImage);
+    }
 
-  PyObject *Py_ObjOuts = PyLong_FromLong(self->objOutPyObjs);
-  PyDict_SetItemString(objConfigDict, "py4pdOBJpyout", Py_ObjOuts);
-  Py_DECREF(Py_ObjOuts);
+    PyObject *Py_ObjOuts = PyLong_FromLong(self->objOutPyObjs);
+    PyDict_SetItemString(objConfigDict, "py4pdOBJpyout", Py_ObjOuts);
+    Py_DECREF(Py_ObjOuts);
 
-  PyObject *Py_NoOutlet = PyLong_FromLong(self->noOutlets);
-  PyDict_SetItemString(objConfigDict, "py4pdOBJnooutlet", Py_NoOutlet);
-  Py_DECREF(Py_NoOutlet);
+    PyObject *Py_NoOutlet = PyLong_FromLong(self->noOutlets);
+    PyDict_SetItemString(objConfigDict, "py4pdOBJnooutlet", Py_NoOutlet);
+    Py_DECREF(Py_NoOutlet);
 
-  PyObject *Py_RequireOutletN = PyLong_FromLong(self->requireNofOutlets);
-  PyDict_SetItemString(objConfigDict, "py4pdOBJrequireoutletn",
-                       Py_RequireOutletN);
-  Py_DECREF(Py_RequireOutletN);
+    PyObject *Py_RequireOutletN = PyLong_FromLong(self->requireNofOutlets);
+    PyDict_SetItemString(objConfigDict, "py4pdOBJrequireoutletn",
+                         Py_RequireOutletN);
+    Py_DECREF(Py_RequireOutletN);
 
-  PyObject *Py_auxOutlets = PyLong_FromLong(self->auxOutlets);
-  PyDict_SetItemString(objConfigDict, "py4pdAuxOutlets", Py_auxOutlets);
-  Py_DECREF(Py_auxOutlets);
+    PyObject *Py_auxOutlets = PyLong_FromLong(self->auxOutlets);
+    PyDict_SetItemString(objConfigDict, "py4pdAuxOutlets", Py_auxOutlets);
+    Py_DECREF(Py_auxOutlets);
 
-  PyObject *Py_ObjName = PyUnicode_FromString(objectName);
-  PyDict_SetItemString(objConfigDict, "py4pdOBJname", Py_ObjName);
-  Py_DECREF(Py_ObjName);
+    PyObject *Py_ObjName = PyUnicode_FromString(objectName);
+    PyDict_SetItemString(objConfigDict, "py4pdOBJname", Py_ObjName);
+    Py_DECREF(Py_ObjName);
 
-  PyObject *Py_IgnoreNoneReturn = PyLong_FromLong(self->ignoreNoneOutputs);
-  PyDict_SetItemString(objConfigDict, "py4pdOBJIgnoreNone",
-                       Py_IgnoreNoneReturn);
-  Py_DECREF(Py_IgnoreNoneReturn);
+    PyObject *Py_IgnoreNoneReturn = PyLong_FromLong(self->ignoreNoneOutputs);
+    PyDict_SetItemString(objConfigDict, "py4pdOBJIgnoreNone",
+                         Py_IgnoreNoneReturn);
+    Py_DECREF(Py_IgnoreNoneReturn);
 
-  PyObject *objectDict = PyDict_New();
-  PyDict_SetItemString(objectDict, objectName, objConfigDict);
-  PyObject *py4pd_capsule = PyCapsule_New(objectDict, objectName, NULL);
-  char py4pd_objectName[MAXPDSTRING];
-  sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
+    PyObject *objectDict = PyDict_New();
+    PyDict_SetItemString(objectDict, objectName, objConfigDict);
+    PyObject *py4pd_capsule = PyCapsule_New(objectDict, objectName, NULL);
+    char py4pd_objectName[MAXPDSTRING];
+    sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
 
-  PyObject *pdModule = PyImport_ImportModule("pd");
-  PyModule_AddObject(pdModule, py4pd_objectName, py4pd_capsule);
-  Py_DECREF(pdModule);
+    PyObject *pdModule = PyImport_ImportModule("pd");
+    PyModule_AddObject(pdModule, py4pd_objectName, py4pd_capsule);
+    Py_DECREF(pdModule);
 
-  Py_RETURN_TRUE;
+    Py_RETURN_TRUE;
 }
 
 // ========================== METHODS ==========================

@@ -1,5 +1,5 @@
 #N canvas 589 420 763 431 8;
-#N canvas 496 67 952 619 PROBLEM2 1;
+#N canvas 496 67 952 619 PROBLEM2 0;
 #X obj 9 48 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
 #N canvas 181 219 1494 700 list1 0;
 #X obj 10 93 t b b b b, f 91;
@@ -162,12 +162,16 @@
 #X connect 14 0 0 0;
 #X restore 6 47 pd PROBLEM2;
 #X obj 6 4 inlet;
-#X obj 6 88 outlet;
 #X obj 46 13 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
 #X obj 108 81 sel 40002;
 #X obj 73 126 print PROBLEM-2-DONE;
-#X connect 0 0 2 0;
-#X connect 0 0 4 0;
+#X obj 6 127 sel 40000;
+#X msg 6 148 1;
+#X obj 6 169 outlet;
+#X connect 0 0 3 0;
+#X connect 0 0 5 0;
 #X connect 1 0 0 0;
-#X connect 3 0 0 0;
-#X connect 4 0 5 0;
+#X connect 2 0 0 0;
+#X connect 3 0 4 0;
+#X connect 5 0 6 0;
+#X connect 6 0 7 0;

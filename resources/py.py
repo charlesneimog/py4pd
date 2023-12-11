@@ -122,19 +122,21 @@ def mksenoide(freqs, amps, phases, vectorsize, samplerate):
     return out, new_phases
 
 
-def sinusoids(freqs, amps):  
-    vectorsize = pd.get_vec_size()
-    samplerate = pd.get_sample_rate()
+def sinusoids(freqs, amps):
     if freqs is None or amps is None:
-        return None
+        pd.error("You need to set the amplitudes")
+        return np.zeros((1, 64))
     if len(freqs) != len(amps):
+        pd.error("The length of freqs and amps are different")
         return None
+
     phases = pd.get_obj_var("PHASE", initial_value=np.zeros(len(freqs)))
     freqs = np.array(freqs, dtype=np.float64)
     amps = np.array(amps, dtype=np.float64)
-    out, new_phases = mksenoide(freqs, amps, phases, vectorsize, samplerate)
+    out, new_phases = mksenoide(freqs, amps, phases, 64, pd.get_sample_rate())
     pd.set_obj_var("PHASE", new_phases)
     return out
+
 
 
 

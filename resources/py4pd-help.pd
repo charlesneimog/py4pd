@@ -181,12 +181,12 @@
 #X msg 295 47 YOU NEED TO INSTALL PYTHON3.11;
 #X obj 13 117 py4pd;
 #X text 292 160 IMPORTANT: This is just simple example \, the exaustive Docs are avaible in www.charlesneimog.github.io/py4pd;
-#X msg 397 230 pipinstall global numpy;
 #X obj 397 250 py4pd;
+#X msg 397 230 pipinstall numpy;
 #X connect 0 0 25 0;
 #X connect 6 0 25 0;
 #X connect 7 0 25 0;
 #X connect 19 0 3 0;
 #X connect 23 0 25 0;
 #X connect 25 0 19 0;
-#X connect 27 0 28 0;
+#X connect 28 0 27 0;

@@ -1,3 +1,4 @@
+import argparse
 import os
 import platform
 import subprocess
@@ -9,71 +10,85 @@ errorInTest = 0
 def runTest(pdpatch):
     global errorInTest
     if platform.system() == "Linux":
-        scriptfile = os.path.abspath(__file__)
-        scriptfolder = os.path.dirname(scriptfile)
-        pathfile = scriptfolder + "/" + pdpatch
-        if os.path.isfile(pathfile):
-            cmd = f'pd -nogui -batch -send "start-test bang" {pathfile}'
-            print("Running: " + "\033[92m" + cmd + "\033[0m", end="\r")
+        thisSCRIPT = os.path.abspath(__file__)
+        thisFOLDER = os.path.dirname(thisSCRIPT)
+        completPathPatch = thisFOLDER + "/" + pdpatch
+        os.chdir(thisFOLDER)
+        if os.path.isfile(pdpatch):
+            cmd = f'pd -nogui -send "start-test bang" {completPathPatch}'
         else:
             print("PureData Patch not found")
             sys.exit()
         try:
             output = subprocess.run(
-                cmd, capture_output=True, text=True, shell=True, timeout=60
+                cmd,
+                capture_output=True,
+                text=True,
+                shell=True,
             )
             outputLines = str(output).split("\\n")
         except subprocess.TimeoutExpired:
-            print("\033[K", end="\r")
-            print("\033[91m" + " Test with " + pdpatch + " failed, TIMEOUT" + "\033[0m")
+            print("Test with " + pdpatch + " failed, TIMEOUT")
             errorInTest += 1
             return
     elif platform.system() == "Windows":
         scriptfile = os.path.abspath(__file__)
         scriptfolder = os.path.dirname(scriptfile)
-        pathfile = scriptfolder + pdpatch
-        # check if pathfile has JUSTLINUX in it
-        if "JUSTLINUX" in pathfile:
-            print("Test not supported on Windows")
-            return
-
+        pathfile = scriptfolder + "\\" + pdpatch
         if os.path.isfile(pathfile):
             pass
         else:
             print(f"Patch {pathfile} not found")
             sys.exit()
-        cmd = f'"C:\\Program Files\\Pd\\bin\\pd.exe" -nogui -batch -send "start-test bang" "{pathfile}"'
+        py4pdPath = os.path.dirname(scriptfolder)
+        cmd = [
+            "..\\pd\\bin\\pd.exe",
+            "-nogui",
+            "-noaudio",
+            "-send",
+            "start-test bang",
+            pathfile,
+        ]
         try:
-            output = subprocess.run(
-                cmd, capture_output=True, text=True, shell=True, timeout=60
+            process = subprocess.run(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                check=True,
+                universal_newlines=True,
+                timeout=45,
             )
-            outputLines = str(output).split("\\n")
+            outputLines = []
+            stderrTOKENS = str(process.stderr).split("\n")
+            for line in stderrTOKENS:
+                if "error:" in line:
+                    outputLines.append(line.replace("error:", ""))
+                else:
+                    outputLines.append(line)
+
         except subprocess.TimeoutExpired:
             print("\033[K", end="\r")
-            print("\033[91m" + " Test with " + pdpatch + " failed, TIMEOUT" + "\033[0m")
+            print("Test with " + pdpatch + " failed")
             errorInTest += 1
             return
     elif platform.system() == "Darwin":
         scriptfile = os.path.abspath(__file__)
         scriptfolder = os.path.dirname(scriptfile)
         pathfile = scriptfolder + "/" + pdpatch
-        if "JUSTLINUX" in pathfile:
-            print("Test not supported on MacOS")
-            return
 
         # check if file exists
-        if os.path.isfile(pathfile):
-            pass
-        else:
+        if not os.path.isfile(pathfile):
             print(f"Patch {pathfile} not found")
             sys.exit()
+
+        py4pdPath = os.path.abspath(scriptfolder)
         cmd = (
-            '/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -send "start-test bang" '
+            f'/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -nogui -noaudio -path {py4pdPath} -send "start-test bang" '
             + pathfile
         )
         try:
             output = subprocess.run(
-                cmd, capture_output=True, text=True, shell=True, timeout=60
+                cmd, capture_output=True, text=True, shell=True, timeout=45
             )
             outputLines = str(output).split("\\n")
         except subprocess.TimeoutExpired:
@@ -90,26 +105,66 @@ def runTest(pdpatch):
     for line in outputLines:
         if "PASS" in line or "Pass" in line:
             passed = True
-    print("\033[K", end="\r")
-    if passed:
-        print("\033[92m" + " Test with " + pdpatch + " passed" + "\033[0m")
-    else:
-        for line in outputLines:
-            print("\033[93m" + line + "\033[0m")
-        print("\033[91m" + " Test with " + pdpatch + " failed" + "\033[0m")
-        errorInTest += 1
+
+    try:
+        try:
+            if passed:
+                print("\033[92m" + " ✅️ Test with " + pdpatch + " passed" + "\033[0m")
+            else:
+                print("\033[91m" + " ❌️ Test with " + pdpatch + " failed" + "\033[0m\n")
+                for line in outputLines:
+                    print("\033[93m" + line + "\033[0m")
+                errorInTest += 1
+        except Exception as e:
+            sys.stdout.reconfigure(encoding="utf-8")
+            if passed:
+                print(f" ✅️ Test with {pdpatch} passed")
+            else:
+                print(f" ❌️ Test with {pdpatch} failed")
+                for line in outputLines:
+                    print(line)
+                errorInTest += 1
+    except Exception as e:
+        print(e)
+        if passed:
+            print(f" Test with {pdpatch} passed")
+        else:
+            print(f" Test with {pdpatch} failed")
+            for line in outputLines:
+                print(line)
+            errorInTest += 1
 
 
 if __name__ == "__main__":
     # list all patches inside test folder
+    args = argparse.ArgumentParser()
+    # create an argument where I can set -rt 6 7 11, then we will run the pates with the given rt values
+    args.add_argument("-tn", type=str, nargs="+", required=False)
+    args = args.parse_args()
+    testNumbers = args.tn
+
     scriptFolder = os.path.dirname(os.path.abspath(__file__))
     patches = os.listdir(scriptFolder)
     patches = [patch for patch in patches if patch.endswith(".pd")]
     patches.sort()
     for patch in patches:
-        runTest(patch)
+        # get patch file name
+        patchName = os.path.basename(patch)
+        patchNumber = int(patchName.split("-")[0])
+        if testNumbers:
+            for testNumber in testNumbers:
+                if patchNumber == int(testNumber):
+                    runTest(patch)
+        else:
+            runTest(patch)
+        # get the test number
+
     if errorInTest != 0:
-        print("\033[91m" + f"{errorInTest} Test has failed" + "\033[0m")
+        print("\n")
+        print("==============================")
+        print("\033[91m" + (" " * 7) + f"{errorInTest} Test has failed" + "\033[0m")
+        print("==============================")
+        print("\n")
         sys.exit(-1)
     elif errorInTest == 0:
         print("\n")
