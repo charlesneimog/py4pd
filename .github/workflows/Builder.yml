@@ -245,8 +245,12 @@ jobs:
 
   deken-upload:
     # if: github.event_name == 'release'
+<<<<<<< HEAD
     # needs: [windows-build, macos-intel-build, macos-arm-build, linux-build]
     needs: [linux-build]
+=======
+    needs: [windows-build, macos-intel-build, macos-arm-build, linux-build]
+>>>>>>> 2deca6347bec28c68e75ad265dc5654941049334
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -257,6 +261,7 @@ jobs:
           name: py4pd
           path: deken/py4pd
 
+<<<<<<< HEAD
       - name: Install Deken
         continue-on-error: true
         run: |
@@ -266,6 +271,15 @@ jobs:
           deken --version
 
       - name: Create Package
+=======
+      - name: Install and run Deken 1ª time
+        continue-on-error: true
+        run: |
+          sudo apt-get install deken -y
+          deken --help
+
+      - name: Install Python
+>>>>>>> 2deca6347bec28c68e75ad265dc5654941049334
         run: |
           deken package py4pd --name py4pd --default-floatsize 32 --version 0.8.4-beta
           deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version 0.8.4-beta
