@@ -1,4 +1,4 @@
-name: Builder
+name: Build and Test [Dev]
 on:
   release:
     types: [published]
@@ -281,4 +281,3 @@ jobs:
         run: |
           ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
           ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
-
