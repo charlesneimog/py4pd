@@ -1,0 +1,17 @@
+#N canvas 634 206 754 488 8;
+#X obj 8 12 py4pd -lib py4pd-score;
+#X obj 119 90 py4pd;
+#X msg 116 43 pip install neoscore;
+#X obj 24 154 py.chord;
+#X msg 21 92 _test;
+#N canvas 130 168 450 300 (subpatch) 0;
+#X obj 10 7 inlet;
+#X msg 10 28 _test;
+#X obj 10 49 py.chord;
+#X connect 0 0 1 0;
+#X connect 1 0 2 0;
+#X restore 169 163 pd;
+#X obj 169 126 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
+#X connect 2 0 1 0;
+#X connect 4 0 3 0;
+#X connect 6 0 5 0;
