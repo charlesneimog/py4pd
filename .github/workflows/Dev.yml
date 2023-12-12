@@ -34,6 +34,9 @@ jobs:
   windows-build:
     runs-on: windows-latest
     if: ${{ inputs.windows }} || github.event_name == 'schedule'
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v3
@@ -43,7 +46,7 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: ["3.11", "3.12"]
+          python-version: ${{ matrix.python-version }}
 
       - if: runner.os == 'Windows'
         name: "Install mingw deps"
@@ -104,6 +107,9 @@ jobs:
     runs-on: macos-latest
     if: ${{ inputs.macos-intel }} || github.event_name == 'schedule'
     timeout-minutes: 15
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -112,7 +118,7 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: ["3.11", "3.12"]
+          python-version: ${{ matrix.python-version }}
 
       - name: set Enviroment
         run: |
@@ -147,7 +153,9 @@ jobs:
     runs-on: macos-latest
     if: ${{ inputs.macos-arm }} || github.event_name == 'release'
     timeout-minutes: 15
-
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -156,7 +164,7 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: ["3.11", "3.12"]
+          python-version: ${{ matrix.python-version }}
 
       - name: set Enviroment
         run: |
@@ -185,6 +193,9 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ inputs.linux }} || github.event_name == 'schedule'
     timeout-minutes: 10
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -192,7 +203,8 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
-          python-version: ["3.11", "3.12"]
+          python-version: ${{ matrix.python-version }}
+
 
       - name: Install Build Dependencies
         run: |
@@ -245,7 +257,7 @@ jobs:
       - name: Download py4pd Object
         uses: actions/download-artifact@v3
         with:
-          name: py4pd
+          name: py4pd-3.12 # NOTE: Always use latest version
           path: py4pd
 
       - name: Install Deken

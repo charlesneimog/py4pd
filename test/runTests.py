@@ -15,7 +15,7 @@ def runTest(pdpatch):
         completPathPatch = thisFOLDER + "/" + pdpatch
         os.chdir(thisFOLDER)
         if os.path.isfile(pdpatch):
-            cmd = f'pd -nogui -noaudio -send "start-test bang" {completPathPatch}'
+            cmd = f'pd -nogui -send "start-test bang" {completPathPatch}'
         else:
             print("PureData Patch not found")
             sys.exit()
