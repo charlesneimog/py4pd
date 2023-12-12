@@ -9,7 +9,7 @@
 </p>
     
 <p align="center">
-  <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml/badge.svg?branch=master"></a>
+  <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Dev-Tests.yml/badge.svg?branch=develop"></a>
 </p>
 
 `py4pd` allows the use of Python within PureData. Its goal is to be simpler to keep up to date, easy to use external modules, and other things. With Python, you can:
