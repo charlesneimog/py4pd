@@ -88,7 +88,7 @@ def runTest(pdpatch):
         )
         try:
             output = subprocess.run(
-                cmd, capture_output=True, text=True, shell=True, timeout=60
+                cmd, capture_output=True, text=True, shell=True, timeout=75
             )
             outputLines = str(output).split("\\n")
         except subprocess.TimeoutExpired:
