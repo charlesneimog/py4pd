@@ -1614,7 +1614,7 @@ void *Py4pdUtils_CreateSubInterpreter(void *arg) {
     // run function
     struct Py4pd_ObjSubInterp *objSubInterp = arg;
     PyObject *pValue = PyObject_CallObject(objSubInterp->pFunc, NULL);
-    post("%s", PyUnicode_AsUTF8(PyObject_Repr(pValue)));
+    (void)pValue;
 
     return 0;
 }

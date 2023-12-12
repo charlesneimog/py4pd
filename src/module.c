@@ -1452,8 +1452,6 @@ PyMethodDef PdMethods[] = {
 };
 
 static PyObject *pdmodule_init(PyObject *self) {
-
-    post("Initializing py4pd module");
     char OUT_string[MAXPDSTRING];
     snprintf(OUT_string, sizeof(OUT_string), "py4pdOut_%p", self);
 
@@ -1493,11 +1491,9 @@ static PyObject *pdmodule_init(PyObject *self) {
 // =================================
 static PyModuleDef_Slot pdmodule_slots[] = {
     {Py_mod_exec, pdmodule_init}, // Initialization phase
-
 #if PYTHON_REQUIRED_VERSION(3, 12)
     {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
 #endif
-
     {0, NULL} // End of slots
 };
 
@@ -1510,7 +1506,6 @@ static struct PyModuleDef pdmodule = {
     .m_size = 0,
     .m_methods = PdMethods, // Methods of the module
     .m_slots = pdmodule_slots,
-    // .m_clear = _memoryboard_clear,
 };
 
 // =================================

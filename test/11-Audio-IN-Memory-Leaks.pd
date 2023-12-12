@@ -31,8 +31,6 @@
 #X obj 407 141 del 1 1 sec;
 #X obj 444 89 del 10 1 sec;
 #X obj 272 351 print PY4PDPASS;
-#X obj 78 240 py4pd;
-#X msg 76 204 pip install numpy;
 #X connect 1 0 3 0;
 #X connect 3 1 2 0;
 #X connect 3 2 13 0;
@@ -62,4 +60,3 @@
 #X connect 27 0 26 0;
 #X connect 29 0 6 0;
 #X connect 30 0 15 0;
-#X connect 33 0 32 0;

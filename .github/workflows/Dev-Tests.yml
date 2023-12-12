@@ -1,9 +1,14 @@
-name: "[Dev] Tests"
+name: Main
 on:
   release:
     types: [published]
   schedule:
     - cron: "0 20 * * *"
+  push:
+    branches:
+      - develop
+    paths:
+      - "**/*.yml"
   workflow_dispatch:
     inputs:
       windows:
@@ -28,9 +33,9 @@ on:
         default: false
 
 jobs:
-  # ==============================================================================
-  # =                               WINDOWS                                      =
-  # ==============================================================================
+  # ============================================================================
+  # =                           WINDOWS                                        =
+  # ============================================================================
   windows-build:
     runs-on: windows-latest
     if: ${{ inputs.windows }} || github.event_name == 'schedule'
@@ -43,11 +48,9 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
       - if: runner.os == 'Windows'
         name: "Install mingw deps"
         uses: msys2/setup-msys2@v2
@@ -68,16 +71,15 @@ jobs:
         run: |
           mkdir py4pd
           python -m pip install numpy
+          
           python -c "import sysconfig; f = open('pythonincludes.txt', 'w'); print(sysconfig.get_paths()['include'].replace('\\', '/'), file=f); f.close()"
           python -c "import os; import sys; f = open('pythonpath.txt', 'w'); print(os.path.dirname(sys.executable).replace('\\', '/'), file=f); f.close()"
-          python -c "import os; import sys; import numpy.distutils.misc_util as np_utils; f = open('numpyincludes.txt', 'w'); print(np_utils.get_numpy_include_dirs()[0].replace('\\', '/'), file=f); f.close()"
-
+          python -c "import os; import sys; import numpy; f = open('numpyincludes.txt', 'w'); print(numpy.get_include(), file=f); f.close()"
       - if: runner.os == 'Windows'
         name: Build py4pd
         shell: msys2 {0}
         run: |
           make PYTHON_VERSION=${{ matrix.python-version }} PDDIR=./pd extension=m_amd64
-
       - name: Copy Files and Set for Tests
         run: |
           $pythondllversion = ${{ matrix.python-version }}.replace(".", "")
@@ -88,18 +90,13 @@ jobs:
           Copy-Item -Path "resources" -Destination "test/py4pd/" -Recurse
           cp py4pd.m_amd64 py4pd\
           cp py4pd.m_amd64 test\py4pd\py4pd.m_amd64
-
       - name: Tests
-        run: |
-          cd test 
-          python ./runTests.py
-
+        run: "cd test \npython ./runTests.py\n"
       - name: Upload Object ZIP
         uses: actions/upload-artifact@v3
         with:
           name: py4pd-${{ matrix.python-version }}
           path: py4pd
-
   # ==============================================================================
   # =                               MAC INTEL                                    =
   # ==============================================================================
@@ -115,18 +112,17 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
       - name: set Enviroment
         run: |
           brew install --cask pd
-          ${{ matrix.python-version }} -m pip install numpy
-
+          python${{ matrix.python-version }} -m pip install numpy
       - name: Build
-        run: make PYTHON_VERSION=${{ matrix.python-version }} extension=d_amd64
+        env:
+          pythonName: python${{ matrix.python-version }}
+        run: make PYTHON_VERSION=$pythonName extension=d_amd64
 
       - name: Copy Files and Set for Tests
         run: |
@@ -138,17 +134,15 @@ jobs:
       - name: Run Tests
         run: |
           cd test
-          ${{ matrix.python-version }} ./runTests.py
-
+          python${{ matrix.python-version }} ./runTests.py
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
           name: py4pd-${{ matrix.python-version }}
           path: py4pd
-
-  # ==============================================================================
-  # =                               MAC ARM                                      =
-  # ==============================================================================
+  # ============================================================================
+  # =                               MAC ARM                                    =
+  # ============================================================================
   macos-arm-build:
     runs-on: macos-latest
     if: ${{ inputs.macos-arm }} || github.event_name == 'release'
@@ -161,34 +155,31 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
       - name: set Enviroment
         run: |
           brew install --cask pd
-          ${{ matrix.python-version }} -m pip install numpy
+          python${{ matrix.python-version }} -m pip install numpy
           mkdir py4pd
-
       - name: Build
-        run: make PYTHON_VERSION=${{ matrix.python-version }} extension=d_arm64
+        env:
+          pythonName: python${{ matrix.python-version }}
+        run: make PYTHON_VERSION=$pythonName extension=d_arm64
+
 
       - name: Copy files to py4pd
         run: |
           cp py4pd.d_arm64 py4pd
-
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
           name: py4pd-${{ matrix.python-version }}
           path: py4pd
-
-  # ==============================================================================
-  # =                               LINUX                                        =
-  # ==============================================================================
-
+  # ============================================================================
+  # =                               LINUX                                      =
+  # ============================================================================
   linux-build:
     runs-on: ubuntu-latest
     if: ${{ inputs.linux }} || github.event_name == 'schedule'
@@ -205,29 +196,36 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-
       - name: Install Build Dependencies
-        run: |
+        env:
+          pythonName: python${{ matrix.python-version }}
+        run: | 
           curl -L -o pd.tar.gz https://msp.ucsd.edu/Software/pd-0.54-1.src.tar.gz
-          tar -xzf pd.tar.gz  
-          rm pd.tar.gz  
+          tar -xzf pd.tar.gz
+          rm pd.tar.gz
           mv pd-* pure-data
-          ${{ matrix.python-version }} -m pip install numpy
-
-      - name: Install PureData
+          $pythonName -m pip install numpy
+        
+      - name: Install PureData and Python
+        env:
+          pythonPackage: python${{ matrix.python-version }}-dev
         run: |
-          sudo add-apt-repository ppa:pure-data/pure-data
+          sudo add-apt-repository ppa:deadsnakes/ppa
           sudo apt-get update
+          sudo apt-get install $pythonPackage -y
+          sudo add-apt-repository ppa:pure-data/pure-data -y
           sudo apt-get install puredata -y
 
       - name: Build
-        run: make PDINCLUDEDIR=./pure-data/src/ PYTHON_VERSION=${{ matrix.python-version }} extension=l_amd64
-
+        env:
+          pythonName: python${{ matrix.python-version }}
+        run: make PDINCLUDEDIR=./pure-data/src/ PYTHON_VERSION=$pythonName extension=l_amd64
+      
       - name: Copy files to py4pd
         run: |
           mkdir -p py4pd
           cp py4pd.l_amd64 resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd
-          cp -r resources py4pd 
+          cp -r resources py4pd
           cp -r src py4pd
           find py4pd/src -name "*.o" -type f -delete
           cp resources/README.deken.pd py4pd
@@ -236,18 +234,18 @@ jobs:
 
       - name: Tests
         run: |
-          cd test && ${{ matrix.python-version }} ./runTests.py
-
+          cd test
+          python${{ matrix.python-version }} ./runTests.py
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
           name: py4pd-${{ matrix.python-version }}
           path: py4pd
 
-  # ==============================================================================
-  # =                               DEKEN                                        =
-  # ==============================================================================
-
+          
+  # ============================================================================
+  # =                               DEKEN                                      =
+  # ============================================================================
   deken-upload:
     if: github.event_name == 'release'
     needs: [windows-build, macos-intel-build, macos-arm-build, linux-build]
@@ -257,16 +255,14 @@ jobs:
       - name: Download py4pd Object
         uses: actions/download-artifact@v3
         with:
-          name: py4pd-3.12 # NOTE: Always use latest version
+          name: py4pd-3.12
           path: py4pd
-
       - name: Install Deken
         continue-on-error: true
         run: |
           git clone https://github.com/pure-data/deken
           chmod +x ./deken/developer/deken
           ./deken/developer/deken install --self
-
       - name: Config Deken
         run: |
           echo "username = ${DEKEN_USERNAME}" > $HOME/.deken/config
@@ -274,13 +270,11 @@ jobs:
         env:
           DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
           PASSWORD: ${{ secrets.DEKEN_PASSWORD }}
-
       - name: Fix problem with easywebdav2
         continue-on-error: true
         run: |
           ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
           ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
-
       - name: Upload deken Package
         run: |
           ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
