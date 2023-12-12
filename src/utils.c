@@ -1,3 +1,4 @@
+#include <m_pd.h>
 #define NO_IMPORT_ARRAY
 #include "py4pd.h"
 
@@ -626,8 +627,8 @@ int Py4pdUtils_ExecuteSystemCommand(const char *command) {
     ZeroMemory(&si, sizeof(STARTUPINFO));
     si.cb = sizeof(STARTUPINFO);
     ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
-   
-   DWORD exitCode;
+
+    DWORD exitCode;
     if (CreateProcess(NULL, (LPSTR)command, NULL, NULL, FALSE, CREATE_NO_WINDOW,
                       NULL, NULL, &si, &pi)) {
         WaitForSingleObject(pi.hProcess, INFINITE);
@@ -636,15 +637,16 @@ int Py4pdUtils_ExecuteSystemCommand(const char *command) {
                 post("HELP: Try to run: '%s' from the terminal/cmd", command);
             }
         } else {
-            pd_error(NULL, "[py4pd] Unable to retrieve exit code from command!");
+            pd_error(NULL,
+                     "[py4pd] Unable to retrieve exit code from command!");
         }
     } else {
         pd_error(NULL, "Error: Process creation failed!");
-        return -1; 
+        return -1;
     }
     CloseHandle(pi.hProcess);
     CloseHandle(pi.hThread);
-    return exitCode; 
+    return exitCode;
 #else
     int result = system(command);
     if (result != 0) {
@@ -1583,29 +1585,20 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x) {
     return objectCapsule;
 }
 
-// ========================= THREAD INTERPRETER ====================
+// =================================================================
+// ========================= SUBINTERPRETER ========================
+// =================================================================
 
-// just if python version if 3.12 or higher
 #if PYTHON_REQUIRED_VERSION(3, 12)
 
-struct ThreadArgs {
-    int start;
-    int sleep_time;
+struct Py4pd_ObjSubInterp {
     PyObject *pFunc;
-    PyObject *pArgs;
-    PyObject *pValue;
 };
 
 // =================================================================
-void *thread_function(void *arg) {
     (void)arg;
 
-    post("ok");
-    PyRun_SimpleString("import time");
-    PyRun_SimpleString("time.sleep(10)");
-    post("ok");
 
-    return NULL;
 }
 
 // ===============================================================
@@ -1617,39 +1610,14 @@ void *thread_function(void *arg) {
  * otherwise it will return 1.
  */
 void Py4pdUtils_CreatePythonInterpreter(t_py *x) {
-
     if (x->pFunction == NULL) {
         pd_error(x, "[Python] No function defined");
         return;
     }
 
-    PyInterpreterConfig config = {
-        .check_multi_interp_extensions = 0,
-        .gil = PyInterpreterConfig_OWN_GIL,
-    };
-
-    PyThreadState *tstate = NULL;
-
-    post("before new interpreter");
-    PyStatus status = Py_NewInterpreterFromConfig(&tstate, &config);
-    post("after new interpreter");
-    if (PyStatus_Exception(status)) {
-        _PyErr_SetFromPyStatus(status);
-        PyObject *exc = PyErr_GetRaisedException();
-        PyErr_SetString(PyExc_RuntimeError, "interpreter creation failed");
-        _PyErr_ChainExceptions1(exc);
-        return;
-    } else {
-        post("ok");
-    }
-
-    // create thread_function
-    pthread_t thread_id;
-    pthread_create(&thread_id, NULL, thread_function, NULL);
 
     return;
 }
-
 #endif
 
 // ============================================================
