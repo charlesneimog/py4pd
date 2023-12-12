@@ -31,7 +31,11 @@ on:
         required: false
         type: boolean
         default: false
-
+env:
+  pythonOld: "3.10"
+  pythonStable: "3.11"
+  pythonNew: "3.12"
+  
 jobs:
   # ============================================================================
   # =                           WINDOWS                                        =
@@ -41,7 +45,7 @@ jobs:
     if: ${{ inputs.windows }} || github.event_name == 'schedule'
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: [$pythonOld, $pythonStable, $pythonNew]
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v3
@@ -106,7 +110,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+       python-version: [$pythonOld, $pythonStable, $pythonNew]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -149,7 +153,7 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+       python-version: [$pythonOld, $pythonStable, $pythonNew]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -186,7 +190,7 @@ jobs:
     timeout-minutes: 10
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+       python-version: [$pythonOld, $pythonStable, $pythonNew]
     steps:
       - uses: actions/checkout@v3
         with:
@@ -255,7 +259,7 @@ jobs:
       - name: Download py4pd Object
         uses: actions/download-artifact@v3
         with:
-          name: py4pd-3.12
+          name: py4pd-$pythonStable
           path: py4pd
       - name: Install Deken
         continue-on-error: true
@@ -279,3 +283,20 @@ jobs:
         run: |
           ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
           ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
+  
+  # ============================================================================
+  # =                               RELEASES                                   =
+  # ============================================================================
+  release:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    needs: [windows-build, macos-intel-build, macos-arm-build, linux-build]
+    strategy:
+      matrix:
+        python-version: [$pythonOld, $pythonStable, $pythonNew]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Publish py4pd Object
+        uses: actions/download-artifact@v3
+        with:
+          name: py4pd-${{ matrix.python-version }}
