@@ -36,6 +36,11 @@ env:
   pythonStable: "3.11"
   pythonNew: "3.12"
   
+env:
+  pythonOld: "3.10"
+  pythonStable: "3.11"
+  pythonNew: "3.12"
+  
 jobs:
   # ============================================================================
   # =                           WINDOWS                                        =
@@ -272,6 +277,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: py4pd-$pythonStable
+          name: py4pd-$pythonStable
           path: py4pd
       - name: Install Deken
         continue-on-error: true
@@ -294,7 +300,6 @@ jobs:
       - name: Upload deken Package
         run: |
           ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
-          ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
   
   # ============================================================================
   # =                               RELEASES                                   =
