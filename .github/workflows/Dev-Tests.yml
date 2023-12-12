@@ -71,7 +71,7 @@ jobs:
         run: |
           mkdir py4pd
           python -m pip install numpy
-          
+          python -c "import sysconfig; f = open('pythondll.txt', 'w'); print(sysconfig.get_config_vars()['exec_prefix'] + '\\python' + sysconfig.get_config_vars('VERSION')[0] + '.dll', file=f); f.close()"
           python -c "import sysconfig; f = open('pythonincludes.txt', 'w'); print(sysconfig.get_paths()['include'].replace('\\', '/'), file=f); f.close()"
           python -c "import os; import sys; f = open('pythonpath.txt', 'w'); print(os.path.dirname(sys.executable).replace('\\', '/'), file=f); f.close()"
           python -c "import os; import sys; import numpy; f = open('numpyincludes.txt', 'w'); print(numpy.get_include(), file=f); f.close()"
@@ -82,9 +82,9 @@ jobs:
           make PYTHON_VERSION=${{ matrix.python-version }} PDDIR=./pd extension=m_amd64
       - name: Copy Files and Set for Tests
         run: |
-          $pythondllversion = ${{ matrix.python-version }}.replace(".", "")
+          $pythondllversion = Get-Content pythondll.txt
           $pythonpath = Get-Content pythonpath.txt
-          Copy-Item -Path "$pythonpath\python${pythondllversion}.dll" -Destination py4pd\ -Recurse
+          Copy-Item -Path "$pythondllversion" -Destination py4pd\ -Recurse
           Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd\ -Recurse
           Copy-Item -Path "py4pd" -Destination "test" -Recurse
           Copy-Item -Path "resources" -Destination "test/py4pd/" -Recurse
