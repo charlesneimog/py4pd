@@ -214,6 +214,10 @@ typedef struct _py4pdInlet_proxy{
     int          inletIndex;
 }t_py4pdInlet_proxy;
 
+
+void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv);
+
+
 // =====================================
 int Py4pd_ImportNumpyForPy4pd();
 void Py4pd_PrintDocs(t_py *x);
@@ -255,6 +259,9 @@ uint32_t Py4pdUtils_Ntohl(uint32_t netlong);
 void *Py4pdLib_FreeObj(t_py *x);
 void Py4pdUtils_CreatePicObj(t_py *x, PyObject *PdDict, t_class *object_PY4PD_Class, int argc, t_atom *argv);
 void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue *src, t_py4pd_pValue *dest);
+
+// SubInterpreter 
+void Py4pdUtils_CreatePythonInterpreter(t_py *x);
 
 // EMBEDDED MODULE 
 extern PyMethodDef PdMethods[];
