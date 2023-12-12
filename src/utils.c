@@ -1593,12 +1593,30 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x) {
 
 struct Py4pd_ObjSubInterp {
     PyObject *pFunc;
+    PyObject *pModule;
 };
 
 // =================================================================
+void *Py4pdUtils_CreateSubInterpreter(void *arg) {
     (void)arg;
+    PyInterpreterConfig config = {
+        .check_multi_interp_extensions = 1,
+        .gil = PyInterpreterConfig_OWN_GIL,
+    };
 
+    PyThreadState *tstate = NULL;
+    PyStatus status = Py_NewInterpreterFromConfig(&tstate, &config);
+    if (PyStatus_Exception(status)) {
+        PyErr_SetString(PyExc_RuntimeError, "Interpreter creation failed");
+        return NULL;
+    }
 
+    // run function
+    struct Py4pd_ObjSubInterp *objSubInterp = arg;
+    PyObject *pValue = PyObject_CallObject(objSubInterp->pFunc, NULL);
+    post("%s", PyUnicode_AsUTF8(PyObject_Repr(pValue)));
+
+    return 0;
 }
 
 // ===============================================================
@@ -1615,7 +1633,16 @@ void Py4pdUtils_CreatePythonInterpreter(t_py *x) {
         return;
     }
 
+    // add object to struct
+    struct Py4pd_ObjSubInterp *objSubInterp =
+        malloc(sizeof(struct Py4pd_ObjSubInterp));
+    objSubInterp->pFunc = x->pFunction;
 
+    pthread_t PyInterpId;
+    pthread_create(&PyInterpId, NULL, Py4pdUtils_CreateSubInterpreter,
+                   objSubInterp);
+    pthread_detach(PyInterpId);
+    post("main thread");
     return;
 }
 #endif

@@ -1,4 +1,3 @@
-#include <m_pd.h>
 #define PY_ARRAY_UNIQUE_SYMBOL py4pd_ARRAY_API
 #include "py4pd.h"
 
@@ -7,11 +6,14 @@ t_class *py4pd_class;        // For for normal objects, almost unused
 t_class *py4pd_classLibrary; // For libraries
 int object_count = 0;
 
-static void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv) {
-    (void)x;
+void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv) {
+    // (void)x;
     (void)argc;
     (void)argv;
-    pd_error(NULL, "This is just for internal tests, don't use it");
+
+    post("glist_isvisible = %d", glist_isvisible(x->glist));
+    post("gobj_shouldvis = %d", gobj_shouldvis((t_gobj *)x, x->glist));
+
     return NULL;
 }
 // ============================================
@@ -202,8 +204,8 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         return -1;
     }
 
-    // check if module has the function Py4pdLoadObjects or "script_file_name +
-    // setup"
+    // check if module has the function Py4pdLoadObjects or
+    // "script_file_name + setup"
     char *setupFuncName = malloc(strlen(scriptFileName->s_name) + 7);
     snprintf(setupFuncName, strlen(scriptFileName->s_name) + 7, "%s_setup",
              scriptFileName->s_name);
@@ -789,7 +791,6 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     int prev_obj_exists = 0;
     PyObject *MainModule = PyImport_ImportModule("pd");
     PyObject *oldObjectCapsule;
-
     if (MainModule != NULL) {
         oldObjectCapsule =
             PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
@@ -801,6 +802,9 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         } else {
             prev_obj_exists = 0;
         }
+    } else {
+        Py4pdUtils_PrintError(x);
+        return;
     }
 
     PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
@@ -1190,7 +1194,6 @@ void py4pd_setup(void) {
     class_addmethod(py4pd_class, (t_method)Py4pd_TestCode, gensym("_test"),
                     A_GIMME, 0);
 
-// test functions
 #if PYTHON_REQUIRED_VERSION(3, 12)
     class_addmethod(py4pd_class, (t_method)Py4pdUtils_CreatePythonInterpreter,
                     gensym("detach"), 0);
