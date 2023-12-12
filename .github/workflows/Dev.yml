@@ -2,14 +2,8 @@ name: "[Dev] Tests"
 on:
   release:
     types: [published]
-  push:
-    branches:
-      - develop
-    paths:
-      - "**/*.py"
-      - "**/*.c"
-      - "**/*.h"
-      - "**/*.yml"
+  schedule:
+    - cron: "0 20 * * *"
   workflow_dispatch:
     inputs:
       windows:
@@ -39,7 +33,7 @@ jobs:
   # ==============================================================================
   windows-build:
     runs-on: windows-latest
-    if: ${{ inputs.windows }} || github.event_name == 'release'
+    if: ${{ inputs.windows }} || github.event_name == 'schedule'
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v3
@@ -49,7 +43,7 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: ["3.11", "3.12"]
 
       - if: runner.os == 'Windows'
         name: "Install mingw deps"
@@ -79,12 +73,13 @@ jobs:
         name: Build py4pd
         shell: msys2 {0}
         run: |
-          make PYTHON_VERSION=python3.11 PDDIR=./pd extension=m_amd64
+          make PYTHON_VERSION=${{ matrix.python-version }} PDDIR=./pd extension=m_amd64
 
       - name: Copy Files and Set for Tests
         run: |
+          $pythondllversion = ${{ matrix.python-version }}.replace(".", "")
           $pythonpath = Get-Content pythonpath.txt
-          Copy-Item -Path "$pythonpath\python311.dll" -Destination py4pd\ -Recurse
+          Copy-Item -Path "$pythonpath\python${pythondllversion}.dll" -Destination py4pd\ -Recurse
           Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd\ -Recurse
           Copy-Item -Path "py4pd" -Destination "test" -Recurse
           Copy-Item -Path "resources" -Destination "test/py4pd/" -Recurse
@@ -99,7 +94,7 @@ jobs:
       - name: Upload Object ZIP
         uses: actions/upload-artifact@v3
         with:
-          name: py4pd
+          name: py4pd-${{ matrix.python-version }}
           path: py4pd
 
   # ==============================================================================
@@ -107,7 +102,7 @@ jobs:
   # ==============================================================================
   macos-intel-build:
     runs-on: macos-latest
-    if: ${{ inputs.macos-intel }} || github.event_name == 'release'
+    if: ${{ inputs.macos-intel }} || github.event_name == 'schedule'
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v3
@@ -117,15 +112,15 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: ["3.11", "3.12"]
 
       - name: set Enviroment
         run: |
           brew install --cask pd
-          python3.11 -m pip install numpy
+          ${{ matrix.python-version }} -m pip install numpy
 
       - name: Build
-        run: make PYTHON_VERSION=python3.11 extension=d_amd64
+        run: make PYTHON_VERSION=${{ matrix.python-version }} extension=d_amd64
 
       - name: Copy Files and Set for Tests
         run: |
@@ -137,12 +132,12 @@ jobs:
       - name: Run Tests
         run: |
           cd test
-          python3.11 ./runTests.py
+          ${{ matrix.python-version }} ./runTests.py
 
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
-          name: py4pd
+          name: py4pd-${{ matrix.python-version }}
           path: py4pd
 
   # ==============================================================================
@@ -161,16 +156,16 @@ jobs:
 
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: ["3.11", "3.12"]
 
       - name: set Enviroment
         run: |
           brew install --cask pd
-          python3.11 -m pip install numpy
+          ${{ matrix.python-version }} -m pip install numpy
           mkdir py4pd
 
       - name: Build
-        run: make PYTHON_VERSION=python3.11 extension=d_arm64
+        run: make PYTHON_VERSION=${{ matrix.python-version }} extension=d_arm64
 
       - name: Copy files to py4pd
         run: |
@@ -179,7 +174,7 @@ jobs:
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
-          name: py4pd
+          name: py4pd-${{ matrix.python-version }}
           path: py4pd
 
   # ==============================================================================
@@ -188,7 +183,7 @@ jobs:
 
   linux-build:
     runs-on: ubuntu-latest
-    if: ${{ inputs.linux }} || github.event_name == 'release'
+    if: ${{ inputs.linux }} || github.event_name == 'schedule'
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v3
@@ -197,7 +192,7 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: ["3.11", "3.12"]
 
       - name: Install Build Dependencies
         run: |
@@ -205,8 +200,7 @@ jobs:
           tar -xzf pd.tar.gz  
           rm pd.tar.gz  
           mv pd-* pure-data
-          sudo apt-get install python3.11-dev -y
-          python3.11 -m pip install numpy
+          ${{ matrix.python-version }} -m pip install numpy
 
       - name: Install PureData
         run: |
@@ -215,7 +209,7 @@ jobs:
           sudo apt-get install puredata -y
 
       - name: Build
-        run: make PDINCLUDEDIR=./pure-data/src/ PYTHON_VERSION=python3.11 extension=l_amd64
+        run: make PDINCLUDEDIR=./pure-data/src/ PYTHON_VERSION=${{ matrix.python-version }} extension=l_amd64
 
       - name: Copy files to py4pd
         run: |
@@ -230,12 +224,12 @@ jobs:
 
       - name: Tests
         run: |
-          cd test && python3 ./runTests.py
+          cd test && ${{ matrix.python-version }} ./runTests.py
 
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
-          name: py4pd
+          name: py4pd-${{ matrix.python-version }}
           path: py4pd
 
   # ==============================================================================
