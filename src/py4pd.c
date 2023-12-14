@@ -1172,6 +1172,8 @@ void py4pd_setup(void) {
                     0); // open code
     class_addmethod(py4pd_class, (t_method)Py4pd_OpenScript, gensym("open"),
                     A_GIMME, 0);
+    class_addmethod(py4pd_class, (t_method)Py4pd_OpenScript, gensym("create"),
+                    A_GIMME, 0);
     class_addmethod(py4pd_class, (t_method)Py4pd_SetEditor, gensym("click"), 0,
                     0); // when click open editor
     class_addmethod(py4pd_classLibrary, (t_method)Py4pd_SetEditor,
