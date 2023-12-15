@@ -589,6 +589,8 @@ t_int *Py4pdLib_AudioINPerform(t_int *w) {
     npy_intp dims[] = {numChannels, x->vectorSize};
     PyObject *pAudio = PyArray_SimpleNewFromData(
         2, dims, NPY_FLOAT, in); // NOTE: this should be DOUBLE in pd64
+    PyObject *pAudio = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, in);
+    // NOTE: pAudio must use NPY_DOUBLE in pd64
     if (x->pArgTuple == NULL) {
         x->pArgTuple = PyTuple_New(x->pArgsCount);
         return (w + 4);
