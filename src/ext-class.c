@@ -260,23 +260,23 @@ static PyObject *Py4pdNewObj_Method_AddObj(py4pdNewObject *self,
 
     if (self->objType == PY4PD_NORMALOBJ) {
         objClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                             (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                             (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                              CLASS_DEFAULT, A_GIMME, 0);
     } else if (self->objType == PY4PD_VISOBJ) {
         objClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                             (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                             (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                              CLASS_DEFAULT, A_GIMME, 0);
     } else if (self->objType == PY4PD_AUDIOINOBJ) {
         objClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                             (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                             (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                              CLASS_MULTICHANNEL, A_GIMME, 0);
     } else if (self->objType == PY4PD_AUDIOOUTOBJ) {
         objClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                             (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                             (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                              CLASS_MULTICHANNEL, A_GIMME, 0);
     } else if (self->objType == PY4PD_AUDIOOBJ) {
         objClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                             (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                             (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                              CLASS_MULTICHANNEL, A_GIMME, 0);
     } else {
         PyErr_SetString(PyExc_TypeError,

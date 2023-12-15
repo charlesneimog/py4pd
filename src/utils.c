@@ -175,6 +175,8 @@ void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
  * @return void*
  */
 void *Py4pdLib_FreeObj(t_py *x) {
+
+void *Py4pdUtils_FreeObj(t_py *x) {
     object_count--;
     if (object_count == 0) {
         object_count = 0;
