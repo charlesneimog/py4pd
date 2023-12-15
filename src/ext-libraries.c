@@ -885,9 +885,15 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     int playableInt = 0;
     t_py *py4pd = Py4pdUtils_GetObject(self);
 
-    if (py4pd->libraryFolder == NULL) {
+    size_t totalLength;
+    const char *helpFolder = "/help/";
+    if (py4pd->libraryFolder != NULL) {
+        totalLength =
+            strlen(py4pd->libraryFolder->s_name) + strlen(helpFolder) + 1;
+    } else {
         pd_error(py4pd, "[py4pd] Library Folder is NULL, some help patches may "
                         "not be found");
+        return NULL;
     }
 
     const char *helpFolder = "/help/";
@@ -898,7 +904,9 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
         pd_error(py4pd, "[py4pd] Error allocating memory (code 001)");
         return NULL;
     }
-    strcpy(helpFolderCHAR, py4pd->libraryFolder->s_name);
+
+    snprintf(helpFolderCHAR, sizeof(helpFolderCHAR), "%s",
+             py4pd->libraryFolder->s_name);
     strcat(helpFolderCHAR, helpFolder);
 
     if (!PyArg_ParseTuple(args, "Os", &Function, &objectName)) {
