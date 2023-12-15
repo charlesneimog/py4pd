@@ -280,7 +280,6 @@ const char *Py4pdUtils_GetFilename(const char *path) {
 // ====================================================
 void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck,
                                      t_symbol *script_file_name) {
-    return;
 #ifdef _WIN64
     WIN32_FIND_DATAA findData;
     HANDLE hFind;
@@ -313,44 +312,29 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck,
         FindClose(hFind);
     }
 #else
-    DIR *dir = opendir(".");
-    if (dir == NULL) {
-        pd_error(NULL, "[py4pd] Unable to open directory.");
+    DIR *dir;
+    struct dirent *entry;
+
+    if ((dir = opendir(folderToCheck)) == NULL) {
         return;
     }
-
-    struct dirent *entry;
+    dir = opendir(folderToCheck);
     while ((entry = readdir(dir)) != NULL) {
-        // Build the full path to the entry
-        char path[1024];
-        snprintf(path, sizeof(path), "./%s", entry->d_name);
-
-        // Use stat to get information about the entry
-        struct stat info;
-        if (stat(path, &info) != 0) {
-            perror("stat");
-            continue;
-        }
-
-        // Check if the entry is a directory
-        if (S_ISDIR(info.st_mode) && strcmp(entry->d_name, ".") != 0 &&
+        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 &&
             strcmp(entry->d_name, "..") != 0) {
-            // Assuming script_file_name->s_name is a string
             if (strcmp(entry->d_name, script_file_name->s_name) == 0) {
-                // Post function and pd_error assumed to be defined elsewhere
                 post("");
                 pd_error(x,
                          "[py4pd] The library '%s' conflicts with a Python "
                          "package name.",
                          script_file_name->s_name);
-                pd_error(x, "[py4pd] This can cause problems related to "
+                pd_error(x, "[py4pd] This can cause problems related with "
                             "py4pdLoadObjects.");
                 pd_error(x, "[py4pd] Rename the library.");
                 post("");
             }
         }
     }
-
     closedir(dir);
 #endif
     return;
@@ -845,6 +829,14 @@ void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue *src,
     dest->pdout = src->pdout;
     dest->objOwner = src->objOwner;
     dest->objectsUsing = src->objectsUsing;
+}
+
+// =====================================================================
+int Py4pdUtils_ImportNumpy(t_py *x) {
+    // post("importing NUMPY");
+    (void)x;
+    // _import_array();
+    return 0;
 }
 
 // =====================================================================

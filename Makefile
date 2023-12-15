@@ -9,7 +9,7 @@ ifeq (MINGW,$(findstring MINGW,$(uname)))
 	PYTHON_PATH := $(shell cat pythonpath.txt)
 	NUMPY_INCLUDE := $(shell cat numpyincludes.txt)
 	PYTHON_DLL := $(PYTHON_DLL)
-	cflags = -I '$(PYTHON_INCLUDE)' -I '$(NUMPY_INCLUDE)' -Wno-cast-function-type -Wno-unused-variable -D_BSD_SOURCE -std=c11
+	cflags = -I '$(PYTHON_INCLUDE)' -I '$(NUMPY_INCLUDE)' -Wno-cast-function-type -Wno-unused-variable 
 	ldlibs =  '$(PYTHON_DLL)' -lwinpthread 
 
 # =================================== Linux =====================================
@@ -17,7 +17,7 @@ else ifeq (Linux,$(findstring Linux,$(uname)))
 	# $(shell rm -f src/*.o)
   	PYTHON_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
 	NUMPY_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import numpy; print(numpy.get_include())')
-	cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -D_BSD_SOURCE -std=c11
+	cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type
   	ldlibs = -l $(PYTHON_VERSION) 
 
 # =================================== MacOS =====================================
@@ -25,9 +25,9 @@ else ifeq (Darwin,$(findstring Darwin,$(uname)))
   	PYTHON_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
 	NUMPY_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import numpy; print(numpy.get_include())')
 	ifeq ($(extension),d_arm64)
-		cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-bad-function-cast -mmacosx-version-min=12 -D_BSD_SOURCE -std=c11
+		cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-bad-function-cast -mmacosx-version-min=12 
 	else
-  		cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-bad-function-cast -mmacosx-version-min=10.9 -D_BSD_SOURCE -std=c11
+  		cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-bad-function-cast -mmacosx-version-min=10.9 
 	endif
   	PYTHON_LIB := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
   	ldlibs = -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wno-null-pointer-subtraction

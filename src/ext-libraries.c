@@ -882,8 +882,7 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
         return NULL;
     }
 
-    snprintf(helpFolderCHAR, sizeof(helpFolderCHAR), "%s",
-             py4pd->libraryFolder->s_name);
+    snprintf(helpFolderCHAR, totalLength, "%s", py4pd->libraryFolder->s_name);
     strcat(helpFolderCHAR, helpFolder);
 
     if (!PyArg_ParseTuple(args, "Os", &Function, &objectName)) {

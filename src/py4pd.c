@@ -1,5 +1,5 @@
-// #define NO_IMPORT_ARRAY
-// #define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
+#define NO_IMPORT_ARRAY
+#define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
 #include "py4pd.h"
 
 // ============================================
@@ -126,8 +126,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
 
     // conver const char* to char*
     char *pkgPathchar = malloc(strlen(x->pkgPath->s_name) + 1);
-    // strcpy(pkgPathchar, x->pkgPath->s_name);
-    strlcpy(pkgPathchar, x->pkgPath->s_name, strlen(x->pkgPath->s_name) + 1);
+    strcpy(pkgPathchar, x->pkgPath->s_name);
 
     Py4pdUtils_CheckPkgNameConflict(x, pkgPathchar, scriptFileName);
     Py4pdUtils_CheckPkgNameConflict(x, pyGlobalFolder, scriptFileName);
@@ -810,7 +809,8 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     // odd code, but solve the bug
     t_py *prev_obj;
     int prev_obj_exists = 0;
-    PyObject *MainModule = PyImport_ImportModule("pd");
+    PyObject *MainModule;
+    MainModule = PyImport_ImportModule("pd");
     PyObject *oldObjectCapsule;
     if (MainModule != NULL) {
         oldObjectCapsule =
