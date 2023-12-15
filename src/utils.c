@@ -1,4 +1,3 @@
-#include <m_pd.h>
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
 #include "py4pd.h"
@@ -175,7 +174,6 @@ void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
  * @param x
  * @return void*
  */
-void *Py4pdLib_FreeObj(t_py *x) {
 
 void *Py4pdUtils_FreeObj(t_py *x) {
     object_count--;
@@ -315,20 +313,14 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck,
         FindClose(hFind);
     }
 #else
-    DIR *dir;
-    struct dirent *entry;
-
-    if ((dir = opendir(folderToCheck)) == NULL) {
     DIR *dir = opendir(".");
     if (dir == NULL) {
         pd_error(NULL, "[py4pd] Unable to open directory.");
         return;
     }
-    dir = opendir(folderToCheck);
 
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 &&
         // Build the full path to the entry
         char path[1024];
         snprintf(path, sizeof(path), "./%s", entry->d_name);
@@ -351,7 +343,6 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck,
                          "[py4pd] The library '%s' conflicts with a Python "
                          "package name.",
                          script_file_name->s_name);
-                pd_error(x, "[py4pd] This can cause problems related with "
                 pd_error(x, "[py4pd] This can cause problems related to "
                             "py4pdLoadObjects.");
                 pd_error(x, "[py4pd] Rename the library.");
@@ -973,7 +964,6 @@ void Py4pdUtils_PrintError(t_py *x) {
  * @param pArgs is the arguments to pass to the function
  * @return the return value of the function
  */
-PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
 int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
 
     t_py *prev_obj = NULL;
@@ -1005,14 +995,12 @@ int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
                  x->pFuncName->s_name);
         Py4pdUtils_PrintError(x);
         Py_XDECREF(MainModule);
-        return NULL;
         return -1;
     }
     objectCapsule = Py4pdUtils_AddPdObject(x);
     if (objectCapsule == NULL) {
         pd_error(x, "[Python] Failed to add object to Python");
         Py_XDECREF(MainModule);
-        return NULL;
         return -1;
     }
 
@@ -1031,7 +1019,6 @@ int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
         objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
         if (objectCapsule == NULL) {
             pd_error(x, "[Python] Failed to add object to Python");
-            return NULL;
             return -1;
         }
     }
@@ -1040,7 +1027,6 @@ int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
         if (x->objType < 3) {
             free(PyPtrValue);
         }
-        return NULL;
         return -1;
     }
     if (pValue != NULL && (x->objType < 3)) {
@@ -1049,14 +1035,12 @@ int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
         Py_XDECREF(MainModule);
         free(PyPtrValue);
         PyErr_Clear();
-        return NULL;
         return 0;
     } else if (pValue == NULL) {
         Py4pdUtils_PrintError(x);
         Py_XDECREF(pValue);
         Py_XDECREF(MainModule);
         free(PyPtrValue);
-        return NULL;
         return 0;
     }
 
@@ -1064,12 +1048,10 @@ int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
         Py_XDECREF(MainModule);
         free(PyPtrValue);
         PyErr_Clear();
-        return pValue;
         return 0;
     } else {
         pd_error(x, "[%s] Unknown error, please report", x->objName->s_name);
         PyErr_Clear();
-        return NULL;
         return -1;
     }
 }
@@ -1660,8 +1642,6 @@ void *Py4pdUtils_CreateSubInterpreter(void *arg) {
 
     // run function
     struct Py4pd_ObjSubInterp *objSubInterp = arg;
-    PyObject *pValue = PyObject_CallObject(objSubInterp->pFunc, NULL);
-    (void)pValue;
     t_py *x = objSubInterp->x;
     x->funcCalled = 0;
 
@@ -1689,18 +1669,14 @@ void *Py4pdUtils_CreateSubInterpreter(void *arg) {
  * otherwise it will return 1.
  */
 void Py4pdUtils_CreatePythonInterpreter(t_py *x) {
-    if (x->pFunction == NULL) {
-        pd_error(x, "[Python] No function defined");
 
     if (x->pSubInterpRunning) {
         pd_error(x, "[Python] Subinterpreter already running");
         return;
     }
 
-    // add object to struct
     struct Py4pd_ObjSubInterp *objSubInterp =
         malloc(sizeof(struct Py4pd_ObjSubInterp));
-    objSubInterp->pFunc = x->pFunction;
 
     objSubInterp->x = x;
     x->pSubInterpRunning = 1;
@@ -1708,7 +1684,6 @@ void Py4pdUtils_CreatePythonInterpreter(t_py *x) {
     pthread_create(&PyInterpId, NULL, Py4pdUtils_CreateSubInterpreter,
                    objSubInterp);
     pthread_detach(PyInterpId);
-    post("main thread");
     return;
 }
 #endif
