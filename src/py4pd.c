@@ -1,4 +1,3 @@
-#define PY_ARRAY_UNIQUE_SYMBOL py4pd_ARRAY_API
 // #define NO_IMPORT_ARRAY
 // #define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
 #include "py4pd.h"
@@ -9,13 +8,28 @@ t_class *py4pd_classLibrary; // For libraries
 int object_count = 0;
 
 void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv) {
-    // (void)x;
+    (void)x;
     (void)argc;
     (void)argv;
 
-    post("glist_isvisible = %d", glist_isvisible(x->glist));
-    post("gobj_shouldvis = %d", gobj_shouldvis((t_gobj *)x, x->glist));
-
+    // Dimensions of the array
+    // _import_array();
+    // npy_intp dims[] = {2, 10};
+    //
+    // // Total number of elements in the array
+    // int total_elements = dims[0] * dims[1];
+    //
+    // // Assuming you have a 2D array of integers
+    // int data[] = {
+    //     1,  2,  3,  4,  5,  6,  7,  8,  9,  10, // Row 1
+    //     11, 12, 13, 14, 15, 16, 17, 18, 19, 20  // Row 2
+    // };
+    //
+    // // Using PyArray_SimpleNewFromData to create a NumPy array
+    // PyObject *numpy_array = PyArray_SimpleNewFromData(2, dims, NPY_INT,
+    // data);
+    //
+    // post("OK");
     return NULL;
 }
 // ============================================
@@ -112,7 +126,6 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
 
     // conver const char* to char*
     char *pkgPathchar = malloc(strlen(x->pkgPath->s_name) + 1);
-    strcpy(pkgPathchar, x->pkgPath->s_name);
     // strcpy(pkgPathchar, x->pkgPath->s_name);
     strlcpy(pkgPathchar, x->pkgPath->s_name, strlen(x->pkgPath->s_name) + 1);
 
@@ -1057,15 +1070,6 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
             Py4pdUtils_AddPathsToPythonPath(x);
         }
         if (argc > 1) { // check if there are two arguments
-            if (_import_array() != 0) {
-                pd_error(NULL,
-                         "\n!!!!!!\n [py4pd] Unable to import NumPy! Send "
-                         "[pip install "
-                         "numpy] to py4pd object to install it.] "
-                         "\n!!!!!!\n");
-                x->numpyImported = 0;
-                return (x);
-            }
             Py4pd_SetFunction(x, s, argc, argv);
             x->numpyImported = 1;
         }
@@ -1091,15 +1095,6 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         Py4pdUtils_SetObjConfig(x);
         if (object_count == 0) {
             Py4pdUtils_AddPathsToPythonPath(x);
-            if (_import_array() != 0) {
-                pd_error(NULL,
-                         "\n!!!!!!\n [py4pd] Unable to import NumPy! Send "
-                         "[pip install "
-                         "numpy] to py4pd object to install it.] "
-                         "\n!!!!!!\n");
-                x->numpyImported = 0;
-                return NULL;
-            }
         }
         x->numpyImported = 1;
         int libraryLoaded = Py4pd_LibraryLoad(x, argc, argv);
@@ -1138,8 +1133,6 @@ void py4pd_setup(void) {
 
     py4pd_class =
         class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
-                  (t_newmethod)Py4pd_Py4pdNew, // metodo de criação do objeto
-                  (t_method)Py4pdLib_FreeObj,  // quando voce deleta o objeto
                   (t_newmethod)Py4pd_Py4pdNew,  // metodo de criação do objeto
                   (t_method)Py4pdUtils_FreeObj, // quando voce deleta o objeto
                   sizeof(t_py), // quanta memoria precisamos para esse objeto
@@ -1148,7 +1141,6 @@ void py4pd_setup(void) {
                   0);           // fim de argumentos
 
     py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)Py4pd_Py4pdNew,
-                                   (t_method)Py4pdLib_FreeObj, sizeof(t_py),
                                    (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                                    CLASS_NOINLET, A_GIMME, 0);
 
