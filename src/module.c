@@ -1511,15 +1511,11 @@ static struct PyModuleDef pdmodule = {
 
 // =================================
 PyMODINIT_FUNC PyInit_pd() {
-    PyObject *py4pdmodule;
     import_array() PyObject *py4pdmodule;
     py4pdmodule = PyModuleDef_Init(&pdmodule);
     if (py4pdmodule == NULL) {
         return NULL;
     }
-
-#if !PYTHON_REQUIRED_VERSION(3, 12)
-#endif
 
     return py4pdmodule;
 }
