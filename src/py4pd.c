@@ -113,6 +113,8 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     // conver const char* to char*
     char *pkgPathchar = malloc(strlen(x->pkgPath->s_name) + 1);
     strcpy(pkgPathchar, x->pkgPath->s_name);
+    // strcpy(pkgPathchar, x->pkgPath->s_name);
+    strlcpy(pkgPathchar, x->pkgPath->s_name, strlen(x->pkgPath->s_name) + 1);
 
     Py4pdUtils_CheckPkgNameConflict(x, pkgPathchar, scriptFileName);
     Py4pdUtils_CheckPkgNameConflict(x, pyGlobalFolder, scriptFileName);
@@ -747,6 +749,10 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     t_symbol *script_file_name = atom_gensym(argv + 0);
     t_symbol *pFuncNameSymbol = atom_gensym(argv + 1);
+    if (script_file_name == NULL) {
+        pd_error(x, "[py4pd] Script Name is NULL!");
+        return;
+    }
 
     if (x->funcCalled == 1) {
         int function_is_equal =
