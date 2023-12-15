@@ -167,6 +167,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject            *pArgTuple;
     t_symbol            *pFuncName; // function_name; // function name
     t_symbol            *pScriptName; // script name or pathname
+    t_int               pSubInterpRunning; // number of arguments
 
     // == AUDIO AND NUMPY
     t_int               audioOutput; // flag to check if is to use audio output
@@ -222,6 +223,7 @@ void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv);
 int Py4pd_ImportNumpyForPy4pd();
 void Py4pd_PrintDocs(t_py *x);
 void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f);
+void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
 
 #define PY4PD_IMAGE "R0lGODlhKgAhAPAAAP///wAAACH5BAAAAAAAIf8LSW1hZ2VNYWdpY2sOZ2FtbWE9MC40NTQ1NDUALAAAAAAqACEAAAIkhI+py+0Po5y02ouz3rz7D4biSJbmiabqyrbuC8fyTNf2jTMFADs="
 #define PY4PDSIGTOTAL(s) ((t_int)((s)->s_length * (s)->s_nchans))
@@ -243,7 +245,7 @@ int Py4pdUtils_IsNumericOrDot(const char *str);
 void Py4pdUtils_RemoveChar(char *str, char c);
 char *Py4pdUtils_Mtok(char *input, char *delimiter);
 void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet);
-PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pDict);
+int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pDict);
 t_py4pd_pValue *Py4pdUtils_Run(t_py *x, PyObject *pArgs, t_py4pd_pValue *pValuePointer);
 PyObject *Py4pdUtils_RunPyAudioOut(t_py *x, PyObject *pArgs, PyObject *pKwargs);
 void Py4pdUtils_DECREF(PyObject *pValue);
