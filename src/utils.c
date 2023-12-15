@@ -974,6 +974,7 @@ void Py4pdUtils_PrintError(t_py *x) {
  * @return the return value of the function
  */
 PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
+int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
 
     t_py *prev_obj = NULL;
     int prev_obj_exists = 0;
@@ -1005,12 +1006,14 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
         Py4pdUtils_PrintError(x);
         Py_XDECREF(MainModule);
         return NULL;
+        return -1;
     }
     objectCapsule = Py4pdUtils_AddPdObject(x);
     if (objectCapsule == NULL) {
         pd_error(x, "[Python] Failed to add object to Python");
         Py_XDECREF(MainModule);
         return NULL;
+        return -1;
     }
 
     pValue = PyObject_Call(x->pFunction, pArgs, pKwargs);
@@ -1029,6 +1032,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
         if (objectCapsule == NULL) {
             pd_error(x, "[Python] Failed to add object to Python");
             return NULL;
+            return -1;
         }
     }
 
@@ -1037,6 +1041,7 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
             free(PyPtrValue);
         }
         return NULL;
+        return -1;
     }
     if (pValue != NULL && (x->objType < 3)) {
         Py4pdUtils_ConvertToPd(x, PyPtrValue, x->mainOut);
@@ -1045,12 +1050,14 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
         free(PyPtrValue);
         PyErr_Clear();
         return NULL;
+        return 0;
     } else if (pValue == NULL) {
         Py4pdUtils_PrintError(x);
         Py_XDECREF(pValue);
         Py_XDECREF(MainModule);
         free(PyPtrValue);
         return NULL;
+        return 0;
     }
 
     else if (x->objType > 2) {
@@ -1058,10 +1065,12 @@ PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
         free(PyPtrValue);
         PyErr_Clear();
         return pValue;
+        return 0;
     } else {
         pd_error(x, "[%s] Unknown error, please report", x->objName->s_name);
         PyErr_Clear();
         return NULL;
+        return -1;
     }
 }
 
