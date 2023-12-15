@@ -1,5 +1,6 @@
 #include <m_pd.h>
 #define NO_IMPORT_ARRAY
+#define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
 #include "py4pd.h"
 
 // ====================================================

@@ -1,4 +1,6 @@
 #define PY_ARRAY_UNIQUE_SYMBOL py4pd_ARRAY_API
+// #define NO_IMPORT_ARRAY
+// #define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
 #include "py4pd.h"
 
 // ============================================

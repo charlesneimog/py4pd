@@ -701,6 +701,13 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     char py4pd_objectName[MAXPDSTRING];
     snprintf(py4pd_objectName, sizeof(py4pd_objectName), "py4pd_ObjectDict_%s",
              objectName);
+    import_array() PyObject *pd_module = PyImport_ImportModule("pd");
+
+    if (pd_module == NULL) {
+        pd_error(NULL,
+                 "[py4pd] Not possible import the pd module, please report!");
+        return NULL;
+    }
 
     PyObject *pd_module = PyImport_ImportModule("pd");
     PyObject *py4pd_capsule =
