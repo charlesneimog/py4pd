@@ -1629,6 +1629,7 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x) {
 struct Py4pd_ObjSubInterp {
     PyObject *pFunc;
     PyObject *pModule;
+    t_py *x;
 };
 
 // =================================================================
@@ -1646,11 +1647,36 @@ void *Py4pdUtils_CreateSubInterpreter(void *arg) {
         return NULL;
     }
 
+    if (tstate == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "Interpreter creation failed");
+        return NULL;
+    }
+
+    PyThreadState *subInterp = PyThreadState_Get();
+    post("Id %d", subInterp->thread_id);
+
+    uint64_t threadId = PyThreadState_GetID(tstate);
+    post("Thread Id: %d", threadId);
+
     // run function
     struct Py4pd_ObjSubInterp *objSubInterp = arg;
     PyObject *pValue = PyObject_CallObject(objSubInterp->pFunc, NULL);
     (void)pValue;
+    t_py *x = objSubInterp->x;
+    x->funcCalled = 0;
 
+    Py4pdUtils_AddPathsToPythonPath(x);
+
+    t_atom args[2];
+    SETSYMBOL(&args[0], gensym("threadtest"));
+    SETSYMBOL(&args[1], gensym("mytest"));
+
+    Py4pd_SetFunction(x, gensym("set"), 2, args);
+    PyObject *pArgs = PyTuple_New(0);
+    int pValue = Py4pdUtils_RunPy(x, pArgs, NULL);
+    if (pValue != 0) {
+        return NULL;
+    }
     return 0;
 }
 
@@ -1665,6 +1691,9 @@ void *Py4pdUtils_CreateSubInterpreter(void *arg) {
 void Py4pdUtils_CreatePythonInterpreter(t_py *x) {
     if (x->pFunction == NULL) {
         pd_error(x, "[Python] No function defined");
+
+    if (x->pSubInterpRunning) {
+        pd_error(x, "[Python] Subinterpreter already running");
         return;
     }
 
@@ -1673,6 +1702,8 @@ void Py4pdUtils_CreatePythonInterpreter(t_py *x) {
         malloc(sizeof(struct Py4pd_ObjSubInterp));
     objSubInterp->pFunc = x->pFunction;
 
+    objSubInterp->x = x;
+    x->pSubInterpRunning = 1;
     pthread_t PyInterpId;
     pthread_create(&PyInterpId, NULL, Py4pdUtils_CreateSubInterpreter,
                    objSubInterp);
