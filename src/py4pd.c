@@ -1140,6 +1140,8 @@ void py4pd_setup(void) {
         class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
                   (t_newmethod)Py4pd_Py4pdNew, // metodo de criação do objeto
                   (t_method)Py4pdLib_FreeObj,  // quando voce deleta o objeto
+                  (t_newmethod)Py4pd_Py4pdNew,  // metodo de criação do objeto
+                  (t_method)Py4pdUtils_FreeObj, // quando voce deleta o objeto
                   sizeof(t_py), // quanta memoria precisamos para esse objeto
                   0,            // nao há uma GUI especial para esse objeto???
                   A_GIMME,      // os podem ser qualquer coisa
@@ -1147,6 +1149,7 @@ void py4pd_setup(void) {
 
     py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)Py4pd_Py4pdNew,
                                    (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                                   (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                                    CLASS_NOINLET, A_GIMME, 0);
 
     // this is like have lot of objects with the same name, add all methods
