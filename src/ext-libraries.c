@@ -587,8 +587,6 @@ t_int *Py4pdLib_AudioINPerform(t_int *w) {
     int n = (int)(w[3]);
     int numChannels = n / x->vectorSize;
     npy_intp dims[] = {numChannels, x->vectorSize};
-    PyObject *pAudio = PyArray_SimpleNewFromData(
-        2, dims, NPY_FLOAT, in); // NOTE: this should be DOUBLE in pd64
     PyObject *pAudio = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, in);
     // NOTE: pAudio must use NPY_DOUBLE in pd64
     if (x->pArgTuple == NULL) {
@@ -669,13 +667,6 @@ t_int *Py4pdLib_AudioPerform(t_int *w) {
 
 // =====================================
 static void Py4pdLib_Dsp(t_py *x, t_signal **sp) {
-    if (_import_array() != 0) {
-        x->numpyImported = 0;
-        pd_error(x, "[py4pd] Failed to import numpy");
-    } else {
-        x->numpyImported = 1;
-    }
-
     if (x->objType == PY4PD_AUDIOINOBJ) {
         x->nChs = sp[0]->s_nchans;
         x->vectorSize = sp[0]->s_n;
@@ -711,7 +702,6 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
 
-    PyObject *pd_module = PyImport_ImportModule("pd");
     PyObject *py4pd_capsule =
         PyObject_GetAttrString(pd_module, py4pd_objectName);
     PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
@@ -788,16 +778,6 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
 
-    if (x->objType > 1) {
-        int numpyArrayImported = _import_array();
-        if (numpyArrayImported == 0) {
-            x->numpyImported = 1;
-        } else {
-            x->numpyImported = 0;
-            Py4pdUtils_PrintError(x);
-            pd_error(NULL, "[%s] Numpy was not imported!", objectName);
-        }
-    }
     x->pdObjArgs = malloc(sizeof(t_atom) * argc);
     for (int i = 0; i < argc; i++) {
         x->pdObjArgs[i] = argv[i];
@@ -896,9 +876,6 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
         return NULL;
     }
 
-    const char *helpFolder = "/help/";
-    size_t totalLength =
-        strlen(py4pd->libraryFolder->s_name) + strlen(helpFolder) + 1;
     char *helpFolderCHAR = (char *)malloc(totalLength * sizeof(char));
     if (helpFolderCHAR == NULL) {
         pd_error(py4pd, "[py4pd] Error allocating memory (code 001)");
@@ -1008,27 +985,22 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
 
     if (objectType == PY4PD_NORMALOBJ) {
         localClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                               (t_method)Py4pdLib_FreeObj, sizeof(t_py),
                                (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                                CLASS_DEFAULT, A_GIMME, 0);
     } else if (objectType == PY4PD_VISOBJ) {
         localClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                               (t_method)Py4pdLib_FreeObj, sizeof(t_py),
                                (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                                CLASS_DEFAULT, A_GIMME, 0);
     } else if (objectType == PY4PD_AUDIOINOBJ) {
         localClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                               (t_method)Py4pdLib_FreeObj, sizeof(t_py),
                                (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                                CLASS_MULTICHANNEL, A_GIMME, 0);
     } else if (objectType == PY4PD_AUDIOOUTOBJ) {
         localClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                               (t_method)Py4pdLib_FreeObj, sizeof(t_py),
                                (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                                CLASS_MULTICHANNEL, A_GIMME, 0);
     } else if (objectType == PY4PD_AUDIOOBJ) {
         localClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                               (t_method)Py4pdLib_FreeObj, sizeof(t_py),
                                (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                                CLASS_MULTICHANNEL, A_GIMME, 0);
     } else {
