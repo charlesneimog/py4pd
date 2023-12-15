@@ -547,7 +547,7 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av) {
     }
 
     Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
-    Py4pdUtils_DECREF(pArgs);
+    Py_DECREF(pArgs);
     PyErr_Clear();
     return;
 }
@@ -571,11 +571,9 @@ void Py4pdLib_Bang(t_py *x) {
     Py_DECREF(pArgs);
 }
 
-// =====================================
-//             +++++++++++            //
-//             ++ AUDIO ++            //
-//             +++++++++++            //
-// =====================================
+// ====================================================
+// ===================== Audio ========================
+// ====================================================
 t_int *Py4pdLib_AudioINPerform(t_int *w) {
     t_py *x = (t_py *)(w[1]);
 
@@ -686,9 +684,9 @@ static void Py4pdLib_Dsp(t_py *x, t_signal **sp) {
     }
 }
 
-// ================
-// == CREATE OBJ ==
-// ================
+// ====================================================
+// ===================== Create Obj ===================
+// ====================================================
 void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     const char *objectName = s->s_name;
     char py4pd_objectName[MAXPDSTRING];
@@ -727,7 +725,6 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
 
-    // post("All important things work!");
     PyObject *ignoreOnNone = PyDict_GetItemString(PdDict, "py4pdOBJIgnoreNone");
     PyObject *playable = PyDict_GetItemString(PdDict, "py4pdOBJPlayable");
     PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
@@ -845,9 +842,9 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     return (x);
 }
 
-// ===========================================
-// ================ PYTHON MOD ===============
-// ===========================================
+// ====================================================
+// ===================== pd.add_object ================
+// ====================================================
 PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     char *objectName;

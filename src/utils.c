@@ -2,6 +2,108 @@
 #define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
 #include "py4pd.h"
 
+/*
+This file serves as a versatile collection of functions utilized within the
+Py4pd object, providing a diverse set of utilities for various tasks and
+functionalities. The functions are organized following distinct subsets, each
+dedicated to specific purposes.
+*/
+
+// ====================================================
+// ====================== Utilities ===================
+// ====================================================
+/*
+ * @brief See if str is a number or a dot
+ * @param str is the string to check
+ * @return 1 if it is a number or a dot, 0 otherwise
+ */
+int Py4pdUtils_IsNumericOrDot(const char *str) {
+    int hasDot = 0;
+    while (*str) {
+        if (isdigit(*str)) {
+            str++;
+        } else if (*str == '.' && !hasDot) {
+            hasDot = 0;
+            str++;
+        } else {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+// =====================================================================
+/*
+ * @brief Remove some char from a string
+ * @param str is the string to remove the char
+ * @param c is the char to remove
+ * @return the string without the char
+ */
+void Py4pdUtils_RemoveChar(char *str, char c) {
+    int i, j;
+    for (i = 0, j = 0; str[i] != '\0'; i++) {
+        if (str[i] != c) {
+            str[j] = str[i];
+            j++;
+        }
+    }
+    str[j] = '\0';
+}
+
+// =====================================================================
+/*
+ * @brief Convert and output Python Values to PureData values
+ * @param x is the py4pd object
+ * @param pValue is the Python value to convert
+ * @return nothing, but output the value to the outlet
+ */
+void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet) {
+    (void)x;
+    // new and redone - Derek Kwan
+    long unsigned int seplen = strlen(" ");
+    seplen++;
+    char *sep = t_getbytes(seplen * sizeof(*sep));
+    memset(sep, '\0', seplen);
+    strcpy(sep, " ");
+    if (s) {
+        long unsigned int iptlen = strlen(s->s_name);
+        t_atom *out = t_getbytes(iptlen * sizeof(*out));
+        iptlen++;
+        char *newstr = t_getbytes(iptlen * sizeof(*newstr));
+        memset(newstr, '\0', iptlen);
+        strcpy(newstr, s->s_name);
+        int atompos = 0; // position in atom
+        char *ret = Py4pdUtils_Mtok(newstr, sep);
+        char *err; // error pointer
+        while (ret != NULL) {
+            if (strlen(ret) > 0) {
+                int allnums =
+                    Py4pdUtils_IsNumericOrDot(ret); // flag if all nums
+                if (allnums) { // if errpointer is at beginning, that means
+                               // we've got a float
+                    double f = strtod(ret, &err);
+                    SETFLOAT(&out[atompos], (t_float)f);
+                } else { // else we're dealing with a symbol
+                    t_symbol *cursym = gensym(ret);
+                    SETSYMBOL(&out[atompos], cursym);
+                };
+                atompos++; // increment position in atom
+            };
+            ret = Py4pdUtils_Mtok(NULL, sep);
+        };
+        if (out->a_type == A_SYMBOL) {
+            outlet_anything(outlet, out->a_w.w_symbol, atompos - 1, out + 1);
+        } else if (out->a_type == A_FLOAT && atompos >= 1) {
+            outlet_list(outlet, &s_list, atompos, out);
+        }
+        t_freebytes(out, iptlen * sizeof(*out));
+        t_freebytes(newstr, iptlen * sizeof(*newstr));
+    };
+    t_freebytes(sep, seplen * sizeof(*sep));
+}
+
+// ====================================================
+// ====================== Libraries ===================
 // ====================================================
 /*
  * @brief This function parse the arguments for pd Objects created with the
@@ -89,6 +191,71 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr,
 }
 
 // ====================================================
+// ========== Iteration between Pd2py|Py2pd ===========
+// ====================================================
+/*
+ * @brief add PureData Object struct to Python Module, because this we are able
+ * to config Pd Obj from Python
+ * @param x is the py4pd object
+ * @param capsule is the PyObject (capsule)
+ * @return the pointer to the py capsule
+ */
+
+PyObject *Py4pdUtils_AddPdObject(t_py *x) {
+    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("pd"));
+    PyObject *objectCapsule;
+    if (MainModule != NULL) {
+        objectCapsule =
+            PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        if (objectCapsule != NULL) {
+            PyCapsule_SetPointer(objectCapsule, x);
+        } else {
+            objectCapsule = PyCapsule_New(
+                x, "py4pd", NULL); // create a capsule to pass the
+                                   // object to the python interpreter
+            PyModule_AddObject(
+                PyImport_ImportModule("pd"), "py4pd",
+                objectCapsule); // add the capsule to the python interpreter
+        }
+    } else {
+        pd_error(x, "[Python] Could not get the main module");
+        objectCapsule = NULL;
+    }
+    return objectCapsule;
+}
+
+// =====================================================================
+/*
+ * @brief Convert one PyObject pointer to a PureData pointer
+ * @param pValue is the PyObject pointer to convert
+ * @return the PureData pointer
+ */
+PyObject *Py4pdUtils_PyObjectToPointer(PyObject *pValue) {
+    PyObject *pValuePointer = PyLong_FromVoidPtr(pValue);
+    return pValuePointer;
+}
+
+// =====================================================================
+/*
+ * @brief Convert one PureData pointer to a PyObject pointer
+ * @param p is the PureData pointer to convert
+ * @return the PyObject pointer
+ */
+PyObject *Py4pdUtils_PointerToPyObject(PyObject *p) {
+    PyObject *pValue = PyLong_AsVoidPtr(p);
+    return pValue;
+}
+
+// =====================================================================
+void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue *src,
+                                     t_py4pd_pValue *dest) {
+    dest->pValue = src->pValue;
+    dest->pdout = src->pdout;
+    dest->objOwner = src->objOwner;
+    dest->objectsUsing = src->objectsUsing;
+}
+
+// ====================================================
 /*
  * @brief This function parse the arguments for the py4pd object
  * @param x is the py4pd object
@@ -97,117 +264,18 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr,
  * @param argv is the arguments
  * @return return void
  */
-
-void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
-
-    int i;
-    for (i = 0; i < argc; i++) {
-        if (argv[i].a_type == A_SYMBOL) {
-            t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
-            if (py4pdArgs == gensym("-picture") ||
-                py4pdArgs == gensym("-score") || py4pdArgs == gensym("-pic") ||
-                py4pdArgs == gensym("-canvas")) {
-                Py4pdPic_InitVisMode(x, c, py4pdArgs, i, argc, argv, NULL);
-                int j;
-                for (j = i; j < argc; j++) {
-                    argv[j] = argv[j + 1];
-                }
-                argc--;
-            } else if (py4pdArgs == gensym("-nvim") ||
-                       py4pdArgs == gensym("-vscode") ||
-                       py4pdArgs == gensym("-sublime") ||
-                       py4pdArgs == gensym("-emacs")) {
-                // remove the '-' from the name of the editor
-                const char *editor = py4pdArgs->s_name;
-                editor++;
-                x->editorName = gensym(editor);
-                int j;
-                for (j = i; j < argc; j++) {
-                    argv[j] = argv[j + 1];
-                }
-                argc--;
-            } else if (py4pdArgs == gensym("-audioin")) {
-                x->audioInput = 1;
-                x->audioOutput = 0;
-                x->useNumpyArray = 0;
-                int j;
-                for (j = i; j < argc; j++) {
-                    argv[j] = argv[j + 1];
-                }
-                argc--;
-            } else if (py4pdArgs == gensym("-audioout")) {
-                // post("[py4pd] Audio Outlets enabled");
-                x->audioOutput = 1;
-                x->audioInput = 0;
-                x->useNumpyArray = 0;
-                x->mainOut = outlet_new(
-                    &x->obj, gensym("signal")); // create a signal outlet
-                int j;
-                for (j = i; j < argc; j++) {
-                    argv[j] = argv[j + 1];
-                }
-                argc--;
-            } else if (py4pdArgs == gensym("-audio")) {
-                x->audioInput = 1;
-                x->audioOutput = 1;
-                x->mainOut = outlet_new(
-                    &x->obj, gensym("signal")); // create a signal outlet
-                x->useNumpyArray = 0;
-                int j;
-                for (j = i; j < argc; j++) {
-                    argv[j] = argv[j + 1];
-                }
-                argc--;
-            }
-        }
+t_py *Py4pdUtils_GetObject(PyObject *pd_module) {
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
+    if (py4pd_capsule == NULL) {
+        return NULL;
     }
-    if (x->audioOutput == 0) {
-        x->mainOut =
-            outlet_new(&x->obj,
-                       0); // cria um outlet caso o objeto nao contenha audio
-    }
+    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+    Py_DECREF(py4pd_capsule);
+    return py4pd;
 }
 
-// ============================================
-/**
- * @brief Free the memory of the object
- * @param x
- * @return void*
- */
-
-void *Py4pdUtils_FreeObj(t_py *x) {
-    object_count--;
-    if (object_count == 0) {
-        object_count = 0;
-        char command[1000];
-#ifdef _WIN64
-        sprintf(command, "cmd /C del /Q /S %s*.*", x->tempPath->s_name);
-        (void)Py4pdUtils_ExecuteSystemCommand(command);
-#else
-        sprintf(command, "rm -rf %s", x->tempPath->s_name);
-        (void)Py4pdUtils_ExecuteSystemCommand(command);
-#endif
-    }
-    if (x->visMode != 0)
-        Py4pdPic_Free(x);
-
-    if (x->pdcollect != NULL)
-        Py4pdMod_FreePdcollectHash(x->pdcollect);
-
-    if (x->pArgsCount > 1 && x->pyObjArgs != NULL) {
-        for (int i = 1; i < x->pArgsCount; i++) {
-            if (!x->pyObjArgs[i]->pdout)
-                Py_DECREF(x->pyObjArgs[i]->pValue);
-            free(x->pyObjArgs[i]);
-        }
-        free(x->pyObjArgs);
-    }
-    if (x->pdObjArgs != NULL) {
-        free(x->pdObjArgs);
-    }
-    return NULL;
-}
-
+// ====================================================
+// ========================= Files ====================
 // ====================================================
 /*
  * @brief get the folder name of something
@@ -432,476 +500,9 @@ void Py4pdUtils_CreateTempFolder(t_py *x) {
 #endif
 }
 
-// ===================================================================
-/*
- * @brief It creates the commandline to open the editor
- * @param x is the py4pd object
- * @param command is the commandline to open the editor
- * @param line is the line to open the editor
- * @return the commandline to open the editor
- */
-void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
-    const char *editor = x->editorName->s_name;
-    const char *filename = x->pScriptName->s_name;
-    const char *home = x->pdPatchPath->s_name;
-    char completePath[MAXPDSTRING];
-
-    if (x->pyObject) {
-        sprintf(completePath, "'%s'", filename);
-    } else if (x->isLib) {
-        PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->pFunction);
-        t_symbol *pScriptName = gensym(PyUnicode_AsUTF8(code->co_filename));
-        sprintf(completePath, "'%s'", pScriptName->s_name);
-    } else {
-        sprintf(completePath, "'%s/%s.py'", home, filename);
-    }
-
-    // check if there is .py in filename
-    if (strcmp(editor, PY4PD_EDITOR) == 0) {
-        sprintf(command, "%s %s", PY4PD_EDITOR, completePath);
-    } else if (strcmp(editor, "vscode") == 0) {
-        sprintf(command, "code -g '%s:%d'", completePath, line);
-    } else if (strcmp(editor, "nvim") == 0) {
-// if it is linux
-#ifdef __linux__
-        char *env_var = getenv("XDG_CURRENT_DESKTOP");
-        if (env_var == NULL) {
-            pd_error(x, "[py4pd] Your desktop environment is not supported, "
-                        "please report.");
-            sprintf(command, "ls ");
-        } else {
-            if (strcmp(env_var, "GNOME") == 0) {
-                int gnomeConsole = system("kgx --version");
-                int gnomeTerminal = system("gnome-terminal --version");
-                char GuiTerminal[MAXPDSTRING];
-                if (gnomeConsole == 0) {
-                    sprintf(GuiTerminal, "kgx");
-                } else if (gnomeTerminal == 0) {
-                    sprintf(GuiTerminal, "gnome-terminal");
-                } else {
-                    pd_error(
-                        x, "[py4pd] You seems to be using GNOME, but "
-                           "gnome-terminal or gnome-console is not installed, "
-                           "please install one of them.");
-                }
-                sprintf(command, "%s -- nvim +%d %s", GuiTerminal, line,
-                        completePath);
-            } else if (strcmp(env_var, "KDE") == 0) {
-                pd_error(
-                    x, "[py4pd] This is untested, please report if it works.");
-                sprintf(command, "konsole -e \"nvim +%d %s\"", line,
-                        completePath);
-            } else {
-                pd_error(x,
-                         "[py4pd] Your desktop environment %s is not "
-                         "supported, please report.",
-                         env_var);
-                sprintf(command, "ls ");
-            }
-        }
-#else
-        sprintf(command, "nvim +%d %s", line, completePath);
-#endif
-    } else if (strcmp(editor, "gvim") == 0) {
-        sprintf(command, "gvim +%d %s", line, completePath);
-    } else if (strcmp(editor, "sublime") == 0) {
-        sprintf(command, "subl --goto %s:%d", completePath, line);
-    } else if (strcmp(editor, "emacs") == 0) {
-        sprintf(command,
-                "emacs --eval '(progn (find-file \"%s\") (goto-line %d))'",
-                completePath, line);
-    } else {
-        pd_error(x, "[py4pd] editor %s not supported.", editor);
-    }
-    return;
-}
-
-// ============================================
-// ========= PY4PD METHODS FUNCTIONS ==========
-// ============================================
-/*
- * @brief It creates the commandline to open the editor
- * @param x is the py4pd object
- * @param command is the commandline to open the editor
- * @param line is the line to open the editor
- * @return the commandline to open the editor
- */
-void Py4pdUtils_PipInstallRequirements(t_py *x, t_symbol *s, int argc,
-                                       t_atom *argv) {
-    (void)s;
-    const char *pipPackage;
-    const char *localORglobal;
-
-    PyObject *py4pdModule = PyImport_ImportModule("py4pd");
-    if (py4pdModule == NULL) {
-        pd_error(x, "[Python] pipInstall: py4pd module not found");
-        return;
-    }
-    PyObject *pipInstallFunction =
-        PyObject_GetAttrString(py4pdModule, "pipinstallRequirements");
-    if (pipInstallFunction == NULL) {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "[Python] pd.pipInstall: pipinstall function not found");
-        return;
-    }
-    PyObject *ObjFunction = x->pFunction;
-    x->pFunction = pipInstallFunction;
-
-    localORglobal = atom_getsymbolarg(0, argc, argv)->s_name;
-    pipPackage = atom_getsymbolarg(1, argc, argv)->s_name;
-
-    // the function is executed using pipinstall([localORglobal, pipPackage])
-    PyObject *argsList = PyList_New(2);
-    PyList_SetItem(argsList, 0, Py_BuildValue("s", localORglobal));
-    PyList_SetItem(argsList, 1, Py_BuildValue("s", pipPackage));
-    PyObject *argTuple = PyTuple_New(1);
-    PyTuple_SetItem(argTuple, 0, argsList);
-
-    t_py *prev_obj = NULL;
-    int prev_obj_exists = 0;
-    PyObject *MainModule = PyImport_ImportModule("pd");
-    PyObject *oldObjectCapsule;
-
-    if (MainModule != NULL) {
-        oldObjectCapsule =
-            PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
-        if (oldObjectCapsule != NULL) {
-            PyObject *py4pd_capsule =
-                PyObject_GetAttrString(MainModule, "py4pd");
-            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-            prev_obj_exists = 1;
-        } else {
-            prev_obj_exists = 0;
-        }
-    }
-
-    PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
-
-    if (objectCapsule == NULL) {
-        pd_error(x, "[Python] Failed to add object to Python");
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyObject *ptype_str = PyObject_Str(ptype);
-        PyObject *pvalue_str = PyObject_Str(pvalue);
-        PyObject *ptraceback_str = PyObject_Str(ptraceback);
-        const char *ptype_c = PyUnicode_AsUTF8(ptype_str);
-        const char *pvalue_c = PyUnicode_AsUTF8(pvalue_str);
-        const char *ptraceback_c = PyUnicode_AsUTF8(ptraceback_str);
-        pd_error(x, "[Python] %s: %s\n%s", ptype_c, pvalue_c, ptraceback_c);
-        return;
-    }
-
-    PyObject *pValue = PyObject_CallObject(pipInstallFunction, argTuple);
-
-    if (prev_obj_exists == 1 && pValue != NULL) {
-        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
-        if (objectCapsule == NULL) {
-            pd_error(x, "[Python] Failed to add object to Python");
-            return;
-        }
-    }
-
-    if (pValue == NULL) {
-        pd_error(x, "[Python] pipInstall: pipinstall function failed");
-        return;
-    }
-    x->pFunction = ObjFunction;
-    Py_DECREF(argTuple);
-    Py_DECREF(pValue);
-    Py_DECREF(pipInstallFunction);
-    Py_DECREF(py4pdModule);
-    return;
-}
-
-// ====================================
-/*
- * @brief Run system command and check for errors
- * @param command is the command to run
- * @return void, but it prints the error if it fails
- */
-
-int Py4pdUtils_ExecuteSystemCommand(const char *command) {
-#ifdef _WIN64
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    ZeroMemory(&si, sizeof(STARTUPINFO));
-    si.cb = sizeof(STARTUPINFO);
-    ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
-
-    DWORD exitCode;
-    if (CreateProcess(NULL, (LPSTR)command, NULL, NULL, FALSE, CREATE_NO_WINDOW,
-                      NULL, NULL, &si, &pi)) {
-        WaitForSingleObject(pi.hProcess, INFINITE);
-        if (GetExitCodeProcess(pi.hProcess, &exitCode)) {
-            if (exitCode != 0) {
-                post("HELP: Try to run: '%s' from the terminal/cmd", command);
-            }
-        } else {
-            pd_error(NULL,
-                     "[py4pd] Unable to retrieve exit code from command!");
-        }
-    } else {
-        pd_error(NULL, "Error: Process creation failed!");
-        return -1;
-    }
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-    return exitCode;
-#else
-    int result = system(command);
-    if (result != 0) {
-        pd_error(NULL, "[py4pd] Failed to execute command: %s", command);
-        return -1;
-    }
-    return 0;
-#endif
-}
-
-// ============================================
-/*
- * @brief See if str is a number or a dot
- * @param str is the string to check
- * @return 1 if it is a number or a dot, 0 otherwise
- */
-int Py4pdUtils_IsNumericOrDot(const char *str) {
-    int hasDot = 0;
-    while (*str) {
-        if (isdigit(*str)) {
-            str++;
-        } else if (*str == '.' && !hasDot) {
-            hasDot = 0;
-            str++;
-        } else {
-            return 0;
-        }
-    }
-    return 1;
-}
-
-// =====================================================================
-/*
- * @brief Remove some char from a string
- * @param str is the string to remove the char
- * @param c is the char to remove
- * @return the string without the char
- */
-void Py4pdUtils_RemoveChar(char *str, char c) {
-    int i, j;
-    for (i = 0, j = 0; str[i] != '\0'; i++) {
-        if (str[i] != c) {
-            str[j] = str[i];
-            j++;
-        }
-    }
-    str[j] = '\0';
-}
-
-// =====================================================================
-/*
- * @brief Py4pdUtils_Mtok is a function separated from the tokens of one
- * string
- * @param input is the string to be separated
- * @param delimiter is the string to be separated
- * @return the string separated by the delimiter
- */
-char *Py4pdUtils_Mtok(char *input, char *delimiter) {
-    static char *string;
-    if (input != NULL)
-        string = input;
-    if (string == NULL)
-        return string;
-    char *end = strstr(string, delimiter);
-    while (end == string) {
-        *end = '\0';
-        string = end + strlen(delimiter);
-        end = strstr(string, delimiter);
-    };
-    if (end == NULL) {
-        char *temp = string;
-        string = NULL;
-        return temp;
-    }
-    char *temp = string;
-    *end = '\0';
-    string = end + strlen(delimiter);
-    return (temp);
-}
-
-// =====================================================================
-/*
- * @brief Convert and output Python Values to PureData values
- * @param x is the py4pd object
- * @param pValue is the Python value to convert
- * @return nothing, but output the value to the outlet
- */
-void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet) {
-    (void)x;
-    // new and redone - Derek Kwan
-    long unsigned int seplen = strlen(" ");
-    seplen++;
-    char *sep = t_getbytes(seplen * sizeof(*sep));
-    memset(sep, '\0', seplen);
-    strcpy(sep, " ");
-    if (s) {
-        long unsigned int iptlen = strlen(s->s_name);
-        t_atom *out = t_getbytes(iptlen * sizeof(*out));
-        iptlen++;
-        char *newstr = t_getbytes(iptlen * sizeof(*newstr));
-        memset(newstr, '\0', iptlen);
-        strcpy(newstr, s->s_name);
-        int atompos = 0; // position in atom
-        char *ret = Py4pdUtils_Mtok(newstr, sep);
-        char *err; // error pointer
-        while (ret != NULL) {
-            if (strlen(ret) > 0) {
-                int allnums =
-                    Py4pdUtils_IsNumericOrDot(ret); // flag if all nums
-                if (allnums) { // if errpointer is at beginning, that means
-                               // we've got a float
-                    double f = strtod(ret, &err);
-                    SETFLOAT(&out[atompos], (t_float)f);
-                } else { // else we're dealing with a symbol
-                    t_symbol *cursym = gensym(ret);
-                    SETSYMBOL(&out[atompos], cursym);
-                };
-                atompos++; // increment position in atom
-            };
-            ret = Py4pdUtils_Mtok(NULL, sep);
-        };
-        if (out->a_type == A_SYMBOL) {
-            outlet_anything(outlet, out->a_w.w_symbol, atompos - 1, out + 1);
-        } else if (out->a_type == A_FLOAT && atompos >= 1) {
-            outlet_list(outlet, &s_list, atompos, out);
-        }
-        t_freebytes(out, iptlen * sizeof(*out));
-        t_freebytes(newstr, iptlen * sizeof(*newstr));
-    };
-    t_freebytes(sep, seplen * sizeof(*sep));
-}
-
-// =====================================================================
-/*
- * @brief Convert one PyObject pointer to a PureData pointer
- * @param pValue is the PyObject pointer to convert
- * @return the PureData pointer
- */
-PyObject *Py4pdUtils_PyObjectToPointer(PyObject *pValue) {
-    PyObject *pValuePointer = PyLong_FromVoidPtr(pValue);
-    return pValuePointer;
-}
-
-// =====================================================================
-/*
- * @brief Convert one PureData pointer to a PyObject pointer
- * @param p is the PureData pointer to convert
- * @return the PyObject pointer
- */
-PyObject *Py4pdUtils_PointerToPyObject(PyObject *p) {
-    PyObject *pValue = PyLong_AsVoidPtr(p);
-    return pValue;
-}
-
 // ====================================================
-/*
- * @brief This function parse the arguments for the py4pd object
- * @param x is the py4pd object
- * @param c is the canvas of the object
- * @param argc is the number of arguments
- * @param argv is the arguments
- * @return return void
- */
-
-t_py *Py4pdUtils_GetObject(PyObject *pd_module) {
-    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, "py4pd");
-    if (py4pd_capsule == NULL) {
-        return NULL;
-    }
-    t_py *py4pd = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-    Py_DECREF(py4pd_capsule);
-    return py4pd;
-}
-
-// =====================================================================
-void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue *src,
-                                     t_py4pd_pValue *dest) {
-    dest->pValue = src->pValue;
-    dest->pdout = src->pdout;
-    dest->objOwner = src->objOwner;
-    dest->objectsUsing = src->objectsUsing;
-}
-
-// =====================================================================
-int Py4pdUtils_ImportNumpy(t_py *x) {
-    // post("importing NUMPY");
-    (void)x;
-    // _import_array();
-    return 0;
-}
-
-// =====================================================================
-PyObject *Py4pdUtils_RunPyAudioOut(t_py *x, PyObject *pArgs,
-                                   PyObject *pKwargs) {
-    t_py *prev_obj = NULL;
-    int prev_obj_exists = 0;
-    PyObject *MainModule = PyImport_ImportModule("pd");
-    PyObject *oldObjectCapsule = NULL;
-    PyObject *pValue;
-    PyObject *objectCapsule = NULL;
-
-    if (MainModule != NULL) {
-        oldObjectCapsule =
-            PyObject_GetAttrString(MainModule, "py4pd"); // borrowed reference
-        if (oldObjectCapsule != NULL) {
-            PyObject *py4pd_capsule = PyObject_GetAttrString(
-                MainModule, "py4pd"); // borrowed reference
-            prev_obj =
-                (t_py *)PyCapsule_GetPointer(py4pd_capsule,
-                                             "py4pd"); // borrowed reference
-            prev_obj_exists = 1;
-            Py_DECREF(oldObjectCapsule);
-            Py_DECREF(py4pd_capsule);
-        } else {
-            prev_obj_exists = 0;
-            Py_XDECREF(oldObjectCapsule);
-        }
-    } else {
-        pd_error(x,
-                 "[%s] Failed to import pd module when Running Python function",
-                 x->pFuncName->s_name);
-        PyErr_Print();
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
-        PyObject *pstr = PyObject_Str(pvalue);
-        pd_error(x, "[Python] %s", PyUnicode_AsUTF8(pstr));
-        Py_DECREF(pstr);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
-        Py_XDECREF(MainModule);
-        PyErr_Clear();
-        return NULL;
-    }
-    objectCapsule = Py4pdUtils_AddPdObject(x);
-    if (objectCapsule == NULL) {
-        pd_error(x, "[Python] Failed to add object to Python");
-        Py_XDECREF(MainModule);
-        return NULL;
-    }
-    pValue = PyObject_Call(x->pFunction, pArgs, pKwargs);
-    if (prev_obj_exists == 1 && pValue != NULL) {
-        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
-        if (objectCapsule == NULL) {
-            pd_error(x, "[Python] Failed to add object to Python");
-            return NULL;
-        }
-    }
-    Py_XDECREF(MainModule);
-    return pValue;
-}
-
-// =====================================================================
+// ===================== User Interation ==============
+// ====================================================
 /*
  * @brief Run a Python function
  * @param x is the py4pd object
@@ -949,7 +550,9 @@ void Py4pdUtils_PrintError(t_py *x) {
     PyErr_Clear();
 }
 
-// =====================================================================
+// ====================================================
+// ===================== Run ==========================
+// ====================================================
 /*
  * @brief Run a Python function
  * @param x is the py4pd object
@@ -1023,7 +626,7 @@ int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
     }
     if (pValue != NULL && (x->objType < 3)) {
         Py4pdUtils_ConvertToPd(x, PyPtrValue, x->mainOut);
-        Py4pdUtils_DECREF(pValue);
+        Py_DECREF(pValue);
         Py_XDECREF(MainModule);
         free(PyPtrValue);
         PyErr_Clear();
@@ -1048,102 +651,71 @@ int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
     }
 }
 
-// =====================================================================
-/*
- * @brief Run a Python function
- * @param x is the py4pd object
- * @param pArgs is the arguments to pass to the function
- * @return the return value of the function
- */
-void Py4pdUtils_INCREF(PyObject *pValue) {
-    if (pValue->ob_refcnt < 0) {
-        pd_error(NULL, "[DEV] pValue refcnt < 0, Memory Leak, please report!");
-        return;
-    }
+// ====================================================
+PyObject *Py4pdUtils_RunPyAudioOut(t_py *x, PyObject *pArgs,
+                                   PyObject *pKwargs) {
+    t_py *prev_obj = NULL;
+    int prev_obj_exists = 0;
+    PyObject *MainModule = PyImport_ImportModule("pd");
+    PyObject *oldObjectCapsule = NULL;
+    PyObject *pValue;
+    PyObject *objectCapsule = NULL;
 
-    if (Py_IsNone(pValue)) {
-        return;
-    }
-    // check if pValue is between -5 and 255
-    else if (PyLong_Check(pValue)) {
-        long value = PyLong_AsLong(pValue);
-        if (value >= -5 && value <= 255) {
-            return;
-        }
-    }
-    Py_INCREF(pValue);
-    return;
-}
-
-// =====================================================================
-/*
- * @brief Run a Python function
- * @param x is the py4pd object
- * @param pArgs is the arguments to pass to the function
- * @return the return value of the function
- */
-void Py4pdUtils_DECREF(PyObject *pValue) {
-    if (pValue == NULL) {
-        return;
-    }
-
-    if (Py_IsNone(pValue)) {
-        return;
-    }
-    // check if pValue is between -5 and 255
-    else if (PyLong_Check(pValue)) {
-        long value = PyLong_AsLong(pValue);
-        if (value >= -5 && value <= 255) {
-            return;
-        }
-    }
-    if (pValue->ob_refcnt > 0) {
-        Py_DECREF(pValue);
-    }
-
-    if (pValue->ob_refcnt == 0) {
-        pValue = NULL;
-    }
-    return;
-}
-
-// =====================================================================
-/*
- * @brief Run a Python function
- * @param x is the py4pd object
- * @param pArgs is the arguments to pass to the function
- * @return the return value of the function
- */
-void Py4pdUtils_KILL(PyObject *pValue) {
-    if (Py_IsNone(pValue)) {
-        return;
-    } else if (Py_IsTrue(pValue)) {
-        return;
-    } else if (PyLong_Check(pValue)) {
-        long value = PyLong_AsLong(pValue);
-        if (value >= -5 && value <= 255) {
-            return;
+    if (MainModule != NULL) {
+        oldObjectCapsule =
+            PyObject_GetAttrString(MainModule, "py4pd"); // borrowed reference
+        if (oldObjectCapsule != NULL) {
+            PyObject *py4pd_capsule = PyObject_GetAttrString(
+                MainModule, "py4pd"); // borrowed reference
+            prev_obj =
+                (t_py *)PyCapsule_GetPointer(py4pd_capsule,
+                                             "py4pd"); // borrowed reference
+            prev_obj_exists = 1;
+            Py_DECREF(oldObjectCapsule);
+            Py_DECREF(py4pd_capsule);
+        } else {
+            prev_obj_exists = 0;
+            Py_XDECREF(oldObjectCapsule);
         }
     } else {
-        int iter = 0;
-        while (pValue->ob_refcnt > 0) {
-            Py_DECREF(pValue);
-            if (pValue->ob_refcnt == 0) {
-                pValue = NULL;
-                break;
-            }
-            iter++;
-            if (iter > 10000) {
-                pd_error(NULL, "[Python] Failed to kill object, there is a "
-                               "Memory Leak");
-                break;
-            }
-        }
-        return;
+        pd_error(x,
+                 "[%s] Failed to import pd module when Running Python function",
+                 x->pFuncName->s_name);
+        PyErr_Print();
+        PyObject *ptype, *pvalue, *ptraceback;
+        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+        PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+        PyObject *pstr = PyObject_Str(pvalue);
+        pd_error(x, "[Python] %s", PyUnicode_AsUTF8(pstr));
+        Py_DECREF(pstr);
+        Py_XDECREF(ptype);
+        Py_XDECREF(pvalue);
+        Py_XDECREF(ptraceback);
+        Py_XDECREF(MainModule);
+        PyErr_Clear();
+        return NULL;
     }
+    objectCapsule = Py4pdUtils_AddPdObject(x);
+    if (objectCapsule == NULL) {
+        pd_error(x, "[Python] Failed to add object to Python");
+        Py_XDECREF(MainModule);
+        return NULL;
+    }
+    pValue = PyObject_Call(x->pFunction, pArgs, pKwargs);
+    if (prev_obj_exists == 1 && pValue != NULL) {
+        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
+        if (objectCapsule == NULL) {
+            pd_error(x, "[Python] Failed to add object to Python");
+            return NULL;
+        }
+    }
+    Py_XDECREF(MainModule);
+    return pValue;
 }
 
-// =====================================================================
+// ====================================================
+// ===================== Memory =======================
+// ====================================================
 /*
  * @brief It warnings if there is a memory leak
  * @param pValue is the value to check
@@ -1195,7 +767,49 @@ void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where) {
     return;
 }
 
-// =====================================================================
+// ============================================
+/**
+ * @brief Free the memory of the object
+ * @param x
+ * @return void*
+ */
+
+void *Py4pdUtils_FreeObj(t_py *x) {
+    object_count--;
+    if (object_count == 0) {
+        object_count = 0;
+        char command[1000];
+#ifdef _WIN64
+        sprintf(command, "cmd /C del /Q /S %s*.*", x->tempPath->s_name);
+        (void)Py4pdUtils_ExecuteSystemCommand(command);
+#else
+        sprintf(command, "rm -rf %s", x->tempPath->s_name);
+        (void)Py4pdUtils_ExecuteSystemCommand(command);
+#endif
+    }
+    if (x->visMode != 0)
+        Py4pdPic_Free(x);
+
+    if (x->pdcollect != NULL)
+        Py4pdMod_FreePdcollectHash(x->pdcollect);
+
+    if (x->pArgsCount > 1 && x->pyObjArgs != NULL) {
+        for (int i = 1; i < x->pArgsCount; i++) {
+            if (!x->pyObjArgs[i]->pdout)
+                Py_DECREF(x->pyObjArgs[i]->pValue);
+            free(x->pyObjArgs[i]);
+        }
+        free(x->pyObjArgs);
+    }
+    if (x->pdObjArgs != NULL) {
+        free(x->pdObjArgs);
+    }
+    return NULL;
+}
+
+// ====================================================
+// ===================== Convertions ==========================
+// ====================================================
 /*
  * @brief Convert and output Python Values to PureData values
  * @param x is the py4pd object
@@ -1437,7 +1051,88 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc,
     return ArgsTuple;
 }
 
-// ========================= py4pd object ==============================
+// ====================================================
+// ===================== ObjConfig ====================
+// ====================================================
+/*
+ * @brief This function parse the arguments for the py4pd object
+ * @param x is the py4pd object
+ * @param c is the canvas of the object
+ * @param argc is the number of arguments
+ * @param argv is the arguments
+ * @return return void
+ */
+
+void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
+
+    int i;
+    for (i = 0; i < argc; i++) {
+        if (argv[i].a_type == A_SYMBOL) {
+            t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
+            if (py4pdArgs == gensym("-picture") ||
+                py4pdArgs == gensym("-score") || py4pdArgs == gensym("-pic") ||
+                py4pdArgs == gensym("-canvas")) {
+                Py4pdPic_InitVisMode(x, c, py4pdArgs, i, argc, argv, NULL);
+                int j;
+                for (j = i; j < argc; j++) {
+                    argv[j] = argv[j + 1];
+                }
+                argc--;
+            } else if (py4pdArgs == gensym("-nvim") ||
+                       py4pdArgs == gensym("-vscode") ||
+                       py4pdArgs == gensym("-sublime") ||
+                       py4pdArgs == gensym("-emacs")) {
+                // remove the '-' from the name of the editor
+                const char *editor = py4pdArgs->s_name;
+                editor++;
+                x->editorName = gensym(editor);
+                int j;
+                for (j = i; j < argc; j++) {
+                    argv[j] = argv[j + 1];
+                }
+                argc--;
+            } else if (py4pdArgs == gensym("-audioin")) {
+                x->audioInput = 1;
+                x->audioOutput = 0;
+                x->useNumpyArray = 0;
+                int j;
+                for (j = i; j < argc; j++) {
+                    argv[j] = argv[j + 1];
+                }
+                argc--;
+            } else if (py4pdArgs == gensym("-audioout")) {
+                // post("[py4pd] Audio Outlets enabled");
+                x->audioOutput = 1;
+                x->audioInput = 0;
+                x->useNumpyArray = 0;
+                x->mainOut = outlet_new(
+                    &x->obj, gensym("signal")); // create a signal outlet
+                int j;
+                for (j = i; j < argc; j++) {
+                    argv[j] = argv[j + 1];
+                }
+                argc--;
+            } else if (py4pdArgs == gensym("-audio")) {
+                x->audioInput = 1;
+                x->audioOutput = 1;
+                x->mainOut = outlet_new(
+                    &x->obj, gensym("signal")); // create a signal outlet
+                x->useNumpyArray = 0;
+                int j;
+                for (j = i; j < argc; j++) {
+                    argv[j] = argv[j + 1];
+                }
+                argc--;
+            }
+        }
+    }
+    if (x->audioOutput == 0) {
+        x->mainOut =
+            outlet_new(&x->obj,
+                       0); // cria um outlet caso o objeto nao contenha audio
+    }
+}
+
 /*
 
 * @brief Get the config from py4pd.cfg file
@@ -1482,18 +1177,6 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
                         packages_path[strlen(packages_path) - 1] =
                             '\0'; // remove the last character
                     }
-
-                    // packages_path[strlen(packages_path) - 1] =
-                    //     '\0'; // remove the last character
-                    // char *i = packages_path;
-                    // char *j = packages_path;
-                    // while (*j != 0) {
-                    //   *i = *j++;
-                    //   if (*i != ' ')
-                    //     i++;
-                    // }
-                    // *i = 0;
-                    // if packages_path start with . add the home_path
                     if (packages_path[0] == '.') {
                         char *new_packages_path = (char *)malloc(
                             sizeof(char) * (strlen(x->pdPatchPath->s_name) +
@@ -1511,9 +1194,7 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
                     }
                 }
                 free(packages_path); // free memory
-            }
-
-            else if (strstr(line, "editor =") != NULL) {
+            } else if (strstr(line, "editor =") != NULL) {
                 char *editor = (char *)malloc(
                     sizeof(char) * (strlen(line) - strlen("editor = ") + 1)); //
                 strcpy(editor, line + strlen("editor = "));
@@ -1521,14 +1202,12 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
                 Py4pdUtils_RemoveChar(editor, '\r');
                 Py4pdUtils_RemoveChar(editor, ' ');
                 x->editorName = gensym(editor);
-                free(editor); // free memory
-                              // logpost(x, 3, "[py4pd] Editor set to %s",
-                              // x->editorName->s_name);
+                free(editor);
             }
         }
-        fclose(file); // close file
+        fclose(file);
     }
-    free(PADRAO_packages_path); // free memory
+    free(PADRAO_packages_path);
     Py4pdUtils_CreateTempFolder(x);
     return;
 }
@@ -1562,42 +1241,93 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
     return;
 }
 
-// ========================= PYTHON ==============================
+// ===================================================================
 /*
-* @brief add PureData Object to Python Module
-* @param x is the py4pd object
-* @param capsule is the PyObject (capsule)
-* @return the pointer to the py capsule
+ * @brief It creates the commandline to open the editor
+ * @param x is the py4pd object
+ * @param command is the commandline to open the editor
+ * @param line is the line to open the editor
+ * @return the commandline to open the editor
+ */
+void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
+    const char *editor = x->editorName->s_name;
+    const char *filename = x->pScriptName->s_name;
+    const char *home = x->pdPatchPath->s_name;
+    char completePath[MAXPDSTRING];
 
-*/
-
-PyObject *Py4pdUtils_AddPdObject(t_py *x) {
-    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("pd"));
-    PyObject *objectCapsule;
-    if (MainModule != NULL) {
-        objectCapsule =
-            PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
-        if (objectCapsule != NULL) {
-            PyCapsule_SetPointer(objectCapsule, x);
-        } else {
-            objectCapsule = PyCapsule_New(
-                x, "py4pd", NULL); // create a capsule to pass the
-                                   // object to the python interpreter
-            PyModule_AddObject(
-                PyImport_ImportModule("pd"), "py4pd",
-                objectCapsule); // add the capsule to the python interpreter
-        }
+    if (x->pyObject) {
+        sprintf(completePath, "'%s'", filename);
+    } else if (x->isLib) {
+        PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->pFunction);
+        t_symbol *pScriptName = gensym(PyUnicode_AsUTF8(code->co_filename));
+        sprintf(completePath, "'%s'", pScriptName->s_name);
     } else {
-        pd_error(x, "[Python] Could not get the main module");
-        objectCapsule = NULL;
+        sprintf(completePath, "'%s/%s.py'", home, filename);
     }
-    return objectCapsule;
+
+    // check if there is .py in filename
+    if (strcmp(editor, PY4PD_EDITOR) == 0) {
+        sprintf(command, "%s %s", PY4PD_EDITOR, completePath);
+    } else if (strcmp(editor, "vscode") == 0) {
+        sprintf(command, "code -g '%s:%d'", completePath, line);
+    } else if (strcmp(editor, "nvim") == 0) {
+// if it is linux
+#ifdef __linux__
+        char *env_var = getenv("XDG_CURRENT_DESKTOP");
+        if (env_var == NULL) {
+            pd_error(x, "[py4pd] Your desktop environment is not supported, "
+                        "please report.");
+            sprintf(command, "ls ");
+        } else {
+            if (strcmp(env_var, "GNOME") == 0) {
+                int gnomeConsole = system("kgx --version");
+                int gnomeTerminal = system("gnome-terminal --version");
+                char GuiTerminal[MAXPDSTRING];
+                if (gnomeConsole == 0) {
+                    sprintf(GuiTerminal, "kgx");
+                } else if (gnomeTerminal == 0) {
+                    sprintf(GuiTerminal, "gnome-terminal");
+                } else {
+                    pd_error(
+                        x, "[py4pd] You seems to be using GNOME, but "
+                           "gnome-terminal or gnome-console is not installed, "
+                           "please install one of them.");
+                }
+                sprintf(command, "%s -- nvim +%d %s", GuiTerminal, line,
+                        completePath);
+            } else if (strcmp(env_var, "KDE") == 0) {
+                pd_error(
+                    x, "[py4pd] This is untested, please report if it works.");
+                sprintf(command, "konsole -e \"nvim +%d %s\"", line,
+                        completePath);
+            } else {
+                pd_error(x,
+                         "[py4pd] Your desktop environment %s is not "
+                         "supported, please report.",
+                         env_var);
+                sprintf(command, "ls ");
+            }
+        }
+#else
+        sprintf(command, "nvim +%d %s", line, completePath);
+#endif
+    } else if (strcmp(editor, "gvim") == 0) {
+        sprintf(command, "gvim +%d %s", line, completePath);
+    } else if (strcmp(editor, "sublime") == 0) {
+        sprintf(command, "subl --goto %s:%d", completePath, line);
+    } else if (strcmp(editor, "emacs") == 0) {
+        sprintf(command,
+                "emacs --eval '(progn (find-file \"%s\") (goto-line %d))'",
+                completePath, line);
+    } else {
+        pd_error(x, "[py4pd] editor %s not supported.", editor);
+    }
+    return;
 }
 
-// =================================================================
-// ========================= SUBINTERPRETER ========================
-// =================================================================
-
+// ====================================================
+// ===================== SubInterpreters ==============
+// ====================================================
 #if PYTHON_REQUIRED_VERSION(3, 12)
 
 struct Py4pd_ObjSubInterp {
@@ -1680,9 +1410,40 @@ void Py4pdUtils_CreatePythonInterpreter(t_py *x) {
 }
 #endif
 
-// ============================================================
-// ========================= GIF ==============================
-// ============================================================
+// ====================================================
+// ================= Show images in PureData  =========
+// ====================================================
+/*
+ * @brief Py4pdUtils_Mtok is a function separated from the tokens of one
+ * string
+ * @param input is the string to be separated
+ * @param delimiter is the string to be separated
+ * @return the string separated by the delimiter
+ */
+char *Py4pdUtils_Mtok(char *input, char *delimiter) { // TODO: WRONG PLACE
+    static char *string;
+    if (input != NULL)
+        string = input;
+    if (string == NULL)
+        return string;
+    char *end = strstr(string, delimiter);
+    while (end == string) {
+        *end = '\0';
+        string = end + strlen(delimiter);
+        end = strstr(string, delimiter);
+    };
+    if (end == NULL) {
+        char *temp = string;
+        string = NULL;
+        return temp;
+    }
+    char *temp = string;
+    *end = '\0';
+    string = end + strlen(delimiter);
+    return (temp);
+}
+
+// =====================================================================
 void Py4pdUtils_CreatePicObj(t_py *x, PyObject *PdDict,
                              t_class *object_PY4PD_Class, int argc,
                              t_atom *argv) {
@@ -1733,14 +1494,13 @@ void Py4pdUtils_CreatePicObj(t_py *x, PyObject *PdDict,
     Py4pdPic_InitVisMode(x, c, py4pdArgs, 0, argc, argv, object_PY4PD_Class);
 }
 
-// ========================= GIF ==============================
+// =====================================================================
 /*
  * @brief This function read the gif file and return the base64 string
  * @param x is the object
  * @param filename is the gif file name
  * @return void
  */
-
 static char *Py4pdUtils_Gif2Base64(const unsigned char *data, size_t dataSize) {
     const char base64Chars[] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -1772,8 +1532,7 @@ static char *Py4pdUtils_Gif2Base64(const unsigned char *data, size_t dataSize) {
 
     return encodedData;
 }
-
-// ========================= GIF ==============================
+// =====================================================================
 /*
  * @brief This function read the gif file and return the base64 string
  * @param x is the object
@@ -1826,9 +1585,7 @@ void Py4pdUtils_ReadGifFile(t_py *x, const char *filename) {
     return;
 }
 
-// ==========================================================
-// ======================= PNG ==============================
-// ==========================================================
+// =====================================================================
 /*
  * @brief This convert get the png file and convert to base64, that can be
  * readed for pd-gui
@@ -1837,7 +1594,6 @@ void Py4pdUtils_ReadGifFile(t_py *x, const char *filename) {
  * @param encoded_data is the base64 string
  * @return void
  */
-
 static void Py4pdUtils_Png2Base64(const uint8_t *data, size_t input_length,
                                   char *encoded_data) {
     const char base64_chars[] =
@@ -1867,16 +1623,13 @@ static void Py4pdUtils_Png2Base64(const uint8_t *data, size_t input_length,
 
     encoded_data[encoded_length - 1] = '\0';
 }
-
 // ===============================================
 /*
  * @brief This function read the png file and convert to base64
  * @param x is the object
  * @param filename is the png file
  * @return void
-
-*/
-
+ */
 void Py4pdUtils_ReadPngFile(t_py *x, const char *filename) {
     FILE *file = fopen(filename, "rb");
     if (file == NULL) {
@@ -1930,21 +1683,90 @@ void Py4pdUtils_ReadPngFile(t_py *x, const char *filename) {
     return;
 }
 
-// ==========================================================
-
+// =====================================================================
 /*
+ * @brief Run a Python function
+ * @param x is the py4pd object
+ * @param pArgs is the arguments to pass to the function
+ * @return the return value of the function
+ */
+void Py4pdUtils_INCREF(PyObject *pValue) {
+    if (pValue->ob_refcnt < 0) {
+        pd_error(NULL, "[DEV] pValue refcnt < 0, Memory Leak, please report!");
+        return;
+    }
 
-* @brief get the size (width and height) of the png file
-* @param pngfile is the path to the png file
-* @return the width and height of the png file
-*
-*/
+    if (Py_IsNone(pValue)) {
+        return;
+    }
+    // check if pValue is between -5 and 255
+    else if (PyLong_Check(pValue)) {
+        long value = PyLong_AsLong(pValue);
+        if (value >= -5 && value <= 255) {
+            return;
+        }
+    }
+    Py_INCREF(pValue);
+    return;
+}
 
+// ====================================================
+// ================= Compatibility between OS =========
+// ====================================================
+/*
+ * @brief get the size (width and height) of the png file
+ * @param pngfile is the path to the png file
+ * @return the width and height of the png file
+ */
 inline uint32_t Py4pdUtils_Ntohl(uint32_t netlong) {
 #if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
     return ((netlong & 0xff) << 24) | ((netlong & 0xff00) << 8) |
            ((netlong & 0xff0000) >> 8) | ((netlong & 0xff000000) >> 24);
 #else
     return netlong;
+#endif
+}
+
+// ====================================
+/*
+ * @brief Run system command and check for errors
+ * @param command is the command to run
+ * @return void, but it prints the error if it fails
+ */
+
+int Py4pdUtils_ExecuteSystemCommand(const char *command) { // TODO: WRONG PLACE
+#ifdef _WIN64
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    ZeroMemory(&si, sizeof(STARTUPINFO));
+    si.cb = sizeof(STARTUPINFO);
+    ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+
+    DWORD exitCode;
+    if (CreateProcess(NULL, (LPSTR)command, NULL, NULL, FALSE, CREATE_NO_WINDOW,
+                      NULL, NULL, &si, &pi)) {
+        WaitForSingleObject(pi.hProcess, INFINITE);
+        if (GetExitCodeProcess(pi.hProcess, &exitCode)) {
+            if (exitCode != 0) {
+                post("HELP: Try to run: '%s' from the terminal/cmd", command);
+            }
+        } else {
+            pd_error(NULL,
+                     "[py4pd] Unable to retrieve exit code from command!");
+        }
+    } else {
+        pd_error(NULL, "Error: Process creation failed!");
+        return -1;
+    }
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+    return exitCode;
+#else
+    int result = system(command);
+    if (result != 0) {
+        pd_error(NULL, "[py4pd] Failed to execute command: %s", command);
+        return -1;
+    }
+    return 0;
 #endif
 }

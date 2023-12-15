@@ -248,7 +248,6 @@ void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet);
 int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pDict);
 t_py4pd_pValue *Py4pdUtils_Run(t_py *x, PyObject *pArgs, t_py4pd_pValue *pValuePointer);
 PyObject *Py4pdUtils_RunPyAudioOut(t_py *x, PyObject *pArgs, PyObject *pKwargs);
-void Py4pdUtils_DECREF(PyObject *pValue);
 void Py4pdUtils_PrintError(t_py *x);
 void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValue, t_outlet *outlet);
 PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv);
