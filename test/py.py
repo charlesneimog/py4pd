@@ -8,7 +8,8 @@ try:
     numpyIsInstalled = True
 except Exception as e:
     pd.error("You must restart Pure Data to use numpy.")
-    sys.exit()
+    print(e)
+
 
 # ================================================
 # ==============  Functions  =====================
