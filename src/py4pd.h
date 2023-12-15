@@ -258,7 +258,7 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x);
 void Py4pdUtils_ReadGifFile(t_py *x, const char *filename);
 void Py4pdUtils_ReadPngFile(t_py *x, const char *filename);
 uint32_t Py4pdUtils_Ntohl(uint32_t netlong);
-void *Py4pdLib_FreeObj(t_py *x);
+void *Py4pdUtils_FreeObj(t_py *x);
 void Py4pdUtils_CreatePicObj(t_py *x, PyObject *PdDict, t_class *object_PY4PD_Class, int argc, t_atom *argv);
 void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue *src, t_py4pd_pValue *dest);
 
