@@ -732,6 +732,27 @@ PyObject *Py4pdUtils_RunPyAudioOut(t_py *x, PyObject *pArgs,
 // ====================================================
 // ===================== Memory =======================
 // ====================================================
+int Py4pdUtils_Snprintf(char *buffer, size_t size, const char *format, ...) {
+    int result;
+    va_list args;
+
+    va_start(args, format);
+
+    // Use vsnprintf with the provided size to prevent buffer overflow
+    result = vsnprintf(buffer, size, format, args);
+
+    // Check for errors or truncation (result is negative)
+    if (result < 0 || (size_t)result >= size) {
+        // Handle the error or truncation as needed
+        result = -1; // Set to an error code or take appropriate action
+    }
+
+    va_end(args);
+
+    return result;
+}
+
+// ====================================================
 /*
  * @brief It warnings if there is a memory leak
  * @param pValue is the value to check
