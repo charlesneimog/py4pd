@@ -296,11 +296,6 @@ jobs:
         with:
           name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
           path: py4pd
-      - name: Upload Audio Artefacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: Audios-Artefacts
-          path: test/*.wav
 
 
   # ============================================================================
