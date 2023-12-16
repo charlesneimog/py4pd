@@ -1514,8 +1514,6 @@ static struct PyModuleDef pdModule = {
 
 // =================================
 PyMODINIT_FUNC PyInit_pd() {
-    post("calling PyInit_pd");
-
     import_array() PyObject *py4pdModule;
     py4pdModule = PyModuleDef_Init(&pdModule);
     if (py4pdModule == NULL) {
