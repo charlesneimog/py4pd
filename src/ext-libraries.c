@@ -1094,20 +1094,20 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
         class_addmethod(localClass, (t_method)Py4pdLib_Click, gensym("click"),
                         0, 0);
         if (playableInt == 1) {
-            class_addmethod(localClass, (t_method)Py4pdLib_Play, gensym("play"),
-                            A_GIMME, 0);
-            class_addmethod(localClass, (t_method)Py4pdLib_Stop, gensym("stop"),
-                            0, 0);
-            class_addmethod(localClass, (t_method)Py4pdLib_Clear,
+            class_addmethod(localClass, (t_method)Py4pdPlayer_Play,
+                            gensym("play"), A_GIMME, 0);
+            class_addmethod(localClass, (t_method)Py4pdPlayer_Stop,
+                            gensym("stop"), 0, 0);
+            class_addmethod(localClass, (t_method)Py4pdPlayer_Clear,
                             gensym("clear"), 0, 0);
         }
     } else if (objectType == PY4PD_VISOBJ) {
         if (playableInt == 1) {
-            class_addmethod(localClass, (t_method)Py4pdLib_Play, gensym("play"),
-                            A_GIMME, 0);
-            class_addmethod(localClass, (t_method)Py4pdLib_Stop, gensym("stop"),
-                            0, 0);
-            class_addmethod(localClass, (t_method)Py4pdLib_Clear,
+            class_addmethod(localClass, (t_method)Py4pdPlayer_Play,
+                            gensym("play"), A_GIMME, 0);
+            class_addmethod(localClass, (t_method)Py4pdPlayer_Stop,
+                            gensym("stop"), 0, 0);
+            class_addmethod(localClass, (t_method)Py4pdPlayer_Clear,
                             gensym("clear"), 0, 0);
         }
         class_addmethod(localClass, (t_method)Py4pdPic_Zoom, gensym("zoom"),

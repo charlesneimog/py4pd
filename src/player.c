@@ -1,7 +1,8 @@
 #include "py4pd.h"
+#include "utils.h"
 
 // ======================================================
-Dictionary *Py4pdLib_CreateDictionary() {
+Dictionary *Py4pdPlayer_CreateDictionary() {
     Dictionary *dictionary = (Dictionary *)malloc(sizeof(Dictionary));
     dictionary->entries = NULL;
     dictionary->size = 0;
@@ -10,7 +11,7 @@ Dictionary *Py4pdLib_CreateDictionary() {
 }
 
 // ======================================================
-int Py4pdLib_CompareOnset(const void *a, const void *b) {
+int Py4pdPlayer_CompareOnset(const void *a, const void *b) {
     const KeyValuePair *entryA = (const KeyValuePair *)a;
     const KeyValuePair *entryB = (const KeyValuePair *)b;
 
@@ -23,7 +24,7 @@ int Py4pdLib_CompareOnset(const void *a, const void *b) {
 }
 
 // ======================================================
-KeyValuePair *Py4pdLib_PlayerGetValue(Dictionary *dictionary, int onset) {
+KeyValuePair *Py4pdPlayer_PlayerGetValue(Dictionary *dictionary, int onset) {
     if (dictionary == NULL) {
         return NULL;
     }
@@ -36,9 +37,9 @@ KeyValuePair *Py4pdLib_PlayerGetValue(Dictionary *dictionary, int onset) {
 }
 
 // ======================================================
-void Py4pdLib_PlayerInsertThing(t_py *x, int onset, PyObject *value) {
+void Py4pdPlayer_PlayerInsertThing(t_py *x, int onset, PyObject *value) {
     if (x->playerDict == NULL) {
-        x->playerDict = Py4pdLib_CreateDictionary();
+        x->playerDict = Py4pdPlayer_CreateDictionary();
     }
     int index = -1;
     for (int i = 0; i < x->playerDict->size; i++) {
@@ -74,7 +75,7 @@ void Py4pdLib_PlayerInsertThing(t_py *x, int onset, PyObject *value) {
 }
 
 // ======================================================
-void Py4pdLib_FreeDictionary(Dictionary *dictionary) {
+void Py4pdPlayer_FreeDictionary(Dictionary *dictionary) {
     if (dictionary == NULL) {
         return;
     }
@@ -86,14 +87,14 @@ void Py4pdLib_FreeDictionary(Dictionary *dictionary) {
 }
 
 // ================== PLAYER ======================
-void Py4pdLib_PlayTick(t_py *x) {
+void Py4pdPlayer_PlayTick(t_py *x) {
     if (x->playerDict->lastOnset > x->msOnset) {
         clock_delay(x->playerClock, 1);
     } else {
         clock_unset(x->playerClock);
     }
     x->msOnset++;
-    KeyValuePair *entry = Py4pdLib_PlayerGetValue(x->playerDict, x->msOnset);
+    KeyValuePair *entry = Py4pdPlayer_PlayerGetValue(x->playerDict, x->msOnset);
     if (entry != NULL) {
         for (int i = 0; i < entry->size; i++) {
             PyObject *pValue = Py_BuildValue("O", entry->values[i]);
@@ -109,7 +110,7 @@ void Py4pdLib_PlayTick(t_py *x) {
 }
 
 // ======================================================
-void Py4pdLib_Play(t_py *x, t_symbol *s, int ac, t_atom *av) {
+void Py4pdPlayer_Play(t_py *x, t_symbol *s, int ac, t_atom *av) {
     (void)s;
     x->msOnset = 0;
     if (x->playerDict == NULL) {
@@ -119,8 +120,8 @@ void Py4pdLib_Play(t_py *x, t_symbol *s, int ac, t_atom *av) {
     if (ac != 0 && av[0].a_type == A_FLOAT) {
         x->msOnset = (int)av->a_w.w_float;
     }
-    x->playerClock = clock_new(x, (t_method)Py4pdLib_PlayTick);
-    Py4pdLib_PlayTick(x);
+    x->playerClock = clock_new(x, (t_method)Py4pdPlayer_PlayTick);
+    Py4pdPlayer_PlayTick(x);
     return;
 }
 
@@ -139,7 +140,7 @@ void Py4pdLib_Clear(t_py *x) {
     if (x->playerClock != NULL) {
         clock_unset(x->playerClock);
     }
-    Py4pdLib_FreeDictionary(x->playerDict);
+    Py4pdPlayer_FreeDictionary(x->playerDict);
     x->playerDict = NULL;
     return;
 }
