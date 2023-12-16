@@ -168,6 +168,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         Py_XDECREF(ptype_str);
         Py_XDECREF(pvalue_str);
         Py_XDECREF(ptraceback_str);
+        Py4pdUtils_PrintError(x);
         Py_XDECREF(MainModule);
         return -1;
     }
