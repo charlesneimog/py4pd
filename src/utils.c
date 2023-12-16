@@ -2,7 +2,6 @@
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
-#include "py4pd.h"
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
 
@@ -214,12 +213,6 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x) {
         if (objectCapsule != NULL) {
             PyCapsule_SetPointer(objectCapsule, x);
         } else {
-            objectCapsule = PyCapsule_New(
-                x, "py4pd", NULL); // create a capsule to pass the
-                                   // object to the python interpreter
-            PyModule_AddObject(
-                PyImport_ImportModule("pd"), "py4pd",
-                objectCapsule); // add the capsule to the python interpreter
             // create a capsule to t_py to Py Interp.
             objectCapsule = PyCapsule_New(x, "py4pd", NULL);
             PyObject *pdModule = PyImport_ImportModule("pd");
@@ -233,7 +226,6 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x) {
             Py_DECREF(pdModule);
         }
     } else {
-        pd_error(x, "[Python] Could not get the main module");
         pd_error(x, "[py4pd] Could not get the main module");
         objectCapsule = NULL;
     }
@@ -1251,6 +1243,7 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
 
 // ============================================
 void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
+    post("[py4pd] Adding paths to python path");
     // Add additional paths to the python path
     char pyScripts_folder[MAXPDSTRING];
     snprintf(pyScripts_folder, MAXPDSTRING, "%sresources/py4pd-mod",
