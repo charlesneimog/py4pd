@@ -1,4 +1,8 @@
+#include "ext-libraries.h"
+#include "pic.h"
+#include "player.h"
 #include "py4pd.h"
+#include "utils.h"
 
 #define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
@@ -1346,7 +1350,8 @@ static PyObject *Py4pdMod_AddThingToPlay(PyObject *self, PyObject *args,
                         "pd.add_to_player(onset, thing2Output)");
         return NULL;
     }
-    Py4pdLib_PlayerInsertThing(x, (int)onset, Py_BuildValue("O", thingToPlay));
+    Py4pdPlayer_PlayerInsertThing(x, (int)onset,
+                                  Py_BuildValue("O", thingToPlay));
     Py_RETURN_NONE;
 }
 
@@ -1359,7 +1364,7 @@ static PyObject *Py4pdMod_ClearPlayer(PyObject *self, PyObject *args) {
     (void)args;
 
     t_py *x = Py4pdUtils_GetObject(self);
-    Py4pdLib_Clear(x);
+    Py4pdPlayer_Clear(x);
     Py_RETURN_NONE;
 }
 

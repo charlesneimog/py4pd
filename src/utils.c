@@ -1,3 +1,6 @@
+#include "utils.h"
+#include "module.h"
+#include "pic.h"
 #include "py4pd.h"
 
 #define NO_IMPORT_ARRAY
@@ -1276,6 +1279,9 @@ int Py4pdUtils_CheckNumpyInstall(t_py *x) {
     if (numpy == NULL) {
         pd_error(x, "[py4pd] Numpy not installed, send [pip install numpy] to "
                     "the py4pd object");
+        post("\n\n");
+        post("=== Complete Error Description ===");
+        Py4pdUtils_PrintError(x);
         return 0;
     }
     Py_DECREF(numpy);
@@ -1397,30 +1403,12 @@ void *Py4pdUtils_CreateSubInterpreter(void *arg) {
         PyErr_SetString(PyExc_RuntimeError, "Interpreter creation failed");
         return NULL;
     }
-
-    PyThreadState *subInterp = PyThreadState_Get();
-    post("Id %d", subInterp->thread_id);
-
-    uint64_t threadId = PyThreadState_GetID(tstate);
-    post("Thread Id: %d", threadId);
+    // WE ARE IN THE NEW SUBINTERPRETER
 
     // run function
     struct Py4pd_ObjSubInterp *objSubInterp = arg;
     t_py *x = objSubInterp->x;
     x->funcCalled = 0;
-
-    Py4pdUtils_AddPathsToPythonPath(x);
-
-    t_atom args[2];
-    SETSYMBOL(&args[0], gensym("threadtest"));
-    SETSYMBOL(&args[1], gensym("mytest"));
-
-    Py4pd_SetFunction(x, gensym("set"), 2, args);
-    PyObject *pArgs = PyTuple_New(0);
-    int pValue = Py4pdUtils_RunPy(x, pArgs, NULL);
-    if (pValue != 0) {
-        return NULL;
-    }
     return 0;
 }
 
@@ -1433,7 +1421,6 @@ void *Py4pdUtils_CreateSubInterpreter(void *arg) {
  * otherwise it will return 1.
  */
 void Py4pdUtils_CreatePythonInterpreter(t_py *x) {
-
     if (x->pSubInterpRunning) {
         pd_error(x, "[Python] Subinterpreter already running");
         return;
@@ -1441,9 +1428,9 @@ void Py4pdUtils_CreatePythonInterpreter(t_py *x) {
 
     struct Py4pd_ObjSubInterp *objSubInterp =
         malloc(sizeof(struct Py4pd_ObjSubInterp));
-
     objSubInterp->x = x;
     x->pSubInterpRunning = 1;
+
     pthread_t PyInterpId;
     pthread_create(&PyInterpId, NULL, Py4pdUtils_CreateSubInterpreter,
                    objSubInterp);

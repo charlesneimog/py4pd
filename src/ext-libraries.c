@@ -1,4 +1,7 @@
+#include "pic.h"
+#include "player.h"
 #include "py4pd.h"
+#include "utils.h"
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API

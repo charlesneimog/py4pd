@@ -1,4 +1,6 @@
 #include "py4pd.h"
+#include "module.h"
+#include "utils.h"
 
 // ============================================
 t_class *py4pd_class;        // For for normal objects, almost unused
