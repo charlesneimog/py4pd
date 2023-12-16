@@ -11,10 +11,6 @@
 #define PY_SSIZE_T_CLEAN // Remove deprecated functions
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
-#include <numpy/arrayobject.h>
-
-
 #ifdef __linux__
     #define __USE_GNU
 #endif
