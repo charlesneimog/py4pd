@@ -1,5 +1,3 @@
-#define NO_IMPORT_ARRAY
-#define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
 #include "py4pd.h"
 
 // ============================================
@@ -151,23 +149,6 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
 
     if (objectCapsule == NULL) {
-        pd_error(x, "[Python] Failed to add object to Python");
-        // TODO: Replace to Py4pdPrint Error
-        PyObject *ptype, *pvalue, *ptraceback;
-        PyErr_Fetch(&ptype, &pvalue, &ptraceback);
-        PyObject *ptype_str = PyObject_Str(ptype);
-        PyObject *pvalue_str = PyObject_Str(pvalue);
-        PyObject *ptraceback_str = PyObject_Str(ptraceback);
-        char const *ptype_c = PyUnicode_AsUTF8(ptype_str);
-        char const *pvalue_c = PyUnicode_AsUTF8(pvalue_str);
-        char const *ptraceback_c = PyUnicode_AsUTF8(ptraceback_str);
-        pd_error(x, "[Python] %s: %s\n%s", ptype_c, pvalue_c, ptraceback_c);
-        Py_XDECREF(ptype);
-        Py_XDECREF(pvalue);
-        Py_XDECREF(ptraceback);
-        Py_XDECREF(ptype_str);
-        Py_XDECREF(pvalue_str);
-        Py_XDECREF(ptraceback_str);
         Py4pdUtils_PrintError(x);
         Py_XDECREF(MainModule);
         return -1;
@@ -1097,7 +1078,6 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         if (object_count == 0) {
             Py4pdUtils_AddPathsToPythonPath(x);
         }
-        x->numpyImported = 1;
         int libraryLoaded = Py4pd_LibraryLoad(x, argc, argv);
         if (libraryLoaded == -1) {
             return NULL;
