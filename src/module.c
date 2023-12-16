@@ -391,28 +391,10 @@ static PyObject *Py4pdMod_GetObjArgs(PyObject *self, PyObject *args) {
 
     PyObject *pList = PyList_New(0);
     for (int i = 0; i < x->objArgsCount; i++) {
-        if (x->pdObjArgs[i].a_type == A_FLOAT) {
-            int isInt =
-                (int)x->pdObjArgs[i].a_w.w_float == x->pdObjArgs[i].a_w.w_float;
-            if (isInt) {
-                PyObject *Number = PyLong_FromLong(x->pdObjArgs[i].a_w.w_float);
-                PyList_Append(pList, Number);
-                Py_DECREF(Number);
-            } else {
-                PyObject *Number =
-                    PyFloat_FromDouble(x->pdObjArgs[i].a_w.w_float);
-                PyList_Append(pList, Number);
-                Py_DECREF(Number);
-            }
-
-        } else if (x->pdObjArgs[i].a_type == A_SYMBOL) {
-            PyObject *strObj =
-                PyUnicode_FromString(x->pdObjArgs[i].a_w.w_symbol->s_name);
-            PyList_Append(pList, strObj);
-            Py_DECREF(strObj);
-        } else {
-            // post("In pd.getobjargs: unknown type");
-        }
+        t_symbol *key = atom_getsymbolarg(i, x->objArgsCount, x->pdObjArgs);
+        PyObject *strObj = PyUnicode_FromString(key->s_name);
+        PyList_Append(pList, strObj);
+        Py_DECREF(strObj);
     }
     return pList;
 }
