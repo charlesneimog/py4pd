@@ -11,10 +11,6 @@
 #define PY_SSIZE_T_CLEAN // Remove deprecated functions
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
-#include <numpy/arrayobject.h>
-
-
 #ifdef __linux__
     #define __USE_GNU
 #endif
@@ -29,7 +25,7 @@
 
 #define PY4PD_MAJOR_VERSION 0
 #define PY4PD_MINOR_VERSION 8
-#define PY4PD_MICRO_VERSION 4
+#define PY4PD_MICRO_VERSION 5
 
 #define PYTHON_REQUIRED_VERSION(major, minor) ((major < PY_MAJOR_VERSION) || (major == PY_MAJOR_VERSION && minor <= PY_MINOR_VERSION))
 
@@ -167,6 +163,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject            *pArgTuple;
     t_symbol            *pFuncName; // function_name; // function name
     t_symbol            *pScriptName; // script name or pathname
+    t_int               pSubInterpRunning; // number of arguments
 
     // == AUDIO AND NUMPY
     t_int               audioOutput; // flag to check if is to use audio output
@@ -214,10 +211,15 @@ typedef struct _py4pdInlet_proxy{
     int          inletIndex;
 }t_py4pdInlet_proxy;
 
+
+void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv);
+int Py4pdUtils_CheckNumpyInstall(t_py *x);
+
 // =====================================
 int Py4pd_ImportNumpyForPy4pd();
 void Py4pd_PrintDocs(t_py *x);
 void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f);
+void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
 
 #define PY4PD_IMAGE "R0lGODlhKgAhAPAAAP///wAAACH5BAAAAAAAIf8LSW1hZ2VNYWdpY2sOZ2FtbWE9MC40NTQ1NDUALAAAAAAqACEAAAIkhI+py+0Po5y02ouz3rz7D4biSJbmiabqyrbuC8fyTNf2jTMFADs="
 #define PY4PDSIGTOTAL(s) ((t_int)((s)->s_length * (s)->s_nchans))
@@ -225,6 +227,7 @@ void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f);
 extern int object_count; 
 
 // UTILITIES 
+
 int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argc, t_atom **argv);
 t_py *Py4pdUtils_GetObject(PyObject *pd_module);
 void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);
@@ -239,10 +242,9 @@ int Py4pdUtils_IsNumericOrDot(const char *str);
 void Py4pdUtils_RemoveChar(char *str, char c);
 char *Py4pdUtils_Mtok(char *input, char *delimiter);
 void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet);
-PyObject *Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pDict);
+int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pDict);
 t_py4pd_pValue *Py4pdUtils_Run(t_py *x, PyObject *pArgs, t_py4pd_pValue *pValuePointer);
 PyObject *Py4pdUtils_RunPyAudioOut(t_py *x, PyObject *pArgs, PyObject *pKwargs);
-void Py4pdUtils_DECREF(PyObject *pValue);
 void Py4pdUtils_PrintError(t_py *x);
 void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValue, t_outlet *outlet);
 PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv);
@@ -252,9 +254,12 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x);
 void Py4pdUtils_ReadGifFile(t_py *x, const char *filename);
 void Py4pdUtils_ReadPngFile(t_py *x, const char *filename);
 uint32_t Py4pdUtils_Ntohl(uint32_t netlong);
-void *Py4pdLib_FreeObj(t_py *x);
+void *Py4pdUtils_FreeObj(t_py *x);
 void Py4pdUtils_CreatePicObj(t_py *x, PyObject *PdDict, t_class *object_PY4PD_Class, int argc, t_atom *argv);
 void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue *src, t_py4pd_pValue *dest);
+
+// SubInterpreter 
+void Py4pdUtils_CreatePythonInterpreter(t_py *x);
 
 // EMBEDDED MODULE 
 extern PyMethodDef PdMethods[];

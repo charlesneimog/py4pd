@@ -182,7 +182,7 @@
 #X obj 13 117 py4pd;
 #X text 292 160 IMPORTANT: This is just simple example \, the exaustive Docs are avaible in www.charlesneimog.github.io/py4pd;
 #X obj 397 250 py4pd;
-#X msg 397 230 pipinstall numpy;
+#X msg 397 230 pip install numpy;
 #X connect 0 0 25 0;
 #X connect 6 0 25 0;
 #X connect 7 0 25 0;

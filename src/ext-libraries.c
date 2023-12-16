@@ -1,5 +1,10 @@
 #include "py4pd.h"
 
+#define NO_IMPORT_ARRAY
+#define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
+#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
+#include <numpy/arrayobject.h>
+
 // ================= PUREDATA ================
 static t_class *py4pdInlets_proxy_class;
 void Py4pdLib_Bang(t_py *x);
@@ -547,7 +552,7 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av) {
     }
 
     Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
-    Py4pdUtils_DECREF(pArgs);
+    Py_DECREF(pArgs);
     PyErr_Clear();
     return;
 }
@@ -571,24 +576,23 @@ void Py4pdLib_Bang(t_py *x) {
     Py_DECREF(pArgs);
 }
 
-// =====================================
-//             +++++++++++            //
-//             ++ AUDIO ++            //
-//             +++++++++++            //
-// =====================================
+// ====================================================
+// ===================== Audio ========================
+// ====================================================
 t_int *Py4pdLib_AudioINPerform(t_int *w) {
     t_py *x = (t_py *)(w[1]);
 
-    if (x->audioError || !x->numpyImported) {
+    if (x->audioError) {
         return (w + 4);
     }
 
-    t_sample *in = (t_sample *)(w[2]);
+    t_sample *AudioIn = (t_sample *)(w[2]);
     int n = (int)(w[3]);
     int numChannels = n / x->vectorSize;
     npy_intp dims[] = {numChannels, x->vectorSize};
-    PyObject *pAudio = PyArray_SimpleNewFromData(
-        2, dims, NPY_FLOAT, in); // NOTE: this should be DOUBLE in pd64
+    PyObject *pAudio = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, AudioIn);
+
+    // NOTE: pAudio must use NPY_DOUBLE in pd64
     if (x->pArgTuple == NULL) {
         x->pArgTuple = PyTuple_New(x->pArgsCount);
         return (w + 4);
@@ -607,8 +611,9 @@ t_int *Py4pdLib_AudioINPerform(t_int *w) {
 t_int *Py4pdLib_AudioOUTPerform(t_int *w) {
     t_py *x = (t_py *)(w[1]);
 
-    if (x->audioError || x->numpyImported == 0)
+    if (x->audioError) {
         return (w + 4);
+    }
 
     t_sample *audioOut = (t_sample *)(w[2]);
     int n = (int)(w[3]);
@@ -633,7 +638,8 @@ t_int *Py4pdLib_AudioOUTPerform(t_int *w) {
 // =====================================
 t_int *Py4pdLib_AudioPerform(t_int *w) {
     t_py *x = (t_py *)(w[1]);
-    if (x->audioError || x->numpyImported == 0)
+
+    if (x->audioError)
         return (w + 5);
     t_sample *audioIn = (t_sample *)(w[2]);
     t_sample *audioOut = (t_sample *)(w[3]);
@@ -667,13 +673,6 @@ t_int *Py4pdLib_AudioPerform(t_int *w) {
 
 // =====================================
 static void Py4pdLib_Dsp(t_py *x, t_signal **sp) {
-    if (_import_array() != 0) {
-        x->numpyImported = 0;
-        pd_error(x, "[py4pd] Failed to import numpy");
-    } else {
-        x->numpyImported = 1;
-    }
-
     if (x->objType == PY4PD_AUDIOINOBJ) {
         x->nChs = sp[0]->s_nchans;
         x->vectorSize = sp[0]->s_n;
@@ -693,16 +692,22 @@ static void Py4pdLib_Dsp(t_py *x, t_signal **sp) {
     }
 }
 
-// ================
-// == CREATE OBJ ==
-// ================
+// ====================================================
+// ===================== Create Obj ===================
+// ====================================================
 void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     const char *objectName = s->s_name;
     char py4pd_objectName[MAXPDSTRING];
     snprintf(py4pd_objectName, sizeof(py4pd_objectName), "py4pd_ObjectDict_%s",
              objectName);
-
     PyObject *pd_module = PyImport_ImportModule("pd");
+
+    if (pd_module == NULL) {
+        pd_error(NULL,
+                 "[py4pd] Not possible import the pd module, please report!");
+        return NULL;
+    }
+
     PyObject *py4pd_capsule =
         PyObject_GetAttrString(pd_module, py4pd_objectName);
     PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
@@ -728,7 +733,6 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
 
-    // post("All important things work!");
     PyObject *ignoreOnNone = PyDict_GetItemString(PdDict, "py4pdOBJIgnoreNone");
     PyObject *playable = PyDict_GetItemString(PdDict, "py4pdOBJPlayable");
     PyObject *pyOUT = PyDict_GetItemString(PdDict, "py4pdOBJpyout");
@@ -779,16 +783,6 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
 
-    if (x->objType > 1) {
-        int numpyArrayImported = _import_array();
-        if (numpyArrayImported == 0) {
-            x->numpyImported = 1;
-        } else {
-            x->numpyImported = 0;
-            Py4pdUtils_PrintError(x);
-            pd_error(NULL, "[%s] Numpy was not imported!", objectName);
-        }
-    }
     x->pdObjArgs = malloc(sizeof(t_atom) * argc);
     for (int i = 0; i < argc; i++) {
         x->pdObjArgs[i] = argv[i];
@@ -856,9 +850,9 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     return (x);
 }
 
-// ===========================================
-// ================ PYTHON MOD ===============
-// ===========================================
+// ====================================================
+// ===================== pd.add_object ================
+// ====================================================
 PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     char *objectName;
@@ -876,20 +870,24 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     int playableInt = 0;
     t_py *py4pd = Py4pdUtils_GetObject(self);
 
-    if (py4pd->libraryFolder == NULL) {
+    size_t totalLength;
+    const char *helpFolder = "/help/";
+    if (py4pd->libraryFolder != NULL) {
+        totalLength =
+            strlen(py4pd->libraryFolder->s_name) + strlen(helpFolder) + 1;
+    } else {
         pd_error(py4pd, "[py4pd] Library Folder is NULL, some help patches may "
                         "not be found");
+        return NULL;
     }
 
-    const char *helpFolder = "/help/";
-    size_t totalLength =
-        strlen(py4pd->libraryFolder->s_name) + strlen(helpFolder) + 1;
     char *helpFolderCHAR = (char *)malloc(totalLength * sizeof(char));
     if (helpFolderCHAR == NULL) {
         pd_error(py4pd, "[py4pd] Error allocating memory (code 001)");
         return NULL;
     }
-    strcpy(helpFolderCHAR, py4pd->libraryFolder->s_name);
+
+    snprintf(helpFolderCHAR, totalLength, "%s", py4pd->libraryFolder->s_name);
     strcat(helpFolderCHAR, helpFolder);
 
     if (!PyArg_ParseTuple(args, "Os", &Function, &objectName)) {
@@ -991,23 +989,23 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
 
     if (objectType == PY4PD_NORMALOBJ) {
         localClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                               (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                               (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                                CLASS_DEFAULT, A_GIMME, 0);
     } else if (objectType == PY4PD_VISOBJ) {
         localClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                               (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                               (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                                CLASS_DEFAULT, A_GIMME, 0);
     } else if (objectType == PY4PD_AUDIOINOBJ) {
         localClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                               (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                               (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                                CLASS_MULTICHANNEL, A_GIMME, 0);
     } else if (objectType == PY4PD_AUDIOOUTOBJ) {
         localClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                               (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                               (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                                CLASS_MULTICHANNEL, A_GIMME, 0);
     } else if (objectType == PY4PD_AUDIOOBJ) {
         localClass = class_new(gensym(objectName), (t_newmethod)Py4pdLib_NewObj,
-                               (t_method)Py4pdLib_FreeObj, sizeof(t_py),
+                               (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                                CLASS_MULTICHANNEL, A_GIMME, 0);
     } else {
         PyErr_SetString(PyExc_TypeError,

@@ -1,18 +1,21 @@
+import os
 import sys
 from random import randint
 
+import numpy as np
 import pd
-
-try:
-    import numpy as np
-    numpyIsInstalled = True
-except Exception as e:
-    pd.error("You must restart Pure Data to use numpy.")
-    sys.exit()
 
 # ================================================
 # ==============  Functions  =====================
 # ================================================
+
+
+def getTestId():
+    pythonVersionMajor = sys.version_info[0]
+    pythonVersionMinor = sys.version_info[1]
+
+    platform = sys.platform
+    return f"{platform}-{pythonVersionMajor}.{pythonVersionMinor}"
 
 
 def sumlist(x, valuetimes):
@@ -55,8 +58,10 @@ def fibonacci(n):
 # ================== LISTS  ======================
 # ================================================
 
+
 def randomNumpyArray():
     return np.random.rand(1, 64).tolist()[0]
+
 
 # ================================================
 # ================== AUDIO  ======================
@@ -130,6 +135,7 @@ def printall(x, y):
 # ================ Audio =========================
 # ================================================
 
+
 def generate_sine_wave(frequency, amplitude, phase, num_samples, sampling_rate):
     angular_frequency = 2 * np.pi * frequency
     t = np.arange(num_samples) / sampling_rate
@@ -195,17 +201,16 @@ def audioInOut(audio):
     return transformed_audio
 
 
-
-
 # ================================================
 # ================ SETUP =========================
 # ================================================
 
 
 def py4pdLoadObjects():
+    pd.add_object(getTestId, "getTestId")
+
     pd.add_object(sinusoids, "sinusoids~", objtype=pd.AUDIOOUT)
     pd.add_object(audioin, "audioin~", objtype=pd.AUDIOIN)
     pd.add_object(audioInOut, "audio~", objtype=pd.AUDIO)
     pd.add_object(generate_audio_noise, "pynoise~", objtype=pd.AUDIOOUT)
     pd.add_object(randomNumpyArray, "random-array", pyout=True)
-    

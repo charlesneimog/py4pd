@@ -1,14 +1,14 @@
 all: py4pd
-
 lib.name = py4pd
 uname := $(shell uname -s)
 
 # =================================== Windows ===================================
 ifeq (MINGW,$(findstring MINGW,$(uname)))
+	PYTHON_DLL := $(shell cat pythondll.txt)
 	PYTHON_INCLUDE := $(shell cat pythonincludes.txt)
 	PYTHON_PATH := $(shell cat pythonpath.txt)
 	NUMPY_INCLUDE := $(shell cat numpyincludes.txt)
-	PYTHON_DLL := $(PYTHON_PATH)/python311.dll
+	PYTHON_DLL := $(PYTHON_DLL)
 	cflags = -I '$(PYTHON_INCLUDE)' -I '$(NUMPY_INCLUDE)' -Wno-cast-function-type -Wno-unused-variable 
 	ldlibs =  '$(PYTHON_DLL)' -lwinpthread 
 
@@ -31,7 +31,7 @@ else ifeq (Darwin,$(findstring Darwin,$(uname)))
 	endif
   	PYTHON_LIB := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
   	ldlibs = -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wno-null-pointer-subtraction
-	
+
 else
   $(error "Unknown system type: $(uname)")
   $(shell exit 1)
@@ -39,15 +39,22 @@ endif
 
 # =================================== Sources ===================================
 
-py4pd.class.sources = src/py4pd.c src/utils.c src/module.c src/pic.c src/ext-libraries.c src/ext-class.c src/player.c
+py4pd.class.sources = \
+	src/py4pd.c \
+	src/utils.c \
+	src/module.c \
+	src/pic.c \
+	src/ext-libraries.c \
+	src/ext-class.c \
+	src/player.c
 
 # =================================== Data ======================================
 datafiles = \
-$(wildcard Help-files/*.pd) \
-$(wildcard scripts/*.py) \
-$(wildcard py.py) \
-$(wildcard py4pd-help.pd) \
-$(PYTHON_DLL)
+	$(wildcard Help-files/*.pd) \
+	$(wildcard scripts/*.py) \
+	$(wildcard py.py) \
+	$(wildcard py4pd-help.pd) \
+	$(PYTHON_DLL)
 
 # =================================== Pd Lib Builder =============================
 
@@ -58,5 +65,3 @@ ifeq ($(extension),d_arm64)
 endif
 
 include $(PDLIBBUILDER_DIR)/Makefile.pdlibbuilder
-
-

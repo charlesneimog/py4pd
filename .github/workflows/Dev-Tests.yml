@@ -1,0 +1,331 @@
+name: "Dev-Tests"
+on:
+  workflow_dispatch:
+    inputs:
+      windows:
+        description: "Build for Windows"
+        required: false
+        type: boolean
+        default: false
+      macos-intel:
+        description: "Build for Mac Intel"
+        required: false
+        type: boolean
+        default: false
+      macos-arm:
+        description: "Build for Mac ARM"
+        required: false
+        type: boolean
+        default: false
+      linux:
+        description: "Build for Linux"
+        required: false
+        type: boolean
+        default: false
+  release:
+    types: [published]
+  schedule:
+    - cron: "0 20 * * *"
+  push:
+    branches:
+      - develop
+    paths:
+      - "**/*.yml"
+  
+jobs:
+  pythonversion:
+    runs-on: ubuntu-latest
+    outputs:
+      python-versions: ${{ steps.set-matrix.outputs.python-versions }}
+      deken-python-versions: ${{ steps.set-matrix.outputs.deken-python-versions }}
+      tag_name: ${{ steps.check-tag.outputs.tag_name }}
+    steps:
+      - id: set-matrix
+        run: |
+          echo "python-versions=[\"3.10\",\"3.11\",\"3.12\"]" >> $GITHUB_OUTPUT
+          echo "deken-python-versions=[\"3.11\"]" >> $GITHUB_OUTPUT
+    
+      - name: Check if tag_name is empty
+        id: check-tag
+        run: |
+          latest_tag=$(curl -s "https://api.github.com/repos/charlesneimog/py4pd/tags" | jq -r '.[0].name')
+          echo "tag_name=$latest_tag" >> $GITHUB_OUTPUT
+          
+      - name: Print Outputs
+        run: |
+          cat $GITHUB_OUTPUT
+        env:
+          GITHUB_OUTPUT: ${{ github.workspace }}/github_output.txt
+
+
+  # ============================================================================
+  # =                               LINUX                                      =
+  # ============================================================================
+  linux-build:
+    runs-on: ubuntu-latest
+    needs: pythonversion
+    if: ${{ inputs.linux }} || github.event_name == 'schedule'
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Build Dependencies
+        env:
+          pythonName: python${{ matrix.python-version }}
+        run: | 
+          curl -L -o pd.tar.gz https://msp.ucsd.edu/Software/pd-0.54-1.src.tar.gz
+          tar -xzf pd.tar.gz
+          rm pd.tar.gz
+          mv pd-* pure-data
+          $pythonName -m pip install numpy
+        
+      - name: Install PureData and Python
+        env:
+          pythonPackage: python${{ matrix.python-version }}-dev
+        run: |
+          sudo add-apt-repository ppa:deadsnakes/ppa
+          sudo apt-get update
+          sudo apt-get install $pythonPackage -y
+          sudo add-apt-repository ppa:pure-data/pure-data -y
+          sudo apt-get install puredata -y
+
+      - name: Build
+        env:
+          pythonName: python${{ matrix.python-version }}
+        run: make PDINCLUDEDIR=./pure-data/src/ PYTHON_VERSION=$pythonName extension=l_amd64
+      
+      - name: Copy files to py4pd
+        run: |
+          mkdir -p py4pd
+          cp py4pd.l_amd64 resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd
+          cp -r resources py4pd
+          cp -r src py4pd
+          find py4pd/src -name "*.o" -type f -delete
+          cp resources/README.deken.pd py4pd
+          cp -r py4pd test
+          rm py4pd.l_amd64
+
+      - name: Tests
+        run: |
+          cd test
+          python${{ matrix.python-version }} ./runTests.py
+      - name: Upload Object
+        uses: actions/upload-artifact@v3
+        with:
+          name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
+          path: py4pd
+
+  # ============================================================================
+  # =                           WINDOWS                                        =
+  # ============================================================================
+  windows-build:
+    runs-on: windows-latest
+    needs: pythonversion
+    if: ${{ inputs.windows }} || github.event_name == 'schedule'
+    strategy:
+      matrix:
+        python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - if: runner.os == 'Windows'
+        name: "Install mingw deps"
+        uses: msys2/setup-msys2@v2
+        with:
+          install: make autoconf automake libtool mingw-w64-x86_64-gcc mingw-w64-x86_64-libwinpthread-git mingw-w64-x86_64-dlfcn mingw-w64-x86_64-grep  mingw-w64-x86_64-curl unzip
+          update: false
+
+      - if: runner.os == 'Windows'
+        name: Get Pd
+        shell: msys2 {0}
+        run: |
+          curl -L -o pure-data.zip http://msp.ucsd.edu/Software/pd-0.54-0.msw.zip
+          unzip pure-data.zip
+          rm pure-data.zip
+          rename  pd-0.54-0 pd pd-0.54-0
+
+      - name: Configure Environment
+        run: |
+          mkdir py4pd
+          python -m pip install numpy
+          python -c "import sysconfig; f = open('pythondll.txt', 'w'); print(sysconfig.get_config_vars()['exec_prefix'] + '\\python' + sysconfig.get_config_vars('VERSION')[0] + '.dll', file=f); f.close()"
+          python -c "import sysconfig; f = open('pythonincludes.txt', 'w'); print(sysconfig.get_paths()['include'].replace('\\', '/'), file=f); f.close()"
+          python -c "import os; import sys; f = open('pythonpath.txt', 'w'); print(os.path.dirname(sys.executable).replace('\\', '/'), file=f); f.close()"
+          python -c "import os; import sys; import numpy; f = open('numpyincludes.txt', 'w'); print(numpy.get_include(), file=f); f.close()"
+      - if: runner.os == 'Windows'
+        name: Build py4pd
+        shell: msys2 {0}
+        run: |
+          make PYTHON_VERSION=${{ matrix.python-version }} PDDIR=./pd extension=m_amd64
+      - name: Copy Files and Set for Tests
+        run: |
+          $pythondllversion = Get-Content pythondll.txt
+          $pythonpath = Get-Content pythonpath.txt
+          Copy-Item -Path "$pythondllversion" -Destination py4pd\ -Recurse
+          Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd\ -Recurse
+          Copy-Item -Path "py4pd" -Destination "test" -Recurse
+          Copy-Item -Path "resources" -Destination "test/py4pd/" -Recurse
+          cp py4pd.m_amd64 py4pd\
+          cp py4pd.m_amd64 test\py4pd\py4pd.m_amd64
+      - name: Tests
+        run: "cd test \npython ./runTests.py\n"
+      - name: Upload Object ZIP
+        uses: actions/upload-artifact@v3
+        with:
+          name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
+          path: py4pd
+  # ==============================================================================
+  # =                               MAC INTEL                                    =
+  # ==============================================================================
+  macos-intel-build:
+    runs-on: macos-latest
+    needs: pythonversion
+    if: ${{ inputs.macos-intel }} || github.event_name == 'schedule'
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: set Enviroment
+        run: |
+          brew install --cask pd
+          python${{ matrix.python-version }} -m pip install numpy
+      - name: Build
+        env:
+          pythonName: python${{ matrix.python-version }}
+        run: make PYTHON_VERSION=$pythonName extension=d_amd64
+
+      - name: Copy Files and Set for Tests
+        run: |
+          mkdir py4pd
+          mv py4pd.d_amd64 py4pd
+          cp -r py4pd test
+          cp -r resources test/py4pd
+
+      - name: Run Tests
+        run: |
+          cd test
+          python${{ matrix.python-version }} ./runTests.py
+      - name: Upload Object
+        uses: actions/upload-artifact@v3
+        with:
+          name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
+          path: py4pd
+  # ============================================================================
+  # =                               MAC ARM                                    =
+  # ============================================================================
+  macos-arm-build:
+    runs-on: macos-latest
+    needs: pythonversion
+    if: ${{ inputs.macos-arm }} || github.event_name == 'release'
+    timeout-minutes: 15
+    strategy:
+      matrix:
+        python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: set Enviroment
+        run: |
+          brew install --cask pd
+          python${{ matrix.python-version }} -m pip install numpy
+          mkdir py4pd
+      - name: Build
+        env:
+          pythonName: python${{ matrix.python-version }}
+        run: make PYTHON_VERSION=$pythonName extension=d_arm64
+
+
+      - name: Copy files to py4pd
+        run: |
+          cp py4pd.d_arm64 py4pd
+      - name: Upload Object
+        uses: actions/upload-artifact@v3
+        with:
+          name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
+          path: py4pd
+
+  # ============================================================================
+  # =                               DEKEN                                      =
+  # ============================================================================
+  deken-upload:
+    if: github.event_name == 'release'
+    needs: [pythonversion, windows-build, macos-intel-build, macos-arm-build, linux-build]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ${{ fromJson(needs.pythonversion.outputs.deken-python-versions) }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download py4pd Object
+        uses: actions/download-artifact@v3
+        with:
+          name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
+          path: py4pd
+      - name: Install Deken
+        continue-on-error: true
+        run: |
+          git clone https://github.com/pure-data/deken
+          chmod +x ./deken/developer/deken
+          ./deken/developer/deken install --self
+      - name: Config Deken
+        run: |
+          echo "username = ${DEKEN_USERNAME}" > $HOME/.deken/config
+          echo "password = ${PASSWORD}" >> $HOME/.deken/config
+        env:
+          DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
+          PASSWORD: ${{ secrets.DEKEN_PASSWORD }}
+      - name: Fix problem with easywebdav2
+        continue-on-error: true
+        run: |
+          ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
+          ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
+      - name: Upload deken Package
+        run: |
+          ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
+  
+  # ============================================================================
+  # =                               RELEASES                                   =
+  # ============================================================================
+  release:
+    runs-on: ubuntu-latest
+    needs: [pythonversion, windows-build, macos-intel-build, macos-arm-build, linux-build]
+    if: github.event_name == 'release'
+    strategy:
+      matrix:
+        python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Publish py4pd Object
+        uses: actions/download-artifact@v3
+        with:
+          name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}

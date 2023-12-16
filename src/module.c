@@ -1,5 +1,9 @@
 #include "py4pd.h"
 
+#define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
+#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
+#include <numpy/arrayobject.h>
+
 // =================================
 /**
  * @brief Dict to save data for object varibles.
@@ -1362,27 +1366,6 @@ static PyObject *Py4pdMod_ClearPlayer(PyObject *self, PyObject *args) {
 // =================================
 // ========= MODULE INIT ===========
 // =================================
-
-#if PYTHON_REQUIRED_VERSION(3, 12)
-
-static int _memoryboard_modexec(PyObject *m) { return 0; }
-
-static PyModuleDef_Slot _memoryboard_slots[] = {
-    {Py_mod_exec, _memoryboard_modexec},
-    {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
-    {0, NULL}};
-
-static int _memoryboard_traverse(PyObject *module, visitproc visit, void *arg) {
-    return 0;
-}
-
-static int _memoryboard_clear(PyObject *module) { return 0; }
-
-#endif
-
-// =================================
-static PyObject *pdmoduleError;
-
 // =================================
 PyMethodDef PdMethods[] = {
 
@@ -1472,34 +1455,12 @@ PyMethodDef PdMethods[] = {
     {NULL, NULL, 0, NULL} //
 };
 
-// =================================
-static struct PyModuleDef pdmodule = {
-    PyModuleDef_HEAD_INIT,
-    .m_name = "pd", /* name of module */
-    .m_doc = "pd module provide function to interact with PureData, see the "
-             "docs in www.charlesneimog.github.io/py4pd",
-    .m_size = 0,
-    .m_methods = PdMethods, // Methods of the module
-#if PYTHON_REQUIRED_VERSION(3, 12)
-    .m_slots = _memoryboard_slots,
-    .m_traverse = _memoryboard_traverse,
-    .m_clear = _memoryboard_clear,
-#endif
-};
-
-// =================================
-PyMODINIT_FUNC PyInit_pd() {
-    PyObject *py4pdmodule;
-    py4pdmodule = PyModule_Create(&pdmodule);
-
-    if (py4pdmodule == NULL) {
-        return NULL;
-    }
+static PyObject *pdmodule_init(PyObject *self) {
     char OUT_string[MAXPDSTRING];
-    snprintf(OUT_string, sizeof(OUT_string), "py4pdOut_%p", py4pdmodule);
+    snprintf(OUT_string, sizeof(OUT_string), "py4pdOut_%p", self);
 
     char CLEAR_string[MAXPDSTRING];
-    snprintf(CLEAR_string, sizeof(CLEAR_string), "py4pdClear_%p", py4pdmodule);
+    snprintf(CLEAR_string, sizeof(CLEAR_string), "py4pdClear_%p", self);
 
     PyObject *puredata_samplerate, *puredata_vecsize, *visObject, *normalObject,
         *audioINObject, *audioOUTObject, *pdAudio, *Py4pd_OutLoopString,
@@ -1517,35 +1478,48 @@ PyMODINIT_FUNC PyInit_pd() {
     Py4pd_OutLoopString = PyUnicode_FromString(OUT_string);
     Py4pd_ClearLoopString = PyUnicode_FromString(CLEAR_string);
 
-    PyModule_AddObject(py4pdmodule, "SAMPLERATE", puredata_samplerate);
-    PyModule_AddObject(py4pdmodule, "VECSIZE", puredata_vecsize);
+    PyModule_AddObject(self, "SAMPLERATE", puredata_samplerate);
+    PyModule_AddObject(self, "VECSIZE", puredata_vecsize);
 
-    PyModule_AddObject(py4pdmodule, "NORMAL", normalObject);
-    PyModule_AddObject(py4pdmodule, "VIS", visObject);
-    PyModule_AddObject(py4pdmodule, "AUDIOIN", audioINObject);
-    PyModule_AddObject(py4pdmodule, "AUDIOOUT", audioOUTObject);
-    PyModule_AddObject(py4pdmodule, "AUDIO", pdAudio);
+    PyModule_AddObject(self, "NORMAL", normalObject);
+    PyModule_AddObject(self, "VIS", visObject);
+    PyModule_AddObject(self, "AUDIOIN", audioINObject);
+    PyModule_AddObject(self, "AUDIOOUT", audioOUTObject);
+    PyModule_AddObject(self, "AUDIO", pdAudio);
 
-    PyModule_AddObject(py4pdmodule, "OUTLOOP", Py4pd_OutLoopString);
-    PyModule_AddObject(py4pdmodule, "CLEARLOOP", Py4pd_ClearLoopString);
+    PyModule_AddObject(self, "OUTLOOP", Py4pd_OutLoopString);
+    PyModule_AddObject(self, "CLEARLOOP", Py4pd_ClearLoopString);
+    return 0;
+}
 
-    pdmoduleError = PyErr_NewException("spam.error", NULL, NULL);
+// =================================
+static PyModuleDef_Slot pdmodule_slots[] = {
+    {Py_mod_exec, pdmodule_init}, // Initialization phase
+#if PYTHON_REQUIRED_VERSION(3, 12)
+    {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
+#endif
+    {0, NULL} // End of slots
+};
 
-    Py_XINCREF(pdmoduleError);
-    if (PyModule_AddObject(py4pdmodule, "moduleerror", pdmoduleError) < 0) {
-        Py_XDECREF(pdmoduleError);
-        Py_CLEAR(pdmoduleError);
-        Py_DECREF(py4pdmodule);
+// =================================
+static struct PyModuleDef pdModule = {
+    PyModuleDef_HEAD_INIT,
+    .m_name = "pd", /* name of module */
+    .m_doc = "pd module provide function to interact with PureData, see the "
+             "docs in www.charlesneimog.github.io/py4pd",
+    .m_size = 0,
+    .m_methods = PdMethods, // Methods of the module
+    .m_slots = pdmodule_slots,
+};
+
+// =================================
+PyMODINIT_FUNC PyInit_pd() {
+    import_array() PyObject *py4pdModule;
+    py4pdModule = PyModuleDef_Init(&pdModule);
+    if (py4pdModule == NULL) {
         return NULL;
     }
-
-    if (PyType_Ready(&Py4pdNewObj_Type) < 0)
-        return NULL;
-
-    Py_INCREF(&Py4pdNewObj_Type);
-    PyModule_AddObject(py4pdmodule, "NewObject", (PyObject *)&Py4pdNewObj_Type);
-
-    return py4pdmodule;
+    return py4pdModule;
 }
 
 // ============================

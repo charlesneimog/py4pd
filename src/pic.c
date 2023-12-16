@@ -1,4 +1,3 @@
-#define NO_IMPORT_ARRAY
 #include "py4pd.h"
 
 t_widgetbehavior py4pd_widgetbehavior;

@@ -1,0 +1,4 @@
+#N canvas 634 206 754 617 8;
+#X msg 107 71 _test;
+#X obj 107 92 py4pd;
+#X connect 0 0 1 0;

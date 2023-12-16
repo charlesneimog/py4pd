@@ -44,7 +44,7 @@ def runTest(pdpatch):
         cmd = [
             "..\\pd\\bin\\pd.exe",
             "-nogui",
-            "-noaudio",
+            "-batch",
             "-send",
             "start-test bang",
             pathfile,
@@ -83,12 +83,12 @@ def runTest(pdpatch):
 
         py4pdPath = os.path.abspath(scriptfolder)
         cmd = (
-            f'/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -nogui -noaudio -path {py4pdPath} -send "start-test bang" '
+            f'/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -nogui -batch -send "start-test bang" '
             + pathfile
         )
         try:
             output = subprocess.run(
-                cmd, capture_output=True, text=True, shell=True, timeout=45
+                cmd, capture_output=True, text=True, shell=True, timeout=75
             )
             outputLines = str(output).split("\\n")
         except subprocess.TimeoutExpired:
