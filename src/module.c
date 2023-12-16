@@ -1,6 +1,10 @@
 #define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
 #include "py4pd.h"
 
+#define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
+#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
+#include <numpy/arrayobject.h>
+
 // =================================
 /**
  * @brief Dict to save data for object varibles.
@@ -1500,6 +1504,7 @@ static PyModuleDef_Slot pdmodule_slots[] = {
 
 // =================================
 static struct PyModuleDef pdmodule = {
+static struct PyModuleDef pdModule = {
     PyModuleDef_HEAD_INIT,
     .m_name = "pd", /* name of module */
     .m_doc = "pd module provide function to interact with PureData, see the "
@@ -1514,10 +1519,16 @@ PyMODINIT_FUNC PyInit_pd() {
     import_array() PyObject *py4pdmodule;
     py4pdmodule = PyModuleDef_Init(&pdmodule);
     if (py4pdmodule == NULL) {
+    post("calling PyInit_pd");
+
+    import_array() PyObject *py4pdModule;
+    py4pdModule = PyModuleDef_Init(&pdModule);
+    if (py4pdModule == NULL) {
         return NULL;
     }
 
     return py4pdmodule;
+    return py4pdModule;
 }
 
 // ============================
