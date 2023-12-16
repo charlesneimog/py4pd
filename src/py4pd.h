@@ -25,7 +25,6 @@
 
 #define PY4PD_MAJOR_VERSION 0
 #define PY4PD_MINOR_VERSION 8
-#define PY4PD_MICRO_VERSION 5
 #define PY4PD_MICRO_VERSION 6
 
 #define PYTHON_REQUIRED_VERSION(major, minor) ((major < PY_MAJOR_VERSION) || (major == PY_MAJOR_VERSION && minor <= PY_MINOR_VERSION))
@@ -156,6 +155,9 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_symbol             *objName; // object name
 
     // == PYTHON
+    PyThreadState       *pSubInterpState;
+    t_int               pSubInterpRunning; // number of arguments
+
     PyObject            *pModule; // script name
     PyObject            *pFunction; // function name
     // PyObject            *showFunction; // TODO: FUTURE function to show the function
@@ -164,7 +166,6 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject            *pArgTuple;
     t_symbol            *pFuncName; // function_name; // function name
     t_symbol            *pScriptName; // script name or pathname
-    t_int               pSubInterpRunning; // number of arguments
 
     // == AUDIO AND NUMPY
     t_int               audioOutput; // flag to check if is to use audio output
@@ -217,7 +218,6 @@ void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv);
 int Py4pdUtils_CheckNumpyInstall(t_py *x);
 
 // =====================================
-int Py4pd_ImportNumpyForPy4pd();
 void Py4pd_PrintDocs(t_py *x);
 void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f);
 void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
@@ -227,69 +227,9 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
 
 extern int object_count; 
 
-// UTILITIES 
-
-int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argc, t_atom **argv);
-t_py *Py4pdUtils_GetObject(PyObject *pd_module);
-void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);
-char *Py4pdUtils_GetFolderName(char *path);
-const char *Py4pdUtils_GetFilename(const char *path);
-void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *script_file_name);
-void Py4pdUtils_FindObjFolder(t_py *x);
-void Py4pdUtils_CreateTempFolder(t_py *x);
-void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line);
-int Py4pdUtils_ExecuteSystemCommand(const char *command);
-int Py4pdUtils_IsNumericOrDot(const char *str);
-void Py4pdUtils_RemoveChar(char *str, char c);
-char *Py4pdUtils_Mtok(char *input, char *delimiter);
-void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet);
-int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pDict);
-t_py4pd_pValue *Py4pdUtils_Run(t_py *x, PyObject *pArgs, t_py4pd_pValue *pValuePointer);
-PyObject *Py4pdUtils_RunPyAudioOut(t_py *x, PyObject *pArgs, PyObject *pKwargs);
-void Py4pdUtils_PrintError(t_py *x);
-void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValue, t_outlet *outlet);
-PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv);
-void Py4pdUtils_SetObjConfig(t_py *x);
-void Py4pdUtils_AddPathsToPythonPath(t_py *x);
-PyObject *Py4pdUtils_AddPdObject(t_py *x);
-void Py4pdUtils_ReadGifFile(t_py *x, const char *filename);
-void Py4pdUtils_ReadPngFile(t_py *x, const char *filename);
-uint32_t Py4pdUtils_Ntohl(uint32_t netlong);
-void *Py4pdUtils_FreeObj(t_py *x);
-void Py4pdUtils_CreatePicObj(t_py *x, PyObject *PdDict, t_class *object_PY4PD_Class, int argc, t_atom *argv);
-void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue *src, t_py4pd_pValue *dest);
-
 // SubInterpreter 
 void Py4pdUtils_CreatePythonInterpreter(t_py *x);
 
-// EMBEDDED MODULE 
-extern PyMethodDef PdMethods[];
-PyMODINIT_FUNC PyInit_pd(void);
-void Py4pdMod_FreePdcollectHash(pdcollectHash* hash_table);
-extern PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords);
-
-// PLAYER 
-void Py4pdLib_PlayerInsertThing(t_py *x, int onset, PyObject *value);
-KeyValuePair* Py4pdLib_PlayerGetValue(Dictionary* dictionary, int onset);
-void Py4pdLib_Play(t_py *x, t_symbol *s, int argc, t_atom *argv);
-void Py4pdLib_Stop(t_py *x);
-void Py4pdLib_Clear(t_py *x);
-void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv);
-
-
-// PIC 
-extern void Py4pdPic_Free(t_py *x);
-extern void Py4pdPic_Zoom(t_py *x, t_floatarg f);
-extern void Py4pdPic_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index, int argc, t_atom *argv, t_class *obj_class);
-extern void Py4pdPic_ErasePic(t_py* x, struct _glist *glist); 
-const  char *Py4pdPic_Filepath(t_py *x, const char *filename);
-extern void Py4pdPic_Draw(t_py* x, struct _glist *glist, t_floatarg vis);
-extern void Py4pdPic_GetRect(t_gobj *z, t_glist *glist, int *xp1, int *yp1, int *xp2, int *yp2);
-extern void Py4pdPic_Displace(t_gobj *z, t_glist *glist, int dx, int dy);
-extern void Py4pdPic_Select(t_gobj *z, t_glist *glist, int state);
-extern void Py4pdPic_Delete(t_gobj *z, t_glist *glist);
-
-// PY4PD 
 extern PyTypeObject Py4pdNewObj_Type;
 
 #endif
