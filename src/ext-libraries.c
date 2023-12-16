@@ -582,17 +582,14 @@ void Py4pdLib_Bang(t_py *x) {
 t_int *Py4pdLib_AudioINPerform(t_int *w) {
     t_py *x = (t_py *)(w[1]);
 
-    if (x->audioError || !x->numpyImported) {
     if (x->audioError) {
         return (w + 4);
     }
 
-    t_sample *in = (t_sample *)(w[2]);
     t_sample *AudioIn = (t_sample *)(w[2]);
     int n = (int)(w[3]);
     int numChannels = n / x->vectorSize;
     npy_intp dims[] = {numChannels, x->vectorSize};
-    PyObject *pAudio = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, in);
     PyObject *pAudio = PyArray_SimpleNewFromData(2, dims, NPY_FLOAT, AudioIn);
 
     // NOTE: pAudio must use NPY_DOUBLE in pd64
@@ -614,7 +611,6 @@ t_int *Py4pdLib_AudioINPerform(t_int *w) {
 t_int *Py4pdLib_AudioOUTPerform(t_int *w) {
     t_py *x = (t_py *)(w[1]);
 
-    if (x->audioError || x->numpyImported == 0)
     if (x->audioError) {
         return (w + 4);
     }
@@ -642,7 +638,6 @@ t_int *Py4pdLib_AudioOUTPerform(t_int *w) {
 // =====================================
 t_int *Py4pdLib_AudioPerform(t_int *w) {
     t_py *x = (t_py *)(w[1]);
-    if (x->audioError || x->numpyImported == 0)
 
     if (x->audioError)
         return (w + 5);
@@ -705,7 +700,6 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     char py4pd_objectName[MAXPDSTRING];
     snprintf(py4pd_objectName, sizeof(py4pd_objectName), "py4pd_ObjectDict_%s",
              objectName);
-    import_array() PyObject *pd_module = PyImport_ImportModule("pd");
     PyObject *pd_module = PyImport_ImportModule("pd");
 
     if (pd_module == NULL) {
