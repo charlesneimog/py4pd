@@ -300,7 +300,6 @@ jobs:
           git clone https://github.com/pure-data/deken
           chmod +x ./deken/developer/deken
           ./deken/developer/deken install --self
-          
       - name: Config Deken
         run: |
           echo "username = ${DEKEN_USERNAME}" > $HOME/.deken/config
@@ -317,7 +316,7 @@ jobs:
           
       - name: Upload deken Package
         run: |
-          ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
+          ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ needs.pythonversion.outputs.tag_name }}
   
   # ============================================================================
   # =                               RELEASES                                   =
@@ -331,16 +330,19 @@ jobs:
         python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}
     steps:
       - uses: actions/checkout@v3
+
       - name: Download py4pd Object
         uses: actions/download-artifact@v3
         with:
           name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
           path: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
 
+      - name: Zip py4pd Object
+        run: |
+          zip -r py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}.zip py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }} 
+
       - name: Upload binaries to release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}.zip
-          prerelease: true
-          tag_name: ${{ needs.pythonversion.outputs.tag_name }}
+        run: |
+          gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
+          gh release upload ${{ needs.pythonversion.outputs.tag_name }} py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}.zip  --repo charlesneimog/py4pd --clobber
 
