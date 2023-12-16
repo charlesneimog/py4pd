@@ -1,4 +1,4 @@
-name: "Dev-Tests"
+name: "Dev"
 on:
   workflow_dispatch:
     inputs:
@@ -278,7 +278,7 @@ jobs:
   # =                               DEKEN                                      =
   # ============================================================================
   deken-upload:
-    if: github.event_name == 'release'
+    #if: github.event_name == 'release'
     needs: [pythonversion, windows-build, macos-intel-build, macos-arm-build, linux-build]
     runs-on: ubuntu-latest
     strategy:
@@ -311,7 +311,7 @@ jobs:
           ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
       - name: Upload deken Package
         run: |
-          ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
+          ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
   
   # ============================================================================
   # =                               RELEASES                                   =
@@ -319,13 +319,24 @@ jobs:
   release:
     runs-on: ubuntu-latest
     needs: [pythonversion, windows-build, macos-intel-build, macos-arm-build, linux-build]
-    if: github.event_name == 'release'
+    #if: github.event_name == 'release'
     strategy:
       matrix:
         python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}
     steps:
       - uses: actions/checkout@v3
-      - name: Publish py4pd Object
+      - name: Download py4pd Object
         uses: actions/download-artifact@v3
         with:
           name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
+          path: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
+
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
+          tag: ${{ needs.pythonversion.outputs.tag_name }}
+          overwrite: true
+          asset_name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
+
