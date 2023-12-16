@@ -44,7 +44,7 @@ def runTest(pdpatch):
         cmd = [
             "..\\pd\\bin\\pd.exe",
             "-nogui",
-            "-noaudio",
+            "-batch",
             "-send",
             "start-test bang",
             pathfile,
@@ -83,7 +83,7 @@ def runTest(pdpatch):
 
         py4pdPath = os.path.abspath(scriptfolder)
         cmd = (
-            f'/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -nogui -noaudio -path {py4pdPath} -send "start-test bang" '
+            f'/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -nogui -batch -send "start-test bang" '
             + pathfile
         )
         try:

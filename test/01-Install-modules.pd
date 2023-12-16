@@ -7,7 +7,7 @@
 #X obj 3 269 delay 10 1 msec;
 #X obj 73 108 py4pd;
 #X obj 73 137 sel 1 0;
-#X obj 152 216 print ERROR;
+#X obj 111 187 print ERROR;
 #X obj 89 167 t b b;
 #X obj 265 36 loadbang;
 #X obj 265 125 s start-test;
