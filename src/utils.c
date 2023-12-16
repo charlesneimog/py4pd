@@ -220,9 +220,21 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x) {
             PyModule_AddObject(
                 PyImport_ImportModule("pd"), "py4pd",
                 objectCapsule); // add the capsule to the python interpreter
+            // create a capsule to t_py to Py Interp.
+            objectCapsule = PyCapsule_New(x, "py4pd", NULL);
+            PyObject *pdModule = PyImport_ImportModule("pd");
+            int addSucess =
+                PyModule_AddObject(pdModule, "py4pd", objectCapsule);
+            if (addSucess != 0) {
+                pd_error(x, "[py4pd] Failed to add object to Python");
+                return NULL;
+            }
+
+            Py_DECREF(pdModule);
         }
     } else {
         pd_error(x, "[Python] Could not get the main module");
+        pd_error(x, "[py4pd] Could not get the main module");
         objectCapsule = NULL;
     }
     return objectCapsule;
