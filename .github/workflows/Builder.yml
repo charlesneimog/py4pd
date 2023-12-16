@@ -251,19 +251,21 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
+          
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+          
       - name: set Enviroment
         run: |
           brew install --cask pd
           python${{ matrix.python-version }} -m pip install numpy
           mkdir py4pd
+          
       - name: Build
         env:
           pythonName: python${{ matrix.python-version }}
         run: make PYTHON_VERSION=$pythonName extension=d_arm64
-
 
       - name: Copy files to py4pd
         run: |
@@ -291,12 +293,14 @@ jobs:
         with:
           name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
           path: py4pd
+          
       - name: Install Deken
         continue-on-error: true
         run: |
           git clone https://github.com/pure-data/deken
           chmod +x ./deken/developer/deken
           ./deken/developer/deken install --self
+          
       - name: Config Deken
         run: |
           echo "username = ${DEKEN_USERNAME}" > $HOME/.deken/config
@@ -304,11 +308,13 @@ jobs:
         env:
           DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
           PASSWORD: ${{ secrets.DEKEN_PASSWORD }}
+          
       - name: Fix problem with easywebdav2
         continue-on-error: true
         run: |
-          ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
-          ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
+          ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version ${{ needs.pythonversion.outputs.tag_name }}
+          ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ needs.pythonversion.outputs.tag_name }}
+          
       - name: Upload deken Package
         run: |
           ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ github.event.release.tag_name }}
@@ -332,11 +338,9 @@ jobs:
           path: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
 
       - name: Upload binaries to release
-        uses: svenstaro/upload-release-action@v2
+        uses: softprops/action-gh-release@v1
         with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
-          tag: ${{ needs.pythonversion.outputs.tag_name }}
-          overwrite: true
-          asset_name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
+          files: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}.zip
+          prerelease: true
+          tag_name: ${{ needs.pythonversion.outputs.tag_name }}
 
