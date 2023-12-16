@@ -1,4 +1,3 @@
-#define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
 #include "py4pd.h"
 
 #define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
@@ -1503,7 +1502,6 @@ static PyModuleDef_Slot pdmodule_slots[] = {
 };
 
 // =================================
-static struct PyModuleDef pdmodule = {
 static struct PyModuleDef pdModule = {
     PyModuleDef_HEAD_INIT,
     .m_name = "pd", /* name of module */
@@ -1516,9 +1514,6 @@ static struct PyModuleDef pdModule = {
 
 // =================================
 PyMODINIT_FUNC PyInit_pd() {
-    import_array() PyObject *py4pdmodule;
-    py4pdmodule = PyModuleDef_Init(&pdmodule);
-    if (py4pdmodule == NULL) {
     post("calling PyInit_pd");
 
     import_array() PyObject *py4pdModule;
@@ -1526,8 +1521,6 @@ PyMODINIT_FUNC PyInit_pd() {
     if (py4pdModule == NULL) {
         return NULL;
     }
-
-    return py4pdmodule;
     return py4pdModule;
 }
 
