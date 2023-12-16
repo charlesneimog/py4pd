@@ -126,7 +126,7 @@ void Py4pdPlayer_Play(t_py *x, t_symbol *s, int ac, t_atom *av) {
 }
 
 // ======================================================
-void Py4pdLib_Stop(t_py *x) {
+void Py4pdPlayer_Stop(t_py *x) {
     if (x->playerClock == NULL) {
         pd_error(x, "[%s]: Nothing to stop.", x->objName->s_name);
         return;
@@ -136,7 +136,7 @@ void Py4pdLib_Stop(t_py *x) {
 }
 
 // ======================================================
-void Py4pdLib_Clear(t_py *x) {
+void Py4pdPlayer_Clear(t_py *x) {
     if (x->playerClock != NULL) {
         clock_unset(x->playerClock);
     }
