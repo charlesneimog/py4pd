@@ -748,6 +748,11 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         return;
     }
 
+    x->numpyImported = Py4pdUtils_CheckNumpyInstall(x);
+    if (!x->numpyImported) {
+        return;
+    }
+
     if (x->funcCalled == 1) {
         int function_is_equal =
             strcmp(pFuncNameSymbol->s_name,
@@ -1063,7 +1068,6 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         t_canvas *c = x->canvas;
         x->zoom = (int)x->canvas->gl_zoom;
         t_symbol *patchDir = canvas_getdir(c);
-
         if (patchDir->s_name[strlen(patchDir->s_name) - 1] != '/') {
             char *new_path = malloc(strlen(patchDir->s_name) + 2);
             strcpy(new_path, patchDir->s_name);
@@ -1071,6 +1075,11 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
             patchDir = gensym(new_path);
             free(new_path);
         }
+        x->numpyImported = Py4pdUtils_CheckNumpyInstall(x);
+        if (!x->numpyImported) {
+            return NULL;
+        }
+
         x->pdPatchPath = patchDir;
         x->pkgPath = patchDir;
         x->visMode = 0;

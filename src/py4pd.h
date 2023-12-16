@@ -213,7 +213,7 @@ typedef struct _py4pdInlet_proxy{
 
 
 void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv);
-
+int Py4pdUtils_CheckNumpyInstall(t_py *x);
 
 // =====================================
 int Py4pd_ImportNumpyForPy4pd();
@@ -227,6 +227,7 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
 extern int object_count; 
 
 // UTILITIES 
+
 int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argc, t_atom **argv);
 t_py *Py4pdUtils_GetObject(PyObject *pd_module);
 void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);

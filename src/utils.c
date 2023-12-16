@@ -1243,7 +1243,6 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
 
 // ============================================
 void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
-    post("[py4pd] Adding paths to python path");
     // Add additional paths to the python path
     char pyScripts_folder[MAXPDSTRING];
     snprintf(pyScripts_folder, MAXPDSTRING, "%sresources/py4pd-mod",
@@ -1269,6 +1268,19 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
     Py_DECREF(py4pdScripts);
     Py_DECREF(py4pdGlobalPackages);
     return;
+}
+
+// ===================================================================
+int Py4pdUtils_CheckNumpyInstall(t_py *x) {
+    PyObject *numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
+    if (numpy == NULL) {
+        pd_error(x, "[py4pd] Numpy not installed, send [pip install numpy] to "
+                    "the py4pd object");
+        return 0;
+    }
+    Py_DECREF(numpy);
+    PyErr_Clear();
+    return 1;
 }
 
 // ===================================================================
