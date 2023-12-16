@@ -26,6 +26,7 @@
 #define PY4PD_MAJOR_VERSION 0
 #define PY4PD_MINOR_VERSION 8
 #define PY4PD_MICRO_VERSION 5
+#define PY4PD_MICRO_VERSION 6
 
 #define PYTHON_REQUIRED_VERSION(major, minor) ((major < PY_MAJOR_VERSION) || (major == PY_MAJOR_VERSION && minor <= PY_MINOR_VERSION))
 
