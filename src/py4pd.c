@@ -1075,10 +1075,6 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
             patchDir = gensym(new_path);
             free(new_path);
         }
-        x->numpyImported = Py4pdUtils_CheckNumpyInstall(x);
-        if (!x->numpyImported) {
-            return NULL;
-        }
 
         x->pdPatchPath = patchDir;
         x->pkgPath = patchDir;
@@ -1086,6 +1082,10 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         Py4pdUtils_SetObjConfig(x);
         if (object_count == 0) {
             Py4pdUtils_AddPathsToPythonPath(x);
+        }
+        x->numpyImported = Py4pdUtils_CheckNumpyInstall(x);
+        if (!x->numpyImported) {
+            return NULL;
         }
         int libraryLoaded = Py4pd_LibraryLoad(x, argc, argv);
         if (libraryLoaded == -1) {
