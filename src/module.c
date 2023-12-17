@@ -389,12 +389,28 @@ static PyObject *Py4pdMod_GetObjArgs(PyObject *self, PyObject *args) {
         return NULL;
     }
 
+    // BUG:, when using -a this give the wrong result;
     PyObject *pList = PyList_New(0);
     for (int i = 0; i < x->objArgsCount; i++) {
-        t_symbol *key = atom_getsymbolarg(i, x->objArgsCount, x->pdObjArgs);
-        PyObject *strObj = PyUnicode_FromString(key->s_name);
-        PyList_Append(pList, strObj);
-        Py_DECREF(strObj);
+        if (x->pdObjArgs[i].a_type == A_SYMBOL) {
+            t_symbol *key = atom_getsymbolarg(i, x->objArgsCount, x->pdObjArgs);
+            PyObject *strObj = PyUnicode_FromString(key->s_name);
+            PyList_Append(pList, strObj);
+            Py_DECREF(strObj);
+        } else if (x->pdObjArgs[i].a_type == A_FLOAT) {
+            int isInt = atom_getintarg(i, x->objArgsCount, x->pdObjArgs) ==
+                        atom_getfloatarg(i, x->objArgsCount, x->pdObjArgs);
+            t_float key = atom_getfloatarg(i, x->objArgsCount, x->pdObjArgs);
+            if (isInt) {
+                PyObject *Number = PyLong_FromLong(key);
+                PyList_Append(pList, Number);
+                Py_DECREF(Number);
+            } else {
+                PyObject *Number = PyFloat_FromDouble(key);
+                PyList_Append(pList, Number);
+                Py_DECREF(Number);
+            }
+        }
     }
     return pList;
 }
