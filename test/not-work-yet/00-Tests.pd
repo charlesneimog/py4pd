@@ -1,4 +1,16 @@
-#N canvas 634 206 754 617 8;
+#N canvas 600 295 754 617 8;
 #X msg 107 71 _test;
 #X obj 107 92 py4pd;
+#X obj 218 112 py4pd threadtest exe;
+#X obj 218 133 print;
+#X obj 63 184 py4pd threadtest importnumpy;
+#X msg 70 118 run;
+#X obj 63 205 print;
+#X msg 129 140 reload;
+#X msg 224 67 detach;
 #X connect 0 0 1 0;
+#X connect 2 0 3 0;
+#X connect 4 0 6 0;
+#X connect 5 0 4 0;
+#X connect 7 0 4 0;
+#X connect 8 0 2 0;
