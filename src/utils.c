@@ -1,7 +1,9 @@
-#include "utils.h"
+#include "py4pd.h"
+
+#include "ext-libraries.h"
 #include "module.h"
 #include "pic.h"
-#include "py4pd.h"
+#include "utils.h"
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
