@@ -24,8 +24,6 @@ on:
         default: false
   release:
     types: [published]
-  schedule:
-    - cron: "0 20 * * *"
   push:
     branches:
       - develop
