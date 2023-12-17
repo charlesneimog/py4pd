@@ -143,7 +143,9 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr,
                         for (j = i; j < argc; j++) {
                             argv[j] = argv[j + 2];
                             (*argvPtr)[j] = (*argvPtr)[j + 2];
-                            // *argcPtr = *argcPtr - 2;
+                            // *argcPtr =
+                            //     *argcPtr - 1; // BUG: Broke pd-list Args
+                            //     investigation
                         }
                     }
                 }
