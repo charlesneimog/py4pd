@@ -1396,8 +1396,6 @@ PyMethodDef PdMethods[] = {
     // Files
     {"get_patch_dir", Py4pdMod_GetPatchHome, METH_VARARGS,
      "Get PureData Patch Path Folder"},
-    {"get_home_folder", Py4pdMod_GetPatchHome, METH_VARARGS,
-     "Get PureData Patch Path Folder"},
     {"get_py4pd_dir", Py4pdMod_GetPy4pdFolder, METH_VARARGS,
      "Get PureData Py4PD Folder"},
     {"get_temp_dir", Py4pdMod_GetPy4pdTmpFolder, METH_VARARGS,
