@@ -1,3 +1,4 @@
+#include "ext-class.h"
 #include "ext-libraries.h"
 #include "pic.h"
 #include "player.h"
