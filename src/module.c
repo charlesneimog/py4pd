@@ -456,7 +456,7 @@ static PyObject *Py4pdMod_PdRecursiveCall(PyObject *self, PyObject *args) {
             x->recursiveClock = clock_new(x, (t_method)Py4pdMod_RecursiveTick);
         Py_INCREF(pValue); // avoid thing to be deleted
         x->recursiveCalls = 0;
-        clock_setunit(x->recursiveClock, 0, 1);
+        // clock_setunit(x->recursiveClock, 0, 0);
         clock_delay(x->recursiveClock, 0);
         Py_RETURN_TRUE;
     }
