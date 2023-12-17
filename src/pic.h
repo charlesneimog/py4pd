@@ -15,6 +15,13 @@ extern void Py4pdPic_Displace(t_gobj *z, t_glist *glist, int dx, int dy);
 extern void Py4pdPic_Select(t_gobj *z, t_glist *glist, int state);
 extern void Py4pdPic_Delete(t_gobj *z, t_glist *glist);
 
+// typedef struct _py4pd_edit_proxy{ 
+//     t_object    p_obj;
+//     t_symbol   *p_sym;
+//     t_clock    *p_clock;
+//     struct      _py *p_cnv;
+// }t_py4pd_edit_proxy;
+
 #endif
 
 
