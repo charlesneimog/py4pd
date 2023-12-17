@@ -1492,6 +1492,22 @@ static PyObject *pdmodule_init(PyObject *self) {
 
     PyModule_AddObject(self, "OUTLOOP", Py4pd_OutLoopString);
     PyModule_AddObject(self, "CLEARLOOP", Py4pd_ClearLoopString);
+
+    // PD TYPES
+    PyObject *pA_GIMME = PyLong_FromLong(A_GIMME);
+    PyObject *pA_FLOAT = PyLong_FromLong(A_FLOAT);
+    PyObject *pA_SYMBOL = PyLong_FromLong(A_SYMBOL);
+
+    PyModule_AddObject(self, "A_GIMME", pA_GIMME);
+    PyModule_AddObject(self, "A_FLOAT", pA_FLOAT);
+    PyModule_AddObject(self, "A_SYMBOL", pA_SYMBOL);
+
+    if (PyType_Ready(&Py4pdNewObj_Type) < 0)
+        return NULL;
+    Py_INCREF(&Py4pdNewObj_Type);
+
+    PyModule_AddObject(self, "new_object", (PyObject *)&Py4pdNewObj_Type);
+
     return 0;
 }
 
@@ -1522,6 +1538,7 @@ PyMODINIT_FUNC PyInit_pd() {
     if (py4pdModule == NULL) {
         return NULL;
     }
+
     return py4pdModule;
 }
 
