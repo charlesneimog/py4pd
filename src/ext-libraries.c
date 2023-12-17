@@ -1,6 +1,8 @@
+#include "py4pd.h"
+
+#include "ext-libraries.h"
 #include "pic.h"
 #include "player.h"
-#include "py4pd.h"
 #include "utils.h"
 
 #define NO_IMPORT_ARRAY
@@ -9,8 +11,8 @@
 #include <numpy/arrayobject.h>
 
 // ================= PUREDATA ================
-static t_class *py4pdInlets_proxy_class;
 void Py4pdLib_Bang(t_py *x);
+static t_class *py4pdInlets_proxy_class;
 
 // ===========================================
 void Py4pdLib_ReloadObject(t_py *x) {
@@ -701,7 +703,8 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     if (x->pyObjArgs == NULL) {
         x->pyObjArgs = malloc(sizeof(t_py4pd_pValue *) * x->pArgsCount);
     }
-    int inlets = Py4pdLib_CreateObjInlets(pyFunction, x, argc, argv);
+    int inlets = Py4pdUtils_CreateObjInlets(
+        pyFunction, x, py4pdInlets_proxy_class, argc, argv);
     if (inlets != 0) {
         free(x->pdObjArgs);
         free(x->pyObjArgs);
