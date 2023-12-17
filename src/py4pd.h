@@ -147,12 +147,13 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int                 playable;
 
     // Library
-    t_int                isLib; // flag to check if is to use python library
-    t_int                pyObject;
-    t_int                objType;
-    t_int                ignoreOnNone;
-    PyObject             *argsDict; // parameters
-    t_symbol             *objName; // object name
+    t_int                   isLib; // flag to check if is to use python library
+    t_int                   pyObject;
+    t_int                   objType;
+    t_int                   ignoreOnNone;
+    t_symbol                *objName; // object name
+    PyObject                *argsDict; // parameters
+    struct Py4pdNewObject   *objClass; // object class
 
     // == PYTHON
     PyThreadState       *pSubInterpState;
