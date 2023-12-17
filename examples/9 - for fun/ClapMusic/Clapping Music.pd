@@ -41,6 +41,8 @@
 #X obj 256 281 loadbang;
 #X obj 448 138 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
 #X text 163 6 YOU NEED ELSE LIBRARY!!!!!;
+#X obj 103 152 loadbang;
+#X msg 103 173 pointers 0;
 #X connect 1 0 25 0;
 #X connect 2 0 25 1;
 #X connect 3 0 12 0;
@@ -81,3 +83,6 @@
 #X connect 38 0 36 0;
 #X connect 39 0 38 0;
 #X connect 40 0 33 0;
+#X connect 42 0 43 0;
+#X connect 43 0 29 0;
+#X connect 43 0 28 0;
