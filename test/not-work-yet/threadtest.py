@@ -31,7 +31,7 @@ def listmethod(a, c):
     pd.print(f"a = {a} | c = {c}")
     
 def anythingmethod(a):
-    pd.print("Hello from anything method")   
+    pd.print(f"Hello from anything method | a = {a}")
     
 def bangmethod():
     pd.print("Hello from bang method")
@@ -46,7 +46,8 @@ def threadtest_setup():
     newobj = pd.new_object("myobj")
    
     newobj.addmethod_list(listmethod)
-
+    newobj.addmethod_anything(anythingmethod)
+    #newobj.addmethod("asd", anythingmethod)
 
     newobj.add_object()
 
