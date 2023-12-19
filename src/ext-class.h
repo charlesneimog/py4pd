@@ -26,8 +26,8 @@ typedef struct {
     PyObject *pFuncBang;
 
     // PySel Methods
-    PyObject *pDictSelectors;
-    PyObject *pSelectorArgs;
+    PyObject *pDictSelectors; // dict with method and function
+    PyObject *pSelectorArgs; // dict with method args
 
 } Py4pdNewObj;
 

@@ -27,6 +27,10 @@
 #define PY4PD_MINOR_VERSION 8
 #define PY4PD_MICRO_VERSION 6
 
+
+#define PY4PD_GIT_ISSUES "https://github.com/charlesneimog/py4pd/issues"
+
+
 #define PYTHON_REQUIRED_VERSION(major, minor) ((major < PY_MAJOR_VERSION) || (major == PY_MAJOR_VERSION && minor <= PY_MINOR_VERSION))
 
 #ifdef _WIN32
@@ -213,6 +217,13 @@ typedef struct _py4pdInlet_proxy{
     t_py        *p_master;
     int          inletIndex;
 }t_py4pdInlet_proxy;
+
+typedef struct _classInlets{
+    t_object     p_ob;
+    t_py        *p_master;
+    int          inletIndex;
+}classInlets;
+
 
 
 void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv);

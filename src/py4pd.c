@@ -12,24 +12,8 @@ void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv) {
     (void)argc;
     (void)argv;
 
-    // Dimensions of the array
-    // _import_array();
-    // npy_intp dims[] = {2, 10};
-    //
-    // // Total number of elements in the array
-    // int total_elements = dims[0] * dims[1];
-    //
-    // // Assuming you have a 2D array of integers
-    // int data[] = {
-    //     1,  2,  3,  4,  5,  6,  7,  8,  9,  10, // Row 1
-    //     11, 12, 13, 14, 15, 16, 17, 18, 19, 20  // Row 2
-    // };
-    //
-    // // Using PyArray_SimpleNewFromData to create a NumPy array
-    // PyObject *numpy_array = PyArray_SimpleNewFromData(2, dims, NPY_INT,
-    // data);
-    //
-    // post("OK");
+    (void)PyObject_CallObject(x->pFunction, x->pArgTuple);
+
     return NULL;
 }
 // ============================================

@@ -21,37 +21,34 @@ def exe():
 def sum_of_primes(start, end):
     return sum(num for num in range(start, end + 1) if is_prime(num))
 
-def floatmethod():
-    pd.print("Hello from float method")
+def floatmethod(x, y):
+    return x + y
 
-def symbolmethod():
-    pd.print("Hello from symbol method")
+def symbolmethod(a):
+    pd.print(f"Symbol method, I received {a} symbol")
 
-def listmethod():
-    pd.print("Hello from list method")
+def listmethod(a, c):
+    pd.print(f"a = {a} | c = {c}")
     
-def anythingmethod():
+def anythingmethod(a):
     pd.print("Hello from anything method")   
     
 def bangmethod():
     pd.print("Hello from bang method")
     
-def selectormethod():
+def selectormethod(a, b, c, d):
     pd.print("Hello from selector method")
     
-def myclass():
-    newobj = pd.new_object("myclass")
-    newobj.addmethod_float(floatmethod)
-    newobj.addmethod_symbol(symbolmethod)
+def selectormethod2():
+    pd.print("Hello from selector2 method")
+    
+def threadtest_setup():
+    newobj = pd.new_object("myobj")
+   
     newobj.addmethod_list(listmethod)
-    newobj.addmethod_anything(anythingmethod)
-    newobj.addmethod_bang(bangmethod)
-    newobj.addmethod("mymethod", selectormethod)
-    newobj.addmethod("mymethod2", selectormethod, arg_types=(pd.A_FLOAT, pd.A_SYMBOL)) 
+
+
     newobj.add_object()
 
 
 
-def mytest():
-    sum_of_primes(1, 1000000)
-    return "ok"
