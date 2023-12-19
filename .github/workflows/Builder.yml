@@ -111,12 +111,12 @@ jobs:
           cp -r src py4pd
           find py4pd/src -name "*.o" -type f -delete
           cp resources/README.deken.pd py4pd
-          cp -r py4pd test
+          cp -r py4pd resources/tests
           rm py4pd.l_amd64
 
       - name: Tests
         run: |
-          cd test
+          cd resources/tests
           python${{ matrix.python-version }} ./runTests.py
       - name: Upload Object
         uses: actions/upload-artifact@v3
@@ -180,12 +180,15 @@ jobs:
           $pythonpath = Get-Content pythonpath.txt
           Copy-Item -Path "$pythondllversion" -Destination py4pd\ -Recurse
           Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd\ -Recurse
-          Copy-Item -Path "py4pd" -Destination "test" -Recurse
-          Copy-Item -Path "resources" -Destination "test/py4pd/" -Recurse
+          Copy-Item -Path "py4pd" -Destination "resources/tests" -Recurse
+          Copy-Item -Path "resources" -Destination "resources/tests/py4pd/" -Recurse
           cp py4pd.m_amd64 py4pd\
-          cp py4pd.m_amd64 test\py4pd\py4pd.m_amd64
+          cp py4pd.m_amd64 resources\tests\py4pd\py4pd.m_amd64
       - name: Tests
-        run: "cd test \npython ./runTests.py\n"
+        run: | 
+        	cd resources/tests 
+        	python ./runTests.py
+        	
       - name: Upload Object ZIP
         uses: actions/upload-artifact@v3
         with:
@@ -223,12 +226,12 @@ jobs:
         run: |
           mkdir py4pd
           mv py4pd.d_amd64 py4pd
-          cp -r py4pd test
-          cp -r resources test/py4pd
+          cp -r py4pd resources/tests
+          cp -r resources resources/tests/py4pd
 
       - name: Run Tests
         run: |
-          cd test
+          cd resources/tests
           python${{ matrix.python-version }} ./runTests.py
       - name: Upload Object
         uses: actions/upload-artifact@v3
