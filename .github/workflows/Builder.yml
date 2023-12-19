@@ -181,14 +181,14 @@ jobs:
           Copy-Item -Path "$pythondllversion" -Destination py4pd\ -Recurse
           Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd\ -Recurse
           Copy-Item -Path "py4pd" -Destination "resources/tests" -Recurse
-          Copy-Item -Path "resources" -Destination "resources/tests/py4pd/" -Recurse
+          Copy-Item -Path "resources/py4pd-mod" -Destination "resources/tests/py4pd/resources" -Recurse
           cp py4pd.m_amd64 py4pd\
           cp py4pd.m_amd64 resources\tests\py4pd\py4pd.m_amd64
       - name: Tests
         run: | 
-        	cd resources/tests 
-        	python ./runTests.py
-        	
+          cd resources/tests 
+          python ./runTests.py
+
       - name: Upload Object ZIP
         uses: actions/upload-artifact@v3
         with:
@@ -226,8 +226,8 @@ jobs:
         run: |
           mkdir py4pd
           mv py4pd.d_amd64 py4pd
-          cp -r py4pd resources/tests
-          cp -r resources resources/tests/py4pd
+          find py4pd -type f -exec cp {} resources/tests/ \; -o -type d -name resources -prune
+          find resources -type f -exec cp {} resources/tests/py4pd/ \; -o -type d -name py4pd -prune
 
       - name: Run Tests
         run: |
