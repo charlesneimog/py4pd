@@ -1,6 +1,6 @@
 #include "py4pd.h"
 
-#include "ext-libraries.h"
+// #include "ext-libraries.h"
 #include "module.h"
 #include "pic.h"
 #include "utils.h"
@@ -379,9 +379,9 @@ PyObject *Py4pdUtils_CreatePyObjFromPdArgs(t_symbol *s, int argc,
         pArgs = PyUnicode_FromString(s->s_name);
     } else if ((s == gensym("list") || s == gensym("anything")) && argc > 1) {
         pArgs = PyList_New(argc);
-
         for (int i = 0; i < argc; i++) {
-            if (argv[i].a_type == A_FLOAT) {
+            t_atomtype aType = argv[i].a_type;
+            if (aType == A_FLOAT) {
                 int pdInt = atom_getintarg(i, argc, argv);
                 float pdFloat = atom_getfloatarg(i, argc, argv);
                 int isInt = pdInt == pdFloat;
@@ -392,10 +392,11 @@ PyObject *Py4pdUtils_CreatePyObjFromPdArgs(t_symbol *s, int argc,
                     PyObject *pFloat = PyFloat_FromDouble(pdFloat);
                     PyList_SetItem(pArgs, i, pFloat);
                 }
-            } else if (argv[i].a_type == A_SYMBOL) {
+            } else if (aType == A_SYMBOL) {
                 t_symbol *pdSymbol = atom_getsymbolarg(i, argc, argv);
                 PyObject *pSymbol = PyUnicode_FromString(pdSymbol->s_name);
                 PyList_SetItem(pArgs, i, pSymbol);
+                Py_DECREF(pSymbol);
             } else {
                 pd_error(NULL, "[py4pd] py4pd just support floats or symbols");
             }

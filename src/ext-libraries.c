@@ -300,66 +300,16 @@ void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac,
                             t_atom *av) {
     (void)s;
     t_py *py4pd = (t_py *)x->p_master;
-    PyObject *pyInletValue = NULL;
 
-    if (ac == 0)
-        pyInletValue = PyUnicode_FromString(s->s_name);
-    else if ((s == gensym("list") || s == gensym("anything")) && ac > 1) {
-        pyInletValue = PyList_New(ac);
-        for (int i = 0; i < ac; i++) {
-            if (av[i].a_type == A_FLOAT) {
-                int isInt =
-                    atom_getintarg(i, ac, av) == atom_getfloatarg(i, ac, av);
-                if (isInt)
-                    PyList_SetItem(pyInletValue, i,
-                                   PyLong_FromLong(atom_getintarg(i, ac, av)));
-                else
-                    PyList_SetItem(
-                        pyInletValue, i,
-                        PyFloat_FromDouble(atom_getfloatarg(i, ac, av)));
-            } else if (av[i].a_type == A_SYMBOL)
-                PyList_SetItem(
-                    pyInletValue, i,
-                    PyUnicode_FromString(atom_getsymbolarg(i, ac, av)->s_name));
-        }
-    } else if ((s == gensym("float") || s == gensym("symbol")) && ac == 1) {
-        if (av[0].a_type == A_FLOAT) {
-            int isInt =
-                atom_getintarg(0, ac, av) == atom_getfloatarg(0, ac, av);
-            if (isInt)
-                pyInletValue = PyLong_FromLong(atom_getintarg(0, ac, av));
-            else
-                pyInletValue = PyFloat_FromDouble(atom_getfloatarg(0, ac, av));
-        } else if (av[0].a_type == A_SYMBOL)
-            pyInletValue =
-                PyUnicode_FromString(atom_getsymbolarg(0, ac, av)->s_name);
-    } else {
-        pyInletValue = PyList_New(ac + 1);
-        PyList_SetItem(pyInletValue, 0, PyUnicode_FromString(s->s_name));
-        for (int i = 0; i < ac; i++) {
-            if (av[i].a_type == A_FLOAT) {
-                int isInt =
-                    atom_getintarg(i, ac, av) == atom_getfloatarg(i, ac, av);
-                if (isInt)
-                    PyList_SetItem(pyInletValue, i + 1,
-                                   PyLong_FromLong(atom_getintarg(i, ac, av)));
-                else
-                    PyList_SetItem(
-                        pyInletValue, i + 1,
-                        PyFloat_FromDouble(atom_getfloatarg(i, ac, av)));
-            } else if (av[i].a_type == A_SYMBOL)
-                PyList_SetItem(
-                    pyInletValue, i + 1,
-                    PyUnicode_FromString(atom_getsymbolarg(i, ac, av)->s_name));
-        }
-    }
+    PyObject *pInletValue = Py4pdUtils_CreatePyObjFromPdArgs(s, ac, av);
+
     if (!py4pd->pyObjArgs[x->inletIndex]->pdout)
         Py_DECREF(py4pd->pyObjArgs[x->inletIndex]->pValue);
 
     py4pd->pyObjArgs[x->inletIndex]->objectsUsing = 0;
     py4pd->pyObjArgs[x->inletIndex]->pdout = 0;
     py4pd->pyObjArgs[x->inletIndex]->objOwner = py4pd->objName;
-    py4pd->pyObjArgs[x->inletIndex]->pValue = pyInletValue;
+    py4pd->pyObjArgs[x->inletIndex]->pValue = pInletValue;
 
     if (py4pd->objType == PY4PD_AUDIOOBJ ||
         py4pd->objType == PY4PD_AUDIOINOBJ) {
@@ -382,61 +332,10 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av) {
         return;
     }
 
-    PyObject *pyInletValue = NULL;
-    if (ac == 0)
-        pyInletValue = PyUnicode_FromString(s->s_name);
-    else if ((s == gensym("list") || s == gensym("anything")) && ac > 1) {
-        pyInletValue = PyList_New(ac);
-        for (int i = 0; i < ac; i++) {
-            if (av[i].a_type == A_FLOAT) {
-                int isInt =
-                    atom_getintarg(i, ac, av) == atom_getfloatarg(i, ac, av);
-                if (isInt)
-                    PyList_SetItem(pyInletValue, i,
-                                   PyLong_FromLong(atom_getintarg(i, ac, av)));
-                else
-                    PyList_SetItem(
-                        pyInletValue, i,
-                        PyFloat_FromDouble(atom_getfloatarg(i, ac, av)));
-            } else if (av[i].a_type == A_SYMBOL)
-                PyList_SetItem(
-                    pyInletValue, i,
-                    PyUnicode_FromString(atom_getsymbolarg(i, ac, av)->s_name));
-        }
-    } else if ((s == gensym("float") || s == gensym("symbol")) && ac == 1) {
-        if (av[0].a_type == A_FLOAT) {
-            int isInt =
-                atom_getintarg(0, ac, av) == atom_getfloatarg(0, ac, av);
-            if (isInt)
-                pyInletValue = PyLong_FromLong(atom_getintarg(0, ac, av));
-            else
-                pyInletValue = PyFloat_FromDouble(atom_getfloatarg(0, ac, av));
-        } else if (av[0].a_type == A_SYMBOL)
-            pyInletValue =
-                PyUnicode_FromString(atom_getsymbolarg(0, ac, av)->s_name);
-    } else {
-        pyInletValue = PyList_New(ac + 1);
-        PyList_SetItem(pyInletValue, 0, PyUnicode_FromString(s->s_name));
-        for (int i = 0; i < ac; i++) {
-            if (av[i].a_type == A_FLOAT) {
-                int isInt =
-                    atom_getintarg(i, ac, av) == atom_getfloatarg(i, ac, av);
-                if (isInt)
-                    PyList_SetItem(pyInletValue, i + 1,
-                                   PyLong_FromLong(atom_getintarg(i, ac, av)));
-                else
-                    PyList_SetItem(
-                        pyInletValue, i + 1,
-                        PyFloat_FromDouble(atom_getfloatarg(i, ac, av)));
-            } else if (av[i].a_type == A_SYMBOL)
-                PyList_SetItem(
-                    pyInletValue, i + 1,
-                    PyUnicode_FromString(atom_getsymbolarg(i, ac, av)->s_name));
-        }
-    }
+    PyObject *pInletValue = Py4pdUtils_CreatePyObjFromPdArgs(s, ac, av);
 
     if (x->objType == PY4PD_AUDIOOUTOBJ) {
-        x->pyObjArgs[0]->pValue = pyInletValue;
+        x->pyObjArgs[0]->pValue = pInletValue;
         x->audioError = 0;
         return;
     }
@@ -445,7 +344,7 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av) {
         return;
 
     PyObject *pArgs = PyTuple_New(x->pArgsCount);
-    PyTuple_SetItem(pArgs, 0, pyInletValue);
+    PyTuple_SetItem(pArgs, 0, pInletValue);
 
     for (int i = 1; i < x->pArgsCount; i++) {
         PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
@@ -453,11 +352,11 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av) {
     }
 
     if (x->objType > PY4PD_VISOBJ) {
-        Py_INCREF(pyInletValue);
+        Py_INCREF(pInletValue);
         x->pyObjArgs[0]->objectsUsing = 0;
         x->pyObjArgs[0]->pdout = 0;
         x->pyObjArgs[0]->objOwner = x->objName;
-        x->pyObjArgs[0]->pValue = pyInletValue;
+        x->pyObjArgs[0]->pValue = pInletValue;
         x->pArgTuple = pArgs;
         Py_INCREF(x->pArgTuple);
         return;
