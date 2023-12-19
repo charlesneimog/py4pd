@@ -1,12 +1,48 @@
-#include "ext-class.h"
 #include "py4pd.h"
-#include "unicodeobject.h"
+
+#include "ext-class.h"
 #include "utils.h"
 
 static t_class *InletsExtClassProxy;
 
 // ====================================================
 // ===================== Obj Methods ==================
+// ====================================================
+static void Py4pdNewObj_PdExecBangMethod(t_py *x) {
+    Py4pdNewObj *pObjSelf;
+    pObjSelf = (Py4pdNewObj *)x->objClass;
+    PyObject *pFunc = (PyObject *)pObjSelf->pFuncBang;
+    if (pFunc == NULL) {
+        pd_error(NULL, "[%s] No method defined for bang.", x->objName->s_name);
+        return;
+    }
+    x->pFunction = pFunc;
+    PyCodeObject *pFuncCode = (PyCodeObject *)PyFunction_GetCode(pFunc);
+    int pFuncArgs = pFuncCode->co_argcount;
+
+    PyObject *pInletValue = PyUnicode_FromString("bang");
+    PyObject *pArgs = PyTuple_New(pFuncArgs);
+    PyTuple_SetItem(pArgs, 0, pInletValue);
+    for (int i = 1; i < pFuncArgs; i++) {
+        PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
+        Py_INCREF(x->pyObjArgs[i]->pValue); // This keep the reference.
+    }
+
+    if (x->objType > PY4PD_VISOBJ) {
+        Py_INCREF(pInletValue);
+        x->pyObjArgs[0]->objectsUsing = 0;
+        x->pyObjArgs[0]->pdout = 0;
+        x->pyObjArgs[0]->objOwner = x->objName;
+        x->pyObjArgs[0]->pValue = pInletValue;
+        x->pArgTuple = pArgs;
+        Py_INCREF(x->pArgTuple);
+        return;
+    }
+
+    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
+    Py_DECREF(pArgs);
+}
+
 // ====================================================
 static void Py4pdNewObj_PdExecFloatMethod(t_py *x, t_float f) {
     Py4pdNewObj *pObjSelf;
@@ -82,20 +118,23 @@ static void Py4pdNewObj_PdExecSymbolMethod(t_py *x, t_symbol *s) {
 // ====================================================
 static void Py4pdNewObj_PdExecListMethod(t_py *x, t_symbol *s, int argc,
                                          t_atom *argv) {
-    (void)x;
     Py4pdNewObj *pObjSelf;
+
+    if (s == NULL || s == gensym("bang")) {
+        Py4pdNewObj_PdExecBangMethod(x);
+        return;
+    }
 
     pObjSelf = (Py4pdNewObj *)x->objClass;
     PyObject *pFunc = (PyObject *)pObjSelf->pFuncList;
+
     x->pFunction = pFunc;
     PyCodeObject *pFuncCode = (PyCodeObject *)PyFunction_GetCode(pFunc);
     int pFuncArgs = pFuncCode->co_argcount;
     PyObject *pArgs = PyTuple_New(pFuncArgs);
+
     PyObject *pInletValue = Py4pdUtils_CreatePyObjFromPdArgs(s, argc, argv);
-
-    post("pFuncArgs: %s", PyUnicode_AsUTF8(PyObject_Str(pInletValue)));
-
-    return;
+    PyTuple_SetItem(pArgs, 0, pInletValue);
 
     for (int i = 1; i < pFuncArgs; i++) {
         PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
@@ -120,25 +159,40 @@ static void Py4pdNewObj_PdExecListMethod(t_py *x, t_symbol *s, int argc,
 // ====================================================
 static void Py4pdNewObj_PdExecAnythingMethod(t_py *x, t_symbol *s, int argc,
                                              t_atom *argv) {
-    (void)x;
     Py4pdNewObj *pObjSelf;
+
+    if (s == NULL || s == gensym("bang")) {
+        Py4pdNewObj_PdExecBangMethod(x);
+        return;
+    }
 
     pObjSelf = (Py4pdNewObj *)x->objClass;
     PyObject *pFunc = (PyObject *)pObjSelf->pFuncAnything;
-    PyObject *pArgs = PyTuple_New(0);
+    x->pFunction = pFunc;
+    PyCodeObject *pFuncCode = (PyCodeObject *)PyFunction_GetCode(pFunc);
+    int pFuncArgs = pFuncCode->co_argcount;
+    PyObject *pArgs = PyTuple_New(pFuncArgs);
 
-    (void)PyObject_CallObject(pFunc, pArgs);
-}
+    PyObject *pInletValue = Py4pdUtils_CreatePyObjFromPdArgs(s, argc, argv);
+    PyTuple_SetItem(pArgs, 0, pInletValue);
 
-// ====================================================
-static void Py4pdNewObj_PdExecBangMethod(t_py *x) {
-    Py4pdNewObj *pObjSelf;
+    for (int i = 1; i < pFuncArgs; i++) {
+        PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
+        Py_INCREF(x->pyObjArgs[i]->pValue); // This keep the reference.
+    }
 
-    pObjSelf = (Py4pdNewObj *)x->objClass;
-    PyObject *pFunc = (PyObject *)pObjSelf->pFuncBang;
-    PyObject *pArgs = PyTuple_New(0);
-
-    (void)PyObject_CallObject(pFunc, pArgs);
+    if (x->objType > PY4PD_VISOBJ) {
+        Py_INCREF(pArgs);
+        x->pyObjArgs[0]->objectsUsing = 0;
+        x->pyObjArgs[0]->pdout = 0;
+        x->pyObjArgs[0]->objOwner = x->objName;
+        x->pyObjArgs[0]->pValue = pArgs;
+        x->pArgTuple = pArgs;
+        Py_INCREF(x->pArgTuple);
+        return;
+    }
+    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
+    Py_DECREF(pArgs);
 }
 
 // ====================================================
@@ -178,14 +232,38 @@ static void Py4pdNewObj_PdExecSelectorMethod(t_py *x, t_symbol *selector,
     }
 
     PyObject *pFunc = PyDict_GetItem(pDictSelectors, pSelector);
+    x->pFunction = pFunc;
     if (!pFunc) {
         pd_error(NULL, "pFunc is NULL, please report in %s", PY4PD_GIT_ISSUES);
         return;
     }
+    selector = gensym("anything");
 
-    PyObject *pArgs = PyTuple_New(0);
+    PyCodeObject *pFuncCode = (PyCodeObject *)PyFunction_GetCode(pFunc);
+    int pFuncArgs = pFuncCode->co_argcount;
+    PyObject *pArgs = PyTuple_New(pFuncArgs);
 
-    (void)PyObject_CallObject(pFunc, pArgs);
+    PyObject *pInletValue =
+        Py4pdUtils_CreatePyObjFromPdArgs(selector, argc, argv);
+    PyTuple_SetItem(pArgs, 0, pInletValue);
+
+    for (int i = 1; i < pFuncArgs; i++) {
+        PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
+        Py_INCREF(x->pyObjArgs[i]->pValue); // This keep the reference.
+    }
+
+    if (x->objType > PY4PD_VISOBJ) {
+        Py_INCREF(pArgs);
+        x->pyObjArgs[0]->objectsUsing = 0;
+        x->pyObjArgs[0]->pdout = 0;
+        x->pyObjArgs[0]->objOwner = x->objName;
+        x->pyObjArgs[0]->pValue = pArgs;
+        x->pArgTuple = pArgs;
+        Py_INCREF(x->pArgTuple);
+        return;
+    }
+    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
+    Py_DECREF(pArgs);
 }
 
 // ====================================================
