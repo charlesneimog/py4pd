@@ -1,6 +1,6 @@
 #N canvas 552 221 631 353 8;
 #X msg 25 46 doc, f 6;
-#N canvas 491 261 794 378 embedded 0;
+#N canvas 491 261 794 378 embedded 1;
 #X obj 9 192 py4pd;
 #X msg 47 128 run;
 #X msg 52 147 reload;

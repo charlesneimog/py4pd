@@ -3,7 +3,6 @@ import sys
 from random import randint
 import numpy as np
 
-
 # ================================================
 # ==============  Functions  =====================
 # ================================================
@@ -144,7 +143,4 @@ def sinusoids(freqs, amps):
 
 def py4pdLoadObjects():
     pd.add_object(sinusoids, 'sinusoids~', objtype=pd.AUDIOOUT) 
-    
-    newobj = pd.new_object("obj")
-    pd.print(dir(newobj))
     

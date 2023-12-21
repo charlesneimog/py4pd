@@ -1,7 +1,5 @@
 site_name: py4pd
-   
-copyright: Copyright &copy 2023 | Charles K. Neimog | University of São Paulo. 
-
+copyright: Copyright &copy 2023 | Charles K. Neimog | University of São Paulo.
 theme:
   logo: assets/py4pd-logo.svg
   custom_dir: docs/overrides
@@ -12,7 +10,10 @@ theme:
   features:
     - navigation.top
     - navigation.sections
-    - content.code.annotate 
+    - navigation.instant
+    - navigation.tracking
+    - navigation.prune
+    - content.code.annotate
     - content.code.copy
     - navigation.tabs
     - navigation.tabs.sticky
@@ -24,8 +25,6 @@ theme:
     - header.autohide
     - attr_list
     - md_in_html
-    
-  
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -41,41 +40,66 @@ theme:
       toggle:
         icon: material/lightbulb-outline
         name: Switch to light mode
-  
 markdown_extensions:
-
-    - pymdownx.superfences
-    - pymdownx.tabbed:
-        alternate_style: true
-    - pymdownx.emoji:
-        emoji_index: !!python/name:material.extensions.emoji.twemoji
-        emoji_generator: !!python/name:material.extensions.emoji.to_svg
-    - pymdownx.extra
-    - pymdownx.details
-    - pymdownx.inlinehilite
-    - pymdownx.tasklist
-    - pymdownx.magiclink
-    - pymdownx.highlight
-    - abbr
-    - attr_list
-    - md_in_html
-    - admonition
-    - pymdownx.details
-
-
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.extra
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.tasklist
+  - pymdownx.magiclink
+  - pymdownx.highlight
+  - abbr
+  - toc
+  - attr_list
+  - md_in_html
+  - admonition
+  - pymdownx.details
 repo_url: https://github.com/charlesneimog/py4pd
-
+plugins:
+  - search
+  - localsearch
+  - social
 extra_css:
   - extra/extra.css
-   
 nav:
-    - index.md 
-    - setup.md
-    - puredata-users.md
-    - python-users.md
-    - libraries.md
+  - Home: index.md
+  - Getting started:
+      - Install: setup.md
+  - PureData Use: 
+    - pd-users/index.md
+    - Arguments: pd-users/args.md
+    - Methods: pd-users/methods.md
+  - Python Use: 
+      - Introduction: python-users/index.md
+      - Creating Pd Libraries:
+          - Pd Objs with Python: python-users/pylibrary.md
+          - Object Types:
+              - Default: python-users/objtypes/default.md
+              - Image: python-users/objtypes/image.md
+              - Audio: python-users/objtypes/audio.md
+          - pd.add_object: python-users/pd.add_object.md
+          - pd.new_object: python-users/pd.new_object.md
 
+      - Py4pd Internal Module:
+          - Python/Pd - Exchanging Data: python-users/data.md
+          - Working with Images: python-users/images.md
+          - Get Audio Parameters: python-users/audio.md
+          - Files: python-users/file.md
+          - Utilities: python-users/info.md
+  - libraries.md
 extra:
+  alternate:
+    - name: Português
+      link: /pt/
+      lang: pt
+  analytics:
+    provider: google
+    property: G-E81RWT6R4V
   social:
     - icon: fontawesome/brands/instagram
       link: https://www.instagram.com/charlesneimog/
@@ -83,5 +107,3 @@ extra:
       link: https://www.github.com/charlesneimog/
     - icon: fontawesome/solid/paper-plane
       link: mailto:charlesneimog@outlook.com
-
-
