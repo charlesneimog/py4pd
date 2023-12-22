@@ -1428,11 +1428,11 @@ PyMethodDef PdMethods[] = {
     // Others
     {"get_obj_pointer", Py4pdMod_GetObjPointer, METH_NOARGS,
      "Get PureData Object Pointer"},
+
+    // Loops
     {"set_obj_var", Py4pdMod_SetObjVar, METH_VARARGS,
      "It sets a global variable for the Object, it is not clear after the "
      "execution of the function"},
-
-    // Loops
     {"accum_obj_var", Py4pdMod_AccumObjVar, METH_VARARGS,
      "It adds the values in the end of the list"},
     {"get_obj_var", (PyCFunction)Py4pdMod_GetObjVar,

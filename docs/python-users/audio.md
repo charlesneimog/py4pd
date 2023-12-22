@@ -51,3 +51,26 @@ This get the current vectorsize/blocksize of PureData. This get the vector size 
     
 </div>
 
+## `pd.get_num_channels`
+
+This function get the actual number of channels of the object.
+
+<div class="grid cards" markdown>
+
+-   :fontawesome-brands-python: __Example__
+
+    It just returns unique string.
+    
+    ``` py
+    import pd
+	    
+    def getNumberOfChannels(audio):
+        return pd.get_num_channels()
+
+    ```
+
+-   :fontawesome-solid-gear: __Arguments__
+
+    There is no `args` for this function.
+    
+</div>

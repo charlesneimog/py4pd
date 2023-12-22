@@ -8,6 +8,11 @@ If you use [Python](https://www.python.org/) and [PureData](https://puredata.inf
 
 In this section I present all things that you can do with `pd` internal module. Below, some interesting examples.
 
-- [Write PureData Objects with Python](objclass.md)
-- [Real-Time Audio](objtypes/audio.md)
-- [Scores and Graphs](objtypes/image.md)
+<div class="grid cards" markdown>
+
+-   :fontawesome-solid-terminal: [__Write PureData Objects with Python__](pd.new_object/methods/)
+-   :fontawesome-solid-wave-square: [__Real-Time Audio__](objtypes/audio.md)
+-   :fontawesome-solid-chart-line: [__Graphs__](objtypes/image.md)
+
+</div>
+

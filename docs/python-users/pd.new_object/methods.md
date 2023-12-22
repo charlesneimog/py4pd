@@ -1,4 +1,4 @@
-You can create your objects with Python. For the complex, you create a new class using `pd.new_object()` and define configurations, object types, etc using the methods of this class.
+You can create your objects with Python. For the complex, you create a new class using `pd.new_object()` and define configurations, object types, etc using the methods of this class, next is presented all methods used for the class returned from `#!python pd.new_object("myobjectname")`.
 
 ### `addmethod_bang`
 

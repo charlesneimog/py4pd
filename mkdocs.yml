@@ -116,6 +116,8 @@ nav:
           - Python/Pd - Exchanging Data: python-users/data.md
           - Working with Images: python-users/images.md
           - Get Audio Parameters: python-users/audio.md
+          - Object Variables: python-users/obj-vars.md
+          - Internal Player: python-users/player.md
           - Files: python-users/file.md
           - Utilities: python-users/info.md
   - libraries.md

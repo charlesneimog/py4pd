@@ -73,7 +73,6 @@ This function uses `logpost` in C PureData API to log messages using levels. For
 
 If you want to inform errors in PureData console use `pd.error` method. 
 
-
 <div class="grid cards" markdown>
 
 -   :fontawesome-brands-python: __Example__
@@ -97,6 +96,98 @@ If you want to inform errors in PureData console use `pd.error` method.
     | Parameters     | Type | Description                   | 
     | :-----------: | :----: | :------------------------------: |
     | `arg1`   | `string` | Message of the error. |
+
+</div>
+
+## `pd.pd_has_gui`
+
+<div class="grid cards" markdown>
+
+-   :fontawesome-brands-python: __Example__
+
+    Return `False` when running PureData from terminal using `-nogui`.
+
+    ``` py
+    import pd
+	    
+
+    def thereisGUI():
+        return pd.pd_has_gui()
+
+    ```
+
+-   :fontawesome-solid-gear: __Arguments__
+
+    There is no Arguments.
+
+</div>
+
+
+## `pd.get_patch_zoom`
+
+<div class="grid cards" markdown>
+
+-   :fontawesome-brands-python: __Example__
+
+    Get the zoom level of the Patch current opened.
+
+    ``` py
+    import pd
+	    
+
+    def getZoom():
+        return pd.get_patch_zoom()
+
+    ```
+
+-   :fontawesome-solid-gear: __Arguments__
+
+    There is no Arguments.
+
+</div>
+
+## `get_outlet_count`
+
+
+<div class="grid cards" markdown>
+
+-   :fontawesome-brands-python: __Example__
+
+    Get the numbers of outlets of the object.
+    
+    ``` python
+    import pd
+	    
+    def get_out_count():
+        pd.get_outlet_count()
+
+    ```
+
+-   :fontawesome-solid-gear: __Arguments__
+
+    There is no args for this function.
+
+</div>
+
+## `get_objects_args`
+
+<div class="grid cards" markdown>
+
+-   :fontawesome-brands-python: __Example__
+
+    Return a list with all the arguments used in the creation of the object.
+    
+    ``` python
+    import pd
+	    
+    def get_out_count():
+        pd.get_objects_args()
+
+    ```
+
+-   :fontawesome-solid-gear: __Arguments__
+
+    There is no args for this function.
 
 </div>
 
