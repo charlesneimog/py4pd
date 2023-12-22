@@ -1,0 +1,5 @@
+#N canvas 854 408 780 300 8;
+#X msg 27 18 doc;
+#X obj 27 104 py4pd py pdsum;
+#X text 52 14 It prints the documentation of the function in the PureData console. The functions must be setted and requires a documentation provide by the creator of the function., f 32;
+#X connect 0 0 1 0;

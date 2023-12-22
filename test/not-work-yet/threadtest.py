@@ -43,13 +43,35 @@ def selectormethod2():
     pd.print("Hello from selector2 method")
     
 def threadtest_setup():
-    newobj = pd.new_object("myobj")
-   
+    patchZoom = pd.get_patch_zoom()
+    if patchZoom == 1:
+        scoreImage = "./resources/score_nozoom.gif"
+    elif patchZoom == 2:
+        scoreImage = "./resources/score.gif"
+
+    # Vis Obj
+    newobj = pd.new_object("vis")
     newobj.addmethod_list(listmethod)
     newobj.addmethod_anything(anythingmethod)
-    #newobj.addmethod("asd", anythingmethod)
-
+    newobj.type = pd.VIS
+    newobj.image = scoreImage
+    newobj.fig_size = (250, 250)
     newobj.add_object()
 
+    # Audioin Obj
+    newobj = pd.new_object("audioin")
+    newobj.addmethod_anything(anythingmethod)
+    newobj.type = pd.AUDIOIN
+    newobj.add_object()
+
+import pd
+import random
+
+def randomNumber():
+    return random.randint(0, 100)
 
 
+def py4pdLoadObjects():
+    random = pd.new_object("py.random")
+    random.addmethod_bang(randomNumber)
+    random.add_object()
