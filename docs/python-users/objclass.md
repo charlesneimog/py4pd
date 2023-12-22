@@ -82,7 +82,7 @@ You can create your own objects with Python. For that, you define the Python Fun
     Here we add the function `mysumObject` in PureData enviroment. For more infos read the [Python Objects](https://www.charlesneimog.com/py4pd/researchers/) page.
 
     <p align="center">
-        <img src="../../examples/createobj/mynewpdobject.png" width="50%" alt="My New PD Object">
+        <img src="../../examples/createobj/mynewpdobject.png" width="50%" style="box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);" alt="My New PD Object">
     </p>
 
 

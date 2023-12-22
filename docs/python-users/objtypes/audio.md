@@ -32,7 +32,7 @@ myfftobj.addmethod_float(myfloatmethod)
     The *first inlet* of this object always need be **audio**, in Python, the first also always will be audio. For audio `py4pd` uses a numpy array, you can use `snake~ in` to create objects with multiple audio inputs, each channel will be one dimension of the array.
 
 <p align="center">
-    <img src="../../../examples/audioin/audioin.png" width="50%" alt="Audio Input Image">
+    <img src="../../../examples/audioin/audioin.png" width="50%" alt="Audio Input Image" style="box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
 </p>
 
 ??? example end "Python Code"
@@ -61,7 +61,7 @@ To create Audio out object, in `pd.add_object` we add the `objtype=pd.AUDIOOUT`.
 The audio function always need to return a numpy array.
 
 <p align="center">
-    <img src="../../../examples/audioout/audioout.png" width="35%" alt="Audio Output Image">
+    <img src="../../../examples/audioout/audioout.png" width="35%" alt="Audio Output Image" style="box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
 </p>
 
 ## `Audio (in/out)`
@@ -71,7 +71,7 @@ Used to manipulations of Audio. FFT, reverbs, and others.
 To create Audio object (audio input and output), in `pd.add_object` we add the `objtype=pd.AUDIO`.
 
 <p align="center">
-    <img src="../../../examples/audio/audio.png" width="35%" alt="Audio Image">
+    <img src="../../../examples/audio/audio.png" width="35%" alt="Audio Image" style="box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
 </p>
 
 ??? example end "Python Code"

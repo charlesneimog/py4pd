@@ -99,7 +99,7 @@ With `py4pd` you can display images inside PureData patches using Python, you ca
 
         ```
     <p align="center">
-      <img src="../../examples/score/score.gif" alt="pd.out Example" width="100%">
+      <img src="../../examples/score/score.gif" alt="pd.out Example" width="100%" style="box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
     </p>
 
 

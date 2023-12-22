@@ -60,5 +60,5 @@ def libraryname_setup():
 
 <p align="center">
     Following this steps we have this patch:
-    <img src="../../examples/createobj/mynewpdobject.png" width="50%"</img>
+    <img src="../../examples/createobj/mynewpdobject.png" width="50%" style="box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);"</img>
 </p>

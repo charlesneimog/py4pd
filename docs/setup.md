@@ -65,6 +65,6 @@ Install just `py4pd` (no Python) will not work.
 4. Select py4pd and click on `Install`:
 
 <figure markdown>
-  ![Install py4pd](assets/install-py4pd.gif){ width="700" loading="lazy"}
+  ![Install py4pd](assets/install-py4pd.gif){ width="700" loading="lazy"  style="border-radius: 3px; box-shadow: 0px 8px 8px rgba(0, 0, 0, 0.2);"}
   <figcaption>Process of install py4pd on PureData</figcaption>
 </figure>

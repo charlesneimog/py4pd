@@ -1,11 +1,12 @@
 site_name: py4pd
+
 copyright: Copyright &copy 2023 | Charles K. Neimog | University of São Paulo.
-copyright: Copyright &copy 2023 | Charles K. Neimog | University of São Paulo.
+
 theme:
   logo: assets/py4pd-logo.svg
   custom_dir: docs/overrides
-  logo_dark_mode: assets/py4pd-dark.svg
-  logo_light_mode: assets/py4pd-light.svg
+  logo_dark_mode: assets/py4pd-dark-home.svg
+  logo_light_mode: assets/py4pd-light-home.svg
   favicon: assets/py4pd-favicon.png
   name: material
   features:
@@ -34,7 +35,7 @@ theme:
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: white
-      accent: light blue
+      accent: dark blue
       toggle:
         icon: material/lightbulb
         name: Switch to dark mode
@@ -45,6 +46,7 @@ theme:
       toggle:
         icon: material/lightbulb-outline
         name: Switch to light mode
+        
 markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tabbed:
@@ -82,15 +84,20 @@ markdown_extensions:
   - md_in_html
   - admonition
   - pymdownx.details
+  
 repo_url: https://github.com/charlesneimog/py4pd
+
+
 plugins:
   - search
   - localsearch
   - search
   - localsearch
   - social
+  
 extra_css:
   - extra/extra.css
+  
 nav:
   - Home: index.md
   - Getting started:
@@ -121,18 +128,8 @@ nav:
           - Files: python-users/file.md
           - Utilities: python-users/info.md
   - libraries.md
+  
 extra:
-  alternate:
-    - name: Português
-      link: /pt/
-      lang: pt
-  analytics:
-    provider: google
-    property: G-E81RWT6R4V
-  alternate:
-    - name: Português
-      link: /pt/
-      lang: pt
   analytics:
     provider: google
     property: G-E81RWT6R4V

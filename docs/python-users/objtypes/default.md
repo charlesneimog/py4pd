@@ -3,11 +3,11 @@ Used to create functions like sum numbers, convertion between datas (svg to scor
 ### `py4pd-upic`
 
 <div style="display: flex; justify-content: center;">
-    <img src="../../../examples/py4pd-upic/py4pd-upic.png" width="50%" alt="Audio Output Image">
+    <img src="../../../examples/py4pd-upic/py4pd-upic.png" width="50%" alt="Audio Output Image" style="box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
 </div>
 
 <p align="center">
-    <img src="../../../examples/py4pd-upic/svg.png" width="75%" alt="Audio Output Image">
+    <img src="../../../examples/py4pd-upic/svg.png" width="75%" alt="Audio Output Image" style="box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
 </p>
 
 <p align="center">

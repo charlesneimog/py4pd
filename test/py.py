@@ -217,8 +217,8 @@ def py4pdLoadObjects():
     pd.add_object(pdouttest, "pd.out", num_aux_outlets=4)
     
     # Others
-    pd.add_object(sinusoids, "sinusoids~", objtype=pd.AUDIOOUT)
-    pd.add_object(audioin, "audioin~", objtype=pd.AUDIOIN)
-    pd.add_object(audioInOut, "audio~", objtype=pd.AUDIO)
-    pd.add_object(generate_audio_noise, "pynoise~", objtype=pd.AUDIOOUT)
-    pd.add_object(randomNumpyArray, "random-array", pyout=True)
+    pd.add_object(sinusoids, "sinusoids~", obj_type=pd.AUDIOOUT)
+    pd.add_object(audioin, "audioin~", obj_type=pd.AUDIOIN)
+    pd.add_object(audioInOut, "audio~", obj_type=pd.AUDIO)
+    pd.add_object(generate_audio_noise, "pynoise~", obj_type=pd.AUDIOOUT)
+    pd.add_object(randomNumpyArray, "random-array", py_out=True)

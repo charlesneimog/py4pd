@@ -46,7 +46,7 @@ See the example:
     ```
 
 <p align="center">
-    <img src="../../../../examples/descriptors/descriptors.png" width="40%" alt="Descriptors Image">
+    <img src="../../../../examples/descriptors/descriptors.png" width="40%" alt="Descriptors Image" style="box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
 </p>
 
 ## py4pd-score
@@ -54,5 +54,5 @@ See the example:
 With `py4pd-score` you can use tradicional scores inside PureData patches. It is highly inspired in OpenMusic score, when `py4pd` be very stable, I want to implement the `voice`, `note` objects, for now just chord is implemented.
 
 <p align="center">
-    <img src="../../../../examples/score/score.gif" width="50%" alt="Scores">
+    <img src="../../../../examples/score/score.gif" width="50%" alt="Scores" style="box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
 </p>

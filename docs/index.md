@@ -8,8 +8,9 @@ hide:
 
 <p align="center"> Welcome to the <code>py4pd</code> documentation! </p>
 
-<p align="center">
-    <img src="./assets/py4pd.svg" width="7%" loading="lazy" alt="Py4pd logo, a rect with the Python logo inside.">
+<p align="center" markdown>
+  ![Image title](./assets/py4pd-light-home.svg#only-light){ width="6%" }
+  ![Image title](./assets/py4pd-dark-home.svg#only-dark){ width="6%" }
 </p>
 
 ## <h2 align="center"> **What is py4pd?** </h2>
@@ -32,7 +33,7 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
     When I started work with PureData, I missed score visualization tools. `py4pd` can easily solve this using `neoscore`.
 
     <p align="center">
-        <img src="../examples/score/score.gif" width="50%" loading="lazy" alt="Score GIF">
+        <img src="../examples/score/score.gif" width="50%" loading="lazy" alt="Score GIF"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
     </p>
 
 === "Artificial Inteligence"
@@ -40,7 +41,7 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
     It is easy to use `AI` with `py4pd`. There are already powerful objects for realtime, like `nn~` and `ddsp~`, but they are designed to specify approaches. Below is an example using `py4pd` and the Python code used by `nn~` (offline processing).
 
     <p align="center">
-        <img src="examples/ia/ia.png" width="60%"></img>
+        <img src="examples/ia/ia.png" width="60%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);"></img>
     </p>
 
     <p align="center">
@@ -81,11 +82,11 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
 
 
     <p align="center">
-        <img src="examples/img2sound/img2sound.jpeg"></img>
+        <img src="examples/img2sound/img2sound.svg" style="width: 100%; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);"></img>
     </p>
 
     <p align="center">
-        <audio controls style="width: 60%; border-radius: 10px;">
+        <audio controls style="width: 70%;">
             <source src="examples/img2sound/img2sound.mp3" type="audio/mpeg">
             Your browser does not support the audio element.
         </audio>
@@ -96,7 +97,7 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
     In Python, there is not just one Spectral Analysis package. I mainly use `loristrck` because of the `.sdif` files. But there is `simpl`, `librosa`, [PyAudio_FFT](https://github.com/aiXander/Realtime_PyAudio_FFT), among others. If you want spectral manipulations you can work with `pysdif3` which is fast and amazing. Here is an example using `loristrck` in PureData.
 
     <p align="center">
-        <img src="examples/spectral-analysis/analisys.gif" width="50%"></img>
+        <img src="examples/spectral-analysis/analisys.gif" width="50%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);"></img>
     </p>
 
 === "Audio Descriptors Graphs"
@@ -104,7 +105,7 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
     You can use some of the Audio Descriptors provided by `audioflux` for some analysis.
 
     <p align="center">
-        <img src="examples/descriptors/descriptors.png" width="35%"></img>
+        <img src="examples/descriptors/descriptors.png" width="35%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);"></img>
     </p>
 
 ---
