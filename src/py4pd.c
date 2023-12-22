@@ -1122,6 +1122,7 @@ void py4pd_setup(void) {
 
     // this is like have lot of objects with the same name, add all methods
     // for
+
     class_addmethod(py4pd_class, (t_method)Py4pd_SetPy4pdHomePath,
                     gensym("home"), A_GIMME,
                     0); // set home path

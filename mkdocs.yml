@@ -1,5 +1,6 @@
 site_name: py4pd
 copyright: Copyright &copy 2023 | Charles K. Neimog | University of São Paulo.
+copyright: Copyright &copy 2023 | Charles K. Neimog | University of São Paulo.
 theme:
   logo: assets/py4pd-logo.svg
   custom_dir: docs/overrides
@@ -10,6 +11,10 @@ theme:
   features:
     - navigation.top
     - navigation.sections
+    - navigation.instant
+    - navigation.tracking
+    - navigation.prune
+    - content.code.annotate
     - navigation.instant
     - navigation.tracking
     - navigation.prune
@@ -59,8 +64,28 @@ markdown_extensions:
   - md_in_html
   - admonition
   - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.extra
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.tasklist
+  - pymdownx.magiclink
+  - pymdownx.highlight
+  - abbr
+  - toc
+  - attr_list
+  - md_in_html
+  - admonition
+  - pymdownx.details
 repo_url: https://github.com/charlesneimog/py4pd
 plugins:
+  - search
+  - localsearch
   - search
   - localsearch
   - social
@@ -95,6 +120,13 @@ nav:
           - Utilities: python-users/info.md
   - libraries.md
 extra:
+  alternate:
+    - name: Português
+      link: /pt/
+      lang: pt
+  analytics:
+    provider: google
+    property: G-E81RWT6R4V
   alternate:
     - name: Português
       link: /pt/

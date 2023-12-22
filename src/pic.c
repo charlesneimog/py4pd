@@ -542,17 +542,8 @@ void Py4pdPic_PicDefinition(t_py *x) {
  */
 void Py4pdPic_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
                           int argc, t_atom *argv, t_class *obj_class) {
-    if (py4pdArgs == gensym("-canvas")) {
-        x->visMode = 1;
-    } else if (py4pdArgs == gensym("-picture") || py4pdArgs == gensym("-pic")) {
-        x->visMode = 2;
-    } else if (py4pdArgs == gensym("-score")) {
-        x->visMode = 3;
-    } else {
-        x->visMode = 1;
-        pd_error(x, "[py4pd]: unknown visMode");
-    }
 
+    (void)py4pdArgs; // TODO: remove this
     PY4PD_edit_proxy_class = class_new(0, 0, 0, sizeof(t_py4pd_edit_proxy),
                                        CLASS_NOINLET | CLASS_PD, 0);
     class_addanything(PY4PD_edit_proxy_class, Py4pdPic_EditProxyAny);
@@ -582,6 +573,7 @@ void Py4pdPic_InitVisMode(t_py *x, t_canvas *c, t_symbol *py4pdArgs, int index,
 #else
     snprintf(buf, MAXPDSTRING - 1, ".x%lx.c", (unsigned long)cv);
 #endif
+
     x->canvasName = gensym(buf);
     pd_bind(&x->obj.ob_pd, gensym(buf));
     x->edit = cv->gl_edit;

@@ -136,6 +136,13 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr,
         if (argv[i].a_type == A_SYMBOL) {
             if (strcmp(argv[i].a_w.w_symbol->s_name, "-n_args") == 0 ||
                 strcmp(argv[i].a_w.w_symbol->s_name, "-a") == 0) {
+
+                if (argc > (i + 2)) {
+                    pd_error(x, "The -a or -n_args must be created in the end "
+                                "of the object paramerts");
+                    return 0; // TODO: error should be -1 NOT 0;
+                }
+
                 if (i + 1 < argc) {
                     if (argv[i + 1].a_type == A_FLOAT) {
                         x->pArgsCount = atom_getintarg(i + 1, argc, argv);
@@ -143,9 +150,7 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr,
                         for (j = i; j < argc; j++) {
                             argv[j] = argv[j + 2];
                             (*argvPtr)[j] = (*argvPtr)[j + 2];
-                            // *argcPtr =
-                            //     *argcPtr - 1; // BUG: Broke pd-list Args
-                            //     investigation
+                            *argcPtr = *argcPtr - 1;
                         }
                     }
                 }
@@ -1736,13 +1741,11 @@ void Py4pdUtils_CreatePicObj(t_py *x, PyObject *PdDict,
                              t_class *object_PY4PD_Class, int argc,
                              t_atom *argv) {
     t_canvas *c = x->canvas;
-    PyObject *pyLibraryFolder =
-        PyDict_GetItemString(PdDict, "py4pdOBJLibraryFolder");
-
+    PyObject *pyLibraryFolder = PyDict_GetItemString(PdDict, "LibraryFolder");
     t_symbol *py4pdArgs = gensym("-canvas");
-    PyObject *py4pdOBJwidth = PyDict_GetItemString(PdDict, "py4pdOBJwidth");
+    PyObject *py4pdOBJwidth = PyDict_GetItemString(PdDict, "width");
     x->width = PyLong_AsLong(py4pdOBJwidth);
-    PyObject *py4pdOBJheight = PyDict_GetItemString(PdDict, "py4pdOBJheight");
+    PyObject *py4pdOBJheight = PyDict_GetItemString(PdDict, "height");
     x->height = PyLong_AsLong(py4pdOBJheight);
     if (argc > 1) {
         if (argv[0].a_type == A_FLOAT) {
@@ -1753,7 +1756,7 @@ void Py4pdUtils_CreatePicObj(t_py *x, PyObject *PdDict,
         }
     }
 
-    PyObject *gifFile = PyDict_GetItemString(PdDict, "py4pdOBJGif");
+    PyObject *gifFile = PyDict_GetItemString(PdDict, "Gif");
     if (gifFile == NULL) {
         x->imageBase64 = PY4PD_IMAGE;
     } else {
