@@ -48,7 +48,7 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
     When I started work with PureData, I missed score visualization tools. `py4pd` can easily solve this using `neoscore`.
 
     <p align="center">
-        <img src="../examples/score/score.gif" width="50%" loading="lazy" alt="Score GIF"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
+        <img src="examples/score/score.gif" width="50%" loading="lazy" alt="Score GIF"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
     </p>
 
 === "Artificial Inteligence"
