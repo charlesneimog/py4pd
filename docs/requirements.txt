@@ -1,4 +1,3 @@
 mkdocs-material
-mkdocs
 mkdocs-localsearch
 mkdocs-material[imaging]
