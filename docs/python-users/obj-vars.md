@@ -1,5 +1,6 @@
-The following functions serve to instantiate variables for the object. The utilization of global variables is discouraged, primarily due to the potential for errors. For instance, consider the scenario where you create a sinusoidal object. In order to generate a continuous sinusoidal, it is imperative to store the pertinent variables. If the variables are saved globally and multiple objects are created, errors may arise. Both objects would store the phrase in the same variable, rendering both ineffective. In cases of this nature, it is advisable to employ the objects that will be introduced here.
+The following functions serve to instantiate variables for the object. The utilization of global variables is discouraged, primarily due to the potential for errors. For instance, consider the scenario where you create a sinusoidal object. In order to generate a continuous sinusoidal, it is crucial to store some pertinent values, as `phrase` for example. If the variables are saved globally and multiple objects are created, errors may arise. In the sinusoidal case, all objects would store the phrase in the same variable, rendering the sinusoidal wrong. In examples like this, it is appropriate to employ the objects `pd.set_obj_var`, `pd.get_obj_var` and `pd.accum_obj_var`.
 
+---
 
 ## `pd.set_obj_var`
 
@@ -50,7 +51,6 @@ The following functions serve to instantiate variables for the object. The utili
     | `arg2`   | `Python Object` | Python object to save |
 
 </div>
-
 
 ## `pd.get_obj_var`
 

@@ -1,17 +1,17 @@
+## Messages and Debug
+
 There are three messages used to print info in the PureData console, `pd.print`, `pd.logpost` and `pd.error`.
 
 ------------------
-## `pd.print`
-
-The ordinary function `#!python print()` will not work in `py4pd` (unless that you open PureData from the terminal). So if you want to debug or print some info from the PureData console you need to use `#!python pd.print`. 
-
-
+### `pd.print`
 
 <div class="grid cards" markdown>
 
 -   :fontawesome-brands-python: __Example__
 
-    It just returns unique string with the pathname.
+
+    The ordinary function `#!python print()` will not work in `py4pd` (unless that you open PureData from the terminal). So if you want to debug or print some info from the PureData console you need to use `#!python pd.print`. 
+
     
     ``` py
     import pd
@@ -41,15 +41,13 @@ The ordinary function `#!python print()` will not work in `py4pd` (unless that y
 </div>
 
 ------------------
-## `pd.logpost`
-
-This function uses `logpost` in C PureData API to log messages using levels. For example, if you use `#!python logpost(4, "PureData message in level 4")`, the message will appear in console just if the user had selected to show the messages of level 4 in PureData Console.
+### `pd.logpost`
 
 <div class="grid cards" markdown>
 
 -   :fontawesome-brands-python: __Example__
 
-    It just returns unique string with the pathname.
+    This function uses `logpost` in C PureData API to log messages using levels. For example, if you use `#!python logpost(4, "PureData message in level 4")`, the message will appear in console just if the user had selected to show the messages of level 4 in PureData Console.
     
     ``` py
     import pd
@@ -73,17 +71,16 @@ This function uses `logpost` in C PureData API to log messages using levels. For
 
 ---
 
-## `pd.error`
-
-If you want to inform errors in PureData console use `pd.error` method. 
+### `pd.error`
 
 <div class="grid cards" markdown>
 
 -   :fontawesome-brands-python: __Example__
     
+    If you want to inform errors in PureData console use `pd.error` method. The message is printed in red.
+    
     ``` py
     import pd
-	    
 
     def main(arg1):
         try:
@@ -103,13 +100,15 @@ If you want to inform errors in PureData console use `pd.error` method.
 
 </div>
 
-## `pd.pd_has_gui`
+## GUI
+
+### `pd.pd_has_gui`
 
 <div class="grid cards" markdown>
 
 -   :fontawesome-brands-python: __Example__
 
-    Return `False` when running PureData from terminal using `-nogui`.
+    When using some functions as `pd.show_image` can be usefull to know if there a GUI running. This function returns `False` when running PureData from terminal using `-nogui`.
 
     ``` py
     import pd
@@ -127,13 +126,13 @@ If you want to inform errors in PureData console use `pd.error` method.
 </div>
 
 
-## `pd.get_patch_zoom`
+### `pd.get_patch_zoom`
 
 <div class="grid cards" markdown>
 
 -   :fontawesome-brands-python: __Example__
 
-    Get the zoom level of the Patch current opened.
+    To set different default images for `pd.VIS` objects, you can use this function. It return 1 when the patch is used without zoom and 2 when is used with zoom. 
 
     ``` py
     import pd
@@ -150,8 +149,11 @@ If you want to inform errors in PureData console use `pd.error` method.
 
 </div>
 
-## `get_outlet_count`
+## Objects
 
+This functions are used to retrive information about the currect object where the function is being executed.
+
+### `get_outlet_count`
 
 <div class="grid cards" markdown>
 
@@ -173,7 +175,7 @@ If you want to inform errors in PureData console use `pd.error` method.
 
 </div>
 
-## `get_objects_args`
+### `get_objects_args`
 
 <div class="grid cards" markdown>
 
@@ -185,7 +187,7 @@ If you want to inform errors in PureData console use `pd.error` method.
     import pd
 	    
     def get_out_count():
-        pd.get_objects_args()
+        pd.get_obj_args()
 
     ```
 
