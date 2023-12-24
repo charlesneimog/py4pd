@@ -10,12 +10,12 @@ In this section is descriteb how the `py4pd` objects works in PureData enviromen
 
 -   :fontawesome-solid-gear: __Arguments__
 
-    [:octicons-arrow-right-24: Arguments](/pd-users/args/)
+    [:octicons-arrow-right-24: Arguments](args.md)
 
 
 -   :fontawesome-solid-lightbulb: __Methods__
 
-    [:octicons-arrow-right-24: Methods](/pd-users/methods/)
+    [:octicons-arrow-right-24: Methods](methods.md)
 
 </div>
 

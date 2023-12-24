@@ -4,55 +4,55 @@ Next, I present all methods used in `py4pd` object. But the three main `methods`
 
 <div class="grid cards" markdown>
 
-- :fontawesome-solid-gear: __[set](#set)__
+- :my-icons-pd: __[set](#set)__
     
     It loads the `Python` function.
    
-- :fontawesome-solid-gear: __[pip](#pip)__
+- :my-icons-pd: __[pip](#pip)__
     
     To install packages. `pip install` install packages, `pip target` which folder install the packages.
 
-- :fontawesome-solid-gear: __[run](#run)__
+- :my-icons-pd: __[run](#run)__
 
     It runs the `Python` function.
 
-- :fontawesome-solid-gear: __[pointers](#pointers)__
+- :my-icons-pd: __[pointers](#pointers)__
     
     On/Off the Python Data output.
 
-- :fontawesome-solid-gear: __[doc](#doc)__
+- :my-icons-pd: __[doc](#doc)__
 
     Print the documentation of the `Python` function.
 
-- :fontawesome-solid-gear: __[open](#open)__
+- :my-icons-pd: __[open](#open)__
 
     Open a loaded script.
 
-- :fontawesome-solid-gear: __[editor](#editor)__
+- :my-icons-pd: __[editor](#editor)__
 
     Set the editor to open Python Scripts.
 
-- :fontawesome-solid-gear: __[create](#create)__
+- :my-icons-pd: __[create](#create)__
 
     Create a new `.py` script.
 
-- :fontawesome-solid-gear: __[functions](#functions)__
+- :my-icons-pd: __[functions](#functions)__
 
     Print all the functions inside a script.
 
-- :fontawesome-solid-gear: __[reload](#reload)__
+- :my-icons-pd: __[reload](#reload)__
 
     Reload the Python Function.
 
-- :fontawesome-solid-gear: __[home](#home)__
+- :my-icons-pd: __[home](#home)__
 
     Set the Python Home folder.
 
-- :fontawesome-solid-gear: __[packages](#packages)__
+- :my-icons-pd: __[packages](#packages)__
 
     Set the Python Packages folder (where Python search for Packages).
 
-- :fontawesome-solid-gear: __[version](#version)__
+- :my-icons-pd: __[version](#version)__
 
     Print the Version of `py4pd` and Python.
 
@@ -76,8 +76,7 @@ _Set the function for the object._
     | `arg1`   | `symbol` | Python Script name (never uses |
     | `arg2`   | `anything` | Args for the function |
    
-
--   :fontawesome-solid-lightbulb: __Example__
+-   :my-icons-pd: __Example__
 
     <p align="center">
         <img src="../../examples/pd-methods/set.png" width="70%" alt="Set method example"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
@@ -108,7 +107,7 @@ When you `set` some function and see some error related with `ModuleNotFoundErro
     ??? note
         You can also use `pip target` to change the folder where `py4pd` will install the modules. `pip target local` will install the modules inside the patch folder. `pip install global` will install in the py4pd folder. Global installations are the default.
         
--   :fontawesome-solid-lightbulb: __Example__
+-   :my-icons-pd: __Example__
 
     <p align="center">
         <img src="../../examples/pd-methods/pip.png" width="60%" alt="Set method example"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
@@ -133,7 +132,7 @@ _Used to run the Python Functions._
     | `Arguments`   | `anything` | Arguments for the function |
     
 
--   :fontawesome-solid-lightbulb: __Example__
+-   :my-icons-pd: __Example__
 
     <p align="center">
         <img src="../../examples/pd-methods/run.png" width="70%" alt="Set method example"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
@@ -158,7 +157,7 @@ You can work with Python Data types inside PureData. With this you can work with
     | `on/off`   | `1` or `0` | `1` for on `0` for off |
     
 
--   :fontawesome-solid-lightbulb: __Example__
+-   :my-icons-pd: __Example__
 
     <p align="center">
         <img src="../../examples/pd-methods/pointers.png" width="100%" alt="Set method example"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
@@ -187,7 +186,7 @@ It prints on PureData the documentation of the Python Function (if it exits).
         
         The creator of the function must provide some documentation.
 
--   :fontawesome-solid-lightbulb: __Example__
+-   :my-icons-pd: __Example__
 
     <p align="center">
         <img src="../../examples/pd-methods/doc.png" width="70%" alt="Set method example"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
@@ -213,7 +212,7 @@ It opens `py` script files, case the file does not exist in the patch folder, it
     | `args`   | `symbol` | script file name **without** extension `.py`. |
 
 
--   :fontawesome-solid-lightbulb: __Example__
+-   :my-icons-pd: __Example__
 
     <p align="center">
         <img src="../../examples/pd-methods/open.png" width="100%" alt="Set method example"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
@@ -224,6 +223,32 @@ It opens `py` script files, case the file does not exist in the patch folder, it
 
 ---
 
+### <h3 align="center"> <code>create</code> </h3>
+
+It creates a new script in the patch folder.
+
+
+<div class="grid cards" markdown>
+
+-   :fontawesome-solid-gear: __Arguments__
+
+    ---
+
+    | Parameters     | Type | Description                   |
+    | :-----------: | :----: | :------------------------------: |
+    | `args`   | `symbol` | script file name **without** extension `.py`. |
+
+
+-   :my-icons-pd: __Example__
+
+    <p align="center">
+        <img src="../../examples/pd-methods/create.png" width="80%" alt="Set method example"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
+    </p>
+
+</div>
+
+
+---
 ### <h3 align="center"> <code>editor</code> </h3>
 
 Without arguments it opens the Python Script loaded with the message `set`. With one symbol args you can choose between four IDE: `vscode`, `nvim`, `emacs` or `sublime`. The function must be loaded first.
@@ -240,7 +265,7 @@ Without arguments it opens the Python Script loaded with the message `set`. With
     | `arg1`   | `symbol` | `vscode`, `nvim`, `emacs` and `sublime`. |
 
 
--   :fontawesome-solid-lightbulb: __Example__
+-   :my-icons-pd: __Example__
 
     <p align="center">
         <img src="../../examples/pd-methods/editor.png" width="70%" alt="Set method example"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
@@ -266,7 +291,7 @@ If you are working on a Python Script and changing the code, you need to send th
         There is no Arguments.
     </p>
 
--   :fontawesome-solid-lightbulb: __Example__
+-   :my-icons-pd: __Example__
 
     <p align="center">
         <img src="../../examples/pd-methods/reload.png" width="70%" alt="Set method example"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
@@ -291,7 +316,7 @@ Set the home for Python. It is similar to execute Python from some specific fold
     | :-----------: | :----: | :------------------------------: |
     | `arg1`   | `symbol` | Folder that will be the `HOME` for Python Script. |
 
--   :fontawesome-solid-lightbulb: __Example__
+-   :my-icons-pd: __Example__
 
     <p align="center">
         <img src="../../examples/pd-methods/home.png" width="70%" alt="Set method example"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
@@ -315,11 +340,30 @@ Set the packages path for Python. `py4pd` will look for external modules inside 
     | :-----------: | :----: | :------------------------------: |
     | `arg1`   | `symbol` | Folder that will be the `HOME` for Python packages. |
 
--   :fontawesome-solid-lightbulb: __Example__
+-   :my-icons-pd: __Example__
 
     <p align="center">
         <img src="../../examples/pd-methods/packages.png" width="70%" alt="Set method example"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
     </p>
 
+
+</div>
+
+### <h3 align="center"> <code>version</code> </h3>
+
+Output the version of the installed `py4pd` and the version of `Python`.
+
+
+<div class="grid cards" markdown>
+
+-   :fontawesome-solid-gear: __Arguments__
+
+    There is no Arguments.
+
+-   :my-icons-pd: __Example__
+
+    <p align="center">
+        <img src="../../examples/pd-methods/version.png" width="70%" alt="Set method example"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
+    </p>
 
 </div>

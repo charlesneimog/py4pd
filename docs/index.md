@@ -19,6 +19,21 @@ hide:
 
 `py4pd` integrates the power of [Python](https://www.python.org/) into the real-time environment of [PureData](https://puredata.info/). Besides providing means for score visualization, AI integration, audio analysis tools, SVG/drawing score handling, and various other functionalities, <u><i>you can create PureData Objects using Python</i></u>. If you use [OpenMusic](https://openmusic-project.github.io/openmusic/) or [BachLibrary](https://www.bachproject.net/), you will find some inspiration in it.
 
+<div class="grid cards" markdown>
+
+-   :simple-python: __Create PureData Objects With Python__
+
+    [:octicons-arrow-right-24: Learning about `py4pd`](python-users/index.md)
+
+
+-   :simple-composer: __I don't programing!__
+
+    [:octicons-arrow-right-24: If you don't know Python, click here!](libraries.md)
+
+</div>
+
+
+
 !!! info "How to install?"
 
     To check how to install go to [Installation](https://www.charlesneimog.com/py4pd/setup/).
@@ -110,7 +125,7 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
 
 ---
 
-### <h3 align="center"> **Pieces** </h3>
+## <h2 align="center"> **Pieces** </h2>
 
 === "Eco (2023)"
 

@@ -1,4 +1,4 @@
-#N canvas 974 59 799 799 8;
+#N canvas 974 59 478 461 8;
 #X obj 9 6 py4pd -lib py4pd;
 #X obj 122 303 py.and -a 4;
 #X obj 187 303 py.or -a 4;

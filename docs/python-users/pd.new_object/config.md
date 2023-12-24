@@ -201,7 +201,7 @@ Some configuration for the object.
 
     !!! note ""
 
-        When set to `True`, it adds 3 methods for the object, `play`, `stop`, `clear`, this allows to use the function `pd.add_to_player`.
+        <p style="font-size: 16px"> When set to `True`, it adds 3 methods for the object, `play`, `stop`, `clear`, this allows to use the function `pd.add_to_player`. </p>
 
     ``` py
 

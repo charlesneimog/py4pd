@@ -78,3 +78,26 @@ In `py4pd`, `pd.get_home_folder` is a function that returns the path to the dire
 </div>
 
 
+## `pd.get_pd_search_paths`
+
+`pd.get_pd_search_paths` returns all the folders in the PureData search path.
+
+<div class="grid cards" markdown>
+
+-   :fontawesome-brands-python: __Example__
+
+    It return a list of all the paths in the search path.
+    
+    ``` py
+    import pd
+	    
+    def getPdSearchPaths():
+        return pd.get_pd_search_paths()
+
+    ```
+
+-   :fontawesome-solid-gear: __Arguments__
+
+    There is no `args` for this function.
+    
+</div>

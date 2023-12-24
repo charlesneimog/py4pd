@@ -3,6 +3,9 @@
 With this function you create a `Python Object Player`, so you can trigger Python functions using times parameters. See [py4pd-upic](https://github.com/charlesneimog/py4pd-upic), in this library I use `pd.add_to_player` to play svg draws that are used to control parameters.
 
 
+!!! danger "Set the right configuration"
+    <p style="font-size: 16px;">To use this `methods` the Python Object must be configurable with `playable` as `#!python True`. See [configuration](pd.new_object/config.md#playable) for `player` object.</p>
+
 <div class="grid cards" markdown>
 
 -   :fontawesome-brands-python: __Example__

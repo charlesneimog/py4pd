@@ -1,32 +1,23 @@
+import os
+
 import pd
 
-try:
-    from src.pip import *
-except Exception as e:
-    pd.error("Error to add py.pip: " + str(e))
+# list all folders inside src
+thisFile = os.path.abspath(__file__)
 
-from src.pip import *
+# try to import all files inside src. (must use this file)
+for root, dirs, files in os.walk(os.path.join(thisFile, "src")):
+    for file in files:
+        if file.endswith(".py") and file != "__init__.py":
+            try:
+                exec(f"from src.{file[:-3]} import *")
+            except Exception as e:
+                pd.error(f"Error importing {file}: {e}")
 
-try:
-    from src.convertion import *
-    from src.info import *
-    from src.list import *
-    from src.loop import *
-    from src.math import *
-    from src.musicconvertions import *
-    from src.openmusic import *
-    from src.operators import *
-    from src.show import *
-    from src.test import *
-    from src.tree import *
-    from src.utils import *
-
-except Exception as e:
-    pd.error("Error loading py4pd objects: " + str(e))
-    pd.add_object(pipinstall, "py.pip")
 
 from src.convertion import *
 from src.info import *
+from src.libs import *
 from src.list import *
 from src.loop import *
 from src.math import *
@@ -38,6 +29,8 @@ from src.show import *
 from src.test import *
 from src.tree import *
 from src.utils import *
+
+# try to import all files inside src.
 
 
 def mysumarg(a=3, b=2, c=5, d=4):
@@ -62,11 +55,11 @@ def py4pdLoadObjects():
     pd.add_object(pyisin, "pyisin", py_out=True, help_patch="py.logic-help.pd")
 
     # info
-    pd.add_object(pdprint, "py.print", no_outlet=True)
+    pd.add_object(pdprint, "py.print", no_outlet=True, help_path="py.print-help.pd")
 
     # Convertion Objects
     pd.add_object(py2pd, "py2pd", ignore_none_return=True)
-    pd.add_object(pd2py, "pd2py")
+    pd.add_object(pd2py, "pd2py", py_out=True)
     pd.add_object(pdlist2pylist, "py.mklist", py_out=True)
 
     # List Functions
@@ -128,3 +121,10 @@ def py4pdLoadObjects():
     # test
     pd.add_object(py4pdtimer, "py.timer", no_outlet=True)
     pd.add_object(getMemoryUse, "py.memuse")
+
+    # py4pd libs
+    py4pd_libs = pd.new_object("py4pd.libs")
+    py4pd_libs.addmethod("install", downloadPy4pdLibraries)
+    py4pd_libs.addmethod("libraries", listPy4pdLibraries)
+    py4pd_libs.help_patch = "py4pd.libs-help.pd"
+    py4pd_libs.add_object()

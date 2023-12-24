@@ -114,7 +114,3 @@ With `py4pd` you can display images inside PureData patches using Python, you ca
 
 ---
 
-## `pd.get_pxsize` 
-
-
-TODO.

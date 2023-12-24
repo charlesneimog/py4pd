@@ -43,6 +43,7 @@ def selectormethod2():
     pd.print("Hello from selector2 method")
     
 def threadtest_setup():
+    pd.print(str(pd.get_pd_search_paths()))
     patchZoom = pd.get_patch_zoom()
     if patchZoom == 1:
         scoreImage = "./resources/score_nozoom.gif"
@@ -71,7 +72,4 @@ def randomNumber():
     return random.randint(0, 100)
 
 
-def py4pdLoadObjects():
-    random = pd.new_object("py.random")
-    random.addmethod_bang(randomNumber)
-    random.add_object()
+

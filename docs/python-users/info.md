@@ -29,7 +29,11 @@ The ordinary function `#!python print()` will not work in `py4pd` (unless that y
     | Parameters     | Type | Description                   | 
     | :-----------: | :----: | :------------------------------: |
     | `arg1`   | `Python Object` | Thing to print |
-    | `**show_prefix`   | `Python Object` | When `False` don't print prefix |
+
+    ---
+    | Kwargs | Type | Description                   | 
+    | :-----------: | :----: | :------------------------------: |
+    | `show_prefix`   | `Python Object` | When `False` don't print prefix |
 
     !!! info
         For Object written in Python, prefix will be the Object Name.

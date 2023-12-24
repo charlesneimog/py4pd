@@ -4,7 +4,7 @@ We have three objects to use.
 - [Audio Out](#audio-out)
 - [Audio In/Out](#audio-inout)
 
-## `Audio In`
+### Audio In
 
 Used to output analised data from audio. Objects with Partial Trackings, Audio Descriptors, and others.
 
@@ -52,7 +52,7 @@ myfftobj.addmethod_float(myfloatmethod)
 
     ```
 
-## `Audio Out`
+### Audio Out
 
 Used to create audio using Python. Objects that creates sinusoids, some special noise and others.
 
@@ -64,7 +64,7 @@ The audio function always need to return a numpy array.
     <img src="../../../examples/audioout/audioout.png" width="35%" alt="Audio Output Image" style="box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
 </p>
 
-## `Audio (in/out)`
+### Audio (in/out)
 
 Used to manipulations of Audio. FFT, reverbs, and others.
 

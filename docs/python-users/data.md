@@ -31,18 +31,15 @@ These are the methods used to send data from Python to PureData. The inverse pat
     | Parameters     | Type | Description                   | 
     | :-----------: | :----: | :------------------------------: |
     | `arg1`   | `Python Object` | Python thing that will be outputed. |
-    | `**symbol`   | `string` | It prepend the string in the output, can be used with `route` object. |
-    | `**out_n`   | `int` | Index of the outlet used to output. |
 
+    --- 
+
+    | Kwargs | Type | Description                   | 
+    | :-----------: | :----: | :------------------------------: |
+    | `symbol`   | `string` | It prepend the string in the output, can be used with `route` object. |
+    | `out_n`   | `int` | Index of the outlet used to output. |
 
 </div>
-
-
-    
-
-
-
-
 
 ---------------------------
 
@@ -82,7 +79,6 @@ You can use `pd.send` to send data to a receive object in your PureData patch. T
     | `arg1`   | `string` | Name of the receiver object. |
     | `arg2`   | `Python Object` | Data that will be sent. |
 
-
 </div>
 
 
@@ -114,7 +110,11 @@ You can use `pd.send` to send data to a receive object in your PureData patch. T
     | :-----------: | :----: | :------------------------------: |
     | `arg1`   | `string` | Name of the table. |
     | `arg2`   | `Python Object` | List or array (numpy) of numbers. |
-    | `**rezise`   | `Boolean` | Set if the table will be resized or not. |
+
+    ---
+    | Kwargs | Type | Description                   | 
+    | :-----------: | :----: | :------------------------------: |
+    | `rezise`   | `Boolean` | Set if the table will be resized or not. |
 
 </div>
 
@@ -148,8 +148,13 @@ You can use `pd.send` to send data to a receive object in your PureData patch. T
     | Parameters | Type    | Description                  |
     | :--------: | :-----: | :--------------------------: |
     |   `arg1`   | `string`|    Name of the table.        |
-    |   `**numpy` | `Boolean`| Return a numpy array when True. |
+
+    ---
+    | Kwargs | Type    | Description                  |
+    | :--------: | :-----: | :--------------------------: |
+    |   `numpy` | `Boolean`| Return a list instead of a numpy array when `False`. |
     
+
 </div>
 
 

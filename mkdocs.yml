@@ -9,6 +9,10 @@ theme:
   logo_light_mode: assets/py4pd-light-home.svg
   favicon: assets/py4pd-favicon.png
   name: material
+  icon:
+    custom: 
+      - my-icons/pd
+      - my-icons/pdobj
   features:
     - navigation.top
     - navigation.sections
@@ -31,7 +35,14 @@ theme:
     - header.autohide
     - attr_list
     - md_in_html
+    - pymdownx.superfences
+    - footnotes
+
   palette:
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: white
@@ -46,6 +57,7 @@ theme:
       toggle:
         icon: material/lightbulb-outline
         name: Switch to light mode
+
         
 markdown_extensions:
   - pymdownx.superfences
@@ -54,24 +66,9 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
-  - pymdownx.extra
-  - pymdownx.details
-  - pymdownx.inlinehilite
-  - pymdownx.tasklist
-  - pymdownx.magiclink
-  - pymdownx.highlight
-  - abbr
-  - toc
-  - attr_list
-  - md_in_html
-  - admonition
-  - pymdownx.details
-  - pymdownx.superfences
-  - pymdownx.tabbed:
-      alternate_style: true
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      options:
+        custom_icons:
+          - docs/overrides/.icons
   - pymdownx.extra
   - pymdownx.details
   - pymdownx.inlinehilite
@@ -87,12 +84,8 @@ markdown_extensions:
   
 repo_url: https://github.com/charlesneimog/py4pd
 
-
 plugins:
   - search
-  - localsearch
-  - search
-  - localsearch
   - social
   
 extra_css:

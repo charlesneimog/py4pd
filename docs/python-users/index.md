@@ -10,9 +10,10 @@ In this section I present all things that you can do with `pd` internal module. 
 
 <div class="grid cards" markdown>
 
--   :fontawesome-solid-terminal: [__Write PureData Objects with Python__](pd.new_object/methods/)
+-   :simple-python: [__Write PureData Objects with Python__](pd.new_object/methods.md)
 -   :fontawesome-solid-wave-square: [__Real-Time Audio__](objtypes/audio.md)
 -   :fontawesome-solid-chart-line: [__Graphs__](objtypes/image.md)
+-   :material-cog-play: [__Python Object Player__](player.md)
 
 </div>
 
