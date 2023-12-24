@@ -1441,6 +1441,8 @@ PyMethodDef PdMethods[] = {
     {"get_patch_zoom", Py4pdMod_PdZoom, METH_NOARGS, "Get Patch zoom"},
     {"get_outlet_count", Py4pdMod_PdGetOutletsCount, METH_NOARGS,
      "Get the Number of Outlets of one object."},
+    {"get_obj_args", Py4pdMod_GetObjArgs, METH_NOARGS,
+     "Returns list with all the args."},
     {"get_object_args", Py4pdMod_GetObjArgs, METH_NOARGS,
      "Returns list with all the args."},
 

@@ -1,12 +1,13 @@
-## `pd.get_patch_dir`
+In `py4pd`, sometimes you need to save something in the patch folder (as audio files), or save something temporally, or anothers things. In this sections we present some helpers to get the correct pathname that can be usefull.
 
-In `py4pd`, `pd.get_home_folder` is a function that returns the path to the directory where the currently-running PureData patch is located. This can be useful for accessing files and resources relative to the location of the patch. 
+
+## `pd.get_patch_dir`
 
 <div class="grid cards" markdown>
 
 -   :fontawesome-brands-python: __Example__
 
-    It just returns unique string with the pathname.
+    Returns pathname of the current patch folder.
     
     ``` py
     import pd
@@ -28,15 +29,14 @@ In `py4pd`, `pd.get_home_folder` is a function that returns the path to the dire
 
 ## `pd.get_temp_dir`
 
-`pd.get_temp_dir` returns one pathname to save stuff that won't be used more than once, all files inside this folder are deleted when the PureData patch is closed.
 
 
 <div class="grid cards" markdown>
 
 -   :fontawesome-brands-python: __Example__
 
-    It just returns unique string with the pathname.
-    
+    `pd.get_temp_dir` returns a pathname for a temp-folder, **all files inside this folder are deleted when the PureData patch is closed** or when all the `py4pd` objects are deleted.
+
     ``` py
     import pd
 	    
@@ -55,13 +55,11 @@ In `py4pd`, `pd.get_home_folder` is a function that returns the path to the dire
 
 ## `pd.get_py4pd_dir`
 
-`pd.get_py4pd_dir` returns the folder where the binary of `py4pd` is located.
-
 <div class="grid cards" markdown>
 
 -   :fontawesome-brands-python: __Example__
 
-    It just returns unique string with the pathname.
+    Returns the folder where the binary of `py4pd` is located.
     
     ``` py
     import pd
@@ -80,13 +78,13 @@ In `py4pd`, `pd.get_home_folder` is a function that returns the path to the dire
 
 ## `pd.get_pd_search_paths`
 
-`pd.get_pd_search_paths` returns all the folders in the PureData search path.
+
 
 <div class="grid cards" markdown>
 
 -   :fontawesome-brands-python: __Example__
 
-    It return a list of all the paths in the search path.
+    `pd.get_pd_search_paths` returns all the folders in the PureData search path.
     
     ``` py
     import pd
