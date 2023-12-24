@@ -27,9 +27,7 @@
 #define PY4PD_MINOR_VERSION 8
 #define PY4PD_MICRO_VERSION 6
 
-
 #define PY4PD_GIT_ISSUES "https://github.com/charlesneimog/py4pd/issues"
-
 
 #define PYTHON_REQUIRED_VERSION(major, minor) ((major < PY_MAJOR_VERSION) || (major == PY_MAJOR_VERSION && minor <= PY_MINOR_VERSION))
 
@@ -225,11 +223,6 @@ typedef struct _classInlets{
 }classInlets;
 
 
-
-void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv);
-int Py4pdUtils_CheckNumpyInstall(t_py *x);
-
-// =====================================
 void Py4pd_PrintDocs(t_py *x);
 void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f);
 void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
@@ -238,10 +231,6 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
 #define PY4PDSIGTOTAL(s) ((t_int)((s)->s_length * (s)->s_nchans))
 
 extern int object_count; 
-
-// SubInterpreter 
-void Py4pdUtils_CreatePythonInterpreter(t_py *x);
-
 extern PyTypeObject Py4pdNewObj_Type;
 
 #endif
