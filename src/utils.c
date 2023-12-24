@@ -381,8 +381,12 @@ PyObject *Py4pdUtils_CreatePyObjFromPdArgs(t_symbol *s, int argc,
 
     PyObject *pArgs = NULL;
     if (argc == 0) {
-        pArgs = PyUnicode_FromString(s->s_name);
-    } else if ((s == gensym("list") || s == gensym("anything")) && argc > 1) {
+        if (s != NULL) {
+            pArgs = PyUnicode_FromString(s->s_name);
+        }
+    } else if ((s == gensym("list") || s == gensym("anything") || s == NULL) &&
+               argc > 1) {
+        post("I am here");
         pArgs = PyList_New(argc);
         for (int i = 0; i < argc; i++) {
             t_atomtype aType = argv[i].a_type;
@@ -406,7 +410,8 @@ PyObject *Py4pdUtils_CreatePyObjFromPdArgs(t_symbol *s, int argc,
                 pd_error(NULL, "[py4pd] py4pd just support floats or symbols");
             }
         }
-    } else if ((s == gensym("float") || s == gensym("symbol")) && argc == 1) {
+    } else if ((s == gensym("float") || s == gensym("symbol") || s == NULL) &&
+               argc == 1) {
         if (argv[0].a_type == A_FLOAT) {
             int isInt = atom_getintarg(0, argc, argv) ==
                         atom_getfloatarg(0, argc, argv);
@@ -823,6 +828,16 @@ void Py4pdUtils_PrintError(t_py *x) {
     Py_XDECREF(pvalue);
     Py_XDECREF(ptraceback);
     PyErr_Clear();
+}
+
+// ===========================================
+void Py4pdUtils_Click(t_py *x) {
+    PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->pFunction);
+    int line = PyCode_Addr2Line(code, 0);
+    char command[MAXPDSTRING];
+    Py4pdUtils_GetEditorCommand(x, command, line);
+    Py4pdUtils_ExecuteSystemCommand(command);
+    return;
 }
 
 // ====================================================
