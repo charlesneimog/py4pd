@@ -1,10 +1,9 @@
-## `pd.add_to_player`
-
-With this function you create a `Python Object Player`, so you can trigger Python functions using times parameters. See [py4pd-upic](https://github.com/charlesneimog/py4pd-upic), in this library I use `pd.add_to_player` to play svg draws that are used to control parameters.
-
+For musicians, it is important to put things in time. With the functions presented here you can call specific functions using `onsets` values. For example, in [py4pd-upic](https://github.com/charlesneimog/py4pd-upic) I use `pd.add_to_player` to play svg draws that are used to control parameters. So each `svg` elements trigger some specific function in a specific point in time.
 
 !!! danger "Set the right configuration"
     <p style="font-size: 16px;">To use this `methods` the Python Object must be configurable with `playable` as `#!python True`. See [configuration](pd.new_object/config.md#playable) for `player` object.</p>
+
+## `pd.add_to_player`
 
 <div class="grid cards" markdown>
 

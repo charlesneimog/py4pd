@@ -17,7 +17,6 @@ hide:
 
 === ":fontawesome-solid-1: Install Python"
 
-
     ### <h3 align="center"> **1. Install Python** </h3>
 
     ---
