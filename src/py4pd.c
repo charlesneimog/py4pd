@@ -368,12 +368,20 @@ static void Py4pd_Pip(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
 
     if (atom_getsymbolarg(0, argc, argv) == gensym("install")) {
-        struct pipInstallArgs pipArgs;
-        pipArgs.x = x;
-        pipArgs.pipPackage = atom_getsymbolarg(1, argc, argv);
-        pthread_t threadId;
-        pthread_create(&threadId, NULL, Py4pd_PipInstallDetach, &pipArgs);
-        pthread_detach(threadId);
+        for (int j = 1; j < argc; j++) {
+            if (argv[j].a_type == A_SYMBOL) {
+                struct pipInstallArgs pipArgs;
+                pipArgs.x = x;
+                pipArgs.pipPackage = atom_getsymbolarg(j, argc, argv);
+                pthread_t threadId;
+                pthread_create(&threadId, NULL, Py4pd_PipInstallDetach,
+                               &pipArgs);
+                pthread_detach(threadId);
+            } else {
+                pd_error(x, "[py4pd] The package name must be a symbol");
+                return;
+            }
+        }
         return;
     } else if (atom_getsymbolarg(0, argc, argv) == gensym("target")) {
         t_symbol *folder = atom_getsymbolarg(1, argc, argv);
@@ -387,6 +395,7 @@ static void Py4pd_Pip(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
 }
 
+// ============================================
 static void Py4pd_Deprecated(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)argc;
     (void)argv;
@@ -1175,11 +1184,6 @@ void py4pd_setup(void) {
     // Test
     class_addmethod(py4pd_class, (t_method)Py4pd_TestCode, gensym("_test"),
                     A_GIMME, 0);
-
-#if PYTHON_REQUIRED_VERSION(3, 12)
-    class_addmethod(py4pd_class, (t_method)Py4pdUtils_CreatePythonInterpreter,
-                    gensym("detach"), 0);
-#endif
 }
 
 #ifdef __WIN64
