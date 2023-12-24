@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/plugdata-team/plugdata/wiki">
+  <a href="https://charlesneimog.github.io/py4pd/">
     <img src="https://raw.githubusercontent.com/charlesneimog/py4pd/master/docs/assets/py4pd.svg" alt="Logo" width=100 height=58>
   </a>
   <h1 align="center">py4pd</h1>
