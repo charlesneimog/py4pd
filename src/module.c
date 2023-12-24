@@ -1101,6 +1101,27 @@ static PyObject *Py4pdMod_GetPy4pdTmpFolder(PyObject *self, PyObject *args) {
     return PyUnicode_FromString(x->tempPath->s_name);
 }
 
+// Py4pdMod_GetPdSysPath
+
+// =================================
+/**
+ * @brief Returns the tmp folder for py4pd (normally in ~/.py4pd)
+ */
+static PyObject *Py4pdMod_GetPdSearchPaths(PyObject *self, PyObject *args) {
+    (void)self;
+    (void)args;
+
+    PyObject *pdPathList = PyList_New(0);
+    for (int i = 0; 1; i++) {
+        char const *pathelem = namelist_get(STUFF->st_searchpath, i);
+        if (!pathelem) {
+            break;
+        }
+        // add pathelem to pdPathList
+        PyList_Append(pdPathList, PyUnicode_FromString(pathelem));
+    }
+    return pdPathList;
+}
 // =================================
 /**
  * @brief Shows an image using something similar to else/pic
@@ -1401,6 +1422,8 @@ PyMethodDef PdMethods[] = {
      "Get PureData Py4PD Folder"},
     {"get_temp_dir", Py4pdMod_GetPy4pdTmpFolder, METH_VARARGS,
      "Get PureData Temp Folder"},
+    {"get_pd_search_paths", Py4pdMod_GetPdSearchPaths, METH_NOARGS,
+     "Get PureData sys path"},
 
     // User
     {"get_key", Py4pdMod_PdKey, METH_VARARGS, "Get Object User Parameters"},
