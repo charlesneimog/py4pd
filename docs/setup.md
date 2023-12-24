@@ -23,9 +23,31 @@ Install just `py4pd` (no Python) will not work.
 <!--     <iframe style="border-radius: 5px" width="560" height="315" src="https://www.youtube.com/embed/TVcHzLCmpDM?si=GIkYPPifzjhfFZvM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe> -->
 <!-- </p> -->
 
-!!! danger "Check the Python Version"
+??? danger "Check the Python Version"
 
-    **Always check the version of Python. The version `0.8.0` use Python 3.11.**
+     <table class="special-table" style="width: 50%" align="center">
+        <thead>
+          <tr>
+            <th>Py4pd Version</th>
+            <th>Python Version</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>0.8.0</code></td>
+            <td>Python 3.11</td>
+          </tr>
+        </tbody>
+        <tbody>
+          <tr>
+            <td><code>0.7.0</code></td>
+            <td>Python 3.10</td>
+          </tr>
+        </tbody>
+    </table>
+
+
+
 
 === ":fontawesome-brands-windows: Windows"
 
