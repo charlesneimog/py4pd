@@ -27,7 +27,7 @@ This function will be executed when the object receives a bang.
 -   :fontawesome-brands-python: __PureData Example__
 
     <p align="center">
-        <img src="../../examples/new_object/bang.gif" width="60%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);" alt="Scores">
+        <img src="../../../examples/new_object/bang.gif" width="60%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);" alt="Scores">
     </p>
     
 </div>
@@ -55,7 +55,7 @@ This function will be executed when the object receives a bang.
 -   :fontawesome-brands-python: __PureData Example__
 
     <p align="center">
-        <img src="../../examples/new_object/float.gif" width="60%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);" alt="Scores">
+        <img src="../../../examples/new_object/float.gif" width="60%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);" alt="Scores">
     </p>
     
 </div>
@@ -84,7 +84,7 @@ This function will be executed when the object receives a bang.
 -   :fontawesome-brands-python: __PureData Example__
 
     <p align="center">
-        <img src="../../examples/new_object/symbol.gif" width="90%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);" alt="Scores">
+        <img src="../../../examples/new_object/symbol.gif" width="90%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);" alt="Scores">
     </p>
     
 </div>
@@ -114,7 +114,7 @@ This function will be executed when the object receives a bang.
 -   :fontawesome-brands-python: __PureData Example__
 
     <p align="center">
-        <img src="../../examples/new_object/list.gif" width="90%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);" alt="Scores">
+        <img src="../../../examples/new_object/list.gif" width="90%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);" alt="Scores">
     </p>
     
 </div>
@@ -142,7 +142,7 @@ This function will be executed when the object receives a bang.
 -   :fontawesome-brands-python: __PureData Example__
 
     <p align="center">
-        <img src="../../examples/new_object/anything.gif" width="90%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);" alt="Scores">
+        <img src="../../../examples/new_object/anything.gif" width="90%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);" alt="Scores">
     </p>
     
 </div>
@@ -181,7 +181,7 @@ This function will be executed when the object receives a bang.
 -   :fontawesome-brands-python: __PureData Example__
 
     <p align="center">
-        <img src="../../examples/new_object/addmethod.gif" width="90%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);" alt="Scores">
+        <img src="../../../examples/new_object/addmethod.gif" width="90%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);" alt="Scores">
     </p>
 
     !!! info "Inlets"
