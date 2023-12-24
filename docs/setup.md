@@ -47,32 +47,6 @@ hide:
 
     === ":material-apple: macOS"
 
-??? danger "Check the Python Version"
-
-     <table class="special-table" style="width: 50%" align="center">
-        <thead>
-          <tr>
-            <th>Py4pd Version</th>
-            <th>Python Version</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><code>0.8.0</code></td>
-            <td>Python 3.11</td>
-          </tr>
-        </tbody>
-        <tbody>
-          <tr>
-            <td><code>0.7.0</code></td>
-            <td>Python 3.10</td>
-          </tr>
-        </tbody>
-    </table>
-
-
-
-
         On `MacOS` you can install Python like and ordirary software.
 
         * Go to [Python.org](https://www.python.org/downloads/release/python-3115/),
@@ -96,7 +70,7 @@ hide:
         * Run: 
             * :simple-fedora: `sudo dnf install python3.11 python3-pip`
             * :material-ubuntu: `sudo apt install python3.11 python3-pip` 
-            * :material-arch: `sudo yay -S python3.11 python3.pip`
+            * :material-arch: `yay -S python311 python3.pip`
 
 === ":fontawesome-solid-2: Install py4pd"
 
