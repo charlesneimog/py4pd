@@ -17,6 +17,7 @@ typedef struct {
     int requireNofOutlets;
     int ignoreNoneOutputs;
     const char *objImage;
+    const char *helpPatch;
 
     // PyFunctions
     PyObject *pFuncFloat;
@@ -24,6 +25,9 @@ typedef struct {
     PyObject *pFuncList;
     PyObject *pFuncAnything;
     PyObject *pFuncBang;
+    PyObject *pAudioIn;
+    PyObject *pAudioOut;
+    PyObject *pAudio;
 
     // PySel Methods
     PyObject *pDictSelectors; // dict with method and function
