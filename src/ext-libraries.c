@@ -1,5 +1,6 @@
 #include "py4pd.h"
 
+#include "dsp.h"
 #include "ext-libraries.h"
 #include "pic.h"
 #include "player.h"
@@ -74,16 +75,6 @@ void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b) {
         }
         binbuf_addsemi(b);
     }
-    return;
-}
-
-// ===========================================
-void Py4pdLib_Click(t_py *x) {
-    PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->pFunction);
-    int line = PyCode_Addr2Line(code, 0);
-    char command[MAXPDSTRING];
-    Py4pdUtils_GetEditorCommand(x, command, line);
-    Py4pdUtils_ExecuteSystemCommand(command);
     return;
 }
 
@@ -705,7 +696,7 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
 
     // special methods
     if (objectType == PY4PD_NORMALOBJ) {
-        class_addmethod(localClass, (t_method)Py4pdLib_Click, gensym("click"),
+        class_addmethod(localClass, (t_method)Py4pdUtils_Click, gensym("click"),
                         0, 0);
         if (playableInt == 1) {
             class_addmethod(localClass, (t_method)Py4pdPlayer_Play,
@@ -732,27 +723,27 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     }
     // AUDIOIN
     else if (objectType == PY4PD_AUDIOINOBJ) {
-        class_addmethod(localClass, (t_method)Py4pdLib_Click, gensym("click"),
+        class_addmethod(localClass, (t_method)Py4pdUtils_Click, gensym("click"),
                         0, 0);
-        class_addmethod(localClass, (t_method)Py4pdLib_Dsp, gensym("dsp"),
+        class_addmethod(localClass, (t_method)Py4pdAudio_Dsp, gensym("dsp"),
                         A_CANT,
                         0); // add a method to a class
         CLASS_MAINSIGNALIN(localClass, t_py, py4pdAudio);
     }
     // AUDIOOUT
     else if (objectType == PY4PD_AUDIOOUTOBJ) {
-        class_addmethod(localClass, (t_method)Py4pdLib_Click, gensym("click"),
+        class_addmethod(localClass, (t_method)Py4pdUtils_Click, gensym("click"),
                         0, 0);
-        class_addmethod(localClass, (t_method)Py4pdLib_Dsp, gensym("dsp"),
+        class_addmethod(localClass, (t_method)Py4pdAudio_Dsp, gensym("dsp"),
                         A_CANT,
                         0); // add a method to a class
 
     }
     // AUDIO
     else if (objectType == PY4PD_AUDIOOBJ) {
-        class_addmethod(localClass, (t_method)Py4pdLib_Click, gensym("click"),
+        class_addmethod(localClass, (t_method)Py4pdUtils_Click, gensym("click"),
                         0, 0);
-        class_addmethod(localClass, (t_method)Py4pdLib_Dsp, gensym("dsp"),
+        class_addmethod(localClass, (t_method)Py4pdAudio_Dsp, gensym("dsp"),
                         A_CANT,
                         0); // add a method to a class
         CLASS_MAINSIGNALIN(localClass, t_py, py4pdAudio);
