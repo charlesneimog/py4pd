@@ -11,7 +11,6 @@ For those unfamiliar with programming, `py4pd` will be useful through its librar
 
     <p style="font-size: 18px" align="center" markdown>Check <code>py4pd</code> installation process [here](setup.md).</p>
 
-
 You can download the libraries using `deken`. To install the library search for the library name.
 
 ??? info "Gif of installation process"
