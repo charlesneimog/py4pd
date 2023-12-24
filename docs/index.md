@@ -26,7 +26,7 @@ hide:
     [:octicons-arrow-right-24: Learning about `py4pd`](python-users/index.md)
 
 
--   :simple-composer: __I don't programing!__
+-   :simple-composer: __I don't program!__
 
     [:octicons-arrow-right-24: If you don't know Python, click here!](libraries.md)
 
