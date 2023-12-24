@@ -43,9 +43,10 @@ py4pd.class.sources = \
 	src/py4pd.c \
 	src/utils.c \
 	src/module.c \
-	src/pic.c \
 	src/ext-libraries.c \
 	src/ext-class.c \
+	src/pic.c \
+	src/dsp.c \
 	src/player.c
 
 # =================================== Data ======================================

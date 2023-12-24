@@ -1,4 +1,6 @@
 #include "py4pd.h"
+#include "module.h"
+#include "utils.h"
 
 // ============================================
 t_class *py4pd_class;        // For for normal objects, almost unused
@@ -10,24 +12,8 @@ void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv) {
     (void)argc;
     (void)argv;
 
-    // Dimensions of the array
-    // _import_array();
-    // npy_intp dims[] = {2, 10};
-    //
-    // // Total number of elements in the array
-    // int total_elements = dims[0] * dims[1];
-    //
-    // // Assuming you have a 2D array of integers
-    // int data[] = {
-    //     1,  2,  3,  4,  5,  6,  7,  8,  9,  10, // Row 1
-    //     11, 12, 13, 14, 15, 16, 17, 18, 19, 20  // Row 2
-    // };
-    //
-    // // Using PyArray_SimpleNewFromData to create a NumPy array
-    // PyObject *numpy_array = PyArray_SimpleNewFromData(2, dims, NPY_INT,
-    // data);
-    //
-    // post("OK");
+    (void)PyObject_CallObject(x->pFunction, x->pArgTuple);
+
     return NULL;
 }
 // ============================================
@@ -382,12 +368,20 @@ static void Py4pd_Pip(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
 
     if (atom_getsymbolarg(0, argc, argv) == gensym("install")) {
-        struct pipInstallArgs pipArgs;
-        pipArgs.x = x;
-        pipArgs.pipPackage = atom_getsymbolarg(1, argc, argv);
-        pthread_t threadId;
-        pthread_create(&threadId, NULL, Py4pd_PipInstallDetach, &pipArgs);
-        pthread_detach(threadId);
+        for (int j = 1; j < argc; j++) {
+            if (argv[j].a_type == A_SYMBOL) {
+                struct pipInstallArgs pipArgs;
+                pipArgs.x = x;
+                pipArgs.pipPackage = atom_getsymbolarg(j, argc, argv);
+                pthread_t threadId;
+                pthread_create(&threadId, NULL, Py4pd_PipInstallDetach,
+                               &pipArgs);
+                pthread_detach(threadId);
+            } else {
+                pd_error(x, "[py4pd] The package name must be a symbol");
+                return;
+            }
+        }
         return;
     } else if (atom_getsymbolarg(0, argc, argv) == gensym("target")) {
         t_symbol *folder = atom_getsymbolarg(1, argc, argv);
@@ -401,6 +395,7 @@ static void Py4pd_Pip(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
 }
 
+// ============================================
 static void Py4pd_Deprecated(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)argc;
     (void)argv;
@@ -1136,6 +1131,7 @@ void py4pd_setup(void) {
 
     // this is like have lot of objects with the same name, add all methods
     // for
+
     class_addmethod(py4pd_class, (t_method)Py4pd_SetPy4pdHomePath,
                     gensym("home"), A_GIMME,
                     0); // set home path
@@ -1188,11 +1184,6 @@ void py4pd_setup(void) {
     // Test
     class_addmethod(py4pd_class, (t_method)Py4pd_TestCode, gensym("_test"),
                     A_GIMME, 0);
-
-#if PYTHON_REQUIRED_VERSION(3, 12)
-    class_addmethod(py4pd_class, (t_method)Py4pdUtils_CreatePythonInterpreter,
-                    gensym("detach"), 0);
-#endif
 }
 
 #ifdef __WIN64

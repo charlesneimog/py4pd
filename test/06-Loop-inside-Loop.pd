@@ -45,12 +45,11 @@
 #X obj 253 410 delay 1 1 samp;
 #X obj 116 9 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
 #X obj 182 356 expr if($f1 > 20000 \, 1 \, 0);
-#X msg 274 226 0;
 #X obj 43 336 print PY4PDPASS;
 #X connect 1 0 10 0;
 #X connect 1 0 28 0;
 #X connect 2 0 3 0;
-#X connect 2 1 36 0;
+#X connect 2 1 35 0;
 #X connect 5 0 4 0;
 #X connect 5 1 2 0;
 #X connect 6 0 7 0;
@@ -87,4 +86,3 @@
 #X connect 33 0 10 0;
 #X connect 33 0 28 0;
 #X connect 34 0 26 0;
-#X connect 35 0 24 1;

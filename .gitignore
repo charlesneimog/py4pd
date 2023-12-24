@@ -15,6 +15,7 @@ py4pd.zip
 DLLs/*
 Lib/*
 scripts/*
+test/*.wav
 build
 test/py4pd
 numpyincludes.txt

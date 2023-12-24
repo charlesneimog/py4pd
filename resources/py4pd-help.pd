@@ -1,4 +1,4 @@
-#N canvas 552 221 631 353 8;
+#N canvas 452 11 1285 696 8;
 #X msg 25 46 doc, f 6;
 #N canvas 491 261 794 378 embedded 0;
 #X obj 9 192 py4pd;
@@ -105,7 +105,8 @@
 #X text 320 74 Click on this bang for MacOS | Bottom of page;
 #X text 320 101 Click on this bang for Windows | Bottom of page;
 #X text 320 124 Click on this bang for Linux;
-#N canvas 485 102 440 353 Libraries 0;
+#N canvas 485 102 1102 800 Libraries 1;
+#N canvas 30 68 853 681 audioLibraries 0;
 #X text 83 6 <= Load the library of the script called py.py. The script must be located in the patch folder or inside one folder with same of the script that are in the PureData Search patches. For example \, If I have ~/Documents/Pd/pd-ji/pd-ji.py you can use py4pd -lib pd-ji to load the library., f 66;
 #X text 96 83 Freqs in Hz.;
 #X obj 15 246 dac~;
@@ -169,6 +170,16 @@
 #X connect 10 0 14 0;
 #X connect 11 0 8 0;
 #X connect 13 0 12 0;
+#X restore 302 12 pd audioLibraries;
+#X obj 10 39 py4pd -lib py4pd;
+#X obj 11 149 py4pd.libs;
+#X text 67 73 See all the py4pd libraries.;
+#X msg 11 73 libraries;
+#X msg 51 111 install py4pd-score;
+#X text 156 111 Install py4pd-score.;
+#X text 397 11 <= Example;
+#X connect 4 0 2 0;
+#X connect 5 0 2 0;
 #X restore 14 233 pd Libraries;
 #X text 80 232 <= Share your Python code as pd objects.;
 #X text 109 210 <= Interact with Python from PureData.;
@@ -181,8 +192,9 @@
 #X msg 295 47 YOU NEED TO INSTALL PYTHON3.11;
 #X obj 13 117 py4pd;
 #X text 292 160 IMPORTANT: This is just simple example \, the exaustive Docs are avaible in www.charlesneimog.github.io/py4pd;
-#X obj 397 250 py4pd;
-#X msg 397 230 pip install numpy;
+#X obj 334 230 py4pd;
+#X msg 334 210 pip install numpy;
+#X text 429 207 <= See an error related with numpy \, click here!, f 30;
 #X connect 0 0 25 0;
 #X connect 6 0 25 0;
 #X connect 7 0 25 0;

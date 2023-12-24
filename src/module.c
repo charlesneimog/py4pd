@@ -1,4 +1,9 @@
+#include "ext-class.h"
+#include "ext-libraries.h"
+#include "pic.h"
+#include "player.h"
 #include "py4pd.h"
+#include "utils.h"
 
 #define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
@@ -385,29 +390,27 @@ static PyObject *Py4pdMod_GetObjArgs(PyObject *self, PyObject *args) {
         return NULL;
     }
 
+    // BUG:, when using -a this give the wrong result;
     PyObject *pList = PyList_New(0);
     for (int i = 0; i < x->objArgsCount; i++) {
-        if (x->pdObjArgs[i].a_type == A_FLOAT) {
-            int isInt =
-                (int)x->pdObjArgs[i].a_w.w_float == x->pdObjArgs[i].a_w.w_float;
+        if (x->pdObjArgs[i].a_type == A_SYMBOL) {
+            t_symbol *key = atom_getsymbolarg(i, x->objArgsCount, x->pdObjArgs);
+            PyObject *strObj = PyUnicode_FromString(key->s_name);
+            PyList_Append(pList, strObj);
+            Py_DECREF(strObj);
+        } else if (x->pdObjArgs[i].a_type == A_FLOAT) {
+            int isInt = atom_getintarg(i, x->objArgsCount, x->pdObjArgs) ==
+                        atom_getfloatarg(i, x->objArgsCount, x->pdObjArgs);
+            t_float key = atom_getfloatarg(i, x->objArgsCount, x->pdObjArgs);
             if (isInt) {
-                PyObject *Number = PyLong_FromLong(x->pdObjArgs[i].a_w.w_float);
+                PyObject *Number = PyLong_FromLong(key);
                 PyList_Append(pList, Number);
                 Py_DECREF(Number);
             } else {
-                PyObject *Number =
-                    PyFloat_FromDouble(x->pdObjArgs[i].a_w.w_float);
+                PyObject *Number = PyFloat_FromDouble(key);
                 PyList_Append(pList, Number);
                 Py_DECREF(Number);
             }
-
-        } else if (x->pdObjArgs[i].a_type == A_SYMBOL) {
-            PyObject *strObj =
-                PyUnicode_FromString(x->pdObjArgs[i].a_w.w_symbol->s_name);
-            PyList_Append(pList, strObj);
-            Py_DECREF(strObj);
-        } else {
-            // post("In pd.getobjargs: unknown type");
         }
     }
     return pList;
@@ -454,7 +457,7 @@ static PyObject *Py4pdMod_PdRecursiveCall(PyObject *self, PyObject *args) {
             x->recursiveClock = clock_new(x, (t_method)Py4pdMod_RecursiveTick);
         Py_INCREF(pValue); // avoid thing to be deleted
         x->recursiveCalls = 0;
-        clock_setunit(x->recursiveClock, 0, 1);
+        // clock_setunit(x->recursiveClock, 0, 0);
         clock_delay(x->recursiveClock, 0);
         Py_RETURN_TRUE;
     }
@@ -1098,6 +1101,27 @@ static PyObject *Py4pdMod_GetPy4pdTmpFolder(PyObject *self, PyObject *args) {
     return PyUnicode_FromString(x->tempPath->s_name);
 }
 
+// Py4pdMod_GetPdSysPath
+
+// =================================
+/**
+ * @brief Returns the tmp folder for py4pd (normally in ~/.py4pd)
+ */
+static PyObject *Py4pdMod_GetPdSearchPaths(PyObject *self, PyObject *args) {
+    (void)self;
+    (void)args;
+
+    PyObject *pdPathList = PyList_New(0);
+    for (int i = 0; 1; i++) {
+        char const *pathelem = namelist_get(STUFF->st_searchpath, i);
+        if (!pathelem) {
+            break;
+        }
+        // add pathelem to pdPathList
+        PyList_Append(pdPathList, PyUnicode_FromString(pathelem));
+    }
+    return pdPathList;
+}
 // =================================
 /**
  * @brief Shows an image using something similar to else/pic
@@ -1346,7 +1370,8 @@ static PyObject *Py4pdMod_AddThingToPlay(PyObject *self, PyObject *args,
                         "pd.add_to_player(onset, thing2Output)");
         return NULL;
     }
-    Py4pdLib_PlayerInsertThing(x, (int)onset, Py_BuildValue("O", thingToPlay));
+    Py4pdPlayer_PlayerInsertThing(x, (int)onset,
+                                  Py_BuildValue("O", thingToPlay));
     Py_RETURN_NONE;
 }
 
@@ -1359,7 +1384,7 @@ static PyObject *Py4pdMod_ClearPlayer(PyObject *self, PyObject *args) {
     (void)args;
 
     t_py *x = Py4pdUtils_GetObject(self);
-    Py4pdLib_Clear(x);
+    Py4pdPlayer_Clear(x);
     Py_RETURN_NONE;
 }
 
@@ -1393,12 +1418,12 @@ PyMethodDef PdMethods[] = {
     // Files
     {"get_patch_dir", Py4pdMod_GetPatchHome, METH_VARARGS,
      "Get PureData Patch Path Folder"},
-    {"get_home_folder", Py4pdMod_GetPatchHome, METH_VARARGS,
-     "Get PureData Patch Path Folder"},
     {"get_py4pd_dir", Py4pdMod_GetPy4pdFolder, METH_VARARGS,
      "Get PureData Py4PD Folder"},
     {"get_temp_dir", Py4pdMod_GetPy4pdTmpFolder, METH_VARARGS,
      "Get PureData Temp Folder"},
+    {"get_pd_search_paths", Py4pdMod_GetPdSearchPaths, METH_NOARGS,
+     "Get PureData sys path"},
 
     // User
     {"get_key", Py4pdMod_PdKey, METH_VARARGS, "Get Object User Parameters"},
@@ -1426,13 +1451,11 @@ PyMethodDef PdMethods[] = {
     // Others
     {"get_obj_pointer", Py4pdMod_GetObjPointer, METH_NOARGS,
      "Get PureData Object Pointer"},
-    {"get_str_pointer", Py4pdMod_GetObjPointer, METH_NOARGS,
-     "Get PureData Object Pointer"},
+
+    // Loops
     {"set_obj_var", Py4pdMod_SetObjVar, METH_VARARGS,
      "It sets a global variable for the Object, it is not clear after the "
      "execution of the function"},
-
-    // Loops
     {"accum_obj_var", Py4pdMod_AccumObjVar, METH_VARARGS,
      "It adds the values in the end of the list"},
     {"get_obj_var", (PyCFunction)Py4pdMod_GetObjVar,
@@ -1489,6 +1512,22 @@ static PyObject *pdmodule_init(PyObject *self) {
 
     PyModule_AddObject(self, "OUTLOOP", Py4pd_OutLoopString);
     PyModule_AddObject(self, "CLEARLOOP", Py4pd_ClearLoopString);
+
+    // PD TYPES
+    PyObject *pA_GIMME = PyLong_FromLong(A_GIMME);
+    PyObject *pA_FLOAT = PyLong_FromLong(A_FLOAT);
+    PyObject *pA_SYMBOL = PyLong_FromLong(A_SYMBOL);
+
+    PyModule_AddObject(self, "A_GIMME", pA_GIMME);
+    PyModule_AddObject(self, "A_FLOAT", pA_FLOAT);
+    PyModule_AddObject(self, "A_SYMBOL", pA_SYMBOL);
+
+    if (PyType_Ready(&Py4pdNewObj_Type) < 0)
+        return NULL;
+    Py_INCREF(&Py4pdNewObj_Type);
+
+    PyModule_AddObject(self, "new_object", (PyObject *)&Py4pdNewObj_Type);
+
     return 0;
 }
 
@@ -1519,6 +1558,7 @@ PyMODINIT_FUNC PyInit_pd() {
     if (py4pdModule == NULL) {
         return NULL;
     }
+
     return py4pdModule;
 }
 

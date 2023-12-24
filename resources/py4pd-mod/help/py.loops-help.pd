@@ -1,4 +1,4 @@
-#N canvas 669 -1 1129 799 8;
+#N canvas 669 -1 501 417 8;
 #X obj 9 6 py4pd -lib py4pd;
 #X obj 7 75 py.iterate;
 #X obj 7 120 py.collect;
@@ -28,13 +28,13 @@
 #X obj 196 189 py- None 1;
 #X obj 167 94 t a a a a, f 18;
 #X obj 195 14 r call_again;
-#X obj 167 301 s call_again;
+#X obj 167 315 s call_again;
 #X obj 104 55 t f f;
 #X obj 167 225 py*;
 #X obj 167 246 py2pd;
 #X obj 273 303 f;
 #X obj 273 324 nbx 5 14 -1e+37 1e+37 0 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 256;
-#X obj 321 213;
+#X obj 167 266 py.recursive;
 #X connect 1 0 3 0;
 #X connect 1 1 2 0;
 #X connect 2 0 4 0;
@@ -56,5 +56,6 @@
 #X connect 17 1 14 0;
 #X connect 18 0 19 0;
 #X connect 19 0 20 1;
-#X connect 19 0 16 0;
+#X connect 19 0 22 0;
 #X connect 20 0 21 0;
+#X connect 22 0 16 0;

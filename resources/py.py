@@ -3,6 +3,7 @@ import sys
 from random import randint
 import numpy as np
 
+
 # ================================================
 # ==============  Functions  =====================
 # ================================================
@@ -136,9 +137,6 @@ def sinusoids(freqs, amps):
     out, new_phases = mksenoide(freqs, amps, phases, 64, pd.get_sample_rate())
     pd.set_obj_var("PHASE", new_phases)
     return out
-
-
-
 
 
 def py4pdLoadObjects():

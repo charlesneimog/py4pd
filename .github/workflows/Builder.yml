@@ -109,8 +109,14 @@ jobs:
           cp -r src py4pd
           find py4pd/src -name "*.o" -type f -delete
           cp resources/README.deken.pd py4pd
+          rm py4pd/resources/BUILD.md
+          rm py4pd/resources/*.json
+          rm py4pd/resources/*.py
+          rm py4pd/resources/*.pd
+          rm py4pd/resources/*.cfg
+          rm py4pd/src/.clang-format
+          rm -r py4pd/resources/pd-lib-builder
           cp -r py4pd test
-          rm py4pd.l_amd64
 
       - name: Tests
         run: |
@@ -216,6 +222,26 @@ jobs:
         env:
           pythonName: python${{ matrix.python-version }}
         run: make PYTHON_VERSION=$pythonName extension=d_amd64
+        
+      - name: Link Python
+        env:
+          pythonName: python${{ matrix.python-version }}
+        run: |
+          python_location=$(whereis $pythonName | awk '{print $2}')
+          if [ -z "$python_location" ]; then
+            echo "Python not found."
+            exit 1
+          fi
+          target_link="/usr/local/bin/$pythonName"
+          if [ ! -e "$target_link" ]; then
+            sudo ln -s "$python_location" "$target_link"
+            echo "Symbolic link created successfully."
+          else
+            echo "File or symbolic link already exists: $target_link"
+          fi
+          ls -l "$target_link"
+          "$target_link" --version
+        
 
       - name: Copy Files and Set for Tests
         run: |
@@ -278,7 +304,7 @@ jobs:
   # =                               DEKEN                                      =
   # ============================================================================
   deken-upload:
-    #if: github.event_name == 'release'
+    if: github.event_name == 'release'
     needs: [pythonversion, windows-build, macos-intel-build, macos-arm-build, linux-build]
     runs-on: ubuntu-latest
     strategy:
@@ -322,7 +348,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     needs: [pythonversion, windows-build, macos-intel-build, macos-arm-build, linux-build]
-    #if: github.event_name == 'release'
+    if: github.event_name == 'release'
     strategy:
       matrix:
         python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}

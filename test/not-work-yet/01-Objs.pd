@@ -1,0 +1,10 @@
+#N canvas 599 33 840 686 8;
+#X obj 5 5 py4pd -lib threadtest;
+#X obj 9 235 nbx 5 14 -1e+37 1e+37 0 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 256;
+#X msg 33 43 asd 100.4 232 3 4;
+#X obj 9 78 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
+#X obj 9 125 audioin, f 21;
+#X obj 125 70 adc~;
+#X obj 150 242 vis;
+#X connect 3 0 4 0;
+#X connect 4 0 1 0;
