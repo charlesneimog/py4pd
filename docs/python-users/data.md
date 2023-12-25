@@ -1,5 +1,5 @@
 These are the methods used to send data from Python to PureData. The inverse path is done mainly with `run` and `key` messages. 
-<br>
+
 --------------------------------------
 ## `pd.out`
 
@@ -85,7 +85,7 @@ You can use `pd.send` to send data to a receive object in your PureData patch. T
 -------------------------------------- 
 ## `pd.tabwrite`
 
-`pd.tabwrite` is a method that is essentially a copy of the `tabwrite` object in PureData. With this method, you can write audio or any data supported to PureData array.
+`pd.tabwrite` is a method that is essentially a copy of the `tabwrite` object in PureData. With this method, you can write audio or any data supported to the PureData array.
 
 
 <div class="grid cards" markdown>

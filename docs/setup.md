@@ -9,7 +9,7 @@ hide:
 ## <h2 align="center"> **Setup** </h2>
 
 !!! danger "Python installation is required!"
-    <p style="font-size: 16px" align="center">Install just `py4pd` (no Python) will not work.</p>
+    <p style="font-size: 16px" align="center">Installing just `py4pd` (no Python) will not work.</p>
 
  <p align="center"> The process of installation is simple, first we install <code>Python</code> and then <code>py4pd</code>. </p>
 
@@ -47,7 +47,7 @@ hide:
 
     === ":material-apple: macOS"
 
-        On `MacOS` you can install Python like and ordirary software.
+        On `MacOS` you can install Python as an ordinary software.
 
         * Go to [Python.org](https://www.python.org/downloads/release/python-3115/),
         * Go to the bottom of the page and download: `macOS 64-bit universal2 installer`.
@@ -56,7 +56,7 @@ hide:
 
     === ":fontawesome-brands-windows: Windows"
 
-        On `Windows` you can install Python like and ordirary software.
+        On `Windows` you can install Python as an ordinary software.
 
         * Go to [Python.org](https://www.python.org/downloads/release/python-3115/),
         * Go to the bottom of the page and download: `Windows installer (64-bit)`.
@@ -64,7 +64,7 @@ hide:
 
     === ":material-linux: Linux"
 
-        On `Linux` you can install Python like and ordirary software.
+        On `Linux`:
 
         * Open the terminal.
         * Run: 

@@ -1,6 +1,6 @@
 ## `pd.get_sample_rate`
 
-This get the current samplerate of PureData. You can use the `pd.SAMPLERATE` variable too.
+This gets the current sample-rate of PureData. You can use the `pd.SAMPLERATE` variable too.
 
 <div class="grid cards" markdown>
 
@@ -28,13 +28,13 @@ This get the current samplerate of PureData. You can use the `pd.SAMPLERATE` var
 
 ## `pd.get_vec_size`
 
-This get the current vectorsize/blocksize of PureData. This get the vector size of the object, so it is inside some patch with `block~ 128` and the PureData is configured with `vectorsize = 64` it will return 128. To get the PureData vector size you can use `pd.VECSIZE`.
+This gets the current vector-size/blocksize of PureData. This gets the vector size of the object, so it is inside some patch with `block`~ 128`, and the PureData is configured with `vectorsize = 64` it will return 128. To get the PureData vector size you can use `pd.VECSIZE`.
 
 <div class="grid cards" markdown>
 
 -   :fontawesome-brands-python: __Example__
 
-    It just returns unique string.
+    It just returns a unique string.
     
     ``` py
     import pd
@@ -53,13 +53,13 @@ This get the current vectorsize/blocksize of PureData. This get the vector size 
 
 ## `pd.get_num_channels`
 
-This function get the actual number of channels of the object.
+This function gets the actual number of channels of the object.
 
 <div class="grid cards" markdown>
 
 -   :fontawesome-brands-python: __Example__
 
-    It just returns unique string.
+    It just returns a unique string.
     
     ``` py
     import pd

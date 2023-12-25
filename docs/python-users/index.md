@@ -2,11 +2,11 @@
 
 If you use [Python](https://www.python.org/) and [PureData](https://puredata.info/), you can use the `pd` module, available with `py4pd` object, to:
 
-- Use your own Python code as a PureData Objects;
+- Use your own Python code as a PureData Object;
 - Interact with PureData from Python;
-- Make your Python Audio Research Avaible in PureData and DAWs enviroment (using for example [PlugData](https://plugdata.org/));
+- Make your Python Audio Research available in PureData and DAWs environment (using for example [PlugData](https://plugdata.org/));
 
-In this section I present all things that you can do with `pd` internal module. Below, some interesting examples.
+In this section, I present what you can use with `pd` internal module. Below, are some interesting examples.
 
 <div class="grid cards" markdown>
 

@@ -7,7 +7,7 @@ It is crucial to emphasize that when an object uses `pd.add_object()` it is adde
 
 -   :fontawesome-brands-python: __Example__
 
-    It just returns unique string with the pathname.
+    It just returns a unique string with the pathname.
     
     ``` py
     import pd
@@ -17,9 +17,7 @@ It is crucial to emphasize that when an object uses `pd.add_object()` it is adde
         pd.add_object(myFunction, "mypyobj", 
                 obj_type=pd.VIS, fig_size=(400, 200), 
                 py_out=True, no_outlet=False)
-
     ```
-
     
 </div>
 

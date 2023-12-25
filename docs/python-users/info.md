@@ -10,7 +10,7 @@ There are three messages used to print info in the PureData console, `pd.print`,
 -   :fontawesome-brands-python: __Example__
 
 
-    The ordinary function `#!python print()` will not work in `py4pd` (unless that you open PureData from the terminal). So if you want to debug or print some info from the PureData console you need to use `#!python pd.print`. 
+    The ordinary function `#!python print()` will not work in `py4pd` (unless you open PureData from the terminal). So if you want to debug or print some info from the PureData console you need to use `#!python pd.print`. 
 
     
     ``` py
@@ -36,7 +36,7 @@ There are three messages used to print info in the PureData console, `pd.print`,
     | `show_prefix`   | `Python Object` | When `False` don't print prefix |
 
     !!! info
-        For Object written in Python, prefix will be the Object Name.
+        For Object written in Python, the prefix will be the Object Name.
     
 </div>
 
@@ -47,7 +47,7 @@ There are three messages used to print info in the PureData console, `pd.print`,
 
 -   :fontawesome-brands-python: __Example__
 
-    This function uses `logpost` in C PureData API to log messages using levels. For example, if you use `#!python logpost(4, "PureData message in level 4")`, the message will appear in console just if the user had selected to show the messages of level 4 in PureData Console.
+    This function uses `logpost` in C PureData API to log messages using levels. For example, if you use `#!python logpost(4, "PureData message in level 4")`, the message will appear in the console just if the user had selected to show the messages of level 4 in PureData Console.
     
     ``` py
     import pd
@@ -108,7 +108,7 @@ There are three messages used to print info in the PureData console, `pd.print`,
 
 -   :fontawesome-brands-python: __Example__
 
-    When using some functions as `pd.show_image` can be usefull to know if there a GUI running. This function returns `False` when running PureData from terminal using `-nogui`.
+    When using some functions as `pd.show_image` can be useful to know if a GUI is running. This function returns `False` when running PureData from the terminal using `-nogui`.
 
     ``` py
     import pd
@@ -121,7 +121,7 @@ There are three messages used to print info in the PureData console, `pd.print`,
 
 -   :fontawesome-solid-gear: __Arguments__
 
-    There is no Arguments.
+    There are no Arguments.
 
 </div>
 
@@ -132,7 +132,7 @@ There are three messages used to print info in the PureData console, `pd.print`,
 
 -   :fontawesome-brands-python: __Example__
 
-    To set different default images for `pd.VIS` objects, you can use this function. It return 1 when the patch is used without zoom and 2 when is used with zoom. 
+    To set different default images for `pd.VIS` objects, you can use this function. It returns 1 when the patch is used without zoom and 2 when is used with zoom. 
 
     ``` py
     import pd
@@ -145,13 +145,13 @@ There are three messages used to print info in the PureData console, `pd.print`,
 
 -   :fontawesome-solid-gear: __Arguments__
 
-    There is no Arguments.
+    There are no Arguments.
 
 </div>
 
 ## Objects
 
-This functions are used to retrive information about the currect object where the function is being executed.
+These functions are used to retrieve information about the current object where the function is being executed.
 
 ### `get_outlet_count`
 
@@ -159,7 +159,7 @@ This functions are used to retrive information about the currect object where th
 
 -   :fontawesome-brands-python: __Example__
 
-    Get the numbers of outlets of the object.
+    Get the number of outlets of the object.
     
     ``` python
     import pd
@@ -175,13 +175,13 @@ This functions are used to retrive information about the currect object where th
 
 </div>
 
-### `get_objects_args`
+### `get_obj_args`
 
 <div class="grid cards" markdown>
 
 -   :fontawesome-brands-python: __Example__
 
-    Return a list with all the arguments used in the creation of the object.
+    Returns a list of all arguments used to create the object.
     
     ``` python
     import pd

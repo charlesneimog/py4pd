@@ -1,4 +1,4 @@
-Used to create functions like sum numbers, convertion between datas (svg to scores, for example), etc. This objects are the more simple but the more useful, you create it using `pd.add_object` or `pd.new_object`. Inside the folder resources of the `py4pd` code you will find a lot of examples of these objects, we also have some py4pd libraries, like `py4pd-upic`, `py4pd-ji`, `py4pd-freesound`, `py4pd-partials`.
+Used to create functions like sum numbers, conversion between data (svg to scores, for example), etc. These objects are the simpler but more useful, you create them using `pd`.add_object` or `pd.new_object`. Inside the folder resources of the `py4pd` code you will find a lot of examples of these objects, we also have some py4pd libraries, like `py4pd-upic`, `py4pd-ji`, `py4pd-freesound`, `py4pd-partials`.
 
 ### `py4pd-upic`
 

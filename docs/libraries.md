@@ -56,14 +56,14 @@ You can download the libraries using `deken`. To install the library search for 
     <tbody>
       <tr>
         <td><a href="https://github.com/charlesneimog/py4pd-partials">py4pd-partials</a></td>
-        <td>It allows to do Partial Tracking in PureData (under developement yet)</td>
+        <td>It allows to do Partial Tracking in PureData (under development yet)</td>
         <td><a href="https://charlesneimog.github.io/"</a> Charles K. Neimog</td>
       </tr>
     </tbody>
     <tbody>
       <tr>
         <td><a href="https://github.com/charlesneimog/py4pd-freesound">py4pd-freesound</a></td>
-        <td>Get freesound sound in PureData (under developement yet)</td>
+        <td>Get freesound sound in PureData (under development yet)</td>
         <td><a href="https://charlesneimog.github.io/"</a> Charles K. Neimog</td>
       </tr>
     </tbody>

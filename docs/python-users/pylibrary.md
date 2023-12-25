@@ -1,10 +1,10 @@
-With the `py4pd` it is possible to create new PureData objects using just Python. For that, you need to declare your Python functions and then create a function called `libraryname_setup` or `py4pdLoadObjects`. Inside this function, for simple objects you can use `pd.add_object`, for more complex objects, with lot of methods, you need to use the class returned from `pd.new_object()`.
+With the `py4pd` it is possible to create new PureData objects using just Python. For that, you need to declare your Python functions and then create a function called `libraryname_setup` or `py4pdLoadObjects`. Inside this function, for simple objects you can use `pd.add_object`, for more complex objects, with a lot of methods, you need to use the class returned from `pd.new_object()`.
 
-Before understand the funcions, if you want to create libraries we highly suggest the folder organization showed below.
+Before understanding the functions, if you want to create libraries we highly suggest the folder organization shown below.
 
 !!! note
 
-    _The folder name must be the same name of the `.py` file. In this example, it must be called `libraryname`_,
+    _The folder name must be the same as the `.py` file. In this example, it must be called `libraryname`_,
 
 
 !!! warning ""

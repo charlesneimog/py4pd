@@ -1,4 +1,4 @@
-In `py4pd`, sometimes you need to save something in the patch folder (as audio files), or save something temporally, or anothers things. In this sections we present some helpers to get the correct pathname that can be usefull.
+In `py4pd`, sometimes you need to save something in the patch folder (as audio files), or save something temporally, or other things. In this section, we present some helpers to get the correct pathname that can be useful.
 
 
 ## `pd.get_patch_dir`

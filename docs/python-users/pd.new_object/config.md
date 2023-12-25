@@ -168,7 +168,7 @@ Some configuration for the object.
 
     !!! note ""
 
-        Set the height and width (respectivaly) of the image.
+        Set the height and width (respectively) of the image.
 
     ``` py
     def py4pdLoadObjects():
@@ -201,7 +201,7 @@ Some configuration for the object.
 
     !!! note ""
 
-        <p style="font-size: 16px"> When set to `True`, it adds 3 methods for the object, `play`, `stop`, `clear`, this allows to use the function `pd.add_to_player`. </p>
+        <p style="font-size: 16px"> When set to `True`, it adds 3 methods for the object, `play`, `stop`, `clear`, this allows to use of the function `pd.add_to_player`. </p>
 
     ``` py
 

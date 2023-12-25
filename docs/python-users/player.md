@@ -1,7 +1,7 @@
-For musicians, it is important to put things in time. With the functions presented here you can call specific functions using `onsets` values. For example, in [py4pd-upic](https://github.com/charlesneimog/py4pd-upic) I use `pd.add_to_player` to play svg draws that are used to control parameters. So each `svg` elements trigger some specific function in a specific point in time.
+For musicians, it is important to put things in time. With the functions presented here, you can call specific functions using `onset` values. For example, in [py4pd-upic](https://github.com/charlesneimog/py4pd-upic) I use `pd.add_to_player` to play svg draws that are used to control parameters. So each `svg` elements trigger some specific function at a specific point in time.
 
 !!! danger "Set the right configuration"
-    <p style="font-size: 16px;">To use this `methods` the Python Object must be configurable with `playable` as `#!python True`. See [configuration](pd.new_object/config.md#playable) for `player` object.</p>
+    <p style="font-size: 16px;">To use these `methods` the Python Object must be configurable with `playable` as `#!python True`. See [configuration](pd.new_object/config.md#playable) for the `player` object.</p>
 
 ## `pd.add_to_player`
 
@@ -9,7 +9,7 @@ For musicians, it is important to put things in time. With the functions present
 
 -   :fontawesome-brands-python: __Example__
 
-    It just returns unique string.
+    It just returns a unique string.
     
     ``` python
     import pd

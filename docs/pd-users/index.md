@@ -1,6 +1,6 @@
 # `py4pd` Object
 
-In this section is descriteb how the `py4pd` objects works in PureData enviroment. I split the content in two parts, one for arguments others for methods. I recommend to read the sections of arguments first then the section about the methods. 
+This section describes how the `py4pd` objects work in PureData environment. I split the content into two parts, one for arguments other for methods. I recommend reading the sections on arguments first then the section about the methods. 
 
 <p align="center">
     <img src="../examples/pd-methods/geral.png" width="40%"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">

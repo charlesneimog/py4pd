@@ -45,7 +45,7 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
 
 === "Score In PureData"
 
-    When I started work with PureData, I missed score visualization tools. `py4pd` can easily solve this using `neoscore`.
+    When I started to work with PureData, I missed score visualization tools. `py4pd` can easily solve this using `neoscore`.
 
     <p align="center">
         <img src="examples/score/score.gif" width="50%" loading="lazy" alt="Score GIF"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
@@ -53,7 +53,7 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
 
 === "Artificial Inteligence"
 
-    It is easy to use `AI` with `py4pd`. There are already powerful objects for realtime, like `nn~` and `ddsp~`, but they are designed to specify approaches. Below is an example using `py4pd` and the Python code used by `nn~` (offline processing).
+    It is easy to use `AI` with `py4pd`. There are already powerful objects for real-time, like `nn~` and `ddsp~`, but they are designed to specify approaches. Below is an example using `py4pd` and the Python code used by `nn~` (offline processing).
 
     <p align="center">
         <img src="examples/ia/ia.png" width="60%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);"></img>
@@ -68,7 +68,7 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
 
     ??? example end "Python Code"
 
-        To illustrate the statement "Python offers a more accessible and user-friendly alternative that C and C++", presented earlier, here is an example of Python code:
+        To illustrate the statement "Python offers a more accessible and user-friendly alternative than C and C++", presented earlier, here is an example of Python code:
 
         ``` py
 
@@ -77,13 +77,13 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
         import librosa # Library to load audios in Python
 
         def renderAudio_nn(audio, model):
-            model = pd.get_patch_dir() + '/' + model # get the pathname of model.ts, that is the result of the IA trained.
+            model = pd.get_patch_dir() + '/' + model # get the pathname of model.ts, which is the result of the IA trained.
             audio = pd.get_patch_dir() + '/' +  audio # The audio source
             torch.set_grad_enabled(False) # config of the IA
             model = torch.jit.load(model).eval() # Load model of IA
             x = librosa.load(audio)[0] # take the audio samples of the sound (audio)
             x_for = torch.from_numpy(x).reshape(1, 1, -1) # transform the audio to fit in the IA model
-            z = model.encode(x_for) # tranlate for the IA thing, I believe here is the black box.
+            z = model.encode(x_for) # the black box
             z[:, 0] += torch.linspace(-2, 2, z.shape[-1]) # No idea;
             y = model.decode(z).numpy().reshape(-1) # Now we have sound again!
             pd.tabwrite('iaAudio', y.tolist(), resize=True) # Here we write the sound in the table 'iaAudio'.
@@ -129,7 +129,7 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
 
 === "Eco (2023)"
 
-    Eco (2023) is the first version of one under developing piece that use some concepts of the composer Ricardo Thomasi in his PhD research. The idea here, is to use smartphones/tablets putted in the performance music stand, to make realtime `FFT` and `Partial Tracking` and then, generate scores that are played. The smartphones/tablets send data to PureData, and using `py4pd`, we generate realtime scores using `neoscore`.
+    Eco (2023) is the first version of one under-developing piece that uses some concepts of the composer Ricardo Thomasi in his PhD research. The idea here is to use smartphones/tablets put in the performance music stand, to make real-time `FFT` and `Partial Tracking` and then, generate scores that are played. The smartphones/tablets send data to PureData, and using `py4pd`, we generate real-time scores using `neoscore`.
 
     <p align="center">
         <iframe style="border-radius: 5px" width="560" height="315" src="https://www.youtube.com/embed/XIEI7-W7t2o" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
@@ -137,7 +137,7 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
 
 === "Moteto (2023)"
 
-    The piece Moteto aims to be a rereading of medieval motet. In addition, to overlapping independent voices, we use Just Intonation structures. With the help of technology, I aim to make the piece playable, also by amateur choirs, it is available in this website: www.charlesneimog.com/moteto/.
+    The piece Moteto aims to be a rereading of a medieval motet. In addition, to overlapping independent voices, we use Just Intonation structures. With the help of technology, I aim to make the piece playable, also by amateur choirs, it is available on this website: www.charlesneimog.com/moteto/.
     <p align="center">
         <iframe style="border-radius: 5px" width="560" height="315" src="https://www.youtube.com/embed/TVcHzLCmpDM?si=GIkYPPifzjhfFZvM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
     </p>

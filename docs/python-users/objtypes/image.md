@@ -1,6 +1,6 @@
 Used to create functions to show something. Like Scores, Audio descriptors, and others.
 
-To create vis object, in `pd.add_object` we add the `objtype=pd.VIS`. Inside the function, we always need the `pd.show_image` method, without it, anything will be showed.
+To create `pd.VIS` object, in `pd.add_object` we add the `objtype=pd.VIS`. Inside the function, we always need the `pd.show_image` method, without it, nothing will be shown.
 For `pd.VIS` objects, we have some options in `pd.add_object`.
 
 See the example:
@@ -51,7 +51,7 @@ See the example:
 
 ## py4pd-score
 
-With `py4pd-score` you can use tradicional scores inside PureData patches. It is highly inspired in OpenMusic score, when `py4pd` be very stable, I want to implement the `voice`, `note` objects, for now just chord is implemented.
+With `py4pd-score` you can use traditional scores inside PureData patches. It is highly inspired by the OpenMusic score, when `py4pd` is stable, I want to implement the `voice`, `note` objects, for now just chord is implemented.
 
 <p align="center">
     <img src="../../../examples/score/score.gif" width="50%" alt="Scores" style="box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">

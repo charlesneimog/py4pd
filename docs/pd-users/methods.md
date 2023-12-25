@@ -1,6 +1,6 @@
 # <h2 align="center"> **Methods** </h2>
 
-Next, I present all methods used in `py4pd` object. But the three main `methods` are:
+Next, I present all methods used in `py4pd` object. The methods are messages that you can send to the object. The methods are:
 
 <div class="grid cards" markdown>
 
@@ -50,13 +50,11 @@ Next, I present all methods used in `py4pd` object. But the three main `methods`
 
 - :my-icons-pd: __[packages](#packages)__
 
-    Set the Python Packages folder (where Python search for Packages).
+    Set the Python Packages folder (where Python searches for Packages).
 
 - :my-icons-pd: __[version](#version)__
 
     Print the Version of `py4pd` and Python.
-
-
 
 </div>
 
@@ -91,7 +89,7 @@ _Set the function for the object._
 
 ### <h3 align="center"> <code>pip</code> </h3>
 
-When you `set` some function and see some error related with `ModuleNotFoundError: No module named somemodule`, you need to use `pip` to install this module.
+When you `set` some function and see some error related to `ModuleNotFoundError:` No module named some module`, you` need to use `pip` to install this module.
 
 <div class="grid cards" markdown>
 
@@ -145,7 +143,7 @@ _Used to run the Python Functions._
 
 ### <h3 align="center"> <code>pointers</code> </h3>
 
-You can work with Python Data types inside PureData. With this you can work with any data type provided by Python inside PureData.
+You can work with Python Data types inside PureData. With this, you can work with any data type provided by Python inside PureData.
 
 <div class="grid cards" markdown>
 
@@ -170,7 +168,7 @@ You can work with Python Data types inside PureData. With this you can work with
 
 ### <h3 align="center"> <code>doc</code> </h3>
 
-It prints on PureData the documentation of the Python Function (if it exits).
+It prints on PureData the documentation of the Python Function (if it exists).
 
 <div class="grid cards" markdown>
 
@@ -198,7 +196,7 @@ It prints on PureData the documentation of the Python Function (if it exits).
 
 ### <h3 align="center"> <code>open</code> </h3>
 
-It opens `py` script files, case the file does not exist in the patch folder, it creates a new Python Script. `open score`, for example, will open the `score.py` (if it exists) or create `score.py`.
+It opens `py` script files, in case the file does not exist in the patch folder, it creates a new Python Script. `open score`, for example, will open the `score.py` (if it exists) or create `score.py`.
 
 
 <div class="grid cards" markdown>
@@ -251,7 +249,7 @@ It creates a new script in the patch folder.
 ---
 ### <h3 align="center"> <code>editor</code> </h3>
 
-Without arguments it opens the Python Script loaded with the message `set`. With one symbol args you can choose between four IDE: `vscode`, `nvim`, `emacs` or `sublime`. The function must be loaded first.
+Without arguments, it opens the Python Script loaded with the message `set`. With one symbol args, you can choose between four IDE: `vscode`, `nvim, `emacs`, or `sublime`. The function must be loaded first.
 
 
 <div class="grid cards" markdown>
@@ -272,7 +270,7 @@ Without arguments it opens the Python Script loaded with the message `set`. With
     </p>
 
     ??? tip "Tip"
-        If a function is loaded, `click` in the object will open the loaded function too.
+        If a function is loaded, clicking on the object will open the loaded function too.
 
 </div>
 
@@ -288,7 +286,7 @@ If you are working on a Python Script and changing the code, you need to send th
 -   :fontawesome-solid-gear: __Arguments__
 
     <p align="center">
-        There is no Arguments.
+        There are no Arguments.
     </p>
 
 -   :my-icons-pd: __Example__
@@ -304,8 +302,7 @@ If you are working on a Python Script and changing the code, you need to send th
 
 ### <h3 align="center"> <code>home</code> </h3>
 
-Set the home for Python. It is similar to execute Python from some specific folder. For example, when we use `cd Downloads` then `python myscript.py` in the same terminal.
-
+Set the home for Python. It is similar to executing Python from some specific folder. For example, when we use `cd Downloads` then `python myscript.py` in the same terminal.
 
 
 <div class="grid cards" markdown>
@@ -329,7 +326,7 @@ Set the home for Python. It is similar to execute Python from some specific fold
 
 ### <h3 align="center"> <code>packages</code> </h3>
 
-Set the packages path for Python. `py4pd` will look for external modules inside this folders. For example, if you one virtual enviroment called `composition` with miniconda, you can send `packages ~/miniconda3/envs/composition/lib/python3.11/site-packages` to use the installed packages.
+Set the package path for Python. `py4pd` will look for external modules inside these folders. For example, if you have one virtual environment called `composition`` with miniconda, you can send `packages ~/miniconda3/envs/composition/lib/python3.11/site-packages` to use the installed packages.
 
 
 <div class="grid cards" markdown>

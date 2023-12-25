@@ -1,4 +1,4 @@
-The following functions serve to instantiate variables for the object. The utilization of global variables is discouraged, primarily due to the potential for errors. For instance, consider the scenario where you create a sinusoidal object. In order to generate a continuous sinusoidal, it is crucial to store some pertinent values, as `phrase` for example. If the variables are saved globally and multiple objects are created, errors may arise. In the sinusoidal case, all objects would store the phrase in the same variable, rendering the sinusoidal wrong. In examples like this, it is appropriate to employ the objects `pd.set_obj_var`, `pd.get_obj_var` and `pd.accum_obj_var`.
+The following functions serve to instantiate variables for the object. The utilization of global variables is discouraged, primarily due to the potential for errors. For instance, consider the scenario where you create a sinusoidal object. To generate a continuous sinusoidal, it is crucial to store some pertinent values, such as `phrase` for example. If the variables are saved globally and multiple objects are created, errors may arise. In the sinusoidal case, all objects would store the phrase in the same variable, rendering the sinusoidal wrong. In examples like this, it is appropriate to employ the objects `pd.set_obj_var`, `pd.get_obj_var` and `pd.accum_obj_var`.
 
 ---
 
@@ -8,7 +8,7 @@ The following functions serve to instantiate variables for the object. The utili
 
 -   :fontawesome-brands-python: __Example__
 
-    This function set a value for a object internal variable.
+    This function sets a value for an object internal variable.
     
     ``` python
     import pd
@@ -33,7 +33,7 @@ The following functions serve to instantiate variables for the object. The utili
 
 -   :fontawesome-brands-python: __Example__
 
-    This function will create a list with all things that you save in it. `py.collect` use this function and I believe that will be usefull just in loops contexts.
+    This function will create a list with all the things that you save in it. `py.collect` uses this function and I believe that will be useful just in loop contexts.
     
     ``` python
     import pd
