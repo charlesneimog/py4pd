@@ -9,7 +9,7 @@ ifeq (MINGW,$(findstring MINGW,$(uname)))
 	PYTHON_PATH := $(shell cat pythonpath.txt)
 	NUMPY_INCLUDE := $(shell cat numpyincludes.txt)
 	PYTHON_DLL := $(PYTHON_DLL)
-	cflags = -I '$(PYTHON_INCLUDE)' -I '$(NUMPY_INCLUDE)' -Wno-cast-function-type -Wno-unused-variable 
+	cflags = -I '$(PYTHON_INCLUDE)' -I '$(NUMPY_INCLUDE)' -Wno-cast-function-type -Wno-unused-variable -std=c99
 	ldlibs =  '$(PYTHON_DLL)' -lwinpthread 
 
 # =================================== Linux =====================================
@@ -17,7 +17,7 @@ else ifeq (Linux,$(findstring Linux,$(uname)))
 	# $(shell rm -f src/*.o)
   	PYTHON_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
 	NUMPY_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import numpy; print(numpy.get_include())')
-	cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type
+	cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -std=c99 -D_DEFAULT_SOURCE
   	ldlibs = -l $(PYTHON_VERSION) 
 
 # =================================== MacOS =====================================
@@ -29,7 +29,7 @@ else ifeq (Darwin,$(findstring Darwin,$(uname)))
 	else
   		cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-bad-function-cast -mmacosx-version-min=10.9 
 	endif
-  	PYTHON_LIB := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))')
+  	PYTHON_LIB := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("LIBDIR"))') -std=c99 -D_BSD_SOURCE
   	ldlibs = -L $(PYTHON_LIB) -l $(PYTHON_VERSION) -Wno-null-pointer-subtraction
 
 else

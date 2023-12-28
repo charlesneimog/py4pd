@@ -76,7 +76,7 @@ def pd_tempfolder():
 
 def pd_output():
     "It sends some output to the py4pd output."
-
+    
     for x in range(10):
         pd.out(x)
 
@@ -93,12 +93,10 @@ def pdout(x):
     pd.out(x, symbol="myloop")
     pd.out(x, symbol="myloop2")
     return None
-
-
+    
 def pdouttest(y):
     for x in range(y):
         pd.out(x, out_n=x)
-
 
 def pd_print():
     "It sends a message to the py4pd message box."
@@ -162,7 +160,7 @@ def mksenoide(freqs, amps, phases, vectorsize, samplerate):
     return out, new_phases
 
 
-def sinusoids(freqs, amps):
+def sinusoids(freqs=[440], amps=[0.3]):
     if freqs is None or amps is None:
         pd.error("You need to set the amplitudes")
         return np.zeros((1, 64))
@@ -207,42 +205,6 @@ def audioInOut(audio):
     return transformed_audio
 
 
-def testpdMethod(method):
-    try:
-        if method == "get_patch_dir":
-            return pd.get_patch_dir()
-        elif method == "get_vec_size":
-            return pd.get_vec_size()
-        elif method == "get_py4pd_dir":
-            return pd.get_py4pd_dir()
-        elif method == "tabwrite":
-            return pd.tabwrite("pd-test", [10, 20, 30, 40, 50], resize=True)
-        elif method == "tabread":
-            return pd.tabread("pd-test", numpy=False) == [10, 20, 30, 40, 50]
-        elif method == "print":
-            return pd.print("Ok")
-        elif method == "logpost":
-            return pd.logpost(1, "logpost")
-        elif method == "error":
-            return pd.error("my test")
-        elif method == "search-patches":
-            return pd.get_pd_search_paths()
-        elif method == "get_patch_zoom":
-            return pd.get_patch_zoom()
-        elif method == "get_outlet_count":
-            return pd.get_outlet_count()
-        elif method == "get_obj_args":
-            return pd.get_obj_args()
-        elif method == "objargs":
-            pd.print(pd.get_obj_args())
-        else:
-            return -1
-
-    except Exception as e:
-        pd.print(e)
-        return -1
-
-
 # ================================================
 # ================ SETUP =========================
 # ================================================
@@ -250,14 +212,20 @@ def testpdMethod(method):
 
 def py4pdLoadObjects():
     pd.add_object(getTestId, "getTestId")
-
+    
     # pd module test
     pd.add_object(pdouttest, "pd.out", num_aux_outlets=4)
-
+    
     # Others
-    pd.add_object(sinusoids, "sinusoids~", obj_type=pd.AUDIOOUT)
+    objsinusoids = pd.new_object("sinusoids~")
+    objsinusoids.type = pd.AUDIOOUT
+    objsinusoids.addmethod_audioout(sinusoids)
+    objsinusoids.add_object()
+
+   
+   
+    # 
     pd.add_object(audioin, "audioin~", obj_type=pd.AUDIOIN)
     pd.add_object(audioInOut, "audio~", obj_type=pd.AUDIO)
     pd.add_object(generate_audio_noise, "pynoise~", obj_type=pd.AUDIOOUT)
     pd.add_object(randomNumpyArray, "random-array", py_out=True)
-    pd.add_object(testpdMethod, "pd-mod")

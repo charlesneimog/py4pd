@@ -1,4 +1,4 @@
-#N canvas 487 -20 1368 929 8;
+#N canvas 487 -20 1247 752 8;
 #X declare -path mem;
 #X obj 8 6 py4pd -lib py4pd;
 #X obj 10 48 bng 25 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
@@ -13,7 +13,7 @@
 #X obj 167 102 problem2;
 #X obj 246 100 problem3;
 #X obj 325 100 problem4;
-#N canvas 180 218 843 717 Memory-Leaks 1;
+#N canvas 180 218 843 717 Memory-Leaks 0;
 #X obj 7 101 nbx 5 14 -1e+37 1e+37 0 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 256;
 #X obj 7 136 list;
 #X obj 24 117 r mem;

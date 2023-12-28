@@ -1,0 +1,2 @@
+#N canvas 742 17 840 686 8;
+#X obj 5 5 py4pd -lib py4pd-score;
