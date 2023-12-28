@@ -15,7 +15,7 @@ for root, dirs, files in os.walk(os.path.join(thisFile, "src")):
                 pd.error(f"Error importing {file}: {e}")
 
 
-from src.convertion import *
+from src.convertion import pd2py, pdlist2pylist, py2pd
 from src.info import *
 from src.libs import *
 from src.list import *

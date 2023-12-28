@@ -46,4 +46,6 @@ def pyrecursive(data):
 
 def pygate(value, out):
     """It gates the output"""
-    pd.out(value, out_n=out)
+    if out == 0 or out is None:
+        return None
+    pd.out(value, out_n=out - 1)
