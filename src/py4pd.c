@@ -5,7 +5,7 @@
 // ============================================
 t_class *py4pd_class;        // For for normal objects, almost unused
 t_class *py4pd_classLibrary; // For libraries
-int object_count = 0;
+int objCount = 0;
 
 void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv) {
     (void)x;

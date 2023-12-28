@@ -451,7 +451,7 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
         }
     }
 
-    object_count++; // To clear memory when closing the patch
+    objCount++; // To clear memory when closing the patch
     Py_DECREF(pd_module);
     Py_DECREF(py4pd_capsule);
     return (x);

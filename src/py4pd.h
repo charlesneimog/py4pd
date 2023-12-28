@@ -230,7 +230,7 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
 #define PY4PD_IMAGE "R0lGODlhKgAhAPAAAP///wAAACH5BAAAAAAAIf8LSW1hZ2VNYWdpY2sOZ2FtbWE9MC40NTQ1NDUALAAAAAAqACEAAAIkhI+py+0Po5y02ouz3rz7D4biSJbmiabqyrbuC8fyTNf2jTMFADs="
 #define PY4PDSIGTOTAL(s) ((t_int)((s)->s_length * (s)->s_nchans))
 
-extern int object_count; 
+extern int objCount; 
 extern PyTypeObject Py4pdNewObj_Type;
 
 #endif

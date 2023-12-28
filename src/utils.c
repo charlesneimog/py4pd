@@ -1086,9 +1086,9 @@ void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where) {
  */
 
 void *Py4pdUtils_FreeObj(t_py *x) {
-    object_count--;
-    if (object_count == 0) {
-        object_count = 0;
+    objCount--;
+    if (objCount == 0) {
+        objCount = 0;
         char command[1000];
 #ifdef _WIN64
         sprintf(command, "cmd /C del /Q /S %s*.*", x->tempPath->s_name);
