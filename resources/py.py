@@ -140,5 +140,5 @@ def sinusoids(freqs, amps):
 
 
 def py4pdLoadObjects():
-    pd.add_object(sinusoids, 'sinusoids~', objtype=pd.AUDIOOUT) 
+    pd.add_object(sinusoids, 'sinusoids~', obj_type=pd.AUDIOOUT) 
     
