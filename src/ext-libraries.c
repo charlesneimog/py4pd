@@ -375,6 +375,7 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     x->pScriptName = gensym(PyUnicode_AsUTF8(code->co_filename));
     x->objType = PyLong_AsLong(Py_ObjType);
     x->numInlets = code->co_argcount;
+    x->vectorSize = sys_getblksize();
     Py4pdUtils_SetObjConfig(x);
     x->pArgsCount = 0;
     int parseArgsRight =
