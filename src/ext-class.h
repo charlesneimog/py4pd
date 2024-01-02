@@ -25,8 +25,8 @@ typedef struct {
     PyObject *pFuncList;
     PyObject *pFuncAnything;
     PyObject *pFuncBang;
-    PyObject *pAudioIn;
-    PyObject *pAudioOut;
+
+    // Audio
     PyObject *pAudio;
 
     // PySel Methods
