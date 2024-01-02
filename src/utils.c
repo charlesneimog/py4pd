@@ -72,14 +72,14 @@ void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet) {
     seplen++;
     char *sep = t_getbytes(seplen * sizeof(*sep));
     memset(sep, '\0', seplen);
-    strcpy(sep, " ");
+    strlcpy(sep, " ", seplen);
     if (s) {
         long unsigned int iptlen = strlen(s->s_name);
         t_atom *out = t_getbytes(iptlen * sizeof(*out));
         iptlen++;
         char *newstr = t_getbytes(iptlen * sizeof(*newstr));
         memset(newstr, '\0', iptlen);
-        strcpy(newstr, s->s_name);
+        strlcpy(newstr, s->s_name, iptlen);
         int atompos = 0; // position in atom
         char *ret = Py4pdUtils_Mtok(newstr, sep);
         char *err; // error pointer
@@ -386,7 +386,6 @@ PyObject *Py4pdUtils_CreatePyObjFromPdArgs(t_symbol *s, int argc,
         }
     } else if ((s == gensym("list") || s == gensym("anything") || s == NULL) &&
                argc > 1) {
-        post("I am here");
         pArgs = PyList_New(argc);
         for (int i = 0; i < argc; i++) {
             t_atomtype aType = argv[i].a_type;
@@ -903,6 +902,9 @@ int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
     if (prev_obj_exists == 1 && pValue != NULL) {
         objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
         if (objectCapsule == NULL) {
+            if (PyPtrValue != NULL) {
+                free(PyPtrValue);
+            }
             pd_error(x, "[Python] Failed to add object to Python");
             return -1;
         }
@@ -1178,6 +1180,9 @@ inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct,
             } else if (Py_IsNone(pValue_i)) {
                 // not possible to represent None in Pd, so we just skip it
             } else {
+                if (list_array != NULL) {
+                    free(list_array);
+                }
                 pd_error(
                     x,
                     "[py4pd] py4pd just convert int, float, string, and lists! "
@@ -1240,7 +1245,8 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc,
             if (strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL) {
                 char *str =
                     (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
-                strcpy(str, argv[i].a_w.w_symbol->s_name);
+                strlcpy(str, argv[i].a_w.w_symbol->s_name,
+                        strlen(argv[i].a_w.w_symbol->s_name) + 1);
                 Py4pdUtils_RemoveChar(str, '[');
                 listsArrays[listCount] = PyList_New(0);
                 int isNumeric = Py4pdUtils_IsNumericOrDot(str);
@@ -1492,12 +1498,12 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
                         char *new_packages_path = (char *)malloc(
                             sizeof(char) * (strlen(x->pdPatchPath->s_name) +
                                             strlen(packages_path) + 1)); //
-                        strcpy(new_packages_path,
-                               x->pdPatchPath->s_name); // copy string one
-                                                        // into the result.
-                        strcat(new_packages_path,
-                               packages_path +
-                                   1); // append string two to the result.
+                        strlcpy(new_packages_path, x->pdPatchPath->s_name,
+                                strlen(x->pdPatchPath->s_name) + 1);
+                        strlcat(new_packages_path,
+                                packages_path + 1, // remove the first character
+                                strlen(packages_path) + 1);
+
                         x->pkgPath = gensym(new_packages_path);
                         free(new_packages_path);
                     } else {
@@ -1508,7 +1514,8 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
             } else if (strstr(line, "editor =") != NULL) {
                 char *editor = (char *)malloc(
                     sizeof(char) * (strlen(line) - strlen("editor = ") + 1)); //
-                strcpy(editor, line + strlen("editor = "));
+                strlcpy(editor, line + strlen("editor = "),
+                        strlen(line) - strlen("editor = ") + 1);
                 Py4pdUtils_RemoveChar(editor, '\n');
                 Py4pdUtils_RemoveChar(editor, '\r');
                 Py4pdUtils_RemoveChar(editor, ' ');
