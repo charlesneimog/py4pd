@@ -493,7 +493,10 @@ static PyObject *Py4pdMod_PdGetOutletsCount(PyObject *self, PyObject *args) {
                         "be used inside py4pd object or functions.");
         return NULL;
     }
-    return PyLong_FromLong(x->extrasOuts->outCount);
+    if (x->extrasOuts == NULL) {
+        return PyLong_FromLong(1);
+    }
+    return PyLong_FromLong(x->extrasOuts->outCount + 1);
 }
 
 // =================================
