@@ -1,23 +1,12 @@
 #include "module.h"
 #include "py4pd.h"
 #include "utils.h"
-#include <m_pd.h>
-#include <string.h>
 
 // ============================================
 t_class *py4pd_class;        // For for normal objects, almost unused
 t_class *py4pd_classLibrary; // For libraries
-int objCount = 0;
+int objCount = 0;            // To keep track of the number of objects created
 
-void *Py4pd_TestCode(t_py *x, int argc, t_atom *argv) {
-    (void)x;
-    (void)argc;
-    (void)argv;
-
-    (void)PyObject_CallObject(x->pFunction, x->pArgTuple);
-
-    return NULL;
-}
 // ============================================
 // =========== PY4PD LOAD LIBRARIES ===========
 // ============================================
@@ -250,13 +239,22 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
 }
 
 // ========================================
+/*
+ * @brief Struct to pass args to the new thread
+ */
+
 struct pipInstallArgs {
     t_py *x;
     t_symbol *pipPackage;
 };
 
 // ========================================
-void *Py4pd_PipInstallDetach(void *Args) {
+/**
+ * @brief This function call pip install from a new thread
+ * @param pointer to the struct pipInstallArgs
+ * @return void
+ */
+static void *Py4pd_PipInstallDetach(void *Args) {
     struct pipInstallArgs *args = (struct pipInstallArgs *)Args;
     t_py *x = args->x;
     char const *pipPackage = args->pipPackage->s_name;
@@ -386,6 +384,14 @@ static void Py4pd_Pip(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // ============================================
+/**
+ * @brief Function to warning about deprecated methods
+ * @param x pointer to the object
+ * @param s symbol
+ * @param argc number of arguments
+ * @param argv array of arguments
+ * @return void
+ */
 static void Py4pd_Deprecated(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)argc;
     (void)argv;
@@ -517,9 +523,7 @@ static void Py4pd_SetPackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argc is the number of arguments
  * @param argv is the arguments
  * @return void, but it prints the functions
-
-
-*/
+ */
 static void Py4pd_PrintModuleFunctions(t_py *x, t_symbol *s, int argc,
                                        t_atom *argv) {
     (void)s;
@@ -614,7 +618,7 @@ static void Py4pd_OpenScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argv is the arguments
  * @return void, but it sets the editor
  */
-void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+static void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     // check if argv[0] is a symbol and it is diferent from "float"
     if (argc != 0 && argv[0].a_type == A_SYMBOL &&
@@ -653,7 +657,7 @@ void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argv is the arguments
  * @return void, but it reloads the script
  */
-void Py4pd_ReloadPy4pdFunction(t_py *x) {
+static void Py4pd_ReloadPy4pdFunction(t_py *x) {
     PyObject *pName, *pFunc, *pModule, *pReload;
     if (x->funcCalled == 0) { // if the set method was not called, then we
                               // can not run the function :)
@@ -877,7 +881,6 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argc
  * @param argv
  */
-
 static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     int OpenList_count = 0;
@@ -938,7 +941,6 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argv
  * @return It will return nothing but will run the Python function
  */
-
 static void Py4pd_ExecuteFunction(t_py *x, t_symbol *s, int argc,
                                   t_atom *argv) {
     (void)s;
@@ -983,8 +985,7 @@ void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f) {
  * @param argv is the arguments
  * @return It will return the py4pd object.
  */
-
-void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
+static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     int i;
     t_py *x;
     int libraryMODE = 0;
@@ -1087,9 +1088,8 @@ void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
 
 // ====================================================
 /**
- * @brief Setup the py4pd object
+ * @brief Setup the py4pd object, pd call this
  */
-
 void py4pd_setup(void) {
     if (!Py_IsInitialized()) {
         objCount = 0;
@@ -1168,10 +1168,6 @@ void py4pd_setup(void) {
                     0); // set function to be called
     class_addmethod(py4pd_class, (t_method)Py4pd_PrintModuleFunctions,
                     gensym("functions"), A_GIMME, 0);
-
-    // Test
-    class_addmethod(py4pd_class, (t_method)Py4pd_TestCode, gensym("_test"),
-                    A_GIMME, 0);
 }
 
 #ifdef __WIN64
