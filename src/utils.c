@@ -4,6 +4,8 @@
 #include "pic.h"
 #include "utils.h"
 
+#include <string.h>
+
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
@@ -71,14 +73,14 @@ void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet) {
     seplen++;
     char *sep = t_getbytes(seplen * sizeof(*sep));
     memset(sep, '\0', seplen);
-    strlcpy(sep, " ", seplen);
+    Py4pdUtils_Strlcpy(sep, " ", seplen);
     if (s) {
         long unsigned int iptlen = strlen(s->s_name);
         t_atom *out = t_getbytes(iptlen * sizeof(*out));
         iptlen++;
         char *newstr = t_getbytes(iptlen * sizeof(*newstr));
         memset(newstr, '\0', iptlen);
-        strlcpy(newstr, s->s_name, iptlen);
+        Py4pdUtils_Strlcpy(newstr, s->s_name, iptlen);
         int atompos = 0; // position in atom
         char *ret = Py4pdUtils_Mtok(newstr, sep);
         char *err; // error pointer
@@ -770,11 +772,16 @@ void Py4pdUtils_CreateTempFolder(t_py *x) {
         char *command = (char *)malloc(256 * sizeof(char));
         memset(command, 0, 256);
         sprintf(command, "mkdir -p %s", temp_folder);
-        system(command);
+        int result = system(command);
+        if (result != 0) {
+            pd_error(NULL,
+                     "Failed to create directory, Report, this create "
+                     "instabilities: %d\n",
+                     result);
+        }
         free(command);
     }
     free(temp_folder);
-
 #endif
 }
 
@@ -1034,9 +1041,6 @@ int Py4pdUtils_Snprintf(char *buffer, size_t size, const char *format, ...) {
  * @return nothing
  */
 void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where) {
-    if (PY4PD_DEBUG == 0) {
-        return;
-    }
 
     if (Py_IsNone(pValue)) {
         return;
@@ -1244,8 +1248,8 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc,
             if (strchr(argv[i].a_w.w_symbol->s_name, '[') != NULL) {
                 char *str =
                     (char *)malloc(strlen(argv[i].a_w.w_symbol->s_name) + 1);
-                strlcpy(str, argv[i].a_w.w_symbol->s_name,
-                        strlen(argv[i].a_w.w_symbol->s_name) + 1);
+                Py4pdUtils_Strlcpy(str, argv[i].a_w.w_symbol->s_name,
+                                   strlen(argv[i].a_w.w_symbol->s_name) + 1);
                 Py4pdUtils_RemoveChar(str, '[');
                 listsArrays[listCount] = PyList_New(0);
                 int isNumeric = Py4pdUtils_IsNumericOrDot(str);
@@ -1491,10 +1495,11 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
                         char *new_packages_path = (char *)malloc(
                             sizeof(char) * (strlen(x->pdPatchPath->s_name) +
                                             strlen(packages_path) + 1)); //
-                        strlcpy(new_packages_path, x->pdPatchPath->s_name,
-                                strlen(x->pdPatchPath->s_name) + 1);
-                        strlcat(new_packages_path, packages_path + 1,
-                                strlen(packages_path) + 1);
+                        Py4pdUtils_Strlcpy(new_packages_path,
+                                           x->pdPatchPath->s_name,
+                                           strlen(x->pdPatchPath->s_name) + 1);
+                        Py4pdUtils_Strlcat(new_packages_path, packages_path + 1,
+                                           strlen(packages_path) + 1);
                         x->condaPath = gensym(new_packages_path);
                         free(new_packages_path);
                     } else {
@@ -1505,8 +1510,8 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
             } else if (strstr(line, "editor =") != NULL) {
                 char *editor = (char *)malloc(
                     sizeof(char) * (strlen(line) - strlen("editor = ") + 1)); //
-                strlcpy(editor, line + strlen("editor = "),
-                        strlen(line) - strlen("editor = ") + 1);
+                Py4pdUtils_Strlcpy(editor, line + strlen("editor = "),
+                                   strlen(line) - strlen("editor = ") + 1);
                 Py4pdUtils_RemoveChar(editor, '\n');
                 Py4pdUtils_RemoveChar(editor, '\r');
                 Py4pdUtils_RemoveChar(editor, ' ');
@@ -1749,6 +1754,39 @@ char *Py4pdUtils_Mtok(char *input, char *delimiter) { // TODO: WRONG PLACE
 }
 
 // =====================================================================
+size_t Py4pdUtils_Strlcpy(char *dst, const char *src, size_t size) {
+#if defined(__APPLE__)
+    return strlcpy(dst, src, size);
+#else
+    size_t srclen = strlen(src);
+    if (srclen + 1 < size) {
+        memcpy(dst, src, srclen + 1);
+    } else {
+        memcpy(dst, src, size - 1);
+        dst[size - 1] = '\0';
+    }
+    return srclen;
+#endif
+}
+
+// =====================================================================
+size_t Py4pdUtils_Strlcat(char *dst, const char *src, size_t size) {
+#if defined(__APPLE__)
+    return strlcat(dst, src, size);
+#else
+    size_t dest_len = strlen(dst);
+    size_t src_len = strlen(src);
+    if (size <= dest_len) {
+        return dest_len + src_len;
+    }
+    size_t space_left = size - dest_len - 1;
+    strncat(dst, src, space_left);
+    dst[size - 1] = '\0';
+    return dest_len + src_len;
+#endif
+}
+
+// =====================================================================
 void Py4pdUtils_CreatePicObj(t_py *x, PyObject *PdDict,
                              t_class *object_PY4PD_Class, int argc,
                              t_atom *argv) {
@@ -1853,9 +1891,13 @@ void Py4pdUtils_ReadGifFile(t_py *x, const char *filename) {
 
     // pixel size
     fseek(file, 6, SEEK_SET);
-    fread(&x->width, 2, 1, file);
-    fread(&x->height, 2, 1, file);
-
+    int readIntWidth = fread(&x->width, 2, 1, file);
+    int readIntHeight = fread(&x->height, 2, 1, file);
+    if (readIntWidth != 1 || readIntHeight != 1) {
+        pd_error(NULL, "Failed to read file.\n");
+        fclose(file);
+        return;
+    }
     fseek(file, 0, SEEK_END);
     size_t fileSize = ftell(file);
     fseek(file, 0, SEEK_SET);
@@ -1942,8 +1984,13 @@ void Py4pdUtils_ReadPngFile(t_py *x, const char *filename) {
 
     int width, height;
     fseek(file, 16, SEEK_SET);
-    fread(&width, 4, 1, file);
-    fread(&height, 4, 1, file);
+    int resultIntWidth = fread(&width, 4, 1, file);
+    int resultIntHeight = fread(&height, 4, 1, file);
+    if (resultIntWidth != 1 || resultIntHeight != 1) {
+        pd_error(x, "Failed to read file\n");
+        fclose(file);
+        return;
+    }
     width = Py4pdUtils_Ntohl(width);
     height = Py4pdUtils_Ntohl(height);
     x->width = width;

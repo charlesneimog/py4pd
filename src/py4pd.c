@@ -80,7 +80,8 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
 
     // conver const char* to char*
     char *pkgPathchar = malloc(strlen(x->pkgPath->s_name) + 1);
-    strlcpy(pkgPathchar, x->pkgPath->s_name, strlen(x->pkgPath->s_name) + 1);
+    Py4pdUtils_Strlcpy(pkgPathchar, x->pkgPath->s_name,
+                       strlen(x->pkgPath->s_name) + 1);
     // strcpy(pkgPathchar, x->pkgPath->s_name); // TODO: Make safe
 
     Py4pdUtils_CheckPkgNameConflict(x, pkgPathchar, scriptFileName);
@@ -148,8 +149,8 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     }
     // convert const char * to char *
     char *libraryFolder = malloc(strlen(PyUnicode_AsUTF8(pFilenameObj)) + 1);
-    strlcpy(libraryFolder, PyUnicode_AsUTF8(pFilenameObj),
-            strlen(PyUnicode_AsUTF8(pFilenameObj)) + 1);
+    Py4pdUtils_Strlcpy(libraryFolder, PyUnicode_AsUTF8(pFilenameObj),
+                       strlen(PyUnicode_AsUTF8(pFilenameObj)) + 1);
 
     x->libraryFolder = gensym(Py4pdUtils_GetFolderName(libraryFolder));
     free(libraryFolder);
@@ -275,7 +276,7 @@ static void *Py4pd_PipInstallDetach(void *Args) {
 #ifdef __linux__
     size_t commandSize = snprintf(NULL, 0,
                                   "python%d.%d -m pip install --target "
-                                  "'%spy-modules' %s --upgrade",
+                                  "%spy-modules %s --upgrade",
                                   PY_MAJOR_VERSION, PY_MINOR_VERSION,
                                   pipTarget->s_name, pipPackage) +
                          1;
@@ -298,7 +299,7 @@ static void *Py4pd_PipInstallDetach(void *Args) {
     char *COMMAND = malloc(commandSize);
 #ifdef __linux__
     snprintf(COMMAND, commandSize,
-             "python%d.%d -m pip install --target '%spy-modules' "
+             "python%d.%d -m pip install --target %spy-modules "
              "%s --upgrade",
              PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 
@@ -478,9 +479,10 @@ static void Py4pd_SetPackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                 if (path->s_name[0] == '.' && path->s_name[1] == '/') {
                     char *new_path = malloc(strlen(x->pdPatchPath->s_name) +
                                             strlen(path->s_name) + 1);
-                    strlcpy(new_path, x->pdPatchPath->s_name,
-                            strlen(x->pdPatchPath->s_name) + 1);
-                    strlcat(new_path, path->s_name, strlen(new_path) + 1);
+                    Py4pdUtils_Strlcpy(new_path, x->pdPatchPath->s_name,
+                                       strlen(x->pdPatchPath->s_name) + 1);
+                    Py4pdUtils_Strlcat(new_path, path->s_name,
+                                       strlen(new_path) + 1);
                     post("[py4pd] Packages path set to: %s", new_path);
                     x->pkgPath = gensym(new_path);
                     free(new_path);
@@ -1018,8 +1020,9 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         t_symbol *patchDir = canvas_getdir(c);
         if (patchDir->s_name[strlen(patchDir->s_name) - 1] != '/') {
             char *new_path = malloc(strlen(patchDir->s_name) + 1);
-            strlcpy(new_path, patchDir->s_name, strlen(patchDir->s_name) + 1);
-            strlcat(new_path, "/\0", strlen(new_path) + 1);
+            Py4pdUtils_Strlcpy(new_path, patchDir->s_name,
+                               strlen(patchDir->s_name) + 1);
+            Py4pdUtils_Strlcat(new_path, "/\0", strlen(new_path) + 1);
             patchDir = gensym(new_path);
             free(new_path);
         }
@@ -1036,7 +1039,7 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         x->pkgPath = patchDir;
         x->pArgsCount = 0;
         Py4pdUtils_SetObjConfig(x);
-
+        post("conda is: %s", x->condaPath->s_name);
         if (objCount == 0) {
             Py4pdUtils_AddPathsToPythonPath(x);
         }
@@ -1054,8 +1057,9 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         t_symbol *patchDir = canvas_getdir(c);
         if (patchDir->s_name[strlen(patchDir->s_name) - 1] != '/') {
             char *new_path = malloc(strlen(patchDir->s_name) + 2);
-            strlcpy(new_path, patchDir->s_name, strlen(patchDir->s_name) + 1);
-            strlcat(new_path, "/\0", strlen(new_path) + 1);
+            Py4pdUtils_Strlcpy(new_path, patchDir->s_name,
+                               strlen(patchDir->s_name) + 1);
+            Py4pdUtils_Strlcat(new_path, "/\0", strlen(new_path) + 1);
             patchDir = gensym(new_path);
             free(new_path);
         }

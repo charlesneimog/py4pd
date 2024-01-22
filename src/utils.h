@@ -22,6 +22,10 @@ int Py4pdUtils_ExecuteSystemCommand(const char *command);
 int Py4pdUtils_IsNumericOrDot(const char *str);
 void Py4pdUtils_RemoveChar(char *str, char c);
 char *Py4pdUtils_Mtok(char *input, char *delimiter);
+size_t Py4pdUtils_Strlcpy(char *dst, const char *src, size_t size);
+size_t Py4pdUtils_Strlcat(char *dst, const char *src, size_t size);
+
+
 void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet);
 int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pDict);
 t_py4pd_pValue *Py4pdUtils_Run(t_py *x, PyObject *pArgs, t_py4pd_pValue *pValuePointer);

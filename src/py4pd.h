@@ -15,8 +15,6 @@
     #define __USE_GNU
 #endif
 
-#define PY4PD_DEBUG 0
-
 #define PY4PD_NORMALOBJ 0
 #define PY4PD_VISOBJ 1
 #define PY4PD_AUDIOINOBJ 2
@@ -28,12 +26,12 @@
 #define PY4PD_MICRO_VERSION 6
 
 #define PY4PD_GIT_ISSUES "https://github.com/charlesneimog/py4pd/issues"
-
 #define PYTHON_REQUIRED_VERSION(major, minor) ((major < PY_MAJOR_VERSION) || (major == PY_MAJOR_VERSION && minor <= PY_MINOR_VERSION))
 
 #ifdef _WIN32
     #include <windows.h>
     #include <limits.h>
+
 #endif
 
 // DEFINE STANDARD IDE EDITOR

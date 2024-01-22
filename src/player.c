@@ -14,7 +14,6 @@ Dictionary *Py4pdPlayer_CreateDictionary() {
 int Py4pdPlayer_CompareOnset(const void *a, const void *b) {
     const KeyValuePair *entryA = (const KeyValuePair *)a;
     const KeyValuePair *entryB = (const KeyValuePair *)b;
-
     if (entryA->onset < entryB->onset)
         return -1;
     else if (entryA->onset > entryB->onset)

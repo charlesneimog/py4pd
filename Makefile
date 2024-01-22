@@ -17,7 +17,7 @@ else ifeq (Linux,$(findstring Linux,$(uname)))
 	# $(shell rm -f src/*.o)
   	PYTHON_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import sysconfig;print(sysconfig.get_config_var("INCLUDEPY"))')
 	NUMPY_INCLUDE := $(shell $(PYTHON_VERSION) -c 'import numpy; print(numpy.get_include())')
-	cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type -std=c99 -D_DEFAULT_SOURCE
+	cflags = -I $(PYTHON_INCLUDE) -I $(NUMPY_INCLUDE) -Wno-cast-function-type
   	ldlibs = -l $(PYTHON_VERSION) 
 
 # =================================== MacOS =====================================
