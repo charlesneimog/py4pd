@@ -1159,23 +1159,38 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
             char magic_number[3];
             int width, height, max_color_value;
             file = fopen(filename->s_name, "r");
-            fscanf(file, "%s\n%d %d\n%d\n", magic_number, &width, &height,
-                   &max_color_value);
+            int result = fscanf(file, "%s\n%d %d\n%d\n", magic_number, &width,
+                                &height, &max_color_value);
+            if (result != 4) {
+                PyErr_SetString(PyExc_TypeError,
+                                "[Python] pd.showimage: error reading file");
+                return NULL;
+            }
             x->width = width;
             x->height = height;
             fclose(file);
         } else if (strcmp(ext, ".gif") == 0) {
             file = fopen(filename->s_name, "rb");
             fseek(file, 6, SEEK_SET);
-            fread(&x->width, 2, 1, file);
-            fread(&x->height, 2, 1, file);
+            int resultWidth = fread(&x->width, 2, 1, file);
+            int resultHeight = fread(&x->height, 2, 1, file);
+            if (resultWidth != 1 || resultHeight != 1) {
+                PyErr_SetString(PyExc_TypeError,
+                                "[Python] pd.showimage: error reading file");
+                return NULL;
+            }
             fclose(file);
         } else if (strcmp(ext, ".png") == 0) {
             file = fopen(filename->s_name, "rb");
             int width, height;
             fseek(file, 16, SEEK_SET);
-            fread(&width, 4, 1, file);
-            fread(&height, 4, 1, file);
+            int resultWidth = fread(&width, 4, 1, file);
+            int resultHeight = fread(&height, 4, 1, file);
+            if (resultWidth != 1 || resultHeight != 1) {
+                PyErr_SetString(PyExc_TypeError,
+                                "[Python] pd.showimage: error reading file");
+                return NULL;
+            }
             fclose(file);
             width = Py4pdUtils_Ntohl(width);
             height = Py4pdUtils_Ntohl(height);
