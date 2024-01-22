@@ -1463,7 +1463,7 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
         sizeof(char) * (strlen(x->pdPatchPath->s_name) + folderLen)); //
     snprintf(PADRAO_packages_path, strlen(x->pdPatchPath->s_name) + folderLen,
              "%s/py-modules/", x->pdPatchPath->s_name);
-    x->pkgPath = gensym(PADRAO_packages_path);
+    x->condaPath = gensym(PADRAO_packages_path);
     if (x->editorName == NULL) {
         const char *editor = PY4PD_EDITOR;
         x->editorName = gensym(editor);
@@ -1475,23 +1475,17 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
     char config_path[MAXPDSTRING];
     snprintf(config_path, sizeof(config_path), "%s/py4pd.cfg",
              x->py4pdPath->s_name);
-    if (access(config_path, F_OK) != -1) {        // check if file exists
-        FILE *file = fopen(config_path, "r");     /* should check the result */
-        char line[256];                           // line buffer
-        while (fgets(line, sizeof(line), file)) { // read a line
-            if (strstr(line, "packages =") !=
-                NULL) { // check if line contains "packages ="
+    if (access(config_path, F_OK) != -1) {
+        FILE *file = fopen(config_path, "r");
+        char line[256];
+        while (fgets(line, sizeof(line), file)) {
+            if (strstr(line, "packages =") != NULL) {
                 char *packages_path = (char *)malloc(
-                    sizeof(char) *
-                    (strlen(line) - strlen("packages = ") + 1)); //
-                strcpy(packages_path,
-                       line + strlen("packages = ")); // copy string one
-                                                      // into the result.
-                if (strlen(packages_path) > 0) { // check if path is not empty
-                                                 // check if last char is "\n"
+                    sizeof(char) * (strlen(line) - strlen("packages = ") + 1));
+                strcpy(packages_path, line + strlen("packages = "));
+                if (strlen(packages_path) > 0) {
                     if (packages_path[strlen(packages_path) - 1] == '\n') {
-                        packages_path[strlen(packages_path) - 1] =
-                            '\0'; // remove the last character
+                        packages_path[strlen(packages_path) - 1] = '\0';
                     }
                     if (packages_path[0] == '.') {
                         char *new_packages_path = (char *)malloc(
@@ -1499,17 +1493,15 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
                                             strlen(packages_path) + 1)); //
                         strlcpy(new_packages_path, x->pdPatchPath->s_name,
                                 strlen(x->pdPatchPath->s_name) + 1);
-                        strlcat(new_packages_path,
-                                packages_path + 1, // remove the first character
+                        strlcat(new_packages_path, packages_path + 1,
                                 strlen(packages_path) + 1);
-
-                        x->pkgPath = gensym(new_packages_path);
+                        x->condaPath = gensym(new_packages_path);
                         free(new_packages_path);
                     } else {
-                        x->pkgPath = gensym(packages_path);
+                        x->condaPath = gensym(packages_path);
                     }
                 }
-                free(packages_path); // free memory
+                free(packages_path);
             } else if (strstr(line, "editor =") != NULL) {
                 char *editor = (char *)malloc(
                     sizeof(char) * (strlen(line) - strlen("editor = ") + 1)); //
@@ -1538,21 +1530,20 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
     char pyGlobal_packages[MAXPDSTRING];
     snprintf(pyGlobal_packages, MAXPDSTRING, "%sresources/py-modules",
              x->py4pdPath->s_name);
-    PyObject *home_path = PyUnicode_FromString(
-        x->pdPatchPath->s_name); // Place where script file will probably be
-    PyObject *site_package = PyUnicode_FromString(
-        x->pkgPath->s_name); // Place where the packages will be
-    PyObject *py4pdScripts = PyUnicode_FromString(
-        pyScripts_folder); // Place where the py4pd scripts will be
-    PyObject *py4pdGlobalPackages = PyUnicode_FromString(
-        pyGlobal_packages); // Place where the py4pd global packages will be
+    PyObject *home_path = PyUnicode_FromString(x->pdPatchPath->s_name);
+    PyObject *site_package = PyUnicode_FromString(x->pkgPath->s_name);
+    PyObject *conda_packages = PyUnicode_FromString(x->condaPath->s_name);
+    PyObject *py4pdScripts = PyUnicode_FromString(pyScripts_folder);
+    PyObject *py4pdGlobalPackages = PyUnicode_FromString(pyGlobal_packages);
     PyObject *sys_path = PySys_GetObject("path");
     PyList_Insert(sys_path, 0, home_path);
     PyList_Insert(sys_path, 0, site_package);
+    PyList_Insert(sys_path, 0, conda_packages);
     PyList_Insert(sys_path, 0, py4pdScripts);
     PyList_Insert(sys_path, 0, py4pdGlobalPackages);
     Py_DECREF(home_path);
     Py_DECREF(site_package);
+    Py_DECREF(conda_packages);
     Py_DECREF(py4pdScripts);
     Py_DECREF(py4pdGlobalPackages);
     return;

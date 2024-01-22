@@ -1,5 +1,5 @@
-#include "module.h"
 #include "py4pd.h"
+#include "module.h"
 #include "utils.h"
 
 // ============================================
@@ -275,14 +275,14 @@ static void *Py4pd_PipInstallDetach(void *Args) {
 #ifdef __linux__
     size_t commandSize = snprintf(NULL, 0,
                                   "python%d.%d -m pip install --target "
-                                  "%spy-modules %s --upgrade",
+                                  "'%spy-modules' %s --upgrade",
                                   PY_MAJOR_VERSION, PY_MINOR_VERSION,
                                   pipTarget->s_name, pipPackage) +
                          1;
 #elif defined __WIN64
     size_t commandSize = snprintf(NULL, 0,
                                   "py -%d.%d -m pip install --target "
-                                  "%spy-modules %s --upgrade",
+                                  "'%spy-modules' %s --upgrade",
                                   PY_MAJOR_VERSION, PY_MINOR_VERSION,
                                   pipTarget->s_name, pipPackage) +
                          1;
@@ -290,7 +290,7 @@ static void *Py4pd_PipInstallDetach(void *Args) {
     size_t commandSize =
         snprintf(NULL, 0,
                  "/usr/local/bin/python%d.%d -m pip install --target "
-                 "%spy-modules %s --upgrade",
+                 "'%spy-modules' %s --upgrade",
                  PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name,
                  pipPackage) +
         1;
@@ -298,20 +298,20 @@ static void *Py4pd_PipInstallDetach(void *Args) {
     char *COMMAND = malloc(commandSize);
 #ifdef __linux__
     snprintf(COMMAND, commandSize,
-             "python%d.%d -m pip install --target %spy-modules "
+             "python%d.%d -m pip install --target '%spy-modules' "
              "%s --upgrade",
              PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 
 #elif defined __WIN64
     snprintf(COMMAND, commandSize,
-             "py -%d.%d -m pip install --target %spy-modules "
+             "py -%d.%d -m pip install --target '%spy-modules' "
              "%s --upgrade",
              PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 
 #elif defined(__APPLE__) || defined(__MACH__)
     snprintf(COMMAND, commandSize,
              "/usr/local/bin/python%d.%d -m pip install --target "
-             "%spy-modules %s --upgrade",
+             "'%spy-modules' %s --upgrade",
              PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 #endif
     pd_error(NULL, "Installing %s in background, please WAIT ...", pipPackage);
@@ -1031,22 +1031,22 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         x->pipGlobalInstall = 1;
         x->pyObject = 0;
         x->vectorSize = 0;
-        Py4pdUtils_ParseArguments(x, c, argc, argv); // parse arguments
-        x->pdPatchPath = patchDir; // set name of the home path
-        x->pkgPath = patchDir;     // set name of the packages path
+        Py4pdUtils_ParseArguments(x, c, argc, argv);
+        x->pdPatchPath = patchDir;
+        x->pkgPath = patchDir;
         x->pArgsCount = 0;
         Py4pdUtils_SetObjConfig(x);
 
         if (objCount == 0) {
             Py4pdUtils_AddPathsToPythonPath(x);
         }
-        if (argc > 1) { // check if there are two arguments
+        if (argc > 1) {
             Py4pd_SetFunction(x, s, argc, argv);
             x->numpyImported = 1;
         }
         objCount++;
         return (x);
-    } else if (libraryMODE == 1) { // library
+    } else if (libraryMODE == 1) {
         x = (t_py *)pd_new(py4pd_classLibrary);
         x->canvas = canvas_getcurrent();
         t_canvas *c = x->canvas;

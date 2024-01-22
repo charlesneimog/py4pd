@@ -114,7 +114,7 @@ jobs:
           rm py4pd/resources/*.py
           rm py4pd/resources/*.pd
           rm py4pd/resources/*.cfg
-          rm py4pd/src/.clang-format
+          rm -f py4pd/src/.clang-format
           rm -r py4pd/resources/pd-lib-builder
           cp -r py4pd test
 

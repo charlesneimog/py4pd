@@ -197,6 +197,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 
     // Paths
     t_symbol            *pkgPath; // packages path, where the packages are located
+    t_symbol            *condaPath; // Conda path, where the conda site-packages are located
     t_symbol            *pdPatchPath; // where the patch is located
     t_symbol            *py4pdPath; // where py4pd object is located
     t_symbol            *tempPath; // temp path located in ~/.py4pd/, always is deleted when py4pd is closed
