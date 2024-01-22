@@ -76,6 +76,11 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          auto-activate-base: true
+
       - name: Install Build Dependencies
         env:
           pythonName: python${{ matrix.python-version }}
@@ -117,11 +122,23 @@ jobs:
           rm -f py4pd/src/.clang-format
           rm -r py4pd/resources/pd-lib-builder
           cp -r py4pd test
+          
+      - name: Install Conda Environment
+        shell: bash
+        run: |
+          cd test
+          cd py4pd
+          eval "$(${CONDA}/bin/conda shell.bash hook)"
+          conda create -y --name composition
+          conda activate composition
+          pip install svgpathtools
+          python3 -c "import svgpathtools; print('packages =', svgpathtools.__file__.replace('svgpathtools/__init__.py', ''))" > py4pd.cfg
 
       - name: Tests
         run: |
           cd test
           python${{ matrix.python-version }} ./runTests.py
+
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
@@ -137,7 +154,7 @@ jobs:
     if: ${{ inputs.windows }} || github.event_name == 'schedule'
     strategy:
       matrix:
-        python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}
+        python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }} 
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v3
@@ -156,6 +173,11 @@ jobs:
           install: make autoconf automake libtool mingw-w64-x86_64-gcc mingw-w64-x86_64-libwinpthread-git mingw-w64-x86_64-dlfcn mingw-w64-x86_64-grep  mingw-w64-x86_64-curl unzip
           update: false
 
+      - name: Conda local
+        run: |
+          ls C:\Miniconda\condabin\conda.bat
+        
+
       - if: runner.os == 'Windows'
         name: Get Pd
         shell: msys2 {0}
@@ -173,11 +195,13 @@ jobs:
           python -c "import sysconfig; f = open('pythonincludes.txt', 'w'); print(sysconfig.get_paths()['include'].replace('\\', '/'), file=f); f.close()"
           python -c "import os; import sys; f = open('pythonpath.txt', 'w'); print(os.path.dirname(sys.executable).replace('\\', '/'), file=f); f.close()"
           python -c "import os; import sys; import numpy; f = open('numpyincludes.txt', 'w'); print(numpy.get_include(), file=f); f.close()"
+
       - if: runner.os == 'Windows'
         name: Build py4pd
         shell: msys2 {0}
         run: |
           make PYTHON_VERSION=${{ matrix.python-version }} PDDIR=./pd extension=m_amd64
+
       - name: Copy Files and Set for Tests
         run: |
           $pythondllversion = Get-Content pythondll.txt
@@ -188,13 +212,29 @@ jobs:
           Copy-Item -Path "resources" -Destination "test/py4pd/" -Recurse
           cp py4pd.m_amd64 py4pd\
           cp py4pd.m_amd64 test\py4pd\py4pd.m_amd64
+
+      - name: Install Conda Environment
+        run: |
+          cd test
+          C:\Miniconda\condabin\conda.bat create -y -n composition python=${{ matrix.python-version }}
+          C:\Miniconda\condabin\conda.bat activate composition
+          py -${{ matrix.python-version }} -m pip install svgpathtools
+          cp py.py py4pd
+          cd py4pd
+          py -${{ matrix.python-version }} -c "from py import getPy4pdCfg; getPy4pdCfg()"
+          Get-Content py4pd.cfg
+
       - name: Tests
-        run: "cd test \npython ./runTests.py\n"
+        run: |
+          cd test 
+          python ./runTests.py
+
       - name: Upload Object ZIP
         uses: actions/upload-artifact@v3
         with:
           name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
           path: py4pd
+
   # ==============================================================================
   # =                               MAC INTEL                                    =
   # ==============================================================================
@@ -249,6 +289,16 @@ jobs:
           mv py4pd.d_amd64 py4pd
           cp -r py4pd test
           cp -r resources test/py4pd
+
+      - name: Install Conda Environment
+        run: |
+          cd test
+          cd py4pd
+          eval "$(${CONDA}/bin/conda shell.bash hook)"
+          conda create -y --name composition
+          conda activate composition
+          pip install svgpathtools
+          python3 -c "import svgpathtools; print('packages =', svgpathtools.__file__.replace('svgpathtools/__init__.py', ''))" > py4pd.cfg
 
       - name: Run Tests
         run: |

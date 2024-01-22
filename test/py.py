@@ -3,7 +3,11 @@ import sys
 from random import randint
 
 import numpy as np
-import pd
+
+try:
+    import pd
+except:
+    print("Pd not imported")
 
 # ================================================
 # ==============  Functions  =====================
@@ -61,6 +65,32 @@ def fibonacci(n):
 
 def randomNumpyArray():
     return np.random.rand(1, 64).tolist()[0]
+
+
+# ================================================
+# ================== TESTS  ======================
+# ================================================
+def importsvgpathtools():
+    try:
+        import svgpathtools
+
+        return 1
+    except Exception as e:
+        print(e)
+        return 0
+
+
+def getPy4pdCfg():
+    import os
+
+    import svgpathtools
+
+    print(os.getcwd())
+    os.system("ls ")
+
+    with open("./py4pd.cfg", "w") as config_file:
+        value = svgpathtools.__file__.replace("svgpathtools\\__init__.py", "")
+        config_file.write(f"packages = {value}")
 
 
 # ================================================
