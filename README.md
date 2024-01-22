@@ -21,7 +21,8 @@
 * OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
 * Sound analisys with `magenta`, `librosa`, and `pyAudioAnalaysis`;
 
-Go to [Docs](https://www.charlesneimog.com/py4pd) to see examples.
+> [!TIP]  
+> Go to [Docs](https://www.charlesneimog.com/py4pd) to see examples.
 
 ### Download py4pd
 1. Open PureData, `Help->Find Externals->` search for `py4pd` then select py4pd and click on `Install`: 
