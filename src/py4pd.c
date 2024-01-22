@@ -283,7 +283,7 @@ static void *Py4pd_PipInstallDetach(void *Args) {
 #elif defined __WIN64
     size_t commandSize = snprintf(NULL, 0,
                                   "py -%d.%d -m pip install --target "
-                                  "'%spy-modules' %s --upgrade",
+                                  "%spy-modules %s --upgrade",
                                   PY_MAJOR_VERSION, PY_MINOR_VERSION,
                                   pipTarget->s_name, pipPackage) +
                          1;
@@ -305,7 +305,7 @@ static void *Py4pd_PipInstallDetach(void *Args) {
 
 #elif defined __WIN64
     snprintf(COMMAND, commandSize,
-             "py -%d.%d -m pip install --target '%spy-modules' "
+             "py -%d.%d -m pip install --target %spy-modules "
              "%s --upgrade",
              PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 
@@ -1039,7 +1039,6 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         x->pkgPath = patchDir;
         x->pArgsCount = 0;
         Py4pdUtils_SetObjConfig(x);
-        post("conda is: %s", x->condaPath->s_name);
         if (objCount == 0) {
             Py4pdUtils_AddPathsToPythonPath(x);
         }
