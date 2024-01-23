@@ -273,6 +273,17 @@ static void *Py4pd_PipInstallDetach(void *Args) {
         pipTarget = x->pdPatchPath;
     }
 
+    // loop for all pipTarget and check if there is some space char, if yes, get
+    // error
+    for (int i = 0; i < strlen(pipTarget->s_name); i++) {
+        if (isspace(pipTarget->s_name[i])) {
+            pd_error(x, "[py4pd] Spaces are not supported in the path yet, try "
+                        "to remove it");
+            outlet_float(x->mainOut, 0);
+            return NULL;
+        }
+    }
+
 #ifdef __linux__
     size_t commandSize = snprintf(NULL, 0,
                                   "python%d.%d -m pip install --target "
@@ -792,8 +803,7 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     MainModule = PyImport_ImportModule("pd");
     PyObject *oldObjectCapsule;
     if (MainModule != NULL) {
-        oldObjectCapsule =
-            PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd");
         if (oldObjectCapsule != NULL) {
             PyObject *py4pd_capsule =
                 PyObject_GetAttrString(MainModule, "py4pd");
@@ -809,22 +819,16 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
 
-    // =====================
-    pModule = PyImport_ImportModule(
-        sScriptFilename->s_name); // Import the script file with the function
-    // =====================
+    // Import module
+    pModule = PyImport_ImportModule(sScriptFilename->s_name);
 
-    // check if the module was loaded
     if (pModule == NULL) {
         Py4pdUtils_PrintError(x);
         Py_XDECREF(pModule);
         return;
     }
-    pFunc = PyObject_GetAttrString(
-        pModule,
-        pFuncNameSymbol->s_name); // Function name inside the script file
-    if (pFunc && PyCallable_Check(
-                     pFunc)) { // Check if the function exists and is callable
+    pFunc = PyObject_GetAttrString(pModule, pFuncNameSymbol->s_name);
+    if (pFunc && PyCallable_Check(pFunc)) {
         PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(pFunc);
 
         if (prev_obj_exists == 1 && pFunc != NULL) {
