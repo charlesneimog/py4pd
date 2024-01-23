@@ -1500,9 +1500,13 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
                                            strlen(x->pdPatchPath->s_name) + 1);
                         Py4pdUtils_Strlcat(new_packages_path, packages_path + 1,
                                            strlen(packages_path) + 1);
+                        Py4pdUtils_RemoveChar(new_packages_path, '\n');
+                        Py4pdUtils_RemoveChar(new_packages_path, '\r');
                         x->condaPath = gensym(new_packages_path);
                         free(new_packages_path);
                     } else {
+                        Py4pdUtils_RemoveChar(packages_path, '\n');
+                        Py4pdUtils_RemoveChar(packages_path, '\r');
                         x->condaPath = gensym(packages_path);
                     }
                 }
