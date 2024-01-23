@@ -275,26 +275,26 @@ static void *Py4pd_PipInstallDetach(void *Args) {
 
     // loop for all pipTarget and check if there is some space char, if yes, get
     // error
-    for (int i = 0; i < strlen(pipTarget->s_name); i++) {
+    for (int i = 0; i < (int)strlen(pipTarget->s_name); i++) {
         if (isspace(pipTarget->s_name[i])) {
             pd_error(x, "[py4pd] Spaces are not supported in the path yet, try "
                         "to remove it");
-            outlet_float(x->mainOut, 0);
-            return NULL;
+            // outlet_float(x->mainOut, 0);
+            // return NULL;
         }
     }
 
 #ifdef __linux__
     size_t commandSize = snprintf(NULL, 0,
                                   "python%d.%d -m pip install --target "
-                                  "%spy-modules %s --upgrade",
+                                  "'%spy-modules' %s --upgrade",
                                   PY_MAJOR_VERSION, PY_MINOR_VERSION,
                                   pipTarget->s_name, pipPackage) +
                          1;
 #elif defined __WIN64
     size_t commandSize = snprintf(NULL, 0,
                                   "py -%d.%d -m pip install --target "
-                                  "%spy-modules %s --upgrade",
+                                  "'%spy-modules' %s --upgrade",
                                   PY_MAJOR_VERSION, PY_MINOR_VERSION,
                                   pipTarget->s_name, pipPackage) +
                          1;
@@ -310,13 +310,13 @@ static void *Py4pd_PipInstallDetach(void *Args) {
     char *COMMAND = malloc(commandSize);
 #ifdef __linux__
     snprintf(COMMAND, commandSize,
-             "python%d.%d -m pip install --target %spy-modules "
+             "python%d.%d -m pip install --target '%spy-modules' "
              "%s --upgrade",
              PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 
 #elif defined __WIN64
     snprintf(COMMAND, commandSize,
-             "py -%d.%d -m pip install --target %spy-modules "
+             "py -%d.%d -m pip install --target '%spy-modules' "
              "%s --upgrade",
              PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 
@@ -1022,11 +1022,12 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         x->canvas = canvas_getcurrent();
         t_canvas *c = x->canvas;
         t_symbol *patchDir = canvas_getdir(c);
-        if (patchDir->s_name[strlen(patchDir->s_name) - 1] != '/') {
-            char *new_path = malloc(strlen(patchDir->s_name) + 1);
-            Py4pdUtils_Strlcpy(new_path, patchDir->s_name,
-                               strlen(patchDir->s_name) + 1);
-            Py4pdUtils_Strlcat(new_path, "/\0", strlen(new_path) + 1);
+        size_t strLen = strlen(patchDir->s_name);
+
+        if (strLen > 0 && (patchDir->s_name)[strLen - 1] != '/') {
+            char *new_path = malloc(strLen + 2);
+            Py4pdUtils_Strlcpy(new_path, patchDir->s_name, strLen + 1);
+            Py4pdUtils_Strlcat(new_path, "/", strLen + 2);
             patchDir = gensym(new_path);
             free(new_path);
         }

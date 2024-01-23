@@ -134,6 +134,12 @@ jobs:
           pip install svgpathtools
           python3 -c "import svgpathtools; print('packages =', svgpathtools.__file__.replace('svgpathtools/__init__.py', ''))" > py4pd.cfg
 
+      - name: Tests with Spaces
+        run: |
+          cp -r test "test spaces"
+          cd "test spaces"
+          python${{ matrix.python-version }} ./runTests.py
+
       - name: Tests
         run: |
           cd test
@@ -224,6 +230,12 @@ jobs:
           py -${{ matrix.python-version }} -c "from py import getPy4pdCfg; getPy4pdCfg()"
           Get-Content py4pd.cfg
 
+      - name: Tests with Spaces
+        run: |
+          Copy-Item -Path "test" -Destination "test spaces" -Recurse
+          cd "test spaces"
+          py -${{ matrix.python-version }} ./runTests.py
+
       - name: Tests
         run: |
           cd test 
@@ -300,10 +312,17 @@ jobs:
           pip install svgpathtools
           python3 -c "import svgpathtools; print('packages =', svgpathtools.__file__.replace('svgpathtools/__init__.py', ''))" > py4pd.cfg
 
+      - name: Tests with Spaces
+        run: |
+          cp -r test "test spaces"
+          cd "test spaces"
+          python${{ matrix.python-version }} ./runTests.py
+
       - name: Run Tests
         run: |
           cd test
           python${{ matrix.python-version }} ./runTests.py
+
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:

@@ -715,20 +715,30 @@ void Py4pdUtils_FindObjFolder(t_py *x) {
             return;
         }
     }
-
     pathelem = canvas_getdir(x->canvas)->s_name;
-#ifdef _WIN64
-    snprintf(library_path, MAXPDSTRING, "%s\\%s\\", pathelem, "py4pd");
-#else
     snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, "py4pd");
-#endif
     if (access(library_path, F_OK) != -1) {
         x->py4pdPath = gensym(library_path);
+        size_t strLen = strlen(x->py4pdPath->s_name);
+        if (strLen > 0 && (x->py4pdPath->s_name)[strLen - 1] != '/') {
+            char *new_path = malloc(strLen + 2);
+            Py4pdUtils_Strlcpy(new_path, x->py4pdPath->s_name, strLen + 1);
+            Py4pdUtils_Strlcat(new_path, "/", strLen + 2);
+            x->py4pdPath = gensym(new_path);
+            free(new_path);
+        }
         return;
     }
-    pd_error(x, "[py4pd] py4pd was not found in Search Path, this causes "
-                "instabilities.");
+
     x->py4pdPath = canvas_getdir(x->canvas);
+    size_t strLen = strlen(x->py4pdPath->s_name);
+    if (strLen > 0 && (x->py4pdPath->s_name)[strLen - 1] != '/') {
+        char *new_path = malloc(strLen + 2);
+        Py4pdUtils_Strlcpy(new_path, x->py4pdPath->s_name, strLen + 1);
+        Py4pdUtils_Strlcat(new_path, "/", strLen + 2);
+        x->py4pdPath = gensym(new_path);
+        free(new_path);
+    }
     return;
 }
 
