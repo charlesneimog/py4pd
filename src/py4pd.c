@@ -294,10 +294,11 @@ static void *Py4pd_PipInstallDetach(void *Args) {
 #elif defined __WIN64
     size_t commandSize = snprintf(NULL, 0,
                                   "py -%d.%d -m pip install --target "
-                                  "'%spy-modules' %s --upgrade",
+                                  "\"%spy-modules\" %s --upgrade",
                                   PY_MAJOR_VERSION, PY_MINOR_VERSION,
                                   pipTarget->s_name, pipPackage) +
                          1;
+
 #elif defined(__APPLE__) || defined(__MACH__)
     size_t commandSize =
         snprintf(NULL, 0,
@@ -315,7 +316,7 @@ static void *Py4pd_PipInstallDetach(void *Args) {
 
 #elif defined __WIN64
     snprintf(COMMAND, commandSize,
-             "py -%d.%d -m pip install --target '%spy-modules' "
+             "py -%d.%d -m pip install --target \"%spy-modules\" "
              "%s --upgrade",
              PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 

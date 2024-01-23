@@ -1549,6 +1549,13 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
     char pyGlobal_packages[MAXPDSTRING];
     snprintf(pyGlobal_packages, MAXPDSTRING, "%sresources/py-modules",
              x->py4pdPath->s_name);
+
+    post("pdPatch: %s", x->pdPatchPath->s_name);
+    post("x->pkgPath: %s", x->pkgPath->s_name);
+    post("condaPath: %s", x->condaPath->s_name);
+    post("pyScripts_folder: %s", pyScripts_folder);
+    post("pyGlobalPackages: %s", pyGlobal_packages);
+
     PyObject *home_path = PyUnicode_FromString(x->pdPatchPath->s_name);
     PyObject *site_package = PyUnicode_FromString(x->pkgPath->s_name);
     PyObject *conda_packages = PyUnicode_FromString(x->condaPath->s_name);
