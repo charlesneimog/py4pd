@@ -9,13 +9,21 @@ errorInTest = 0
 
 def runTest(pdpatch):
     global errorInTest
+
+    # the pdpatch start with a number divided by -, get this number
+    pdpatchNumber = int(pdpatch.split("-")[0])
+    if pdpatchNumber == 10 or pdpatchNumber == 70 or pdpatchNumber == 71:
+        timeout = 60
+    else:
+        timeout = 15
+
     if platform.system() == "Linux":
         thisSCRIPT = os.path.abspath(__file__)
         thisFOLDER = os.path.dirname(thisSCRIPT)
         completPathPatch = thisFOLDER + "/" + pdpatch
         os.chdir(thisFOLDER)
         if os.path.isfile(pdpatch):
-            cmd = f'pd -nogui -send "start-test bang" {completPathPatch}'
+            cmd = f'pd -nogui -send "start-test bang" "{completPathPatch}"'
         else:
             print("PureData Patch not found")
             sys.exit()
@@ -25,6 +33,7 @@ def runTest(pdpatch):
                 capture_output=True,
                 text=True,
                 shell=True,
+                timeout=timeout,
             )
             outputLines = str(output).split("\\n")
         except subprocess.TimeoutExpired:
@@ -40,7 +49,6 @@ def runTest(pdpatch):
         else:
             print(f"Patch {pathfile} not found")
             sys.exit()
-        py4pdPath = os.path.dirname(scriptfolder)
         cmd = [
             "..\\pd\\bin\\pd.exe",
             "-nogui",
@@ -56,7 +64,7 @@ def runTest(pdpatch):
                 stderr=subprocess.PIPE,
                 check=True,
                 universal_newlines=True,
-                timeout=45,
+                timeout=timeout,
             )
             outputLines = []
             stderrTOKENS = str(process.stderr).split("\n")
@@ -80,15 +88,15 @@ def runTest(pdpatch):
         if not os.path.isfile(pathfile):
             print(f"Patch {pathfile} not found")
             sys.exit()
-
-        py4pdPath = os.path.abspath(scriptfolder)
         cmd = (
             f'/Applications/Pd-*.app/Contents/Resources/bin/pd -stderr -nogui -batch -send "start-test bang" '
+            + '"'
             + pathfile
+            + '"'
         )
         try:
             output = subprocess.run(
-                cmd, capture_output=True, text=True, shell=True, timeout=75
+                cmd, capture_output=True, text=True, shell=True, timeout=timeout
             )
             outputLines = str(output).split("\\n")
         except subprocess.TimeoutExpired:

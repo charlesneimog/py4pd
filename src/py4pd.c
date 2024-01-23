@@ -310,8 +310,7 @@ static void *Py4pd_PipInstallDetach(void *Args) {
     char *COMMAND = malloc(commandSize);
 #ifdef __linux__
     snprintf(COMMAND, commandSize,
-             "python%d.%d -m pip install --target '%spy-modules' "
-             "%s --upgrade",
+             "python%d.%d -m pip install --target '%spy-modules' %s --upgrade",
              PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 
 #elif defined __WIN64
