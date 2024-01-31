@@ -1609,7 +1609,7 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
         t_symbol *pScriptName = gensym(PyUnicode_AsUTF8(code->co_filename));
         sprintf(completePath, "'%s'", pScriptName->s_name);
     } else {
-        sprintf(completePath, "'%s/%s.py'", home, filename);
+        sprintf(completePath, "'%s%s.py'", home, filename);
     }
 
     // check if there is .py in filename
@@ -1618,12 +1618,13 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
     } else if (strcmp(editor, "vscode") == 0) {
 #ifdef __APPLE__
         sprintf(command,
-                "\"/Applications/Visual Studio "
-                "Code.app/Contents/Resources/app/bin/code\" -g \"%s:%d\"",
+                "\"/Applications/Visual Studio Code.app/Contents/"
+                "Resources/app/bin/code\" -g %s:%d",
                 completePath, line);
 #else
-        sprintf(command, "code -g '%s:%d'", completePath, line);
+        sprintf(command, "code -g %s:%d", completePath, line);
 #endif
+
     } else if (strcmp(editor, "nvim") == 0) {
 // if it is linux
 #ifdef __linux__
