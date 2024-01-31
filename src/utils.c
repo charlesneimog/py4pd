@@ -1551,17 +1551,20 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
              x->py4pdPath->s_name);
 
     PyObject *home_path = PyUnicode_FromString(x->pdPatchPath->s_name);
+    PyObject *py4pdPath = PyUnicode_FromString(x->py4pdPath->s_name);
     PyObject *site_package = PyUnicode_FromString(x->pkgPath->s_name);
     PyObject *conda_packages = PyUnicode_FromString(x->condaPath->s_name);
     PyObject *py4pdScripts = PyUnicode_FromString(pyScripts_folder);
     PyObject *py4pdGlobalPackages = PyUnicode_FromString(pyGlobal_packages);
     PyObject *sys_path = PySys_GetObject("path");
     PyList_Insert(sys_path, 0, home_path);
+    PyList_Insert(sys_path, 0, py4pdPath);
     PyList_Insert(sys_path, 0, site_package);
     PyList_Insert(sys_path, 0, conda_packages);
     PyList_Insert(sys_path, 0, py4pdScripts);
     PyList_Insert(sys_path, 0, py4pdGlobalPackages);
     Py_DECREF(home_path);
+    Py_DECREF(py4pdPath);
     Py_DECREF(site_package);
     Py_DECREF(conda_packages);
     Py_DECREF(py4pdScripts);

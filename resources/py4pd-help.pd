@@ -55,7 +55,7 @@
 #X coords 0 1 100 -1 1 1 1;
 #X restore 0 0 graph;
 #X obj 13 160 print py4pd;
-#N canvas 236 39 576 375 code 0;
+#N canvas 236 39 862 375 code 0;
 #X obj 7 305 s py4pd;
 #X msg 74 154 reload, f 8;
 #N canvas 0 50 450 250 (subpatch) 0;
@@ -75,6 +75,10 @@
 #X msg 46 104 editor gvim;
 #X text 133 104 Set Gvim as py4pd editor.;
 #X msg 57 130 editor sublime;
+#X text 276 55 Mac Users should check this link =>;
+#X obj 462 79 pdcontrol;
+#X msg 462 57 browse https://code.visualstudio.com/docs/setup/mac;
+#X text 519 80 The "Launching from the command line" Part...;
 #X connect 1 0 0 0;
 #X connect 3 0 0 0;
 #X connect 4 0 0 0;
@@ -82,6 +86,7 @@
 #X connect 11 0 0 0;
 #X connect 13 0 0 0;
 #X connect 15 0 0 0;
+#X connect 18 0 17 0;
 #X restore 15 187 pd code;
 #X text 70 186 Code python with IDE.;
 #X msg 13 17 set py pdsum;
