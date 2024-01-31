@@ -5,7 +5,6 @@ import pd
 
 try:
     import requests
-
     py4pd_libraries = {
         "py4pd-upic": {
             "link": "charlesneimog/py4pd-upic",
@@ -35,8 +34,9 @@ try:
             responseJson = response.json()
             sourceCodeLink = responseJson[0]["zipball_url"]
             response = requests.get(sourceCodeLink)  # download
-        except:
-            pd.error("Was not possible to download the library '{}'".format(py4pdName))
+        except Exception as e:
+            pd.print("Was not possible to download the library '{}'".format(py4pdName))
+            pd.error(str(e))
             return
 
         libraryPath = pd.get_pd_search_paths()[0] + "/" + py4pdName
@@ -54,7 +54,7 @@ try:
 except:
 
     def listPy4pdLibraries():
-        pd.error("Request is not installed, send 'pip install request' to py4pd")
+        pd.error("Requests is not installed, send 'pip install requests' to py4pd")
 
     def downloadPy4pdLibraries(py4pdName):
-        pd.error("Request is not installed, send 'pip install request' to py4pd")
+        pd.error("Request is not installed, send 'pip install requests' to py4pd")

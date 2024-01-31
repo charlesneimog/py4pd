@@ -106,7 +106,7 @@
 #X text 320 101 Click on this bang for Windows | Bottom of page;
 #X text 320 124 Click on this bang for Linux;
 #N canvas 485 102 499 180 Libraries 0;
-#N canvas 30 68 853 681 audioLibraries 0;
+#N canvas 30 68 472 361 audioLibraries 0;
 #X text 83 6 <= Load the library of the script called py.py. The script must be located in the patch folder or inside one folder with same of the script that are in the PureData Search patches. For example \, If I have ~/Documents/Pd/pd-ji/pd-ji.py you can use py4pd -lib pd-ji to load the library., f 66;
 #X text 96 83 Freqs in Hz.;
 #X obj 15 246 dac~;
