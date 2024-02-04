@@ -673,6 +673,20 @@ static int Py4pdNewObj_SetIgnoreNone(Py4pdNewObj *self, PyObject *value) {
 }
 
 // ============================================================
+static PyObject *Py4pdNewObj_GetEditorClick(Py4pdNewObj *self) {
+    if (self->allowEdit) {
+        Py_RETURN_TRUE;
+    } else {
+        Py_RETURN_FALSE;
+    }
+}
+
+static int Py4pdNewObj_SetEditorClick(Py4pdNewObj *self, PyObject *value) {
+    int allowEditor = PyObject_IsTrue(value);
+    self->allowEdit = allowEditor;
+    return 0;
+}
+// ============================================================
 static PyObject *Py4pdNewObj_GetHelpPatch(Py4pdNewObj *self) {
     if (self->helpPatch != NULL) {
         Py_RETURN_NONE;
@@ -713,6 +727,8 @@ static PyGetSetDef Py4pdNewObj_GetSet[] = {
      (setter)Py4pdNewObj_SetIgnoreNone, "Ignore None outputs", NULL},
     {"help_patch", (getter)Py4pdNewObj_GetHelpPatch,
      (setter)Py4pdNewObj_SetHelpPatch, "Ignore None outputs", NULL},
+    {"allow_editor", (getter)Py4pdNewObj_GetEditorClick,
+     (setter)Py4pdNewObj_SetEditorClick, "Ignore None outputs", NULL},
 
     {NULL, NULL, NULL, NULL, NULL} /* Sentinel */
 };
@@ -1114,6 +1130,10 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
     }
 
     // TODO: Method to Reload
+    if (self->allowEdit) {
+        class_addmethod(objClass, (t_method)Py4pdUtils_Click, gensym("click"),
+                        0, 0);
+    }
 
     if (pArgCount != 0) {
         InletsExtClassProxy =

@@ -1,5 +1,6 @@
 #include "py4pd.h"
 
+#include "ext-class.h"
 #include "module.h"
 #include "pic.h"
 #include "utils.h"
@@ -847,11 +848,58 @@ void Py4pdUtils_PrintError(t_py *x) {
 
 // ===========================================
 void Py4pdUtils_Click(t_py *x) {
-    PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->pFunction);
-    int line = PyCode_Addr2Line(code, 0);
-    char command[MAXPDSTRING];
-    Py4pdUtils_GetEditorCommand(x, command, line);
-    Py4pdUtils_ExecuteSystemCommand(command);
+    if (x->pFunction) {
+        PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->pFunction);
+        int line = PyCode_Addr2Line(code, 0);
+        char command[MAXPDSTRING];
+        Py4pdUtils_GetEditorCommand(x, command, line);
+        Py4pdUtils_ExecuteSystemCommand(command);
+    } else {
+        if (x->objClass == NULL) {
+            pd_error(NULL, "Any Python function or class was defined");
+            return;
+        } else {
+            PyObject *pFunction;
+            Py4pdNewObj *pObjSelf;
+            pObjSelf = (Py4pdNewObj *)x->objClass;
+            int pFuncDefined = 0;
+            if (pObjSelf->pFuncFloat != NULL) {
+                pFunction = pObjSelf->pFuncFloat;
+                pFuncDefined += 1;
+            }
+            if (pObjSelf->pFuncSymbol != NULL) {
+                pFunction = pObjSelf->pFuncSymbol;
+                pFuncDefined += 1;
+            }
+            if (pObjSelf->pFuncList != NULL) {
+                pFunction = pObjSelf->pFuncList;
+                pFuncDefined += 1;
+            }
+            if (pObjSelf->pFuncAnything != NULL) {
+                pFunction = pObjSelf->pFuncAnything;
+                pFuncDefined += 1;
+            }
+            if (pObjSelf->pFuncBang != NULL) {
+                pFunction = pObjSelf->pFuncBang;
+                pFuncDefined += 1;
+            }
+
+            if (pFuncDefined == 0) {
+                pd_error(NULL, "Any Python function was defined");
+                return;
+            } else if (pFuncDefined > 1) {
+                pd_error(NULL, "More than one Python function was defined");
+                return;
+            } else {
+                PyCodeObject *code =
+                    (PyCodeObject *)PyFunction_GetCode(pFunction);
+                int line = PyCode_Addr2Line(code, 0);
+                char command[MAXPDSTRING];
+                Py4pdUtils_GetEditorCommand(x, command, line);
+                Py4pdUtils_ExecuteSystemCommand(command);
+            }
+        }
+    }
     return;
 }
 

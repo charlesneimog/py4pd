@@ -127,4 +127,6 @@ def py4pdLoadObjects():
     py4pd_libs.addmethod("install", downloadPy4pdLibraries)
     py4pd_libs.addmethod("libraries", listPy4pdLibraries)
     py4pd_libs.help_patch = "py4pd.libs-help.pd"
+    py4pd_libs.allow_editor = True
     py4pd_libs.add_object()
+

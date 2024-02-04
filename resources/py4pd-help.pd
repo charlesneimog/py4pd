@@ -200,6 +200,7 @@
 #X obj 335 230 py4pd;
 #X msg 335 210 pip install numpy;
 #X text 429 207 <= See an error related with numpy \, click here!, f 30;
+#X msg 107 91 editor nvim;
 #X connect 0 0 25 0;
 #X connect 6 0 25 0;
 #X connect 7 0 25 0;
@@ -207,3 +208,4 @@
 #X connect 23 0 25 0;
 #X connect 25 0 19 0;
 #X connect 28 0 27 0;
+#X connect 30 0 25 0;

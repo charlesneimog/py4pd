@@ -82,7 +82,6 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     char *pkgPathchar = malloc(strlen(x->pkgPath->s_name) + 1);
     Py4pdUtils_Strlcpy(pkgPathchar, x->pkgPath->s_name,
                        strlen(x->pkgPath->s_name) + 1);
-    // strcpy(pkgPathchar, x->pkgPath->s_name); // TODO: Make safe
 
     Py4pdUtils_CheckPkgNameConflict(x, pkgPathchar, scriptFileName);
     Py4pdUtils_CheckPkgNameConflict(x, pyGlobalFolder, scriptFileName);
@@ -334,7 +333,7 @@ static void *Py4pd_PipInstallDetach(void *Args) {
         outlet_float(x->mainOut, 0);
         return NULL;
     } else {
-        pd_error(NULL, "The installation has been completed.\n Please Restart "
+        pd_error(NULL, "The installation has been completed.\nPlease, RESTART "
                        "PureData!");
         free(COMMAND);
         outlet_float(x->mainOut, 1);

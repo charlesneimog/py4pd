@@ -10,9 +10,13 @@ try:
             "link": "charlesneimog/py4pd-upic",
             "description": "Use svg files as scores.",
         },
-        "py4pd-score": {
-            "link": "charlesneimog/py4pd-score",
-            "description": "Simple Scores in PureData",
+        "py4pd-ji": {
+            "link": "charlesneimog/py4pd-ji",
+            "description": "Just Intonation/Microtonal tools.",
+        },
+        "orchidea":{
+            "link": "charlesneimog/orchidea",
+            "description": "Get the Orchidea samples using midi data",
         },
     }
 
@@ -25,23 +29,38 @@ try:
 
     def downloadPy4pdLibraries(py4pdName):
         """ """
+        if py4pdName not in py4pd_libraries:
+            pd.error("Library '{}' not found".format(py4pdName))
+            return
+
         library = py4pd_libraries[py4pdName]
-        gitLink = "https://api.github.com/repos/{}/releases".format(library)
+        gitLink = "https://api.github.com/repos/{}/releases".format(library["link"])
         installFolder = pd.get_pd_search_paths()[0]
         libraryPath = installFolder + "/" + py4pdName
+
+        # check if file already exists
+        if os.path.exists(libraryPath):
+            pd.print(f"Library '{py4pdName}' already installed")
+            return
+
         try:
             response = requests.get(gitLink)
             responseJson = response.json()
             sourceCodeLink = responseJson[0]["zipball_url"]
             response = requests.get(sourceCodeLink)  # download
         except Exception as e:
-            pd.print("Was not possible to download the library '{}'".format(py4pdName))
+            pd.print("The link was not found, please report using https://github.com/charlesneimog/py4pd/issues")
             pd.error(str(e))
             return
 
-        libraryPath = pd.get_pd_search_paths()[0] + "/" + py4pdName
-        with open(libraryPath + ".zip", "wb") as f:
-            f.write(response.content)
+        try:
+            libraryPath = pd.get_pd_search_paths()[0] + "/" + py4pdName
+            with open(libraryPath + ".zip", "wb") as f:
+                f.write(response.content)
+        except Exception as e:
+            pd.print("Error to download the library '{}'".format(py4pdName))
+            pd.error(str(e))
+            return
 
         with zipfile.ZipFile(libraryPath + ".zip", "r") as zip_ref:
             zip_ref.extractall(pd.get_pd_search_paths()[0])

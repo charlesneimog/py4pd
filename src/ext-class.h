@@ -16,6 +16,7 @@ typedef struct {
     int auxOutlets;
     int requireNofOutlets;
     int ignoreNoneOutputs;
+    int allowEdit;
     const char *objImage;
     const char *helpPatch;
 
