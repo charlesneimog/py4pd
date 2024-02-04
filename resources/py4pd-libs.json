@@ -1,1 +1,15 @@
+{
+    "py4pd-upic": {
+        "link": "charlesneimog/py4pd-upic",
+        "description": "Use svg files as scores."
+    },
+    "py4pd-ji": {
+        "link": "charlesneimog/py4pd-ji",
+        "description": "Just Intonation/Microtonal tools."
+    },
+    "orchidea": {
+        "link": "charlesneimog/orchidea",
+        "description": "Get the Orchidea samples using midi data"
+    }
+}
 
