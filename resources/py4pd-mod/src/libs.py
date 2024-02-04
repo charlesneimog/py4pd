@@ -29,6 +29,7 @@ try:
 
     def downloadPy4pdLibraries(py4pdName):
         """ """
+        pd.print(f"Downloading library '{py4pdName}'")
         if py4pdName not in py4pd_libraries:
             pd.error("Library '{}' not found".format(py4pdName))
             return
@@ -41,6 +42,9 @@ try:
         # check if file already exists
         if os.path.exists(libraryPath):
             pd.print(f"Library '{py4pdName}' already installed")
+            # check if README.deken.pd exists
+            if os.path.exists(libraryPath + "/README.deken.pd"):
+                pd._open_patch("README.deken.pd", libraryPath)
             return
 
         try:
@@ -67,6 +71,7 @@ try:
             extractFolderName = zip_ref.namelist()[0]
             os.rename(installFolder + "/" + extractFolderName, libraryPath)
 
+        pd._open_patch("README.deken.pd", libraryPath)
         os.remove(libraryPath + ".zip")
         pd.print(f"Library '{py4pdName}' installed successfully")
 

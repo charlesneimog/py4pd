@@ -309,8 +309,11 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     PyObject *pd_module = PyImport_ImportModule("pd");
 
     if (pd_module == NULL) {
-        pd_error(NULL,
-                 "[py4pd] Not possible import the pd module, please report!");
+        pd_error(
+            NULL,
+            "[py4pd] Not possible import the pd module for %s, please report!",
+            s->s_name);
+        Py4pdUtils_PrintError(NULL);
         return NULL;
     }
 

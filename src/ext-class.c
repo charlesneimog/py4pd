@@ -745,8 +745,8 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
     if (pd_module == NULL) {
         pd_error(
             NULL,
-            "[py4pd] Not possible import the pd module, please report in %s",
-            PY4PD_GIT_ISSUES);
+            "[py4pd] Not possible import the pd module, failed to create %s",
+            s->s_name);
         return NULL;
     }
 

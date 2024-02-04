@@ -1,5 +1,7 @@
 #include "ext-class.h"
 #include "ext-libraries.h"
+#include "m_pd.h"
+#include "object.h"
 #include "pic.h"
 #include "player.h"
 #include "py4pd.h"
@@ -457,7 +459,6 @@ static PyObject *Py4pdMod_PdRecursiveCall(PyObject *self, PyObject *args) {
             x->recursiveClock = clock_new(x, (t_method)Py4pdMod_RecursiveTick);
         Py_INCREF(pValue); // avoid thing to be deleted
         x->recursiveCalls = 0;
-        // clock_setunit(x->recursiveClock, 0, 0);
         clock_delay(x->recursiveClock, 0);
         Py_RETURN_TRUE;
     }
@@ -1040,6 +1041,68 @@ static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args,
 }
 
 // =================================
+//
+static void Py4pdMod_ScheduledOpenPatch(t_py *x) {
+
+    t_atom *listArray;
+    int listSize = 2;
+    listArray = (t_atom *)malloc(listSize * sizeof(t_atom));
+    const char *patchName = PyUnicode_AsUTF8(PyList_GetItem(x->pObjVarDict, 0));
+    const char *patchDir = PyUnicode_AsUTF8(PyList_GetItem(x->pObjVarDict, 1));
+
+    SETSYMBOL(&listArray[0], gensym(patchName));
+    SETSYMBOL(&listArray[1], gensym(patchDir));
+
+    if (gensym("pd")->s_thing) {
+        typedmess(gensym("pd")->s_thing, gensym("open"), 2, listArray);
+        clock_free(x->recursiveClock);
+        Py_DECREF(x->pObjVarDict);
+        x->pObjVarDict = NULL;
+        free(listArray);
+        return;
+    } else {
+        PyErr_SetString(PyExc_TypeError,
+                        "[Python] pd.open_patch: pd object not found");
+        clock_free(x->recursiveClock);
+        Py_DECREF(x->pObjVarDict);
+        x->pObjVarDict = NULL;
+        free(listArray);
+        return;
+    }
+}
+// =================================
+/**
+ * @brief Same that use the [home] in pd
+ */
+static PyObject *Py4pdMod_OpenPatch(PyObject *self, PyObject *args) {
+    (void)self;
+    t_py *x = Py4pdUtils_GetObject(self);
+
+    char *patchName;
+    char *patchDir;
+
+    if (!PyArg_ParseTuple(args, "ss", &patchName, &patchDir)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "[Python] pd.open_patch: wrong arguments. Use "
+                        "PATCH_NAME followed by PATCH_DIR");
+        return NULL;
+    }
+
+    PyObject *pLibraryPath = PyUnicode_FromString(patchDir);
+    PyObject *sys_path = PySys_GetObject("path");
+    PyList_Insert(sys_path, 0, pLibraryPath);
+    Py_DECREF(pLibraryPath);
+
+    PyObject *pList = PyList_New(2);
+    PyList_SetItem(pList, 0, PyUnicode_FromString(patchName));
+    PyList_SetItem(pList, 1, PyUnicode_FromString(patchDir));
+    x->recursiveClock = clock_new(x, (t_method)Py4pdMod_ScheduledOpenPatch);
+    x->pObjVarDict = pList;
+    clock_delay(x->recursiveClock, 0);
+    Py_RETURN_TRUE;
+}
+
+// =================================
 /**
  * @brief Same that use the [home] in pd
  */
@@ -1494,7 +1557,8 @@ PyMethodDef PdMethods[] = {
     // Internal
     {"_recursive", Py4pdMod_PdRecursiveCall, METH_VARARGS,
      "It calls a function recursively"},
-
+    {"_open_patch", Py4pdMod_OpenPatch, METH_VARARGS,
+     "Open a patch in PureData"},
     {NULL, NULL, 0, NULL} //
 };
 

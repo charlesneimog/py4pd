@@ -253,11 +253,15 @@
 #X connect 11 0 8 0;
 #X connect 13 0 12 0;
 #X restore 340 28 pd py4pd;
+#X obj 266 50 pdcontrol;
+#X obj 245 210 s pd;
+#X msg 249 177 open README.deken.pd /home/neimog/Documents/Pd/externals/py4pd-ji;
 #X connect 4 0 2 0;
 #X connect 8 0 7 0;
 #X connect 9 0 2 0;
 #X connect 10 0 2 0;
 #X connect 11 0 2 0;
+#X connect 16 0 15 0;
 #X restore 14 233 pd Libraries;
 #X text 80 232 <= Share your Python code as pd objects.;
 #X text 110 210 <= Interact with Python from PureData.;
@@ -273,7 +277,7 @@
 #X obj 335 230 py4pd;
 #X msg 335 210 pip install numpy;
 #X text 429 207 <= See an error related with numpy \, click here!, f 30;
-#N canvas 496 -3 464 252 pip 1;
+#N canvas 496 32 464 252 pip 0;
 #X text 5 4 I will try to implement pip as it works in a cmd-line. We use the method [pip] to install and set all the configs for the py4pd enviroment., f 78;
 #X obj 9 108 py4pd;
 #X msg 9 81 pip install numpy;

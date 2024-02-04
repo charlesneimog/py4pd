@@ -100,6 +100,11 @@ def printall(x, y):
     "It sends a message to the py4pd message box."
     pd.print(str(x + y))
 
+def openpatch(name, mydir):
+    pd._open_patch(name, mydir)
+
+
+
 # ================================================
 # ================ Audio =========================
 # ================================================
