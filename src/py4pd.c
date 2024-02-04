@@ -334,7 +334,8 @@ static void *Py4pd_PipInstallDetach(void *Args) {
         outlet_float(x->mainOut, 0);
         return NULL;
     } else {
-        pd_error(NULL, "The installation has been completed.\n");
+        pd_error(NULL, "The installation has been completed.\n Please Restart "
+                       "PureData!");
         free(COMMAND);
         outlet_float(x->mainOut, 1);
         return NULL;
