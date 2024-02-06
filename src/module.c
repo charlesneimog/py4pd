@@ -1,7 +1,5 @@
 #include "ext-class.h"
 #include "ext-libraries.h"
-#include "m_pd.h"
-#include "object.h"
 #include "pic.h"
 #include "player.h"
 #include "py4pd.h"
@@ -634,47 +632,24 @@ static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args,
             objPrefix = 0;
     }
 
-    PyObject *obj;
-
-    if (PyArg_ParseTuple(args, "O", &obj)) {
-        PyObject *str = PyObject_Str(obj);
-        if (str == NULL) {
-            Py_DECREF(str);
-            PyErr_SetString(
-                PyExc_TypeError,
-                "[Python] pd.print failed to convert object to string.");
-            return NULL;
-        }
-        const char *str_value = PyUnicode_AsUTF8(str);
-        if (str_value == NULL) {
-            PyErr_SetString(PyExc_TypeError,
-                            "[Python] pd.print failed to convert string "
-                            "object to UTF-8.");
-            Py_DECREF(str);
-            return NULL;
-        }
+    if (PyTuple_Size(args) > 0) {
         if (printPrefix == 1) { //
             if (x->objName == NULL) {
-                post("[Python]: %s", str_value);
+                startpost("[Python]: ");
             } else {
-                post("[%s]: %s", x->objName->s_name, str_value);
+                startpost("[%s]: ", x->objName->s_name);
             }
             sys_pollgui();
-            Py_RETURN_TRUE;
-        } else {
-            post("%s", str_value);
-            sys_pollgui();
-            Py_RETURN_TRUE;
         }
-        Py_DECREF(str);
-    } else {
-        const char *tupletStr = PyUnicode_AsUTF8(PyObject_Str(args));
-        // TODO: memory leak,
-        post(tupletStr);
-        Py_DECREF(obj);
-        return NULL;
+        for (int i = 0; i < PyTuple_Size(args); i++) {
+            PyObject *arg = PyTuple_GetItem(args, i);
+            PyObject *str = PyObject_Str(arg);
+            startpost(PyUnicode_AsUTF8(str));
+            startpost(" ");
+        }
+        startpost("\n");
     }
-    Py_DECREF(obj);
+
     Py_RETURN_TRUE;
 }
 
