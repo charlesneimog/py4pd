@@ -7,6 +7,11 @@
 
 static t_class *InletsExtClassProxy;
 
+// TODO: Adicionar
+// Descrição: Forma de diferenciar methods entre argumentos que vão utilizar
+// a mensagem como argumento e methods que vão utilizar os inlets como
+// argumentos.
+
 // ====================================================
 // ===================== Obj Methods ==================
 // ====================================================
@@ -949,7 +954,7 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
         class_addbang(objClass, (t_method)Py4pdNewObj_PdExecBangMethod);
         PyCodeObject *code =
             (PyCodeObject *)PyFunction_GetCode(self->pFuncBang);
-        if (code->co_argcount > pArgCount) {
+        if (code->co_argcount > pArgCount || pMaxArgFunction == NULL) {
             pArgCount = code->co_argcount;
             pMaxArgFunction = self->pFuncBang;
         }
@@ -959,7 +964,7 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
         class_addfloat(objClass, (t_method)Py4pdNewObj_PdExecFloatMethod);
         PyCodeObject *code =
             (PyCodeObject *)PyFunction_GetCode(self->pFuncFloat);
-        if (code->co_argcount > pArgCount) {
+        if (code->co_argcount > pArgCount || pMaxArgFunction == NULL) {
             pArgCount = code->co_argcount;
             pMaxArgFunction = self->pFuncFloat;
         }
@@ -969,7 +974,7 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
         class_addsymbol(objClass, (t_method)Py4pdNewObj_PdExecSymbolMethod);
         PyCodeObject *code =
             (PyCodeObject *)PyFunction_GetCode(self->pFuncSymbol);
-        if (code->co_argcount > pArgCount) {
+        if (code->co_argcount > pArgCount || pMaxArgFunction == NULL) {
             pArgCount = code->co_argcount;
             pMaxArgFunction = self->pFuncSymbol;
         }
@@ -979,7 +984,7 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
         class_addlist(objClass, (t_method)Py4pdNewObj_PdExecListMethod);
         PyCodeObject *code =
             (PyCodeObject *)PyFunction_GetCode(self->pFuncList);
-        if (code->co_argcount > pArgCount) {
+        if (code->co_argcount > pArgCount || pMaxArgFunction == NULL) {
             pArgCount = code->co_argcount;
             pMaxArgFunction = self->pFuncList;
         }
@@ -989,7 +994,7 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
         class_addanything(objClass, (t_method)Py4pdNewObj_PdExecAnythingMethod);
         PyCodeObject *code =
             (PyCodeObject *)PyFunction_GetCode(self->pFuncAnything);
-        if (code->co_argcount > pArgCount) {
+        if (code->co_argcount > pArgCount || pMaxArgFunction == NULL) {
             pArgCount = code->co_argcount;
             pMaxArgFunction = self->pFuncAnything;
         }
@@ -1007,7 +1012,7 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
                                                    pSelector); // TODO: CHECK
             PyCodeObject *code =
                 (PyCodeObject *)PyFunction_GetCode(pMethodFunc);
-            if (code->co_argcount > pArgCount) {
+            if (code->co_argcount > pArgCount || pMaxArgFunction == NULL) {
                 pArgCount = code->co_argcount;
                 pMaxArgFunction = pMethodFunc;
             }
