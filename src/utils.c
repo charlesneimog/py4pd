@@ -1579,6 +1579,17 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
                 Py4pdUtils_RemoveChar(editor, ' ');
                 x->editorName = gensym(editor);
                 free(editor);
+            } else if (strstr(line, "editor_command =") != NULL) {
+                char *editor_command = (char *)malloc(
+                    sizeof(char) *
+                    (strlen(line) - strlen("editor_command = ") + 1)); //
+                Py4pdUtils_Strlcpy(
+                    editor_command, line + strlen("editor_command = "),
+                    strlen(line) - strlen("editor_command = ") + 1);
+                Py4pdUtils_RemoveChar(editor_command, '\n');
+                Py4pdUtils_RemoveChar(editor_command, '\r');
+                x->editorCommand = gensym(editor_command);
+                free(editor_command);
             }
         }
         fclose(file);
@@ -1658,6 +1669,11 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
         sprintf(completePath, "'%s'", pScriptName->s_name);
     } else {
         sprintf(completePath, "'%s%s.py'", home, filename);
+    }
+
+    if (x->editorCommand) {
+        sprintf(command, x->editorCommand->s_name, completePath, line);
+        return;
     }
 
     // check if there is .py in filename

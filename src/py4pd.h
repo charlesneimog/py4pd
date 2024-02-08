@@ -203,6 +203,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
 
     // script_name; // script name or pathname
     t_symbol            *editorName; // editor name
+    t_symbol            *editorCommand; // editor personalized command
     py4pdExtraOuts      *extrasOuts; // outlets
     t_py4pd_edit_proxy  *x_proxy; // para lidar com inlets auxiliares
 
