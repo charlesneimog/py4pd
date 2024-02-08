@@ -1541,10 +1541,11 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
         FILE *file = fopen(config_path, "r");
         char line[256];
         while (fgets(line, sizeof(line), file)) {
-            if (strstr(line, "packages =") != NULL) {
+            if (strstr(line, "conda_env_packages =") != NULL) {
                 char *packages_path = (char *)malloc(
-                    sizeof(char) * (strlen(line) - strlen("packages = ") + 1));
-                strcpy(packages_path, line + strlen("packages = "));
+                    sizeof(char) *
+                    (strlen(line) - strlen("conda_env_packages = ") + 1));
+                strcpy(packages_path, line + strlen("conda_env_packages = "));
                 if (strlen(packages_path) > 0) {
                     if (packages_path[strlen(packages_path) - 1] == '\n') {
                         packages_path[strlen(packages_path) - 1] = '\0';
@@ -1569,6 +1570,10 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
                     }
                 }
                 free(packages_path);
+            } else if (strstr(line, "packages =") != NULL) {
+                pd_error(NULL, "The key 'packages' in py4pd.cfg is deprecated, "
+                               "use 'conda_env_packages' instead.");
+
             } else if (strstr(line, "editor =") != NULL) {
                 char *editor = (char *)malloc(
                     sizeof(char) * (strlen(line) - strlen("editor = ") + 1)); //
