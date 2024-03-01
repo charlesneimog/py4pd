@@ -32,6 +32,14 @@ from src.utils import *
 
 # try to import all files inside src.
 
+def numpyIsInstalled():
+    try:
+        import numpy
+        return True
+    except:
+        return False
+    
+
 
 def mysumarg(a=3, b=2, c=5, d=4):
     pd.print(f"mysumarg: {a} + {b} + {c} + {d}")
@@ -39,6 +47,9 @@ def mysumarg(a=3, b=2, c=5, d=4):
 
 
 def py4pdLoadObjects():
+    numpyInstalled = numpyIsInstalled()
+
+
     # Utils
     pd.add_object(getObjectArgs, "py.getargs")
 
@@ -73,6 +84,11 @@ def py4pdLoadObjects():
     pd.add_object(mat_trans, "py.mattrans", py_out=True)
     pd.add_object(rotate, "py.rotate", py_out=True)
     pd.add_object(flat, "py.flat")
+
+    if numpyInstalled:
+        pd.add_object(np2list, "py.np2list", py_out=True)
+        pd.add_object(list2np, "py.list2np")
+
 
     # Loop Functions
     # these are special objects.
@@ -114,9 +130,9 @@ def py4pdLoadObjects():
     pd.add_object(py4pdshow, "py.show", obj_type=pd.VIS)
 
     # music convertions
-    pd.add_object(freq2midicent, "f2mc")
-    pd.add_object(midicent2freq, "mc2f")
-    pd.add_object(midicent2note, "mc2n")
+    pd.add_object(freq2midicent, "py.f2mc")
+    pd.add_object(midicent2freq, "py.mc2f")
+    pd.add_object(midicent2note, "py.mc2n")
 
     # test
     pd.add_object(py4pdtimer, "py.timer", no_outlet=True)

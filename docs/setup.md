@@ -9,7 +9,8 @@ hide:
 ## <h2 align="center"> **Setup** </h2>
 
 !!! danger "Python installation is required!"
-    <p style="font-size: 16px" align="center">Installing just `py4pd` (no Python) will not work.</p>
+
+<p style="font-size: 16px" align="center">Installing just `py4pd` (no Python) will not work.</p>
 
  <p align="center"> The process of installation is simple, first we install <code>Python</code> and then <code>py4pd</code>. </p>
 
@@ -67,9 +68,9 @@ hide:
         On `Linux`:
 
         * Open the terminal.
-        * Run: 
+        * Run:
             * :simple-fedora: `sudo dnf install python3.11 python3-pip`
-            * :material-ubuntu: `sudo apt install python3.11 python3-pip` 
+            * :material-ubuntu: `sudo apt install python3.11 python3-pip`
             * :material-arch: `yay -S python311 python3.pip`
 
 === ":fontawesome-solid-2: Install py4pd"

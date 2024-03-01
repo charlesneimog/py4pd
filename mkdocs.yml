@@ -99,6 +99,7 @@ nav:
     - pd-users/index.md
     - Arguments: pd-users/args.md
     - Methods: pd-users/methods.md
+    - Config File: pd-users/py4pd-cfg.md
   - Python Use: 
       - Introduction: python-users/index.md
       - Creating Pd Libraries:

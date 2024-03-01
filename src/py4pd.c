@@ -35,7 +35,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
 
     char script_file_path[MAXPDSTRING];
     snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->pdPatchPath->s_name,
-             scriptFileName->s_name);
+             atom_gensym(argv + 1)->s_name);
 
     char script_inside_py4pd_path[MAXPDSTRING];
     snprintf(script_inside_py4pd_path, MAXPDSTRING,
@@ -1124,9 +1124,6 @@ void py4pd_setup(void) {
     py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)Py4pd_Py4pdNew,
                                    (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
                                    CLASS_NOINLET, A_GIMME, 0);
-
-    // this is like have lot of objects with the same name, add all methods
-    // for
 
     class_addmethod(py4pd_class, (t_method)Py4pd_SetPy4pdHomePath,
                     gensym("home"), A_GIMME,

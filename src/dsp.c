@@ -18,7 +18,7 @@ static void Py4pdAudio_Audio2PdAudio(t_py *x, PyObject *pValue,
             PyArray_Descr *pArrayType =
                 PyArray_DESCR(pArray); // double or float
             int arrayLength = PyArray_SIZE(pArray);
-            int returnedChannels = PyArray_DIM(pArray, 0);
+            int returnedChannels = PyArray_NDIM(pArray);
 
             if (x->nChs < returnedChannels) {
                 pd_error(x,

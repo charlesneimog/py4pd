@@ -1,5 +1,11 @@
-import pd
 from typing import List
+
+import pd
+
+try:
+    import numpy as np
+except:
+    pass
 
 
 #  ==============
@@ -112,4 +118,18 @@ def flat(nested_list):
         else:
             result.append(item)
     return result
+
+
+def np2list(thelist):
+    return thelist.tolist()
+
+
+def list2np(thelist):
+    if not isinstance(thelist, list):
+        pd.error("[py.list2np]: bad arguments")
+        return None
+    if np is None:
+        pd.error("[py.list2np]: numpy is not installed")
+        return None
+    return np.array(thelist)
 

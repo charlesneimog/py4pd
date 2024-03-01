@@ -21,6 +21,7 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line);
 int Py4pdUtils_ExecuteSystemCommand(const char *command);
 int Py4pdUtils_IsNumericOrDot(const char *str);
 void Py4pdUtils_RemoveChar(char *str, char c);
+void Py4pdUtils_ReplaceChar(char *str, char char2replace, char newchar);
 char *Py4pdUtils_Mtok(char *input, char *delimiter);
 size_t Py4pdUtils_Strlcpy(char *dst, const char *src, size_t size);
 size_t Py4pdUtils_Strlcat(char *dst, const char *src, size_t size);

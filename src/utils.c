@@ -62,6 +62,25 @@ void Py4pdUtils_RemoveChar(char *str, char c) {
 
 // =====================================================================
 /*
+ * @brief Replace one char by the other
+ * @param str
+ * @param char2replace char that will be replaced
+ * @param newchar new char
+ */
+void Py4pdUtils_ReplaceChar(char *str, char char2replace, char newchar) {
+    if (str == NULL) {
+        printf("Error: Input string is NULL.\n");
+        return;
+    }
+    while (*str != '\0') {
+        if (*str == char2replace) {
+            *str = newchar;
+        }
+        str++;
+    }
+}
+// =====================================================================
+/*
  * @brief Convert and output Python Values to PureData values
  * @param x is the py4pd object
  * @param pValue is the Python value to convert
