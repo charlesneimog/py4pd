@@ -47,7 +47,7 @@ hide:
 
     === ":material-apple: macOS"
 
-        On `MacOS` you can install Python as an ordinary software.
+        On `MacOS` you can install Python like and ordirary software.
 
         * Go to [Python.org](https://www.python.org/downloads/release/python-3115/),
         * Go to the bottom of the page and download: `macOS 64-bit universal2 installer`.
