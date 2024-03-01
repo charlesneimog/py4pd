@@ -123,8 +123,7 @@ static void Py4pdNewObj_PdExecSymbolMethod(t_py *x, t_symbol *s) {
 }
 
 // ====================================================
-static void Py4pdNewObj_PdExecListMethod(t_py *x, t_symbol *s, int argc,
-                                         t_atom *argv) {
+static void Py4pdNewObj_PdExecListMethod(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     Py4pdNewObj *pObjSelf;
 
     if (s == NULL || s == gensym("bang")) {
@@ -164,8 +163,7 @@ static void Py4pdNewObj_PdExecListMethod(t_py *x, t_symbol *s, int argc,
 }
 
 // ====================================================
-static void Py4pdNewObj_PdExecAnythingMethod(t_py *x, t_symbol *s, int argc,
-                                             t_atom *argv) {
+static void Py4pdNewObj_PdExecAnythingMethod(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     Py4pdNewObj *pObjSelf;
 
     if (s == NULL || s == gensym("bang")) {
@@ -203,8 +201,51 @@ static void Py4pdNewObj_PdExecAnythingMethod(t_py *x, t_symbol *s, int argc,
 }
 
 // ====================================================
-static void Py4pdNewObj_PdExecSelectorMethod(t_py *x, t_symbol *selector,
-                                             int argc, t_atom *argv) {
+static void Py4pdNewObj_PdExecPyObjectMethod(t_py *x, t_symbol *selector, t_gpointer *p) {
+    Py4pdNewObj *pObjSelf;
+
+    pObjSelf = (Py4pdNewObj *)x->objClass;
+    PyObject *pSelector = PyUnicode_FromString(selector->s_name);
+    t_py4pd_pValue *pArg = (t_py4pd_pValue *)p;
+
+    // get the Dict
+    PyObject *pDictSelectors = (PyObject *)pObjSelf->pDictTypes;
+    PyObject *pDictArgs = PyDict_GetItem((PyObject *)pObjSelf->pTypeArgs, pSelector);
+
+    PyObject *pFunc = PyDict_GetItem(pDictSelectors, pSelector);
+    x->pFunction = pFunc;
+    if (!pFunc) {
+        pd_error(NULL, "There is not method defined for %s", selector->s_name);
+        return;
+    }
+    selector = NULL;
+
+    PyCodeObject *pFuncCode = (PyCodeObject *)PyFunction_GetCode(pFunc);
+    int pFuncArgs = pFuncCode->co_argcount;
+    PyObject *pArgs = PyTuple_New(pFuncArgs);
+
+    PyTuple_SetItem(pArgs, 0, pArg->pValue);
+
+    for (int i = 1; i < pFuncArgs; i++) {
+        PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
+        Py_INCREF(x->pyObjArgs[i]->pValue); // This keep the reference.
+    }
+
+    if (x->objType > PY4PD_VISOBJ) {
+        Py_INCREF(pArgs);
+        x->pyObjArgs[0]->objectsUsing = 0;
+        x->pyObjArgs[0]->pdout = 0;
+        x->pyObjArgs[0]->objOwner = x->objName;
+        x->pyObjArgs[0]->pValue = pArgs;
+        x->pArgTuple = pArgs;
+        Py_INCREF(x->pArgTuple);
+        return;
+    }
+    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
+    Py_DECREF(pArgs);
+}
+// ====================================================
+static void Py4pdNewObj_PdExecSelectorMethod(t_py *x, t_symbol *selector, int argc, t_atom *argv) {
     Py4pdNewObj *pObjSelf;
 
     pObjSelf = (Py4pdNewObj *)x->objClass;
@@ -212,8 +253,7 @@ static void Py4pdNewObj_PdExecSelectorMethod(t_py *x, t_symbol *selector,
 
     // get the Dict
     PyObject *pDictSelectors = (PyObject *)pObjSelf->pDictSelectors;
-    PyObject *pDictArgs =
-        PyDict_GetItem((PyObject *)pObjSelf->pSelectorArgs, pSelector);
+    PyObject *pDictArgs = PyDict_GetItem((PyObject *)pObjSelf->pSelectorArgs, pSelector);
     if (pDictArgs) {
         int argCount = PyTuple_Size(pDictArgs);
         for (int i = 0; i < argCount; i++) {
@@ -250,8 +290,7 @@ static void Py4pdNewObj_PdExecSelectorMethod(t_py *x, t_symbol *selector,
     int pFuncArgs = pFuncCode->co_argcount;
     PyObject *pArgs = PyTuple_New(pFuncArgs);
 
-    PyObject *pInletValue =
-        Py4pdUtils_CreatePyObjFromPdArgs(selector, argc, argv);
+    PyObject *pInletValue = Py4pdUtils_CreatePyObjFromPdArgs(selector, argc, argv);
     PyTuple_SetItem(pArgs, 0, pInletValue);
 
     for (int i = 1; i < pFuncArgs; i++) {
@@ -281,9 +320,7 @@ static PyObject *Py4pdNewObj_AddFloatMethod(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "O", &pFunc)) {
         // set the error string
-        PyErr_SetString(
-            PyExc_TypeError,
-            "pd.new_object.addmethod_float must be a Python Function");
+        PyErr_SetString(PyExc_TypeError, "pd.new_object.addmethod_float must be a Python Function");
         return NULL;
     }
 
@@ -306,9 +343,7 @@ static PyObject *Py4pdNewObj_AddSymbolMethod(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "O", &pFunc)) {
         // set the error string
-        PyErr_SetString(
-            PyExc_TypeError,
-            "pd.new_object.addmethod_float must be a Python Function");
+        PyErr_SetString(PyExc_TypeError, "pd.new_object.addmethod_float must be a Python Function");
         return NULL;
     }
 
@@ -329,9 +364,7 @@ static PyObject *Py4pdNewObj_AddListMethod(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "O", &pFunc)) {
         // set the error string
-        PyErr_SetString(
-            PyExc_TypeError,
-            "pd.new_object.addmethod_float must be a Python Function");
+        PyErr_SetString(PyExc_TypeError, "pd.new_object.addmethod_float must be a Python Function");
         return NULL;
     }
 
@@ -353,9 +386,7 @@ static PyObject *Py4pdNewObj_AddAnythingMethod(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "O", &pFunc)) {
         // set the error string
-        PyErr_SetString(
-            PyExc_TypeError,
-            "pd.new_object.addmethod_float must be a Python Function");
+        PyErr_SetString(PyExc_TypeError, "pd.new_object.addmethod_float must be a Python Function");
         return NULL;
     }
 
@@ -370,8 +401,68 @@ static PyObject *Py4pdNewObj_AddAnythingMethod(PyObject *self, PyObject *args) {
 }
 
 // ============================================================
-static PyObject *Py4pdNewObj_AddSelectorMethod(PyObject *self, PyObject *args,
-                                               PyObject *keywords) {
+static PyObject *Py4pdNewObj_AddPythonObjectMethod(PyObject *self, PyObject *args,
+                                                   PyObject *keywords) {
+    (void)self;
+
+    PyObject *pFunc;
+    PyObject *pArgs;
+    const char *pType;
+
+    if (!PyArg_ParseTuple(args, "sO", &pType, &pFunc)) {
+        PyErr_SetString(PyExc_TypeError, "pd.new_object.addmethod_float must be a Python Function");
+        return NULL;
+    }
+
+    if (!PyCallable_Check(pFunc)) {
+        PyErr_SetString(PyExc_TypeError, "Function is not callable");
+        return NULL;
+    }
+
+    Py4pdNewObj *selfStruct = (Py4pdNewObj *)self;
+    if (selfStruct->pTypeArgs == NULL) {
+        selfStruct->pTypeArgs = PyDict_New();
+    }
+
+    // check if keywords is a NULL
+    if (keywords == NULL) {
+        PyObject *pArgsType = PyLong_FromLong(A_GIMME);
+        PyObject *pArgsTuple = PyTuple_New(1);
+        PyTuple_SetItem(pArgsTuple, 0, pArgsType);
+        PyDict_SetItemString(selfStruct->pTypeArgs, pType, pArgsTuple);
+        Py_DECREF(pArgsType);
+    } else {
+        if (!PyDict_Contains(keywords, PyUnicode_FromString("arg_types"))) {
+            pArgs = PyTuple_New(1);
+            PyObject *pArgsType = PyLong_FromLong(A_GIMME);
+            PyTuple_SetItem(pArgs, 0, pArgsType);
+            PyDict_SetItemString(selfStruct->pTypeArgs, pType, pArgs);
+            Py_DECREF(pArgsType);
+        } else {
+            PyObject *pArgsType = PyDict_GetItemString(keywords, "arg_types");
+            if (PyTuple_Check(pArgsType)) {
+                pArgs = pArgsType;
+                PyDict_SetItemString(selfStruct->pTypeArgs, pType, pArgs);
+            } else {
+                PyErr_SetString(PyExc_TypeError, "arg_types must be a tuple of integers");
+                return NULL;
+            }
+        }
+    }
+
+    if (!selfStruct->pDictTypes) {
+        selfStruct->pDictTypes = PyDict_New();
+    }
+
+    PyObject *pSelectorPy = PyUnicode_FromString(pType);
+    PyDict_SetItem(selfStruct->pDictTypes, pSelectorPy, pFunc);
+    selfStruct->pObjMethod = 1;
+    printf("Object name is: %s\n", selfStruct->objName);
+    Py_RETURN_TRUE;
+}
+
+// ============================================================
+static PyObject *Py4pdNewObj_AddSelectorMethod(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
 
     PyObject *pFunc;
@@ -379,9 +470,7 @@ static PyObject *Py4pdNewObj_AddSelectorMethod(PyObject *self, PyObject *args,
     const char *pSelector;
 
     if (!PyArg_ParseTuple(args, "sO", &pSelector, &pFunc)) {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "pd.new_object.addmethod_float must be a Python Function");
+        PyErr_SetString(PyExc_TypeError, "pd.new_object.addmethod_float must be a Python Function");
         return NULL;
     }
 
@@ -415,11 +504,9 @@ static PyObject *Py4pdNewObj_AddSelectorMethod(PyObject *self, PyObject *args,
             PyObject *pArgsType = PyDict_GetItemString(keywords, "arg_types");
             if (PyTuple_Check(pArgsType)) {
                 pArgs = pArgsType;
-                PyDict_SetItemString(selfStruct->pSelectorArgs, pSelector,
-                                     pArgs);
+                PyDict_SetItemString(selfStruct->pSelectorArgs, pSelector, pArgs);
             } else {
-                PyErr_SetString(PyExc_TypeError,
-                                "arg_types must be a tuple of integers");
+                PyErr_SetString(PyExc_TypeError, "arg_types must be a tuple of integers");
                 return NULL;
             }
         }
@@ -434,6 +521,7 @@ static PyObject *Py4pdNewObj_AddSelectorMethod(PyObject *self, PyObject *args,
 
     Py_RETURN_TRUE;
 }
+
 // ============================================================
 static PyObject *Py4pdNewObj_AddBangMethod(PyObject *self, PyObject *args) {
     (void)self;
@@ -442,9 +530,7 @@ static PyObject *Py4pdNewObj_AddBangMethod(PyObject *self, PyObject *args) {
 
     if (!PyArg_ParseTuple(args, "O", &pFunc)) {
         // set the error string
-        PyErr_SetString(
-            PyExc_TypeError,
-            "pd.new_object.addmethod_float must be a Python Function");
+        PyErr_SetString(PyExc_TypeError, "pd.new_object.addmethod_float must be a Python Function");
         return NULL;
     }
 
@@ -465,9 +551,7 @@ static PyObject *Py4pdNewObj_AddAudioMethod(PyObject *self, PyObject *args) {
     PyObject *pFunc;
 
     if (!PyArg_ParseTuple(args, "O", &pFunc)) {
-        PyErr_SetString(
-            PyExc_TypeError,
-            "pd.new_object.addmethod_audio must be a Python Function");
+        PyErr_SetString(PyExc_TypeError, "pd.new_object.addmethod_audio must be a Python Function");
         return NULL;
     }
 
@@ -514,15 +598,12 @@ static int Py4pdNewObj_Init(Py4pdNewObj *self, PyObject *args, PyObject *kwds) {
 // ============================================================
 // ======================== Obj Attributes ====================
 // ============================================================
-static PyObject *Py4pdNewObj_GetType(Py4pdNewObj *self) {
-    return PyLong_FromLong(self->objType);
-}
+static PyObject *Py4pdNewObj_GetType(Py4pdNewObj *self) { return PyLong_FromLong(self->objType); }
 
 static int Py4pdNewObj_SetType(Py4pdNewObj *self, PyObject *value) {
     int typeValue = PyLong_AsLong(value);
     if (typeValue < 0 || typeValue > 4) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Object type not supported, check the value");
+        PyErr_SetString(PyExc_TypeError, "Object type not supported, check the value");
         return -1;
     }
     self->objType = typeValue;
@@ -552,8 +633,7 @@ static PyObject *Py4pdNewObj_GetPlayable(Py4pdNewObj *self) {
 static int Py4pdNewObj_SetPlayable(Py4pdNewObj *self, PyObject *value) {
     int playableValue = PyObject_IsTrue(value);
     if (playableValue < 0 || playableValue > 1) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Playable value not supported, check the value");
+        PyErr_SetString(PyExc_TypeError, "Playable value not supported, check the value");
         return -1;
     }
     self->objIsPlayable = playableValue;
@@ -597,20 +677,17 @@ static PyObject *Py4pdNewObj_GetFigSize(Py4pdNewObj *self) {
 
 static int Py4pdNewObj_SetFigSize(Py4pdNewObj *self, PyObject *value) {
     if (!PyTuple_Check(value)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Figure size must be a tuple with two integers");
+        PyErr_SetString(PyExc_TypeError, "Figure size must be a tuple with two integers");
         return -1;
     }
     if (PyTuple_Size(value) != 2) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Figure size must be a tuple with two integers");
+        PyErr_SetString(PyExc_TypeError, "Figure size must be a tuple with two integers");
         return -1;
     }
     PyObject *width = PyTuple_GetItem(value, 0);
     PyObject *height = PyTuple_GetItem(value, 1);
     if (!PyLong_Check(width) || !PyLong_Check(height)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Figure size must be a tuple with two integers");
+        PyErr_SetString(PyExc_TypeError, "Figure size must be a tuple with two integers");
         return -1;
     }
     self->objFigSize = value;
@@ -654,8 +731,7 @@ static PyObject *Py4pdNewObj_GetAuxOutNumbers(Py4pdNewObj *self) {
 
 static int Py4pdNewObj_SetAuxOutNumbers(Py4pdNewObj *self, PyObject *value) {
     if (!PyLong_Check(value)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "Auxiliary outlets must be an integer");
+        PyErr_SetString(PyExc_TypeError, "Auxiliary outlets must be an integer");
         return -1;
     }
     self->auxOutlets = PyLong_AsLong(value);
@@ -712,28 +788,26 @@ static int Py4pdNewObj_SetHelpPatch(Py4pdNewObj *self, PyObject *value) {
 static PyGetSetDef Py4pdNewObj_GetSet[] = {
     {"type", (getter)Py4pdNewObj_GetType, (setter)Py4pdNewObj_SetType,
      "pd.NORMALOBJ, Type attribute", NULL},
-    {"name", (getter)Py4pdNewObj_GetName, (setter)Py4pdNewObj_SetName,
-     "Name attribute", NULL},
-    {"playable", (getter)Py4pdNewObj_GetPlayable,
-     (setter)Py4pdNewObj_SetPlayable, "Playable attribute", NULL},
+    {"name", (getter)Py4pdNewObj_GetName, (setter)Py4pdNewObj_SetName, "Name attribute", NULL},
+    {"playable", (getter)Py4pdNewObj_GetPlayable, (setter)Py4pdNewObj_SetPlayable,
+     "Playable attribute", NULL},
     {"fig_size", (getter)Py4pdNewObj_GetFigSize, (setter)Py4pdNewObj_SetFigSize,
      "Figure size attribute", NULL},
-    {"image", (getter)Py4pdNewObj_GetImage, (setter)Py4pdNewObj_SetImage,
-     "Image patch", NULL},
-    {"py_out", (getter)Py4pdNewObj_GetOutputPyObjs,
-     (setter)Py4pdNewObj_SetOutputPyObjs, "Output or not PyObjs", NULL},
-    {"no_outlet", (getter)Py4pdNewObj_GetNoOutlets,
-     (setter)Py4pdNewObj_SetNoOutlets, "Number of outlets", NULL},
+    {"image", (getter)Py4pdNewObj_GetImage, (setter)Py4pdNewObj_SetImage, "Image patch", NULL},
+    {"py_out", (getter)Py4pdNewObj_GetOutputPyObjs, (setter)Py4pdNewObj_SetOutputPyObjs,
+     "Output or not PyObjs", NULL},
+    {"no_outlet", (getter)Py4pdNewObj_GetNoOutlets, (setter)Py4pdNewObj_SetNoOutlets,
+     "Number of outlets", NULL},
     {"require_n_of_outlets", (getter)Py4pdNewObj_GetRequireNofOuts,
      (setter)Py4pdNewObj_SetRequireNofOuts, "Require number of outlets", NULL},
-    {"n_extra_outlets", (getter)Py4pdNewObj_GetAuxOutNumbers,
-     (setter)Py4pdNewObj_SetAuxOutNumbers, "Number of auxiliary outlets", NULL},
-    {"ignore_none", (getter)Py4pdNewObj_GetIgnoreNone,
-     (setter)Py4pdNewObj_SetIgnoreNone, "Ignore None outputs", NULL},
-    {"help_patch", (getter)Py4pdNewObj_GetHelpPatch,
-     (setter)Py4pdNewObj_SetHelpPatch, "Ignore None outputs", NULL},
-    {"allow_editor", (getter)Py4pdNewObj_GetEditorClick,
-     (setter)Py4pdNewObj_SetEditorClick, "Ignore None outputs", NULL},
+    {"n_extra_outlets", (getter)Py4pdNewObj_GetAuxOutNumbers, (setter)Py4pdNewObj_SetAuxOutNumbers,
+     "Number of auxiliary outlets", NULL},
+    {"ignore_none", (getter)Py4pdNewObj_GetIgnoreNone, (setter)Py4pdNewObj_SetIgnoreNone,
+     "Ignore None outputs", NULL},
+    {"help_patch", (getter)Py4pdNewObj_GetHelpPatch, (setter)Py4pdNewObj_SetHelpPatch,
+     "Ignore None outputs", NULL},
+    {"allow_editor", (getter)Py4pdNewObj_GetEditorClick, (setter)Py4pdNewObj_SetEditorClick,
+     "Ignore None outputs", NULL},
 
     {NULL, NULL, NULL, NULL, NULL} /* Sentinel */
 };
@@ -748,15 +822,11 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
     PyObject *pd_module = PyImport_ImportModule("pd");
 
     if (pd_module == NULL) {
-        pd_error(
-            NULL,
-            "[py4pd] Not possible import the pd module, failed to create %s",
-            s->s_name);
+        pd_error(NULL, "[py4pd] Not possible import the pd module, failed to create %s", s->s_name);
         return NULL;
     }
 
-    PyObject *py4pd_capsule =
-        PyObject_GetAttrString(pd_module, py4pd_objectName);
+    PyObject *py4pd_capsule = PyObject_GetAttrString(pd_module, py4pd_objectName);
     PyObject *PdDictCapsule = PyCapsule_GetPointer(py4pd_capsule, objectName);
     if (PdDictCapsule == NULL) {
         pd_error(NULL, "Error: PdDictCapsule is NULL, please report!");
@@ -785,8 +855,7 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
     PyObject *pyOUT = PyDict_GetItemString(PdDict, "pyout");
     PyObject *nooutlet = PyDict_GetItemString(PdDict, "nooutlet");
     PyObject *AuxOutletPy = PyDict_GetItemString(PdDict, "py4pdAuxOutlets");
-    PyObject *RequireUserToSetOutletNumbers =
-        PyDict_GetItemString(PdDict, "requireoutletn");
+    PyObject *RequireUserToSetOutletNumbers = PyDict_GetItemString(PdDict, "requireoutletn");
     PyObject *pyFunction = PyDict_GetItemString(PdDict, "Function");
     PyObject *PyStructSelf = PyDict_GetItemString(PdDict, "objSelf");
     PyObject *pMaxArgFunc = PyDict_GetItemString(PdDict, "objFunc");
@@ -827,8 +896,7 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
         Py4pdUtils_CreatePicObj(x, PdDict, object_PY4PD_Class, argc, argv);
 
     x->pArgsCount = 0;
-    int parseArgsRight =
-        Py4pdUtils_ParseLibraryArguments(x, code, &argc, &argv);
+    int parseArgsRight = Py4pdUtils_ParseLibraryArguments(x, code, &argc, &argv);
 
     if (parseArgsRight == 0) {
         pd_error(NULL, "[%s] Error to parse arguments.", objectName);
@@ -846,8 +914,7 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
         x->pyObjArgs = malloc(sizeof(t_py4pd_pValue *) * x->pArgsCount);
     }
 
-    int inlets = Py4pdUtils_CreateObjInlets(pMaxArgFunc, x, InletsExtClassProxy,
-                                            argc, argv);
+    int inlets = Py4pdUtils_CreateObjInlets(pMaxArgFunc, x, InletsExtClassProxy, argc, argv);
     if (inlets != 0) {
         free(x->pdObjArgs);
         free(x->pyObjArgs);
@@ -905,15 +972,13 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
     }
 
     if (AuxOutlet > 0) {
-        x->extrasOuts =
-            (py4pdExtraOuts *)getbytes(AuxOutlet * sizeof(py4pdExtraOuts));
+        x->extrasOuts = (py4pdExtraOuts *)getbytes(AuxOutlet * sizeof(py4pdExtraOuts));
         x->extrasOuts->outCount = AuxOutlet;
         t_atom defarg[AuxOutlet];
         t_atom *ap;
         py4pdExtraOuts *u;
         int i;
-        for (i = 0, u = x->extrasOuts, ap = defarg; i < AuxOutlet;
-             i++, u++, ap++) {
+        for (i = 0, u = x->extrasOuts, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
             u->u_outlet = outlet_new(&x->obj, &s_anything);
         }
     }
@@ -937,13 +1002,10 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
     t_class *objClass;
 
     if (self->objType < 5 && self->objType > -1) {
-        objClass =
-            class_new(gensym(objectName), (t_newmethod)Py4pdNewObj_NewObj,
-                      (t_method)Py4pdUtils_FreeObj, sizeof(t_py), CLASS_DEFAULT,
-                      A_GIMME, 0);
+        objClass = class_new(gensym(objectName), (t_newmethod)Py4pdNewObj_NewObj,
+                             (t_method)Py4pdUtils_FreeObj, sizeof(t_py), CLASS_DEFAULT, A_GIMME, 0);
     } else {
-        PyErr_SetString(PyExc_TypeError,
-                        "Object type not supported, check the spelling");
+        PyErr_SetString(PyExc_TypeError, "Object type not supported, check the spelling");
         return NULL;
     }
 
@@ -952,8 +1014,11 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
 
     if (self->pFuncBang) {
         class_addbang(objClass, (t_method)Py4pdNewObj_PdExecBangMethod);
-        PyCodeObject *code =
-            (PyCodeObject *)PyFunction_GetCode(self->pFuncBang);
+        PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(self->pFuncBang);
+        if (code == NULL) {
+            PyErr_SetString(PyExc_TypeError, "Not possible to get the number of arguments");
+            return NULL;
+        }
         if (code->co_argcount > pArgCount || pMaxArgFunction == NULL) {
             pArgCount = code->co_argcount;
             pMaxArgFunction = self->pFuncBang;
@@ -962,8 +1027,11 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
 
     if (self->pFuncFloat) {
         class_addfloat(objClass, (t_method)Py4pdNewObj_PdExecFloatMethod);
-        PyCodeObject *code =
-            (PyCodeObject *)PyFunction_GetCode(self->pFuncFloat);
+        PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(self->pFuncFloat);
+        if (code == NULL) {
+            PyErr_SetString(PyExc_TypeError, "Not possible to get the number of arguments");
+            return NULL;
+        }
         if (code->co_argcount > pArgCount || pMaxArgFunction == NULL) {
             pArgCount = code->co_argcount;
             pMaxArgFunction = self->pFuncFloat;
@@ -972,8 +1040,11 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
 
     if (self->pFuncSymbol) {
         class_addsymbol(objClass, (t_method)Py4pdNewObj_PdExecSymbolMethod);
-        PyCodeObject *code =
-            (PyCodeObject *)PyFunction_GetCode(self->pFuncSymbol);
+        PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(self->pFuncSymbol);
+        if (code == NULL) {
+            PyErr_SetString(PyExc_TypeError, "Not possible to get the number of arguments");
+            return NULL;
+        }
         if (code->co_argcount > pArgCount || pMaxArgFunction == NULL) {
             pArgCount = code->co_argcount;
             pMaxArgFunction = self->pFuncSymbol;
@@ -982,8 +1053,11 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
 
     if (self->pFuncList) {
         class_addlist(objClass, (t_method)Py4pdNewObj_PdExecListMethod);
-        PyCodeObject *code =
-            (PyCodeObject *)PyFunction_GetCode(self->pFuncList);
+        PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(self->pFuncList);
+        if (code == NULL) {
+            PyErr_SetString(PyExc_TypeError, "Not possible to get the number of arguments");
+            return NULL;
+        }
         if (code->co_argcount > pArgCount || pMaxArgFunction == NULL) {
             pArgCount = code->co_argcount;
             pMaxArgFunction = self->pFuncList;
@@ -992,8 +1066,11 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
 
     if (self->pFuncAnything) {
         class_addanything(objClass, (t_method)Py4pdNewObj_PdExecAnythingMethod);
-        PyCodeObject *code =
-            (PyCodeObject *)PyFunction_GetCode(self->pFuncAnything);
+        PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(self->pFuncAnything);
+        if (code == NULL) {
+            PyErr_SetString(PyExc_TypeError, "Not possible to get the number of arguments");
+            return NULL;
+        }
         if (code->co_argcount > pArgCount || pMaxArgFunction == NULL) {
             pArgCount = code->co_argcount;
             pMaxArgFunction = self->pFuncAnything;
@@ -1002,16 +1079,17 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
 
     if (self->pDictSelectors) {
         PyObject *pSelector, *pFunc;
-        for (Py_ssize_t i = 0;
-             PyDict_Next(self->pDictSelectors, &i, &pSelector, &pFunc);) {
-            class_addmethod(objClass,
-                            (t_method)Py4pdNewObj_PdExecSelectorMethod,
+        for (Py_ssize_t i = 0; PyDict_Next(self->pDictSelectors, &i, &pSelector, &pFunc);) {
+            class_addmethod(objClass, (t_method)Py4pdNewObj_PdExecSelectorMethod,
                             gensym(PyUnicode_AsUTF8(pSelector)), A_GIMME, 0);
 
             PyObject *pMethodFunc = PyDict_GetItem(self->pDictSelectors,
                                                    pSelector); // TODO: CHECK
-            PyCodeObject *code =
-                (PyCodeObject *)PyFunction_GetCode(pMethodFunc);
+            PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(pMethodFunc);
+            if (code == NULL) {
+                PyErr_SetString(PyExc_TypeError, "Not possible to get the number of arguments");
+                return NULL;
+            }
             if (code->co_argcount > pArgCount || pMaxArgFunction == NULL) {
                 pArgCount = code->co_argcount;
                 pMaxArgFunction = pMethodFunc;
@@ -1019,7 +1097,23 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
         }
     }
 
-    if (pMaxArgFunction == NULL && (self->pAudio == NULL)) {
+    if (self->pDictTypes) {
+        PyObject *pSelector, *pFunc;
+        for (Py_ssize_t i = 0; PyDict_Next(self->pDictTypes, &i, &pSelector, &pFunc);) {
+            PyObject *pMethodFunc = PyDict_GetItem(self->pDictTypes, pSelector);
+            PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(pMethodFunc);
+            if (code == NULL) {
+                PyErr_SetString(PyExc_TypeError, "Not possible to get the number of arguments");
+                return NULL;
+            }
+            if (code->co_argcount > pArgCount || pMaxArgFunction == NULL) {
+                pArgCount = code->co_argcount;
+                pMaxArgFunction = pMethodFunc;
+            }
+        }
+    }
+
+    if (pMaxArgFunction == NULL && (self->pAudio == NULL) && (self->pObjMethod != 1)) {
         PyErr_SetString(PyExc_TypeError, "You must add a method to the object");
         return NULL;
     } else if (self->pAudio != NULL) {
@@ -1083,8 +1177,7 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
     PyDict_SetItemString(objConfigDict, "name", Py_ObjName);
     Py_DECREF(Py_ObjName);
 
-    PyObject *Py_LibraryFolder =
-        PyUnicode_FromString(py4pd->libraryFolder->s_name);
+    PyObject *Py_LibraryFolder = PyUnicode_FromString(py4pd->libraryFolder->s_name);
     PyDict_SetItemString(objConfigDict, "LibraryFolder", Py_LibraryFolder);
     Py_DECREF(Py_LibraryFolder);
 
@@ -1112,42 +1205,36 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
     PyModule_AddObject(PdModule, py4pd_objectName, py4pd_capsule);
     Py_DECREF(PdModule);
 
+    class_addmethod(objClass, (t_method)Py4pdNewObj_PdExecPyObjectMethod, gensym("PyObject"),
+                    A_SYMBOL, A_POINTER, 0);
+
     if (self->objIsPlayable) {
-        class_addmethod(objClass, (t_method)Py4pdPlayer_Play, gensym("play"),
-                        A_GIMME, 0);
-        class_addmethod(objClass, (t_method)Py4pdPlayer_Stop, gensym("stop"), 0,
-                        0);
-        class_addmethod(objClass, (t_method)Py4pdPlayer_Clear, gensym("clear"),
-                        0, 0);
+        class_addmethod(objClass, (t_method)Py4pdPlayer_Play, gensym("play"), A_GIMME, 0);
+        class_addmethod(objClass, (t_method)Py4pdPlayer_Stop, gensym("stop"), 0, 0);
+        class_addmethod(objClass, (t_method)Py4pdPlayer_Clear, gensym("clear"), 0, 0);
     }
 
     if (self->objType == PY4PD_AUDIOINOBJ) {
-        class_addmethod(objClass, (t_method)Py4pdAudio_Dsp, gensym("dsp"),
-                        A_CANT, 0);
+        class_addmethod(objClass, (t_method)Py4pdAudio_Dsp, gensym("dsp"), A_CANT, 0);
         CLASS_MAINSIGNALIN(objClass, t_py, py4pdAudio);
     } else if (self->objType == PY4PD_AUDIOOUTOBJ) {
-        class_addmethod(objClass, (t_method)Py4pdAudio_Dsp, gensym("dsp"),
-                        A_CANT, 0);
+        class_addmethod(objClass, (t_method)Py4pdAudio_Dsp, gensym("dsp"), A_CANT, 0);
     } else if (self->objType == PY4PD_AUDIOOBJ) {
-        class_addmethod(objClass, (t_method)Py4pdAudio_Dsp, gensym("dsp"),
-                        A_CANT, 0);
+        class_addmethod(objClass, (t_method)Py4pdAudio_Dsp, gensym("dsp"), A_CANT, 0);
         CLASS_MAINSIGNALIN(objClass, t_py, py4pdAudio);
     }
 
     // TODO: Method to Reload
     if (self->allowEdit) {
-        class_addmethod(objClass, (t_method)Py4pdUtils_Click, gensym("click"),
-                        0, 0);
+        class_addmethod(objClass, (t_method)Py4pdUtils_Click, gensym("click"), 0, 0);
     }
 
     if (pArgCount != 0) {
-        InletsExtClassProxy =
-            class_new(gensym("_py4pdInlets_proxy"), 0, 0,
-                      sizeof(t_py4pdInlet_proxy), CLASS_DEFAULT, 0);
+        InletsExtClassProxy = class_new(gensym("_py4pdInlets_proxy"), 0, 0,
+                                        sizeof(t_py4pdInlet_proxy), CLASS_DEFAULT, 0);
 
         class_addanything(InletsExtClassProxy, Py4pdUtils_ExtraInletAnything);
-        class_addmethod(InletsExtClassProxy,
-                        (t_method)Py4pdUtils_ExtraInletPointer,
+        class_addmethod(InletsExtClassProxy, (t_method)Py4pdUtils_ExtraInletPointer,
                         gensym("PyObject"), A_SYMBOL, A_POINTER, 0);
     }
     Py_RETURN_TRUE;
@@ -1158,32 +1245,31 @@ static PyMethodDef Py4pdNewObj_methods[] = {
     {"add_object", (PyCFunction)Py4pdNewObj_Method_AddObj, METH_NOARGS,
      "After the config of the Obj, use this to add the object to PureData"},
 
-    {"addmethod_bang", (PyCFunction)Py4pdNewObj_AddBangMethod, METH_VARARGS,
-     "Add Anything Method"},
+    {"addmethod_bang", (PyCFunction)Py4pdNewObj_AddBangMethod, METH_VARARGS, "Add Anything Method"},
 
-    {"addmethod_float", (PyCFunction)Py4pdNewObj_AddFloatMethod, METH_VARARGS,
-     "Add Float Method"},
+    {"addmethod_float", (PyCFunction)Py4pdNewObj_AddFloatMethod, METH_VARARGS, "Add Float Method"},
 
     {"addmethod_symbol", (PyCFunction)Py4pdNewObj_AddSymbolMethod, METH_VARARGS,
      "Add Symbol Method"},
 
-    {"addmethod_list", (PyCFunction)Py4pdNewObj_AddListMethod, METH_VARARGS,
-     "Add List Method"},
+    {"addmethod_list", (PyCFunction)Py4pdNewObj_AddListMethod, METH_VARARGS, "Add List Method"},
 
-    {"addmethod_anything", (PyCFunction)Py4pdNewObj_AddAnythingMethod,
-     METH_VARARGS, "Add Anything Method"},
+    {"addmethod_anything", (PyCFunction)Py4pdNewObj_AddAnythingMethod, METH_VARARGS,
+     "Add Anything Method"},
 
     {"addmethod_audioin", (PyCFunction)Py4pdNewObj_AddAudioMethod, METH_VARARGS,
      "Add Audio Method"},
 
-    {"addmethod_audioout", (PyCFunction)Py4pdNewObj_AddAudioMethod,
-     METH_VARARGS, "Add Audio Method"},
-
-    {"addmethod_audio", (PyCFunction)Py4pdNewObj_AddAudioMethod, METH_VARARGS,
+    {"addmethod_audioout", (PyCFunction)Py4pdNewObj_AddAudioMethod, METH_VARARGS,
      "Add Audio Method"},
 
-    {"addmethod", (PyCFunction)Py4pdNewObj_AddSelectorMethod,
-     METH_VARARGS | METH_KEYWORDS, "Add Method with Selector"},
+    {"addmethod_audio", (PyCFunction)Py4pdNewObj_AddAudioMethod, METH_VARARGS, "Add Audio Method"},
+
+    {"addmethod", (PyCFunction)Py4pdNewObj_AddSelectorMethod, METH_VARARGS | METH_KEYWORDS,
+     "Add Method with Selector"},
+
+    {"addtype", (PyCFunction)Py4pdNewObj_AddPythonObjectMethod, METH_VARARGS | METH_KEYWORDS,
+     "Add Method for specifc Python Object"},
 
     {NULL, NULL, 0, NULL} // Sentinel
 };

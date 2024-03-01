@@ -85,9 +85,12 @@ def py4pdLoadObjects():
     pd.add_object(rotate, "py.rotate", py_out=True)
     pd.add_object(flat, "py.flat")
 
+    pd.add_object(getObjectType, "py.type")
+
+
     if numpyInstalled:
         pd.add_object(np2list, "py.np2list", py_out=True)
-        pd.add_object(list2np, "py.list2np")
+        pd.add_object(list2np, "py.list2np", py_out=True)
 
 
     # Loop Functions
@@ -145,4 +148,7 @@ def py4pdLoadObjects():
     py4pd_libs.help_patch = "py4pd.libs-help.pd"
     py4pd_libs.allow_editor = True
     py4pd_libs.add_object()
+
+
+
 

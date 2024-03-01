@@ -34,6 +34,11 @@ typedef struct {
     PyObject *pDictSelectors; // dict with method and function
     PyObject *pSelectorArgs; // dict with method args
 
+    // PyType Method
+    PyObject *pDictTypes; // dict with method and function
+    PyObject *pTypeArgs; // dict with method args
+    unsigned int pObjMethod;
+
 } Py4pdNewObj;
 
 

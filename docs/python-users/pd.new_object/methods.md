@@ -191,6 +191,48 @@ This function will be executed when the object receives a bang.
 </div>
 
 
+### `add_type`
+
+With this function, you can define functions for each data type. For example, a function to execute when the object receive a `PyObject int (pointer)` another function when receive `PyObject float (pointer)`, and another when receive `PyObject list (pointer)`. You can check the data type of some `PyObject` using the object `py.type` avaible with `[py4pd -lib py4pd]`.
+
+<div class="grid cards" markdown>
+
+-   :fontawesome-brands-python: __Python Example__
+
+    ```python
+    import pd
+
+    def receivedFloat(a):
+        return "Received Python Float"
+
+    def receivedString(d):
+        return "Received Python String"
+
+    def receivedList(f):
+        return "Received Python List"   
+        
+    def py4pdLoadObjects():
+        random = pd.new_object("py.4types")
+        random.addtype("float", receivedFloat)
+        random.addtype("str", receivedString)
+        random.addtype("list", receivedList)
+        random.add_object()
+    ```
+
+-   :fontawesome-brands-python: __PureData Example__
+
+    <p align="center">
+        <img src="../../../examples/new_object/addtype.png" width="90%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);" alt="Scores">
+    </p>
+
+    !!! tip "`py.type` to get the type"
+        
+        Use the object `py.type` to get the name of the type you want.
+    
+</div>
+
+
+
 ### `add_object`
 
 Don't be fooled by false class. `py4pd` still uses procedural language. After configuring your object, you need to use the `pd.add_object()` function for the object to be available in the PureData patch.
