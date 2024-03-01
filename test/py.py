@@ -85,12 +85,9 @@ def getPy4pdCfg():
 
     import svgpathtools
 
-    print(os.getcwd())
-    os.system("ls ")
-
     with open("./py4pd.cfg", "w") as config_file:
         value = svgpathtools.__file__.replace("svgpathtools\\__init__.py", "")
-        config_file.write(f"packages = {value}")
+        config_file.write(f"conda_env_packages = {value}")
 
 
 # ================================================

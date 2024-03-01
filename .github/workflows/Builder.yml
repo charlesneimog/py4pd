@@ -2,6 +2,14 @@ name: "Dev"
 on:
   workflow_dispatch:
     inputs:
+      uploadDeken:
+        description: "Upload on Deken | Just if upload on Release Failded"
+        type: choice
+        required: true
+        default: 'false'
+        options:
+          - true
+          - false
       windows:
         description: "Build for Windows"
         required: false
@@ -29,7 +37,6 @@ on:
       - develop
     paths:
       - "**/*.yml"
-  
 jobs:
   pythonversion:
     runs-on: ubuntu-latest
@@ -42,20 +49,16 @@ jobs:
         run: |
           echo "python-versions=[\"3.10\",\"3.11\",\"3.12\"]" >> $GITHUB_OUTPUT
           echo "deken-python-versions=[\"3.11\"]" >> $GITHUB_OUTPUT
-    
       - name: Check if tag_name is empty
         id: check-tag
         run: |
           latest_tag=$(curl -s "https://api.github.com/repos/charlesneimog/py4pd/tags" | jq -r '.[0].name')
           echo "tag_name=$latest_tag" >> $GITHUB_OUTPUT
-          
       - name: Print Outputs
         run: |
           cat $GITHUB_OUTPUT
         env:
           GITHUB_OUTPUT: ${{ github.workspace }}/github_output.txt
-
-
   # ============================================================================
   # =                               LINUX                                      =
   # ============================================================================
@@ -75,22 +78,19 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
       - uses: conda-incubator/setup-miniconda@v2
         with:
           auto-update-conda: true
           auto-activate-base: true
-
       - name: Install Build Dependencies
         env:
           pythonName: python${{ matrix.python-version }}
-        run: | 
+        run: |
           curl -L -o pd.tar.gz https://msp.ucsd.edu/Software/pd-0.54-1.src.tar.gz
           tar -xzf pd.tar.gz
           rm pd.tar.gz
           mv pd-* pure-data
           $pythonName -m pip install numpy
-        
       - name: Install PureData and Python
         env:
           pythonPackage: python${{ matrix.python-version }}-dev
@@ -100,12 +100,10 @@ jobs:
           sudo apt-get install $pythonPackage -y
           sudo add-apt-repository ppa:pure-data/pure-data -y
           sudo apt-get install puredata -y
-
       - name: Build
         env:
           pythonName: python${{ matrix.python-version }}
         run: make PDINCLUDEDIR=./pure-data/src/ PYTHON_VERSION=$pythonName extension=l_amd64
-      
       - name: Copy files to py4pd
         run: |
           mkdir -p py4pd
@@ -122,7 +120,6 @@ jobs:
           rm -f py4pd/src/.clang-format
           rm -r py4pd/resources/pd-lib-builder
           cp -r py4pd test
-          
       - name: Install Conda Environment
         shell: bash
         run: |
@@ -133,24 +130,20 @@ jobs:
           conda activate composition
           pip install svgpathtools
           python3 -c "import svgpathtools; print('packages =', svgpathtools.__file__.replace('svgpathtools/__init__.py', ''))" > py4pd.cfg
-
       - name: Tests with Spaces
         run: |
           cp -r test "test spaces"
           cd "test spaces"
           python${{ matrix.python-version }} ./runTests.py
-
       - name: Tests
         run: |
           cd test
           python${{ matrix.python-version }} ./runTests.py
-
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
           name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
           path: py4pd
-
   # ============================================================================
   # =                           WINDOWS                                        =
   # ============================================================================
@@ -160,30 +153,25 @@ jobs:
     if: ${{ inputs.windows }} || github.event_name == 'schedule'
     strategy:
       matrix:
-        python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }} 
+        python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: recursive
           fetch-depth: 0
-
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-
       - if: runner.os == 'Windows'
         name: "Install mingw deps"
         uses: msys2/setup-msys2@v2
         with:
           install: make autoconf automake libtool mingw-w64-x86_64-gcc mingw-w64-x86_64-libwinpthread-git mingw-w64-x86_64-dlfcn mingw-w64-x86_64-grep  mingw-w64-x86_64-curl unzip
           update: false
-
       - name: Conda local
         run: |
           ls C:\Miniconda\condabin\conda.bat
-        
-
       - if: runner.os == 'Windows'
         name: Get Pd
         shell: msys2 {0}
@@ -192,7 +180,6 @@ jobs:
           unzip pure-data.zip
           rm pure-data.zip
           rename  pd-0.54-0 pd pd-0.54-0
-
       - name: Configure Environment
         run: |
           mkdir py4pd
@@ -201,13 +188,11 @@ jobs:
           python -c "import sysconfig; f = open('pythonincludes.txt', 'w'); print(sysconfig.get_paths()['include'].replace('\\', '/'), file=f); f.close()"
           python -c "import os; import sys; f = open('pythonpath.txt', 'w'); print(os.path.dirname(sys.executable).replace('\\', '/'), file=f); f.close()"
           python -c "import os; import sys; import numpy; f = open('numpyincludes.txt', 'w'); print(numpy.get_include(), file=f); f.close()"
-
       - if: runner.os == 'Windows'
         name: Build py4pd
         shell: msys2 {0}
         run: |
           make PYTHON_VERSION=${{ matrix.python-version }} PDDIR=./pd extension=m_amd64
-
       - name: Copy Files and Set for Tests
         run: |
           $pythondllversion = Get-Content pythondll.txt
@@ -218,7 +203,6 @@ jobs:
           Copy-Item -Path "resources" -Destination "test/py4pd/" -Recurse
           cp py4pd.m_amd64 py4pd\
           cp py4pd.m_amd64 test\py4pd\py4pd.m_amd64
-
       - name: Install Conda Environment
         run: |
           cd test
@@ -229,24 +213,18 @@ jobs:
           cd py4pd
           py -${{ matrix.python-version }} -c "from py import getPy4pdCfg; getPy4pdCfg()"
           Get-Content py4pd.cfg
-
       - name: Tests with Spaces
         run: |
           Copy-Item -Path "test" -Destination "test spaces" -Recurse
           cd "test spaces"
           py -${{ matrix.python-version }} ./runTests.py
-
       - name: Tests
-        run: |
-          cd test 
-          python ./runTests.py
-
+        run: "cd test \npython ./runTests.py\n"
       - name: Upload Object ZIP
         uses: actions/upload-artifact@v3
         with:
           name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
           path: py4pd
-
   # ==============================================================================
   # =                               MAC INTEL                                    =
   # ==============================================================================
@@ -274,7 +252,6 @@ jobs:
         env:
           pythonName: python${{ matrix.python-version }}
         run: make PYTHON_VERSION=$pythonName extension=d_amd64
-        
       - name: Link Python
         env:
           pythonName: python${{ matrix.python-version }}
@@ -293,15 +270,12 @@ jobs:
           fi
           ls -l "$target_link"
           "$target_link" --version
-        
-
       - name: Copy Files and Set for Tests
         run: |
           mkdir py4pd
           mv py4pd.d_amd64 py4pd
           cp -r py4pd test
           cp -r resources test/py4pd
-
       - name: Install Conda Environment
         run: |
           cd test
@@ -311,18 +285,15 @@ jobs:
           conda activate composition
           pip install svgpathtools
           python3 -c "import svgpathtools; print('packages =', svgpathtools.__file__.replace('svgpathtools/__init__.py', ''))" > py4pd.cfg
-
       - name: Tests with Spaces
         run: |
           cp -r test "test spaces"
           cd "test spaces"
           python${{ matrix.python-version }} ./runTests.py
-
       - name: Run Tests
         run: |
           cd test
           python${{ matrix.python-version }} ./runTests.py
-
       - name: Upload Object
         uses: actions/upload-artifact@v3
         with:
@@ -344,22 +315,18 @@ jobs:
         with:
           submodules: recursive
           fetch-depth: 0
-          
       - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          
       - name: set Enviroment
         run: |
           brew install --cask pd
           python${{ matrix.python-version }} -m pip install numpy
           mkdir py4pd
-          
       - name: Build
         env:
           pythonName: python${{ matrix.python-version }}
         run: make PYTHON_VERSION=$pythonName extension=d_arm64
-
       - name: Copy files to py4pd
         run: |
           cp py4pd.d_arm64 py4pd
@@ -368,12 +335,11 @@ jobs:
         with:
           name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
           path: py4pd
-
   # ============================================================================
   # =                               DEKEN                                      =
   # ============================================================================
   deken-upload:
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' || ${{ inputs.uploadDeken == 'true' }}
     needs: [pythonversion, windows-build, macos-intel-build, macos-arm-build, linux-build]
     runs-on: ubuntu-latest
     strategy:
@@ -386,7 +352,6 @@ jobs:
         with:
           name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
           path: py4pd
-          
       - name: Install Deken
         continue-on-error: true
         run: |
@@ -400,42 +365,34 @@ jobs:
         env:
           DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
           PASSWORD: ${{ secrets.DEKEN_PASSWORD }}
-          
       - name: Fix problem with easywebdav2
         continue-on-error: true
         run: |
           ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version ${{ needs.pythonversion.outputs.tag_name }}
           ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ needs.pythonversion.outputs.tag_name }}
-          
       - name: Upload deken Package
         run: |
           ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ needs.pythonversion.outputs.tag_name }}
-  
   # ============================================================================
   # =                               RELEASES                                   =
   # ============================================================================
   release:
     runs-on: ubuntu-latest
     needs: [pythonversion, windows-build, macos-intel-build, macos-arm-build, linux-build]
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' || ${{ inputs.uploadDeken == 'true' }}
     strategy:
       matrix:
         python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}
     steps:
       - uses: actions/checkout@v3
-
       - name: Download py4pd Object
         uses: actions/download-artifact@v3
         with:
           name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
           path: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
-
       - name: Zip py4pd Object
-        run: |
-          zip -r py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}.zip py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }} 
-
+        run: "zip -r py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}.zip py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }} \n"
       - name: Upload binaries to release
         run: |
           gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
           gh release upload ${{ needs.pythonversion.outputs.tag_name }} py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}.zip  --repo charlesneimog/py4pd --clobber
-
