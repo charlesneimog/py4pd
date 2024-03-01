@@ -1,4 +1,4 @@
-#N canvas 487 -20 1247 752 8;
+#N canvas 12 563 941 473 8;
 #X declare -path mem;
 #X obj 8 6 py4pd -lib py4pd;
 #X obj 10 48 bng 25 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
@@ -12,7 +12,7 @@
 #X obj 89 101 problem1;
 #X obj 167 102 problem2;
 #X obj 246 100 problem3;
-#N canvas 180 218 843 717 Memory-Leaks 0;
+#N canvas 12 44 941 473 Memory-Leaks 1;
 #X obj 7 101 nbx 5 14 -1e+37 1e+37 0 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 256;
 #X obj 7 136 list;
 #X obj 24 117 r mem;
@@ -43,8 +43,8 @@
 #X connect 12 0 3 0;
 #X restore 4 122 pd Memory-Leaks;
 #X obj 89 353 s done;
-#X obj 248 241 tgl 15 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 1;
-#X obj 168 240 tgl 15 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 1;
+#X obj 390 204 tgl 15 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 1;
+#X obj 288 228 tgl 15 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 1;
 #X obj 89 122 tgl 15 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 1;
 #X obj 167 123 t b f;
 #X obj 246 122 t b f;

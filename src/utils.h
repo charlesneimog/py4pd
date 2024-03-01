@@ -4,6 +4,7 @@
 
 #include "py4pd.h"
 
+PyObject *Py4pdUtils_DeepCopy(PyObject *pValue); // Testing function
 int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argc, t_atom **argv);
 t_py *Py4pdUtils_GetObject(PyObject *pd_module);
 void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);
