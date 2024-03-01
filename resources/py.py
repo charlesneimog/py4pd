@@ -1,8 +1,8 @@
-import pd
 import sys
 from random import randint
-import numpy as np
 
+import numpy as np
+import pd
 
 # ================================================
 # ==============  Functions  =====================
