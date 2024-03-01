@@ -25,8 +25,7 @@ static pdcollectHash *Py4pdMod_CreatePdcollectHash(int size) {
 /**
  * @brief Hash function to get the index of the hash table.
  */
-static unsigned int Py4pdMod_HashFunction(pdcollectHash *hash_table,
-                                          char *key) {
+static unsigned int Py4pdMod_HashFunction(pdcollectHash *hash_table, char *key) {
     // FAKE HASH FUNCTION
     int keyAlreadyExists = 0;
     for (int i = 0; i < hash_table->size; i++) {
@@ -44,8 +43,7 @@ static unsigned int Py4pdMod_HashFunction(pdcollectHash *hash_table,
             }
         }
     }
-    PyErr_SetString(PyExc_MemoryError,
-                    "[Python] pd.setglobalvar: memory error");
+    PyErr_SetString(PyExc_MemoryError, "[Python] pd.setglobalvar: memory error");
     return 0;
 }
 
@@ -53,10 +51,13 @@ static unsigned int Py4pdMod_HashFunction(pdcollectHash *hash_table,
 /**
  * @brief Insert item in the hash table.
  */
-static void Py4pdMod_InsertItem(pdcollectHash *hash_table, char *key,
-                                PyObject *obj) {
+static void Py4pdMod_InsertItem(pdcollectHash *hash_table, char *key, PyObject *source) {
     unsigned int index = Py4pdMod_HashFunction(hash_table, key);
     pdcollectItem *item = hash_table->items[index];
+
+    // deep copy of source
+    PyObject *obj = Py4pdUtils_DeepCopy(source);
+
     if (item == NULL && hash_table->count <= hash_table->size) {
         item = (pdcollectItem *)malloc(sizeof(pdcollectItem));
         item->key = strdup(key);
@@ -67,24 +68,26 @@ static void Py4pdMod_InsertItem(pdcollectHash *hash_table, char *key,
         return;
     } else if (hash_table->count > hash_table->size) {
         // WARNING: Untested code
-        pdcollectItem **items = hash_table->items;
-        int size = hash_table->size;
-        hash_table = Py4pdMod_CreatePdcollectHash(size * 2);
-        for (int i = 0; i < size; i++) {
-            if (items[i] != NULL) {
-                Py4pdMod_InsertItem(hash_table, items[i]->key, items[i]->pItem);
-            }
-        }
-        Py4pdMod_InsertItem(hash_table, key, obj);
-        for (int i = 0; i < size; i++) {
-            if (items[i] != NULL) {
-                free(items[i]->key);
-                free(items[i]);
-            }
-        }
+        pd_error(0, "[Python] pd.setglobalvar: memory error, please report, code 001");
+        // pdcollectItem **items = hash_table->items;
+        // int size = hash_table->size;
+        // hash_table = Py4pdMod_CreatePdcollectHash(size * 2);
+        // for (int i = 0; i < size; i++) {
+        //     if (items[i] != NULL) {
+        //         Py4pdMod_InsertItem(hash_table, items[i]->key, items[i]->pItem);
+        //     }
+        // }
+        // Py4pdMod_InsertItem(hash_table, key, obj);
+        // for (int i = 0; i < size; i++) {
+        //     if (items[i] != NULL) {
+        //         free(items[i]->key);
+        //         free(items[i]);
+        //     }
+        // }
         return;
     } else if (item != NULL) {
-        Py_INCREF(obj);
+        // Py_INCREF(obj);
+        Py_XDECREF(item->pItem);
         item->pItem = obj;
         return;
     }
@@ -94,26 +97,24 @@ static void Py4pdMod_InsertItem(pdcollectHash *hash_table, char *key,
 /**
  * @brief Insert item in the hash table, add to the end of a list.
  */
-static void Py4pdMod_AccumItem(pdcollectHash *hash_table, char *key,
-                               PyObject *obj) {
-
+static void Py4pdMod_AccumItem(pdcollectHash *hash_table, char *key, PyObject *source) {
     unsigned int index = Py4pdMod_HashFunction(hash_table, key);
     pdcollectItem *item = hash_table->items[index];
+    // PyObject *obj = Py4pdUtils_DeepCopy(source);
     if (item == NULL && hash_table->count <= hash_table->size) {
         item = (pdcollectItem *)malloc(sizeof(pdcollectItem));
         item->key = strdup(key);
         item->pList = PyList_New(0);
         hash_table->items[index] = item;
     } else if (hash_table->count > hash_table->size) {
-        PyErr_SetString(PyExc_MemoryError,
-                        "[Python] pd.setglobalvar: memory error");
+        PyErr_SetString(PyExc_MemoryError, "[Python] pd.setglobalvar: memory error");
         return;
     }
     if (item->wasCleaned) {
         item->wasCleaned = 0;
     }
-    // Py_INCREF(obj);
-    PyList_Append(item->pList, obj);
+    // Py_INCREF(source);
+    PyList_Append(item->pList, source);
     return;
 }
 
@@ -216,16 +217,14 @@ static PyObject *Py4pdMod_SetObjVar(PyObject *self, PyObject *args) {
     (void)self;
     t_py *x = Py4pdUtils_GetObject(self);
     if (x == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "[Python] pd.setglobalvar: py4pd is NULL");
+        PyErr_SetString(PyExc_RuntimeError, "[Python] pd.setglobalvar: py4pd is NULL");
         return NULL;
     }
     char *key;
     char *varName;
     PyObject *pValueScript;
     if (!PyArg_ParseTuple(args, "sO", &varName, &pValueScript)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.setglobalvar: wrong arguments");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
         return NULL;
     }
 
@@ -243,22 +242,19 @@ static PyObject *Py4pdMod_SetObjVar(PyObject *self, PyObject *args) {
 /**
  * @brief Funcion to get a obj variable
  */
-static PyObject *Py4pdMod_GetObjVar(PyObject *self, PyObject *args,
-                                    PyObject *keywords) {
+static PyObject *Py4pdMod_GetObjVar(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
 
     t_py *x = Py4pdUtils_GetObject(self);
     if (x == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "[Python] pd.setglobalvar: py4pd is NULL");
+        PyErr_SetString(PyExc_RuntimeError, "[Python] pd.setglobalvar: py4pd is NULL");
         return NULL;
     }
     char *key;
     char *varName;
 
     if (!PyArg_ParseTuple(args, "s", &varName)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.setglobalvar: wrong arguments");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
         return NULL;
     }
 
@@ -288,8 +284,10 @@ static PyObject *Py4pdMod_GetObjVar(PyObject *self, PyObject *args,
     }
 
     if (item->aCumulative) {
+        // Py_INCREF(item->pList);
         return item->pList;
     } else {
+        Py_INCREF(item->pItem);
         return item->pItem;
     }
 }
@@ -303,15 +301,13 @@ static PyObject *Py4pdMod_AccumObjVar(PyObject *self, PyObject *args) {
     (void)self;
     t_py *x = Py4pdUtils_GetObject(self);
     if (x == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "[Python] pd.setglobalvar: py4pd is NULL");
+        PyErr_SetString(PyExc_RuntimeError, "[Python] pd.setglobalvar: py4pd is NULL");
         return NULL;
     }
     char *varName;
     PyObject *pValueScript;
     if (!PyArg_ParseTuple(args, "sO", &varName, &pValueScript)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.setglobalvar: wrong arguments");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
         return NULL;
     }
     char *key = malloc(strlen(varName) + 40);
@@ -320,8 +316,7 @@ static PyObject *Py4pdMod_AccumObjVar(PyObject *self, PyObject *args) {
         x->pdcollect = Py4pdMod_CreatePdcollectHash(8);
     }
     Py4pdMod_AccumItem(x->pdcollect, key, pValueScript);
-    x->pdcollect->items[Py4pdMod_HashFunction(x->pdcollect, key)]->aCumulative =
-        1;
+    x->pdcollect->items[Py4pdMod_HashFunction(x->pdcollect, key)]->aCumulative = 1;
     free(key);
     Py_RETURN_TRUE;
 }
@@ -335,16 +330,14 @@ static PyObject *Py4pdMod_ClearObjVar(PyObject *self, PyObject *args) {
 
     t_py *x = Py4pdUtils_GetObject(self);
     if (x == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "[Python] pd.setglobalvar: py4pd is NULL");
+        PyErr_SetString(PyExc_RuntimeError, "[Python] pd.setglobalvar: py4pd is NULL");
         return NULL;
     }
     char *key;
     char *varName;
 
     if (!PyArg_ParseTuple(args, "s", &varName)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.setglobalvar: wrong arguments");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
         return NULL;
     }
 
@@ -385,8 +378,7 @@ static PyObject *Py4pdMod_GetObjArgs(PyObject *self, PyObject *args) {
 
     t_py *x = Py4pdUtils_GetObject(self);
     if (x == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "[Python] pd.setglobalvar: py4pd is NULL");
+        PyErr_SetString(PyExc_RuntimeError, "[Python] pd.setglobalvar: py4pd is NULL");
         return NULL;
     }
 
@@ -421,8 +413,7 @@ static PyObject *Py4pdMod_GetObjArgs(PyObject *self, PyObject *args) {
  * @brief This allows bypass the recursive calls in PureData
  */
 static void Py4pdMod_RecursiveTick(t_py *x) {
-    t_py4pd_pValue *pdPyValue =
-        (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
+    t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
     pdPyValue->pValue = x->recursiveObject;
     pdPyValue->objectsUsing = 0;
     Py4pdUtils_ConvertToPd(x, pdPyValue, x->mainOut);
@@ -441,8 +432,7 @@ static PyObject *Py4pdMod_PdRecursiveCall(PyObject *self, PyObject *args) {
 
     PyObject *pValue;
     if (!PyArg_ParseTuple(args, "O", &pValue)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.setglobalvar: wrong arguments");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
         return NULL;
     }
 
@@ -450,8 +440,7 @@ static PyObject *Py4pdMod_PdRecursiveCall(PyObject *self, PyObject *args) {
     x->recursiveCalls++;
 
     Py_EnterRecursiveCall("[py4pd] Exceeded maximum recursion depth");
-    if (x->recursiveCalls ==
-        x->stackLimit) { // seems to be the limit in PureData,
+    if (x->recursiveCalls == x->stackLimit) { // seems to be the limit in PureData,
         x->recursiveObject = pValue;
         if (x->recursiveClock == NULL)
             x->recursiveClock = clock_new(x, (t_method)Py4pdMod_RecursiveTick);
@@ -462,13 +451,11 @@ static PyObject *Py4pdMod_PdRecursiveCall(PyObject *self, PyObject *args) {
     }
 
     if (x == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "[pd._recursive] pd.recursive: py4pd is NULL");
+        PyErr_SetString(PyExc_RuntimeError, "[pd._recursive] pd.recursive: py4pd is NULL");
         return NULL;
     }
 
-    t_py4pd_pValue *pdPyValue =
-        (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
+    t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
     pdPyValue->pValue = pValue;
     pdPyValue->objectsUsing = 0;
     Py4pdUtils_ConvertToPd(x, pdPyValue, x->mainOut);
@@ -487,9 +474,8 @@ static PyObject *Py4pdMod_PdGetOutletsCount(PyObject *self, PyObject *args) {
     (void)args;
     t_py *x = Py4pdUtils_GetObject(self);
     if (x == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "[Python] py4pd capsule not found. The module pd must "
-                        "be used inside py4pd object or functions.");
+        PyErr_SetString(PyExc_RuntimeError, "[Python] py4pd capsule not found. The module pd must "
+                                            "be used inside py4pd object or functions.");
         return NULL;
     }
     if (x->extrasOuts == NULL) {
@@ -502,16 +488,14 @@ static PyObject *Py4pdMod_PdGetOutletsCount(PyObject *self, PyObject *args) {
 /**
  * @brief allows output data before return in Python Code.
  */
-static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args,
-                                PyObject *keywords) {
+static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args, PyObject *keywords) {
 
     (void)self;
 
     t_py *x = Py4pdUtils_GetObject(self);
     if (x == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "[Python] py4pd capsule not found. The module pd must "
-                        "be used inside py4pd object or functions.");
+        PyErr_SetString(PyExc_RuntimeError, "[Python] py4pd capsule not found. The module pd must "
+                                            "be used inside py4pd object or functions.");
         return NULL;
     }
 
@@ -522,15 +506,14 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args,
         return NULL;
     }
 
-    t_py4pd_pValue *pdPyValue =
-        (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
+    t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
     pdPyValue->pValue = pValue;
     pdPyValue->objectsUsing = 0;
     pdPyValue->pdout = 1;
 
     if (keywords != NULL && x->extrasOuts != NULL) {
-        PyObject *outletNumber = PyDict_GetItemString(
-            keywords, "out_n"); // it gets the data type output
+        PyObject *outletNumber =
+            PyDict_GetItemString(keywords, "out_n"); // it gets the data type output
         if (outletNumber == NULL) {
             Py4pdUtils_ConvertToPd(x, pdPyValue, x->mainOut);
             free(pdPyValue);
@@ -538,8 +521,7 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args,
         }
 
         if (!PyLong_Check(outletNumber)) {
-            PyErr_SetString(PyExc_TypeError,
-                            "[Python] pd.out: out_n must be an integer.");
+            PyErr_SetString(PyExc_TypeError, "[Python] pd.out: out_n must be an integer.");
             Py_DECREF(pValue);
             free(pdPyValue);
             return NULL;
@@ -551,16 +533,13 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args,
             Py_RETURN_TRUE;
         } else {
             outletNumberInt--;
-            if ((x->extrasOuts->outCount > 0) &&
-                (outletNumberInt < x->extrasOuts->outCount)) {
-                Py4pdUtils_ConvertToPd(x, pdPyValue,
-                                       x->extrasOuts[outletNumberInt].u_outlet);
+            if ((x->extrasOuts->outCount > 0) && (outletNumberInt < x->extrasOuts->outCount)) {
+                Py4pdUtils_ConvertToPd(x, pdPyValue, x->extrasOuts[outletNumberInt].u_outlet);
                 free(pdPyValue);
                 Py_RETURN_TRUE;
             } else {
-                PyErr_SetString(
-                    PyExc_TypeError,
-                    "[Python] pd.out: Please check the number of outlets.");
+                PyErr_SetString(PyExc_TypeError,
+                                "[Python] pd.out: Please check the number of outlets.");
                 Py_DECREF(pValue);
                 free(pdPyValue);
                 return NULL;
@@ -576,32 +555,27 @@ static PyObject *Py4pdMod_PdOut(PyObject *self, PyObject *args,
 /**
  * @brief Prints messages to pd console
  */
-static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args,
-                                  PyObject *keywords) {
+static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     int printPrefix = 1;
     int objPrefix = 1;
 
     t_py *x = Py4pdUtils_GetObject(self);
     if (x == NULL) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "[Python] py4pd capsule not found. The module pd must "
-                        "be used inside py4pd object or functions.");
+        PyErr_SetString(PyExc_RuntimeError, "[Python] py4pd capsule not found. The module pd must "
+                                            "be used inside py4pd object or functions.");
         return NULL;
     }
 
     if (keywords == NULL) {
         printPrefix = 1;
     } else {
-        printPrefix =
-            PyDict_Contains(keywords, PyUnicode_FromString("show_prefix"));
-        objPrefix =
-            PyDict_Contains(keywords, PyUnicode_FromString("obj_prefix"));
+        printPrefix = PyDict_Contains(keywords, PyUnicode_FromString("show_prefix"));
+        objPrefix = PyDict_Contains(keywords, PyUnicode_FromString("obj_prefix"));
         if (printPrefix == -1)
             pd_error(NULL, "[Python] pd.print: error in show_prefix argument.");
         else if (printPrefix == 1) {
-            PyObject *resize_value =
-                PyDict_GetItemString(keywords, "show_prefix");
+            PyObject *resize_value = PyDict_GetItemString(keywords, "show_prefix");
             if (resize_value == Py_True)
                 printPrefix = 1;
             else if (resize_value == Py_False)
@@ -616,8 +590,7 @@ static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args,
         if (objPrefix == -1)
             post("[Python] pd.print: error in obj_prefix argument.");
         else if (objPrefix == 1) {
-            PyObject *resize_value =
-                PyDict_GetItemString(keywords, "obj_prefix");
+            PyObject *resize_value = PyDict_GetItemString(keywords, "obj_prefix");
             if (resize_value == Py_True)
                 objPrefix = 1;
             else if (resize_value == Py_False)
@@ -666,8 +639,7 @@ static PyObject *Py4pdMod_PdLogPost(PyObject *self, PyObject *args) {
         logpost(NULL, postlevel, "%s", string);
         return PyLong_FromLong(0);
     } else {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.logpost works with strings and numbers.");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.logpost works with strings and numbers.");
         return NULL;
     }
 }
@@ -705,8 +677,7 @@ static PyObject *Py4pdMod_PdError(PyObject *self, PyObject *args) {
         }
         PyErr_Clear();
     } else {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] argument of pd.error must be a string");
+        PyErr_SetString(PyExc_TypeError, "[Python] argument of pd.error must be a string");
         return NULL;
     }
     return PyLong_FromLong(0);
@@ -729,24 +700,21 @@ static PyObject *Py4pdMod_PdSend(PyObject *self, PyObject *args) {
         if (symbol->s_thing) {
             pd_symbol(symbol->s_thing, gensym(string));
         } else {
-            post("[Python] pd.send not found object [r %s] in pd patch",
-                 receiver);
+            post("[Python] pd.send not found object [r %s] in pd patch", receiver);
         }
     } else if (PyArg_ParseTuple(args, "sf", &receiver, &floatNumber)) {
         t_symbol *symbol = gensym(receiver);
         if (symbol->s_thing) {
             pd_float(symbol->s_thing, floatNumber);
         } else {
-            post("[Python] pd.send not found object [r %s] in pd patch",
-                 receiver);
+            post("[Python] pd.send not found object [r %s] in pd patch", receiver);
         }
     } else if (PyArg_ParseTuple(args, "si", &receiver, &intNumber)) {
         t_symbol *symbol = gensym(receiver);
         if (symbol->s_thing) {
             pd_float(symbol->s_thing, intNumber);
         } else {
-            post("[Python] pd.send not found object [r %s] in pd patch",
-                 receiver);
+            post("[Python] pd.send not found object [r %s] in pd patch", receiver);
         }
     } else if (PyArg_ParseTuple(args, "sO", &receiver, &listargs)) {
         if (PyDict_Check(listargs)) {
@@ -814,8 +782,7 @@ static PyObject *Py4pdMod_PdSend(PyObject *self, PyObject *args) {
 /**
  * @brief Same that use the [tabwrite] in pd
  */
-static PyObject *Py4pdMod_PdTabWrite(PyObject *self, PyObject *args,
-                                     PyObject *keywords) {
+static PyObject *Py4pdMod_PdTabWrite(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     int resize = 0;
     int vecsize;
@@ -876,15 +843,12 @@ static PyObject *Py4pdMod_PdTabWrite(PyObject *self, PyObject *args,
                     garray_getfloatwords(pdarray, &vecsize, &vec);
                 }
                 for (i = 0; i < vecsize; i++) {
-                    float result_float =
-                        (float)PyFloat_AsDouble(PyList_GetItem(samples, i));
+                    float result_float = (float)PyFloat_AsDouble(PyList_GetItem(samples, i));
                     vec[i].w_float = result_float;
                 }
             } else if (PyArray_Check(samples)) {
-                PyArrayObject *pArray =
-                    PyArray_GETCONTIGUOUS((PyArrayObject *)samples);
-                PyArray_Descr *pArrayType =
-                    PyArray_DESCR(pArray); // double or float
+                PyArrayObject *pArray = PyArray_GETCONTIGUOUS((PyArrayObject *)samples);
+                PyArray_Descr *pArrayType = PyArray_DESCR(pArray); // double or float
                 vecsize = PyArray_SIZE(pArray);
                 if (resize == 1) {
                     garray_resize_long(pdarray, vecsize);
@@ -925,8 +889,7 @@ static PyObject *Py4pdMod_PdTabWrite(PyObject *self, PyObject *args,
 /**
  * @brief Same that use the [tabread] in pd
  */
-static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args,
-                                    PyObject *keywords) {
+static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     int vecsize;
     t_garray *pdarray;
@@ -973,16 +936,14 @@ static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args,
         t_symbol *pd_symbol = gensym(string);
         if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class))) {
             pd_error(x, "[Python] Array %s not found.", string);
-            PyErr_SetString(PyExc_TypeError,
-                            "[Python] pd.tabread: array not found");
+            PyErr_SetString(PyExc_TypeError, "[Python] pd.tabread: array not found");
         } else {
             int i;
             if (numpy == 0) {
                 garray_getfloatwords(pdarray, &vecsize, &vec);
                 PyObject *pAudio = PyList_New(vecsize);
                 for (i = 0; i < vecsize; i++) {
-                    PyList_SetItem(pAudio, i,
-                                   PyFloat_FromDouble(vec[i].w_float));
+                    PyList_SetItem(pAudio, i, PyFloat_FromDouble(vec[i].w_float));
                 }
                 PyErr_Clear();
                 return pAudio;
@@ -990,8 +951,7 @@ static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args,
                 garray_getfloatwords(pdarray, &vecsize, &vec);
                 npy_intp dims[1] = {vecsize};
                 PyObject *pAudio = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
-                double *pArrayData =
-                    (double *)PyArray_DATA((PyArrayObject *)pAudio);
+                double *pArrayData = (double *)PyArray_DATA((PyArrayObject *)pAudio);
                 if (pArrayData == NULL) {
                     pd_error(x, "[Python] pd.tabread: error creating "
                                 "numpy array for vec");
@@ -1008,8 +968,7 @@ static PyObject *Py4pdMod_PdTabRead(PyObject *self, PyObject *args,
             }
         }
     } else {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.tabread: wrong arguments");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.tabread: wrong arguments");
         return NULL;
     }
     return NULL;
@@ -1036,8 +995,7 @@ static void Py4pdMod_ScheduledOpenPatch(t_py *x) {
         free(listArray);
         return;
     } else {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.open_patch: pd object not found");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.open_patch: pd object not found");
         clock_free(x->recursiveClock);
         Py_DECREF(x->pObjVarDict);
         x->pObjVarDict = NULL;
@@ -1057,9 +1015,8 @@ static PyObject *Py4pdMod_OpenPatch(PyObject *self, PyObject *args) {
     char *patchDir;
 
     if (!PyArg_ParseTuple(args, "ss", &patchName, &patchDir)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.open_patch: wrong arguments. Use "
-                        "PATCH_NAME followed by PATCH_DIR");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.open_patch: wrong arguments. Use "
+                                         "PATCH_NAME followed by PATCH_DIR");
         return NULL;
     }
 
@@ -1091,11 +1048,26 @@ static PyObject *Py4pdMod_GetPatchHome(PyObject *self, PyObject *args) {
         return NULL;
     }
     if (!PyArg_ParseTuple(args, "")) {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.home: no argument expected");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.home: no argument expected");
         return NULL;
     }
     return PyUnicode_FromString(x->pdPatchPath->s_name);
+}
+
+// =================================
+/**
+ * @brief Returns where py4pd is installed
+ */
+static PyObject *Py4pdMod_GetPyObjectType(PyObject *self, PyObject *args) {
+    (void)self;
+    PyObject *pValue;
+
+    if (!PyArg_ParseTuple(args, "O", &pValue)) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.getobjecttype: wrong arguments");
+        return NULL;
+    }
+    const char *type = Py_TYPE(pValue)->tp_name;
+    return PyUnicode_FromString(type);
 }
 
 // =================================
@@ -1114,8 +1086,7 @@ static PyObject *Py4pdMod_GetPy4pdFolder(PyObject *self, PyObject *args) {
 
     // check if there is no argument
     if (!PyArg_ParseTuple(args, "")) {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.py4pdfolder: no argument expected");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.py4pdfolder: no argument expected");
         return NULL;
     }
     return PyUnicode_FromString(x->py4pdPath->s_name);
@@ -1128,8 +1099,7 @@ static PyObject *Py4pdMod_GetPy4pdFolder(PyObject *self, PyObject *args) {
 static PyObject *Py4pdMod_GetPy4pdTmpFolder(PyObject *self, PyObject *args) {
     (void)self;
     if (!PyArg_ParseTuple(args, "")) {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.samplerate: no argument expected");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.samplerate: no argument expected");
         return NULL;
     }
     t_py *x = Py4pdUtils_GetObject(self);
@@ -1197,11 +1167,10 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
             char magic_number[3];
             int width, height, max_color_value;
             file = fopen(filename->s_name, "r");
-            int result = fscanf(file, "%s\n%d %d\n%d\n", magic_number, &width,
-                                &height, &max_color_value);
+            int result =
+                fscanf(file, "%s\n%d %d\n%d\n", magic_number, &width, &height, &max_color_value);
             if (result != 4) {
-                PyErr_SetString(PyExc_TypeError,
-                                "[Python] pd.showimage: error reading file");
+                PyErr_SetString(PyExc_TypeError, "[Python] pd.showimage: error reading file");
                 return NULL;
             }
             x->width = width;
@@ -1213,8 +1182,7 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
             int resultWidth = fread(&x->width, 2, 1, file);
             int resultHeight = fread(&x->height, 2, 1, file);
             if (resultWidth != 1 || resultHeight != 1) {
-                PyErr_SetString(PyExc_TypeError,
-                                "[Python] pd.showimage: error reading file");
+                PyErr_SetString(PyExc_TypeError, "[Python] pd.showimage: error reading file");
                 return NULL;
             }
             fclose(file);
@@ -1225,8 +1193,7 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
             int resultWidth = fread(&width, 4, 1, file);
             int resultHeight = fread(&height, 4, 1, file);
             if (resultWidth != 1 || resultHeight != 1) {
-                PyErr_SetString(PyExc_TypeError,
-                                "[Python] pd.showimage: error reading file");
+                PyErr_SetString(PyExc_TypeError, "[Python] pd.showimage: error reading file");
                 return NULL;
             }
             fclose(file);
@@ -1235,19 +1202,16 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
             x->width = width;
             x->height = height;
         } else {
-            PyErr_SetString(PyExc_TypeError,
-                            "pd.showimage: file format not supported, use "
-                            ".ppm, .gif, or .png");
+            PyErr_SetString(PyExc_TypeError, "pd.showimage: file format not supported, use "
+                                             ".ppm, .gif, or .png");
             return NULL;
         }
 
-        if (glist_isvisible(x->glist) &&
-            gobj_shouldvis((t_gobj *)x, x->glist)) {
+        if (glist_isvisible(x->glist) && gobj_shouldvis((t_gobj *)x, x->glist)) {
             const char *fileNameOpen = Py4pdPic_Filepath(x, filename->s_name);
             if (access(fileNameOpen, F_OK) == -1) {
                 pd_error(x, "[Python] pd.showimage: file not found");
-                PyErr_SetString(PyExc_TypeError,
-                                "[Python] pd.showimage: file not found");
+                PyErr_SetString(PyExc_TypeError, "[Python] pd.showimage: file not found");
                 return NULL;
             }
             if (fileNameOpen) {
@@ -1256,15 +1220,12 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
                     x->defImg = 0;
                 }
 
-                if (glist_isvisible(x->glist) &&
-                    gobj_shouldvis((t_gobj *)x, x->glist)) {
+                if (glist_isvisible(x->glist) && gobj_shouldvis((t_gobj *)x, x->glist)) {
                     Py4pdPic_ErasePic(x, x->glist);
-                    sys_vgui(
-                        "if {[info exists %lx_picname] == 0} {image create "
-                        "photo %lx_picname -file \"%s\"\n set %lx_picname "
-                        "1\n}\n",
-                        x->picFilePath, x->picFilePath, fileNameOpen,
-                        x->picFilePath);
+                    sys_vgui("if {[info exists %lx_picname] == 0} {image create "
+                             "photo %lx_picname -file \"%s\"\n set %lx_picname "
+                             "1\n}\n",
+                             x->picFilePath, x->picFilePath, fileNameOpen, x->picFilePath);
                     Py4pdPic_Draw(x, x->glist, 1);
                 }
             } else {
@@ -1364,8 +1325,7 @@ static PyObject *Py4pdMod_PdKey(PyObject *self, PyObject *args) {
     (void)self;
     char *key;
     if (!PyArg_ParseTuple(args, "s", &key)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "[Python] pd.key: no argument expected");
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.key: no argument expected");
         return NULL;
     }
 
@@ -1398,9 +1358,8 @@ static PyObject *Py4pdMod_GetObjPointer(PyObject *self, PyObject *args) {
 
     t_py *x = Py4pdUtils_GetObject(self);
     if (x == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                        "py4pd capsule not found. The module pd must be used "
-                        "inside py4pd object or functions.");
+        PyErr_SetString(PyExc_TypeError, "py4pd capsule not found. The module pd must be used "
+                                         "inside py4pd object or functions.");
         return NULL;
     }
 
@@ -1411,8 +1370,7 @@ static PyObject *Py4pdMod_GetObjPointer(PyObject *self, PyObject *args) {
 /**
  * @brief Add a thing to the player, you can use play to play it
  */
-static PyObject *Py4pdMod_AddThingToPlay(PyObject *self, PyObject *args,
-                                         PyObject *keywords) {
+static PyObject *Py4pdMod_AddThingToPlay(PyObject *self, PyObject *args, PyObject *keywords) {
     (void)self;
     (void)keywords;
 
@@ -1421,13 +1379,11 @@ static PyObject *Py4pdMod_AddThingToPlay(PyObject *self, PyObject *args,
     t_py *x = Py4pdUtils_GetObject(self);
 
     if (!PyArg_ParseTuple(args, "fO", &onset, &thingToPlay)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "pd.add_to_player: wrong arguments, it should be: "
-                        "pd.add_to_player(onset, thing2Output)");
+        PyErr_SetString(PyExc_TypeError, "pd.add_to_player: wrong arguments, it should be: "
+                                         "pd.add_to_player(onset, thing2Output)");
         return NULL;
     }
-    Py4pdPlayer_PlayerInsertThing(x, (int)onset,
-                                  Py_BuildValue("O", thingToPlay));
+    Py4pdPlayer_PlayerInsertThing(x, (int)onset, Py_BuildValue("O", thingToPlay));
     Py_RETURN_NONE;
 }
 
@@ -1458,8 +1414,7 @@ PyMethodDef PdMethods[] = {
      "[receive]"},
     {"print", (PyCFunction)Py4pdMod_PdPrint, METH_VARARGS | METH_KEYWORDS,
      "Print informations in PureData Console"},
-    {"logpost", Py4pdMod_PdLogPost, METH_VARARGS,
-     "Print informations in PureData Console"},
+    {"logpost", Py4pdMod_PdLogPost, METH_VARARGS, "Print informations in PureData Console"},
     {"error", Py4pdMod_PdError, METH_VARARGS,
      "Print informations in error format (red) in PureData Console"},
     {"tabwrite", (PyCFunction)Py4pdMod_PdTabWrite, METH_VARARGS | METH_KEYWORDS,
@@ -1472,43 +1427,33 @@ PyMethodDef PdMethods[] = {
      "Show image in PureData, it must be .gif, .bmp, .ppm"},
 
     // Files
-    {"get_patch_dir", Py4pdMod_GetPatchHome, METH_VARARGS,
-     "Get PureData Patch Path Folder"},
-    {"get_py4pd_dir", Py4pdMod_GetPy4pdFolder, METH_VARARGS,
-     "Get PureData Py4PD Folder"},
-    {"get_temp_dir", Py4pdMod_GetPy4pdTmpFolder, METH_VARARGS,
-     "Get PureData Temp Folder"},
-    {"get_pd_search_paths", Py4pdMod_GetPdSearchPaths, METH_NOARGS,
-     "Get PureData sys path"},
+    {"get_patch_dir", Py4pdMod_GetPatchHome, METH_VARARGS, "Get PureData Patch Path Folder"},
+    {"get_py4pd_dir", Py4pdMod_GetPy4pdFolder, METH_VARARGS, "Get PureData Py4PD Folder"},
+    {"get_temp_dir", Py4pdMod_GetPy4pdTmpFolder, METH_VARARGS, "Get PureData Temp Folder"},
+    {"get_pd_search_paths", Py4pdMod_GetPdSearchPaths, METH_NOARGS, "Get PureData sys path"},
 
     // User
     {"get_key", Py4pdMod_PdKey, METH_VARARGS, "Get Object User Parameters"},
 
     // pd
-    {"get_sample_rate", Py4pdMod_PdSampleRate, METH_NOARGS,
-     "Get PureData SampleRate"},
-    {"get_vec_size", Py4pdMod_PdVecSize, METH_NOARGS,
-     "Get PureData Vector Size"},
+    {"get_sample_rate", Py4pdMod_PdSampleRate, METH_NOARGS, "Get PureData SampleRate"},
+    {"get_vec_size", Py4pdMod_PdVecSize, METH_NOARGS, "Get PureData Vector Size"},
     {"get_num_channels", Py4pdMod_ObjNChannels, METH_NOARGS,
      "Return the amount of channels in the object"},
-    {"pd_has_gui", Py4pdMod_PdHasGui, METH_NOARGS,
-     "Return True of False if pd has or no gui"},
+    {"pd_has_gui", Py4pdMod_PdHasGui, METH_NOARGS, "Return True of False if pd has or no gui"},
 
     {"get_patch_zoom", Py4pdMod_PdZoom, METH_NOARGS, "Get Patch zoom"},
     {"get_outlet_count", Py4pdMod_PdGetOutletsCount, METH_NOARGS,
      "Get the Number of Outlets of one object."},
-    {"get_obj_args", Py4pdMod_GetObjArgs, METH_NOARGS,
-     "Returns list with all the args."},
-    {"get_object_args", Py4pdMod_GetObjArgs, METH_NOARGS,
-     "Returns list with all the args."},
+    {"get_obj_args", Py4pdMod_GetObjArgs, METH_NOARGS, "Returns list with all the args."},
+    {"get_object_args", Py4pdMod_GetObjArgs, METH_NOARGS, "Returns list with all the args."},
 
     // library methods
     {"add_object", (PyCFunction)Py4pdLib_AddObj, METH_VARARGS | METH_KEYWORDS,
      "It adds python functions as objects"},
 
     // Others
-    {"get_obj_pointer", Py4pdMod_GetObjPointer, METH_NOARGS,
-     "Get PureData Object Pointer"},
+    {"get_obj_pointer", Py4pdMod_GetObjPointer, METH_NOARGS, "Get PureData Object Pointer"},
 
     // Loops
     {"set_obj_var", Py4pdMod_SetObjVar, METH_VARARGS,
@@ -1516,24 +1461,23 @@ PyMethodDef PdMethods[] = {
      "execution of the function"},
     {"accum_obj_var", Py4pdMod_AccumObjVar, METH_VARARGS,
      "It adds the values in the end of the list"},
-    {"get_obj_var", (PyCFunction)Py4pdMod_GetObjVar,
-     METH_VARARGS | METH_KEYWORDS,
+    {"get_obj_var", (PyCFunction)Py4pdMod_GetObjVar, METH_VARARGS | METH_KEYWORDS,
      "It gets a global variable for the Object, it is not clear after the "
      "execution of the function"},
     {"clear_obj_var", (PyCFunction)Py4pdMod_ClearObjVar, METH_VARARGS,
      "It clear the Dictionary of global variables"},
 
+    {"get_py_type", (PyCFunction)Py4pdMod_GetPyObjectType, METH_VARARGS,
+     "Returns the Python Object"},
+
     // player
-    {"add_to_player", (PyCFunction)Py4pdMod_AddThingToPlay,
-     METH_VARARGS | METH_KEYWORDS, "It adds a thing to the player"},
-    {"clear_player", Py4pdMod_ClearPlayer, METH_NOARGS,
-     "Remove all Python Objects of the player."},
+    {"add_to_player", (PyCFunction)Py4pdMod_AddThingToPlay, METH_VARARGS | METH_KEYWORDS,
+     "It adds a thing to the player"},
+    {"clear_player", Py4pdMod_ClearPlayer, METH_NOARGS, "Remove all Python Objects of the player."},
 
     // Internal
-    {"_recursive", Py4pdMod_PdRecursiveCall, METH_VARARGS,
-     "It calls a function recursively"},
-    {"_open_patch", Py4pdMod_OpenPatch, METH_VARARGS,
-     "Open a patch in PureData"},
+    {"_recursive", Py4pdMod_PdRecursiveCall, METH_VARARGS, "It calls a function recursively"},
+    {"_open_patch", Py4pdMod_OpenPatch, METH_VARARGS, "Open a patch in PureData"},
     {NULL, NULL, 0, NULL} //
 };
 
@@ -1544,9 +1488,8 @@ static PyObject *pdmodule_init(PyObject *self) {
     char CLEAR_string[MAXPDSTRING];
     snprintf(CLEAR_string, sizeof(CLEAR_string), "py4pdClear_%p", self);
 
-    PyObject *puredata_samplerate, *puredata_vecsize, *visObject, *normalObject,
-        *audioINObject, *audioOUTObject, *pdAudio, *Py4pd_OutLoopString,
-        *Py4pd_ClearLoopString;
+    PyObject *puredata_samplerate, *puredata_vecsize, *visObject, *normalObject, *audioINObject,
+        *audioOUTObject, *pdAudio, *Py4pd_OutLoopString, *Py4pd_ClearLoopString;
 
     puredata_samplerate = PyLong_FromLong(sys_getsr());
     puredata_vecsize = PyLong_FromLong(sys_getblksize());
