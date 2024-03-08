@@ -1,0 +1,17 @@
+#N canvas 804 163 813 565 8;
+#X obj 12 8 py4pd -lib main;
+#X obj 12 132 dac~;
+#X obj 12 76 nbx 5 14 -1e+37 1e+37 0 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 256;
+#X obj 12 32 loadbang;
+#X msg 12 53 440;
+#X obj 97 59 hsl 80 10 0 1 0 0 empty empty empty -2 -8 0 8 #fcfcfc #000000 #000000 0 1;
+#X obj 94 74 nbx 5 14 -1e+37 1e+37 0 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000 0 256;
+#X text 180 55 <= Gain.;
+#X obj 12 98 audioout None 0.1;
+#X connect 2 0 8 0;
+#X connect 3 0 4 0;
+#X connect 4 0 2 0;
+#X connect 5 0 6 0;
+#X connect 6 0 8 1;
+#X connect 8 0 1 0;
+#X connect 8 0 1 1;
