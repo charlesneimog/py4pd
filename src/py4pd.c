@@ -20,8 +20,7 @@ int objCount = 0;            // To keep track of the number of objects created
 
 static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     if (argc > 2) {
-        pd_error(
-            x, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
+        pd_error(x, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
         return -1;
     }
     const char *oldName = atom_gensym(argv + 1)->s_name;
@@ -38,13 +37,11 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
              atom_gensym(argv + 1)->s_name);
 
     char script_inside_py4pd_path[MAXPDSTRING];
-    snprintf(script_inside_py4pd_path, MAXPDSTRING,
-             "%s/resources/py4pd-mod/%s.py", x->py4pdPath->s_name,
-             atom_gensym(argv + 1)->s_name);
+    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/resources/py4pd-mod/%s.py",
+             x->py4pdPath->s_name, atom_gensym(argv + 1)->s_name);
 
     PyObject *sysPath = PySys_GetObject("path");
-    if (access(script_file_path, F_OK) == -1 &&
-        access(script_inside_py4pd_path, F_OK) == -1) {
+    if (access(script_file_path, F_OK) == -1 && access(script_inside_py4pd_path, F_OK) == -1) {
         Py_XDECREF(x->pFunction);
         int libraryNotFound = 1;
         for (int i = 0; 1; i++) {
@@ -52,10 +49,8 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
             if (!pathelem) {
                 break;
             }
-            char *library_path =
-                malloc(strlen(pathelem) + strlen(scriptFileName->s_name) + 1);
-            snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem,
-                     atom_gensym(argv + 1)->s_name);
+            char *library_path = malloc(strlen(pathelem) + strlen(scriptFileName->s_name) + 1);
+            snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, atom_gensym(argv + 1)->s_name);
 
             if (access(library_path, F_OK) != -1) { // Library founded
                 libraryNotFound = 0;
@@ -64,8 +59,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
             free(library_path);
         }
         if (libraryNotFound) {
-            pd_error(x, "[py4pd] Library file '%s.py' not found!",
-                     scriptFileName->s_name);
+            pd_error(x, "[py4pd] Library file '%s.py' not found!", scriptFileName->s_name);
             return -1;
         }
     }
@@ -73,15 +67,12 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     PyObject *pModule, *pFunc; // Create the variables of the python objects
     char pyScriptsFolder[MAXPDSTRING];
     char pyGlobalFolder[MAXPDSTRING];
-    snprintf(pyScriptsFolder, MAXPDSTRING, "%s/resources/scripts",
-             x->py4pdPath->s_name);
-    snprintf(pyGlobalFolder, MAXPDSTRING, "%s/resources/py-modules",
-             x->py4pdPath->s_name);
+    snprintf(pyScriptsFolder, MAXPDSTRING, "%s/resources/scripts", x->py4pdPath->s_name);
+    snprintf(pyGlobalFolder, MAXPDSTRING, "%s/resources/py-modules", x->py4pdPath->s_name);
 
     // conver const char* to char*
     char *pkgPathchar = malloc(strlen(x->pkgPath->s_name) + 1);
-    Py4pdUtils_Strlcpy(pkgPathchar, x->pkgPath->s_name,
-                       strlen(x->pkgPath->s_name) + 1);
+    Py4pdUtils_Strlcpy(pkgPathchar, x->pkgPath->s_name, strlen(x->pkgPath->s_name) + 1);
 
     Py4pdUtils_CheckPkgNameConflict(x, pkgPathchar, scriptFileName);
     Py4pdUtils_CheckPkgNameConflict(x, pyGlobalFolder, scriptFileName);
@@ -92,11 +83,9 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     PyObject *oldObjectCapsule;
 
     if (MainModule != NULL) {
-        oldObjectCapsule =
-            PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
         if (oldObjectCapsule != NULL) {
-            PyObject *py4pd_capsule =
-                PyObject_GetAttrString(MainModule, "py4pd");
+            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
             prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
             prev_obj_exists = 1;
         } else {
@@ -112,8 +101,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     }
     pModule = PyImport_ImportModule(atom_gensym(argv + 1)->s_name);
     if (pModule == NULL) {
-        pd_error(x, "[Python] Failed to load script file %s",
-                 scriptFileName->s_name);
+        pd_error(x, "[Python] Failed to load script file %s", scriptFileName->s_name);
         Py4pdUtils_PrintError(x);
         Py_XDECREF(pModule);
         Py_XDECREF(MainModule);
@@ -164,8 +152,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     // check if module has the function Py4pdLoadObjects or
     // "sScriptFilename + setup"
     char *setupFuncName = malloc(strlen(scriptFileName->s_name) + 7);
-    snprintf(setupFuncName, strlen(scriptFileName->s_name) + 7, "%s_setup",
-             scriptFileName->s_name);
+    snprintf(setupFuncName, strlen(scriptFileName->s_name) + 7, "%s_setup", scriptFileName->s_name);
     PyObject *pFuncName = PyUnicode_FromString(setupFuncName);
     t_symbol *pFuncNameSymbol = gensym(setupFuncName);
     pFunc = PyObject_GetAttr(pModule, pFuncName);
@@ -254,17 +241,15 @@ struct pipInstallArgs {
  * @param pointer to the struct pipInstallArgs
  * @return void
  */
-static void *Py4pd_PipInstallDetach(void *Args) {
+static void *Py4pd_PipInstallRequirementsDetach(void *Args) {
     struct pipInstallArgs *args = (struct pipInstallArgs *)Args;
     t_py *x = args->x;
     char const *pipPackage = args->pipPackage->s_name;
     t_symbol *pipTarget;
     if (x->pipGlobalInstall) {
         // add resources to the global path
-        char *globalTarget =
-            malloc(strlen(x->py4pdPath->s_name) + strlen("resources/") + 1);
-        snprintf(globalTarget,
-                 strlen(x->py4pdPath->s_name) + strlen("resources/") + 1,
+        char *globalTarget = malloc(strlen(x->py4pdPath->s_name) + strlen("resources/") + 1);
+        snprintf(globalTarget, strlen(x->py4pdPath->s_name) + strlen("resources/") + 1,
                  "%sresources/", x->py4pdPath->s_name);
         pipTarget = gensym(globalTarget);
         free(globalTarget);
@@ -284,34 +269,124 @@ static void *Py4pd_PipInstallDetach(void *Args) {
     }
 
 #ifdef __linux__
-    size_t commandSize = snprintf(NULL, 0,
-                                  "python%d.%d -m pip install --target "
-                                  "'%spy-modules' %s --upgrade",
-                                  PY_MAJOR_VERSION, PY_MINOR_VERSION,
-                                  pipTarget->s_name, pipPackage) +
-                         1;
+    size_t commandSize =
+        snprintf(NULL, 0,
+                 "python%d.%d -m pip install --target "
+                 "'%spy-modules' -r %s --upgrade",
+                 PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
+        1;
 #elif defined __WIN64
-    size_t commandSize = snprintf(NULL, 0,
-                                  "py -%d.%d -m pip install --target "
-                                  "\"%spy-modules\" %s --upgrade",
-                                  PY_MAJOR_VERSION, PY_MINOR_VERSION,
-                                  pipTarget->s_name, pipPackage) +
-                         1;
+    size_t commandSize =
+        snprintf(NULL, 0,
+                 "py -%d.%d -m pip install --target "
+                 "\"%spy-modules\" -r %s --upgrade",
+                 PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
+        1;
+
+#elif defined(__APPLE__) || defined(__MACH__)
+    size_t commandSize =
+        snprintf(NULL, 0,
+                 "/usr/local/bin/python%d.%d -m pip install --target "
+                 "'%spy-modules' -r %s --upgrade",
+                 PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
+        1;
+#endif
+    char *COMMAND = malloc(commandSize);
+#ifdef __linux__
+    snprintf(COMMAND, commandSize,
+             "python%d.%d -m pip install --target '%spy-modules' -r %s --upgrade", PY_MAJOR_VERSION,
+             PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
+
+#elif defined __WIN64
+    snprintf(COMMAND, commandSize,
+             "py -%d.%d -m pip install --target \"%spy-modules\" "
+             "-r %s --upgrade",
+             PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
+
+#elif defined(__APPLE__) || defined(__MACH__)
+    snprintf(COMMAND, commandSize,
+             "/usr/local/bin/python%d.%d -m pip install --target "
+             "-r '%spy-modules' %s --upgrade",
+             PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
+#endif
+    pd_error(NULL,
+             "Installing %s in the background. Please DO NOT close PureData until you receive a "
+             "complete message... Requirements can take a while!",
+             pipPackage);
+    int result = Py4pdUtils_ExecuteSystemCommand(COMMAND);
+    if (result != 0) {
+        pd_error(NULL, "The instalation failed with error code %d", result);
+        free(COMMAND);
+        return NULL;
+    } else {
+        pd_error(NULL, "The installation has been completed.\nPlease, RESTART "
+                       "PureData!");
+        free(COMMAND);
+        return NULL;
+    }
+    return NULL;
+}
+// ========================================
+/**
+ * @brief This function call pip install from a new thread
+ * @param pointer to the struct pipInstallArgs
+ * @return void
+ */
+static void *Py4pd_PipInstallDetach(void *Args) {
+    struct pipInstallArgs *args = (struct pipInstallArgs *)Args;
+    t_py *x = args->x;
+    char const *pipPackage = args->pipPackage->s_name;
+    t_symbol *pipTarget;
+    if (x->pipGlobalInstall) {
+        // add resources to the global path
+        char *globalTarget = malloc(strlen(x->py4pdPath->s_name) + strlen("resources/") + 1);
+        snprintf(globalTarget, strlen(x->py4pdPath->s_name) + strlen("resources/") + 1,
+                 "%sresources/", x->py4pdPath->s_name);
+        pipTarget = gensym(globalTarget);
+        free(globalTarget);
+    } else {
+        pipTarget = x->pdPatchPath;
+    }
+
+    // loop for all pipTarget and check if there is some space char, if yes, get
+    // error
+    for (int i = 0; i < (int)strlen(pipTarget->s_name); i++) {
+        if (isspace(pipTarget->s_name[i])) {
+            pd_error(x, "[py4pd] Spaces are not supported in the path yet, try "
+                        "to remove it");
+            // outlet_float(x->mainOut, 0);
+            // return NULL;
+        }
+    }
+
+#ifdef __linux__
+    size_t commandSize =
+        snprintf(NULL, 0,
+                 "python%d.%d -m pip install --target "
+                 "'%spy-modules' %s --upgrade",
+                 PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
+        1;
+#elif defined __WIN64
+    size_t commandSize =
+        snprintf(NULL, 0,
+                 "py -%d.%d -m pip install --target "
+                 "\"%spy-modules\" %s --upgrade",
+                 PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
+        1;
 
 #elif defined(__APPLE__) || defined(__MACH__)
     size_t commandSize =
         snprintf(NULL, 0,
                  "/usr/local/bin/python%d.%d -m pip install --target "
                  "'%spy-modules' %s --upgrade",
-                 PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name,
-                 pipPackage) +
+                 PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
         1;
 #endif
     char *COMMAND = malloc(commandSize);
 #ifdef __linux__
     snprintf(COMMAND, commandSize,
-             "python%d.%d -m pip install --target '%spy-modules' %s --upgrade",
-             PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
+             "python%d.%d -m pip install --target '%spy-modules' %s --upgrade", PY_MAJOR_VERSION,
+             PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 
 #elif defined __WIN64
     snprintf(COMMAND, commandSize,
@@ -325,7 +400,10 @@ static void *Py4pd_PipInstallDetach(void *Args) {
              "'%spy-modules' %s --upgrade",
              PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 #endif
-    pd_error(NULL, "Installing %s in background, please WAIT ...", pipPackage);
+    pd_error(NULL,
+             "Installing %s in the background. Please DO NOT close PureData until you receive a "
+             "complete message... This can take a while!",
+             pipPackage);
     int result = Py4pdUtils_ExecuteSystemCommand(COMMAND);
     if (result != 0) {
         pd_error(NULL, "The instalation failed with error code %d", result);
@@ -351,7 +429,7 @@ static void *Py4pd_PipInstallDetach(void *Args) {
  * @param argv array of arguments
  * @return void
  */
-static void Py4pd_Pip(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+void Py4pd_Pip(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
 
     // check if first argv is equal to install
@@ -363,8 +441,15 @@ static void Py4pd_Pip(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     if (atom_getsymbolarg(0, argc, argv) == gensym("install")) {
         if (atom_getsymbolarg(1, argc, argv) == gensym("-r")) {
-            pd_error(x, "[py4pd] The -r option is not supported yet.");
-            return;
+            Py_BEGIN_ALLOW_THREADS struct pipInstallArgs pipArgs;
+            pipArgs.x = x;
+            pipArgs.pipPackage = atom_getsymbolarg(2, argc, argv);
+            pthread_t threadId;
+            pthread_create(&threadId, NULL, Py4pd_PipInstallRequirementsDetach, &pipArgs);
+            pthread_detach(threadId);
+            Py_END_ALLOW_THREADS
+
+                return;
         }
 
         for (int j = 1; j < argc; j++) {
@@ -373,8 +458,7 @@ static void Py4pd_Pip(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                 pipArgs.x = x;
                 pipArgs.pipPackage = atom_getsymbolarg(j, argc, argv);
                 pthread_t threadId;
-                pthread_create(&threadId, NULL, Py4pd_PipInstallDetach,
-                               &pipArgs);
+                pthread_create(&threadId, NULL, Py4pd_PipInstallDetach, &pipArgs);
                 pthread_detach(threadId);
             } else {
                 pd_error(x, "[py4pd] The package name must be a symbol");
@@ -452,8 +536,7 @@ static void Py4pd_PrintPy4pdVersion(t_py *x) {
  * @return void, but it sets the home path
  */
 
-static void Py4pd_SetPy4pdHomePath(t_py *x, t_symbol *s, int argc,
-                                   t_atom *argv) {
+static void Py4pd_SetPy4pdHomePath(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     if (argc < 1) {
         post("[py4pd] The home path is: %s", x->pdPatchPath->s_name);
@@ -488,19 +571,17 @@ static void Py4pd_SetPackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                 t_symbol *path = atom_getsymbol(argv);
                 // It checks relative path
                 if (path->s_name[0] == '.' && path->s_name[1] == '/') {
-                    char *new_path = malloc(strlen(x->pdPatchPath->s_name) +
-                                            strlen(path->s_name) + 1);
+                    char *new_path =
+                        malloc(strlen(x->pdPatchPath->s_name) + strlen(path->s_name) + 1);
                     Py4pdUtils_Strlcpy(new_path, x->pdPatchPath->s_name,
                                        strlen(x->pdPatchPath->s_name) + 1);
-                    Py4pdUtils_Strlcat(new_path, path->s_name,
-                                       strlen(new_path) + 1);
+                    Py4pdUtils_Strlcat(new_path, path->s_name, strlen(new_path) + 1);
                     post("[py4pd] Packages path set to: %s", new_path);
                     x->pkgPath = gensym(new_path);
                     free(new_path);
                 } else {
                     x->pkgPath = atom_getsymbol(argv);
-                    post("[py4pd] Packages path set to: %s",
-                         x->pkgPath->s_name);
+                    post("[py4pd] Packages path set to: %s", x->pkgPath->s_name);
                 }
                 char cfgFile[MAXPDSTRING];
                 char const *py4pdDir = x->py4pdPath->s_name;
@@ -537,8 +618,7 @@ static void Py4pd_SetPackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argv is the arguments
  * @return void, but it prints the functions
  */
-static void Py4pd_PrintModuleFunctions(t_py *x, t_symbol *s, int argc,
-                                       t_atom *argv) {
+static void Py4pd_PrintModuleFunctions(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     (void)argc;
     (void)argv;
@@ -571,11 +651,9 @@ void Py4pd_PrintDocs(t_py *x) {
         return;
     }
     if (x->pFunction &&
-        PyCallable_Check(
-            x->pFunction)) { // Check if the function exists and is callable
-        PyObject *pDoc = PyObject_GetAttrString(
-            x->pFunction,
-            "__doc__"); // Get the documentation of the function
+        PyCallable_Check(x->pFunction)) { // Check if the function exists and is callable
+        PyObject *pDoc = PyObject_GetAttrString(x->pFunction,
+                                                "__doc__"); // Get the documentation of the function
         if (pDoc != NULL) {
             char const *Doc = PyUnicode_AsUTF8(pDoc);
             if (Doc != NULL) {
@@ -680,8 +758,7 @@ static void Py4pd_ReloadPy4pdFunction(t_py *x) {
     pFunc = x->pFunction;
 
     // reload the module
-    pName = PyUnicode_DecodeFSDefault(
-        x->pScriptName->s_name); // Name of script file
+    pName = PyUnicode_DecodeFSDefault(x->pScriptName->s_name); // Name of script file
     pModule = PyImport_Import(pName);
     if (pModule == NULL) {
         pd_error(x, "Error importing the module!");
@@ -699,18 +776,15 @@ static void Py4pd_ReloadPy4pdFunction(t_py *x) {
         Py_DECREF(pModule);
         return;
     } else {
-        pFunc = PyObject_GetAttrString(
-            pModule,
-            x->pFuncName->s_name); // Function name inside the script file
+        pFunc =
+            PyObject_GetAttrString(pModule,
+                                   x->pFuncName->s_name); // Function name inside the script file
         Py_DECREF(pName);
         Py_DECREF(pReload);
-        if (pFunc &&
-            PyCallable_Check(
-                pFunc)) { // Check if the function exists and is callable
+        if (pFunc && PyCallable_Check(pFunc)) { // Check if the function exists and is callable
             x->pFunction = pFunc;
             x->funcCalled = 1;
-            PyCodeObject *code =
-                (PyCodeObject *)PyFunction_GetCode(x->pFunction);
+            PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->pFunction);
             int argCount = code->co_argcount;
             x->pArgsCount = argCount;
             post("The module was reloaded!");
@@ -738,9 +812,8 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     // =====================
     // check number of arguments
     if (argc < 2) { // check is the number of arguments is correct | set
-        pd_error(x,
-                 "[py4pd] 'set' message needs two arguments! The 'Script Name' "
-                 "and the 'Function Name'!");
+        pd_error(x, "[py4pd] 'set' message needs two arguments! The 'Script Name' "
+                    "and the 'Function Name'!");
         return;
     }
 
@@ -757,9 +830,8 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
 
     if (x->funcCalled == 1) {
-        int function_is_equal =
-            strcmp(pFuncNameSymbol->s_name,
-                   x->pFuncName->s_name); // if string is equal strcmp returns 0
+        int function_is_equal = strcmp(pFuncNameSymbol->s_name,
+                                       x->pFuncName->s_name); // if string is equal strcmp returns 0
         if (function_is_equal == 0) {
             pd_error(x, "[py4pd] The function was already set!");
             return;
@@ -783,14 +855,11 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
              sScriptFilename->s_name);
 
     char script_inside_py4pd_path[MAXPDSTRING];
-    snprintf(script_inside_py4pd_path, MAXPDSTRING,
-             "%s/resources/scripts/%s.py", x->py4pdPath->s_name,
-             sScriptFilename->s_name);
+    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/resources/scripts/%s.py",
+             x->py4pdPath->s_name, sScriptFilename->s_name);
 
-    if (access(script_file_path, F_OK) == -1 &&
-        access(script_inside_py4pd_path, F_OK) == -1) {
-        pd_error(x, "[py4pd] The script file %s was not found!",
-                 sScriptFilename->s_name);
+    if (access(script_file_path, F_OK) == -1 && access(script_inside_py4pd_path, F_OK) == -1) {
+        pd_error(x, "[py4pd] The script file %s was not found!", sScriptFilename->s_name);
         Py_XDECREF(x->pFunction);
         return;
     }
@@ -805,8 +874,7 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     if (MainModule != NULL) {
         oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd");
         if (oldObjectCapsule != NULL) {
-            PyObject *py4pd_capsule =
-                PyObject_GetAttrString(MainModule, "py4pd");
+            PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
             prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
             prev_obj_exists = 1;
         } else {
@@ -840,9 +908,8 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         }
 
         if (code->co_flags & CO_VARARGS) {
-            pd_error(
-                x, "[py4pd] The '%s' function has variable arguments (*args)!",
-                pFuncNameSymbol->s_name);
+            pd_error(x, "[py4pd] The '%s' function has variable arguments (*args)!",
+                     pFuncNameSymbol->s_name);
             Py_XDECREF(pFunc);
             Py_XDECREF(pModule);
             return;
@@ -857,8 +924,8 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         }
         x->pArgsCount = code->co_argcount;
         if (x->isLib == 0) {
-            post("[py4pd] The '%s' function has %d arguments!",
-                 pFuncNameSymbol->s_name, x->pArgsCount);
+            post("[py4pd] The '%s' function has %d arguments!", pFuncNameSymbol->s_name,
+                 x->pArgsCount);
         }
         x->pModule = pModule;
         x->pFunction = pFunc;
@@ -917,10 +984,9 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
             lists = (PyObject **)malloc(OpenList_count * sizeof(PyObject *));
         }
 
-        ArgsTuple =
-            Py4pdUtils_ConvertToPy(lists, argc,
-                                   argv); // convert the arguments to python
-        int argCount = PyTuple_Size(ArgsTuple); // get the number of arguments
+        ArgsTuple = Py4pdUtils_ConvertToPy(lists, argc,
+                                           argv); // convert the arguments to python
+        int argCount = PyTuple_Size(ArgsTuple);   // get the number of arguments
         if (argCount != x->pArgsCount) {
             pd_error(x,
                      "[py4pd] Wrong number of arguments! The function %s "
@@ -947,8 +1013,7 @@ static void Py4pd_RunFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  * @param argv
  * @return It will return nothing but will run the Python function
  */
-static void Py4pd_ExecuteFunction(t_py *x, t_symbol *s, int argc,
-                                  t_atom *argv) {
+static void Py4pd_ExecuteFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     if (x->funcCalled == 0) {
         pd_error(x, "[py4pd] You need to call a function before run!");
@@ -1008,8 +1073,7 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     for (i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
             t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
-            if (py4pdArgs == gensym("-library") ||
-                py4pdArgs == gensym("-lib")) {
+            if (py4pdArgs == gensym("-library") || py4pdArgs == gensym("-lib")) {
                 libraryMODE = 1;
                 normalMODE = 0;
                 scriptName = atom_getsymbolarg(i + 1, argc, argv);
@@ -1061,8 +1125,7 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         t_symbol *patchDir = canvas_getdir(c);
         if (patchDir->s_name[strlen(patchDir->s_name) - 1] != '/') {
             char *new_path = malloc(strlen(patchDir->s_name) + 2);
-            Py4pdUtils_Strlcpy(new_path, patchDir->s_name,
-                               strlen(patchDir->s_name) + 1);
+            Py4pdUtils_Strlcpy(new_path, patchDir->s_name, strlen(patchDir->s_name) + 1);
             Py4pdUtils_Strlcat(new_path, "/\0", strlen(new_path) + 1);
             patchDir = gensym(new_path);
             free(new_path);
@@ -1087,9 +1150,8 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         objCount++;
         return (x);
     } else {
-        pd_error(NULL,
-                 "Error in py4pdNew, you can not use more than one flag at "
-                 "the same time.");
+        pd_error(NULL, "Error in py4pdNew, you can not use more than one flag at "
+                       "the same time.");
         return NULL;
     }
 }
@@ -1103,76 +1165,64 @@ void py4pd_setup(void) {
         objCount = 0;
         post("");
         post("[py4pd] by Charles K. Neimog");
-        post("[py4pd] Version %d.%d.%d", PY4PD_MAJOR_VERSION,
-             PY4PD_MINOR_VERSION, PY4PD_MICRO_VERSION);
-        post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION,
-             PY_MINOR_VERSION, PY_MICRO_VERSION);
+        post("[py4pd] Version %d.%d.%d", PY4PD_MAJOR_VERSION, PY4PD_MINOR_VERSION,
+             PY4PD_MICRO_VERSION);
+        post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION,
+             PY_MICRO_VERSION);
         post("");
         PyImport_AppendInittab("pd", PyInit_pd);
         Py_Initialize();
     }
 
-    py4pd_class =
-        class_new(gensym("py4pd"), // cria o objeto quando escrevemos py4pd
-                  (t_newmethod)Py4pd_Py4pdNew,  // metodo de criação do objeto
-                  (t_method)Py4pdUtils_FreeObj, // quando voce deleta o objeto
-                  sizeof(t_py), // quanta memoria precisamos para esse objeto
-                  0,            // nao há uma GUI especial para esse objeto???
-                  A_GIMME,      // os podem ser qualquer coisa
-                  0);           // fim de argumentos
+    py4pd_class = class_new(gensym("py4pd"),              // cria o objeto quando escrevemos py4pd
+                            (t_newmethod)Py4pd_Py4pdNew,  // metodo de criação do objeto
+                            (t_method)Py4pdUtils_FreeObj, // quando voce deleta o objeto
+                            sizeof(t_py), // quanta memoria precisamos para esse objeto
+                            0,            // nao há uma GUI especial para esse objeto???
+                            A_GIMME,      // os podem ser qualquer coisa
+                            0);           // fim de argumentos
 
-    py4pd_classLibrary = class_new(gensym("py4pd"), (t_newmethod)Py4pd_Py4pdNew,
-                                   (t_method)Py4pdUtils_FreeObj, sizeof(t_py),
-                                   CLASS_NOINLET, A_GIMME, 0);
+    py4pd_classLibrary =
+        class_new(gensym("py4pd"), (t_newmethod)Py4pd_Py4pdNew, (t_method)Py4pdUtils_FreeObj,
+                  sizeof(t_py), CLASS_NOINLET, A_GIMME, 0);
 
-    class_addmethod(py4pd_class, (t_method)Py4pd_SetPy4pdHomePath,
-                    gensym("home"), A_GIMME,
+    class_addmethod(py4pd_class, (t_method)Py4pd_SetPy4pdHomePath, gensym("home"), A_GIMME,
                     0); // set home path
-    class_addmethod(py4pd_class, (t_method)Py4pd_SetPackages,
-                    gensym("packages"), A_GIMME,
+    class_addmethod(py4pd_class, (t_method)Py4pd_SetPackages, gensym("packages"), A_GIMME,
                     0); // set packages path
     class_addmethod(py4pd_class, (t_method)Py4pd_Pip, gensym("pip"), A_GIMME,
                     0); // pip install
-    class_addmethod(py4pd_class, (t_method)Py4pd_SetPythonPointersUsage,
-                    gensym("pointers"), A_FLOAT,
+    class_addmethod(py4pd_class, (t_method)Py4pd_SetPythonPointersUsage, gensym("pointers"),
+                    A_FLOAT,
                     0); // set home path
-    class_addmethod(py4pd_class, (t_method)Py4pd_ReloadPy4pdFunction,
-                    gensym("reload"), 0,
+    class_addmethod(py4pd_class, (t_method)Py4pd_ReloadPy4pdFunction, gensym("reload"), 0,
                     0); // reload python script
 
     // DEPRECATED
-    class_addmethod(py4pd_class, (t_method)Py4pd_Deprecated,
-                    gensym("pipinstall"), A_GIMME,
+    class_addmethod(py4pd_class, (t_method)Py4pd_Deprecated, gensym("pipinstall"), A_GIMME,
                     0); // run function
 
     // Object INFO
-    class_addmethod(py4pd_class, (t_method)Py4pd_PrintPy4pdVersion,
-                    gensym("version"), 0,
+    class_addmethod(py4pd_class, (t_method)Py4pd_PrintPy4pdVersion, gensym("version"), 0,
                     0); // show version
-    class_addmethod(py4pd_class, (t_method)Py4pd_SetEditor, gensym("editor"),
-                    A_GIMME,
+    class_addmethod(py4pd_class, (t_method)Py4pd_SetEditor, gensym("editor"), A_GIMME,
                     0); // open code
-    class_addmethod(py4pd_class, (t_method)Py4pd_OpenScript, gensym("open"),
-                    A_GIMME, 0);
-    class_addmethod(py4pd_class, (t_method)Py4pd_OpenScript, gensym("create"),
-                    A_GIMME, 0);
+    class_addmethod(py4pd_class, (t_method)Py4pd_OpenScript, gensym("open"), A_GIMME, 0);
+    class_addmethod(py4pd_class, (t_method)Py4pd_OpenScript, gensym("create"), A_GIMME, 0);
     class_addmethod(py4pd_class, (t_method)Py4pd_SetEditor, gensym("click"), 0,
                     0); // when click open editor
-    class_addmethod(py4pd_classLibrary, (t_method)Py4pd_SetEditor,
-                    gensym("click"), 0,
+    class_addmethod(py4pd_classLibrary, (t_method)Py4pd_SetEditor, gensym("click"), 0,
                     0); // when click open editor
 
     // User
     class_addmethod(py4pd_class, (t_method)Py4pd_PrintDocs, gensym("doc"), 0,
                     0); // open documentation
-    class_addmethod(py4pd_class, (t_method)Py4pd_ExecuteFunction, gensym("run"),
-                    A_GIMME,
+    class_addmethod(py4pd_class, (t_method)Py4pd_ExecuteFunction, gensym("run"), A_GIMME,
                     0); // run function
-    class_addmethod(py4pd_class, (t_method)Py4pd_SetFunction, gensym("set"),
-                    A_GIMME,
+    class_addmethod(py4pd_class, (t_method)Py4pd_SetFunction, gensym("set"), A_GIMME,
                     0); // set function to be called
-    class_addmethod(py4pd_class, (t_method)Py4pd_PrintModuleFunctions,
-                    gensym("functions"), A_GIMME, 0);
+    class_addmethod(py4pd_class, (t_method)Py4pd_PrintModuleFunctions, gensym("functions"), A_GIMME,
+                    0);
 }
 
 #ifdef __WIN64

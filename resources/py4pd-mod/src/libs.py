@@ -18,6 +18,10 @@ try:
             "link": "charlesneimog/orchidea",
             "description": "Get the Orchidea samples using midi data",
         },
+        "py4pd-spt":{
+            "link": "charlesneimog/py4pd-spt",
+            "description": "Simple Partials Tracker for PureData",
+        },
     }
 
     def listPy4pdLibraries():
@@ -71,12 +75,24 @@ try:
             extractFolderName = zip_ref.namelist()[0]
             os.rename(installFolder + "/" + extractFolderName, libraryPath)
 
-        pd._open_patch("README.deken.pd", libraryPath)
-        os.remove(libraryPath + ".zip")
-        pd.print(f"Library '{py4pdName}' installed successfully")
+        thereIsRequirements = False
+        if os.path.exists(libraryPath + "/requirements.txt"):
+            thereIsRequirements = True
+            pd._pipinstall_requirements(libraryPath + "/requirements.txt")
+
+        if os.path.exists(libraryPath + "/README.deken.pd"):
+            pd._open_patch("README.deken.pd", libraryPath)
+        try:
+            os.remove(libraryPath + ".zip")
+        except Exception as e:
+            pd.error(str(e))
+
+        if thereIsRequirements:
+            pd.error(f"Library '{py4pdName}' installed successfully, wait for the requirements to be installed")
+        else:
+            pd.print(f"Library '{py4pdName}' installed successfully")
 
 except:
-
     def listPy4pdLibraries():
         pd.error("Requests is not installed, send 'pip install requests' to py4pd")
 

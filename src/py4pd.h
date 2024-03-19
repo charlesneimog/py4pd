@@ -223,6 +223,7 @@ typedef struct _classInlets{
 }classInlets;
 
 
+void Py4pd_Pip(t_py *x, t_symbol *s, int argc, t_atom *argv);
 void Py4pd_PrintDocs(t_py *x);
 void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f);
 void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);

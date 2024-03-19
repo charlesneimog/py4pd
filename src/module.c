@@ -1,5 +1,6 @@
 #include "ext-class.h"
 #include "ext-libraries.h"
+#include "m_pd.h"
 #include "pic.h"
 #include "player.h"
 #include "py4pd.h"
@@ -1003,6 +1004,27 @@ static void Py4pdMod_ScheduledOpenPatch(t_py *x) {
         return;
     }
 }
+
+// =================================
+static PyObject *Py4pdMod_PipInstallRequirements(PyObject *self, PyObject *args) {
+    t_py *x = Py4pdUtils_GetObject(self);
+    char *requirements;
+
+    if (!PyArg_ParseTuple(args, "s", &requirements)) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd._pipinstall: wrong arguments.");
+    }
+
+    // check
+
+    t_atom pdArgs[3];
+    SETSYMBOL(&pdArgs[0], gensym("install"));
+    SETSYMBOL(&pdArgs[1], gensym("-r"));
+    SETSYMBOL(&pdArgs[2], gensym(requirements));
+    x->pipGlobalInstall = 1;
+    Py4pd_Pip(x, gensym("pip"), 3, pdArgs);
+    Py_RETURN_TRUE;
+}
+
 // =================================
 /**
  * @brief Same that use the [home] in pd
@@ -1474,6 +1496,10 @@ PyMethodDef PdMethods[] = {
     {"add_to_player", (PyCFunction)Py4pdMod_AddThingToPlay, METH_VARARGS | METH_KEYWORDS,
      "It adds a thing to the player"},
     {"clear_player", Py4pdMod_ClearPlayer, METH_NOARGS, "Remove all Python Objects of the player."},
+
+    // Pip
+    {"_pipinstall_requirements", Py4pdMod_PipInstallRequirements, METH_VARARGS | METH_KEYWORDS,
+     "Install a package using pip"},
 
     // Internal
     {"_recursive", Py4pdMod_PdRecursiveCall, METH_VARARGS, "It calls a function recursively"},
