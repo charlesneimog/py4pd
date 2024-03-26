@@ -2109,6 +2109,16 @@ inline uint32_t Py4pdUtils_Ntohl(uint32_t netlong) {
 }
 
 // ====================================
+void *Py4pdUtils_DetachCommand(void *arg) {
+    char *command = (char *)arg;
+    int result = system(command);
+    if (result != 0) {
+        fprintf(stderr, "[py4pd] Failed to execute command: %s\n", command);
+    }
+    return NULL;
+}
+
+// ====================================
 /*
  * @brief Run system command and check for errors
  * @param command is the command to run
@@ -2142,11 +2152,17 @@ int Py4pdUtils_ExecuteSystemCommand(const char *command) { // TODO: WRONG PLACE
     CloseHandle(pi.hThread);
     return exitCode;
 #else
-    int result = system(command);
-    if (result != 0) {
-        pd_error(NULL, "[py4pd] Failed to execute command: %s", command);
+
+    // run system(command in another thread detached)
+    pthread_t thread;
+    int pthread_create_result =
+        pthread_create(&thread, NULL, Py4pdUtils_DetachCommand, (void *)command);
+    if (pthread_create_result != 0) {
+        fprintf(stderr, "[py4pd] Failed to create thread\n");
         return -1;
     }
+    // Detach the thread to allow it to run independently
+    pthread_detach(thread);
     return 0;
 #endif
 }
