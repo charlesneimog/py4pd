@@ -19,7 +19,7 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *scr
 void Py4pdUtils_FindObjFolder(t_py *x);
 void Py4pdUtils_CreateTempFolder(t_py *x);
 void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line);
-int Py4pdUtils_ExecuteSystemCommand(const char *command);
+int Py4pdUtils_ExecuteSystemCommand(const char *command, int thread); 
 int Py4pdUtils_IsNumericOrDot(const char *str);
 void Py4pdUtils_RemoveChar(char *str, char c);
 void Py4pdUtils_ReplaceChar(char *str, char char2replace, char newchar);

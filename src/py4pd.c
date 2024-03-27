@@ -23,6 +23,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         pd_error(x, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
         return -1;
     }
+    printf("Loading library %s\n", atom_gensym(argv + 1)->s_name);
     const char *oldName = atom_gensym(argv + 1)->s_name;
     char newName[MAXPDSTRING];
     int j;
@@ -70,17 +71,25 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     snprintf(pyScriptsFolder, MAXPDSTRING, "%s/resources/scripts", x->py4pdPath->s_name);
     snprintf(pyGlobalFolder, MAXPDSTRING, "%s/resources/py-modules", x->py4pdPath->s_name);
 
-    // conver const char* to char*
-    char *pkgPathchar = malloc(strlen(x->pkgPath->s_name) + 1);
-    Py4pdUtils_Strlcpy(pkgPathchar, x->pkgPath->s_name, strlen(x->pkgPath->s_name) + 1);
+    printf("after snprintf\n");
 
-    Py4pdUtils_CheckPkgNameConflict(x, pkgPathchar, scriptFileName);
-    Py4pdUtils_CheckPkgNameConflict(x, pyGlobalFolder, scriptFileName);
+    // convert const char* to char*
+    // char *globalFolderChar = malloc(strlen(pyGlobalFolder) + 1);
+    // Py4pdUtils_Strlcpy(globalFolderChar, pyGlobalFolder, strlen(pyGlobalFolder) + 1);
+
+    // sound file path
+    // char *pkgPathchar = malloc(strlen(x->pkgPath->s_name) + 1);
+    // Py4pdUtils_Strlcpy(pkgPathchar, x->pkgPath->s_name, strlen(x->pkgPath->s_name) + 1);
+
+    // TODO: Fix this
+    // Py4pdUtils_CheckPkgNameConflict(x, pyGlobalFolder, scriptFileName);
+    // Py4pdUtils_CheckPkgNameConflict(x, pkgPathchar, scriptFileName);
 
     t_py *prev_obj = NULL;
     int prev_obj_exists = 0;
     PyObject *MainModule = PyImport_ImportModule("pd");
     PyObject *oldObjectCapsule;
+    printf("after import module\n");
 
     if (MainModule != NULL) {
         oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
@@ -93,6 +102,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         }
     }
     PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
+    printf("After objectCapsule\n");
 
     if (objectCapsule == NULL) {
         Py4pdUtils_PrintError(x);
@@ -121,6 +131,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     }
 
     PyObject *pModuleDict = PyModule_GetDict(pModule);
+    printf("After get Module Dict\n");
 
     if (pModuleDict == NULL) {
         pd_error(x, "[Python] Failed to get script file dictionary");
@@ -215,6 +226,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         Py_XDECREF(pModuleReloaded);
         Py_XDECREF(pValue);
         logpost(x, 3, "[py4pd] Library %s loaded!", scriptFileName->s_name);
+        printf("%s Loaded\n", atom_gensym(argv + 1)->s_name);
     } else {
         x->funcCalled = 1; // set the flag to 0 because it crash Pd if
         Py4pdUtils_PrintError(x);
@@ -313,7 +325,7 @@ static void *Py4pd_PipInstallRequirementsDetach(void *Args) {
              "Installing %s in the background. Please DO NOT close PureData until you receive a "
              "complete message... Requirements can take a while!",
              pipPackage);
-    int result = Py4pdUtils_ExecuteSystemCommand(COMMAND);
+    int result = Py4pdUtils_ExecuteSystemCommand(COMMAND, 0);
     if (result != 0) {
         pd_error(NULL, "The instalation failed with error code %d", result);
         free(COMMAND);
@@ -404,7 +416,7 @@ static void *Py4pd_PipInstallDetach(void *Args) {
              "Installing %s in the background. Please DO NOT close PureData until you receive a "
              "complete message... This can take a while!",
              pipPackage);
-    int result = Py4pdUtils_ExecuteSystemCommand(COMMAND);
+    int result = Py4pdUtils_ExecuteSystemCommand(COMMAND, 0);
     if (result != 0) {
         pd_error(NULL, "The instalation failed with error code %d", result);
         free(COMMAND);
@@ -696,7 +708,7 @@ static void Py4pd_OpenScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     x->pScriptName = argv[0].a_w.w_symbol;
     char command[MAXPDSTRING];
     Py4pdUtils_GetEditorCommand(x, command, 0);
-    Py4pdUtils_ExecuteSystemCommand(command);
+    Py4pdUtils_ExecuteSystemCommand(command, 1);
     return;
 }
 
@@ -735,7 +747,7 @@ static void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     int line = PyCode_Addr2Line(code, 0);
     char command[MAXPDSTRING];
     Py4pdUtils_GetEditorCommand(x, command, line);
-    Py4pdUtils_ExecuteSystemCommand(command);
+    Py4pdUtils_ExecuteSystemCommand(command, 0);
     return;
 }
 

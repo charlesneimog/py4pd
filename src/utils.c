@@ -641,13 +641,23 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *scr
         FindClose(hFind);
     }
 #else
+    printf("inside checkpkg\n");
     DIR *dir;
     struct dirent *entry;
 
-    if ((dir = opendir(folderToCheck)) == NULL) {
+    if (folderToCheck == NULL) {
+        printf("folderToCheck is NULL\n");
         return;
     }
+
+    printf("before opendir\n");
     dir = opendir(folderToCheck);
+    printf("after opendir\n");
+
+    if (dir == NULL) {
+        return;
+    }
+
     while ((entry = readdir(dir)) != NULL) {
         if (entry->d_type == DT_DIR && strcmp(entry->d_name, ".") != 0 &&
             strcmp(entry->d_name, "..") != 0) {
@@ -665,6 +675,7 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *scr
         }
     }
     closedir(dir);
+    printf("out of checkpkg\n");
 #endif
     return;
 }
@@ -831,7 +842,7 @@ void Py4pdUtils_Click(t_py *x) {
         int line = PyCode_Addr2Line(code, 0);
         char command[MAXPDSTRING];
         Py4pdUtils_GetEditorCommand(x, command, line);
-        Py4pdUtils_ExecuteSystemCommand(command);
+        Py4pdUtils_ExecuteSystemCommand(command, 1);
     } else {
         if (x->objClass == NULL) {
             pd_error(NULL, "Any Python function or class was defined");
@@ -873,7 +884,7 @@ void Py4pdUtils_Click(t_py *x) {
                 int line = PyCode_Addr2Line(code, 0);
                 char command[MAXPDSTRING];
                 Py4pdUtils_GetEditorCommand(x, command, line);
-                Py4pdUtils_ExecuteSystemCommand(command);
+                Py4pdUtils_ExecuteSystemCommand(command, 1);
             }
         }
     }
@@ -1147,7 +1158,7 @@ void *Py4pdUtils_FreeObj(t_py *x) {
         (void)Py4pdUtils_ExecuteSystemCommand(command);
 #else
         sprintf(command, "rm -rf %s", x->tempPath->s_name);
-        (void)Py4pdUtils_ExecuteSystemCommand(command);
+        (void)Py4pdUtils_ExecuteSystemCommand(command, 0);
 #endif
     }
     if (x->visMode != 0)
@@ -2125,7 +2136,7 @@ void *Py4pdUtils_DetachCommand(void *arg) {
  * @return void, but it prints the error if it fails
  */
 
-int Py4pdUtils_ExecuteSystemCommand(const char *command) { // TODO: WRONG PLACE
+int Py4pdUtils_ExecuteSystemCommand(const char *command, int thread) { // TODO: WRONG PLACE
 #ifdef _WIN64
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
@@ -2154,15 +2165,24 @@ int Py4pdUtils_ExecuteSystemCommand(const char *command) { // TODO: WRONG PLACE
 #else
 
     // run system(command in another thread detached)
-    pthread_t thread;
+    if (thread == 0) {
+        int result = system(command);
+        if (result != 0) {
+            fprintf(stderr, "[py4pd] Failed to create thread\n");
+            return -1;
+        }
+        return 0;
+    }
+
+    pthread_t pthread;
     int pthread_create_result =
-        pthread_create(&thread, NULL, Py4pdUtils_DetachCommand, (void *)command);
+        pthread_create(&pthread, NULL, Py4pdUtils_DetachCommand, (void *)command);
     if (pthread_create_result != 0) {
         fprintf(stderr, "[py4pd] Failed to create thread\n");
         return -1;
     }
     // Detach the thread to allow it to run independently
-    pthread_detach(thread);
+    pthread_detach(pthread);
     return 0;
 #endif
 }
