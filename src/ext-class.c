@@ -262,6 +262,7 @@ static void Py4pdNewObj_PdExecSelectorMethod(t_py *x, t_symbol *selector, int ar
             }
             PyObject *pArgType = PyTuple_GetItem(pDictArgs, i);
             t_atomtype pdArgType = (t_atomtype)PyLong_AsLong(pArgType);
+
             if (pdArgType == argv[i].a_type) {
                 continue;
             } else if (pdArgType == 10) {

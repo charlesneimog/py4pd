@@ -18,6 +18,12 @@ int objCount = 0;            // To keep track of the number of objects created
  * @return void
  */
 
+/* TODO: Add way to load local modules inside some folders.
+ * Isso é importante para que, caso uma peça seja feita com um módulo (versão específica)
+ * seja possível usar aquela versão para a obra. Assim também posso atualizar os módulos sem pensar
+em quebras entre outros.
+*/
+
 static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     if (argc > 2) {
         pd_error(x, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");

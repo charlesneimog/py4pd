@@ -377,6 +377,7 @@ void Py4pdUtils_ExtraInletAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t
 PyObject *Py4pdUtils_CreatePyObjFromPdArgs(t_symbol *s, int argc, t_atom *argv) {
 
     PyObject *pArgs = NULL;
+
     if (argc == 0) {
         if (s != NULL) {
             pArgs = PyUnicode_FromString(s->s_name);
@@ -400,7 +401,6 @@ PyObject *Py4pdUtils_CreatePyObjFromPdArgs(t_symbol *s, int argc, t_atom *argv) 
                 t_symbol *pdSymbol = atom_getsymbolarg(i, argc, argv);
                 PyObject *pSymbol = PyUnicode_FromString(pdSymbol->s_name);
                 PyList_SetItem(pArgs, i, pSymbol);
-                Py_DECREF(pSymbol);
             } else {
                 pd_error(NULL, "[py4pd] py4pd just support floats or symbols");
             }
