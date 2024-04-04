@@ -1571,6 +1571,12 @@ static PyObject *SlotsModule_Init(PyObject *self) {
     PyModule_AddObject(self, "A_FLOAT", pA_FLOAT);
     PyModule_AddObject(self, "A_SYMBOL", pA_SYMBOL);
 
+    if (PyType_Ready(&Py4pdNewObj_Type) < 0)
+        return NULL;
+    Py_INCREF(&Py4pdNewObj_Type);
+
+    PyModule_AddObject(self, "new_object", (PyObject *)&Py4pdNewObj_Type);
+
     return 0;
 }
 

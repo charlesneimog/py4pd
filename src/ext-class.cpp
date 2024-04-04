@@ -1322,8 +1322,7 @@ PyTypeObject Py4pdNewObj_Type = {
     nullptr,                                           /* tp_descr_get */
     nullptr,                                           /* tp_descr_set */
     0,                                                 /* tp_dictoffset */
-    (initproc)Py4pdNewObj_Init,                        /* tp_dictoffset */
-    nullptr,                                           /* tp_init */
-    nullptr,                                           /* tp_alloc */
-    nullptr,                                           /* tp_new */
+    (initproc)Py4pdNewObj_Init,                        /* tp_init */
+    PyType_GenericAlloc,                               /* tp_alloc */
+    PyType_GenericNew,                                 /* tp_new */
 };
