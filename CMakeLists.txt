@@ -19,7 +19,8 @@ project(py4pd)
 #╰──────────────────────────────────────╯
 set_pd_external_path(${CMAKE_CURRENT_SOURCE_DIR}/${project_name})
 set(SOURCES_DIR ${CMAKE_SOURCE_DIR}/src)
-file(GLOB SOURCES ${SOURCES_DIR}/*.c)
+file(GLOB SOURCES ${SOURCES_DIR}/*.cpp)
+
 add_pd_external(py4pd py4pd ${SOURCES})
 
 # ──────────────────────────────────────
@@ -36,17 +37,16 @@ execute_process(
 )
 
 if(EXEC_RESULT)
-    message(FATAL_ERROR "Failed to execute Python command to get NumPy include directory.")
+message(FATAL_ERROR "Failed get NumPy include directory. Have you used 'pip install numpy'?")
 endif()
 
 set(NUMPY_INCLUDE_DIR ${NUMPY_INCLUDE_DIR} CACHE PATH "NumPy include directory")
 message(STATUS "NumPy include directory: ${NUMPY_INCLUDE_DIR}")
 
 # ──────────────────────────────────────
-target_compile_options(py4pd PRIVATE "-O3" "-Wall" "-Wshadow" "-ffast-math" "-funroll-loops" "-fomit-frame-pointer" "-mfpmath=sse" "-msse" "-msse2" "-msse3")
 target_include_directories(py4pd PUBLIC ${NUMPY_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC "/usr/include/python${PYVERSION}")
 target_link_libraries(py4pd PUBLIC python${PYVERSION})
-# target_include_directories(py4pd PUBLIC Python)
+target_include_directories(py4pd PUBLIC Python)
 
 

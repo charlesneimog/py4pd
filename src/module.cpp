@@ -1,9 +1,9 @@
 #include "ext-class.h"
 #include "ext-libraries.h"
-#include "m_pd.h"
 #include "pic.h"
 #include "player.h"
 #include "py4pd.h"
+#include "pyerrors.h"
 #include "utils.h"
 
 #define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
@@ -229,7 +229,7 @@ static PyObject *Py4pdMod_SetObjVar(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    key = malloc(strlen(varName) + 40);
+    key = (char *)malloc(strlen(varName) + 40);
     snprintf(key, strlen(varName) + 40, "%s_%p", varName, x);
     if (x->pdcollect == NULL) {
         x->pdcollect = Py4pdMod_CreatePdcollectHash(8);
@@ -259,7 +259,7 @@ static PyObject *Py4pdMod_GetObjVar(PyObject *self, PyObject *args, PyObject *ke
         return NULL;
     }
 
-    key = malloc(strlen(varName) + 40);
+    key = (char *)malloc(strlen(varName) + 40);
     snprintf(key, strlen(varName) + 40, "%s_%p", varName, x);
     if (x->pdcollect == NULL) {
         x->pdcollect = Py4pdMod_CreatePdcollectHash(8);
@@ -311,7 +311,7 @@ static PyObject *Py4pdMod_AccumObjVar(PyObject *self, PyObject *args) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.setglobalvar: wrong arguments");
         return NULL;
     }
-    char *key = malloc(strlen(varName) + 40);
+    char *key = (char *)malloc(strlen(varName) + 40);
     snprintf(key, strlen(varName) + 40, "%s_%p", varName, x);
     if (x->pdcollect == NULL) {
         x->pdcollect = Py4pdMod_CreatePdcollectHash(8);
@@ -342,7 +342,7 @@ static PyObject *Py4pdMod_ClearObjVar(PyObject *self, PyObject *args) {
         return NULL;
     }
 
-    key = malloc(strlen(varName) + 40);
+    key = (char *)malloc(strlen(varName) + 40);
     snprintf(key, strlen(varName) + 40, "%s_%p", varName, x);
     if (x->pdcollect == NULL) {
         free(key);
@@ -613,7 +613,7 @@ static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args, PyObject *keyw
             } else {
                 startpost("[%s]: ", x->objName->s_name);
             }
-            sys_pollgui();
+            sys_pollgui(); // think about this
         }
         for (int i = 0; i < PyTuple_Size(args); i++) {
             PyObject *arg = PyTuple_GetItem(args, i);
@@ -1184,7 +1184,7 @@ static PyObject *Py4pdMod_ShowImage(PyObject *self, PyObject *args) {
         }
 
         FILE *file;
-        char *ext = strrchr(filename->s_name, '.');
+        char *ext = (char *)strrchr(filename->s_name, '.');
         if (strcmp(ext, ".ppm") == 0) {
             char magic_number[3];
             int width, height, max_color_value;
@@ -1348,21 +1348,21 @@ static PyObject *Py4pdMod_PdKey(PyObject *self, PyObject *args) {
     char *key;
     if (!PyArg_ParseTuple(args, "s", &key)) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.key: no argument expected");
-        return NULL;
+        return nullptr;
     }
 
     t_py *x = Py4pdUtils_GetObject(self);
-    if (x == NULL) {
-        return NULL;
+    if (x == nullptr) {
+        return nullptr;
     }
 
-    if (x->pObjVarDict == NULL) {
+    if (x->pObjVarDict == nullptr) {
         PyErr_Clear();
         Py_RETURN_NONE;
     }
 
     PyObject *value = PyDict_GetItemString(x->pObjVarDict, key);
-    if (value == NULL) {
+    if (value == nullptr) {
         PyErr_Clear();
         Py_RETURN_NONE;
     }
@@ -1382,7 +1382,7 @@ static PyObject *Py4pdMod_GetObjPointer(PyObject *self, PyObject *args) {
     if (x == NULL) {
         PyErr_SetString(PyExc_TypeError, "py4pd capsule not found. The module pd must be used "
                                          "inside py4pd object or functions.");
-        return NULL;
+        return nullptr;
     }
 
     return PyUnicode_FromFormat("%p", x);
@@ -1403,7 +1403,7 @@ static PyObject *Py4pdMod_AddThingToPlay(PyObject *self, PyObject *args, PyObjec
     if (!PyArg_ParseTuple(args, "fO", &onset, &thingToPlay)) {
         PyErr_SetString(PyExc_TypeError, "pd.add_to_player: wrong arguments, it should be: "
                                          "pd.add_to_player(onset, thing2Output)");
-        return NULL;
+        return nullptr;
     }
     Py4pdPlayer_PlayerInsertThing(x, (int)onset, Py_BuildValue("O", thingToPlay));
     Py_RETURN_NONE;
@@ -1424,7 +1424,7 @@ static PyObject *Py4pdMod_AddThingToSend(PyObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "fsO", &onset, &receiver, &thingToPlay)) {
         PyErr_SetString(PyExc_TypeError, "pd.add_to_player: wrong arguments, it should be: "
                                          "pd.add_to_player(onset, thing2Output)");
-        return NULL;
+        return nullptr;
     }
     Py4pdPlayer_PlayerInsertThing(x, (int)onset, Py_BuildValue("O", thingToPlay));
     Py_RETURN_NONE;
@@ -1446,7 +1446,7 @@ static PyObject *Py4pdMod_ClearPlayer(PyObject *self, PyObject *args) {
 // ========= MODULE INIT ===========
 // =================================
 // =================================
-PyMethodDef PdMethods[] = {
+static struct PyMethodDef PdMethods[] = {
 
     // PureData inside Python
     {"out", (PyCFunction)Py4pdMod_PdOut, METH_VARARGS | METH_KEYWORDS,
@@ -1524,10 +1524,12 @@ PyMethodDef PdMethods[] = {
     // Internal
     {"_recursive", Py4pdMod_PdRecursiveCall, METH_VARARGS, "It calls a function recursively"},
     {"_open_patch", Py4pdMod_OpenPatch, METH_VARARGS, "Open a patch in PureData"},
-    {NULL, NULL, 0, NULL} //
+    {nullptr, nullptr, 0, nullptr},
+
 };
 
-static PyObject *pdmodule_init(PyObject *self) {
+// =================================
+static PyObject *SlotsModule_Init(PyObject *self) {
     char OUT_string[MAXPDSTRING];
     snprintf(OUT_string, sizeof(OUT_string), "py4pdOut_%p", self);
 
@@ -1545,7 +1547,6 @@ static PyObject *pdmodule_init(PyObject *self) {
     audioINObject = PyLong_FromLong(PY4PD_AUDIOINOBJ);
     audioOUTObject = PyLong_FromLong(PY4PD_AUDIOOUTOBJ);
     pdAudio = PyLong_FromLong(PY4PD_AUDIOOBJ);
-
     Py4pd_OutLoopString = PyUnicode_FromString(OUT_string);
     Py4pd_ClearLoopString = PyUnicode_FromString(CLEAR_string);
 
@@ -1570,44 +1571,44 @@ static PyObject *pdmodule_init(PyObject *self) {
     PyModule_AddObject(self, "A_FLOAT", pA_FLOAT);
     PyModule_AddObject(self, "A_SYMBOL", pA_SYMBOL);
 
-    if (PyType_Ready(&Py4pdNewObj_Type) < 0)
-        return NULL;
-    Py_INCREF(&Py4pdNewObj_Type);
-
-    PyModule_AddObject(self, "new_object", (PyObject *)&Py4pdNewObj_Type);
-
     return 0;
 }
 
 // =================================
-static PyModuleDef_Slot pdmodule_slots[] = {
-    {Py_mod_exec, pdmodule_init}, // Initialization phase
+static PyModuleDef_Slot Py4pdInternalSlot[] = {
+    {Py_mod_exec, reinterpret_cast<void *>(SlotsModule_Init)}, // Initialization phase
 #if PYTHON_REQUIRED_VERSION(3, 12)
     {Py_mod_multiple_interpreters, Py_MOD_PER_INTERPRETER_GIL_SUPPORTED},
 #endif
-    {0, NULL} // End of slots
+    {0, nullptr} // End of slots
 };
 
 // =================================
-static struct PyModuleDef pdModule = {
-    PyModuleDef_HEAD_INIT,
-    .m_name = "pd", /* name of module */
-    .m_doc = "pd module provide function to interact with PureData, see the "
-             "docs in www.charlesneimog.github.io/py4pd",
-    .m_size = 0,
-    .m_methods = PdMethods, // Methods of the module
-    .m_slots = pdmodule_slots,
+static struct PyModuleDef Py4pdInternalModule = {
+    PyModuleDef_HEAD_INIT,       // m_base
+    "pd",                        // m_name
+    "Internal Module for py4pd", // m_doc
+    0,                           // m_size
+    PdMethods,                   // m_methods
+    Py4pdInternalSlot,           // m_slots
+    // nullptr,                     // m_traverse
+    // nullptr,                     // m_clear
+    // nullptr,                     // m_free
+
 };
 
 // =================================
 PyMODINIT_FUNC PyInit_pd() {
-    import_array() PyObject *py4pdModule;
-    py4pdModule = PyModuleDef_Init(&pdModule);
-    if (py4pdModule == NULL) {
-        return NULL;
+    import_array() PyObject *py4pdInternalModule;
+    py4pdInternalModule = PyModuleDef_Init(&Py4pdInternalModule);
+    if (py4pdInternalModule == nullptr) {
+        PyErr_SetString(PyExc_TypeError, "[Python] Error initializing the pd module");
+        return nullptr;
     }
-
-    return py4pdModule;
+    if (PyErr_Occurred()) {
+        PyErr_SetString(PyExc_TypeError, "[Python] Error initializing the pd module");
+        PyErr_Print();
+        return nullptr;
+    }
+    return py4pdInternalModule;
 }
-
-// ============================

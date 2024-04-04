@@ -142,6 +142,7 @@ void Py4pdPlayer_PlayTick(t_py *x) {
         if (entry->isReceiverPlayer) {
             // TODO: Implement receiver
         } else {
+            post("[%s]: Playing onset %d", x->objName->s_name, x->msOnset);
             for (int i = 0; i < entry->size; i++) {
                 PyObject *pValue = Py_BuildValue("O", entry->values[i]);
                 t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));

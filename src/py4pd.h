@@ -3,17 +3,22 @@
 #define PY4PD_H
 
 #include <m_pd.h>
+
+#if defined(_LANGUAGE_C_PLUS_PLUS) || defined(__cplusplus)
+extern "C" {
+#endif
 #include <g_canvas.h>
 #include <s_stuff.h> // get the search paths
+#if defined(_LANGUAGE_C_PLUS_PLUS) || defined(__cplusplus)
+}
+#endif
+
+//
 #include <pthread.h>
 #include <dirent.h>
 
 #define PY_SSIZE_T_CLEAN // Remove deprecated functions
 #include <Python.h>
-
-#ifdef __linux__
-    #define __USE_GNU
-#endif
 
 #define PY4PD_NORMALOBJ 0
 #define PY4PD_VISOBJ 1
@@ -66,9 +71,17 @@ typedef struct _py4pdExtraOuts{
  * @brief Structure representing the values that are stored in the dictionary to be played for the player.
  */
 typedef struct {
+    // receiver output
+    t_symbol **receiver;
+    int isReceiverPlayer;
+
+    // normal output
     int onset;
     int size;
+
+    // value
     PyObject **values;
+
 } KeyValuePair;
 
 typedef struct {
@@ -233,5 +246,6 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv);
 
 extern int objCount; 
 extern PyTypeObject Py4pdNewObj_Type;
+
 
 #endif
