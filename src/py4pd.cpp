@@ -29,44 +29,40 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         pd_error(x, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
         return -1;
     }
-    const char *oldName = atom_gensym(argv + 1)->s_name;
-    char newName[MAXPDSTRING];
-    int j;
-    for (j = 0; oldName[j] != '\0'; j++) {
-        newName[j] = (oldName[j] == '-') ? '_' : oldName[j];
-    }
-    newName[j] = '\0';
-    t_symbol *scriptFileName = gensym(newName);
 
-    char script_file_path[MAXPDSTRING];
-    snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->pdPatchPath->s_name,
-             atom_gensym(argv + 1)->s_name);
+    t_symbol *libName = atom_gensym(argv + 1);
+    std::string funcLibName = Py4pdUtils_GetLibFuncName(libName);
 
-    char script_inside_py4pd_path[MAXPDSTRING];
-    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/resources/py4pd-mod/%s.py",
-             x->py4pdPath->s_name, atom_gensym(argv + 1)->s_name);
+    // first check if file exists
+    std::string pLibPathLocal = x->pdPatchPath->s_name;
+    pLibPathLocal += "/";
+    pLibPathLocal += libName->s_name;
+    pLibPathLocal += ".py";
+
+    // global path
+    std::string pLibPathGlobal = x->py4pdPath->s_name;
+    pLibPathGlobal += "/resources/py-modules/";
+    pLibPathGlobal += libName->s_name;
 
     PyObject *sysPath = PySys_GetObject("path");
-    if (access(script_file_path, F_OK) == -1 && access(script_inside_py4pd_path, F_OK) == -1) {
-        Py_XDECREF(x->pFunction);
+    if (!std::filesystem::exists(pLibPathGlobal) && !std::filesystem::exists(pLibPathLocal)) {
+        // check in Pd Search Paths
         int libraryNotFound = 1;
         for (int i = 0; 1; i++) {
-            char const *pathelem = namelist_get(STUFF->st_searchpath, i);
-            if (!pathelem) {
+            char const *Path = namelist_get(STUFF->st_searchpath, i);
+            if (!Path) {
                 break;
             }
-            char *library_path =
-                (char *)malloc(strlen(pathelem) + strlen(scriptFileName->s_name) + 1);
-            snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, atom_gensym(argv + 1)->s_name);
-
-            if (access(library_path, F_OK) != -1) { // Library founded
+            std::string PdPathsLibPath = Path;
+            PdPathsLibPath += "/";
+            PdPathsLibPath += libName->s_name;
+            if (std::filesystem::exists(PdPathsLibPath)) {
                 libraryNotFound = 0;
-                PyList_Append(sysPath, PyUnicode_FromString(library_path));
+                PyList_Append(sysPath, PyUnicode_FromString(PdPathsLibPath.c_str()));
             }
-            free(library_path);
         }
         if (libraryNotFound) {
-            pd_error(x, "[py4pd] Library file '%s.py' not found!", scriptFileName->s_name);
+            pd_error(x, "[py4pd] Library file '%s.py' not found!", libName->s_name);
             return -1;
         }
     }
@@ -91,7 +87,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
 
     t_py *prev_obj = nullptr;
     int prev_obj_exists = 0;
-    PyObject *MainModule = PyImport_ImportModule("pd");
+    PyObject *MainModule = x->InternalModule;
     PyObject *oldObjectCapsule;
 
     if (MainModule != nullptr) {
@@ -114,7 +110,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     }
     pModule = PyImport_ImportModule(atom_gensym(argv + 1)->s_name);
     if (pModule == nullptr) {
-        pd_error(x, "[Python] Failed to load script file %s", scriptFileName->s_name);
+        pd_error(x, "[Python] Failed to load script file %s", libName->s_name);
         Py4pdUtils_PrintError(x);
         Py_XDECREF(pModule);
         Py_XDECREF(MainModule);
@@ -132,14 +128,11 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         Py_XDECREF(MainModule);
         return -1;
     }
-
     PyObject *pModuleDict = PyModule_GetDict(pModule);
-
     if (pModuleDict == nullptr) {
         pd_error(x, "[Python] Failed to get script file dictionary");
         return -1;
     }
-
     PyObject *pFilenameObj = PyDict_GetItemString(pModuleDict, "__file__");
     if (!pFilenameObj) {
         pd_error(x, "[Python] Failed to get script file path");
@@ -148,12 +141,10 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         return -1;
     }
     // convert const char * to char *
-    char *libraryFolder = (char *)malloc(strlen(PyUnicode_AsUTF8(pFilenameObj)) + 1);
-    Py4pdUtils_Strlcpy(libraryFolder, PyUnicode_AsUTF8(pFilenameObj),
-                       strlen(PyUnicode_AsUTF8(pFilenameObj)) + 1);
+    std::string libFolder = PyUnicode_AsUTF8(pFilenameObj);
 
-    x->libraryFolder = gensym(Py4pdUtils_GetFolderName(libraryFolder));
-    free(libraryFolder);
+    // TODO: Fix this
+    x->libraryFolder = gensym(Py4pdUtils_GetFolderName((char *)libFolder.c_str()));
 
     if (pModule == NULL) {
         Py4pdUtils_PrintError(x);
@@ -164,10 +155,11 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
 
     // check if module has the function Py4pdLoadObjects or
     // "sScriptFilename + setup"
-    char *setupFuncName = (char *)malloc(strlen(scriptFileName->s_name) + 7);
-    snprintf(setupFuncName, strlen(scriptFileName->s_name) + 7, "%s_setup", scriptFileName->s_name);
-    PyObject *pFuncName = PyUnicode_FromString(setupFuncName);
-    t_symbol *pFuncNameSymbol = gensym(setupFuncName);
+    std::string Func2Call = funcLibName;
+    Func2Call += "_setup";
+
+    PyObject *pFuncName = PyUnicode_FromString(Func2Call.c_str());
+    t_symbol *pFuncNameSymbol = gensym(Func2Call.c_str());
     pFunc = PyObject_GetAttr(pModule, pFuncName);
     if (pFunc == NULL) {
         Py_DECREF(pFuncName);
@@ -175,15 +167,13 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         Py_XDECREF(pFunc);
         pFunc = PyObject_GetAttr(pModule, pFuncName);
         if (pFunc == NULL) {
-            pd_error(x, "[Python] Failed to load function %s", setupFuncName);
+            pd_error(x, "[Python] Failed to load function %s", Func2Call.c_str());
             Py4pdUtils_PrintError(x);
             Py_XDECREF(pModule);
-            free(setupFuncName);
             return -1;
         }
         pFuncNameSymbol = gensym("Py4pdLoadObjects");
     }
-    free(setupFuncName);
 
     if (pFunc && PyCallable_Check(pFunc)) {
         if (objectCapsule == NULL) {
@@ -220,14 +210,14 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         }
         x->pModule = pModule;
         x->pFunction = pFunc;
-        x->pScriptName = scriptFileName;
+        x->pScriptName = libName;
         x->pFuncName = pFuncNameSymbol;
         x->funcCalled = 1;
         x->isLib = 1;
         Py_XDECREF(MainModule);
         Py_XDECREF(pModuleReloaded);
         Py_XDECREF(pValue);
-        logpost(x, 3, "[py4pd] Library %s loaded!", scriptFileName->s_name);
+        logpost(x, 3, "[py4pd] Library %s loaded!", libName->s_name);
         printf("%s Loaded\n", atom_gensym(argv + 1)->s_name);
     } else {
         x->funcCalled = 1; // set the flag to 0 because it crash Pd if
@@ -1123,6 +1113,10 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
             patchDir = gensym(new_path);
             free(new_path);
         }
+        bool PdModule = Py4pdUtils_ImportPdModule(x);
+        if (!PdModule) {
+            return nullptr;
+        }
         x->zoom = (int)x->canvas->gl_zoom;
         x->audioInput = 0;
         x->audioOutput = 0;
@@ -1149,6 +1143,10 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         x = (t_py *)pd_new(py4pd_classLibrary);
         x->canvas = canvas_getcurrent();
         t_canvas *c = x->canvas;
+        bool PdModule = Py4pdUtils_ImportPdModule(x);
+        if (!PdModule) {
+            return nullptr;
+        }
         x->zoom = (int)x->canvas->gl_zoom;
         t_symbol *patchDir = canvas_getdir(c);
         if (patchDir->s_name[strlen(patchDir->s_name) - 1] != '/') {

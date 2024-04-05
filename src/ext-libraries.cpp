@@ -346,6 +346,11 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     t_canvas *c = x->canvas;
     t_symbol *patch_dir = canvas_getdir(c);
     x->objName = gensym(objectName);
+    bool PdModule = Py4pdUtils_ImportPdModule(x);
+    if (!PdModule) {
+        return nullptr;
+    }
+
     x->zoom = (int)x->canvas->gl_zoom;
     x->ignoreOnNone = PyLong_AsLong(ignoreOnNone);
     x->outPyPointer = PyLong_AsLong(pyOUT);

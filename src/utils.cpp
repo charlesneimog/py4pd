@@ -17,30 +17,24 @@ functionalities. The functions are organized following distinct subsets, each
 dedicated to specific purposes.
 */
 
-// ====================================================
-// ====================== Utilities ===================
-// ====================================================
+// ╭─────────────────────────────────────╮
+// │              Utilities              │
+// ╰─────────────────────────────────────╯
 /*
  * @brief See if str is a number or a dot
  * @param str is the string to check
  * @return 1 if it is a number or a dot, 0 otherwise
  */
-int Py4pdUtils_IsNumericOrDot(const char *str) {
-    int hasDot = 0;
-    while (*str) {
-        if (isdigit(*str)) {
-            str++;
-        } else if (*str == '.' && !hasDot) {
-            hasDot = 0;
-            str++;
-        } else {
-            return 0;
-        }
-    }
-    return 1;
+int Py4pdUtils_IsNumericOrDot(std::string str) {
+    size_t pos = str.find('.');
+    if (pos != std::string::npos) {
+        return 1;
+    } else {
+        return 0;
+    };
 }
 
-// =====================================================================
+// ─────────────────────────────────────
 /*
  * @brief Remove some char from a string
  * @param str is the string to remove the char
@@ -58,7 +52,7 @@ void Py4pdUtils_RemoveChar(char *str, char c) {
     str[j] = '\0';
 }
 
-// =====================================================================
+// ─────────────────────────────────────
 /*
  * @brief Replace one char by the other
  * @param str
@@ -77,7 +71,8 @@ void Py4pdUtils_ReplaceChar(char *str, char char2replace, char newchar) {
         str++;
     }
 }
-// =====================================================================
+
+// ─────────────────────────────────────
 /*
  * @brief Convert and output Python Values to PureData values
  * @param x is the py4pd object
@@ -128,12 +123,11 @@ void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet) {
     t_freebytes(sep, seplen * sizeof(*sep));
 }
 
-// ====================================================
-// ====================== Libraries ===================
-// ====================================================
+// ╭─────────────────────────────────────╮
+// │              Libraries              │
+// ╰─────────────────────────────────────╯
 /*
- * @brief This function parse the arguments for pd Objects created with the
- * library
+ * @brief parse the arguments for pd Objects created with the library
  * @param x is the py4pd object
  * @param code is the code object of the function
  * @param argc is the number of arguments
@@ -222,7 +216,7 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
     return 1;
 }
 
-// ====================================================
+// ─────────────────────────────────────
 int Py4pdUtils_CreateObjInlets(PyObject *function, t_py *x, t_class *py4pdInlets_proxy_class,
                                int argc, t_atom *argv) {
     (void)function;
@@ -309,6 +303,7 @@ int Py4pdUtils_CreateObjInlets(PyObject *function, t_py *x, t_class *py4pdInlets
 }
 
 // ====================================================
+// ─────────────────────────────────────
 void Py4pdUtils_ExtraInletAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av) {
     (void)s;
     t_py *py4pd = (t_py *)x->p_master;
@@ -372,6 +367,7 @@ void Py4pdUtils_ExtraInletAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t
 }
 
 // ====================================================
+// ─────────────────────────────────────
 PyObject *Py4pdUtils_CreatePyObjFromPdArgs(t_symbol *s, int argc, t_atom *argv) {
 
     PyObject *pArgs = NULL;
@@ -432,7 +428,7 @@ PyObject *Py4pdUtils_CreatePyObjFromPdArgs(t_symbol *s, int argc, t_atom *argv) 
     return pArgs;
 }
 
-// ====================================================
+// ─────────────────────────────────────
 void Py4pdUtils_ExtraInletPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_gpointer *gp) {
     (void)s;
     t_py *py4pd = (t_py *)x->p_master;
@@ -449,9 +445,33 @@ void Py4pdUtils_ExtraInletPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_gpointer
     return;
 }
 
-// ====================================================
-// ========== Iteration between Pd2py|Py2pd ===========
-// ====================================================
+// ─────────────────────────────────────
+std::string Py4pdUtils_GetLibFuncName(t_symbol *name) {
+    //
+    std::string funcName = name->s_name;
+    char oldChar = '-';
+    char newChar = '_'; // Replace 'o' with '0'
+    size_t pos = 0;
+    while ((pos = funcName.find(oldChar, pos)) != std::string::npos) {
+        funcName.replace(pos, 1, 1, newChar);
+        pos++;
+    }
+    return funcName;
+}
+
+// ╭─────────────────────────────────────╮
+// │    Interation between Python and    │
+// │              PureData               │
+// ╰─────────────────────────────────────╯
+bool Py4pdUtils_ImportPdModule(t_py *x) {
+    x->InternalModule = PyImport_ImportModule("pd");
+    if (x->InternalModule == NULL) {
+        pd_error(x, "[py4pd] Failed to import pd module");
+        return false;
+    }
+    return true;
+}
+
 /*
  * @brief add PureData Object struct to Python Module, because this we are able
  * to config Pd Obj from Python
@@ -461,25 +481,17 @@ void Py4pdUtils_ExtraInletPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_gpointer
  */
 
 PyObject *Py4pdUtils_AddPdObject(t_py *x) {
-    PyObject *MainModule = PyImport_ImportModule("pd");
     PyObject *objectCapsule;
-    if (MainModule != nullptr) {
-        objectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
-        if (objectCapsule != nullptr) {
-            PyCapsule_SetPointer(objectCapsule, x);
-        } else {
-            objectCapsule = PyCapsule_New(x, "py4pd", nullptr);
-            PyObject *pdModule = PyImport_ImportModule("pd");
-            int addSucess = PyModule_AddObject(pdModule, "py4pd", objectCapsule);
-            if (addSucess != 0) {
-                pd_error(x, "[py4pd] Failed to add object to Python");
-                return NULL;
-            }
-            Py_DECREF(pdModule);
-        }
+    objectCapsule = PyDict_GetItemString(x->InternalModule, "py4pd"); // borrowed reference
+    if (objectCapsule != nullptr) {
+        PyCapsule_SetPointer(objectCapsule, x);
     } else {
-        pd_error(x, "[py4pd] Could not get the main module");
-        objectCapsule = nullptr;
+        objectCapsule = PyCapsule_New(x, "py4pd", nullptr);
+        int addSucess = PyModule_AddObject(x->InternalModule, "py4pd", objectCapsule);
+        if (addSucess != 0) {
+            pd_error(x, "[py4pd] Failed to add object to Python");
+            return NULL;
+        }
     }
     return objectCapsule;
 }
@@ -533,9 +545,9 @@ t_py *Py4pdUtils_GetObject(PyObject *pd_module) {
     return py4pd;
 }
 
-// ====================================================
-// ========================= Files ====================
-// ====================================================
+// ╭─────────────────────────────────────╮
+// │          Files and Folders          │
+// ╰─────────────────────────────────────╯
 /*
  * @brief get the folder name of something
  * @param x is the py4pd object
@@ -637,7 +649,6 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *scr
         FindClose(hFind);
     }
 #else
-    printf("inside checkpkg\n");
     DIR *dir;
     struct dirent *entry;
 
@@ -646,9 +657,7 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *scr
         return;
     }
 
-    printf("before opendir\n");
     dir = opendir(folderToCheck);
-    printf("after opendir\n");
 
     if (dir == NULL) {
         return;
@@ -730,7 +739,7 @@ void Py4pdUtils_FindObjFolder(t_py *x) {
     return;
 }
 
-// ===================================================================
+// ─────────────────────────────────────
 /**
  * @brief Get the temp path object (inside Users/.py4pd), it creates the folder
  * if it not exist
@@ -783,9 +792,9 @@ void Py4pdUtils_CreateTempFolder(t_py *x) {
 #endif
 }
 
-// ====================================================
-// ===================== User Interation ==============
-// ====================================================
+// ╭─────────────────────────────────────╮
+// │           User Interation           │
+// ╰─────────────────────────────────────╯
 /*
  * @brief Run a Python function
  * @param x is the py4pd object
@@ -887,9 +896,9 @@ void Py4pdUtils_Click(t_py *x) {
     return;
 }
 
-// ====================================================
-// ===================== Run ==========================
-// ====================================================
+// ╭─────────────────────────────────────╮
+// │             Run Python              │
+// ╰─────────────────────────────────────╯
 /*
  * @brief Run a Python function
  * @param x is the py4pd object

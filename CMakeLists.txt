@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 include(${CMAKE_CURRENT_SOURCE_DIR}/resources/pd.build/pd.cmake) # pd.build
 project(py4pd)
+set(CMAKE_CXX_STANDARD 20)
 
 #╭──────────────────────────────────────╮
 #│        Python Static Library         │
@@ -42,6 +43,7 @@ endif()
 
 set(NUMPY_INCLUDE_DIR ${NUMPY_INCLUDE_DIR} CACHE PATH "NumPy include directory")
 message(STATUS "NumPy include directory: ${NUMPY_INCLUDE_DIR}")
+
 
 # ──────────────────────────────────────
 target_include_directories(py4pd PUBLIC ${NUMPY_INCLUDE_DIR})

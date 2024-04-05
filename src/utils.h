@@ -20,7 +20,7 @@ void Py4pdUtils_FindObjFolder(t_py *x);
 void Py4pdUtils_CreateTempFolder(t_py *x);
 void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line);
 int Py4pdUtils_ExecuteSystemCommand(const char *command, int thread); 
-int Py4pdUtils_IsNumericOrDot(const char *str);
+int Py4pdUtils_IsNumericOrDot(std::string str);
 void Py4pdUtils_RemoveChar(char *str, char c);
 void Py4pdUtils_ReplaceChar(char *str, char char2replace, char newchar);
 char *Py4pdUtils_Mtok(char *input, char *delimiter);
@@ -39,6 +39,8 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv
 void Py4pdUtils_SetObjConfig(t_py *x);
 void Py4pdUtils_AddPathsToPythonPath(t_py *x);
 PyObject *Py4pdUtils_AddPdObject(t_py *x);
+std::string Py4pdUtils_GetLibFuncName(t_symbol *name);
+bool Py4pdUtils_ImportPdModule(t_py *x);
 void Py4pdUtils_ReadGifFile(t_py *x, const char *filename);
 void Py4pdUtils_ReadPngFile(t_py *x, const char *filename);
 uint32_t Py4pdUtils_Ntohl(uint32_t netlong);

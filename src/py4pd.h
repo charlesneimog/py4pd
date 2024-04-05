@@ -4,18 +4,19 @@
 
 #include <m_pd.h>
 
-#if defined(_LANGUAGE_C_PLUS_PLUS) || defined(__cplusplus)
 extern "C" {
-#endif
 #include <g_canvas.h>
 #include <s_stuff.h> // get the search paths
-#if defined(_LANGUAGE_C_PLUS_PLUS) || defined(__cplusplus)
 }
-#endif
 
 //
 #include <pthread.h>
 #include <dirent.h>
+
+#include <thread>
+#include <string>
+#include <filesystem>
+
 
 #define PY_SSIZE_T_CLEAN // Remove deprecated functions
 #include <Python.h>
@@ -133,6 +134,8 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_canvas            *canvas; // pointer to the canvas
     t_outlet            *mainOut; // outlet 1.
     t_inlet             *mainIn; // intlet 1
+
+    PyObject            *InternalModule; // Internal Module
 
     // TESTING THINGS
     t_py4pd_pValue      **pyObjArgs; // Obj Variables Arguments 

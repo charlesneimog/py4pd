@@ -4,7 +4,7 @@
 // ======================================================
 Dictionary *Py4pdPlayer_CreateDictionary() {
     Dictionary *dictionary = (Dictionary *)malloc(sizeof(Dictionary));
-    dictionary->entries = NULL;
+    dictionary->entries = nullptr;
     dictionary->size = 0;
     dictionary->lastOnset = 0;
     return dictionary;
@@ -25,19 +25,19 @@ int Py4pdPlayer_CompareOnset(const void *a, const void *b) {
 // ======================================================
 KeyValuePair *Py4pdPlayer_PlayerGetValue(Dictionary *dictionary, int onset) {
     if (dictionary == NULL) {
-        return NULL;
+        return nullptr;
     }
     for (int i = 0; i < dictionary->size; i++) {
         if (dictionary->entries[i].onset == onset) {
             return &(dictionary->entries[i]);
         }
     }
-    return NULL; // Return NULL if no matching onset is found
+    return nullptr; // Return NULL if no matching onset is found
 }
 
 // ======================================================
 void Py4pdPlayer_PlayerSendNewThing(t_py *x, int onset, t_symbol *receiver, PyObject *value) {
-    if (x->playerDict == NULL) {
+    if (x->playerDict == nullptr) {
         x->playerDict = Py4pdPlayer_CreateDictionary();
     }
     int index = -1;
@@ -119,7 +119,7 @@ void Py4pdPlayer_PlayerInsertThing(t_py *x, int onset, PyObject *value) {
 
 // ======================================================
 void Py4pdPlayer_FreeDictionary(Dictionary *dictionary) {
-    if (dictionary == NULL) {
+    if (dictionary == nullptr) {
         return;
     }
     for (int i = 0; i < dictionary->size; i++) {
@@ -138,11 +138,10 @@ void Py4pdPlayer_PlayTick(t_py *x) {
     }
     x->msOnset++;
     KeyValuePair *entry = Py4pdPlayer_PlayerGetValue(x->playerDict, x->msOnset);
-    if (entry != NULL) {
+    if (entry != nullptr) {
         if (entry->isReceiverPlayer) {
             // TODO: Implement receiver
         } else {
-            post("[%s]: Playing onset %d", x->objName->s_name, x->msOnset);
             for (int i = 0; i < entry->size; i++) {
                 PyObject *pValue = Py_BuildValue("O", entry->values[i]);
                 t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
@@ -160,7 +159,7 @@ void Py4pdPlayer_PlayTick(t_py *x) {
 void Py4pdPlayer_Play(t_py *x, t_symbol *s, int ac, t_atom *av) {
     (void)s;
     x->msOnset = 0;
-    if (x->playerDict == NULL) {
+    if (x->playerDict == nullptr) {
         pd_error(x, "[%s]: Nothing to play.", x->objName->s_name);
         return;
     }
@@ -174,7 +173,7 @@ void Py4pdPlayer_Play(t_py *x, t_symbol *s, int ac, t_atom *av) {
 
 // ======================================================
 void Py4pdPlayer_Stop(t_py *x) {
-    if (x->playerClock == NULL) {
+    if (x->playerClock == nullptr) {
         pd_error(x, "[%s]: Nothing to stop.", x->objName->s_name);
         return;
     }
@@ -184,7 +183,7 @@ void Py4pdPlayer_Stop(t_py *x) {
 
 // ======================================================
 void Py4pdPlayer_Clear(t_py *x) {
-    if (x->playerClock != NULL) {
+    if (x->playerClock != nullptr) {
         clock_unset(x->playerClock);
     }
     Py4pdPlayer_FreeDictionary(x->playerDict);
