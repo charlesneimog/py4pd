@@ -129,8 +129,10 @@ Some configuration for the object.
         obj = pd.new_object("myconfigObj")
         obj.ignore_none = True
         obj.add_object()
-
     ```
+
+    !!! warning 
+        Just work when `py_out=True`, if `py_out=False` all `None` values are ignored.
 
 </div>
 

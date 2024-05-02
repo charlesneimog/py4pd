@@ -40,7 +40,7 @@ It is crucial to emphasize that when an object uses `pd.add_object()` it is adde
     | `num_aux_outlets`| `int` | Set the number of auxiliar outlets. If you use 4, it means that the object will have 5 inlets, 4 auxiliar and the main outlet (0). |
     | `added2pd_info` | `Boolean` | Prints the message `"[py4pd]: Object {objectName} added."` when set to `True`. |
     | `help_patch` | `String` | Personalized help patch, it always must be inside the `help` folder. |
-    | `ignore_none_return` | `Boolean` | When `True` it ignores all things that return None. |
+    | `ignore_none_return` | `Boolean` | When `True` it ignores all things that return None. ⚠️⚠️ **Just work when `py_out=True`** ⚠️⚠️. |
     | `obj_image` | `String` | Set the standard image for `pd.VIS` objects. When you create the object it will load this image. |
     
 </div>
