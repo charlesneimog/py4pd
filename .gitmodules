@@ -1,4 +1,0 @@
-[submodule "resources/pd.build"]
-	path = resources/pd.build
-	url = git@github.com:charlesneimog/pd.build.git
-
