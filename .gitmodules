@@ -1,0 +1,3 @@
+[submodule "Resources/pd.cmake"]
+	path = Resources/pd.cmake
+	url = git@github.com:pure-data/pd.cmake.git
