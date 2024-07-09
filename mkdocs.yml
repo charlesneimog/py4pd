@@ -95,6 +95,7 @@ nav:
   - Home: index.md
   - Getting started:
       - Install: setup.md
+  - First Project: projects.md
   - PureData Use: 
     - pd-users/index.md
     - Arguments: pd-users/args.md

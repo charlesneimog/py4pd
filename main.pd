@@ -1,0 +1,2 @@
+#N canvas 6 31 951 1011 12;
+#X obj 54 59 py4pd -lib py4pd;

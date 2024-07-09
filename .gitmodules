@@ -1,13 +1,4 @@
-[submodule "pd-lib-builder"]
-	path = resources/pd-lib-builder
-	url = https://github.com/pure-data/pd-lib-builder.git
-
 [submodule "resources/pd.build"]
 	path = resources/pd.build
 	url = git@github.com:charlesneimog/pd.build.git
-[submodule "resources/cpython"]
-	path = resources/cpython
-	url = https://github.com/python/cpython.git
-[submodule "resources/python-static"]
-	path = resources/python-static
-	url = https://github.com/python-cmake-buildsystem/python-cmake-buildsystem
+

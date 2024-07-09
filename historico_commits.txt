@@ -1,0 +1,765 @@
+commit ae43c8ab34b24a800dc5afcc5367c6b6355d24f3
+Merge: b1b9422 a702e12
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Fri Mar 1 12:08:21 2024 -0300
+
+    Merge branch 'develop' of github.com:charlesneimog/py4pd into develop
+
+commit b1b94225d49f91e802687fcf209e8828229f27f3
+Merge: 2e22ccd 644a24b
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Fri Mar 1 12:07:29 2024 -0300
+
+    Merge branch 'master' into develop
+
+commit a702e1291560c10d81af70263800eaef0a8c6ff5
+Merge: 2e22ccd 644a24b
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Fri Mar 1 12:03:15 2024 -0300
+
+    Merge branch 'master' into develop
+
+commit 2e22ccd3060e7bf64cf809e0fe9cc58d4ff99fe6
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Fri Feb 9 11:59:50 2024 -0300
+
+    remove packages from py4pd.cfg
+
+commit 0ba5e0a76b9e0d98d7b67c11d6467b3f012bdc3e
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Thu Feb 8 10:37:30 2024 -0300
+
+    add docs about py4pd.cfg file
+
+commit 2d71d3e6df1cfda78ff664828b6351178e432c8b
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Thu Feb 8 10:04:35 2024 -0300
+
+    deprecate packages, add conda_env_packages
+
+commit c023d7101ba54aae744c6c0832adef21c737dd0c
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Thu Feb 8 09:58:09 2024 -0300
+
+    Add editor_command option to the py4pd.cfg file
+
+commit 9a718c2131f5827bbee5b562c7afd3d24d83b1f2
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Tue Feb 6 18:27:51 2024 -0300
+
+    fix pd.print for multiple args
+
+commit 566a08cbbedf40560cc420ae477822e9f75caa8e
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Tue Feb 6 18:27:07 2024 -0300
+
+    minor fix build for linux
+
+commit 8ba2c3d99f09883eebfadef4557e854b5900528e
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Tue Feb 6 18:26:54 2024 -0300
+
+    add TODO
+
+commit 3d650bc0ee8b20a4bc126ff47e2a73d3cc0c84d4
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Feb 5 09:13:20 2024 -0300
+
+    Closes #87; fix broken line
+
+commit e26e1d128509fda3318b31ab0c6f3accbe7b6b46
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Feb 4 19:47:43 2024 -0300
+
+    Open README.deken.pd after download some library (almost working)
+
+commit b7336dc68ab28615d8fda88cd860236dcbc882bc
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Feb 4 16:15:59 2024 -0300
+
+    add section about local/global pip installations
+
+commit b73f476a1c4961fc32963fa098812d475e4de2ec
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Feb 4 15:57:41 2024 -0300
+
+    add restart message after pip install
+
+commit 644a24b02f4785bb87464cea45ad7a38b2749845
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Feb 4 14:15:05 2024 -0300
+
+    Delete resources/py4pd-libs.json
+
+commit 533c7febf45230f6ae6641b1ead3fa1c639139b2
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Feb 4 14:12:57 2024 -0300
+
+    Update py4pd-libs.json
+
+commit 8ed64f6bf6234f7e3fb4d6429a3c06af307e6b27
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Feb 4 14:12:00 2024 -0300
+
+    Create py4pd-libs.json
+
+commit 9c89f8b3b76410f53e75aa44cd15835795d5b92a
+Merge: f25a531 3b356b1
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Feb 4 11:13:06 2024 -0300
+
+    Merge branch 'develop' of https://github.com/charlesneimog/py4pd into develop
+
+commit f25a5314e3af56f3062780682c9c9009516e1aef
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Feb 4 11:12:18 2024 -0300
+
+    add restart message after install package
+
+commit 3b356b13557bcf6b9921a638834f6edf283763c4
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Wed Jan 31 22:15:39 2024 -0300
+
+    add requests install in help-patches
+
+commit 3121529b1b036a03f7e7bff82256c7cbc01215ad
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Wed Jan 31 19:34:52 2024 -0300
+
+    add special condition for macos
+
+commit 3c6bd5446a2b744f12e863e671284eb2d752dec3
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Wed Jan 31 19:33:53 2024 -0300
+
+    case help patch from help.
+
+commit 5bdd7d9ee3ad6fe7ba491a9f06bf7cd6b51eb95c
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Wed Jan 31 19:07:31 2024 -0300
+
+    fix vscode binary for MacOS
+
+commit 661e976c604dd1b813233a50da668b4b255f772a
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Tue Jan 23 00:08:56 2024 -0300
+
+    fix double quotes on Windows
+
+commit 52a659ae2128fde5c3e1b1414f495dfd534c03f5
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 22 23:03:53 2024 -0300
+
+    rename all tests
+
+commit 5c6e3b43930c37642cab96275ee8d4ab73e07d40
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 22 22:35:57 2024 -0300
+
+    try to fix errors related with Paths with spaces.
+
+commit e976a05d77eff72d79cd8d92b5034c692d1cc1f0
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 22 21:47:10 2024 -0300
+
+    remove some comments
+
+commit c186427ab01199bf4d886e580726efc584ee9b9f
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 22 21:46:57 2024 -0300
+
+    minor fixes related with conda packages
+
+commit 8239b758832277d91a7ebd6d10702fb7eda852bc
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 22 18:06:55 2024 -0300
+
+    Add conda tests for Python
+    
+    Create test conda packages use.
+
+commit 74420c6967b7b9dd15a5743b0fb652b2d2d6b9c0
+Merge: 9bfa376 d013ed5
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 22 17:31:26 2024 -0300
+
+    Merge branch 'develop' of https://github.com/charlesneimog/py4pd into develop
+
+commit d013ed5e533e4eb67bc723818f629dfa96c78e0b
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 22 15:30:55 2024 -0300
+
+    fix some linux warnings
+
+commit 9bfa3762dde044a6ffd90a8087a3382059d2225e
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 22 15:30:55 2024 -0300
+
+    fix some linux warnings
+
+commit 6cf21469647a3a042df88abc97a8e75f89fb48b1
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 22 11:17:53 2024 -0300
+
+    fix strlcpy for Windows
+
+commit 342a0eb026393c6f455d2362e401631694371d81
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 22 11:21:06 2024 -0300
+
+    Update README.md
+
+commit b1b43a8af485dc2bbe0962e9f68e9eb743ed6bd6
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 22 10:43:27 2024 -0300
+
+    add x->condaPath to search packages in conda envs
+
+commit 5c7bf1d278ae1a7ddd67b9589a2b2477b6a7eb91
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Tue Jan 9 17:24:06 2024 -0300
+
+    fix compile_commands
+
+commit a62b5021ba81b9da7cdc74037c911809901927ee
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 1 21:46:52 2024 -0300
+
+    make `src/utils.c` more safe
+
+commit 9d81a45834ca32f623a80025fee4a5d75de8d5b7
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 1 21:46:36 2024 -0300
+
+    make `py4pd.c` more safe
+
+commit 520fd8044e9c23a5805fa2300ef957069c8d50b0
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 1 21:46:19 2024 -0300
+
+    fix get out method
+
+commit a1423098e6c0a2d586fc2d894c6ae64931857829
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 1 21:46:00 2024 -0300
+
+    save default blocksize for obj
+
+commit 929386c11b0fc4b718b977b651d15c6d48855cfb
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Jan 1 21:45:41 2024 -0300
+
+    add audioin method
+
+commit 80b33e54191d17d4ff56450379616c04889f5fb3
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Wed Dec 27 22:37:30 2023 -0300
+
+    rename object_count to objCount
+
+commit e8ffadca4de457081efe1ea9c3a43b0bb3f294f4
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Wed Dec 27 22:36:45 2023 -0300
+
+    remove clang from src
+
+commit 4587b016d879f069b353dccb8032ad46be697c5e
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Wed Dec 27 22:36:35 2023 -0300
+
+    minor fixes for py4pd-mod
+
+commit 9364a622a4825b97ba22c0ade81c035332cb8404
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Wed Dec 27 22:36:20 2023 -0300
+
+    fix help patches
+
+commit 276cebe14194480467cbc60836f377578e8ccec0
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Wed Dec 27 22:35:58 2023 -0300
+
+    minor docs fixes
+
+commit 4585181533fe3c3e4a03e2cbe8bdc0fe04e2424a
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Wed Dec 27 22:35:33 2023 -0300
+
+    fix tests
+
+commit a7910df2be26fd69fee42b777023dc8ccedfbbb0
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Mon Dec 25 11:35:17 2023 -0300
+
+    Fix some English mistakes
+
+commit f08bab59d3bb8b9847ee430d57e3ac0a3ec4b017
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 13:49:18 2023 -0300
+
+    last fix
+
+commit 948b35d8bdaaca821716673fc907c4c6ec8b7423
+Merge: 27ecd55 37135aa
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 13:50:02 2023 -0300
+
+    Merge pull request #83 from charlesneimog/develop
+    
+    Update docs
+
+commit 37135aa358176524909212b36517120a5a31c9e1
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 13:49:18 2023 -0300
+
+    last fix
+
+commit 27ecd55460af8086225f2ba5483f3d94411e2e2f
+Merge: 76fffd9 389aebf
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 13:42:56 2023 -0300
+
+    Merge pull request #82 from charlesneimog/develop
+    
+    minor docs uptades
+
+commit 389aebfb2b5ba83de07a7431ccd3bedd608e2006
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 13:40:32 2023 -0300
+
+    minor docs uptades
+
+commit 76fffd9f5034cd6798d9ba479f6fef0f1c6fb634
+Merge: bb1eb7c 020f2de
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 13:33:00 2023 -0300
+
+    Merge pull request #81 from charlesneimog/develop
+    
+    one more minor fix
+
+commit 020f2def68266df0567702621f15c09362aeb859
+Merge: cbf42e2 5ef495d
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 13:32:11 2023 -0300
+
+    Merge branch 'develop' of https://github.com/charlesneimog/py4pd into develop
+
+commit cbf42e2d4324cf6afac40aaac1048cd6e6f6e7aa
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 13:26:26 2023 -0300
+
+    minor docs updates
+
+commit bb1eb7c3509a530e6395d50772914d2b3b95a94e
+Merge: 7116f1b 5ef495d
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 13:29:28 2023 -0300
+
+    Merge pull request #80 from charlesneimog/develop
+    
+    Minor docs updates
+
+commit 5ef495d950b2b654c965ba12306d93f45fb504ef
+Merge: b38fae0 7116f1b
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 13:29:19 2023 -0300
+
+    Merge branch 'master' into develop
+
+commit b38fae0b9657152ff3a655af7addfe5fc178f3e2
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 13:26:26 2023 -0300
+
+    minor docs updates
+
+commit 63095cecdf71021d8e3d914a1642dcb15749328e
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 12:58:17 2023 -0300
+
+    fix path to images
+
+commit 7116f1bce5d574627b7942eb4ba95d5c53e6f075
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 12:14:22 2023 -0300
+
+    fix docs builder
+
+commit 58e856a537a58521d00b9bb89e84c8135015326a
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 11:09:35 2023 -0300
+
+    update libs.py
+
+commit aa492fbfaa814a91c1e455a0230387ccef591a7d
+Merge: d2c2825 91f0e73
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 12:09:56 2023 -0300
+
+    Merge pull request #79 from charlesneimog/develop
+    
+    Update Docs
+
+commit d2c28255bd3c27cc52efffae88d6ad0a324d9de1
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 11:32:09 2023 -0300
+
+    Update README.md
+
+commit 91f0e73c0b35f4aa8fc4014802f30ad0c4ce3c76
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 11:09:35 2023 -0300
+
+    update libs.py
+
+commit 0192df3612452b626db286e2bc25b62524f86bea
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 10:33:37 2023 -0300
+
+    move `Py4pdLib_Click` to `Py4pdUtils_Click`.
+
+commit a08f2e5749378a8e3b0eea92f280a0eb57400e33
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 10:32:56 2023 -0300
+
+    remove unused functions
+
+commit 1bb843a9450c4a2bdd049415e00228a2be2ca88a
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 10:32:15 2023 -0300
+
+    Make `pip install` install more than one package once
+
+commit e36da5c537b9a0f817505c15df7fabd65a955322
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 10:31:41 2023 -0300
+
+    add method `pd.get_pd_search_paths`
+
+commit 94418013874ddd054e0274d58a1bf5d731656d90
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 10:31:03 2023 -0300
+
+    move `Py4pdLib_Click` to `Py4pdUtils_Click`
+
+commit dfaf03e6ef4f52d3f4ed119b46b876e2a15286f4
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 10:30:17 2023 -0300
+
+    more audio part to dsp file
+
+commit aa85cfad44c6eb36e4a9e6911af6e4ebe400045b
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 10:29:58 2023 -0300
+
+    organize code and add GetHelpPatch set/get
+
+commit b3fc071451a5a7420f118cf26ec4391be45477ac
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 10:29:18 2023 -0300
+
+    split audio part in new file
+
+commit 4a4791bb1a5442ae577b9b16b8fbb66fa633ecbc
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 24 10:28:17 2023 -0300
+
+    More docs updates
+
+commit cfb6818b840f704a434d156ce587560856969a61
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Fri Dec 22 13:43:26 2023 -0300
+
+    where is Python
+
+commit ad16580bbf8108930e6d53e539393f61b19c638b
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Fri Dec 22 12:55:44 2023 -0300
+
+    more updates for docs
+
+commit 419ce3343b4b11dfe35a7dffa7f00f2eba852372
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Fri Dec 22 11:19:25 2023 -0300
+
+    more docs uptade
+
+commit d3b1ef221ce79b15bbfb6b37eaeff28536c583a9
+Merge: d7f7806 dacd6ed
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Thu Dec 21 23:40:57 2023 -0300
+
+    Merge branch 'develop' of https://github.com/charlesneimog/py4pd into develop
+
+commit d7f7806dcdc5327bba876bfdd5ec77d5cf9385aa
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Thu Dec 21 23:37:10 2023 -0300
+
+    lot of docs updates
+
+commit dacd6edb37c8cbbcc0d206eb24494dcc9317762d
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Thu Dec 21 17:04:40 2023 -0300
+
+    a lot of updates related with documentation
+
+commit 554075c5ea3d0493037f4b00ae715d750b3f1957
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Tue Dec 19 19:43:03 2023 -0300
+
+    Revert "move test to resources/tests"
+    
+    This reverts commit 4278963621f01860491cd5daa9bebbe88da8c0a1.
+
+commit c4d0e51721347cc3902ac2dc507e4f7cc841fac9
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Tue Dec 19 19:42:45 2023 -0300
+
+    Revert "fix builder"
+    
+    This reverts commit 95c75ea69371a6b831684e35825680358e342174.
+
+commit 95c75ea69371a6b831684e35825680358e342174
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Tue Dec 19 18:15:32 2023 -0300
+
+    fix builder
+
+commit 4278963621f01860491cd5daa9bebbe88da8c0a1
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Tue Dec 19 18:13:24 2023 -0300
+
+    move test to resources/tests
+
+commit 29ed2ee81d110335c82dc8d4c150c6235c32a6bf
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Tue Dec 19 18:11:21 2023 -0300
+
+    ignore wavs inside test
+
+commit 938164d089fe10802f84ee0b205a38c2a91a8e5c
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Tue Dec 19 18:10:27 2023 -0300
+
+    Add debug tests
+
+commit deff093438a7a2785a03f68689fada2c142fe01f
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Tue Dec 19 18:10:01 2023 -0300
+
+    fix all the methods, the minimal is already working
+
+commit e198f00673b46ca38c0ea5dfd75c685c43283bd1
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Tue Dec 19 18:09:22 2023 -0300
+
+    Create function to convert pd args to py args [`Py4pdUtils_CreatePyObjFromPdArgs`], avoid repetition of code
+
+commit 3ea01b225bd24974824c3bff22073c62c0d46892
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Tue Dec 19 17:04:17 2023 -0300
+
+    More work around the class to add new objects, this a commit for tests.
+
+commit ad4970c7351f542a9cb487bf7f5e5c15172be471
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 20:49:07 2023 -0300
+
+    Update Builder.yml
+
+commit aa468416d18ea15522aa58966de084704a025872
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:24:43 2023 -0300
+
+    add patches releated with python3.12 and ext-class.c
+
+commit 95a0c1e83212e126289948deb17b3e60c33ed411
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:24:17 2023 -0300
+
+    just some better formatting
+
+commit 578a1e8ceffffdef69a07ed6b5dc4aa5c00fb65b
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:23:56 2023 -0300
+
+    minor fixes and updates
+
+commit 8264153c16e3f113b27bd5326667126ec0a42a22
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:22:34 2023 -0300
+
+    add some help for the player example
+
+commit 2c50b542d38878d7de94c081f018e0b0b4e74440
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:20:40 2023 -0300
+
+    change Py4pdUtils_CreateObjInlets to avoid multiple definitions of `py4pdInlets_proxy_class`
+
+commit e4437593d9c8d159d2fbacf726a72928f0a19d78
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:19:39 2023 -0300
+
+    add `Py4pdUtils_CreateObjInlets` inside utils.h
+
+commit 4c78d8a338de29b3db4e37f3ab1d7279faf72f95
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:19:01 2023 -0300
+
+    this fix pd.get_obj_args but broken every else.
+
+commit 623ca9127b76a5bbf386839b75558de563f4b10f
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:18:35 2023 -0300
+
+    minor changes related with `py4pd.h`, I will try to move all structs of pic.c for pic.h.
+
+commit 5f63c5a38debc6e085a874d9d67bb039229a43d6
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:17:46 2023 -0300
+
+    add new field to save the pFuncs for each method defined.
+
+commit 199907b8bb20f2b29c821cc823fbdc952d7681d3
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:17:10 2023 -0300
+
+    start to remove all the structs of py4pd.h
+
+commit eb1f6a737aaf19460aeb749f74b16e173b040725
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:16:46 2023 -0300
+
+    Move Py4pdUtils_CreateObjInlets to `utils.c`
+
+commit 2728390363ae1dcef2a9dae863a25178cace836c
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:15:59 2023 -0300
+
+    Add some structs in ext-class.h header
+
+commit 47aa877a981d65579c3b056240a75050fc7aec87
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:15:27 2023 -0300
+
+    Create functions to create object using methods, add FloatMethod, SymbolMethod, List, Anything, Bang, and Selector
+
+commit 4838f594921901472e1540834246d6f113c83969
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:14:13 2023 -0300
+
+    create ext-class.h
+
+commit c011b1c589f01d12e4f9aacebbb6538452a2ea07
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:14:02 2023 -0300
+
+    remove get_home_folder method
+
+commit dec7e88fa71b53b9b84ccc6792738c8cae08a4e6
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:13:29 2023 -0300
+
+    Add Pd types in pd module.
+
+commit 3fc96fb1a95e272bba2066e6b3e34dff2cb2e438
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:13:10 2023 -0300
+
+    remove clock_setunit
+
+commit 4f626dc69623a57238618dd1b6f7e6c8eafe518f
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sun Dec 17 19:12:42 2023 -0300
+
+    refactor `Py4pdMod_GetObjArgs`
+
+commit d8ae694ea7fd9c6a141c42cdec92824c13ec2e88
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sat Dec 16 19:19:22 2023 -0300
+
+    fix the Py4pdMod_GetObjArgs method
+
+commit 6bd4d5eb4a3be0b5868a1f31e54a76f126ce0e8e
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sat Dec 16 19:00:34 2023 -0300
+
+    just run deken upload and release upload in releases
+
+commit f81311100c897305a7f0bd96144753967f3b3be7
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sat Dec 16 18:52:57 2023 -0300
+
+    Forgot to change Py4pdLib_Clear and Py4pdLib_Stop to Py4pdPlayer
+
+commit ef1b0cd0c1bdfde54e9c6861145d9b17d0dfd201
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sat Dec 16 18:50:35 2023 -0300
+
+    Organize additional features related to the split of py4pd.h
+
+commit 51d06684215e7d103df5b53a1eb8f83450507240
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sat Dec 16 18:47:57 2023 -0300
+
+    Files inside `player.c` must start with `Py4pdPlayer_` not `Py4pdLib_`.
+
+commit 2948df2bfdf7ad5789a8b7292a48e26b7cb67a8a
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sat Dec 16 18:47:09 2023 -0300
+
+    update examples
+
+commit 307e8b6e51b30c3646b49d4314d8dccd351f13bc
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sat Dec 16 18:46:52 2023 -0300
+
+    split the py4pd.h in multiple files.
+    
+    `py4pd.h` was big and confusing
+
+commit c6a08946fc5311a87d654632a25c8ccb2462ed8a
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sat Dec 16 18:45:16 2023 -0300
+
+    Add to work on versio 0.8.6
+
+commit 7c0492bfeb541278c61aceff2231a13f5ada6c04
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sat Dec 16 16:00:27 2023 -0300
+
+    Update README.md
+
+commit 4e520ca0c2b231bb34a3cf6b8db80d3697435184
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sat Dec 16 15:55:27 2023 -0300
+
+    Update README.md
+
+commit 83f39c9123dfa485cd9ccbe35d07803a7d7af4ea
+Merge: c968fbc f3718a7
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sat Dec 16 15:53:49 2023 -0300
+
+    Merge pull request #78 from charlesneimog/develop
+    
+    Fix Builder, add automatic releases upload for python3.10, 3.11, 3.12
+
+commit f3718a7c510cc80c7afb55bf9e33c9682e4a5445
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sat Dec 16 14:44:29 2023 -0300
+
+    try to upload compiled to github releases
+
+commit 82fe18e844d4ebe31cc5c8d631eef64ea959527b
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sat Dec 16 14:13:10 2023 -0300
+
+    updater Builder
+
+commit 98fa2880d4339e2ea31a994b99d1d05afea01a97
+Author: Charles K. Neimog <charlesneimog@outlook.com>
+Date:   Sat Dec 16 13:50:26 2023 -0300
+
+    minor fixes to github actions
