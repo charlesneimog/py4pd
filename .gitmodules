@@ -11,3 +11,6 @@
 [submodule "resources/python-static"]
 	path = resources/python-static
 	url = https://github.com/python-cmake-buildsystem/python-cmake-buildsystem
+[submodule "Resources/pd.cmake"]
+	path = Resources/pd.cmake
+	url = git@github.com:pure-data/pd.cmake.git
