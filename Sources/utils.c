@@ -609,7 +609,7 @@ const char *Py4pdUtils_GetFilename(const char *path) {
 }
 
 // ====================================================
-void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *script_file_name) {
+int Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *script_file_name) {
 #ifdef _WIN64
     WIN32_FIND_DATAA findData;
     HANDLE hFind;
@@ -633,7 +633,7 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *scr
                         pd_error(x, "[py4pd] This can cause "
                                     "problems related to py4pdLoadObjects.");
                         pd_error(x, "[py4pd] Rename the library.");
-                        post("");
+                        return 1;
                     }
                 }
             }
@@ -641,21 +641,18 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *scr
         FindClose(hFind);
     }
 #else
-    printf("inside checkpkg\n");
     DIR *dir;
     struct dirent *entry;
 
     if (folderToCheck == NULL) {
         printf("folderToCheck is NULL\n");
-        return;
+        return 0;
     }
 
-    printf("before opendir\n");
     dir = opendir(folderToCheck);
-    printf("after opendir\n");
 
     if (dir == NULL) {
-        return;
+        return 0;
     }
 
     while ((entry = readdir(dir)) != NULL) {
@@ -670,14 +667,13 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *scr
                 pd_error(x, "[py4pd] This can cause problems related with "
                             "py4pdLoadObjects.");
                 pd_error(x, "[py4pd] Rename the library.");
-                post("");
+                return 1;
             }
         }
     }
     closedir(dir);
-    printf("out of checkpkg\n");
 #endif
-    return;
+    return 0;
 }
 
 // ====================================================
@@ -1155,7 +1151,7 @@ void *Py4pdUtils_FreeObj(t_py *x) {
         char command[1000];
 #ifdef _WIN64
         sprintf(command, "cmd /C del /Q /S %s*.*", x->tempPath->s_name);
-        (void)Py4pdUtils_ExecuteSystemCommand(command);
+        (void)Py4pdUtils_ExecuteSystemCommand(command, 0);
 #else
         sprintf(command, "rm -rf %s", x->tempPath->s_name);
         (void)Py4pdUtils_ExecuteSystemCommand(command, 0);
@@ -1509,7 +1505,7 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
             if (strstr(line, "conda_env_packages =") != NULL) {
                 char *packages_path = (char *)malloc(
                     sizeof(char) * (strlen(line) - strlen("conda_env_packages = ") + 1));
-                strcpy(packages_path, line + strlen("conda_env_packages = "));
+                strcpy(packages_path, line + strlen("conda_env_packages = ")); // TODO: Need review
                 if (strlen(packages_path) > 0) {
                     if (packages_path[strlen(packages_path) - 1] == '\n') {
                         packages_path[strlen(packages_path) - 1] = '\0';
@@ -1567,11 +1563,18 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
 
 // ============================================
 void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
-    // Add additional paths to the python path
     char pyScripts_folder[MAXPDSTRING];
-    snprintf(pyScripts_folder, MAXPDSTRING, "%sresources/py4pd-mod", x->py4pdPath->s_name);
+    int ret = snprintf(pyScripts_folder, MAXPDSTRING, "%sResources/py4pd", x->py4pdPath->s_name);
+    if (ret < 0) {
+        pd_error(x, "[py4pd] Error when adding py4pd path to sys.path");
+        return;
+    }
     char pyGlobal_packages[MAXPDSTRING];
-    snprintf(pyGlobal_packages, MAXPDSTRING, "%sresources/py-modules", x->py4pdPath->s_name);
+    ret = snprintf(pyGlobal_packages, MAXPDSTRING, "%sResources/py-modules", x->py4pdPath->s_name);
+    if (ret < 0) {
+        pd_error(x, "[py4pd] Error when adding py4pd path to sys.path");
+        return;
+    }
 
     PyObject *home_path = PyUnicode_FromString(x->pdPatchPath->s_name);
     PyObject *py4pdPath = PyUnicode_FromString(x->py4pdPath->s_name);
@@ -1597,8 +1600,8 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
 
 // ===================================================================
 int Py4pdUtils_CheckNumpyInstall(t_py *x) {
-    PyObject *numpy = PyImport_ImportModule("numpy.core._multiarray_umath");
-    if (numpy == NULL) {
+    PyObject *NumpyUmath = PyImport_ImportModule("numpy.core._multiarray_umath");
+    if (NumpyUmath == NULL) {
         pd_error(x, "[py4pd] Numpy not installed, send [pip install numpy] to "
                     "the py4pd object");
         post("\n\n");
@@ -1606,7 +1609,22 @@ int Py4pdUtils_CheckNumpyInstall(t_py *x) {
         Py4pdUtils_PrintError(x);
         return 0;
     }
-    Py_DECREF(numpy);
+
+    // check numpy version
+    PyObject *Numpy = PyImport_ImportModule("numpy");
+    const char *NumpyVersion = PyUnicode_AsUTF8(PyObject_GetAttrString(Numpy, "__version__"));
+    if (NumpyVersion[0] != '2') {
+        pd_error(x,
+                 "[py4pd] Numpy version %s is not supported, please update to "
+                 "version 2.0.0 or higher",
+                 NumpyVersion);
+        post("\n\n");
+        post("=== Complete Error Description ===");
+        Py4pdUtils_PrintError(x);
+        return 0;
+    }
+
+    Py_DECREF(Numpy);
     PyErr_Clear();
     return 1;
 }

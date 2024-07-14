@@ -15,7 +15,7 @@ PyObject *Py4pdUtils_CreatePyObjFromPdArgs(t_symbol *s, int argc, t_atom *argv);
 int Py4pdUtils_CheckNumpyInstall(t_py *x);
 char *Py4pdUtils_GetFolderName(char *path);
 const char *Py4pdUtils_GetFilename(const char *path);
-void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *script_file_name);
+int Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *script_file_name);
 void Py4pdUtils_FindObjFolder(t_py *x);
 void Py4pdUtils_CreateTempFolder(t_py *x);
 void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line);

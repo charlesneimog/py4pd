@@ -44,7 +44,7 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
              atom_gensym(argv + 1)->s_name);
 
     char script_inside_py4pd_path[MAXPDSTRING];
-    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/resources/py4pd-mod/%s.py",
+    snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/Resources/py4pd/%s.py",
              x->py4pdPath->s_name, atom_gensym(argv + 1)->s_name);
 
     PyObject *sysPath = PySys_GetObject("path");
@@ -74,41 +74,45 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     PyObject *pModule, *pFunc; // Create the variables of the python objects
     char pyScriptsFolder[MAXPDSTRING];
     char pyGlobalFolder[MAXPDSTRING];
-    snprintf(pyScriptsFolder, MAXPDSTRING, "%s/resources/scripts", x->py4pdPath->s_name);
-    snprintf(pyGlobalFolder, MAXPDSTRING, "%s/resources/py-modules", x->py4pdPath->s_name);
-
-    printf("after snprintf\n");
+    snprintf(pyScriptsFolder, MAXPDSTRING, "%s/Resources/scripts", x->py4pdPath->s_name);
+    snprintf(pyGlobalFolder, MAXPDSTRING, "%s/Resources/py-modules", x->py4pdPath->s_name);
 
     // convert const char* to char*
-    // char *globalFolderChar = malloc(strlen(pyGlobalFolder) + 1);
-    // Py4pdUtils_Strlcpy(globalFolderChar, pyGlobalFolder, strlen(pyGlobalFolder) + 1);
+    char *globalFolderChar = malloc(strlen(pyGlobalFolder) + 1);
+    Py4pdUtils_Strlcpy(globalFolderChar, pyGlobalFolder, strlen(pyGlobalFolder) + 1);
 
     // sound file path
-    // char *pkgPathchar = malloc(strlen(x->pkgPath->s_name) + 1);
-    // Py4pdUtils_Strlcpy(pkgPathchar, x->pkgPath->s_name, strlen(x->pkgPath->s_name) + 1);
+    char *pkgPathchar = malloc(strlen(x->pkgPath->s_name) + 1);
+    Py4pdUtils_Strlcpy(pkgPathchar, x->pkgPath->s_name, strlen(x->pkgPath->s_name) + 1);
 
-    // TODO: Fix this
-    // Py4pdUtils_CheckPkgNameConflict(x, pyGlobalFolder, scriptFileName);
-    // Py4pdUtils_CheckPkgNameConflict(x, pkgPathchar, scriptFileName);
+    int result = Py4pdUtils_CheckPkgNameConflict(x, pyGlobalFolder, scriptFileName);
+    if (result) {
+        pd_error(x, "[py4pd] Package name conflict, please rename the package.");
+        return -1;
+    }
 
-    t_py *prev_obj = NULL;
-    int prev_obj_exists = 0;
+    result = Py4pdUtils_CheckPkgNameConflict(x, pkgPathchar, scriptFileName);
+    if (result) {
+        pd_error(x, "[py4pd] Package name conflict, please rename the package.");
+        return -1;
+    }
+
+    t_py *PrevObj = NULL;
+    int ThereIsPrevObj = 0;
     PyObject *MainModule = PyImport_ImportModule("pd");
-    PyObject *oldObjectCapsule;
-    printf("after import module\n");
+    PyObject *PrevObjectCapsule;
 
     if (MainModule != NULL) {
-        oldObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
-        if (oldObjectCapsule != NULL) {
+        PrevObjectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
+        if (PrevObjectCapsule != NULL) {
             PyObject *py4pd_capsule = PyObject_GetAttrString(MainModule, "py4pd");
-            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
-            prev_obj_exists = 1;
+            PrevObj = (t_py *)PyCapsule_GetPointer(py4pd_capsule, "py4pd");
+            ThereIsPrevObj = 1;
         } else {
-            prev_obj_exists = 0;
+            ThereIsPrevObj = 0;
         }
     }
     PyObject *objectCapsule = Py4pdUtils_AddPdObject(x);
-    printf("After objectCapsule\n");
 
     if (objectCapsule == NULL) {
         Py4pdUtils_PrintError(x);
@@ -197,8 +201,8 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
         }
         PyObject *pValue = PyObject_CallNoArgs(pFunc); // Call the function
 
-        if (prev_obj_exists == 1 && pValue != NULL) {
-            objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
+        if (ThereIsPrevObj && pValue != NULL) {
+            objectCapsule = Py4pdUtils_AddPdObject(PrevObj);
             if (objectCapsule == NULL) {
                 pd_error(x, "[Python] Failed to add object to Python");
                 return -1;
@@ -215,8 +219,8 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
             return -1;
         }
         // odd code, but solve the bug
-        if (prev_obj_exists == 1 && pValue != NULL) {
-            objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
+        if (ThereIsPrevObj && pValue != NULL) {
+            objectCapsule = Py4pdUtils_AddPdObject(PrevObj);
             if (objectCapsule == NULL) {
                 pd_error(x, "[Python] Failed to add object to Python");
                 return -1;
@@ -266,9 +270,9 @@ static void *Py4pd_PipInstallRequirementsDetach(void *Args) {
     t_symbol *pipTarget;
     if (x->pipGlobalInstall) {
         // add resources to the global path
-        char *globalTarget = malloc(strlen(x->py4pdPath->s_name) + strlen("resources/") + 1);
-        snprintf(globalTarget, strlen(x->py4pdPath->s_name) + strlen("resources/") + 1,
-                 "%sresources/", x->py4pdPath->s_name);
+        char *globalTarget = malloc(strlen(x->py4pdPath->s_name) + strlen("Resources/") + 1);
+        snprintf(globalTarget, strlen(x->py4pdPath->s_name) + strlen("Resources/") + 1,
+                 "%sResources/", x->py4pdPath->s_name);
         pipTarget = gensym(globalTarget);
         free(globalTarget);
     } else {
@@ -357,9 +361,9 @@ static void *Py4pd_PipInstallDetach(void *Args) {
     t_symbol *pipTarget;
     if (x->pipGlobalInstall) {
         // add resources to the global path
-        char *globalTarget = malloc(strlen(x->py4pdPath->s_name) + strlen("resources/") + 1);
-        snprintf(globalTarget, strlen(x->py4pdPath->s_name) + strlen("resources/") + 1,
-                 "%sresources/", x->py4pdPath->s_name);
+        char *globalTarget = malloc(strlen(x->py4pdPath->s_name) + strlen("Resources/") + 1);
+        snprintf(globalTarget, strlen(x->py4pdPath->s_name) + strlen("Resources/") + 1,
+                 "%sResources/", x->py4pdPath->s_name);
         pipTarget = gensym(globalTarget);
         free(globalTarget);
     } else {

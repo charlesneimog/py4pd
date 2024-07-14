@@ -50,11 +50,10 @@ void Py4pdPlayer_PlayerInsertThing(t_py *x, int onset, PyObject *value) {
 
     if (index != -1) {
         // Onset already exists in the dictionary, add value to the array
-        x->playerDict->entries[index].values = (PyObject **)realloc(
-            x->playerDict->entries[index].values,
-            (x->playerDict->entries[index].size + 1) * sizeof(PyObject *));
-        x->playerDict->entries[index]
-            .values[x->playerDict->entries[index].size] = value;
+        x->playerDict->entries[index].values =
+            (PyObject **)realloc(x->playerDict->entries[index].values,
+                                 (x->playerDict->entries[index].size + 1) * sizeof(PyObject *));
+        x->playerDict->entries[index].values[x->playerDict->entries[index].size] = value;
         x->playerDict->entries[index].size++;
     } else {
         // Onset doesn't exist, create a new entry
@@ -62,8 +61,7 @@ void Py4pdPlayer_PlayerInsertThing(t_py *x, int onset, PyObject *value) {
             x->playerDict->lastOnset = onset;
         }
         x->playerDict->entries = (KeyValuePair *)realloc(
-            x->playerDict->entries,
-            (x->playerDict->size + 1) * sizeof(KeyValuePair));
+            x->playerDict->entries, (x->playerDict->size + 1) * sizeof(KeyValuePair));
         KeyValuePair *newEntry = &(x->playerDict->entries[x->playerDict->size]);
         newEntry->onset = onset;
         newEntry->values = (PyObject **)malloc(sizeof(PyObject *));
@@ -97,8 +95,7 @@ void Py4pdPlayer_PlayTick(t_py *x) {
     if (entry != NULL) {
         for (int i = 0; i < entry->size; i++) {
             PyObject *pValue = Py_BuildValue("O", entry->values[i]);
-            t_py4pd_pValue *pdPyValue =
-                (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
+            t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
             pdPyValue->pValue = pValue;
             pdPyValue->objectsUsing = 0;
             pdPyValue->objOwner = x->objName;
