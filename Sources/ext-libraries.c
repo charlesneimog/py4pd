@@ -13,7 +13,7 @@
 
 // ================= PUREDATA ================
 void Py4pdLib_Bang(t_py *x);
-static t_class *py4pdInlets_proxy_class;
+static t_class *Py4pdInletsProxy;
 
 // ===========================================
 void Py4pdLib_ReloadObject(t_py *x) {
@@ -61,14 +61,13 @@ void Py4pdLib_ReloadObject(t_py *x) {
 
 // ===========================================
 void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b) {
-
     t_py *x = (t_py *)z;
-    if (x->visMode) {
+    if (x->VisMode) {
         binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->obj.te_xpix, x->obj.te_ypix);
         binbuf_addbinbuf(b, ((t_py *)x)->obj.te_binbuf);
         int objAtomsCount = binbuf_getnatom(((t_py *)x)->obj.te_binbuf);
         if (objAtomsCount == 1) {
-            binbuf_addv(b, "ii", x->width, x->height);
+            binbuf_addv(b, "ii", x->Width, x->Height);
         }
         binbuf_addsemi(b);
     }
@@ -90,12 +89,12 @@ void Py4pdLib_SetKwargs(t_py *x, t_symbol *s, int ac, t_atom *av) {
     }
     key = atom_getsymbolarg(0, ac, av);
 
-    if (x->kwargsDict == NULL)
-        x->kwargsDict = PyDict_New();
+    if (x->KwArgsDict == NULL)
+        x->KwArgsDict = PyDict_New();
 
-    PyObject *oldItemFromDict = PyDict_GetItemString(x->kwargsDict, s->s_name);
+    PyObject *oldItemFromDict = PyDict_GetItemString(x->KwArgsDict, s->s_name);
     if (oldItemFromDict != NULL) {
-        PyDict_DelItemString(x->kwargsDict, s->s_name);
+        PyDict_DelItemString(x->KwArgsDict, s->s_name);
         Py_DECREF(oldItemFromDict);
     }
 
@@ -103,14 +102,14 @@ void Py4pdLib_SetKwargs(t_py *x, t_symbol *s, int ac, t_atom *av) {
         if (av[1].a_type == A_FLOAT) {
             int isInt = atom_getintarg(1, ac, av) == atom_getfloatarg(1, ac, av);
             if (isInt)
-                PyDict_SetItemString(x->kwargsDict, key->s_name,
+                PyDict_SetItemString(x->KwArgsDict, key->s_name,
                                      PyLong_FromLong(atom_getintarg(1, ac, av)));
             else
-                PyDict_SetItemString(x->kwargsDict, key->s_name,
+                PyDict_SetItemString(x->KwArgsDict, key->s_name,
                                      PyFloat_FromDouble(atom_getfloatarg(1, ac, av)));
 
         } else if (av[1].a_type == A_SYMBOL)
-            PyDict_SetItemString(x->kwargsDict, key->s_name,
+            PyDict_SetItemString(x->KwArgsDict, key->s_name,
                                  PyUnicode_FromString(atom_getsymbolarg(1, ac, av)->s_name));
         else {
             pd_error(x, "The third argument of the message 'kwargs' must be a "
@@ -131,7 +130,7 @@ void Py4pdLib_SetKwargs(t_py *x, t_symbol *s, int ac, t_atom *av) {
                 PyList_SetItem(pyInletValue, i - 1,
                                PyUnicode_FromString(atom_getsymbolarg(i, ac, av)->s_name));
         }
-        PyDict_SetItemString(x->kwargsDict, key->s_name, pyInletValue);
+        PyDict_SetItemString(x->KwArgsDict, key->s_name, pyInletValue);
     }
     return;
 }
@@ -143,13 +142,13 @@ void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_gpointer *gp) {
     t_py *py4pd = (t_py *)x->p_master;
     t_py4pd_pValue *pArg;
     pArg = (t_py4pd_pValue *)gp;
-    if (!pArg->pdout)
-        Py_DECREF(py4pd->pyObjArgs[x->inletIndex]->pValue);
+    if (!pArg->PdOutCount)
+        Py_DECREF(py4pd->PyObjArgs[x->inletIndex]->pValue);
 
-    Py4pdUtils_CopyPy4pdValueStruct(pArg, py4pd->pyObjArgs[x->inletIndex]);
+    Py4pdUtils_CopyPy4pdValueStruct(pArg, py4pd->PyObjArgs[x->inletIndex]);
 
-    if (!pArg->pdout)
-        Py_INCREF(py4pd->pyObjArgs[x->inletIndex]->pValue);
+    if (!pArg->PdOutCount)
+        Py_INCREF(py4pd->PyObjArgs[x->inletIndex]->pValue);
 
     return;
 }
@@ -160,22 +159,21 @@ void Py4pdLib_Pointer(t_py *x, t_symbol *s, t_gpointer *gp) {
 
     t_py4pd_pValue *pArg;
     pArg = (t_py4pd_pValue *)gp;
-    pArg->objectsUsing++;
 
-    if (x->objType > PY4PD_AUDIOINOBJ) {
+    if (x->ObjType > PY4PD_AUDIOINOBJ) {
         pArg = (t_py4pd_pValue *)gp;
-        if (!pArg->pdout)
-            Py_DECREF(x->pyObjArgs[0]->pValue);
+        if (!pArg->PdOutCount)
+            Py_DECREF(x->PyObjArgs[0]->pValue);
 
-        Py4pdUtils_CopyPy4pdValueStruct(pArg, x->pyObjArgs[0]);
+        Py4pdUtils_CopyPy4pdValueStruct(pArg, x->PyObjArgs[0]);
 
-        if (!pArg->pdout)
-            Py_INCREF(x->pyObjArgs[0]->pValue);
-        x->audioError = 0;
+        if (!pArg->PdOutCount)
+            Py_INCREF(x->PyObjArgs[0]->pValue);
+        x->AudioError = 0;
         return;
     }
 
-    if (x->objType > PY4PD_AUDIOINOBJ)
+    if (x->ObjType > PY4PD_AUDIOINOBJ)
         return;
 
     PyObject *pArgs = PyTuple_New(x->pArgsCount);
@@ -183,11 +181,11 @@ void Py4pdLib_Pointer(t_py *x, t_symbol *s, t_gpointer *gp) {
     Py_INCREF(pArg->pValue);
 
     for (int i = 1; i < x->pArgsCount; i++) {
-        PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
-        Py_INCREF(x->pyObjArgs[i]->pValue);
+        PyTuple_SetItem(pArgs, i, x->PyObjArgs[i]->pValue);
+        Py_INCREF(x->PyObjArgs[i]->pValue);
     }
 
-    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
+    Py4pdUtils_RunPy(x, pArgs, x->KwArgsDict);
     Py_DECREF(pArgs);
 
     return;
@@ -200,17 +198,16 @@ void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
 
     PyObject *pInletValue = Py4pdUtils_CreatePyObjFromPdArgs(s, ac, av);
 
-    if (!py4pd->pyObjArgs[x->inletIndex]->pdout)
-        Py_DECREF(py4pd->pyObjArgs[x->inletIndex]->pValue);
+    if (!py4pd->PyObjArgs[x->inletIndex]->PdOutCount)
+        Py_DECREF(py4pd->PyObjArgs[x->inletIndex]->pValue);
 
     // obj
-    py4pd->pyObjArgs[x->inletIndex]->objectsUsing = 0;
-    py4pd->pyObjArgs[x->inletIndex]->pdout = 0;
-    py4pd->pyObjArgs[x->inletIndex]->objOwner = py4pd->objName;
-    py4pd->pyObjArgs[x->inletIndex]->pValue = pInletValue;
+    py4pd->PyObjArgs[x->inletIndex]->PdOutCount = 0;
+    py4pd->PyObjArgs[x->inletIndex]->ObjOwner = py4pd->ObjName;
+    py4pd->PyObjArgs[x->inletIndex]->pValue = pInletValue;
 
-    if (py4pd->objType == PY4PD_AUDIOOBJ || py4pd->objType == PY4PD_AUDIOINOBJ) {
-        py4pd->audioError = 0;
+    if (py4pd->ObjType == PY4PD_AUDIOOBJ || py4pd->ObjType == PY4PD_AUDIOINOBJ) {
+        py4pd->AudioError = 0;
         return;
     }
 
@@ -221,7 +218,7 @@ void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
 void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av) {
 
     if (x->pFunction == NULL) {
-        pd_error(x, "[%s]: No function defined", x->objName->s_name);
+        pd_error(x, "[%s]: No function defined", x->ObjName->s_name);
         return;
     }
     if (s == gensym("bang")) {
@@ -231,35 +228,34 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av) {
 
     PyObject *pInletValue = Py4pdUtils_CreatePyObjFromPdArgs(s, ac, av);
 
-    if (x->objType == PY4PD_AUDIOOUTOBJ) {
-        x->pyObjArgs[0]->pValue = pInletValue;
-        x->audioError = 0;
+    if (x->ObjType == PY4PD_AUDIOOUTOBJ) {
+        x->PyObjArgs[0]->pValue = pInletValue;
+        x->AudioError = 0;
         return;
     }
 
-    if (x->objType > PY4PD_AUDIOINOBJ)
+    if (x->ObjType > PY4PD_AUDIOINOBJ)
         return;
 
     PyObject *pArgs = PyTuple_New(x->pArgsCount);
     PyTuple_SetItem(pArgs, 0, pInletValue);
 
     for (int i = 1; i < x->pArgsCount; i++) {
-        PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
-        Py_INCREF(x->pyObjArgs[i]->pValue); // This keep the reference.
+        PyTuple_SetItem(pArgs, i, x->PyObjArgs[i]->pValue);
+        Py_INCREF(x->PyObjArgs[i]->pValue); // This keep the reference.
     }
 
-    if (x->objType > PY4PD_VISOBJ) {
+    if (x->ObjType > PY4PD_VISOBJ) {
         Py_INCREF(pInletValue);
-        x->pyObjArgs[0]->objectsUsing = 0;
-        x->pyObjArgs[0]->pdout = 0;
-        x->pyObjArgs[0]->objOwner = x->objName;
-        x->pyObjArgs[0]->pValue = pInletValue;
+        x->PyObjArgs[0]->PdOutCount = 0;
+        x->PyObjArgs[0]->ObjOwner = x->ObjName;
+        x->PyObjArgs[0]->pValue = pInletValue;
         x->pArgTuple = pArgs;
         Py_INCREF(x->pArgTuple);
         return;
     }
 
-    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
+    Py4pdUtils_RunPy(x, pArgs, x->KwArgsDict);
     Py_DECREF(pArgs);
     PyErr_Clear();
     return;
@@ -268,18 +264,18 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av) {
 // =====================================
 void Py4pdLib_Bang(t_py *x) {
     if (x->pArgsCount != 0) {
-        pd_error(x, "[%s] Bang can be used only with no arguments Function.", x->objName->s_name);
+        pd_error(x, "[%s] Bang can be used only with no arguments Function.", x->ObjName->s_name);
         return;
     }
     if (x->pFunction == NULL) {
-        pd_error(x, "[%s] Function not defined", x->objName->s_name);
+        pd_error(x, "[%s] Function not defined", x->ObjName->s_name);
         return;
     }
-    if (x->audioOutput) {
+    if (x->AudioOut) {
         return;
     }
     PyObject *pArgs = PyTuple_New(0);
-    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
+    Py4pdUtils_RunPy(x, pArgs, x->KwArgsDict);
     Py_DECREF(pArgs);
 }
 
@@ -338,27 +334,27 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     t_class *object_PY4PD_Class = (t_class *)PyLong_AsVoidPtr(PY_objectClass);
     t_py *x = (t_py *)pd_new(object_PY4PD_Class);
 
-    x->visMode = 0;
-    x->pyObject = 1;
-    x->objArgsCount = argc;
-    x->stackLimit = 100;
-    x->canvas = canvas_getcurrent();
-    t_canvas *c = x->canvas;
+    x->VisMode = 0;
+    x->PyObject = 1;
+    x->ObjArgsCount = argc;
+    x->StackLimit = 100;
+    x->Canvas = canvas_getcurrent();
+    t_canvas *c = x->Canvas;
     t_symbol *patch_dir = canvas_getdir(c);
-    x->objName = gensym(objectName);
-    x->zoom = (int)x->canvas->gl_zoom;
-    x->ignoreOnNone = PyLong_AsLong(ignoreOnNone);
-    x->outPyPointer = PyLong_AsLong(pyOUT);
-    x->funcCalled = 1;
+    x->ObjName = gensym(objectName);
+    x->Zoom = (int)x->Canvas->gl_zoom;
+    x->IgnoreOnNone = PyLong_AsLong(ignoreOnNone);
+    x->OutPyPointer = PyLong_AsLong(pyOUT);
+    x->FuncCalled = 1;
     x->pFunction = pyFunction;
-    x->pdPatchPath = patch_dir; // set name of the home path
-    x->pkgPath = patch_dir;     // set name of the packages path
-    x->playable = PyLong_AsLong(playable);
+    x->PdPatchPath = patch_dir; // set name of the home path
+    x->PkgPath = patch_dir;     // set name of the packages path
+    x->Playable = PyLong_AsLong(playable);
     x->pFuncName = gensym(PyUnicode_AsUTF8(code->co_name));
     x->pScriptName = gensym(PyUnicode_AsUTF8(code->co_filename));
-    x->objType = PyLong_AsLong(Py_ObjType);
-    x->numInlets = code->co_argcount;
-    x->vectorSize = sys_getblksize();
+    x->ObjType = PyLong_AsLong(Py_ObjType);
+    x->nInlets = code->co_argcount;
+    x->VectorSize = sys_getblksize();
     Py4pdUtils_SetObjConfig(x);
     x->pArgsCount = 0;
     int parseArgsRight = Py4pdUtils_ParseLibraryArguments(x, code, &argc, &argv);
@@ -369,43 +365,43 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
 
-    if (x->objType == PY4PD_VISOBJ)
+    if (x->ObjType == PY4PD_VISOBJ)
         Py4pdUtils_CreatePicObj(x, PdDict, object_PY4PD_Class, argc, argv);
 
-    x->pdObjArgs = malloc(sizeof(t_atom) * argc);
+    x->PdObjArgs = malloc(sizeof(t_atom) * argc);
     for (int i = 0; i < argc; i++) {
-        x->pdObjArgs[i] = argv[i];
+        x->PdObjArgs[i] = argv[i];
     }
-    x->objArgsCount = argc;
-    if (x->pyObjArgs == NULL) {
-        x->pyObjArgs = malloc(sizeof(t_py4pd_pValue *) * x->pArgsCount);
+    x->ObjArgsCount = argc;
+    if (x->PyObjArgs == NULL) {
+        x->PyObjArgs = malloc(sizeof(t_py4pd_pValue *) * x->pArgsCount);
     }
-    int inlets = Py4pdUtils_CreateObjInlets(pyFunction, x, py4pdInlets_proxy_class, argc, argv);
+    int inlets = Py4pdUtils_CreateObjInlets(pyFunction, x, Py4pdInletsProxy, argc, argv);
     if (inlets != 0) {
-        free(x->pdObjArgs);
-        free(x->pyObjArgs);
+        free(x->PdObjArgs);
+        free(x->PyObjArgs);
         return NULL;
     }
 
     if (x->pArgsCount < 2) {
-        x->audioError = 0;
+        x->AudioError = 0;
     } else {
-        x->audioError = 1;
+        x->AudioError = 1;
     }
 
-    if (x->objType > 1)
+    if (x->ObjType > 1)
         x->pArgTuple = PyTuple_New(x->pArgsCount);
 
     if (!PyLong_AsLong(nooutlet)) {
-        if (x->objType != PY4PD_AUDIOOUTOBJ && x->objType != PY4PD_AUDIOOBJ)
-            x->mainOut = outlet_new(&x->obj, 0);
+        if (x->ObjType != PY4PD_AUDIOOUTOBJ && x->ObjType != PY4PD_AUDIOOBJ)
+            x->MainOut = outlet_new(&x->obj, 0);
         else {
-            x->mainOut = outlet_new(&x->obj, &s_signal);
-            x->numOutlets = 1;
+            x->MainOut = outlet_new(&x->obj, &s_signal);
+            x->nOutlets = 1;
         }
     }
     if (requireNofOutlets) {
-        if (x->numOutlets == -1) {
+        if (x->nOutlets == -1) {
             pd_error(NULL,
                      "[%s]: This function require that you set the number of "
                      "auxiliar outlets "
@@ -415,18 +411,18 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
             Py_DECREF(py4pd_capsule);
             return NULL;
         } else {
-            AuxOutlet = x->numOutlets;
+            AuxOutlet = x->nOutlets;
         }
     }
 
     if (AuxOutlet > 0) {
-        x->extrasOuts = (py4pdExtraOuts *)getbytes(AuxOutlet * sizeof(py4pdExtraOuts));
-        x->extrasOuts->outCount = AuxOutlet;
+        x->ExtrasOuts = (py4pdExtraOuts *)getbytes(AuxOutlet * sizeof(py4pdExtraOuts));
+        x->ExtrasOuts->outCount = AuxOutlet;
         t_atom defarg[AuxOutlet];
         t_atom *ap;
         py4pdExtraOuts *u;
         int i;
-        for (i = 0, u = x->extrasOuts, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
+        for (i = 0, u = x->ExtrasOuts, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
             u->u_outlet = outlet_new(&x->obj, &s_anything);
         }
     }
@@ -459,8 +455,8 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
 
     size_t totalLength;
     const char *helpFolder = "/help/";
-    if (py4pd->libraryFolder != NULL) {
-        totalLength = strlen(py4pd->libraryFolder->s_name) + strlen(helpFolder) + 1;
+    if (py4pd->LibraryFolder != NULL) {
+        totalLength = strlen(py4pd->LibraryFolder->s_name) + strlen(helpFolder) + 1;
     } else {
         pd_error(py4pd, "[py4pd] Library Folder is NULL, some help patches may "
                         "not be found");
@@ -473,7 +469,7 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
         return NULL;
     }
 
-    snprintf(helpFolderCHAR, totalLength, "%s", py4pd->libraryFolder->s_name);
+    snprintf(helpFolderCHAR, totalLength, "%s", py4pd->LibraryFolder->s_name);
     strcat(helpFolderCHAR, helpFolder);
 
     if (!PyArg_ParseTuple(args, "Os", &Function, &objectName)) {
@@ -600,7 +596,7 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     PyDict_SetItemString(nestedDict, "Type", Py_ObjType);
     Py_DECREF(Py_ObjType);
 
-    PyObject *Py_LibraryFolder = PyUnicode_FromString(py4pd->libraryFolder->s_name);
+    PyObject *Py_LibraryFolder = PyUnicode_FromString(py4pd->LibraryFolder->s_name);
     PyDict_SetItemString(nestedDict, "LibraryFolder", Py_LibraryFolder);
     Py_DECREF(Py_LibraryFolder);
 
@@ -689,7 +685,7 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
         class_addmethod(localClass, (t_method)Py4pdUtils_Click, gensym("click"), 0, 0);
         class_addmethod(localClass, (t_method)Py4pdAudio_Dsp, gensym("dsp"), A_CANT,
                         0); // add a method to a class
-        CLASS_MAINSIGNALIN(localClass, t_py, py4pdAudio);
+        CLASS_MAINSIGNALIN(localClass, t_py, Py4pdAudio);
     }
     // AUDIOOUT
     else if (objectType == PY4PD_AUDIOOUTOBJ) {
@@ -703,7 +699,7 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
         class_addmethod(localClass, (t_method)Py4pdUtils_Click, gensym("click"), 0, 0);
         class_addmethod(localClass, (t_method)Py4pdAudio_Dsp, gensym("dsp"), A_CANT,
                         0); // add a method to a class
-        CLASS_MAINSIGNALIN(localClass, t_py, py4pdAudio);
+        CLASS_MAINSIGNALIN(localClass, t_py, Py4pdAudio);
     } else {
         PyErr_SetString(PyExc_TypeError, "Object type not supported, check the spelling");
         return NULL;
@@ -727,11 +723,11 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     free(helpFolderCHAR);
 
     if (py_args != 0) {
-        py4pdInlets_proxy_class = class_new(gensym("_py4pdInlets_proxy"), 0, 0,
-                                            sizeof(t_py4pdInlet_proxy), CLASS_DEFAULT, 0);
-        class_addanything(py4pdInlets_proxy_class, Py4pdLib_ProxyAnything);
-        class_addmethod(py4pdInlets_proxy_class, (t_method)Py4pdLib_ProxyPointer,
-                        gensym("PyObject"), A_SYMBOL, A_POINTER, 0);
+        Py4pdInletsProxy = class_new(gensym("_py4pdInlets_proxy"), 0, 0, sizeof(t_py4pdInlet_proxy),
+                                     CLASS_DEFAULT, 0);
+        class_addanything(Py4pdInletsProxy, Py4pdLib_ProxyAnything);
+        class_addmethod(Py4pdInletsProxy, (t_method)Py4pdLib_ProxyPointer, gensym("PyObject"),
+                        A_SYMBOL, A_POINTER, 0);
     }
     if (added2pd_info == 1) {
         post("[py4pd]: Object {%s} added to PureData", objectName);

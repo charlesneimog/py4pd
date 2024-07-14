@@ -66,43 +66,42 @@ typedef struct _py4pdExtraOuts{
  * @brief Structure representing the values that are stored in the dictionary to be played for the player.
  */
 typedef struct {
-    int onset;
-    int size;
-    PyObject **values;
+    int Onset;
+    int Size;
+    PyObject **pValues;
 } KeyValuePair;
 
 typedef struct {
-    KeyValuePair* entries;
-    int size;
-    int lastOnset;
+    KeyValuePair* Entries;
+    int Size;
+    int LastOnset;
     int isSorted;
 } Dictionary;
 
 // pValues Objs 
 typedef struct _py4pd_pValue{ 
     PyObject* pValue;
-    int isPvalue;
-    int objectsUsing; 
-    t_symbol *objOwner;
-    int clearAfterUse;
-    int alreadyIncref;
-    int pdout;
+    int IspValue;
+    t_symbol *ObjOwner;
+    int ClearAfterUse;
+    int AlreadyIncref;
+    int PdOutCount;
 }t_py4pd_pValue;
 
 // Collect objects
 typedef struct pdcollectItem{
-    char*         key;
+    char*         Key;
     PyObject*     pList;
     PyObject*     pItem;
-    int           wasCleaned;
+    int           WasCleaned;
     int           aCumulative;
-    int           id;
+    int           Id;
 } pdcollectItem;
 
 typedef struct pdcollectHash{
-    pdcollectItem** items;
-    int size;
-    int count;
+    pdcollectItem** Itens;
+    int Size;
+    int Count;
 } pdcollectHash;
 
 // VIS OBJECTS 
@@ -116,44 +115,44 @@ typedef struct _py4pd_edit_proxy{
 // PY4PD 
 typedef struct _py { // It seems that all the objects are some kind of class.
     t_object            obj; // o objeto
-    t_glist             *glist;
-    t_canvas            *canvas; // pointer to the canvas
-    t_outlet            *mainOut; // outlet 1.
-    t_inlet             *mainIn; // intlet 1
+    t_glist             *Glist;
+    t_canvas            *Canvas; // pointer to the canvas
+    t_outlet            *MainOut; // outlet 1.
+    t_inlet             *MainIn; // intlet 1
 
     // TESTING THINGS
-    t_py4pd_pValue      **pyObjArgs; // Obj Variables Arguments 
-    pdcollectHash       *pdcollect; // hash table to store the objects
-    t_int               recursiveCalls; // check the number of recursive calls
-    t_int               stackLimit; // check the number of recursive calls
-    t_clock             *recursiveClock; // clock to check the number of recursive calls 
-    PyObject            *recursiveObject; // object to check the number of recursive calls
-    t_atom              *pdObjArgs;
-    t_int               objArgsCount;
+    t_py4pd_pValue      **PyObjArgs; // Obj Variables Arguments 
+    pdcollectHash       *PdCollect; // hash table to store the objects
+    t_int               RecursiveCalls; // check the number of recursive calls
+    t_int               StackLimit; // check the number of recursive calls
+    t_clock             *RecursiveClock; // clock to check the number of recursive calls 
+    PyObject            *RecursiveObject; // object to check the number of recursive calls
+    t_atom              *PdObjArgs;
+    t_int               ObjArgsCount;
      
     // ===========
-    t_int                visMode; // is vis object
-    t_int                funcCalled; // flag to check if the set function was called
+    t_int                VisMode; // is vis object
+    t_int                FuncCalled; // flag to check if the set function was called
     t_int                pArgsCount; // number of arguments
-    t_int                outPyPointer; // flag to check if is to output the python pointer
-    t_int                use_pArgs;
-    t_int                use_pKwargs;
+    t_int                OutPyPointer; // flag to check if is to output the python pointer
+    t_int                UsepArgs;
+    t_int                UsepKwargs;
     
     // Player 
-    t_clock              *playerClock;
-    Dictionary           *playerDict;
-    t_int                 playerRunning;
-    t_int                 msOnset;
-    t_int                 playable;
+    t_clock              *PlayerClock;
+    Dictionary           *PlayerDict;
+    t_int                 PlayerRunning;
+    t_int                 MsOnset;
+    t_int                 Playable;
 
     // Library
-    t_int                   isLib; // flag to check if is to use python library
-    t_int                   pyObject;
-    t_int                   objType;
-    t_int                   ignoreOnNone;
-    t_symbol                *objName; // object name
-    PyObject                *argsDict; // parameters
-    struct Py4pdNewObject   *objClass; // object class
+    t_int                   IsLib; // flag to check if is to use python library
+    t_int                   PyObject;
+    t_int                   ObjType;
+    t_int                   IgnoreOnNone;
+    t_symbol                *ObjName; // object name
+    PyObject                *ArgsDict; // parameters
+    struct Py4pdNewObject   *ObjClass; // object class
 
     // == PYTHON
     PyThreadState       *pSubInterpState;
@@ -162,50 +161,50 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject            *pModule; // script name
     PyObject            *pFunction; // function name
     // PyObject            *showFunction; // TODO: FUTURE function to show the function
-    PyObject            *kwargsDict; // arguments
+    PyObject            *KwArgsDict; // arguments
     PyObject            *pObjVarDict;
     PyObject            *pArgTuple;
     t_symbol            *pFuncName; // function_name; // function name
     t_symbol            *pScriptName; // script name or pathname
 
     // == AUDIO AND NUMPY
-    t_int               audioOutput; // flag to check if is to use audio output
-    t_int               pipGlobalInstall;
-    t_int               audioInput; // flag to check if is to use audio input
-    t_int               useNumpyArray; // flag to check if is to use numpy array in audioInput
-    t_int               numpyImported; // flag to check if numpy was imported
-    t_float             py4pdAudio; // audio to fe used in CLASSMAINSIGIN
-    t_int               vectorSize; // vector size
+    t_int               AudioError; // To avoid multiple error messages
+    t_int               AudioOut; // flag to check if is to use audio output
+    t_int               AudioIn; // flag to check if is to use audio input
+    t_int               PipGlobalInstall;
+    t_int               UseNumpy; // flag to check if is to use numpy array in audioInput
+    t_int               NumpyImported; // flag to check if numpy was imported
+    t_float             Py4pdAudio; // audio to fe used in CLASSMAINSIGIN
+    t_int               VectorSize; // vector size
     t_int               nChs; // number of channels
-    t_int               audioError; // To avoid multiple error messages
 
     // Pic Object
-    t_int               zoom; // zoom of the patch
-    t_int               width; // width of image
-    t_int               height; // height of image
-    t_int               edit; // patch is in edit mode or not
-    t_int               defImg; // flag to check if the object was initialized
-    t_int               numInlets; // number of inlets
-    t_int               numOutlets; // number of outlets
-    t_int               mouseIsOver; // flag to check if the mouse is over the object
-    t_symbol            *picFilePath;
-    t_symbol            *canvasName; // name of the tcl variable for x
-    char                *imageBase64; // image data in base64
-    t_int               drawIOlets; // flag to check if the inlets and outlets were created
+    t_int               Zoom; // zoom of the patch
+    t_int               Width; // width of image
+    t_int               Height; // height of image
+    t_int               Edit; // patch is in edit mode or not
+    t_int               DefImg; // flag to check if the object was initialized
+    t_int               nInlets; // number of inlets
+    t_int               nOutlets; // number of outlets
+    t_int               MouseIsOver; // flag to check if the mouse is over the object
+    t_symbol            *PicFilePath;
+    t_symbol            *CanvasName; // name of the tcl variable for x
+    char                *ImageBase64; // image data in base64
+    t_int               DrawIOlets; // flag to check if the inlets and outlets were created
 
     // Paths
-    t_symbol            *pkgPath; // packages path, where the packages are located
-    t_symbol            *condaPath; // Conda path, where the conda site-packages are located
-    t_symbol            *pdPatchPath; // where the patch is located
-    t_symbol            *py4pdPath; // where py4pd object is located
-    t_symbol            *tempPath; // temp path located in ~/.py4pd/, always is deleted when py4pd is closed
-    t_symbol            *libraryFolder; // where the library is located
+    t_symbol            *PkgPath; // packages path, where the packages are located
+    t_symbol            *CondaPath; // Conda path, where the conda site-packages are located
+    t_symbol            *PdPatchPath; // where the patch is located
+    t_symbol            *Py4pdPath; // where py4pd object is located
+    t_symbol            *TempPath; // temp path located in ~/.py4pd/, always is deleted when py4pd is closed
+    t_symbol            *LibraryFolder; // where the library is located
 
     // script_name; // script name or pathname
-    t_symbol            *editorName; // editor name
-    t_symbol            *editorCommand; // editor personalized command
-    py4pdExtraOuts      *extrasOuts; // outlets
-    t_py4pd_edit_proxy  *x_proxy; // para lidar com inlets auxiliares
+    t_symbol            *EditorName; // editor name
+    t_symbol            *EditorCommand; // editor personalized command
+    py4pdExtraOuts      *ExtrasOuts; // outlets
+    t_py4pd_edit_proxy  *Proxy; // para lidar com inlets auxiliares
 
 }t_py;
 

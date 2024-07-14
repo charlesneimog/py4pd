@@ -144,7 +144,7 @@ void Py4pdUtils_FromSymbolSymbol(t_py *x, t_symbol *s, t_outlet *outlet) {
  */
 int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, t_atom **argvPtr) {
     int argsNumberDefined = 0;
-    x->numOutlets = -1;
+    x->nOutlets = -1;
     x->nChs = 1;
 
     int argc = *argcPtr;
@@ -175,7 +175,7 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
                 }
             } else if (strcmp(argv[i].a_w.w_symbol->s_name, "-outn") == 0) {
                 if (argv[i + 1].a_type == A_FLOAT) {
-                    x->numOutlets = atom_getintarg(i + 1, argc, argv);
+                    x->nOutlets = atom_getintarg(i + 1, argc, argv);
                     // remove -outn and the number of outlets from the arguments
                     // list
                     for (j = i; j < argc; j++) {
@@ -184,8 +184,8 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
                         // *argcPtr = *argcPtr - 2;
                     }
                 } else {
-                    x->numOutlets = -1; // -1 means that the number of outlets
-                                        // is not defined
+                    x->nOutlets = -1; // -1 means that the number of outlets
+                                      // is not defined
                 }
             } else if (strcmp(argv[i].a_w.w_symbol->s_name, "-ch") == 0 ||
                        strcmp(argv[i].a_w.w_symbol->s_name, "-channels") == 0) {
@@ -206,13 +206,13 @@ int Py4pdUtils_ParseLibraryArguments(t_py *x, PyCodeObject *code, int *argcPtr, 
                      "[%s] this function uses *args, "
                      "you need to specify the number of arguments "
                      "using -n_args (-a for short) {number}",
-                     x->objName->s_name);
+                     x->ObjName->s_name);
             return 0;
         }
-        x->use_pArgs = 1;
+        x->UsepArgs = 1;
     }
     if (code->co_flags & CO_VARKEYWORDS) {
-        x->use_pKwargs = 1;
+        x->UsepKwargs = 1;
     }
     if (code->co_argcount != 0) {
         if (x->pArgsCount == 0) {
@@ -236,23 +236,22 @@ int Py4pdUtils_CreateObjInlets(PyObject *function, t_py *x, t_class *py4pdInlets
         PyObject_GetAttrString(function, "__defaults__"); // TODO:, WHERE CLEAR THIS?
     int defaultsCount = PyTuple_Size(defaults);
 
-    if (x->use_pArgs && defaultsCount > 0) {
+    if (x->UsepArgs && defaultsCount > 0) {
         pd_error(x, "[py4pd] You can't use *args and defaults at the same time");
         return -1;
     }
     int indexWhereStartDefaults = x->pArgsCount - defaultsCount;
 
     t_py4pd_pValue *PyPtrValueMain = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
-    PyPtrValueMain->objectsUsing = 0;
-    PyPtrValueMain->pdout = 0;
-    PyPtrValueMain->objOwner = x->objName;
+    PyPtrValueMain->PdOutCount = 0;
+    PyPtrValueMain->ObjOwner = x->ObjName;
     if (indexWhereStartDefaults == 0) {
         PyPtrValueMain->pValue = PyTuple_GetItem(defaults, 0);
-        x->pyObjArgs[0] = PyPtrValueMain;
+        x->PyObjArgs[0] = PyPtrValueMain;
     } else {
         Py_INCREF(Py_None);
         PyPtrValueMain->pValue = Py_None;
-        x->pyObjArgs[0] = PyPtrValueMain;
+        x->PyObjArgs[0] = PyPtrValueMain;
     }
 
     if (pyFuncArgs != 0) {
@@ -264,16 +263,15 @@ int Py4pdUtils_CreateObjInlets(PyObject *function, t_py *x, t_class *py4pdInlets
             y->inletIndex = i + 1;
             inlet_new((t_object *)x, (t_pd *)y, 0, 0);
             t_py4pd_pValue *PyPtrValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
-            PyPtrValue->objectsUsing = 0;
-            PyPtrValue->pdout = 0;
-            PyPtrValue->objOwner = x->objName;
+            PyPtrValue->PdOutCount = 0;
+            PyPtrValue->ObjOwner = x->ObjName;
             if (i + 1 >= indexWhereStartDefaults) {
                 PyPtrValue->pValue = PyTuple_GetItem(defaults, (i + 1) - indexWhereStartDefaults);
             } else {
                 PyPtrValue->pValue = Py_None;
                 Py_INCREF(Py_None);
             }
-            x->pyObjArgs[i + 1] = PyPtrValue;
+            x->PyObjArgs[i + 1] = PyPtrValue;
         }
         int argNumbers = x->pArgsCount;
 
@@ -282,9 +280,9 @@ int Py4pdUtils_CreateObjInlets(PyObject *function, t_py *x, t_class *py4pdInlets
                 if (argv[i].a_type == A_FLOAT) {
                     int isInt = atom_getintarg(i, argc, argv) == atom_getfloatarg(i, argc, argv);
                     if (isInt) {
-                        x->pyObjArgs[i]->pValue = PyLong_FromLong(atom_getfloatarg(i, argc, argv));
+                        x->PyObjArgs[i]->pValue = PyLong_FromLong(atom_getfloatarg(i, argc, argv));
                     } else {
-                        x->pyObjArgs[i]->pValue =
+                        x->PyObjArgs[i]->pValue =
                             PyFloat_FromDouble(atom_getfloatarg(i, argc, argv));
                     }
                 }
@@ -292,18 +290,18 @@ int Py4pdUtils_CreateObjInlets(PyObject *function, t_py *x, t_class *py4pdInlets
                 else if (argv[i].a_type == A_SYMBOL) {
                     if (strcmp(atom_getsymbolarg(i, argc, argv)->s_name, "None") == 0) {
                         Py_INCREF(Py_None);
-                        x->pyObjArgs[i]->pValue = Py_None;
+                        x->PyObjArgs[i]->pValue = Py_None;
                     } else {
-                        x->pyObjArgs[i]->pValue =
+                        x->PyObjArgs[i]->pValue =
                             PyUnicode_FromString(atom_getsymbolarg(i, argc, argv)->s_name);
                     }
-                } else if (x->pyObjArgs[i]->pValue == NULL) {
+                } else if (x->PyObjArgs[i]->pValue == NULL) {
                     Py_INCREF(Py_None);
-                    x->pyObjArgs[i]->pValue = Py_None;
+                    x->PyObjArgs[i]->pValue = Py_None;
                 }
-            } else if (x->pyObjArgs[i]->pValue == NULL) {
+            } else if (x->PyObjArgs[i]->pValue == NULL) {
                 Py_INCREF(Py_None);
-                x->pyObjArgs[i]->pValue = Py_None;
+                x->PyObjArgs[i]->pValue = Py_None;
             }
         }
     }
@@ -357,16 +355,15 @@ void Py4pdUtils_ExtraInletAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t
                                PyUnicode_FromString(atom_getsymbolarg(i, ac, av)->s_name));
         }
     }
-    if (!py4pd->pyObjArgs[x->inletIndex]->pdout)
-        Py_DECREF(py4pd->pyObjArgs[x->inletIndex]->pValue);
+    if (!py4pd->PyObjArgs[x->inletIndex]->PdOutCount)
+        Py_DECREF(py4pd->PyObjArgs[x->inletIndex]->pValue);
 
-    py4pd->pyObjArgs[x->inletIndex]->objectsUsing = 0;
-    py4pd->pyObjArgs[x->inletIndex]->pdout = 0;
-    py4pd->pyObjArgs[x->inletIndex]->objOwner = py4pd->objName;
-    py4pd->pyObjArgs[x->inletIndex]->pValue = pyInletValue;
+    py4pd->PyObjArgs[x->inletIndex]->PdOutCount = 0;
+    py4pd->PyObjArgs[x->inletIndex]->ObjOwner = py4pd->ObjName;
+    py4pd->PyObjArgs[x->inletIndex]->pValue = pyInletValue;
 
-    if (py4pd->objType == PY4PD_AUDIOOBJ || py4pd->objType == PY4PD_AUDIOINOBJ) {
-        py4pd->audioError = 0;
+    if (py4pd->ObjType == PY4PD_AUDIOOBJ || py4pd->ObjType == PY4PD_AUDIOINOBJ) {
+        py4pd->AudioError = 0;
         return;
     }
 
@@ -440,13 +437,13 @@ void Py4pdUtils_ExtraInletPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_gpointer
     t_py *py4pd = (t_py *)x->p_master;
     t_py4pd_pValue *pArg;
     pArg = (t_py4pd_pValue *)gp;
-    if (!pArg->pdout)
-        Py_DECREF(py4pd->pyObjArgs[x->inletIndex]->pValue);
+    if (!pArg->PdOutCount)
+        Py_DECREF(py4pd->PyObjArgs[x->inletIndex]->pValue);
 
-    Py4pdUtils_CopyPy4pdValueStruct(pArg, py4pd->pyObjArgs[x->inletIndex]);
+    Py4pdUtils_CopyPy4pdValueStruct(pArg, py4pd->PyObjArgs[x->inletIndex]);
 
-    if (!pArg->pdout)
-        Py_INCREF(py4pd->pyObjArgs[x->inletIndex]->pValue);
+    if (!pArg->PdOutCount)
+        Py_INCREF(py4pd->PyObjArgs[x->inletIndex]->pValue);
 
     return;
 }
@@ -513,9 +510,8 @@ PyObject *Py4pdUtils_PointerToPyObject(PyObject *p) {
 // =====================================================================
 void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue *src, t_py4pd_pValue *dest) {
     dest->pValue = src->pValue;
-    dest->pdout = src->pdout;
-    dest->objOwner = src->objOwner;
-    dest->objectsUsing = src->objectsUsing;
+    dest->PdOutCount = src->PdOutCount;
+    dest->ObjOwner = src->ObjOwner;
 }
 
 // ====================================================
@@ -699,32 +695,32 @@ void Py4pdUtils_FindObjFolder(t_py *x) {
         snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, "py4pd");
 #endif
         if (access(library_path, F_OK) != -1) {
-            x->py4pdPath = gensym(library_path);
+            x->Py4pdPath = gensym(library_path);
             return;
         }
     }
-    pathelem = canvas_getdir(x->canvas)->s_name;
+    pathelem = canvas_getdir(x->Canvas)->s_name;
     snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, "py4pd");
     if (access(library_path, F_OK) != -1) {
-        x->py4pdPath = gensym(library_path);
-        size_t strLen = strlen(x->py4pdPath->s_name);
-        if (strLen > 0 && (x->py4pdPath->s_name)[strLen - 1] != '/') {
+        x->Py4pdPath = gensym(library_path);
+        size_t strLen = strlen(x->Py4pdPath->s_name);
+        if (strLen > 0 && (x->Py4pdPath->s_name)[strLen - 1] != '/') {
             char *new_path = malloc(strLen + 2);
-            Py4pdUtils_Strlcpy(new_path, x->py4pdPath->s_name, strLen + 1);
+            Py4pdUtils_Strlcpy(new_path, x->Py4pdPath->s_name, strLen + 1);
             Py4pdUtils_Strlcat(new_path, "/", strLen + 2);
-            x->py4pdPath = gensym(new_path);
+            x->Py4pdPath = gensym(new_path);
             free(new_path);
         }
         return;
     }
 
-    x->py4pdPath = canvas_getdir(x->canvas);
-    size_t strLen = strlen(x->py4pdPath->s_name);
-    if (strLen > 0 && (x->py4pdPath->s_name)[strLen - 1] != '/') {
+    x->Py4pdPath = canvas_getdir(x->Canvas);
+    size_t strLen = strlen(x->Py4pdPath->s_name);
+    if (strLen > 0 && (x->Py4pdPath->s_name)[strLen - 1] != '/') {
         char *new_path = malloc(strLen + 2);
-        Py4pdUtils_Strlcpy(new_path, x->py4pdPath->s_name, strLen + 1);
+        Py4pdUtils_Strlcpy(new_path, x->Py4pdPath->s_name, strLen + 1);
         Py4pdUtils_Strlcat(new_path, "/", strLen + 2);
-        x->py4pdPath = gensym(new_path);
+        x->Py4pdPath = gensym(new_path);
         free(new_path);
     }
     return;
@@ -765,7 +761,7 @@ void Py4pdUtils_CreateTempFolder(t_py *x) {
     char *temp_folder = (char *)malloc(256 * sizeof(char));
     memset(temp_folder, 0, 256);
     sprintf(temp_folder, "%s/.py4pd/", home);
-    x->tempPath = gensym(temp_folder);
+    x->TempPath = gensym(temp_folder);
     if (access(temp_folder, F_OK) == -1) {
         char *command = (char *)malloc(256 * sizeof(char));
         memset(command, 0, 256);
@@ -840,13 +836,13 @@ void Py4pdUtils_Click(t_py *x) {
         Py4pdUtils_GetEditorCommand(x, command, line);
         Py4pdUtils_ExecuteSystemCommand(command, 1);
     } else {
-        if (x->objClass == NULL) {
+        if (x->ObjClass == NULL) {
             pd_error(NULL, "Any Python function or class was defined");
             return;
         } else {
             PyObject *pFunction;
             Py4pdNewObj *pObjSelf;
-            pObjSelf = (Py4pdNewObj *)x->objClass;
+            pObjSelf = (Py4pdNewObj *)x->ObjClass;
             int pFuncDefined = 0;
             if (pObjSelf->pFuncFloat != NULL) {
                 pFunction = pObjSelf->pFuncFloat;
@@ -936,12 +932,11 @@ int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
     pValue = PyObject_Call(x->pFunction, pArgs, pKwargs);
 
     t_py4pd_pValue *PyPtrValue = NULL;
-    if (x->objType < 3) {
+    if (x->ObjType < 3) {
         PyPtrValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
         PyPtrValue->pValue = pValue;
-        PyPtrValue->objectsUsing = 0;
-        PyPtrValue->pdout = 0;
-        PyPtrValue->objOwner = x->objName;
+        PyPtrValue->PdOutCount = 0;
+        PyPtrValue->ObjOwner = x->ObjName;
     }
 
     if (prev_obj_exists == 1 && pValue != NULL) {
@@ -955,14 +950,14 @@ int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
         }
     }
 
-    if (x->audioOutput == 1) {
-        if (x->objType < 3) {
+    if (x->AudioOut == 1) {
+        if (x->ObjType < 3) {
             free(PyPtrValue);
         }
         return -1;
     }
-    if (pValue != NULL && (x->objType < 3)) {
-        Py4pdUtils_ConvertToPd(x, PyPtrValue, x->mainOut);
+    if (pValue != NULL && (x->ObjType < 3)) {
+        Py4pdUtils_ConvertToPd(x, PyPtrValue, x->MainOut);
         Py_DECREF(pValue);
         Py_XDECREF(MainModule);
         free(PyPtrValue);
@@ -976,13 +971,13 @@ int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
         return 0;
     }
 
-    else if (x->objType > 2) {
+    else if (x->ObjType > 2) {
         Py_XDECREF(MainModule);
         free(PyPtrValue);
         PyErr_Clear();
         return 0;
     } else {
-        pd_error(x, "[%s] Unknown error, please report", x->objName->s_name);
+        pd_error(x, "[%s] Unknown error, please report", x->ObjName->s_name);
         PyErr_Clear();
         return -1;
     }
@@ -1153,26 +1148,26 @@ void *Py4pdUtils_FreeObj(t_py *x) {
         sprintf(command, "cmd /C del /Q /S %s*.*", x->tempPath->s_name);
         (void)Py4pdUtils_ExecuteSystemCommand(command, 0);
 #else
-        sprintf(command, "rm -rf %s", x->tempPath->s_name);
+        sprintf(command, "rm -rf %s", x->TempPath->s_name);
         (void)Py4pdUtils_ExecuteSystemCommand(command, 0);
 #endif
     }
-    if (x->visMode != 0)
+    if (x->VisMode != 0)
         Py4pdPic_Free(x);
 
-    if (x->pdcollect != NULL)
-        Py4pdMod_FreePdcollectHash(x->pdcollect);
+    if (x->PdCollect != NULL)
+        Py4pdMod_FreePdcollectHash(x->PdCollect);
 
-    if (x->pArgsCount > 1 && x->pyObjArgs != NULL) {
+    if (x->pArgsCount > 1 && x->PyObjArgs != NULL) {
         for (int i = 1; i < x->pArgsCount; i++) {
-            if (!x->pyObjArgs[i]->pdout)
-                Py_DECREF(x->pyObjArgs[i]->pValue);
-            free(x->pyObjArgs[i]);
+            if (!x->PyObjArgs[i]->PdOutCount)
+                Py_DECREF(x->PyObjArgs[i]->pValue);
+            free(x->PyObjArgs[i]);
         }
-        free(x->pyObjArgs);
+        free(x->PyObjArgs);
     }
-    if (x->pdObjArgs != NULL) {
-        free(x->pdObjArgs);
+    if (x->PdObjArgs != NULL) {
+        free(x->PdObjArgs);
     }
     return NULL;
 }
@@ -1195,8 +1190,8 @@ inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct, t_out
         return NULL;
     }
 
-    if (x->outPyPointer) {
-        if (pValue == Py_None && x->ignoreOnNone == 1) {
+    if (x->OutPyPointer) {
+        if (pValue == Py_None && x->IgnoreOnNone == 1) {
             return NULL;
         }
         t_atom args[2];
@@ -1428,16 +1423,16 @@ void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
                 // remove the '-' from the name of the editor
                 const char *editor = py4pdArgs->s_name;
                 editor++;
-                x->editorName = gensym(editor);
+                x->EditorName = gensym(editor);
                 int j;
                 for (j = i; j < argc; j++) {
                     argv[j] = argv[j + 1];
                 }
                 argc--;
             } else if (py4pdArgs == gensym("-audioin")) {
-                x->audioInput = 1;
-                x->audioOutput = 0;
-                x->useNumpyArray = 0;
+                x->AudioIn = 1;
+                x->AudioOut = 0;
+                x->UseNumpy = 0;
                 int j;
                 for (j = i; j < argc; j++) {
                     argv[j] = argv[j + 1];
@@ -1445,20 +1440,20 @@ void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
                 argc--;
             } else if (py4pdArgs == gensym("-audioout")) {
                 // post("[py4pd] Audio Outlets enabled");
-                x->audioOutput = 1;
-                x->audioInput = 0;
-                x->useNumpyArray = 0;
-                x->mainOut = outlet_new(&x->obj, gensym("signal")); // create a signal outlet
+                x->AudioOut = 1;
+                x->AudioIn = 0;
+                x->UseNumpy = 0;
+                x->MainOut = outlet_new(&x->obj, gensym("signal")); // create a signal outlet
                 int j;
                 for (j = i; j < argc; j++) {
                     argv[j] = argv[j + 1];
                 }
                 argc--;
             } else if (py4pdArgs == gensym("-audio")) {
-                x->audioInput = 1;
-                x->audioOutput = 1;
-                x->mainOut = outlet_new(&x->obj, gensym("signal")); // create a signal outlet
-                x->useNumpyArray = 0;
+                x->AudioIn = 1;
+                x->AudioOut = 1;
+                x->MainOut = outlet_new(&x->obj, gensym("signal")); // create a signal outlet
+                x->UseNumpy = 0;
                 int j;
                 for (j = i; j < argc; j++) {
                     argv[j] = argv[j + 1];
@@ -1467,8 +1462,8 @@ void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
             }
         }
     }
-    if (x->audioOutput == 0) {
-        x->mainOut = outlet_new(&x->obj,
+    if (x->AudioOut == 0) {
+        x->MainOut = outlet_new(&x->obj,
                                 0); // cria um outlet caso o objeto nao contenha audio
     }
 }
@@ -1484,20 +1479,20 @@ void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
 void Py4pdUtils_SetObjConfig(t_py *x) {
     int folderLen = strlen("/py-modules/") + 1;
     char *PADRAO_packages_path =
-        (char *)malloc(sizeof(char) * (strlen(x->pdPatchPath->s_name) + folderLen)); //
-    snprintf(PADRAO_packages_path, strlen(x->pdPatchPath->s_name) + folderLen, "%s/py-modules/",
-             x->pdPatchPath->s_name);
-    x->condaPath = gensym(PADRAO_packages_path);
-    if (x->editorName == NULL) {
+        (char *)malloc(sizeof(char) * (strlen(x->PdPatchPath->s_name) + folderLen)); //
+    snprintf(PADRAO_packages_path, strlen(x->PdPatchPath->s_name) + folderLen, "%s/py-modules/",
+             x->PdPatchPath->s_name);
+    x->CondaPath = gensym(PADRAO_packages_path);
+    if (x->EditorName == NULL) {
         const char *editor = PY4PD_EDITOR;
-        x->editorName = gensym(editor);
+        x->EditorName = gensym(editor);
     }
-    if (x->py4pdPath == NULL) {
+    if (x->Py4pdPath == NULL) {
         Py4pdUtils_FindObjFolder(x);
     }
 
     char config_path[MAXPDSTRING];
-    snprintf(config_path, sizeof(config_path), "%s/py4pd.cfg", x->py4pdPath->s_name);
+    snprintf(config_path, sizeof(config_path), "%s/py4pd.cfg", x->Py4pdPath->s_name);
     if (access(config_path, F_OK) != -1) {
         FILE *file = fopen(config_path, "r");
         char line[256];
@@ -1512,20 +1507,20 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
                     }
                     if (packages_path[0] == '.') {
                         char *new_packages_path =
-                            (char *)malloc(sizeof(char) * (strlen(x->pdPatchPath->s_name) +
+                            (char *)malloc(sizeof(char) * (strlen(x->PdPatchPath->s_name) +
                                                            strlen(packages_path) + 1)); //
-                        Py4pdUtils_Strlcpy(new_packages_path, x->pdPatchPath->s_name,
-                                           strlen(x->pdPatchPath->s_name) + 1);
+                        Py4pdUtils_Strlcpy(new_packages_path, x->PdPatchPath->s_name,
+                                           strlen(x->PdPatchPath->s_name) + 1);
                         Py4pdUtils_Strlcat(new_packages_path, packages_path + 1,
                                            strlen(packages_path) + 1);
                         Py4pdUtils_RemoveChar(new_packages_path, '\n');
                         Py4pdUtils_RemoveChar(new_packages_path, '\r');
-                        x->condaPath = gensym(new_packages_path);
+                        x->CondaPath = gensym(new_packages_path);
                         free(new_packages_path);
                     } else {
                         Py4pdUtils_RemoveChar(packages_path, '\n');
                         Py4pdUtils_RemoveChar(packages_path, '\r');
-                        x->condaPath = gensym(packages_path);
+                        x->CondaPath = gensym(packages_path);
                     }
                 }
                 free(packages_path);
@@ -1541,7 +1536,7 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
                 Py4pdUtils_RemoveChar(editor, '\n');
                 Py4pdUtils_RemoveChar(editor, '\r');
                 Py4pdUtils_RemoveChar(editor, ' ');
-                x->editorName = gensym(editor);
+                x->EditorName = gensym(editor);
                 free(editor);
             } else if (strstr(line, "editor_command =") != NULL) {
                 char *editor_command = (char *)malloc(
@@ -1550,7 +1545,7 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
                                    strlen(line) - strlen("editor_command = ") + 1);
                 Py4pdUtils_RemoveChar(editor_command, '\n');
                 Py4pdUtils_RemoveChar(editor_command, '\r');
-                x->editorCommand = gensym(editor_command);
+                x->EditorCommand = gensym(editor_command);
                 free(editor_command);
             }
         }
@@ -1564,37 +1559,37 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
 // ============================================
 void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
     char pyScripts_folder[MAXPDSTRING];
-    int ret = snprintf(pyScripts_folder, MAXPDSTRING, "%sResources/py4pd", x->py4pdPath->s_name);
+    int ret = snprintf(pyScripts_folder, MAXPDSTRING, "%sResources/py4pd", x->Py4pdPath->s_name);
     if (ret < 0) {
         pd_error(x, "[py4pd] Error when adding py4pd path to sys.path");
         return;
     }
     char pyGlobal_packages[MAXPDSTRING];
-    ret = snprintf(pyGlobal_packages, MAXPDSTRING, "%sResources/py-modules", x->py4pdPath->s_name);
+    ret = snprintf(pyGlobal_packages, MAXPDSTRING, "%sResources/py-modules", x->Py4pdPath->s_name);
     if (ret < 0) {
         pd_error(x, "[py4pd] Error when adding py4pd path to sys.path");
         return;
     }
 
-    PyObject *home_path = PyUnicode_FromString(x->pdPatchPath->s_name);
-    PyObject *py4pdPath = PyUnicode_FromString(x->py4pdPath->s_name);
-    PyObject *site_package = PyUnicode_FromString(x->pkgPath->s_name);
-    PyObject *conda_packages = PyUnicode_FromString(x->condaPath->s_name);
-    PyObject *py4pdScripts = PyUnicode_FromString(pyScripts_folder);
-    PyObject *py4pdGlobalPackages = PyUnicode_FromString(pyGlobal_packages);
-    PyObject *sys_path = PySys_GetObject("path");
-    PyList_Insert(sys_path, 0, home_path);
-    PyList_Insert(sys_path, 0, py4pdPath);
-    PyList_Insert(sys_path, 0, site_package);
-    PyList_Insert(sys_path, 0, conda_packages);
-    PyList_Insert(sys_path, 0, py4pdScripts);
-    PyList_Insert(sys_path, 0, py4pdGlobalPackages);
-    Py_DECREF(home_path);
-    Py_DECREF(py4pdPath);
-    Py_DECREF(site_package);
-    Py_DECREF(conda_packages);
-    Py_DECREF(py4pdScripts);
-    Py_DECREF(py4pdGlobalPackages);
+    PyObject *HomePath = PyUnicode_FromString(x->PdPatchPath->s_name);
+    PyObject *Py4pdPath = PyUnicode_FromString(x->Py4pdPath->s_name);
+    PyObject *SitePkg = PyUnicode_FromString(x->PkgPath->s_name);
+    PyObject *CondaPkg = PyUnicode_FromString(x->CondaPath->s_name);
+    PyObject *Py4pdScripts = PyUnicode_FromString(pyScripts_folder);
+    PyObject *Py4pdGlobalPkg = PyUnicode_FromString(pyGlobal_packages);
+    PyObject *SysPath = PySys_GetObject("path");
+    PyList_Insert(SysPath, 0, HomePath);
+    PyList_Insert(SysPath, 0, Py4pdPath);
+    PyList_Insert(SysPath, 0, SitePkg);
+    PyList_Insert(SysPath, 0, CondaPkg);
+    PyList_Insert(SysPath, 0, Py4pdScripts);
+    PyList_Insert(SysPath, 0, Py4pdGlobalPkg);
+    Py_DECREF(HomePath);
+    Py_DECREF(Py4pdPath);
+    Py_DECREF(SitePkg);
+    Py_DECREF(CondaPkg);
+    Py_DECREF(Py4pdScripts);
+    Py_DECREF(Py4pdGlobalPkg);
     return;
 }
 
@@ -1638,14 +1633,14 @@ int Py4pdUtils_CheckNumpyInstall(t_py *x) {
  * @return the commandline to open the editor
  */
 void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
-    const char *editor = x->editorName->s_name;
+    const char *editor = x->EditorName->s_name;
     const char *filename = x->pScriptName->s_name;
-    const char *home = x->pdPatchPath->s_name;
+    const char *home = x->PdPatchPath->s_name;
     char completePath[MAXPDSTRING];
 
-    if (x->pyObject) {
+    if (x->PyObject) {
         sprintf(completePath, "'%s'", filename);
-    } else if (x->isLib) {
+    } else if (x->IsLib) {
         PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(x->pFunction);
         t_symbol *pScriptName = gensym(PyUnicode_AsUTF8(code->co_filename));
         sprintf(completePath, "'%s'", pScriptName->s_name);
@@ -1653,8 +1648,8 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
         sprintf(completePath, "'%s%s.py'", home, filename);
     }
 
-    if (x->editorCommand) {
-        sprintf(command, x->editorCommand->s_name, completePath, line);
+    if (x->EditorCommand) {
+        sprintf(command, x->EditorCommand->s_name, completePath, line);
         return;
     }
 
@@ -1756,7 +1751,7 @@ void *Py4pdUtils_CreateSubInterpreter(void *arg) {
     // run function
     struct Py4pd_ObjSubInterp *objSubInterp = arg;
     t_py *x = objSubInterp->x;
-    x->funcCalled = 0;
+    x->FuncCalled = 0;
     return 0;
 }
 
@@ -1854,25 +1849,25 @@ size_t Py4pdUtils_Strlcat(char *dst, const char *src, size_t size) {
 // =====================================================================
 void Py4pdUtils_CreatePicObj(t_py *x, PyObject *PdDict, t_class *object_PY4PD_Class, int argc,
                              t_atom *argv) {
-    t_canvas *c = x->canvas;
+    t_canvas *c = x->Canvas;
     PyObject *pyLibraryFolder = PyDict_GetItemString(PdDict, "LibraryFolder");
     t_symbol *py4pdArgs = gensym("-canvas");
     PyObject *py4pdOBJwidth = PyDict_GetItemString(PdDict, "width");
-    x->width = PyLong_AsLong(py4pdOBJwidth);
+    x->Width = PyLong_AsLong(py4pdOBJwidth);
     PyObject *py4pdOBJheight = PyDict_GetItemString(PdDict, "height");
-    x->height = PyLong_AsLong(py4pdOBJheight);
+    x->Height = PyLong_AsLong(py4pdOBJheight);
     if (argc > 1) {
         if (argv[0].a_type == A_FLOAT) {
-            x->width = atom_getfloatarg(0, argc, argv);
+            x->Width = atom_getfloatarg(0, argc, argv);
         }
         if (argv[1].a_type == A_FLOAT) {
-            x->height = atom_getfloatarg(1, argc, argv);
+            x->Height = atom_getfloatarg(1, argc, argv);
         }
     }
 
     PyObject *gifFile = PyDict_GetItemString(PdDict, "Gif");
     if (gifFile == NULL) {
-        x->imageBase64 = PY4PD_IMAGE;
+        x->ImageBase64 = PY4PD_IMAGE;
     } else {
         char *gifFileCHAR = (char *)PyUnicode_AsUTF8(gifFile);
         if (gifFileCHAR[0] == '.' && gifFileCHAR[1] == '/') {
@@ -1888,7 +1883,7 @@ void Py4pdUtils_CreatePicObj(t_py *x, PyObject *PdDict, t_class *object_PY4PD_Cl
                 pd_error(x,
                          "[%s] File extension not supported (uses just .png "
                          "and .gif), using empty image.",
-                         x->objName->s_name);
+                         x->ObjName->s_name);
             }
         } else {
             pd_error(NULL, "Image file bad format, the file must be relative "
@@ -1953,8 +1948,8 @@ void Py4pdUtils_ReadGifFile(t_py *x, const char *filename) {
 
     // pixel size
     fseek(file, 6, SEEK_SET);
-    int readIntWidth = fread(&x->width, 2, 1, file);
-    int readIntHeight = fread(&x->height, 2, 1, file);
+    int readIntWidth = fread(&x->Width, 2, 1, file);
+    int readIntHeight = fread(&x->Height, 2, 1, file);
     if (readIntWidth != 1 || readIntHeight != 1) {
         pd_error(NULL, "Failed to read file.\n");
         fclose(file);
@@ -1982,10 +1977,10 @@ void Py4pdUtils_ReadGifFile(t_py *x, const char *filename) {
     fclose(file);
     char *base64Data = Py4pdUtils_Gif2Base64(fileContents, fileSize);
     free(fileContents);
-    x->imageBase64 = base64Data;
+    x->ImageBase64 = base64Data;
     if (!base64Data) {
         free(base64Data);
-        x->imageBase64 = PY4PD_IMAGE;
+        x->ImageBase64 = PY4PD_IMAGE;
         pd_error(NULL, "Base64 encoding failed.\n");
     }
 
@@ -2053,8 +2048,8 @@ void Py4pdUtils_ReadPngFile(t_py *x, const char *filename) {
     }
     width = Py4pdUtils_Ntohl(width);
     height = Py4pdUtils_Ntohl(height);
-    x->width = width;
-    x->height = height;
+    x->Width = width;
+    x->Height = height;
 
     // Determine the file size
     fseek(file, 0, SEEK_END);
@@ -2088,7 +2083,7 @@ void Py4pdUtils_ReadPngFile(t_py *x, const char *filename) {
         return;
     }
     Py4pdUtils_Png2Base64(file_data, bytes_read, base64_data);
-    x->imageBase64 = base64_data;
+    x->ImageBase64 = base64_data;
     free(file_data);
     return;
 }

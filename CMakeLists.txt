@@ -53,12 +53,16 @@ if(EXEC_RESULT)
     message(FATAL_ERROR "Failed get Python include directory.")
 endif()
 
+# split the flags into a list
+string(REPLACE " " ";" PYTHON_LD_FLAGS "${PYTHON_LD_FLAGS}")
+
 # ──────────────────────────────────────
-file(GLOB SOURCES ${CMAKE_SOURCE_DIR}/Sources/*.c)
-pd_add_external(py4pd "${SOURCES}")
+file(GLOB PY4PD_SOURCES ${CMAKE_SOURCE_DIR}/Sources/*.c)
+pd_add_external(py4pd "${PY4PD_SOURCES}")
+
 target_include_directories(py4pd PUBLIC ${NUMPY_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC ${PYTHON_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC "/usr/include/python${PYVERSION}")
-target_link_libraries(py4pd PUBLIC ${PYTHON_LD_FLAGS})
+
+target_link_libraries(py4pd PUBLIC "${PYTHON_LD_FLAGS}")
 target_link_libraries(py4pd PUBLIC python${PYVERSION})
-target_include_directories(py4pd PUBLIC Python)

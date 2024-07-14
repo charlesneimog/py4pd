@@ -17,10 +17,10 @@ static t_class *InletsExtClassProxy;
 // ====================================================
 static void Py4pdNewObj_PdExecBangMethod(t_py *x) {
     Py4pdNewObj *pObjSelf;
-    pObjSelf = (Py4pdNewObj *)x->objClass;
+    pObjSelf = (Py4pdNewObj *)x->ObjClass;
     PyObject *pFunc = (PyObject *)pObjSelf->pFuncBang;
     if (pFunc == NULL) {
-        pd_error(NULL, "[%s] No method defined for bang.", x->objName->s_name);
+        pd_error(NULL, "[%s] No method defined for bang.", x->ObjName->s_name);
         return;
     }
     x->pFunction = pFunc;
@@ -31,22 +31,21 @@ static void Py4pdNewObj_PdExecBangMethod(t_py *x) {
     PyObject *pArgs = PyTuple_New(pFuncArgs);
     PyTuple_SetItem(pArgs, 0, pInletValue);
     for (int i = 1; i < pFuncArgs; i++) {
-        PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
-        Py_INCREF(x->pyObjArgs[i]->pValue); // This keep the reference.
+        PyTuple_SetItem(pArgs, i, x->PyObjArgs[i]->pValue);
+        Py_INCREF(x->PyObjArgs[i]->pValue); // This keep the reference.
     }
 
-    if (x->objType > PY4PD_VISOBJ) {
+    if (x->ObjType > PY4PD_VISOBJ) {
         Py_INCREF(pInletValue);
-        x->pyObjArgs[0]->objectsUsing = 0;
-        x->pyObjArgs[0]->pdout = 0;
-        x->pyObjArgs[0]->objOwner = x->objName;
-        x->pyObjArgs[0]->pValue = pInletValue;
+        x->PyObjArgs[0]->PdOutCount = 0;
+        x->PyObjArgs[0]->ObjOwner = x->ObjName;
+        x->PyObjArgs[0]->pValue = pInletValue;
         x->pArgTuple = pArgs;
         Py_INCREF(x->pArgTuple);
         return;
     }
 
-    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
+    Py4pdUtils_RunPy(x, pArgs, x->KwArgsDict);
     Py_DECREF(pArgs);
 }
 
@@ -54,7 +53,7 @@ static void Py4pdNewObj_PdExecBangMethod(t_py *x) {
 static void Py4pdNewObj_PdExecFloatMethod(t_py *x, t_float f) {
     Py4pdNewObj *pObjSelf;
 
-    pObjSelf = (Py4pdNewObj *)x->objClass;
+    pObjSelf = (Py4pdNewObj *)x->ObjClass;
     PyObject *pFunc = (PyObject *)pObjSelf->pFuncFloat;
     x->pFunction = pFunc;
     PyCodeObject *pFuncCode = (PyCodeObject *)PyFunction_GetCode(pFunc);
@@ -69,22 +68,21 @@ static void Py4pdNewObj_PdExecFloatMethod(t_py *x, t_float f) {
     PyObject *pArgs = PyTuple_New(pFuncArgs);
     PyTuple_SetItem(pArgs, 0, pInletValue);
     for (int i = 1; i < pFuncArgs; i++) {
-        PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
-        Py_INCREF(x->pyObjArgs[i]->pValue); // This keep the reference.
+        PyTuple_SetItem(pArgs, i, x->PyObjArgs[i]->pValue);
+        Py_INCREF(x->PyObjArgs[i]->pValue); // This keep the reference.
     }
 
-    if (x->objType > PY4PD_VISOBJ) {
+    if (x->ObjType > PY4PD_VISOBJ) {
         Py_INCREF(pInletValue);
-        x->pyObjArgs[0]->objectsUsing = 0;
-        x->pyObjArgs[0]->pdout = 0;
-        x->pyObjArgs[0]->objOwner = x->objName;
-        x->pyObjArgs[0]->pValue = pInletValue;
+        x->PyObjArgs[0]->PdOutCount = 0;
+        x->PyObjArgs[0]->ObjOwner = x->ObjName;
+        x->PyObjArgs[0]->pValue = pInletValue;
         x->pArgTuple = pArgs;
         Py_INCREF(x->pArgTuple);
         return;
     }
 
-    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
+    Py4pdUtils_RunPy(x, pArgs, x->KwArgsDict);
     Py_DECREF(pArgs);
 }
 
@@ -92,7 +90,7 @@ static void Py4pdNewObj_PdExecFloatMethod(t_py *x, t_float f) {
 static void Py4pdNewObj_PdExecSymbolMethod(t_py *x, t_symbol *s) {
     Py4pdNewObj *pObjSelf;
 
-    pObjSelf = (Py4pdNewObj *)x->objClass;
+    pObjSelf = (Py4pdNewObj *)x->ObjClass;
     PyObject *pFunc = (PyObject *)pObjSelf->pFuncSymbol;
     x->pFunction = pFunc;
     PyCodeObject *pFuncCode = (PyCodeObject *)PyFunction_GetCode(pFunc);
@@ -103,22 +101,21 @@ static void Py4pdNewObj_PdExecSymbolMethod(t_py *x, t_symbol *s) {
     PyObject *pArgs = PyTuple_New(pFuncArgs);
     PyTuple_SetItem(pArgs, 0, pInletValue);
     for (int i = 1; i < pFuncArgs; i++) {
-        PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
-        Py_INCREF(x->pyObjArgs[i]->pValue); // This keep the reference.
+        PyTuple_SetItem(pArgs, i, x->PyObjArgs[i]->pValue);
+        Py_INCREF(x->PyObjArgs[i]->pValue); // This keep the reference.
     }
 
-    if (x->objType > PY4PD_VISOBJ) {
+    if (x->ObjType > PY4PD_VISOBJ) {
         Py_INCREF(pInletValue);
-        x->pyObjArgs[0]->objectsUsing = 0;
-        x->pyObjArgs[0]->pdout = 0;
-        x->pyObjArgs[0]->objOwner = x->objName;
-        x->pyObjArgs[0]->pValue = pInletValue;
+        x->PyObjArgs[0]->PdOutCount = 0;
+        x->PyObjArgs[0]->ObjOwner = x->ObjName;
+        x->PyObjArgs[0]->pValue = pInletValue;
         x->pArgTuple = pArgs;
         Py_INCREF(x->pArgTuple);
         return;
     }
 
-    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
+    Py4pdUtils_RunPy(x, pArgs, x->KwArgsDict);
     Py_DECREF(pArgs);
 }
 
@@ -131,7 +128,7 @@ static void Py4pdNewObj_PdExecListMethod(t_py *x, t_symbol *s, int argc, t_atom 
         return;
     }
 
-    pObjSelf = (Py4pdNewObj *)x->objClass;
+    pObjSelf = (Py4pdNewObj *)x->ObjClass;
     PyObject *pFunc = (PyObject *)pObjSelf->pFuncList;
 
     x->pFunction = pFunc;
@@ -143,22 +140,21 @@ static void Py4pdNewObj_PdExecListMethod(t_py *x, t_symbol *s, int argc, t_atom 
     PyTuple_SetItem(pArgs, 0, pInletValue);
 
     for (int i = 1; i < pFuncArgs; i++) {
-        PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
-        Py_INCREF(x->pyObjArgs[i]->pValue); // This keep the reference.
+        PyTuple_SetItem(pArgs, i, x->PyObjArgs[i]->pValue);
+        Py_INCREF(x->PyObjArgs[i]->pValue); // This keep the reference.
     }
 
-    if (x->objType > PY4PD_VISOBJ) {
+    if (x->ObjType > PY4PD_VISOBJ) {
         Py_INCREF(pArgs);
-        x->pyObjArgs[0]->objectsUsing = 0;
-        x->pyObjArgs[0]->pdout = 0;
-        x->pyObjArgs[0]->objOwner = x->objName;
-        x->pyObjArgs[0]->pValue = pArgs;
+        x->PyObjArgs[0]->PdOutCount = 0;
+        x->PyObjArgs[0]->ObjOwner = x->ObjName;
+        x->PyObjArgs[0]->pValue = pArgs;
         x->pArgTuple = pArgs;
         Py_INCREF(x->pArgTuple);
         return;
     }
 
-    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
+    Py4pdUtils_RunPy(x, pArgs, x->KwArgsDict);
     Py_DECREF(pArgs);
 }
 
@@ -171,7 +167,7 @@ static void Py4pdNewObj_PdExecAnythingMethod(t_py *x, t_symbol *s, int argc, t_a
         return;
     }
 
-    pObjSelf = (Py4pdNewObj *)x->objClass;
+    pObjSelf = (Py4pdNewObj *)x->ObjClass;
     PyObject *pFunc = (PyObject *)pObjSelf->pFuncAnything;
     x->pFunction = pFunc;
     PyCodeObject *pFuncCode = (PyCodeObject *)PyFunction_GetCode(pFunc);
@@ -182,21 +178,20 @@ static void Py4pdNewObj_PdExecAnythingMethod(t_py *x, t_symbol *s, int argc, t_a
     PyTuple_SetItem(pArgs, 0, pInletValue);
 
     for (int i = 1; i < pFuncArgs; i++) {
-        PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
-        Py_INCREF(x->pyObjArgs[i]->pValue); // This keep the reference.
+        PyTuple_SetItem(pArgs, i, x->PyObjArgs[i]->pValue);
+        Py_INCREF(x->PyObjArgs[i]->pValue); // This keep the reference.
     }
 
-    if (x->objType > PY4PD_VISOBJ) {
+    if (x->ObjType > PY4PD_VISOBJ) {
         Py_INCREF(pArgs);
-        x->pyObjArgs[0]->objectsUsing = 0;
-        x->pyObjArgs[0]->pdout = 0;
-        x->pyObjArgs[0]->objOwner = x->objName;
-        x->pyObjArgs[0]->pValue = pArgs;
+        x->PyObjArgs[0]->PdOutCount = 0;
+        x->PyObjArgs[0]->ObjOwner = x->ObjName;
+        x->PyObjArgs[0]->pValue = pArgs;
         x->pArgTuple = pArgs;
         Py_INCREF(x->pArgTuple);
         return;
     }
-    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
+    Py4pdUtils_RunPy(x, pArgs, x->KwArgsDict);
     Py_DECREF(pArgs);
 }
 
@@ -204,7 +199,7 @@ static void Py4pdNewObj_PdExecAnythingMethod(t_py *x, t_symbol *s, int argc, t_a
 static void Py4pdNewObj_PdExecPyObjectMethod(t_py *x, t_symbol *selector, t_gpointer *p) {
     Py4pdNewObj *pObjSelf;
 
-    pObjSelf = (Py4pdNewObj *)x->objClass;
+    pObjSelf = (Py4pdNewObj *)x->ObjClass;
     PyObject *pSelector = PyUnicode_FromString(selector->s_name);
     t_py4pd_pValue *pArg = (t_py4pd_pValue *)p;
 
@@ -227,28 +222,27 @@ static void Py4pdNewObj_PdExecPyObjectMethod(t_py *x, t_symbol *selector, t_gpoi
     PyTuple_SetItem(pArgs, 0, pArg->pValue);
 
     for (int i = 1; i < pFuncArgs; i++) {
-        PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
-        Py_INCREF(x->pyObjArgs[i]->pValue); // This keep the reference.
+        PyTuple_SetItem(pArgs, i, x->PyObjArgs[i]->pValue);
+        Py_INCREF(x->PyObjArgs[i]->pValue); // This keep the reference.
     }
 
-    if (x->objType > PY4PD_VISOBJ) {
+    if (x->ObjType > PY4PD_VISOBJ) {
         Py_INCREF(pArgs);
-        x->pyObjArgs[0]->objectsUsing = 0;
-        x->pyObjArgs[0]->pdout = 0;
-        x->pyObjArgs[0]->objOwner = x->objName;
-        x->pyObjArgs[0]->pValue = pArgs;
+        x->PyObjArgs[0]->PdOutCount = 0;
+        x->PyObjArgs[0]->ObjOwner = x->ObjName;
+        x->PyObjArgs[0]->pValue = pArgs;
         x->pArgTuple = pArgs;
         Py_INCREF(x->pArgTuple);
         return;
     }
-    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
+    Py4pdUtils_RunPy(x, pArgs, x->KwArgsDict);
     Py_DECREF(pArgs);
 }
 // ====================================================
 static void Py4pdNewObj_PdExecSelectorMethod(t_py *x, t_symbol *selector, int argc, t_atom *argv) {
     Py4pdNewObj *pObjSelf;
 
-    pObjSelf = (Py4pdNewObj *)x->objClass;
+    pObjSelf = (Py4pdNewObj *)x->ObjClass;
     PyObject *pSelector = PyUnicode_FromString(selector->s_name);
 
     // get the Dict
@@ -295,21 +289,20 @@ static void Py4pdNewObj_PdExecSelectorMethod(t_py *x, t_symbol *selector, int ar
     PyTuple_SetItem(pArgs, 0, pInletValue);
 
     for (int i = 1; i < pFuncArgs; i++) {
-        PyTuple_SetItem(pArgs, i, x->pyObjArgs[i]->pValue);
-        Py_INCREF(x->pyObjArgs[i]->pValue); // This keep the reference.
+        PyTuple_SetItem(pArgs, i, x->PyObjArgs[i]->pValue);
+        Py_INCREF(x->PyObjArgs[i]->pValue); // This keep the reference.
     }
 
-    if (x->objType > PY4PD_VISOBJ) {
+    if (x->ObjType > PY4PD_VISOBJ) {
         Py_INCREF(pArgs);
-        x->pyObjArgs[0]->objectsUsing = 0;
-        x->pyObjArgs[0]->pdout = 0;
-        x->pyObjArgs[0]->objOwner = x->objName;
-        x->pyObjArgs[0]->pValue = pArgs;
+        x->PyObjArgs[0]->PdOutCount = 0;
+        x->PyObjArgs[0]->ObjOwner = x->ObjName;
+        x->PyObjArgs[0]->pValue = pArgs;
         x->pArgTuple = pArgs;
         Py_INCREF(x->pArgTuple);
         return;
     }
-    Py4pdUtils_RunPy(x, pArgs, x->kwargsDict);
+    Py4pdUtils_RunPy(x, pArgs, x->KwArgsDict);
     Py_DECREF(pArgs);
 }
 
@@ -867,33 +860,33 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
     t_py *x = (t_py *)pd_new(object_PY4PD_Class);
 
     Py4pdNewObj *objClass = PyLong_AsVoidPtr(PyStructSelf);
-    x->objClass = (void *)objClass;
-    x->visMode = 0;
-    x->objType = objClass->objType;
-    x->pyObject = 1;
-    x->objArgsCount = argc;
-    x->stackLimit = 100;
-    x->canvas = canvas_getcurrent();
-    t_canvas *c = x->canvas;
+    x->ObjClass = (void *)objClass;
+    x->VisMode = 0;
+    x->ObjType = objClass->objType;
+    x->PyObject = 1;
+    x->ObjArgsCount = argc;
+    x->StackLimit = 100;
+    x->Canvas = canvas_getcurrent();
+    t_canvas *c = x->Canvas;
     t_symbol *patch_dir = canvas_getdir(c);
-    x->objName = gensym(objectName);
-    x->zoom = (int)x->canvas->gl_zoom;
-    x->ignoreOnNone = PyLong_AsLong(ignoreOnNone);
-    x->outPyPointer = PyLong_AsLong(pyOUT);
-    x->funcCalled = 1;
+    x->ObjName = gensym(objectName);
+    x->Zoom = (int)x->Canvas->gl_zoom;
+    x->IgnoreOnNone = PyLong_AsLong(ignoreOnNone);
+    x->OutPyPointer = PyLong_AsLong(pyOUT);
+    x->FuncCalled = 1;
     x->pFunction = pyFunction;
-    x->vectorSize = sys_getblksize();
-    x->pdPatchPath = patch_dir; // set name of the home path
-    x->pkgPath = patch_dir;     // set name of the packages path
-    x->playable = PyLong_AsLong(playable);
+    x->VectorSize = sys_getblksize();
+    x->PdPatchPath = patch_dir; // set name of the home path
+    x->PkgPath = patch_dir;     // set name of the packages path
+    x->Playable = PyLong_AsLong(playable);
 
     PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(pMaxArgFunc);
     x->pFuncName = gensym(PyUnicode_AsUTF8(code->co_name));
     x->pScriptName = gensym(PyUnicode_AsUTF8(code->co_filename));
-    x->numInlets = code->co_argcount;
+    x->nInlets = code->co_argcount;
     Py4pdUtils_SetObjConfig(x);
 
-    if (x->objType == PY4PD_VISOBJ)
+    if (x->ObjType == PY4PD_VISOBJ)
         Py4pdUtils_CreatePicObj(x, PdDict, object_PY4PD_Class, argc, argv);
 
     x->pArgsCount = 0;
@@ -906,23 +899,23 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
 
-    x->pdObjArgs = malloc(sizeof(t_symbol) * argc);
+    x->PdObjArgs = malloc(sizeof(t_symbol) * argc);
     for (int i = 0; i < argc; i++) {
-        x->pdObjArgs[i] = argv[i];
+        x->PdObjArgs[i] = argv[i];
     }
-    x->objArgsCount = argc;
-    if (x->pyObjArgs == NULL) {
-        x->pyObjArgs = malloc(sizeof(t_py4pd_pValue *) * x->pArgsCount);
+    x->ObjArgsCount = argc;
+    if (x->PyObjArgs == NULL) {
+        x->PyObjArgs = malloc(sizeof(t_py4pd_pValue *) * x->pArgsCount);
     }
 
     int inlets = Py4pdUtils_CreateObjInlets(pMaxArgFunc, x, InletsExtClassProxy, argc, argv);
     if (inlets != 0) {
-        free(x->pdObjArgs);
-        free(x->pyObjArgs);
+        free(x->PdObjArgs);
+        free(x->PyObjArgs);
         return NULL;
     }
 
-    if (x->objType > PY4PD_VISOBJ) {
+    if (x->ObjType > PY4PD_VISOBJ) {
         if (objClass->pAudio == NULL) {
             pd_error(NULL,
                      "[%s] Error: Audio method not defined, use "
@@ -941,24 +934,24 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
         }
     }
     if (x->pArgsCount < 2) {
-        x->audioError = 0;
+        x->AudioError = 0;
     } else {
-        x->audioError = 1;
+        x->AudioError = 1;
     }
 
-    if (x->objType > 1)
+    if (x->ObjType > 1)
         x->pArgTuple = PyTuple_New(x->pArgsCount);
 
     if (!PyLong_AsLong(nooutlet)) {
-        if (x->objType != PY4PD_AUDIOOUTOBJ && x->objType != PY4PD_AUDIOOBJ)
-            x->mainOut = outlet_new(&x->obj, 0);
+        if (x->ObjType != PY4PD_AUDIOOUTOBJ && x->ObjType != PY4PD_AUDIOOBJ)
+            x->MainOut = outlet_new(&x->obj, 0);
         else {
-            x->mainOut = outlet_new(&x->obj, &s_signal);
-            x->numOutlets = 1;
+            x->MainOut = outlet_new(&x->obj, &s_signal);
+            x->nOutlets = 1;
         }
     }
     if (requireNofOutlets) {
-        if (x->numOutlets == -1) {
+        if (x->nOutlets == -1) {
             pd_error(NULL,
                      "[%s]: This function require that you set the number of "
                      "outlets "
@@ -968,18 +961,18 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
             Py_DECREF(py4pd_capsule);
             return NULL;
         } else {
-            AuxOutlet = x->numOutlets;
+            AuxOutlet = x->nOutlets;
         }
     }
 
     if (AuxOutlet > 0) {
-        x->extrasOuts = (py4pdExtraOuts *)getbytes(AuxOutlet * sizeof(py4pdExtraOuts));
-        x->extrasOuts->outCount = AuxOutlet;
+        x->ExtrasOuts = (py4pdExtraOuts *)getbytes(AuxOutlet * sizeof(py4pdExtraOuts));
+        x->ExtrasOuts->outCount = AuxOutlet;
         t_atom defarg[AuxOutlet];
         t_atom *ap;
         py4pdExtraOuts *u;
         int i;
-        for (i = 0, u = x->extrasOuts, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
+        for (i = 0, u = x->ExtrasOuts, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
             u->u_outlet = outlet_new(&x->obj, &s_anything);
         }
     }
@@ -1178,7 +1171,7 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
     PyDict_SetItemString(objConfigDict, "name", Py_ObjName);
     Py_DECREF(Py_ObjName);
 
-    PyObject *Py_LibraryFolder = PyUnicode_FromString(py4pd->libraryFolder->s_name);
+    PyObject *Py_LibraryFolder = PyUnicode_FromString(py4pd->LibraryFolder->s_name);
     PyDict_SetItemString(objConfigDict, "LibraryFolder", Py_LibraryFolder);
     Py_DECREF(Py_LibraryFolder);
 
@@ -1217,12 +1210,12 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
 
     if (self->objType == PY4PD_AUDIOINOBJ) {
         class_addmethod(objClass, (t_method)Py4pdAudio_Dsp, gensym("dsp"), A_CANT, 0);
-        CLASS_MAINSIGNALIN(objClass, t_py, py4pdAudio);
+        CLASS_MAINSIGNALIN(objClass, t_py, Py4pdAudio);
     } else if (self->objType == PY4PD_AUDIOOUTOBJ) {
         class_addmethod(objClass, (t_method)Py4pdAudio_Dsp, gensym("dsp"), A_CANT, 0);
     } else if (self->objType == PY4PD_AUDIOOBJ) {
         class_addmethod(objClass, (t_method)Py4pdAudio_Dsp, gensym("dsp"), A_CANT, 0);
-        CLASS_MAINSIGNALIN(objClass, t_py, py4pdAudio);
+        CLASS_MAINSIGNALIN(objClass, t_py, Py4pdAudio);
     }
 
     // TODO: Method to Reload
