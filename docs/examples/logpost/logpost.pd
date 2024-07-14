@@ -1,5 +1,0 @@
-#N canvas 780 95 450 401 8;
-#X obj 7 2 py4pd -lib logpost;
-#X obj 41 76 py.logs;
-#X obj 41 33 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
-#X connect 2 0 1 0;

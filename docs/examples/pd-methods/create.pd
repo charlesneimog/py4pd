@@ -1,5 +1,0 @@
-#N canvas 854 408 780 300 8;
-#X obj 11 95 py4pd;
-#X msg 11 54 create myscript;
-#X text 106 50 Create a myscript.py in the same folder of the patch., f 24;
-#X connect 1 0 0 0;
