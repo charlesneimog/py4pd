@@ -39,7 +39,7 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv
 void Py4pdUtils_SetObjConfig(t_py *x);
 void Py4pdUtils_AddPathsToPythonPath(t_py *x);
 PyObject *Py4pdUtils_AddPdObject(t_py *x);
-std::string Py4pdUtils_GetLibFuncName(t_symbol *name);
+std::string Py4pdUtils_GetLibFuncName(std::string LibName);
 bool Py4pdUtils_ImportPdModule(t_py *x);
 void Py4pdUtils_ReadGifFile(t_py *x, const char *filename);
 void Py4pdUtils_ReadPngFile(t_py *x, const char *filename);

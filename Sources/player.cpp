@@ -137,13 +137,13 @@ void Py4pdPlayer_PlayTick(t_py *x) {
         clock_unset(x->playerClock);
     }
     x->msOnset++;
-    KeyValuePair *entry = Py4pdPlayer_PlayerGetValue(x->playerDict, x->msOnset);
-    if (entry != nullptr) {
-        if (entry->isReceiverPlayer) {
+    KeyValuePair *Entry = Py4pdPlayer_PlayerGetValue(x->playerDict, x->msOnset);
+    if (Entry != nullptr) {
+        if (Entry->isReceiverPlayer) {
             // TODO: Implement receiver
         } else {
-            for (int i = 0; i < entry->size; i++) {
-                PyObject *pValue = Py_BuildValue("O", entry->values[i]);
+            for (int i = 0; i < Entry->size; i++) {
+                PyObject *pValue = Entry->values[i];
                 t_py4pd_pValue *pdPyValue = (t_py4pd_pValue *)malloc(sizeof(t_py4pd_pValue));
                 pdPyValue->pValue = pValue;
                 pdPyValue->objectsUsing = 0;

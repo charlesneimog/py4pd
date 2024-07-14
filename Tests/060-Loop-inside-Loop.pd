@@ -1,4 +1,4 @@
-#N canvas 598 -23 1179 954 8;
+#N canvas 6 28 951 1012 8;
 #X obj 5 5 py4pd -lib py4pd;
 #X obj 135 10 r start-test;
 #X obj 27 315 sel 0 1;

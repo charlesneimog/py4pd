@@ -5,6 +5,7 @@
 #include <m_pd.h>
 
 extern "C" {
+
 #include <g_canvas.h>
 #include <s_stuff.h> // get the search paths
 }

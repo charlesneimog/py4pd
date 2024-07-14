@@ -446,17 +446,16 @@ void Py4pdUtils_ExtraInletPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_gpointer
 }
 
 // ─────────────────────────────────────
-std::string Py4pdUtils_GetLibFuncName(t_symbol *name) {
-    //
-    std::string funcName = name->s_name;
+std::string Py4pdUtils_GetLibFuncName(std::string LibName) {
+    std::string FuncName = LibName;
     char oldChar = '-';
-    char newChar = '_'; // Replace 'o' with '0'
+    char newChar = '_';
     size_t pos = 0;
-    while ((pos = funcName.find(oldChar, pos)) != std::string::npos) {
-        funcName.replace(pos, 1, 1, newChar);
+    while ((pos = FuncName.find(oldChar, pos)) != std::string::npos) {
+        FuncName.replace(pos, 1, 1, newChar);
         pos++;
     }
-    return funcName;
+    return FuncName;
 }
 
 // ╭─────────────────────────────────────╮
@@ -688,7 +687,7 @@ void Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *scr
 // ====================================================
 /*
  * @brief Get the py4pd folder object, it creates the folder for scripts inside
- * resources
+ * Resources
  * @param x is the py4pd object
  * @return save the py4pd folder in x->py4pdPath
  */
@@ -1214,6 +1213,7 @@ inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct, t_out
         outlet_anything(outlet, gensym("PyObject"), 2, args);
         return NULL;
     }
+    return nullptr;
 
     if (PyTuple_Check(pValue)) {
         if (PyTuple_Size(pValue) == 1) {
@@ -1574,9 +1574,9 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
 void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
     // Add additional paths to the python path
     char pyScripts_folder[MAXPDSTRING];
-    snprintf(pyScripts_folder, MAXPDSTRING, "%sresources/py4pd-mod", x->py4pdPath->s_name);
+    snprintf(pyScripts_folder, MAXPDSTRING, "%sResources/py4pd-mod", x->py4pdPath->s_name);
     char pyGlobal_packages[MAXPDSTRING];
-    snprintf(pyGlobal_packages, MAXPDSTRING, "%sresources/py-modules", x->py4pdPath->s_name);
+    snprintf(pyGlobal_packages, MAXPDSTRING, "%sResources/py-modules", x->py4pdPath->s_name);
 
     PyObject *home_path = PyUnicode_FromString(x->pdPatchPath->s_name);
     PyObject *py4pdPath = PyUnicode_FromString(x->py4pdPath->s_name);
