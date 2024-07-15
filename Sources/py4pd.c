@@ -297,7 +297,7 @@ static void *Py4pd_PipInstallRequirementsDetach(void *Args) {
                  "'%spy-modules' -r %s --upgrade",
                  PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
         1;
-#elif defined __WIN64
+#elif defined _WIN32
     size_t commandSize =
         snprintf(NULL, 0,
                  "py -%d.%d -m pip install --target "
@@ -388,7 +388,7 @@ static void *Py4pd_PipInstallDetach(void *Args) {
                  "'%spy-modules' %s --upgrade",
                  PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
         1;
-#elif defined __WIN64
+#elif defined _WIN32
     size_t commandSize =
         snprintf(NULL, 0,
                  "py -%d.%d -m pip install --target "
@@ -470,8 +470,7 @@ void Py4pd_Pip(t_py *Py4pd, t_symbol *S, int Argc, t_atom *Argv) {
             pthread_create(&threadId, NULL, Py4pd_PipInstallRequirementsDetach, &pipArgs);
             pthread_detach(threadId);
             Py_END_ALLOW_THREADS
-
-                return;
+            return;
         }
 
         for (int j = 1; j < Argc; j++) {

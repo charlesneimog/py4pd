@@ -974,6 +974,7 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
         int i;
         for (i = 0, u = x->ExtrasOuts, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
             u->u_outlet = outlet_new(&x->obj, &s_anything);
+        // TODO: Need free this memory with puredata freebytes
         }
     }
 

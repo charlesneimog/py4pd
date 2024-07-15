@@ -4,9 +4,17 @@
 
 #include <m_pd.h>
 #include <g_canvas.h>
-#include <s_stuff.h> // get the search paths
-#include <pthread.h>
+#include <s_stuff.h> // get the search 
 #include <dirent.h>
+#include <pthread.h>
+
+
+#ifdef _WIN32
+    #include <windows.h>
+#else
+   
+    #include <pthread.h>
+#endif
 
 #define PY_SSIZE_T_CLEAN // Remove deprecated functions
 #include <Python.h>
@@ -27,12 +35,6 @@
 
 #define PY4PD_GIT_ISSUES "https://github.com/charlesneimog/py4pd/issues"
 #define PYTHON_REQUIRED_VERSION(major, minor) ((major < PY_MAJOR_VERSION) || (major == PY_MAJOR_VERSION && minor <= PY_MINOR_VERSION))
-
-#ifdef _WIN32
-    #include <windows.h>
-    #include <limits.h>
-
-#endif
 
 // DEFINE STANDARD IDE EDITOR
 #ifndef PY4PD_EDITOR

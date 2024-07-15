@@ -73,28 +73,23 @@ jobs:
         with:
           msystem: mingw64
           update: false
-          install: make mingw-w64-x86_64-gcc mingw64/mingw-w64-x86_64-cmake mingw-w64-x86_64-python mingw-w64-x86_64-python-numpy
+          install: make mingw-w64-x86_64-gcc mingw64/mingw-w64-x86_64-cmake
       - name: Install winget
         uses: Cyberboss/install-winget@v1
       - name: Install PureData Float 32
         if: matrix.precision == '32'
         run: |
-          python -m pip install numpy
           winget install -e --id MillerPuckette.PureData --accept-source-agreements
+          winget install -e --id Python.Python.3.11 --accept-source-agreements
+          py -3.11 -m pip install numpy
       - name: Install PureData Float 64
         if: matrix.precision == '64'
         run: |
-          python -m pip install numpy
           winget install -e --id MillerPuckette.Pd64 --accept-source-agreements
-      - name: Configure and build Visual Studio
-        if: matrix.compiler == 'msvc'
-        run: |
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPDLIBDIR=./ -DPYVERSION=3.11
-          cmake --build build
-          cmake --install build
+          winget install -e --id Python.Python.3.11 --accept-source-agreements
+          py -3.11 -m pip install numpy
       - name: Configure and build Mingw
         shell: msys2 {0}
-        if: matrix.compiler == 'mingw'
         run: |
           cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPDLIBDIR=./ -DPYVERSION=3.11
           cmake --build build

@@ -680,6 +680,18 @@ int Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *scri
  * @return save the py4pd folder in x->py4pdPath
  */
 
+void Py4pdUtils_CreateNewThread(t_py *x) {
+
+}
+
+// ====================================================
+/*
+ * @brief Get the py4pd folder object, it creates the folder for scripts inside
+ * resources
+ * @param x is the py4pd object
+ * @return save the py4pd folder in x->py4pdPath
+ */
+
 void Py4pdUtils_FindObjFolder(t_py *x) {
     const char *pathelem;
     char library_path[MAXPDSTRING];
@@ -689,7 +701,7 @@ void Py4pdUtils_FindObjFolder(t_py *x) {
         if (!pathelem) {
             break;
         }
-#ifdef _WIN64
+#ifdef _WIN32
         snprintf(library_path, MAXPDSTRING, "%s\\%s\\", pathelem, "py4pd");
 #else
         snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, "py4pd");
