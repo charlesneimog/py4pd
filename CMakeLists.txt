@@ -112,6 +112,9 @@ pd_add_datafile(py4pd "${PY4PD_PY_FILES}")
 file(GLOB PY4PD_HELP_FILES ${CMAKE_SOURCE_DIR}/Resources/*.pd)
 pd_add_datafile(py4pd "${PY4PD_HELP_FILES}")
 
+file(GLOB PY4PDMOD_HELP_FILES ${CMAKE_SOURCE_DIR}/Resources/Help-Files/*.pd)
+pd_add_datafile(py4pd "${PY4PD_HELP_FILES}" DESTINATION "py4pd/help")
+
 pd_add_datafile(py4pd "${CMAKE_SOURCE_DIR}/Resources/py.py")
 pd_add_datafile(py4pd "${CMAKE_SOURCE_DIR}/LICENSE")
 pd_add_datafile(py4pd "${CMAKE_SOURCE_DIR}/README.md")
