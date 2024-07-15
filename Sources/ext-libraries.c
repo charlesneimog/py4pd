@@ -422,11 +422,11 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     if (AuxOutlet > 0) {
         x->extrasOuts = (py4pdExtraOuts *)getbytes(AuxOutlet * sizeof(py4pdExtraOuts));
         x->extrasOuts->outCount = AuxOutlet;
-        t_atom defarg[AuxOutlet];
+        t_atom *DefArgs = (t_atom *)getbytes(AuxOutlet * sizeof(t_atom));
         t_atom *ap;
         py4pdExtraOuts *u;
         int i;
-        for (i = 0, u = x->extrasOuts, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
+        for (i = 0, u = x->extrasOuts, ap = DefArgs; i < AuxOutlet; i++, u++, ap++) {
             u->u_outlet = outlet_new(&x->obj, &s_anything);
         }
     }
