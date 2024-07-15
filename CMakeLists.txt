@@ -46,17 +46,20 @@ if (WIN32)
     set(PYTHON_LD_FLAGS "-lpython${PYVERSION}")
 
 else()
-execute_process(
-    COMMAND python${PYVERSION}-config --ldflags
-    OUTPUT_VARIABLE PYTHON_LD_FLAGS
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    RESULT_VARIABLE EXEC_RESULT)
+    execute_process(
+        COMMAND python${PYVERSION}-config --ldflags
+        OUTPUT_VARIABLE PYTHON_LD_FLAGS
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE EXEC_RESULT)
 
-if(EXEC_RESULT)
-    message(FATAL_ERROR "Failed get Python include directory.")
-endif()
+    if(EXEC_RESULT)
+        message(FATAL_ERROR "Failed get Python include directory.")
+    endif()
+    string(REPLACE " " ";" PYTHON_LD_FLAGS ${PYTHON_LD_FLAGS})
+    if (APPLE)
+        list(GET PYTHON_LD_FLAGS 0 PYTHON_LD_FLAGS)
+    endif()
 
-string(REPLACE " " ";" PYTHON_LD_FLAGS ${PYTHON_LD_FLAGS})
 
 endif()
 # ──────────────────────────────────────
