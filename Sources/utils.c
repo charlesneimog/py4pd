@@ -712,7 +712,7 @@ void Py4pdUtils_CreateTempFolder(t_py *x) {
     LPSTR home = (LPSTR)malloc(256 * sizeof(char));
     memset(home, 0, 256);
     sprintf(home, "%s\\.py4pd\\", user_folder);
-    x->tempPath = gensym(home);
+    x->TempPath = gensym(home);
     if (access(home, F_OK) == -1) {
         char *command = (char *)malloc(256 * sizeof(char));
         memset(command, 0, 256);
@@ -1115,8 +1115,8 @@ void *Py4pdUtils_FreeObj(t_py *x) {
     if (objCount == 0) {
         objCount = 0;
         char command[1000];
-#ifdef _WIN64
-        sprintf(command, "cmd /C del /Q /S %s*.*", x->tempPath->s_name);
+#ifdef _WIN32
+        sprintf(command, "cmd /C del /Q /S %s*.*", x->TempPath->s_name);
         (void)Py4pdUtils_ExecuteSystemCommand(command, 0);
 #else
         sprintf(command, "rm -rf %s", x->TempPath->s_name);

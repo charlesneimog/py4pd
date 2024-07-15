@@ -80,11 +80,11 @@ else()
     if(APPLE)
         list(GET PYTHON_LD_FLAGS 0 PYTHON_LD_FLAGS)
     endif()
-
+    string(REPLACE " " ";" PYTHON_LD_FLAGS "${PYTHON_LD_FLAGS}")
+    list(APPEND PYTHON_LD_FLAGS "-lpython${PYVERSION}")
 endif()
 
 # split the flags into a list
-string(REPLACE " " ";" PYTHON_LD_FLAGS "${PYTHON_LD_FLAGS}")
 
 # ╭──────────────────────────────────────╮
 # │           PureData Object            │
@@ -96,7 +96,6 @@ target_include_directories(py4pd PUBLIC ${PYTHON_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC "/usr/include/python${PYVERSION}")
 
 target_link_libraries(py4pd PUBLIC "${PYTHON_LD_FLAGS}")
-target_link_libraries(py4pd PUBLIC python${PYVERSION})
 
 # ╭──────────────────────────────────────╮
 # │              Data Files              │
