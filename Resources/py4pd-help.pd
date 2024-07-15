@@ -1,4 +1,4 @@
-#N canvas 644 484 613 306 8;
+#N canvas 963 554 951 486 8;
 #X msg 25 46 doc, f 6;
 #N canvas 491 261 794 378 embedded 0;
 #X obj 9 192 py4pd;
@@ -277,7 +277,7 @@
 #X obj 335 230 py4pd;
 #X msg 335 210 pip install numpy;
 #X text 429 207 <= See an error related with numpy \, click here!, f 30;
-#N canvas 496 32 464 252 pip 0;
+#N canvas 963 28 951 486 pip 1;
 #X text 5 4 I will try to implement pip as it works in a cmd-line. We use the method [pip] to install and set all the configs for the py4pd enviroment., f 78;
 #X obj 9 108 py4pd;
 #X msg 9 81 pip install numpy;
@@ -292,9 +292,9 @@
 #X msg 22 145 pip target local;
 #X text 4 145 1;
 #X text 33 168 2;
-#X text 122 75 This install numpy inside py4pd/resources/py-modules. This is a global installation (is the default). [pip target global], f 61;
-#X text 148 136 This install numpy inside [THIS-PATCH-FOLDER]/py-modules;
 #X text 146 164 IMPORTANT: If you want to use packages of different versions \, do NOT install these packages using global installation. Always send [pip target local] to the py4pd object you will use to send [pip install MY-PACKAGE]. If you install different versions globally and install diferent versions locally it will lead to undefined behaviors., f 61;
+#X text 122 75 This install numpy inside py4pd/Resources/py4pd-env. This is a global installation (is the default). [pip target global], f 61;
+#X text 148 136 This install numpy inside [THIS-PATCH-FOLDER]/py4pd-env;
 #X connect 2 0 1 0;
 #X connect 5 0 4 0;
 #X connect 7 0 4 0;

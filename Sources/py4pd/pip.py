@@ -43,7 +43,7 @@ def pipinstall(mypackage):
                         "pip",
                         "install",
                         "--target",
-                        f"{folder}/py-modules",
+                        f"{folder}/py4pd-env",
                         package,
                         "--upgrade",
                     ],
@@ -77,7 +77,7 @@ def pipinstall(mypackage):
                 "pip",
             ]
             result = subprocess.run(command, check=False)
-            folder = f"{folder}/py-modules/"
+            folder = f"{folder}/py4pd-env/"
             # change all / to \
             folder = folder.replace("/", "\\")
 
@@ -110,7 +110,7 @@ def pipinstall(mypackage):
                         "pip",
                         "install",
                         "--target",
-                        f"{folder}/py-modules",
+                        f"{folder}/py4pd-env",
                         package,
                         "--upgrade",
                     ],

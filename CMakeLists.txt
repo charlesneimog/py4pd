@@ -15,20 +15,19 @@ else()
     message(STATUS "Using Python version: ${PYVERSION}")
 endif()
 
-
 # ───────── Numpy Array Include ───────
-if (WIN32)
+if(WIN32)
     execute_process(
-            COMMAND powershell -Command "py -${PYVERSION} -c \"import numpy; print(numpy.get_include())\""
-            OUTPUT_VARIABLE NUMPY_INCLUDE_DIR
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            RESULT_VARIABLE EXEC_RESULT)
+        COMMAND powershell -Command "py -${PYVERSION} -c \"import numpy; print(numpy.get_include())\""
+        OUTPUT_VARIABLE NUMPY_INCLUDE_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE EXEC_RESULT)
 else()
     execute_process(
-            COMMAND python${PYVERSION} -c "import numpy; print(numpy.get_include())"
-            OUTPUT_VARIABLE NUMPY_INCLUDE_DIR
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            RESULT_VARIABLE EXEC_RESULT)
+        COMMAND python${PYVERSION} -c "import numpy; print(numpy.get_include())"
+        OUTPUT_VARIABLE NUMPY_INCLUDE_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE EXEC_RESULT)
 endif()
 
 if(EXEC_RESULT)
@@ -38,7 +37,7 @@ endif()
 message(STATUS "NumPy include directory: ${NUMPY_INCLUDE_DIR}")
 
 # ──────────── Python Include ────────────
-if (WIN32)
+if(WIN32)
     execute_process(
         COMMAND powershell -Command "py -${PYVERSION} -c \"import sysconfig; print(sysconfig.get_paths()['include'])\""
         OUTPUT_VARIABLE PYTHON_INCLUDE_DIR
@@ -52,18 +51,18 @@ else()
         RESULT_VARIABLE EXEC_RESULT)
 endif()
 
-
 if(EXEC_RESULT)
     message(FATAL_ERROR "Failed get Python include directory.")
 endif()
 
 # ─────────── Python LD Flags ─────────
-if (WIN32)
+if(WIN32)
     execute_process(
-            COMMAND powershell -Command "py -${PYVERSION} -c \"import sysconfig; print(sysconfig.get_config_var('BINDIR'))\""
-            OUTPUT_VARIABLE PYTHON_BIN_DIR
-            OUTPUT_STRIP_TRAILING_WHITESPACE
-            RESULT_VARIABLE EXEC_RESULT)
+        COMMAND powershell -Command
+                "py -${PYVERSION} -c \"import sysconfig; print(sysconfig.get_config_var('BINDIR'))\""
+        OUTPUT_VARIABLE PYTHON_BIN_DIR
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        RESULT_VARIABLE EXEC_RESULT)
     # remove the dot (.) from PYVERSION
     string(REPLACE "." "" PYVERSION_NO_DOT ${PYVERSION})
     set(PYTHON_LD_FLAGS "-L${PYTHON_BIN_DIR} -lpython${PYVERSION_NO_DOT}")
@@ -78,23 +77,42 @@ else()
         message(FATAL_ERROR "Failed get Python include directory.")
     endif()
     string(REPLACE " " ";" PYTHON_LD_FLAGS ${PYTHON_LD_FLAGS})
-    if (APPLE)
+    if(APPLE)
         list(GET PYTHON_LD_FLAGS 0 PYTHON_LD_FLAGS)
     endif()
-
 
 endif()
 
 # split the flags into a list
 string(REPLACE " " ";" PYTHON_LD_FLAGS "${PYTHON_LD_FLAGS}")
 
-# ──────────────────────────────────────
+# ╭──────────────────────────────────────╮
+# │           PureData Object            │
+# ╰──────────────────────────────────────╯
 file(GLOB PY4PD_SOURCES ${CMAKE_SOURCE_DIR}/Sources/*.c)
 pd_add_external(py4pd "${PY4PD_SOURCES}")
-
 target_include_directories(py4pd PUBLIC ${NUMPY_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC ${PYTHON_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC "/usr/include/python${PYVERSION}")
 
 target_link_libraries(py4pd PUBLIC "${PYTHON_LD_FLAGS}")
 target_link_libraries(py4pd PUBLIC python${PYVERSION})
+
+# ╭──────────────────────────────────────╮
+# │              Data Files              │
+# ╰──────────────────────────────────────╯
+file(GLOB PY4PD_SRC_FILES ${CMAKE_SOURCE_DIR}/Sources/*.c ${CMAKE_SOURCE_DIR}/Sources/*.h)
+pd_add_datafile(py4pd "${PY4PD_SRC_FILES}" DESTINATION "Sources")
+
+file(GLOB PY4PD_SRC_FILES ${CMAKE_SOURCE_DIR}/Sources/py4pd/*.py)
+pd_add_datafile(py4pd "${PY4PD_SRC_FILES}" DESTINATION "py4pd")
+
+file(GLOB PY4PD_PY_FILES ${CMAKE_SOURCE_DIR}/Sources/py4pd.py)
+pd_add_datafile(py4pd "${PY4PD_PY_FILES}")
+
+file(GLOB PY4PD_HELP_FILES ${CMAKE_SOURCE_DIR}/Resources/*.pd)
+pd_add_datafile(py4pd "${PY4PD_HELP_FILES}")
+
+pd_add_datafile(py4pd "${CMAKE_SOURCE_DIR}/Resources/py.py")
+pd_add_datafile(py4pd "${CMAKE_SOURCE_DIR}/LICENSE")
+pd_add_datafile(py4pd "${CMAKE_SOURCE_DIR}/README.md")

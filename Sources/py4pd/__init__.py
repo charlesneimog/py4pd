@@ -1,34 +1,20 @@
 import os
 
 import pd
-
-# list all folders inside src
-thisFile = os.path.abspath(__file__)
-
-# try to import all files inside src. (must use this file)
-for root, dirs, files in os.walk(os.path.join(thisFile, "src")):
-    for file in files:
-        if file.endswith(".py") and file != "__init__.py":
-            try:
-                exec(f"from src.{file[:-3]} import *")
-            except Exception as e:
-                pd.error(f"Error importing {file}: {e}")
-
-
-from src.convertion import pd2py, pdlist2pylist, py2pd
-from src.info import *
-from src.libs import *
-from src.list import *
-from src.loop import *
-from src.math import *
-from src.musicconvertions import *
-from src.openmusic import *
-from src.operators import *
-from src.pip import *
-from src.show import *
-from src.test import *
-from src.tree import *
-from src.utils import *
+from py4pd.convertion import pd2py, pdlist2pylist, py2pd
+from py4pd.info import *
+from py4pd.libs import *
+from py4pd.list import *
+from py4pd.loop import *
+from py4pd.math import *
+from py4pd.musicconvertions import *
+from py4pd.openmusic import *
+from py4pd.operators import *
+from py4pd.pip import *
+from py4pd.show import *
+from py4pd.test import *
+from py4pd.tree import *
+from py4pd.utils import *
 
 # try to import all files inside src.
 
@@ -46,9 +32,8 @@ def mysumarg(a=3, b=2, c=5, d=4):
     return a + b + c + d
 
 
-def py4pdLoadObjects():
+def py4pd_setup():
     numpyInstalled = numpyIsInstalled()
-
 
     # Utils
     pd.add_object(getObjectArgs, "py.getargs")
