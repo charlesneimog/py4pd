@@ -1543,35 +1543,64 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
     }
 
     PyObject *HomePath = PyUnicode_FromString(x->PdPatchPath->s_name);
-    // PyObject *Py4pdPath = PyUnicode_FromString(x->Py4pdPath->s_name);
     PyObject *SitePkg = PyUnicode_FromString(x->PkgPath->s_name);
     PyObject *CondaPkg = PyUnicode_FromString(x->CondaPath->s_name);
-    PyObject *Py4pdScripts = PyUnicode_FromString(Py4pdMod);
     PyObject *Py4pdGlobalPkg = PyUnicode_FromString(Py4pdPkgs);
-    PyObject *SysPath = PySys_GetObject("path");
-    PyList_Insert(SysPath, 0, HomePath);
-    // PyList_Insert(SysPath, 0, Py4pdPath);
-    PyList_Insert(SysPath, 0, SitePkg);
-    PyList_Insert(SysPath, 0, CondaPkg);
-    PyList_Insert(SysPath, 0, Py4pdScripts);
-    PyList_Insert(SysPath, 0, Py4pdGlobalPkg);
-    Py_DECREF(HomePath);
-    // Py_DECREF(Py4pdPath);
-    Py_DECREF(SitePkg);
-    Py_DECREF(CondaPkg);
-    Py_DECREF(Py4pdScripts);
-    Py_DECREF(Py4pdGlobalPkg);
+
+    if (HomePath && SitePkg && CondaPkg && Py4pdGlobalPkg) {
+        PyObject *SysPath = PySys_GetObject("path"); // Borrowed reference
+        int SysPathLen = PyList_Size(SysPath);
+        if (SysPath && PyList_Check(SysPath)) {
+            PyList_Insert(SysPath, SysPathLen, HomePath);
+            PyList_Insert(SysPath, SysPathLen, SitePkg);
+            PyList_Insert(SysPath, SysPathLen, CondaPkg);
+            PyList_Insert(SysPath, SysPathLen, Py4pdGlobalPkg);
+        }
+    }
+
     return;
+}
+
+// ============================================
+void Py4pdUtils_ConfigurePythonPaths() {
+    PyObject *SysPath = PySys_GetObject("path"); // Borrowed reference
+    Py_ssize_t PathsLen = PyList_Size(SysPath);
+
+#ifdef __linux__
+    const int PathsToRemove = 2;
+#elif __APPLE__
+    const int PathsToRemove = 1;
+#else
+    const int PathsToRemove = 1;
+#endif
+
+    if (PathsLen > 0 && PathsToRemove > 0) {
+        for (int i = 0; i < PathsToRemove; ++i) {
+            Py_ssize_t index = PathsLen - 1 - i;
+            PyObject *path_entry = PyList_GetItem(SysPath, index);
+            PyList_SetSlice(SysPath, index, index + 1, NULL);
+            Py_DECREF(path_entry);
+        }
+    }
 }
 
 // ===================================================================
 int Py4pdUtils_CheckNumpyInstall(t_py *x) {
-    PyObject *NumpyUmath = PyImport_ImportModule("numpy.core._multiarray_umath");
+    PyObject *SysPath = PySys_GetObject("path"); // Borrowed reference
+    PyObject *SysPathStr = PyObject_Str(SysPath);
+    if (SysPathStr) {
+        const char *SysPathCStr = PyUnicode_AsUTF8(SysPathStr);
+        if (SysPathCStr) {
+            printf("Novos caminhos do sistema Python: %s\n", SysPathCStr);
+        }
+        Py_DECREF(SysPathStr);
+    }
+
+    PyObject *NumpyUmath = PyImport_ImportModule("numpy");
     if (NumpyUmath == NULL) {
         pd_error(x, "[py4pd] Numpy not installed, send [pip install numpy] to "
                     "the py4pd object");
-        post("\n\n");
-        post("=== Complete Error Description ===");
+        PyErr_Print();
         Py4pdUtils_PrintError(x);
         return 0;
     }
@@ -1584,9 +1613,6 @@ int Py4pdUtils_CheckNumpyInstall(t_py *x) {
                  "[py4pd] Numpy version %s is not supported, please update to "
                  "version 2.0.0 or higher",
                  NumpyVersion);
-        post("\n\n");
-        post("=== Complete Error Description ===");
-        Py4pdUtils_PrintError(x);
         return 0;
     }
 

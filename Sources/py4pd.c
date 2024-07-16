@@ -3,9 +3,9 @@
 #include "utils.h"
 
 // ============================================
-t_class *py4pd_class;        // For for normal objects, almost unused
-t_class *py4pd_classLibrary; // For libraries
-int objCount = 0;            // To keep track of the number of objects created
+t_class *Py4pdObjClass; // For for normal objects, almost unused
+t_class *Py4pdLibClass; // For libraries
+int objCount = 0;       // To keep track of the number of objects created
 
 // ============================================
 // =========== PY4PD LOAD LIBRARIES ===========
@@ -1045,30 +1045,24 @@ void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f) {
 static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     int i;
     t_py *x;
-    int libraryMODE = 0;
-    int normalMODE = 1;
-    t_symbol *scriptName = NULL;
-    int major, minor, micro;
-    sys_getversion(&major, &minor, &micro);
-    if (major < 0 && minor < 54) {
-        pd_error(NULL, "[py4pd] You need to use Pd 0.54 or higher");
-        return NULL;
-    }
+    int LibMode = 0;
+    int ObjMode = 1;
+    t_symbol *ScriptName = NULL;
 
     // Get what will be the type of the object
     for (i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
             t_symbol *py4pdArgs = atom_getsymbolarg(i, argc, argv);
             if (py4pdArgs == gensym("-library") || py4pdArgs == gensym("-lib")) {
-                libraryMODE = 1;
-                normalMODE = 0;
-                scriptName = atom_getsymbolarg(i + 1, argc, argv);
+                LibMode = 1;
+                ObjMode = 0;
+                ScriptName = atom_getsymbolarg(i + 1, argc, argv);
             }
         }
     }
 
-    if (normalMODE == 1) {
-        x = (t_py *)pd_new(py4pd_class); // create a new py4pd object
+    if (ObjMode == 1) {
+        x = (t_py *)pd_new(Py4pdObjClass); // create a new py4pd object
         x->Canvas = canvas_getcurrent();
         t_canvas *c = x->Canvas;
         t_symbol *patchDir = canvas_getdir(c);
@@ -1103,22 +1097,22 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         }
         objCount++;
         return (x);
-    } else if (libraryMODE == 1) {
-        x = (t_py *)pd_new(py4pd_classLibrary);
+    } else if (LibMode == 1) {
+        x = (t_py *)pd_new(Py4pdLibClass);
         x->Canvas = canvas_getcurrent();
         t_canvas *c = x->Canvas;
         x->Zoom = (int)x->Canvas->gl_zoom;
-        t_symbol *patchDir = canvas_getdir(c);
-        if (patchDir->s_name[strlen(patchDir->s_name) - 1] != '/') {
-            char *new_path = malloc(strlen(patchDir->s_name) + 2);
-            Py4pdUtils_Strlcpy(new_path, patchDir->s_name, strlen(patchDir->s_name) + 1);
-            Py4pdUtils_Strlcat(new_path, "/\0", strlen(new_path) + 1);
-            patchDir = gensym(new_path);
-            free(new_path);
+        t_symbol *PatchDir = canvas_getdir(c);
+        if (PatchDir->s_name[strlen(PatchDir->s_name) - 1] != '/') {
+            char *NewPath = malloc(strlen(PatchDir->s_name) + 2);
+            Py4pdUtils_Strlcpy(NewPath, PatchDir->s_name, strlen(PatchDir->s_name) + 1);
+            Py4pdUtils_Strlcat(NewPath, "/\0", strlen(NewPath) + 1);
+            PatchDir = gensym(NewPath);
+            free(NewPath);
         }
 
-        x->PdPatchPath = patchDir;
-        x->PkgPath = patchDir;
+        x->PdPatchPath = PatchDir;
+        x->PkgPath = PatchDir;
         x->VisMode = 0;
         Py4pdUtils_SetObjConfig(x);
         if (objCount == 0) {
@@ -1132,7 +1126,7 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         if (libraryLoaded == -1) {
             return NULL;
         }
-        x->pScriptName = scriptName;
+        x->pScriptName = ScriptName;
         objCount++;
         return (x);
     } else {
@@ -1147,6 +1141,59 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
  * @brief Setup the py4pd object, pd call this
  */
 void py4pd_setup(void) {
+    int Major, Minor, Micro;
+    sys_getversion(&Major, &Minor, &Micro);
+
+    if (Major < 0 && Minor < 54) {
+        pd_error(NULL, "[py4pd] py4pd requires Pd version 0.54 or later.");
+        return;
+    }
+
+    Py4pdObjClass = class_new(gensym("py4pd"), (t_newmethod)Py4pd_Py4pdNew,
+                              (t_method)Py4pdUtils_FreeObj, sizeof(t_py), 0, A_GIMME, 0);
+
+    Py4pdLibClass =
+        class_new(gensym("py4pd"), (t_newmethod)Py4pd_Py4pdNew, (t_method)Py4pdUtils_FreeObj,
+                  sizeof(t_py), CLASS_NOINLET, A_GIMME, 0);
+
+    class_addmethod(Py4pdObjClass, (t_method)Py4pd_SetPy4pdHomePath, gensym("home"), A_GIMME,
+                    0); // set home path
+    class_addmethod(Py4pdObjClass, (t_method)Py4pd_SetPackages, gensym("packages"), A_GIMME,
+                    0); // set packages path
+    class_addmethod(Py4pdObjClass, (t_method)Py4pd_Pip, gensym("pip"), A_GIMME,
+                    0); // pip install
+    class_addmethod(Py4pdObjClass, (t_method)Py4pd_SetPythonPointersUsage, gensym("pointers"),
+                    A_FLOAT,
+                    0); // set home path
+    class_addmethod(Py4pdObjClass, (t_method)Py4pd_ReloadPy4pdFunction, gensym("reload"), 0,
+                    0); // reload python script
+
+    // DEPRECATED
+    class_addmethod(Py4pdObjClass, (t_method)Py4pd_Deprecated, gensym("pipinstall"), A_GIMME,
+                    0); // run function
+
+    // Object INFO
+    class_addmethod(Py4pdObjClass, (t_method)Py4pd_PrintPy4pdVersion, gensym("version"), 0,
+                    0); // show version
+    class_addmethod(Py4pdObjClass, (t_method)Py4pd_SetEditor, gensym("editor"), A_GIMME,
+                    0); // open code
+    class_addmethod(Py4pdObjClass, (t_method)Py4pd_OpenScript, gensym("open"), A_GIMME, 0);
+    class_addmethod(Py4pdObjClass, (t_method)Py4pd_OpenScript, gensym("create"), A_GIMME, 0);
+    class_addmethod(Py4pdObjClass, (t_method)Py4pd_SetEditor, gensym("click"), 0,
+                    0); // when click open editor
+    class_addmethod(Py4pdLibClass, (t_method)Py4pd_SetEditor, gensym("click"), 0,
+                    0); // when click open editor
+
+    // User
+    class_addmethod(Py4pdObjClass, (t_method)Py4pd_PrintDocs, gensym("doc"), 0,
+                    0); // open documentation
+    class_addmethod(Py4pdObjClass, (t_method)Py4pd_ExecuteFunction, gensym("run"), A_GIMME,
+                    0); // run function
+    class_addmethod(Py4pdObjClass, (t_method)Py4pd_SetFunction, gensym("set"), A_GIMME,
+                    0); // set function to be called
+    class_addmethod(Py4pdObjClass, (t_method)Py4pd_PrintModuleFunctions, gensym("functions"),
+                    A_GIMME, 0);
+
     if (!Py_IsInitialized()) {
         objCount = 0;
         post("");
@@ -1158,57 +1205,8 @@ void py4pd_setup(void) {
         post("");
         PyImport_AppendInittab("pd", PyInit_pd);
         Py_Initialize();
+        Py4pdUtils_ConfigurePythonPaths();
     }
-
-    py4pd_class = class_new(gensym("py4pd"),              // cria o objeto quando escrevemos py4pd
-                            (t_newmethod)Py4pd_Py4pdNew,  // metodo de criação do objeto
-                            (t_method)Py4pdUtils_FreeObj, // quando voce deleta o objeto
-                            sizeof(t_py), // quanta memoria precisamos para esse objeto
-                            0,            // nao há uma GUI especial para esse objeto???
-                            A_GIMME,      // os podem ser qualquer coisa
-                            0);           // fim de argumentos
-
-    py4pd_classLibrary =
-        class_new(gensym("py4pd"), (t_newmethod)Py4pd_Py4pdNew, (t_method)Py4pdUtils_FreeObj,
-                  sizeof(t_py), CLASS_NOINLET, A_GIMME, 0);
-
-    class_addmethod(py4pd_class, (t_method)Py4pd_SetPy4pdHomePath, gensym("home"), A_GIMME,
-                    0); // set home path
-    class_addmethod(py4pd_class, (t_method)Py4pd_SetPackages, gensym("packages"), A_GIMME,
-                    0); // set packages path
-    class_addmethod(py4pd_class, (t_method)Py4pd_Pip, gensym("pip"), A_GIMME,
-                    0); // pip install
-    class_addmethod(py4pd_class, (t_method)Py4pd_SetPythonPointersUsage, gensym("pointers"),
-                    A_FLOAT,
-                    0); // set home path
-    class_addmethod(py4pd_class, (t_method)Py4pd_ReloadPy4pdFunction, gensym("reload"), 0,
-                    0); // reload python script
-
-    // DEPRECATED
-    class_addmethod(py4pd_class, (t_method)Py4pd_Deprecated, gensym("pipinstall"), A_GIMME,
-                    0); // run function
-
-    // Object INFO
-    class_addmethod(py4pd_class, (t_method)Py4pd_PrintPy4pdVersion, gensym("version"), 0,
-                    0); // show version
-    class_addmethod(py4pd_class, (t_method)Py4pd_SetEditor, gensym("editor"), A_GIMME,
-                    0); // open code
-    class_addmethod(py4pd_class, (t_method)Py4pd_OpenScript, gensym("open"), A_GIMME, 0);
-    class_addmethod(py4pd_class, (t_method)Py4pd_OpenScript, gensym("create"), A_GIMME, 0);
-    class_addmethod(py4pd_class, (t_method)Py4pd_SetEditor, gensym("click"), 0,
-                    0); // when click open editor
-    class_addmethod(py4pd_classLibrary, (t_method)Py4pd_SetEditor, gensym("click"), 0,
-                    0); // when click open editor
-
-    // User
-    class_addmethod(py4pd_class, (t_method)Py4pd_PrintDocs, gensym("doc"), 0,
-                    0); // open documentation
-    class_addmethod(py4pd_class, (t_method)Py4pd_ExecuteFunction, gensym("run"), A_GIMME,
-                    0); // run function
-    class_addmethod(py4pd_class, (t_method)Py4pd_SetFunction, gensym("set"), A_GIMME,
-                    0); // set function to be called
-    class_addmethod(py4pd_class, (t_method)Py4pd_PrintModuleFunctions, gensym("functions"), A_GIMME,
-                    0);
 }
 
 #ifdef __WIN64

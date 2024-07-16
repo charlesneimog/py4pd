@@ -6,11 +6,11 @@ from py4pd.info import *
 from py4pd.libs import *
 from py4pd.list import *
 from py4pd.loop import *
-from py4pd.pymath import *
 from py4pd.musicconvertions import *
 from py4pd.openmusic import *
 from py4pd.operators import *
 from py4pd.pip import *
+from py4pd.pymath import *
 from py4pd.show import *
 from py4pd.test import *
 from py4pd.tree import *

@@ -51,7 +51,7 @@
 
 
 // PY4PD 
-extern t_class *py4pd_class, *pyNewObject_VIS;
+extern t_class *Py4pdObjClass, *pyNewObject_VIS;
 
 // OUTLETS 
 /*
