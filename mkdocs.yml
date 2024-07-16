@@ -1,16 +1,15 @@
 site_name: py4pd
 docs_dir: Documentation
 copyright: Copyright &copy 2023 | Charles K. Neimog | University of São Paulo.
-
 theme:
   logo: assets/py4pd-logo.svg
-  custom_dir: docs/overrides
+  custom_dir: Documentation/overrides
   logo_dark_mode: assets/py4pd-dark-home.svg
   logo_light_mode: assets/py4pd-light-home.svg
   favicon: assets/py4pd-favicon.png
   name: material
   icon:
-    custom: 
+    custom:
       - my-icons/pd
       - my-icons/pdobj
   features:
@@ -37,7 +36,6 @@ theme:
     - md_in_html
     - pymdownx.superfences
     - footnotes
-
   palette:
     - media: "(prefers-color-scheme)"
       toggle:
@@ -57,8 +55,6 @@ theme:
       toggle:
         icon: material/lightbulb-outline
         name: Switch to light mode
-
-        
 markdown_extensions:
   - pymdownx.superfences
   - pymdownx.tabbed:
@@ -81,26 +77,24 @@ markdown_extensions:
   - md_in_html
   - admonition
   - pymdownx.details
-  
 repo_url: https://github.com/charlesneimog/py4pd
-
 plugins:
   - search
   - social
-  
 extra_css:
   - extra/extra.css
-  
 nav:
   - Home: index.md
-  - Getting started:
+  - Installation:
       - Install: setup.md
-  - PureData Use: 
-    - pd-users/index.md
-    - Arguments: pd-users/args.md
-    - Methods: pd-users/methods.md
-    - Config File: pd-users/py4pd-cfg.md
-  - Python Use: 
+  - How-To:
+      - projects.md
+  - PureData Use:
+      - pd-users/index.md
+      - Arguments: pd-users/args.md
+      - Methods: pd-users/methods.md
+      - Config File: pd-users/py4pd-cfg.md
+  - Python Use:
       - Introduction: python-users/index.md
       - Creating Pd Libraries:
           - Pd Objs with Python: python-users/pylibrary.md
@@ -109,10 +103,9 @@ nav:
               - Image: python-users/objtypes/image.md
               - Audio: python-users/objtypes/audio.md
           - pd.add_object: python-users/pd.add_object.md
-          - pd.new_object: 
-            - Methods: python-users/pd.new_object/methods.md
-            - Configuration: python-users/pd.new_object/config.md
-
+          - pd.new_object:
+              - Methods: python-users/pd.new_object/methods.md
+              - Configuration: python-users/pd.new_object/config.md
       - Py4pd Internal Module:
           - Python/Pd - Exchanging Data: python-users/data.md
           - Working with Images: python-users/images.md
@@ -122,7 +115,6 @@ nav:
           - Files: python-users/file.md
           - Utilities: python-users/info.md
   - libraries.md
-  
 extra:
   analytics:
     provider: google
