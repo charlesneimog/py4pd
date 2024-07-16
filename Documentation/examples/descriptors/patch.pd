@@ -1,0 +1,8 @@
+#N canvas 423 56 738 668 8;
+#X obj 29 19 py4pd -lib main;
+#X obj 29 70 descritores 640 480;
+#X obj 29 45 bng 15 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;
+#X obj 112 40 py4pd;
+#X msg 112 19 pip install audioflux;
+#X connect 2 0 1 0;
+#X connect 4 0 3 0;
