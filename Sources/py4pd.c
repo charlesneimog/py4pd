@@ -25,6 +25,7 @@ em quebras entre outros.
 */
 
 static int Py4pd_LibraryLoad(t_py *Py4pd, int Argc, t_atom *Argv) {
+    LOG("Py4pd_LibraryLoad");
     if (Argc > 2) {
         pd_error(Py4pd, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
         return -1;
@@ -56,17 +57,19 @@ static int Py4pd_LibraryLoad(t_py *Py4pd, int Argc, t_atom *Argv) {
             if (!pathelem) {
                 break;
             }
-            char *LibPath = malloc(strlen(pathelem) + strlen(ScriptFileName->s_name) + 1);
+            char *LibPath = (char *)malloc(strlen(pathelem) + strlen(ScriptFileName->s_name) + 1);
             snprintf(LibPath, MAXPDSTRING, "%s/%s/", pathelem, atom_gensym(Argv + 1)->s_name);
-
-            if (access(LibPath, F_OK) != -1) { // Library founded
+            if (access(LibPath, F_OK) != -1) { // Library found
                 LibNotFound = 0;
                 PyList_Append(SysPath, PyUnicode_FromString(LibPath));
+                post("[py4pd] Library path added: %s", LibPath);
             }
             free(LibPath);
         }
         if (LibNotFound) {
-            pd_error(Py4pd, "[py4pd] Library file '%s.py' not found!", ScriptFileName->s_name);
+            pd_error(Py4pd, "[py4pd] Library '%s' not found!", ScriptFileName->s_name);
+            pd_error(Py4pd,
+                     "[py4pd] Please, make sure the library is in the search path of PureData");
             return -1;
         }
     }
@@ -127,7 +130,6 @@ static int Py4pd_LibraryLoad(t_py *Py4pd, int Argc, t_atom *Argv) {
     }
 
     PyObject *pModuleDict = PyModule_GetDict(pModule);
-    printf("After get Module Dict\n");
 
     if (pModuleDict == NULL) {
         pd_error(Py4pd, "[Python] Failed to get script file dictionary");
@@ -222,7 +224,6 @@ static int Py4pd_LibraryLoad(t_py *Py4pd, int Argc, t_atom *Argv) {
         Py_XDECREF(pModuleReloaded);
         Py_XDECREF(pValue);
         logpost(Py4pd, 3, "[py4pd] Library %s loaded!", ScriptFileName->s_name);
-        printf("%s Loaded\n", atom_gensym(Argv + 1)->s_name);
     } else {
         Py4pd->FuncCalled = 1; // set the flag to 0 because it crash Pd if
         Py4pdUtils_PrintError(Py4pd);
@@ -1043,6 +1044,7 @@ void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f) {
  * @return It will return the py4pd object.
  */
 static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
+    LOG("Py4pd_Py4pdNew");
     int i;
     t_py *x;
     int LibMode = 0;

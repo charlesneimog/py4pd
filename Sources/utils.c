@@ -462,6 +462,7 @@ void Py4pdUtils_ExtraInletPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_gpointer
  */
 
 PyObject *Py4pdUtils_AddPdObject(t_py *x) {
+    LOG("Py4pdUtils_AddPdObject");
     PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("pd"));
     PyObject *objectCapsule;
     if (MainModule != NULL) {
@@ -543,26 +544,28 @@ t_py *Py4pdUtils_GetObject(PyObject *pd_module) {
  * @param x is the py4pd object
  * @return save the py4pd folder in x->py4pdPath
  */
-char *Py4pdUtils_GetFolderName(char *path) {
-    char *folder = NULL;
-    char *last_separator = NULL;
+char *Py4pdUtils_GetFolderName(char *Path) {
+    LOG("Py4pdUtils_GetFolderName)");
+
+    char *Folder = NULL;
+    char *FolderSeparator = NULL;
 
 // Find the last occurrence of a path separator
 #ifdef _WIN32
-    last_separator = strrchr(path, '\\');
+    FolderSeparator = strrchr(path, '\\');
 #else
-    last_separator = strrchr(path, '/');
+    FolderSeparator = strrchr(Path, '/');
 #endif
 
     // If a separator is found, extract the folder name
-    if (last_separator != NULL) {
-        size_t folder_length = last_separator - path;
-        folder = malloc(folder_length + 1);
-        strncpy(folder, path, folder_length);
-        folder[folder_length] = '\0';
+    if (FolderSeparator != NULL) {
+        size_t FolderLen = FolderSeparator - Path;
+        Folder = malloc(FolderLen + 1);
+        strncpy(Folder, Path, FolderLen);
+        Folder[FolderLen] = '\0';
     }
 
-    return folder;
+    return Folder;
 }
 
 // ====================================================
@@ -572,38 +575,38 @@ char *Py4pdUtils_GetFolderName(char *path) {
  * @return save the py4pd folder in x->py4pdPath
  */
 
-const char *Py4pdUtils_GetFilename(const char *path) {
-    const char *filename = NULL;
+const char *Py4pdUtils_GetFilename(const char *Path) {
+    const char *Filename = NULL;
 
     // Find the last occurrence of a path separator
-    const char *last_separator = strrchr(path, '/');
+    const char *LastSeparator = strrchr(Path, '/');
 
 #ifdef _WIN64
-    const char *last_separator_win = strrchr(path, '\\');
-    if (last_separator_win != NULL && last_separator_win > last_separator) {
-        last_separator = last_separator_win;
+    const char *LastSeparatorWin = strrchr(Path, '\\');
+    if (LastSeparatorWin != NULL && LastSeparatorWin > LastSeparator) {
+        LastSeparator = LastSeparatorWin;
     }
 #endif
 
     // If a separator is found, extract the filename
-    if (last_separator != NULL) {
-        filename = last_separator + 1;
+    if (LastSeparator != NULL) {
+        Filename = LastSeparator + 1;
     } else {
         // No separator found, use the entire path as the filename
-        filename = path;
+        Filename = Path;
     }
 
     // remove .py from filename
-    const char *last_dot = strrchr(filename, '.');
-    if (last_dot != NULL) {
-        size_t filename_length = last_dot - filename;
-        char *filename_without_extension = malloc(filename_length + 1);
-        strncpy(filename_without_extension, filename, filename_length);
-        filename_without_extension[filename_length] = '\0';
-        filename = filename_without_extension;
+    const char *LastDot = strrchr(Filename, '.');
+    if (LastDot != NULL) {
+        size_t FilenameLen = LastDot - Filename;
+        char *FileNoExt = malloc(FilenameLen + 1);
+        strncpy(FileNoExt, Filename, FilenameLen);
+        FileNoExt[FilenameLen] = '\0';
+        Filename = FileNoExt;
     }
 
-    return filename;
+    return Filename;
 }
 
 // ====================================================
@@ -728,25 +731,23 @@ void Py4pdUtils_CreateTempFolder(t_py *x) {
     }
     free(home);
 #else
-    const char *home = getenv("HOME");
-    char *temp_folder = (char *)malloc(256 * sizeof(char));
-    memset(temp_folder, 0, 256);
-    sprintf(temp_folder, "%s/.py4pd/", home);
-    x->TempPath = gensym(temp_folder);
-    if (access(temp_folder, F_OK) == -1) {
-        char *command = (char *)malloc(256 * sizeof(char));
-        memset(command, 0, 256);
-        sprintf(command, "mkdir -p %s", temp_folder);
-        int result = system(command);
-        if (result != 0) {
+    const char *Home = getenv("HOME");
+    char *TmpFolder = (char *)malloc(256 * sizeof(char));
+    sprintf(TmpFolder, "%s/.py4pd/", Home);
+    x->TempPath = gensym(TmpFolder);
+    if (access(TmpFolder, F_OK) == -1) {
+        char *Command = (char *)malloc(256 * sizeof(char));
+        sprintf(Command, "mkdir -p %s", TmpFolder);
+        int Result = system(Command);
+        if (Result != 0) {
             pd_error(NULL,
                      "Failed to create directory, Report, this create "
                      "instabilities: %d\n",
-                     result);
+                     Result);
         }
-        free(command);
+        free(Command);
     }
-    free(temp_folder);
+    free(TmpFolder);
 #endif
 }
 
@@ -760,6 +761,7 @@ void Py4pdUtils_CreateTempFolder(t_py *x) {
  * @return the return value of the function
  */
 void Py4pdUtils_PrintError(t_py *x) {
+    LOG("Py4pdUtils_PrintError");
     PyObject *ptype, *pvalue, *ptraceback;
     PyErr_Fetch(&ptype, &pvalue, &ptraceback);
     PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
@@ -1061,6 +1063,7 @@ PyObject *Py4pdUtils_DeepCopy(PyObject *pValue) {
  * @return nothing
  */
 void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where) {
+    LOG("Py4pdUtils_MemLeakCheck");
 
     if (Py_IsNone(pValue)) {
         return;
@@ -1111,6 +1114,7 @@ void Py4pdUtils_MemLeakCheck(PyObject *pValue, int refcnt, char *where) {
  */
 
 void *Py4pdUtils_FreeObj(t_py *x) {
+    LOG("Py4pdUtils_FreeObj");
     objCount--;
     if (objCount == 0) {
         objCount = 0;
@@ -1153,6 +1157,7 @@ void *Py4pdUtils_FreeObj(t_py *x) {
  * @return nothing, but output the value to the outlet
  */
 inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct, t_outlet *outlet) {
+    LOG("Py4pdUtils_ConvertToPd");
     PyObject *pValue = pValueStruct->pValue;
 
     if (pValue->ob_refcnt < 1) {
@@ -1251,6 +1256,7 @@ inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct, t_out
  * @return the Python tuple with the values
  */
 PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv) {
+    LOG("Py4pdUtils_ConvertToPy");
     PyObject *ArgsTuple = PyTuple_New(0); // start new tuple with 1 element
     int listStarted = 0;
     int argCount = 0;
@@ -1376,7 +1382,7 @@ PyObject *Py4pdUtils_ConvertToPy(PyObject *listsArrays[], int argc, t_atom *argv
  */
 
 void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
-
+    LOG("Py4pdUtils_ParseArguments");
     int i;
     for (i = 0; i < argc; i++) {
         if (argv[i].a_type == A_SYMBOL) {
@@ -1448,6 +1454,7 @@ void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
 */
 
 void Py4pdUtils_SetObjConfig(t_py *x) {
+    LOG("Py4pdUtils_SetObjConfig");
     int folderLen = strlen("/py4pd-env/") + 1;
     char *PADRAO_packages_path =
         (char *)malloc(sizeof(char) * (strlen(x->PdPatchPath->s_name) + folderLen)); //
@@ -1529,6 +1536,8 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
 
 // ============================================
 void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
+    LOG("Py4pdUtils_AddPathsToPythonPath");
+
     char Py4pdMod[MAXPDSTRING];
     int ret = snprintf(Py4pdMod, MAXPDSTRING, "%s/py4pd", x->Py4pdPath->s_name);
     if (ret < 0) {
@@ -1586,16 +1595,6 @@ void Py4pdUtils_ConfigurePythonPaths() {
 
 // ===================================================================
 int Py4pdUtils_CheckNumpyInstall(t_py *x) {
-    PyObject *SysPath = PySys_GetObject("path"); // Borrowed reference
-    PyObject *SysPathStr = PyObject_Str(SysPath);
-    if (SysPathStr) {
-        const char *SysPathCStr = PyUnicode_AsUTF8(SysPathStr);
-        if (SysPathCStr) {
-            printf("Novos caminhos do sistema Python: %s\n", SysPathCStr);
-        }
-        Py_DECREF(SysPathStr);
-    }
-
     PyObject *NumpyUmath = PyImport_ImportModule("numpy");
     if (NumpyUmath == NULL) {
         pd_error(x, "[py4pd] Numpy not installed, send [pip install numpy] to "
@@ -1812,6 +1811,7 @@ char *Py4pdUtils_Mtok(char *input, char *delimiter) { // TODO: WRONG PLACE
 
 // =====================================================================
 size_t Py4pdUtils_Strlcpy(char *dst, const char *src, size_t size) {
+    LOG("Py4pdUtils_Strlcpy");
 #if defined(__APPLE__)
     return strlcpy(dst, src, size);
 #else

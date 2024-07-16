@@ -49,9 +49,20 @@
     #endif
 #endif
 
+#define DEBUG 1
+
+#if DEBUG
+#define LOG(message, ...) \
+    do { \
+        fprintf(stderr, "[%s:%d] " message "\n", __FILE__, __LINE__, ##__VA_ARGS__); \
+    } while (0)
+#else
+#define LOG(message, ...)
+#endif
+
 
 // PY4PD 
-extern t_class *Py4pdObjClass, *pyNewObject_VIS;
+extern t_class *Py4pdObjClass, *Py4pdVisObjClass;
 
 // OUTLETS 
 /*
