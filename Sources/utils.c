@@ -463,17 +463,16 @@ void Py4pdUtils_ExtraInletPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_gpointer
 
 PyObject *Py4pdUtils_AddPdObject(t_py *x) {
     LOG("Py4pdUtils_AddPdObject");
-    PyObject *MainModule = PyModule_GetDict(PyImport_AddModule("pd"));
-    PyObject *objectCapsule;
-    if (MainModule != NULL) {
-        objectCapsule = PyDict_GetItemString(MainModule, "py4pd"); // borrowed reference
-        if (objectCapsule != NULL) {
-            PyCapsule_SetPointer(objectCapsule, x);
+    PyObject *PdModule = PyModule_GetDict(PyImport_AddModule("pd"));
+    PyObject *objCapsule;
+    if (PdModule != NULL) {
+        objCapsule = PyDict_GetItemString(PdModule, "py4pd"); // borrowed reference
+        if (objCapsule != NULL) {
+            PyCapsule_SetPointer(objCapsule, x);
         } else {
-            // create a capsule to t_py to Py Interp.
-            objectCapsule = PyCapsule_New(x, "py4pd", NULL);
+            objCapsule = PyCapsule_New(x, "py4pd", NULL);
             PyObject *pdModule = PyImport_ImportModule("pd");
-            int addSucess = PyModule_AddObject(pdModule, "py4pd", objectCapsule);
+            int addSucess = PyModule_AddObject(pdModule, "py4pd", objCapsule);
             if (addSucess != 0) {
                 pd_error(x, "[py4pd] Failed to add object to Python");
                 return NULL;
@@ -483,9 +482,9 @@ PyObject *Py4pdUtils_AddPdObject(t_py *x) {
         }
     } else {
         pd_error(x, "[py4pd] Could not get the main module");
-        objectCapsule = NULL;
+        objCapsule = NULL;
     }
-    return objectCapsule;
+    return objCapsule;
 }
 
 // =====================================================================
@@ -866,43 +865,42 @@ void Py4pdUtils_Click(t_py *x) {
  * @return the return value of the function
  */
 int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
+    LOG("Py4pdUtils_RunPy");
 
-    t_py *prev_obj = NULL;
-    int prev_obj_exists = 0;
-    PyObject *MainModule = PyImport_ImportModule("pd");
+    t_py *PrevObj = NULL;
+    int IsPrevObj = 0;
+    PyObject *PdModule = PyImport_ImportModule("pd");
     PyObject *oldObjectCapsule = NULL;
     PyObject *pValue = NULL;
     PyObject *objectCapsule = NULL;
 
-    if (MainModule != NULL) {
-        oldObjectCapsule = PyObject_GetAttrString(MainModule, "py4pd"); // borrowed reference
+    if (PdModule != NULL) {
+        oldObjectCapsule = PyObject_GetAttrString(PdModule, "py4pd"); // borrowed reference
         if (oldObjectCapsule != NULL) {
-            PyObject *py4pd_capsule =
-                PyObject_GetAttrString(MainModule, "py4pd"); // borrowed reference
-            prev_obj = (t_py *)PyCapsule_GetPointer(py4pd_capsule,
-                                                    "py4pd"); // borrowed reference
-            prev_obj_exists = 1;
-            Py_DECREF(oldObjectCapsule);
-            Py_DECREF(py4pd_capsule);
+            PyObject *ObjCapsule = PyObject_GetAttrString(PdModule, "py4pd");
+            PrevObj = (t_py *)PyCapsule_GetPointer(ObjCapsule, "py4pd");
+            IsPrevObj = 1;
         } else {
-            prev_obj_exists = 0;
+            IsPrevObj = 0;
             Py_XDECREF(oldObjectCapsule);
         }
     } else {
         pd_error(x, "[%s] Failed to import pd module when Running Python function",
                  x->pFuncName->s_name);
         Py4pdUtils_PrintError(x);
-        Py_XDECREF(MainModule);
+        Py_XDECREF(PdModule);
         return -1;
     }
     objectCapsule = Py4pdUtils_AddPdObject(x);
     if (objectCapsule == NULL) {
         pd_error(x, "[Python] Failed to add object to Python");
-        Py_XDECREF(MainModule);
+        Py_XDECREF(PdModule);
         return -1;
     }
 
+    LOG("    Before PyObjectCall");
     pValue = PyObject_Call(x->pFunction, pArgs, pKwargs);
+    LOG("    After PyObjectCall");
 
     t_py4pd_pValue *PyPtrValue = NULL;
     if (x->ObjType < 3) {
@@ -912,8 +910,8 @@ int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
         PyPtrValue->ObjOwner = x->ObjName;
     }
 
-    if (prev_obj_exists == 1 && pValue != NULL) {
-        objectCapsule = Py4pdUtils_AddPdObject(prev_obj);
+    if (IsPrevObj == 1 && pValue != NULL) {
+        objectCapsule = Py4pdUtils_AddPdObject(PrevObj);
         if (objectCapsule == NULL) {
             if (PyPtrValue != NULL) {
                 free(PyPtrValue);
@@ -932,20 +930,20 @@ int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
     if (pValue != NULL && (x->ObjType < 3)) {
         Py4pdUtils_ConvertToPd(x, PyPtrValue, x->MainOut);
         Py_DECREF(pValue);
-        Py_XDECREF(MainModule);
+        Py_XDECREF(PdModule);
         free(PyPtrValue);
         PyErr_Clear();
         return 0;
     } else if (pValue == NULL) {
         Py4pdUtils_PrintError(x);
         Py_XDECREF(pValue);
-        Py_XDECREF(MainModule);
+        Py_XDECREF(PdModule);
         free(PyPtrValue);
         return 0;
     }
 
     else if (x->ObjType > 2) {
-        Py_XDECREF(MainModule);
+        Py_XDECREF(PdModule);
         free(PyPtrValue);
         PyErr_Clear();
         return 0;
@@ -1605,17 +1603,17 @@ int Py4pdUtils_CheckNumpyInstall(t_py *x) {
     }
 
     // check numpy version
-    PyObject *Numpy = PyImport_ImportModule("numpy");
-    const char *NumpyVersion = PyUnicode_AsUTF8(PyObject_GetAttrString(Numpy, "__version__"));
-    if (NumpyVersion[0] != '2') {
-        pd_error(x,
-                 "[py4pd] Numpy version %s is not supported, please update to "
-                 "version 2.0.0 or higher",
-                 NumpyVersion);
-        return 0;
-    }
+    // PyObject *Numpy = PyImport_ImportModule("numpy");
+    // const char *NumpyVersion = PyUnicode_AsUTF8(PyObject_GetAttrString(Numpy, "__version__"));
+    // if (NumpyVersion[0] != '2') {
+    //     pd_error(x,
+    //              "[py4pd] Numpy version %s is not supported, please update to "
+    //              "version 2.0.0 or higher",
+    //              NumpyVersion);
+    //     return 0;
+    // }
 
-    Py_DECREF(Numpy);
+    // Py_DECREF(Numpy);
     PyErr_Clear();
     return 1;
 }
