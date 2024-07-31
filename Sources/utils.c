@@ -374,15 +374,14 @@ void Py4pdUtils_ExtraInletAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t
 
 // ====================================================
 PyObject *Py4pdUtils_CreatePyObjFromPdArgs(t_symbol *s, int argc, t_atom *argv) {
-
     PyObject *pArgs = NULL;
-
     if (argc == 0) {
         if (s != NULL) {
             pArgs = PyUnicode_FromString(s->s_name);
         }
     } else if ((s == gensym("list") || s == gensym("anything") || s == NULL) && argc > 1) {
         pArgs = PyList_New(argc);
+
         for (int i = 0; i < argc; i++) {
             t_atomtype aType = argv[i].a_type;
             if (aType == A_FLOAT) {
@@ -891,11 +890,23 @@ int Py4pdUtils_RunPy(t_py *x, PyObject *pArgs, PyObject *pKwargs) {
         Py_XDECREF(PdModule);
         return -1;
     }
+
     objectCapsule = Py4pdUtils_AddPdObject(x);
     if (objectCapsule == NULL) {
         pd_error(x, "[Python] Failed to add object to Python");
         Py_XDECREF(PdModule);
         return -1;
+    }
+
+    // check if all pArgs are != from NULL
+    int pArgsSize = PyTuple_Size(pArgs);
+    for (int i = 0; i < pArgsSize; i++) {
+        if (PyTuple_GetItem(pArgs, i) == NULL) {
+            t_symbol *objName = x->ObjName;
+            pd_error(x, "[%s] There %dº arg is not set, please set it (you can use None).",
+                     objName->s_name, i + 1);
+            return -1;
+        }
     }
 
     LOG("    Before PyObjectCall");
