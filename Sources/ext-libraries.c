@@ -17,6 +17,7 @@ static t_class *Py4pdInletsProxy;
 
 // ===========================================
 void Py4pdLib_ReloadObject(t_py *x) {
+    LOG("Py4pdLib_Bang");
     if (x->pFunction != NULL && PyFunction_Check(x->pFunction)) {
         PyObject *pFunctionModule = PyObject_GetAttrString(x->pFunction, "__module__");
         if (pFunctionModule != NULL) {
@@ -61,6 +62,7 @@ void Py4pdLib_ReloadObject(t_py *x) {
 
 // ===========================================
 void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b) {
+    LOG("Py4pdLib_Py4pdObjPicSave");
     t_py *x = (t_py *)z;
     if (x->VisMode) {
         binbuf_addv(b, "ssii", gensym("#X"), gensym("obj"), x->obj.te_xpix, x->obj.te_ypix);
@@ -76,6 +78,7 @@ void Py4pdLib_Py4pdObjPicSave(t_gobj *z, t_binbuf *b) {
 
 // ===========================================
 void Py4pdLib_SetKwargs(t_py *x, t_symbol *s, int ac, t_atom *av) {
+    LOG("Py4pdLib_SetKwargs");
     (void)s;
     t_symbol *key;
 
@@ -138,6 +141,7 @@ void Py4pdLib_SetKwargs(t_py *x, t_symbol *s, int ac, t_atom *av) {
 // ===========================================
 // ===========================================
 void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_gpointer *gp) {
+    LOG("Py4pdLib_ProxyPointer");
     (void)s;
     t_py *py4pd = (t_py *)x->p_master;
     t_py4pd_pValue *pArg;
@@ -155,6 +159,7 @@ void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_gpointer *gp) {
 
 // =============================================
 void Py4pdLib_Pointer(t_py *x, t_symbol *s, t_gpointer *gp) {
+    LOG("Py4pdLib_Pointer");
     (void)s;
 
     t_py4pd_pValue *pArg;
@@ -193,6 +198,7 @@ void Py4pdLib_Pointer(t_py *x, t_symbol *s, t_gpointer *gp) {
 
 // =====================================
 void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av) {
+    LOG("Py4pdLib_ProxyAnything");
     (void)s;
     t_py *py4pd = (t_py *)x->p_master;
 
@@ -216,6 +222,7 @@ void Py4pdLib_ProxyAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *
 
 // =====================================
 void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av) {
+    LOG("Py4pdLib_Anything");
 
     if (x->pFunction == NULL) {
         pd_error(x, "[%s]: No function defined", x->ObjName->s_name);
@@ -263,6 +270,7 @@ void Py4pdLib_Anything(t_py *x, t_symbol *s, int ac, t_atom *av) {
 
 // =====================================
 void Py4pdLib_Bang(t_py *x) {
+    LOG("Py4pdLib_Bang");
     if (x->pArgsCount != 0) {
         pd_error(x, "[%s] Bang can be used only with no arguments Function.", x->ObjName->s_name);
         return;
@@ -283,6 +291,7 @@ void Py4pdLib_Bang(t_py *x) {
 // ===================== Create Obj ===================
 // ====================================================
 void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
+    LOG("Py4pdLib_NewObj");
     const char *objectName = s->s_name;
     char py4pd_objectName[MAXPDSTRING];
     snprintf(py4pd_objectName, sizeof(py4pd_objectName), "py4pd_ObjectDict_%s", objectName);
