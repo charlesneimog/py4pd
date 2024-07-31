@@ -711,23 +711,34 @@ static void Py4pd_OpenScript(t_py *x, t_symbol *s, int argc, t_atom *argv) {
  */
 static void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
-    // check if argv[0] is a symbol and it is diferent from "float"
-    if (argc != 0 && argv[0].a_type == A_SYMBOL &&
-        strcmp(argv[0].a_w.w_symbol->s_name, "float") != 0) {
-        x->EditorName = atom_getsymbol(argv + 0);
-        post("[py4pd] Editor set to: %s", x->EditorName->s_name);
-        char cfgFile[MAXPDSTRING];
-        char const *py4pdDir = x->Py4pdPath->s_name;
-        snprintf(cfgFile, MAXPDSTRING, "%s/py4pd.cfg", py4pdDir);
-        FILE *file = fopen(cfgFile, "w");
-        fprintf(file, "editor = %s\n", x->EditorName->s_name);
-        fprintf(file, "packages = %s", x->PkgPath->s_name);
-        fclose(file);
-        return;
+    LOG("Py4pd_SetEditor");
+    printf("argc: %d\n", argc);
+    printf("is lib: %d\n", (int)x->IsLib);
+
+    if (!x->IsLib) {
+        if (argc != 0 && argv[0].a_type == A_SYMBOL &&
+            gensym("float") == atom_getsymbol(argv + 0)) {
+
+            x->EditorName = atom_getsymbol(argv + 0);
+            post("[py4pd] Editor set to: %s", x->EditorName->s_name);
+            char cfgFile[MAXPDSTRING];
+            char const *py4pdDir = x->Py4pdPath->s_name;
+            snprintf(cfgFile, MAXPDSTRING, "%s/py4pd.cfg", py4pdDir);
+            FILE *file = fopen(cfgFile, "w");
+            fprintf(file, "editor = %s\n", x->EditorName->s_name);
+            fprintf(file, "packages = %s", x->PkgPath->s_name);
+            fclose(file);
+            return;
+        }
     }
+
     if (x->FuncCalled == 0) { // if the set method was not called, then we
         pd_error(x, "[py4pd] To open the editor you need to set the "
                     "function first!");
+        return;
+    }
+
+    if (x->pFunction == NULL) {
         return;
     }
 
@@ -1050,6 +1061,9 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
     int LibMode = 0;
     int ObjMode = 1;
     t_symbol *ScriptName = NULL;
+    if (objCount == 0) {
+        Py4pdUtils_ConfigurePythonPaths();
+    }
 
     // Get what will be the type of the object
     for (i = 0; i < argc; i++) {
@@ -1207,7 +1221,6 @@ void py4pd_setup(void) {
         post("");
         PyImport_AppendInittab("pd", PyInit_pd);
         Py_Initialize();
-        Py4pdUtils_ConfigurePythonPaths();
     }
 }
 
