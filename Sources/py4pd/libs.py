@@ -22,6 +22,10 @@ try:
             "link": "charlesneimog/py4pd-spt",
             "description": "Simple Partials Tracker for PureData",
         },
+        "py4pd-freesound":{
+            "link": "charlesneimog/py4pd-freesound",
+            "description": "Search, retrieve, play, and manipulate audio samples from Freesound.org.",
+        },
     }
 
     def listPy4pdLibraries():
