@@ -1,30 +1,15 @@
 ---
 hide:
-  - navigation
   - toc
 ---
 
-# Installation
+To use `py4pd`, besides PureData, you need to install Python and the package `py4pd`. I recommend to install Python first then the `py4pd` package.
 
-## <h2 align="center"> **Setup** </h2>
-
-!!! danger "Python installation is required!"
-
-<p style="font-size: 16px" align="center">Installing just `py4pd` (no Python) will not work.</p>
-
- <p align="center"> The process of installation is simple, first we install <code>Python</code> and then <code>py4pd</code>. </p>
-
----
-
-=== ":fontawesome-solid-1: Install Python"
-
-    ### <h3 align="center"> **1. Install Python** </h3>
-
-    ---
-
-    !!! danger inline "Check the Python Version"
-
-         <table class="special-table" style="width: 100%" align="center">
+!!! warning
+    Always use the right version of Python as showed in the table.
+    
+    
+     <table class="special-table" style="width: 100%" align="center">
             <thead>
               <tr>
                 <th>Py4pd Version</th>
@@ -45,44 +30,46 @@ hide:
             </tbody>
         </table>
 
+## Install Python
 
-    === ":material-apple: macOS"
-
-        On `MacOS` you can install Python as an ordinary software.
-
-        * Go to [Python.org](https://www.python.org/downloads/release/python-3115/),
-        * Go to the bottom of the page and download: `macOS 64-bit universal2 installer`.
-        * Install it as an ordinary program.
+---
 
 
-    === ":fontawesome-brands-windows: Windows"
+=== ":material-apple: macOS"
 
-        On `Windows` you can install Python as an ordinary software.
+    On `MacOS` you can install Python as an ordinary software.
 
-        * Go to [Python.org](https://www.python.org/downloads/release/python-3115/),
-        * Go to the bottom of the page and download: `Windows installer (64-bit)`.
-        * Install it as an ordinary program.
+    * Go to [Python.org](https://www.python.org/downloads/release/python-3115/),
+    * Go to the bottom of the page and download: `macOS 64-bit universal2 installer`.
+    * Install it as an ordinary program.
 
-    === ":material-linux: Linux"
 
-        On `Linux`:
+=== ":fontawesome-brands-windows: Windows"
 
-        * Open the terminal.
-        * Run:
-            * :simple-fedora: `sudo dnf install python3.11 python3-pip`
-            * :material-ubuntu: `sudo apt install python3.11 python3-pip`
-            * :material-arch: `yay -S python311 python3.pip`
+    On `Windows` you can install Python as an ordinary software.
 
-=== ":fontawesome-solid-2: Install py4pd"
+    * Go to [Python.org](https://www.python.org/downloads/release/python-3115/),
+    * Go to the bottom of the page and download: `Windows installer (64-bit)`.
+    * Install it as an ordinary program.
 
-    ### <h3 align="center"> **2. Install `py4pd`** </h3>
+=== ":material-linux: Linux"
 
-    1. Open PureData,
-    2. Go to `Help->Find Externals->`,
-    3. Search for `py4pd`,
-    4. Select py4pd and click on `Install`:
+    On `Linux`:
 
-    <figure markdown>
-      ![Install py4pd](assets/install-py4pd.gif){ width="700" loading="lazy"  style="border-radius: 3px; box-shadow: 0px 8px 8px rgba(0, 0, 0, 0.2);"}
-      <figcaption>Process of install py4pd on PureData</figcaption>
-    </figure>
+    * Open the terminal.
+    * Run:
+        * :simple-fedora: `sudo dnf install python3.11 python3-pip`
+        * :material-ubuntu: `sudo apt install python3.11 python3-pip`
+        * :material-arch: `yay -S python311 python3.pip`
+
+## <h2 align="center"> **Install `py4pd`** </h2>
+
+1. Open PureData,
+2. Go to `Help->Find Externals->`,
+3. Search for `py4pd`,
+4. Select py4pd and click on `Install`:
+
+<figure markdown>
+  ![Install py4pd](assets/install-py4pd.gif){ width="700" loading="lazy"  style="border-radius: 3px; box-shadow: 0px 8px 8px rgba(0, 0, 0, 0.2);"}
+  <figcaption>Process of install py4pd on PureData</figcaption>
+</figure>
