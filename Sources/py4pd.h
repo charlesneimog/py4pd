@@ -40,12 +40,12 @@
 #ifndef PY4PD_EDITOR
     #ifdef _WIN32
         // Windows
-        #define PY4PD_EDITOR "idle3.11"
+        #define PY4PD_EDITOR "idle3.12"
     #elif defined(__APPLE__) || defined(__MACH__)
         // macOS
-        #define PY4PD_EDITOR "/Library/Frameworks/Python.framework/Versions/3.11/bin/python3 -m idlelib.idle"
+        #define PY4PD_EDITOR "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3 -m idlelib.idle"
     #else
-        #define PY4PD_EDITOR "idle3.11"
+        #define PY4PD_EDITOR "idle3.12"
     #endif
 #endif
 

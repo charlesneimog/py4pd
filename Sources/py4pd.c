@@ -30,7 +30,6 @@ static int Py4pd_LibraryLoad(t_py *Py4pd, int Argc, t_atom *Argv) {
         pd_error(Py4pd, "[py4pd] Too many arguments! Usage: py4pd -lib <library_name>");
         return -1;
     }
-    printf("Loading library %s\n", atom_gensym(Argv + 1)->s_name);
     const char *Py4pdLibName = atom_gensym(Argv + 1)->s_name;
     char Py4pdCorrectLibName[MAXPDSTRING];
     int j;
@@ -53,25 +52,25 @@ static int Py4pd_LibraryLoad(t_py *Py4pd, int Argc, t_atom *Argv) {
         Py_XDECREF(Py4pd->pFunction);
         int LibNotFound = 1;
         for (int i = 0; 1; i++) {
-            char const *pathelem = namelist_get(STUFF->st_searchpath, i);
-            if (!pathelem) {
+            char const *PathElem = namelist_get(STUFF->st_searchpath, i);
+            if (!PathElem) {
                 break;
             }
-            char *LibPath = (char *)malloc(strlen(pathelem) + strlen(ScriptFileName->s_name) + 1);
-            snprintf(LibPath, MAXPDSTRING, "%s/%s/", pathelem, atom_gensym(Argv + 1)->s_name);
+            char *LibPath = (char *)malloc(strlen(PathElem) + strlen(ScriptFileName->s_name) + 1);
+            snprintf(LibPath, MAXPDSTRING, "%s/%s/", PathElem, atom_gensym(Argv + 1)->s_name);
             if (access(LibPath, F_OK) != -1) { // Library found
                 LibNotFound = 0;
                 PyList_Append(SysPath, PyUnicode_FromString(LibPath));
-                post("[py4pd] Library path added: %s", LibPath);
             }
             free(LibPath);
         }
-        if (LibNotFound) {
-            pd_error(Py4pd, "[py4pd] Library '%s' not found!", ScriptFileName->s_name);
-            pd_error(Py4pd,
-                     "[py4pd] Please, make sure the library is in the search path of PureData");
-            return -1;
-        }
+
+        // if (LibNotFound) {
+        //     pd_error(Py4pd, "[py4pd] Library '%s' not found!", ScriptFileName->s_name);
+        //     pd_error(Py4pd,
+        //              "[py4pd] Please, make sure the library is in the search path of PureData");
+        //     return -1;
+        // }
     }
 
     PyObject *pModule, *pFunc; // Create the variables of the python objects
@@ -108,6 +107,7 @@ static int Py4pd_LibraryLoad(t_py *Py4pd, int Argc, t_atom *Argv) {
         Py_XDECREF(MainModule);
         return -1;
     }
+
     pModule = PyImport_ImportModule(atom_gensym(Argv + 1)->s_name);
     if (pModule == NULL) {
         pd_error(Py4pd, "[Python] Failed to load script file %s", ScriptFileName->s_name);
@@ -144,12 +144,12 @@ static int Py4pd_LibraryLoad(t_py *Py4pd, int Argc, t_atom *Argv) {
         return -1;
     }
     // convert const char * to char *
-    char *libraryFolder = malloc(strlen(PyUnicode_AsUTF8(pFilenameObj)) + 1);
-    Py4pdUtils_Strlcpy(libraryFolder, PyUnicode_AsUTF8(pFilenameObj),
+    char *libFolder = malloc(strlen(PyUnicode_AsUTF8(pFilenameObj)) + 1);
+    Py4pdUtils_Strlcpy(libFolder, PyUnicode_AsUTF8(pFilenameObj),
                        strlen(PyUnicode_AsUTF8(pFilenameObj)) + 1);
 
-    Py4pd->LibraryFolder = gensym(Py4pdUtils_GetFolderName(libraryFolder));
-    free(libraryFolder);
+    Py4pd->LibraryFolder = gensym(Py4pdUtils_GetFolderName(libFolder));
+    free(libFolder);
 
     if (pModule == NULL) {
         Py4pdUtils_PrintError(Py4pd);
@@ -236,7 +236,7 @@ static int Py4pd_LibraryLoad(t_py *Py4pd, int Argc, t_atom *Argv) {
 
 // ========================================
 /*
- * @brief Struct to pass args to the new thread
+ * @brief Struct to pass args to the new thread to execute pip detached
  */
 
 struct pipInstallArgs {

@@ -1574,6 +1574,16 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
             PyList_Insert(SysPath, SysPathLen, CondaPkg);
             PyList_Insert(SysPath, SysPathLen, Py4pdGlobalPkg);
         }
+
+        // now the pd search path modules
+        for (int i = 0; 1; i++) {
+            const char *PathElem = namelist_get(STUFF->st_searchpath, i);
+            if (!PathElem) {
+                break;
+            }
+            PyObject *PdSearchPath = PyUnicode_FromString(PathElem);
+            PyList_Insert(SysPath, SysPathLen, PdSearchPath);
+        }
     }
 
     return;

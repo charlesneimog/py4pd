@@ -173,7 +173,6 @@ static void Py4pdNewObj_PdExecAnythingMethod(t_py *x, t_symbol *s, int argc, t_a
     PyCodeObject *pFuncCode = (PyCodeObject *)PyFunction_GetCode(pFunc);
     int pFuncArgs = pFuncCode->co_argcount;
     PyObject *pArgs = PyTuple_New(pFuncArgs);
-
     PyObject *pInletValue = Py4pdUtils_CreatePyObjFromPdArgs(s, argc, argv);
     PyTuple_SetItem(pArgs, 0, pInletValue);
 
@@ -191,6 +190,7 @@ static void Py4pdNewObj_PdExecAnythingMethod(t_py *x, t_symbol *s, int argc, t_a
         Py_INCREF(x->pArgTuple);
         return;
     }
+
     Py4pdUtils_RunPy(x, pArgs, x->KwArgsDict);
     Py_DECREF(pArgs);
 }
@@ -974,7 +974,7 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
         int i;
         for (i = 0, u = x->ExtrasOuts, ap = defarg; i < AuxOutlet; i++, u++, ap++) {
             u->u_outlet = outlet_new(&x->obj, &s_anything);
-        // TODO: Need free this memory with puredata freebytes
+            // TODO: Need free this memory with puredata freebytes
         }
     }
 
