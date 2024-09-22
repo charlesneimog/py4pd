@@ -8,7 +8,7 @@
 
 ## Project 1 - Simple Script
 
-Once you install Python and `py4pd`, the simple way to use Python inside PureData is trhow `.py` files. You must organize your work as
+Once you install Python and `py4pd`, the simple way to use Python inside PureData is by `.py` files. You must organize your work as
 
 ```
 ├─ PROJECT_FOLDER
