@@ -550,7 +550,7 @@ char *Py4pdUtils_GetFolderName(char *Path) {
 
 // Find the last occurrence of a path separator
 #ifdef _WIN32
-    FolderSeparator = strrchr(path, '\\');
+    FolderSeparator = strrchr(Path, '\\');
 #else
     FolderSeparator = strrchr(Path, '/');
 #endif
