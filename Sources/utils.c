@@ -277,33 +277,31 @@ int Py4pdUtils_CreateObjInlets(PyObject *function, t_py *x, t_class *py4pdInlets
         }
         int argNumbers = x->pArgsCount;
 
-        for (i = 0; i < argNumbers; i++) {
+        for (i = 0; i < argNumbers - 1; i++) {
             if (i <= argc) {
                 if (argv[i].a_type == A_FLOAT) {
                     int isInt = atom_getintarg(i, argc, argv) == atom_getfloatarg(i, argc, argv);
                     if (isInt) {
-                        x->PyObjArgs[i]->pValue = PyLong_FromLong(atom_getfloatarg(i, argc, argv));
+                        x->PyObjArgs[i + 1]->pValue =
+                            PyLong_FromLong(atom_getfloatarg(i, argc, argv));
                     } else {
-                        x->PyObjArgs[i]->pValue =
+                        x->PyObjArgs[i + 1]->pValue =
                             PyFloat_FromDouble(atom_getfloatarg(i, argc, argv));
                     }
                 }
 
                 else if (argv[i].a_type == A_SYMBOL) {
                     if (strcmp(atom_getsymbolarg(i, argc, argv)->s_name, "None") == 0) {
-                        Py_INCREF(Py_None);
-                        x->PyObjArgs[i]->pValue = Py_None;
+                        x->PyObjArgs[i + 1]->pValue = Py_None;
                     } else {
-                        x->PyObjArgs[i]->pValue =
+                        x->PyObjArgs[i + 1]->pValue =
                             PyUnicode_FromString(atom_getsymbolarg(i, argc, argv)->s_name);
                     }
                 } else if (x->PyObjArgs[i]->pValue == NULL) {
-                    Py_INCREF(Py_None);
-                    x->PyObjArgs[i]->pValue = Py_None;
+                    x->PyObjArgs[i + 1]->pValue = Py_None;
                 }
             } else if (x->PyObjArgs[i]->pValue == NULL) {
-                Py_INCREF(Py_None);
-                x->PyObjArgs[i]->pValue = Py_None;
+                x->PyObjArgs[i + 1]->pValue = Py_None;
             }
         }
     }

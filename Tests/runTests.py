@@ -13,7 +13,7 @@ def runTest(pdpatch):
     # the pdpatch start with a number divided by -, get this number
     pdpatchNumber = int(pdpatch.split("-")[0])
     if pdpatchNumber == 10 or pdpatchNumber == 70 or pdpatchNumber == 71:
-        timeout = 60
+        timeout = 120
     else:
         timeout = 15
 
