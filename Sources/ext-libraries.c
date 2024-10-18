@@ -488,8 +488,8 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     }
     int objectType = 0;
     if (keywords != NULL) {
-        if (PyDict_Contains(keywords, PyUnicode_FromString("obj_type"))) {
-            PyObject *type = PyDict_GetItemString(keywords, "obj_type");
+        if (PyDict_Contains(keywords, PyUnicode_FromString("type"))) {
+            PyObject *type = PyDict_GetItemString(keywords, "type");
             objectType = PyLong_AsLong(type);
         }
         if (PyDict_Contains(keywords, PyUnicode_FromString("fig_size"))) {
@@ -548,18 +548,18 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
                 pd_error(NULL, "Help patch must end with '-help.pd'");
             }
         }
-        if (PyDict_Contains(keywords, PyUnicode_FromString("ignore_none_return"))) {
-            PyObject *noneReturn = PyDict_GetItemString(keywords, "ignore_none_return");
+        if (PyDict_Contains(keywords, PyUnicode_FromString("ignore_none"))) {
+            PyObject *noneReturn = PyDict_GetItemString(keywords, "ignore_none");
             if (noneReturn == Py_True) {
                 ignoreNoneReturn = 1;
             }
         }
-        if (PyDict_Contains(keywords, PyUnicode_FromString("obj_image"))) {
-            PyObject *type = PyDict_GetItemString(keywords, "obj_image");
+        if (PyDict_Contains(keywords, PyUnicode_FromString("image"))) {
+            PyObject *type = PyDict_GetItemString(keywords, "image");
             gifImage = PyUnicode_AsUTF8(type);
         }
-        if (PyDict_Contains(keywords, PyUnicode_FromString("num_aux_outlets"))) {
-            PyObject *type = PyDict_GetItemString(keywords, "num_aux_outlets");
+        if (PyDict_Contains(keywords, PyUnicode_FromString("n_extra_outlets"))) {
+            PyObject *type = PyDict_GetItemString(keywords, "n_extra_outlets");
             auxOutlets = PyLong_AsLong(type);
         }
         if (PyDict_Contains(keywords, PyUnicode_FromString("playable"))) {
