@@ -108,3 +108,7 @@ def omabs(a):
         return [abs(x) for x in a]
     else:
         pd.error("[py.abs]: bad arguments")
+
+
+def pdround(f):
+    return round(f)

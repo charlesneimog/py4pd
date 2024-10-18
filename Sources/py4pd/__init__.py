@@ -18,13 +18,14 @@ from py4pd.utils import *
 
 # try to import all files inside src.
 
+
 def numpyIsInstalled():
     try:
         import numpy
+
         return True
     except:
         return False
-    
 
 
 def mysumarg(a=3, b=2, c=5, d=4):
@@ -52,6 +53,7 @@ def py4pd_setup():
 
     # info
     pd.add_object(pdprint, "py.print", no_outlet=True, help_path="py.print-help.pd")
+    pd.add_object(pdraise, "py.raise", no_outlet=True)
 
     # Convertion Objects
     pd.add_object(py2pd, "py2pd", ignore_none_return=True)
@@ -63,6 +65,7 @@ def py4pd_setup():
     pd.add_object(nth, "py.nth", py_out=True)
     pd.add_object(omappend, "py.append", py_out=True)
     pd.add_object(omlist, "py.list", py_out=True)
+    pd.add_object(pysplit, "py.split", py_out=True, require_outlet_n=True)
     pd.add_object(pymax, "py.max")
     pd.add_object(pymin, "py.min")
     pd.add_object(pyreduce, "py.reduce", py_out=True)
@@ -72,11 +75,9 @@ def py4pd_setup():
 
     pd.add_object(getObjectType, "py.type")
 
-
     if numpyInstalled:
         pd.add_object(np2list, "py.np2list", py_out=True)
         pd.add_object(list2np, "py.list2np", py_out=True)
-
 
     # Loop Functions
     # these are special objects.
@@ -105,6 +106,7 @@ def py4pd_setup():
     pd.add_object(omdiv, "py/")
     pd.add_object(omabs, "py.abs")
     pd.add_object(ommod, "py//", py_out=True)
+    pd.add_object(pdround, "py.round")
 
     pd.add_object(py4pdListComprehension, "py.listcomp", py_out=True)
 
@@ -133,7 +135,3 @@ def py4pd_setup():
     py4pd_libs.help_patch = "py4pd.libs-help.pd"
     py4pd_libs.allow_editor = True
     py4pd_libs.add_object()
-
-
-
-

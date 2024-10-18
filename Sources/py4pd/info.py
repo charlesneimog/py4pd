@@ -10,3 +10,8 @@ def pdprint(value):
         pd.print(str(prefix) + " " + str(value), show_prefix=False)
     else:
         pd.print(str(value))
+
+
+def pdraise(msg):
+    msg = " ".join(msg)
+    raise Exception(msg)

@@ -5,12 +5,14 @@ import pd
 try:
     import numpy as np
 except:
+    np = None
     pass
 
 
 #  ==============
 #  List Functions
 #  ==============
+
 
 def mat_trans(matrix: List[List]) -> List[List]:
     """
@@ -26,7 +28,7 @@ def mat_trans(matrix: List[List]) -> List[List]:
     ## check if all rows have the same length
     if not all(len(row) == len(matrix[0]) for row in matrix):
         raise ValueError("All rows must have the same length")
-    
+
     result = []
     max_len = max(map(len, matrix)) - 1
     for i in range(max_len + 1):
@@ -50,6 +52,7 @@ def omlist(*args):
         thelist.append(i)
     return thelist
 
+
 def omappend(*args):
     """Append a list to another list"""
     # for example omappend([1,2,3], [4,5,6]) -> [1,2,3,4,5,6]
@@ -60,6 +63,7 @@ def omappend(*args):
         else:
             thelist.append(i)
     return thelist
+
 
 def pylen(value):
     """Get the length of a Python data type"""
@@ -82,7 +86,7 @@ def pyreduce(key, value):
         pd.error("[py.reduce]: bad arguments")
         return None
 
-    if key == "+":  
+    if key == "+":
         return sum(value)
     elif key == "-":
         result = 0
@@ -101,6 +105,7 @@ def pyreduce(key, value):
         return result
     else:
         pd.error("[py.reduce]: bad arguments")
+
 
 def rotate(list, n):
     """Rotate a list"""
@@ -133,3 +138,15 @@ def list2np(thelist):
         return None
     return np.array(thelist)
 
+
+def pysplit(mylist):
+    mylist = [1, 2, 3, 4, 5, 6]
+    outcount = pd.get_outlet_count()
+    if len(mylist) < outcount:
+        outcount = len(mylist)
+        pd.error("Outputing just some elements of the list")
+
+    # output first 6 using the last outlet, then output 5 using the second last outlet
+    reversed_list = mylist[::-1]
+    for i in range(outcount):
+        pd.out(reversed_list[i], out_num=outcount - i - 1)
