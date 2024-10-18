@@ -1579,6 +1579,7 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
             if (!PathElem) {
                 break;
             }
+            post("PathElem: %s", PathElem);
             PyObject *PdSearchPath = PyUnicode_FromString(PathElem);
             PyList_Insert(SysPath, SysPathLen, PdSearchPath);
         }
@@ -1734,7 +1735,7 @@ void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
 // ====================================================
 #if PYTHON_REQUIRED_VERSION(3, 12)
 
-struct Py4pd_ObjSubInterp {
+struct Py4pdUtils_ObjSubInterp {
     PyObject *pFunc;
     PyObject *pModule;
     t_py *x;
@@ -1762,7 +1763,7 @@ void *Py4pdUtils_CreateSubInterpreter(void *arg) {
     // WE ARE IN THE NEW SUBINTERPRETER
 
     // run function
-    struct Py4pd_ObjSubInterp *objSubInterp = arg;
+    struct Py4pdUtils_ObjSubInterp *objSubInterp = arg;
     t_py *x = objSubInterp->x;
     x->FuncCalled = 0;
     return 0;
@@ -1782,7 +1783,7 @@ void Py4pdUtils_CreatePythonInterpreter(t_py *x) {
         return;
     }
 
-    struct Py4pd_ObjSubInterp *objSubInterp = malloc(sizeof(struct Py4pd_ObjSubInterp));
+    struct Py4pdUtils_ObjSubInterp *objSubInterp = malloc(sizeof(struct Py4pdUtils_ObjSubInterp));
     objSubInterp->x = x;
     x->pSubInterpRunning = 1;
 
