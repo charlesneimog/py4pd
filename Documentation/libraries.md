@@ -17,7 +17,7 @@ You can download the libraries using `deken`. To install the library search for 
 
     <figure markdown>
       ![Install py4pd](assets/install-libraries.gif){ width="70%" loading="lazy"}
-      <figcaption>Process of install py4pd-ji on PureData</figcaption>
+      <figcaption>Process of install the library `ji` on PureData</figcaption>
     </figure>
 
 --------------------------
@@ -34,7 +34,7 @@ You can download the libraries using `deken`. To install the library search for 
     </thead>
     <tbody>
       <tr>
-        <td><a href="https://github.com/charlesneimog/py4pd-ji">py4pd-ji</a></td>
+        <td><a href="https://github.com/charlesneimog/py4pd-ji">ji</a></td>
         <td>It creates an environment for the microtonal music composition, mainly for Just Intonation composition.</td>
         <td><a href="https://charlesneimog.github.io/"</a> Charles K. Neimog</td>
       </tr>
@@ -48,21 +48,21 @@ You can download the libraries using `deken`. To install the library search for 
     </tbody>
     <tbody>
       <tr>
-        <td><a href="https://github.com/charlesneimog/py4pd-upic">py4pd-upic</a></td>
+        <td><a href="https://github.com/charlesneimog/py4pd-upic">upic</a></td>
         <td>It allows to convert svg to audio parameters</td>
         <td><a href="https://charlesneimog.github.io/"</a> Charles K. Neimog</td>
       </tr>
     </tbody>
     <tbody>
       <tr>
-        <td><a href="https://github.com/charlesneimog/py4pd-partials">py4pd-partials</a></td>
+        <td><a href="https://github.com/charlesneimog/py4pd-partials">partials</a></td>
         <td>It allows to do Partial Tracking in PureData (under development yet)</td>
         <td><a href="https://charlesneimog.github.io/"</a> Charles K. Neimog</td>
       </tr>
     </tbody>
     <tbody>
       <tr>
-        <td><a href="https://github.com/charlesneimog/py4pd-freesound">py4pd-freesound</a></td>
+        <td><a href="https://github.com/charlesneimog/py4pd-freesound">freesound</a></td>
         <td>Get freesound sound in PureData (under development yet)</td>
         <td><a href="https://charlesneimog.github.io/"</a> Charles K. Neimog</td>
       </tr>
