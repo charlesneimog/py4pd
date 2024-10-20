@@ -9,7 +9,6 @@
 Python
 bin
 pd/
-py4pd/
 test/py4pd/
 py4pd.zip
 DLLs/*
@@ -43,7 +42,7 @@ __pycache__/py.cpython-310.pyc
 #*.png
 *.vscode
 
-py-modules
+py4pd-env
 ./compile_commands.json
 .cache/
 compile_commands.json

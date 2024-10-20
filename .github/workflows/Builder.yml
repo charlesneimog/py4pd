@@ -1,390 +1,185 @@
-name: "Dev"
+---
+name: C/C++ CI
 on:
   workflow_dispatch:
-    inputs:
-      windows:
-        description: "Build for Windows"
-        required: false
-        type: boolean
-        default: false
-      macos-intel:
-        description: "Build for Mac Intel"
-        required: false
-        type: boolean
-        default: false
-      macos-arm:
-        description: "Build for Mac ARM"
-        required: false
-        type: boolean
-        default: false
-      linux:
-        description: "Build for Linux"
-        required: false
-        type: boolean
-        default: false
-  release:
-    types: [published]
   push:
-    branches:
-      - develop
-    paths:
-      - "**/*.yml"
+    branches: [develop, master]
+  pull_request:
+    branches: [develop, master]
+env:
+  LIBNAME: py4pd
+  LIBVERSION: 0.8.7
 jobs:
-  pythonversion:
-    runs-on: ubuntu-latest
-    outputs:
-      python-versions: ${{ steps.set-matrix.outputs.python-versions }}
-      deken-python-versions: ${{ steps.set-matrix.outputs.deken-python-versions }}
-      tag_name: ${{ steps.check-tag.outputs.tag_name }}
-    steps:
-      - id: set-matrix
-        run: |
-          echo "python-versions=[\"3.10\",\"3.11\",\"3.12\"]" >> $GITHUB_OUTPUT
-          echo "deken-python-versions=[\"3.11\"]" >> $GITHUB_OUTPUT
-      - name: Check if tag_name is empty
-        id: check-tag
-        run: |
-          latest_tag=$(curl -s "https://api.github.com/repos/charlesneimog/py4pd/tags" | jq -r '.[0].name')
-          echo "tag_name=$latest_tag" >> $GITHUB_OUTPUT
-      - name: Print Outputs
-        run: |
-          cat $GITHUB_OUTPUT
-        env:
-          GITHUB_OUTPUT: ${{ github.workspace }}/github_output.txt
-  # ============================================================================
-  # =                               LINUX                                      =
-  # ============================================================================
-  linux-build:
-    runs-on: ubuntu-latest
-    needs: pythonversion
-    if: ${{ inputs.linux }} || github.event_name == 'schedule'
-    timeout-minutes: 10
+  macos-universal-build:
+    runs-on: macos-latest
     strategy:
       matrix:
-        python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}
+        arch: [amd64, arm64]
+        precision: [32, 64]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
-      - uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-      - uses: conda-incubator/setup-miniconda@v2
-        with:
-          auto-update-conda: true
-          auto-activate-base: true
-      - name: Install Build Dependencies
-        env:
-          pythonName: python${{ matrix.python-version }}
+      - name: Install PureData and Deps x86_64 Mac
+        if: ${{ matrix.arch == 'amd64' }}
         run: |
-          curl -L -o pd.tar.gz https://msp.ucsd.edu/Software/pd-0.54-1.src.tar.gz
-          tar -xzf pd.tar.gz
-          rm pd.tar.gz
-          mv pd-* pure-data
-          $pythonName -m pip install numpy
-      - name: Install PureData and Python
-        env:
-          pythonPackage: python${{ matrix.python-version }}-dev
+          arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          arch -x86_64 /usr/local/bin/brew install pd
+          arch -x86_64 /usr/local/bin/brew install python@3.11
+          arch -x86_64 /usr/local/bin/pip3 install numpy
+      - name: Install PureData and Deps arm64 Mac
+        if: ${{ matrix.arch == 'arm64' }}
         run: |
-          sudo add-apt-repository ppa:deadsnakes/ppa
-          sudo apt-get update
-          sudo apt-get install $pythonPackage -y
-          sudo add-apt-repository ppa:pure-data/pure-data -y
-          sudo apt-get install puredata -y
-      - name: Build
-        env:
-          pythonName: python${{ matrix.python-version }}
-        run: make PDINCLUDEDIR=./pure-data/src/ PYTHON_VERSION=$pythonName extension=l_amd64
-      - name: Copy files to py4pd
+          brew install pd
+          brew install python@3.11
+          python3.11 -m pip install numpy
+      - name: Build Object for Arm
+        if: ${{ matrix.arch == 'arm64' }}
         run: |
-          mkdir -p py4pd
-          cp py4pd.l_amd64 resources/py4pd.cfg resources/py.py resources/py4pd-help.pd py4pd
-          cp -r resources py4pd
-          cp -r src py4pd
-          find py4pd/src -name "*.o" -type f -delete
-          cp resources/README.deken.pd py4pd
-          rm py4pd/resources/BUILD.md
-          rm py4pd/resources/*.json
-          rm py4pd/resources/*.py
-          rm py4pd/resources/*.pd
-          rm py4pd/resources/*.cfg
-          rm -f py4pd/src/.clang-format
-          rm -r py4pd/resources/pd-lib-builder
-          cp -r py4pd test
-      - name: Install Conda Environment
-        shell: bash
+          export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:/opt/homebrew/include/"
+          export LDFLAGS="-L/opt/homebrew/lib"
+          cmake . -B build -DCMAKE_OSX_ARCHITECTURES=arm64 -DPD_FLOATSIZE=${{ matrix.precision }} -DPDLIBDIR=./ -DPYVERSION=3.11
+          cmake --build build -j $(sysctl -n hw.logicalcpu)
+          make install -C build
+      - name: Build Object for x86_64
+        if: ${{ matrix.arch == 'amd64' }}
         run: |
-          cd test
-          cd py4pd
-          eval "$(${CONDA}/bin/conda shell.bash hook)"
-          conda create -y --name composition
-          conda activate composition
-          pip install svgpathtools
-          python3 -c "import svgpathtools; print('conda_env_packages =', svgpathtools.__file__.replace('svgpathtools/__init__.py', ''))" > py4pd.cfg
-      - name: Tests with Spaces
-        run: |
-          cp -r test "test spaces"
-          cd "test spaces"
-          python${{ matrix.python-version }} ./runTests.py
-      - name: Tests
-        run: |
-          cd test
-          python${{ matrix.python-version }} ./runTests.py
+          export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:/usr/local/include/"
+          export LDFLAGS="-L/usr/local/lib"
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_OSX_ARCHITECTURES=x86_64 -DPDLIBDIR=./ -DPYVERSION=3.11
+          cmake --build build -j $(sysctl -n hw.logicalcpu)
+          make install -C build
       - name: Upload Object
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
-          path: py4pd
-  # ============================================================================
-  # =                           WINDOWS                                        =
-  # ============================================================================
+          name: ${{env.LIBNAME}}-macos-${{matrix.arch}}-${{matrix.precision}}
+          path: ${{env.LIBNAME}}
   windows-build:
     runs-on: windows-latest
-    needs: pythonversion
-    if: ${{ inputs.windows }} || github.event_name == 'schedule'
     strategy:
       matrix:
-        python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}
-    timeout-minutes: 20
+        compiler: [mingw]
+        arch: [amd64]
+        precision: [32, 64]  # pd double and single float
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
-      - uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-      - if: runner.os == 'Windows'
-        name: "Install mingw deps"
+      - if: matrix.compiler == 'mingw'
+        name: Set up Msys2
         uses: msys2/setup-msys2@v2
         with:
-          install: make autoconf automake libtool mingw-w64-x86_64-gcc mingw-w64-x86_64-libwinpthread-git mingw-w64-x86_64-dlfcn mingw-w64-x86_64-grep  mingw-w64-x86_64-curl unzip
+          msystem: mingw64
           update: false
-      - name: Conda local
+          install: make mingw-w64-x86_64-gcc mingw64/mingw-w64-x86_64-cmake
+      - name: Install winget
+        uses: Cyberboss/install-winget@v1
+      - name: Install PureData Float 32
+        if: matrix.precision == '32'
         run: |
-          ls C:\Miniconda\condabin\conda.bat
-      - if: runner.os == 'Windows'
-        name: Get Pd
+          winget install -e --id MillerPuckette.PureData --accept-source-agreements
+          winget install -e --id Python.Python.3.11 --accept-source-agreements
+          py -3.11 -m pip install numpy
+      - name: Install PureData Float 64
+        if: matrix.precision == '64'
+        run: |
+          winget install -e --id MillerPuckette.Pd64 --accept-source-agreements
+          winget install -e --id Python.Python.3.11 --accept-source-agreements
+          py -3.11 -m pip install numpy
+      - name: Configure and build Mingw
         shell: msys2 {0}
         run: |
-          curl -L -o pure-data.zip http://msp.ucsd.edu/Software/pd-0.54-0.msw.zip
-          unzip pure-data.zip
-          rm pure-data.zip
-          rename  pd-0.54-0 pd pd-0.54-0
-      - name: Configure Environment
-        run: |
-          mkdir py4pd
-          python -m pip install numpy
-          python -c "import sysconfig; f = open('pythondll.txt', 'w'); print(sysconfig.get_config_vars()['exec_prefix'] + '\\python' + sysconfig.get_config_vars('VERSION')[0] + '.dll', file=f); f.close()"
-          python -c "import sysconfig; f = open('pythonincludes.txt', 'w'); print(sysconfig.get_paths()['include'].replace('\\', '/'), file=f); f.close()"
-          python -c "import os; import sys; f = open('pythonpath.txt', 'w'); print(os.path.dirname(sys.executable).replace('\\', '/'), file=f); f.close()"
-          python -c "import os; import sys; import numpy; f = open('numpyincludes.txt', 'w'); print(numpy.get_include(), file=f); f.close()"
-      - if: runner.os == 'Windows'
-        name: Build py4pd
-        shell: msys2 {0}
-        run: |
-          make PYTHON_VERSION=${{ matrix.python-version }} PDDIR=./pd extension=m_amd64
-      - name: Copy Files and Set for Tests
-        run: |
-          $pythondllversion = Get-Content pythondll.txt
-          $pythonpath = Get-Content pythonpath.txt
-          Copy-Item -Path "$pythondllversion" -Destination py4pd\ -Recurse
-          Copy-Item -Path "$pythonpath\python3.dll" -Destination py4pd\ -Recurse
-          Copy-Item -Path "py4pd" -Destination "test" -Recurse
-          Copy-Item -Path "resources" -Destination "test/py4pd/" -Recurse
-          cp py4pd.m_amd64 py4pd\
-          cp py4pd.m_amd64 test\py4pd\py4pd.m_amd64
-      - name: Install Conda Environment
-        run: |2
-          cd test
-          C:\Miniconda\condabin\conda.bat create -y -n composition python=${{ matrix.python-version }}
-          C:\Miniconda\condabin\conda.bat activate composition
-          py -${{ matrix.python-version }} -m pip install svgpathtools
-          cp py.py py4pd
-          cd py4pd
-          py -${{ matrix.python-version }} -c "from py import getPy4pdCfg; getPy4pdCfg()"
-          Get-Content py4pd.cfg
-      - name: Tests with Spaces
-        run: |
-          Copy-Item -Path "test" -Destination "test spaces" -Recurse
-          cd "test spaces"
-          py -${{ matrix.python-version }} ./runTests.py
-      - name: Tests
-        run: "cd test \npython ./runTests.py\n"
-      - name: Upload Object ZIP
-        uses: actions/upload-artifact@v3
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPDLIBDIR=./ -DPYVERSION=3.11
+          cmake --build build
+          cmake --install build
+      - name: Upload
+        uses: actions/upload-artifact@v4
         with:
-          name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
-          path: py4pd
-  # ==============================================================================
-  # =                               MAC INTEL                                    =
-  # ==============================================================================
-  macos-intel-build:
-    runs-on: macos-latest
-    needs: pythonversion
-    if: ${{ inputs.macos-intel }} || github.event_name == 'schedule'
-    timeout-minutes: 15
-    strategy:
-      matrix:
-        python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-          fetch-depth: 0
-      - uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: set Enviroment
-        run: |
-          brew install --cask pd
-          python${{ matrix.python-version }} -m pip install numpy
-      - name: Build
-        env:
-          pythonName: python${{ matrix.python-version }}
-        run: make PYTHON_VERSION=$pythonName extension=d_amd64
-      - name: Link Python
-        env:
-          pythonName: python${{ matrix.python-version }}
-        run: |
-          python_location=$(whereis $pythonName | awk '{print $2}')
-          if [ -z "$python_location" ]; then
-            echo "Python not found."
-            exit 1
-          fi
-          target_link="/usr/local/bin/$pythonName"
-          if [ ! -e "$target_link" ]; then
-            sudo ln -s "$python_location" "$target_link"
-            echo "Symbolic link created successfully."
-          else
-            echo "File or symbolic link already exists: $target_link"
-          fi
-          ls -l "$target_link"
-          "$target_link" --version
-      - name: Copy Files and Set for Tests
-        run: |
-          mkdir py4pd
-          mv py4pd.d_amd64 py4pd
-          cp -r py4pd test
-          cp -r resources test/py4pd
-      - name: Install Conda Environment
-        run: |
-          cd test
-          cd py4pd
-          eval "$(${CONDA}/bin/conda shell.bash hook)"
-          conda create -y --name composition
-          conda activate composition
-          pip install svgpathtools
-          python3 -c "import svgpathtools; print('conda_env_packages =', svgpathtools.__file__.replace('svgpathtools/__init__.py', ''))" > py4pd.cfg
-      - name: Tests with Spaces
-        run: |
-          cp -r test "test spaces"
-          cd "test spaces"
-          python${{ matrix.python-version }} ./runTests.py
-      - name: Run Tests
-        run: |
-          cd test
-          python${{ matrix.python-version }} ./runTests.py
-      - name: Upload Object
-        uses: actions/upload-artifact@v3
-        with:
-          name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
-          path: py4pd
-  # ============================================================================
-  # =                               MAC ARM                                    =
-  # ============================================================================
-  macos-arm-build:
-    runs-on: macos-latest
-    needs: pythonversion
-    if: ${{ inputs.macos-arm }} || github.event_name == 'release'
-    timeout-minutes: 15
-    strategy:
-      matrix:
-        python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: recursive
-          fetch-depth: 0
-      - uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: set Enviroment
-        run: |
-          brew install --cask pd
-          python${{ matrix.python-version }} -m pip install numpy
-          mkdir py4pd
-      - name: Build
-        env:
-          pythonName: python${{ matrix.python-version }}
-        run: make PYTHON_VERSION=$pythonName extension=d_arm64
-      - name: Copy files to py4pd
-        run: |
-          cp py4pd.d_arm64 py4pd
-      - name: Upload Object
-        uses: actions/upload-artifact@v3
-        with:
-          name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
-          path: py4pd
-  # ============================================================================
-  # =                               DEKEN                                      =
-  # ============================================================================
-  deken-upload:
-    if: github.event_name == 'release'
-    needs: [pythonversion, windows-build, macos-intel-build, macos-arm-build, linux-build]
+          name: ${{env.LIBNAME}}-f${{ matrix.precision }}-windows-${{ matrix.compiler
+            }}
+          path: ${{env.LIBNAME}}
+  linux-build:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ${{ fromJson(needs.pythonversion.outputs.deken-python-versions) }}
+        arch: [amd64, aarch64, arm]
+        precision: [32, 64]
     steps:
-      - uses: actions/checkout@v3
-      - name: Download py4pd Object
-        uses: actions/download-artifact@v4.1.7
+      - uses: actions/checkout@v4
         with:
-          name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
-          path: py4pd
+          submodules: recursive
+          fetch-depth: 0
+      - name: PureData Sources
+        run: |
+          sudo apt update
+          sudo add-apt-repository ppa:pure-data/pure-data -y
+          sudo apt install puredata -y
+          sudo apt install python3.11-dev -y
+          python3.11 -m pip install numpy
+      - name: Install aarch64 gcc
+        if: matrix.arch == 'aarch64'
+        run: |
+          sudo apt install gcc-aarch64-linux-gnu -y
+          sudo apt install g++-aarch64-linux-gnu -y
+      - name: Install arm gcc
+        if: matrix.arch == 'arm'
+        run: |
+          sudo apt install gcc-arm-linux-gnueabihf -y
+          sudo apt install g++-arm-linux-gnueabihf -y
+      - name: Build Object
+        if: matrix.arch == 'amd64'
+        run: |
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPDLIBDIR=./ -DPYVERSION=3.11
+          cmake --build build -- -j$(nproc)
+          make install -C build
+      - name: Build Object
+        if: matrix.arch == 'aarch64'
+        run: |
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DPDLIBDIR=./ -DPYVERSION=3.11
+          cmake --build build -- -j$(nproc)
+          make install -C build
+      - name: Build Object
+        if: matrix.arch == 'arm'
+        run: |
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=arm -DPDLIBDIR=./ -DPYVERSION=3.11
+          cmake --build build -- -j$(nproc)
+          make install -C build
+      - name: Upload Object
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.LIBNAME }}-linux-${{matrix.arch}}-${{matrix.precision}}
+          path: ${{env.LIBNAME}}
+  package-artifacts:
+    needs: [macos-universal-build, windows-build, linux-build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ${{ env.LIBNAME }}-*
+          path: artifacts
+          merge-multiple: true
+      - name: Clear tmp files
+        run: rm -f artifacts/*.pdb
+        # ──────────────────────────────────────
       - name: Install Deken
         continue-on-error: true
         run: |
-          git clone https://github.com/pure-data/deken
-          chmod +x ./deken/developer/deken
-          ./deken/developer/deken install --self
-      - name: Config Deken
-        run: |
-          echo "username = ${DEKEN_USERNAME}" > $HOME/.deken/config
-          echo "password = ${PASSWORD}" >> $HOME/.deken/config
-        env:
-          DEKEN_USERNAME: ${{ secrets.DEKEN_USERNAME }}
-          PASSWORD: ${{ secrets.DEKEN_PASSWORD }}
-      - name: Fix problem with easywebdav2
-        continue-on-error: true
-        run: |
-          ./deken/developer/deken package py4pd --name py4pd --default-floatsize 32 --version ${{ needs.pythonversion.outputs.tag_name }}
-          ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ needs.pythonversion.outputs.tag_name }}
-      - name: Upload deken Package
-        run: |
-          ./deken/developer/deken upload py4pd --name py4pd --objects py4pd --default-floatsize 32 --version ${{ needs.pythonversion.outputs.tag_name }}
-  # ============================================================================
-  # =                               RELEASES                                   =
-  # ============================================================================
-  release:
-    runs-on: ubuntu-latest
-    needs: [pythonversion, windows-build, macos-intel-build, macos-arm-build, linux-build]
-    if: github.event_name == 'release'
-    strategy:
-      matrix:
-        python-version: ${{ fromJson(needs.pythonversion.outputs.python-versions) }}
-    steps:
-      - uses: actions/checkout@v3
-      - name: Download py4pd Object
-        uses: actions/download-artifact@v4.1.7
+          mkdir -p ${PWD}/package
+          docker run --rm --user $(id -u) \
+          --volume ${PWD}/artifacts:/artifacts \
+          --volume ${PWD}/package:/package \
+          registry.git.iem.at/pd/deken \
+          deken package /artifacts --output-dir /package -v ${{env.LIBVERSION}} -n ${{env.LIBNAME}}
+      - name: Clear Artifacts
+        uses: geekyeggo/delete-artifact@v5
         with:
-          name: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
-          path: py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}
-      - name: Zip py4pd Object
-        run: "zip -r py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}.zip py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }} \n"
-      - name: Upload binaries to release
-        run: |
-          gh auth login --with-token <<< "${{ secrets.GITHUB_TOKEN }}"
-          gh release upload ${{ needs.pythonversion.outputs.tag_name }} py4pd_${{ needs.pythonversion.outputs.tag_name }}_python${{ matrix.python-version }}.zip  --repo charlesneimog/py4pd --clobber
+          name: ${{ env.LIBNAME }}-*
+      - name: Upload Deken
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.LIBNAME }}-${{env.LIBVERSION}}
+          path: ./package/
