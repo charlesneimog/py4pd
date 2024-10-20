@@ -76,7 +76,7 @@ def pd_tempfolder():
 
 def pd_output():
     "It sends some output to the py4pd output."
-    
+
     for x in range(10):
         pd.out(x)
 
@@ -93,10 +93,12 @@ def pdout(x):
     pd.out(x, symbol="myloop")
     pd.out(x, symbol="myloop2")
     return None
-    
+
+
 def pdouttest(y):
     for x in range(y):
         pd.out(x, out_n=x)
+
 
 def pd_print():
     "It sends a message to the py4pd message box."
@@ -212,19 +214,17 @@ def audioInOut(audio):
 
 def py4pdLoadObjects():
     pd.add_object(getTestId, "getTestId")
-    
+
     # pd module test
-    pd.add_object(pdouttest, "pd.out", num_aux_outlets=4)
-    
+    pd.add_object(pdouttest, "pd.out", n_outlets=5)
+
     # Others
     objsinusoids = pd.new_object("sinusoids~")
     objsinusoids.type = pd.AUDIOOUT
     objsinusoids.addmethod_audioout(sinusoids)
     objsinusoids.add_object()
 
-   
-   
-    # 
+    #
     pd.add_object(audioin, "audioin~", obj_type=pd.AUDIOIN)
     pd.add_object(audioInOut, "audio~", obj_type=pd.AUDIO)
     pd.add_object(generate_audio_noise, "pynoise~", obj_type=pd.AUDIOOUT)

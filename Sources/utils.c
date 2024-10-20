@@ -705,6 +705,8 @@ void Py4pdUtils_FindObjFolder(t_py *x) {
  */
 
 void Py4pdUtils_CreateTempFolder(t_py *x) {
+    LOG("Py4pdUtils_CreateTempFolder");
+
 #ifdef _WIN64
     // get user folder
     char *user_folder = getenv("USERPROFILE");
@@ -1613,28 +1615,17 @@ void Py4pdUtils_ConfigurePythonPaths() {
 
 // ===================================================================
 int Py4pdUtils_CheckNumpyInstall(t_py *x) {
+    LOG("Py4pdUtils_CheckNumpyInstall");
+
     PyObject *NumpyUmath = PyImport_ImportModule("numpy");
     if (NumpyUmath == NULL) {
         pd_error(x, "[py4pd] Numpy not installed, send [pip install numpy] to "
                     "the py4pd object");
         PyErr_Print();
         Py4pdUtils_PrintError(x);
+        PyErr_Clear();
         return 0;
     }
-
-    // check numpy version
-    // PyObject *Numpy = PyImport_ImportModule("numpy");
-    // const char *NumpyVersion = PyUnicode_AsUTF8(PyObject_GetAttrString(Numpy, "__version__"));
-    // if (NumpyVersion[0] != '2') {
-    //     pd_error(x,
-    //              "[py4pd] Numpy version %s is not supported, please update to "
-    //              "version 2.0.0 or higher",
-    //              NumpyVersion);
-    //     return 0;
-    // }
-
-    // Py_DECREF(Numpy);
-    PyErr_Clear();
     return 1;
 }
 
@@ -1846,6 +1837,7 @@ size_t Py4pdUtils_Strlcpy(char *dst, const char *src, size_t size) {
 
 // =====================================================================
 size_t Py4pdUtils_Strlcat(char *dst, const char *src, size_t size) {
+    LOG("Py4pdUtils_Strlcat");
 #if defined(__APPLE__)
     return strlcat(dst, src, size);
 #else

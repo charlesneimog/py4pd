@@ -94,8 +94,10 @@ pd_add_external(py4pd "${PY4PD_SOURCES}")
 target_include_directories(py4pd PUBLIC ${NUMPY_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC ${PYTHON_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC "/usr/include/python${PYVERSION}")
-
 target_link_libraries(py4pd PUBLIC "${PYTHON_LD_FLAGS}")
+
+# add debug flag
+target_compile_options(py4pd PRIVATE -g)
 
 # ╭──────────────────────────────────────╮
 # │              Data Files              │

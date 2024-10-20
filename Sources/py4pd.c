@@ -1032,11 +1032,11 @@ static void Py4pd_ExecuteFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) 
 void Py4pd_SetPythonPointersUsage(t_py *x, t_floatarg f) {
     int usepointers = (int)f;
     if (usepointers == 1) {
-        post("[py4pd] Python Pointers enabled.");
+        // post("[py4pd] Python Pointers enabled.");
         x->OutPyPointer = 1;
     } else if (usepointers == 0) {
         x->OutPyPointer = 0;
-        post("[py4pd] Python Pointers disabled");
+        // post("[py4pd] Python Pointers disabled");
     } else {
         pd_error(x, "[py4pd] Python Pointers status must be 0 (disable) or 1 "
                     "(enable)");

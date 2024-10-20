@@ -420,7 +420,10 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
             Py_DECREF(py4pd_capsule);
             return NULL;
         } else {
-            AuxOutlet = x->nOutlets;
+            AuxOutlet = x->nOutlets - 1;
+            if (AuxOutlet < 0) {
+                AuxOutlet = 0;
+            }
         }
     }
 
@@ -486,6 +489,7 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
         free(helpFolderCHAR);
         return NULL;
     }
+
     int objectType = 0;
     if (keywords != NULL) {
         if (PyDict_Contains(keywords, PyUnicode_FromString("type"))) {
@@ -560,7 +564,13 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
         }
         if (PyDict_Contains(keywords, PyUnicode_FromString("n_extra_outlets"))) {
             PyObject *type = PyDict_GetItemString(keywords, "n_extra_outlets");
-            auxOutlets = PyLong_AsLong(type);
+            auxOutlets = PyLong_AsLong(type) + 1;
+            // to keep compatibility
+        }
+        if (PyDict_Contains(keywords, PyUnicode_FromString("n_outlets"))) {
+            PyObject *type = PyDict_GetItemString(keywords, "n_outlets");
+            auxOutlets = PyLong_AsLong(type) - 1;
+            // need to thing about this, it is weird
         }
         if (PyDict_Contains(keywords, PyUnicode_FromString("playable"))) {
             PyObject *playable = PyDict_GetItemString(keywords, "playable");

@@ -140,13 +140,12 @@ def list2np(thelist):
 
 
 def pysplit(mylist):
-    mylist = [1, 2, 3, 4, 5, 6]
     outcount = pd.get_outlet_count()
-    if len(mylist) < outcount:
-        outcount = len(mylist)
+    listcount = len(mylist)
+    if listcount > outcount:
         pd.error("Outputing just some elements of the list")
 
     # output first 6 using the last outlet, then output 5 using the second last outlet
     reversed_list = mylist[::-1]
-    for i in range(outcount):
-        pd.out(reversed_list[i], out_num=outcount - i - 1)
+    for i in range(listcount):
+        pd.out(reversed_list[i], out_n=outcount - i - 1)

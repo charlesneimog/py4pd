@@ -279,7 +279,7 @@ def py4pdLoadObjects():
     pd.add_object(getTestId, "getTestId")
 
     # pd module test
-    pd.add_object(pdouttest, "pd.out", num_aux_outlets=4)
+    pd.add_object(pdouttest, "pd.out", n_outlets=5)
 
     # Others
     pd.add_object(sinusoids, "sinusoids~", obj_type=pd.AUDIOOUT)

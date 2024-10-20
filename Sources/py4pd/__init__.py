@@ -56,7 +56,7 @@ def py4pd_setup():
     pd.add_object(pdraise, "py.raise", no_outlet=True)
 
     # Convertion Objects
-    pd.add_object(py2pd, "py2pd", ignore_none_return=True)
+    pd.add_object(py2pd, "py2pd", ignore_none=True)
     pd.add_object(pd2py, "pd2py", py_out=True)
     pd.add_object(pdlist2pylist, "py.mklist", py_out=True)
 
@@ -80,23 +80,22 @@ def py4pd_setup():
         pd.add_object(list2np, "py.list2np", py_out=True)
 
     # Loop Functions
-    # these are special objects.
     pd.add_object(
-        pyiterate, "py.iterate", py_out=True, num_aux_outlets=1, ignore_none_return=True
+        pyiterate, "py.iterate", py_out=True, n_outlets=2, ignore_none=True
     )  # these are special objects, they don't have a pyout argument but output py data types
     pd.add_object(
-        pycollect, "py.collect", py_out=True, ignore_none_return=True
+        pycollect, "py.collect", py_out=True, ignore_none=True
     )  # these are special objects, they don't have a pyout argument but output py data types
-    pd.add_object(pyrecursive, "py.recursive", py_out=True, ignore_none_return=True)
+    pd.add_object(pyrecursive, "py.recursive", py_out=True, ignore_none=True)
     pd.add_object(
         pytrigger,
         "py.trigger",
         py_out=True,
-        ignore_none_return=True,
+        ignore_none=True,
         require_outlet_n=True,
     )
     pd.add_object(
-        pygate, "py.gate", py_out=True, require_outlet_n=True, ignore_none_return=True
+        pygate, "py.gate", py_out=True, require_outlet_n=True, ignore_none=True
     )
 
     # Math Functions

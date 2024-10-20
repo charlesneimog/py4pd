@@ -720,7 +720,8 @@ static int Py4pdNewObj_SetRequireNofOuts(Py4pdNewObj *self, PyObject *value) {
 
 // ============================================================
 static PyObject *Py4pdNewObj_GetAuxOutNumbers(Py4pdNewObj *self) {
-    return PyLong_FromLong(self->auxOutlets);
+    // TODO: Keep compatibility (I must change this)
+    return PyLong_FromLong(self->auxOutlets + 1);
 }
 
 static int Py4pdNewObj_SetAuxOutNumbers(Py4pdNewObj *self, PyObject *value) {
@@ -961,7 +962,10 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
             Py_DECREF(py4pd_capsule);
             return NULL;
         } else {
-            AuxOutlet = x->nOutlets;
+            AuxOutlet = x->nOutlets - 1;
+            if (AuxOutlet < 0) {
+                AuxOutlet = 0;
+            }
         }
     }
 
