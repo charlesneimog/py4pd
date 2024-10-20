@@ -2206,3 +2206,29 @@ int Py4pdUtils_ExecuteSystemCommand(const char *command, int thread) { // TODO: 
     return 0;
 #endif
 }
+
+// ─────────────────────────────────────
+static t_class *py4pd_pyobj_ptr_class;
+
+// ─────────────────────────────────────
+t_py4pd_pValue *Py4pdUtils_PyObjectNew(int frameSize, int bufferSize) {
+    t_py4pd_pValue *x = (t_py4pd_pValue *)getbytes(sizeof(t_py4pd_pValue));
+    // x->x_pd = AnalysisPtr;
+    // x->x_data = new AnalysisData(frameSize, bufferSize);
+    // std::string PointerStr = std::to_string((long long)x->x_data);
+    // x->x_sym = gensym(PointerStr.c_str());
+    // pd_bind((t_pd *)x, x->x_sym);
+    return x;
+}
+
+// ─────────────────────────────────────
+void Py4pdUtils_PyObjectKill(t_py4pd_pValue *x) {
+    //
+    // pd_unbind((t_pd *)x, x->x_sym);
+}
+
+// ─────────────────────────────────────
+t_py4pd_pValue *Py4pdUtils_PyObjectGet(t_symbol *s) {
+    t_py4pd_pValue *x = (t_py4pd_pValue *)pd_findbyclass(s, py4pd_pyobj_ptr_class);
+    return x;
+}
