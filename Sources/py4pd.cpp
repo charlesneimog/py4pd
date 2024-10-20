@@ -34,14 +34,14 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
     std::string FuncLibName = Py4pdUtils_GetLibFuncName(LibName);
 
     // first check if file exists
-    std::string LibPathLocal = x->pdPatchPath->s_name;
+    std::string LibPathLocal = x->PdPatchPath->s_name;
     LibPathLocal += "/";
     LibPathLocal += LibName;
     LibPathLocal += ".py";
 
     // global path
-    std::string LibPathGlobal = x->py4pdPath->s_name;
-    LibPathGlobal += "/Resources/py-modules/";
+    std::string LibPathGlobal = x->Py4pdPath->s_name;
+    LibPathGlobal += "/py4pd-env/";
     LibPathGlobal += LibName;
 
     PyObject *SysPath = PySys_GetObject("path");
@@ -61,10 +61,10 @@ static int Py4pd_LibraryLoad(t_py *x, int argc, t_atom *argv) {
                 PyList_Append(SysPath, PyUnicode_FromString(PdPathsLibPath.c_str()));
             }
         }
-        if (libraryNotFound) {
-            pd_error(x, "[py4pd] Library file '%s.py' not found!", LibName.c_str());
-            return -1;
-        }
+        // if (libraryNotFound) {
+        //     pd_error(x, "[py4pd] Library file '%s.py' not found!", LibName.c_str());
+        //     return -1;
+        // }
     }
 
     PyObject *pModule, *pFunc; // Create the variables of the python objects
@@ -236,13 +236,13 @@ static void *Py4pd_PipInstallRequirementsDetach(void *Args) {
     if (x->pipGlobalInstall) {
         // add Resources to the global path
         char *globalTarget =
-            (char *)malloc(strlen(x->py4pdPath->s_name) + strlen("Resources/") + 1);
-        snprintf(globalTarget, strlen(x->py4pdPath->s_name) + strlen("Resources/") + 1,
-                 "%sResources/", x->py4pdPath->s_name);
+            (char *)malloc(strlen(x->Py4pdPath->s_name) + strlen("Resources/") + 1);
+        snprintf(globalTarget, strlen(x->Py4pdPath->s_name) + strlen("Resources/") + 1,
+                 "%sResources/", x->Py4pdPath->s_name);
         pipTarget = gensym(globalTarget);
         free(globalTarget);
     } else {
-        pipTarget = x->pdPatchPath;
+        pipTarget = x->PdPatchPath;
     }
 
     // loop for all pipTarget and check if there is some space char, if yes, get
@@ -260,14 +260,14 @@ static void *Py4pd_PipInstallRequirementsDetach(void *Args) {
     size_t commandSize =
         snprintf(NULL, 0,
                  "python%d.%d -m pip install --target "
-                 "'%spy-modules' -r %s --upgrade",
+                 "'%spy4pd-env' -r %s --upgrade",
                  PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
         1;
 #elif defined __WIN64
     size_t commandSize =
         snprintf(NULL, 0,
                  "py -%d.%d -m pip install --target "
-                 "\"%spy-modules\" -r %s --upgrade",
+                 "\"%spy4pd-env\" -r %s --upgrade",
                  PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
         1;
 
@@ -275,26 +275,26 @@ static void *Py4pd_PipInstallRequirementsDetach(void *Args) {
     size_t commandSize =
         snprintf(NULL, 0,
                  "/usr/local/bin/python%d.%d -m pip install --target "
-                 "'%spy-modules' -r %s --upgrade",
+                 "'%spy4pd-env' -r %s --upgrade",
                  PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
         1;
 #endif
     char *COMMAND = (char *)malloc(commandSize);
 #ifdef __linux__
     snprintf(COMMAND, commandSize,
-             "python%d.%d -m pip install --target '%spy-modules' -r %s --upgrade", PY_MAJOR_VERSION,
+             "python%d.%d -m pip install --target '%spy4pd-env' -r %s --upgrade", PY_MAJOR_VERSION,
              PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 
 #elif defined __WIN64
     snprintf(COMMAND, commandSize,
-             "py -%d.%d -m pip install --target \"%spy-modules\" "
+             "py -%d.%d -m pip install --target \"%spy4pd-env\" "
              "-r %s --upgrade",
              PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 
 #elif defined(__APPLE__) || defined(__MACH__)
     snprintf(COMMAND, commandSize,
              "/usr/local/bin/python%d.%d -m pip install --target "
-             "-r '%spy-modules' %s --upgrade",
+             "-r '%spy4pd-env' %s --upgrade",
              PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 #endif
     pd_error(NULL,
@@ -328,13 +328,13 @@ static void *Py4pd_PipInstallDetach(void *Args) {
     if (x->pipGlobalInstall) {
         // add Resources to the global path
         char *globalTarget =
-            (char *)malloc(strlen(x->py4pdPath->s_name) + strlen("Resources/") + 1);
-        snprintf(globalTarget, strlen(x->py4pdPath->s_name) + strlen("Resources/") + 1,
-                 "%sResources/", x->py4pdPath->s_name);
+            (char *)malloc(strlen(x->Py4pdPath->s_name) + strlen("Resources/") + 1);
+        snprintf(globalTarget, strlen(x->Py4pdPath->s_name) + strlen("Resources/") + 1,
+                 "%sResources/", x->Py4pdPath->s_name);
         pipTarget = gensym(globalTarget);
         free(globalTarget);
     } else {
-        pipTarget = x->pdPatchPath;
+        pipTarget = x->PdPatchPath;
     }
 
     // loop for all pipTarget and check if there is some space char, if yes, get
@@ -352,14 +352,14 @@ static void *Py4pd_PipInstallDetach(void *Args) {
     size_t commandSize =
         snprintf(NULL, 0,
                  "python%d.%d -m pip install --target "
-                 "'%spy-modules' %s --upgrade",
+                 "'%spy4pd-env' %s --upgrade",
                  PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
         1;
 #elif defined __WIN64
     size_t commandSize =
         snprintf(NULL, 0,
                  "py -%d.%d -m pip install --target "
-                 "\"%spy-modules\" %s --upgrade",
+                 "\"%spy4pd-env\" %s --upgrade",
                  PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
         1;
 
@@ -367,26 +367,25 @@ static void *Py4pd_PipInstallDetach(void *Args) {
     size_t commandSize =
         snprintf(NULL, 0,
                  "/usr/local/bin/python%d.%d -m pip install --target "
-                 "'%spy-modules' %s --upgrade",
+                 "'%spy4pd-env' %s --upgrade",
                  PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
         1;
 #endif
     char *COMMAND = (char *)malloc(commandSize);
 #ifdef __linux__
-    snprintf(COMMAND, commandSize,
-             "python%d.%d -m pip install --target '%spy-modules' %s --upgrade", PY_MAJOR_VERSION,
-             PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
+    snprintf(COMMAND, commandSize, "python%d.%d -m pip install --target '%spy4pd-env' %s --upgrade",
+             PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 
 #elif defined __WIN64
     snprintf(COMMAND, commandSize,
-             "py -%d.%d -m pip install --target \"%spy-modules\" "
+             "py -%d.%d -m pip install --target \"%spy4pd-env\" "
              "%s --upgrade",
              PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 
 #elif defined(__APPLE__) || defined(__MACH__)
     snprintf(COMMAND, commandSize,
              "/usr/local/bin/python%d.%d -m pip install --target "
-             "'%spy-modules' %s --upgrade",
+             "'%spy4pd-env' %s --upgrade",
              PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 #endif
     pd_error(NULL,
@@ -528,10 +527,10 @@ static void Py4pd_PrintPy4pdVersion(t_py *x) {
 static void Py4pd_SetPy4pdHomePath(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     if (argc < 1) {
-        post("[py4pd] The home path is: %s", x->pdPatchPath->s_name);
+        post("[py4pd] The home path is: %s", x->PdPatchPath->s_name);
     } else {
-        x->pdPatchPath = atom_getsymbol(argv);
-        post("[py4pd] The home path set to: %s", x->pdPatchPath->s_name);
+        x->PdPatchPath = atom_getsymbol(argv);
+        post("[py4pd] The home path set to: %s", x->PdPatchPath->s_name);
     }
     return;
 }
@@ -552,7 +551,7 @@ static void Py4pd_SetPy4pdHomePath(t_py *x, t_symbol *s, int argc, t_atom *argv)
 static void Py4pd_SetPackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     (void)s;
     if (argc < 1) {
-        post("[py4pd] The packages path is: %s", x->pkgPath->s_name);
+        post("[py4pd] The packages path is: %s", x->PkgPath->s_name);
         return;
     } else {
         if (argc == 1) {
@@ -561,32 +560,32 @@ static void Py4pd_SetPackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                 // It checks relative path
                 if (path->s_name[0] == '.' && path->s_name[1] == '/') {
                     char *new_path =
-                        (char *)malloc(strlen(x->pdPatchPath->s_name) + strlen(path->s_name) + 1);
-                    Py4pdUtils_Strlcpy(new_path, x->pdPatchPath->s_name,
-                                       strlen(x->pdPatchPath->s_name) + 1);
+                        (char *)malloc(strlen(x->PdPatchPath->s_name) + strlen(path->s_name) + 1);
+                    Py4pdUtils_Strlcpy(new_path, x->PdPatchPath->s_name,
+                                       strlen(x->PdPatchPath->s_name) + 1);
                     Py4pdUtils_Strlcat(new_path, path->s_name, strlen(new_path) + 1);
                     post("[py4pd] Packages path set to: %s", new_path);
-                    x->pkgPath = gensym(new_path);
+                    x->PkgPath = gensym(new_path);
                     free(new_path);
                 } else {
-                    x->pkgPath = atom_getsymbol(argv);
-                    post("[py4pd] Packages path set to: %s", x->pkgPath->s_name);
+                    x->PkgPath = atom_getsymbol(argv);
+                    post("[py4pd] Packages path set to: %s", x->PkgPath->s_name);
                 }
                 char cfgFile[MAXPDSTRING];
-                char const *py4pdDir = x->py4pdPath->s_name;
+                char const *py4pdDir = x->Py4pdPath->s_name;
                 snprintf(cfgFile, MAXPDSTRING, "%s/py4pd.cfg", py4pdDir);
                 FILE *file = fopen(cfgFile, "w");
                 if (x->editorName != NULL) {
                     fprintf(file, "editor = %s\n", x->editorName->s_name);
                 }
-                fprintf(file, "packages = %s", x->pkgPath->s_name);
+                fprintf(file, "packages = %s", x->PkgPath->s_name);
                 fclose(file);
             } else {
                 pd_error(x, "[py4pd] The packages path must be a string");
                 return;
             }
             // check if path exists and is valid
-            if (access(x->pkgPath->s_name, F_OK) == -1) {
+            if (access(x->PkgPath->s_name, F_OK) == -1) {
                 pd_error(x, "[py4pd] The packages path is not valid");
                 return;
             }
@@ -706,11 +705,11 @@ static void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
         x->editorName = atom_getsymbol(argv + 0);
         post("[py4pd] Editor set to: %s", x->editorName->s_name);
         char cfgFile[MAXPDSTRING];
-        char const *py4pdDir = x->py4pdPath->s_name;
+        char const *py4pdDir = x->Py4pdPath->s_name;
         snprintf(cfgFile, MAXPDSTRING, "%s/py4pd.cfg", py4pdDir);
         FILE *file = fopen(cfgFile, "w");
         fprintf(file, "editor = %s\n", x->editorName->s_name);
-        fprintf(file, "packages = %s", x->pkgPath->s_name);
+        fprintf(file, "packages = %s", x->PkgPath->s_name);
         fclose(file);
         return;
     }
@@ -840,12 +839,12 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     // check if script file exists
     char script_file_path[MAXPDSTRING];
-    snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->pdPatchPath->s_name,
+    snprintf(script_file_path, MAXPDSTRING, "%s/%s.py", x->PdPatchPath->s_name,
              sScriptFilename->s_name);
 
     char script_inside_py4pd_path[MAXPDSTRING];
     snprintf(script_inside_py4pd_path, MAXPDSTRING, "%s/Resources/scripts/%s.py",
-             x->py4pdPath->s_name, sScriptFilename->s_name);
+             x->Py4pdPath->s_name, sScriptFilename->s_name);
 
     if (access(script_file_path, F_OK) == -1 && access(script_inside_py4pd_path, F_OK) == -1) {
         pd_error(x, "[py4pd] The script file %s was not found!", sScriptFilename->s_name);
@@ -1109,8 +1108,8 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         x->pyObject = 0;
         x->vectorSize = 0;
         Py4pdUtils_ParseArguments(x, c, argc, argv);
-        x->pdPatchPath = patchDir;
-        x->pkgPath = patchDir;
+        x->PdPatchPath = patchDir;
+        x->PkgPath = patchDir;
         x->pArgsCount = 0;
         Py4pdUtils_SetObjConfig(x);
         if (objCount == 0) {
@@ -1139,8 +1138,8 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
             patchDir = gensym(new_path);
             free(new_path);
         }
-        x->pdPatchPath = patchDir;
-        x->pkgPath = patchDir;
+        x->PdPatchPath = patchDir;
+        x->PkgPath = patchDir;
         x->visMode = 0;
         Py4pdUtils_SetObjConfig(x);
         if (objCount == 0) {

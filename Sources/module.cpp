@@ -1073,7 +1073,7 @@ static PyObject *Py4pdMod_GetPatchHome(PyObject *self, PyObject *args) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.home: no argument expected");
         return NULL;
     }
-    return PyUnicode_FromString(x->pdPatchPath->s_name);
+    return PyUnicode_FromString(x->PdPatchPath->s_name);
 }
 
 // =================================
@@ -1111,7 +1111,7 @@ static PyObject *Py4pdMod_GetPy4pdFolder(PyObject *self, PyObject *args) {
         PyErr_SetString(PyExc_TypeError, "[Python] pd.py4pdfolder: no argument expected");
         return NULL;
     }
-    return PyUnicode_FromString(x->py4pdPath->s_name);
+    return PyUnicode_FromString(x->Py4pdPath->s_name);
 }
 
 // =================================
@@ -1131,7 +1131,7 @@ static PyObject *Py4pdMod_GetPy4pdTmpFolder(PyObject *self, PyObject *args) {
         return NULL;
     }
     Py4pdUtils_CreateTempFolder(x);
-    return PyUnicode_FromString(x->tempPath->s_name);
+    return PyUnicode_FromString(x->TempPath->s_name);
 }
 
 // Py4pdMod_GetPdSysPath

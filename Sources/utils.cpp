@@ -707,32 +707,32 @@ void Py4pdUtils_FindObjFolder(t_py *x) {
         snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, "py4pd");
 #endif
         if (access(library_path, F_OK) != -1) {
-            x->py4pdPath = gensym(library_path);
+            x->Py4pdPath = gensym(library_path);
             return;
         }
     }
     pathelem = canvas_getdir(x->canvas)->s_name;
     snprintf(library_path, MAXPDSTRING, "%s/%s/", pathelem, "py4pd");
     if (access(library_path, F_OK) != -1) {
-        x->py4pdPath = gensym(library_path);
-        size_t strLen = strlen(x->py4pdPath->s_name);
-        if (strLen > 0 && (x->py4pdPath->s_name)[strLen - 1] != '/') {
+        x->Py4pdPath = gensym(library_path);
+        size_t strLen = strlen(x->Py4pdPath->s_name);
+        if (strLen > 0 && (x->Py4pdPath->s_name)[strLen - 1] != '/') {
             char *new_path = (char *)malloc(strLen + 2);
-            Py4pdUtils_Strlcpy(new_path, x->py4pdPath->s_name, strLen + 1);
+            Py4pdUtils_Strlcpy(new_path, x->Py4pdPath->s_name, strLen + 1);
             Py4pdUtils_Strlcat(new_path, "/", strLen + 2);
-            x->py4pdPath = gensym(new_path);
+            x->Py4pdPath = gensym(new_path);
             free(new_path);
         }
         return;
     }
 
-    x->py4pdPath = canvas_getdir(x->canvas);
-    size_t strLen = strlen(x->py4pdPath->s_name);
-    if (strLen > 0 && (x->py4pdPath->s_name)[strLen - 1] != '/') {
+    x->Py4pdPath = canvas_getdir(x->canvas);
+    size_t strLen = strlen(x->Py4pdPath->s_name);
+    if (strLen > 0 && (x->Py4pdPath->s_name)[strLen - 1] != '/') {
         char *new_path = (char *)malloc(strLen + 2);
-        Py4pdUtils_Strlcpy(new_path, x->py4pdPath->s_name, strLen + 1);
+        Py4pdUtils_Strlcpy(new_path, x->Py4pdPath->s_name, strLen + 1);
         Py4pdUtils_Strlcat(new_path, "/", strLen + 2);
-        x->py4pdPath = gensym(new_path);
+        x->Py4pdPath = gensym(new_path);
         free(new_path);
     }
     return;
@@ -773,7 +773,7 @@ void Py4pdUtils_CreateTempFolder(t_py *x) {
     char *temp_folder = (char *)malloc(256 * sizeof(char));
     memset(temp_folder, 0, 256);
     sprintf(temp_folder, "%s/.py4pd/", home);
-    x->tempPath = gensym(temp_folder);
+    x->TempPath = gensym(temp_folder);
     if (access(temp_folder, F_OK) == -1) {
         char *command = (char *)malloc(256 * sizeof(char));
         memset(command, 0, 256);
@@ -1161,7 +1161,7 @@ void *Py4pdUtils_FreeObj(t_py *x) {
         sprintf(command, "cmd /C del /Q /S %s*.*", x->tempPath->s_name);
         (void)Py4pdUtils_ExecuteSystemCommand(command);
 #else
-        sprintf(command, "rm -rf %s", x->tempPath->s_name);
+        sprintf(command, "rm -rf %s", x->TempPath->s_name);
         (void)Py4pdUtils_ExecuteSystemCommand(command, 0);
 #endif
     }
@@ -1493,20 +1493,20 @@ void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv) {
 void Py4pdUtils_SetObjConfig(t_py *x) {
     int folderLen = strlen("/py-modules/") + 1;
     char *PADRAO_packages_path =
-        (char *)malloc(sizeof(char) * (strlen(x->pdPatchPath->s_name) + folderLen)); //
-    snprintf(PADRAO_packages_path, strlen(x->pdPatchPath->s_name) + folderLen, "%s/py-modules/",
-             x->pdPatchPath->s_name);
-    x->condaPath = gensym(PADRAO_packages_path);
+        (char *)malloc(sizeof(char) * (strlen(x->PdPatchPath->s_name) + folderLen)); //
+    snprintf(PADRAO_packages_path, strlen(x->PdPatchPath->s_name) + folderLen, "%s/py-modules/",
+             x->PdPatchPath->s_name);
+    x->CondaPath = gensym(PADRAO_packages_path);
     if (x->editorName == NULL) {
         const char *editor = PY4PD_EDITOR;
         x->editorName = gensym(editor);
     }
-    if (x->py4pdPath == NULL) {
+    if (x->Py4pdPath == NULL) {
         Py4pdUtils_FindObjFolder(x);
     }
 
     char config_path[MAXPDSTRING];
-    snprintf(config_path, sizeof(config_path), "%s/py4pd.cfg", x->py4pdPath->s_name);
+    snprintf(config_path, sizeof(config_path), "%s/py4pd.cfg", x->Py4pdPath->s_name);
     if (access(config_path, F_OK) != -1) {
         FILE *file = fopen(config_path, "r");
         char line[256];
@@ -1521,20 +1521,20 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
                     }
                     if (packages_path[0] == '.') {
                         char *new_packages_path =
-                            (char *)malloc(sizeof(char) * (strlen(x->pdPatchPath->s_name) +
+                            (char *)malloc(sizeof(char) * (strlen(x->PdPatchPath->s_name) +
                                                            strlen(packages_path) + 1)); //
-                        Py4pdUtils_Strlcpy(new_packages_path, x->pdPatchPath->s_name,
-                                           strlen(x->pdPatchPath->s_name) + 1);
+                        Py4pdUtils_Strlcpy(new_packages_path, x->PdPatchPath->s_name,
+                                           strlen(x->PdPatchPath->s_name) + 1);
                         Py4pdUtils_Strlcat(new_packages_path, packages_path + 1,
                                            strlen(packages_path) + 1);
                         Py4pdUtils_RemoveChar(new_packages_path, '\n');
                         Py4pdUtils_RemoveChar(new_packages_path, '\r');
-                        x->condaPath = gensym(new_packages_path);
+                        x->CondaPath = gensym(new_packages_path);
                         free(new_packages_path);
                     } else {
                         Py4pdUtils_RemoveChar(packages_path, '\n');
                         Py4pdUtils_RemoveChar(packages_path, '\r');
-                        x->condaPath = gensym(packages_path);
+                        x->CondaPath = gensym(packages_path);
                     }
                 }
                 free(packages_path);
@@ -1572,31 +1572,46 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
 
 // ============================================
 void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
-    // Add additional paths to the python path
-    char pyScripts_folder[MAXPDSTRING];
-    snprintf(pyScripts_folder, MAXPDSTRING, "%sResources/py4pd-mod", x->py4pdPath->s_name);
-    char pyGlobal_packages[MAXPDSTRING];
-    snprintf(pyGlobal_packages, MAXPDSTRING, "%sResources/py-modules", x->py4pdPath->s_name);
+    char Py4pdMod[MAXPDSTRING];
+    int ret = snprintf(Py4pdMod, MAXPDSTRING, "%s/py4pd", x->Py4pdPath->s_name);
+    if (ret < 0) {
+        pd_error(x, "[py4pd] Error when adding py4pd path to sys.path");
+        return;
+    }
+    char Py4pdPkgs[MAXPDSTRING];
+    ret = snprintf(Py4pdPkgs, MAXPDSTRING, "%s/py4pd-env", x->Py4pdPath->s_name);
+    if (ret < 0) {
+        pd_error(x, "[py4pd] Error when adding py4pd path to sys.path");
+        return;
+    }
 
-    PyObject *home_path = PyUnicode_FromString(x->pdPatchPath->s_name);
-    PyObject *py4pdPath = PyUnicode_FromString(x->py4pdPath->s_name);
-    PyObject *site_package = PyUnicode_FromString(x->pkgPath->s_name);
-    PyObject *conda_packages = PyUnicode_FromString(x->condaPath->s_name);
-    PyObject *py4pdScripts = PyUnicode_FromString(pyScripts_folder);
-    PyObject *py4pdGlobalPackages = PyUnicode_FromString(pyGlobal_packages);
-    PyObject *sys_path = PySys_GetObject("path");
-    PyList_Insert(sys_path, 0, home_path);
-    PyList_Insert(sys_path, 0, py4pdPath);
-    PyList_Insert(sys_path, 0, site_package);
-    PyList_Insert(sys_path, 0, conda_packages);
-    PyList_Insert(sys_path, 0, py4pdScripts);
-    PyList_Insert(sys_path, 0, py4pdGlobalPackages);
-    Py_DECREF(home_path);
-    Py_DECREF(py4pdPath);
-    Py_DECREF(site_package);
-    Py_DECREF(conda_packages);
-    Py_DECREF(py4pdScripts);
-    Py_DECREF(py4pdGlobalPackages);
+    PyObject *HomePath = PyUnicode_FromString(x->PdPatchPath->s_name);
+    PyObject *SitePkg = PyUnicode_FromString(x->PkgPath->s_name);
+    PyObject *CondaPkg = PyUnicode_FromString(x->CondaPath->s_name);
+    PyObject *Py4pdGlobalPkg = PyUnicode_FromString(Py4pdPkgs);
+
+    if (HomePath && SitePkg && CondaPkg && Py4pdGlobalPkg) {
+        PyObject *SysPath = PySys_GetObject("path"); // Borrowed reference
+        int SysPathLen = PyList_Size(SysPath);
+        if (SysPath && PyList_Check(SysPath)) {
+            PyList_Insert(SysPath, SysPathLen, HomePath);
+            PyList_Insert(SysPath, SysPathLen, SitePkg);
+            PyList_Insert(SysPath, SysPathLen, CondaPkg);
+            PyList_Insert(SysPath, SysPathLen, Py4pdGlobalPkg);
+        }
+
+        // now the pd search path modules
+        for (int i = 0; 1; i++) {
+            const char *PathElem = namelist_get(STUFF->st_searchpath, i);
+            if (!PathElem) {
+                break;
+            }
+            post("PathElem: %s", PathElem);
+            PyObject *PdSearchPath = PyUnicode_FromString(PathElem);
+            PyList_Insert(SysPath, SysPathLen, PdSearchPath);
+        }
+    }
+
     return;
 }
 
@@ -1626,7 +1641,7 @@ int Py4pdUtils_CheckNumpyInstall(t_py *x) {
 void Py4pdUtils_GetEditorCommand(t_py *x, char *command, int line) {
     const char *editor = x->editorName->s_name;
     const char *filename = x->pScriptName->s_name;
-    const char *home = x->pdPatchPath->s_name;
+    const char *home = x->PdPatchPath->s_name;
     char completePath[MAXPDSTRING];
 
     if (x->pyObject) {

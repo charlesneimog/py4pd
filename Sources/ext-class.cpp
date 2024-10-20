@@ -890,8 +890,8 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
     x->funcCalled = 1;
     x->pFunction = pyFunction;
     x->vectorSize = sys_getblksize();
-    x->pdPatchPath = patch_dir; // set name of the home path
-    x->pkgPath = patch_dir;     // set name of the packages path
+    x->PdPatchPath = patch_dir; // set name of the home path
+    x->PkgPath = patch_dir;     // set name of the packages path
     x->playable = PyLong_AsLong(playable);
 
     PyCodeObject *code = (PyCodeObject *)PyFunction_GetCode(pMaxArgFunc);

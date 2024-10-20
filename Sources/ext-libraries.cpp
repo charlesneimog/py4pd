@@ -356,8 +356,8 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     x->outPyPointer = PyLong_AsLong(pyOUT);
     x->funcCalled = 1;
     x->pFunction = pyFunction;
-    x->pdPatchPath = patch_dir; // set name of the home path
-    x->pkgPath = patch_dir;     // set name of the packages path
+    x->PdPatchPath = patch_dir; // set name of the home path
+    x->PkgPath = patch_dir;     // set name of the packages path
     x->playable = PyLong_AsLong(playable);
     x->pFuncName = gensym(PyUnicode_AsUTF8(code->co_name));
     x->pScriptName = gensym(PyUnicode_AsUTF8(code->co_filename));
