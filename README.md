@@ -42,6 +42,6 @@ Just one thing, the development of this object occurs in de `develop` branch, th
 
 ## Building from Source
 
-* To build from the source code, you can follow the steps: [Compiling from Source Code.](https://github.com/charlesneimog/py4pd/blob/master/resources/BUILD.md).
+* To build from the source code, you can follow the steps: [Compiling from Source Code.](https://github.com/charlesneimog/py4pd/blob/master/Resources/BUILD.md).
 
 
