@@ -1,3 +1,4 @@
+---
 site_name: py4pd
 docs_dir: Documentation
 copyright: Copyright &copy 2023 | Charles K. Neimog | University of São Paulo.
@@ -9,9 +10,7 @@ theme:
   favicon: assets/py4pd-favicon.png
   name: material
   icon:
-    custom:
-      - my-icons/pd
-      - my-icons/pdobj
+    custom: [my-icons/pd, my-icons/pdobj]
   features:
     - navigation.top
     - navigation.sections
@@ -37,18 +36,18 @@ theme:
     - pymdownx.superfences
     - footnotes
   palette:
-    - media: "(prefers-color-scheme)"
+    - media: (prefers-color-scheme)
       toggle:
         icon: material/brightness-auto
         name: Switch to light mode
-    - media: "(prefers-color-scheme: light)"
+    - media: '(prefers-color-scheme: light)'
       scheme: default
       primary: white
       accent: dark blue
       toggle:
         icon: material/lightbulb
         name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
+    - media: '(prefers-color-scheme: dark)'
       scheme: slate
       accent: light blue
       primary: black
@@ -63,8 +62,7 @@ markdown_extensions:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
       options:
-        custom_icons:
-          - docs/overrides/.icons
+        custom_icons: [docs/overrides/.icons]
   - pymdownx.extra
   - pymdownx.details
   - pymdownx.inlinehilite
@@ -78,23 +76,21 @@ markdown_extensions:
   - admonition
   - pymdownx.details
 repo_url: https://github.com/charlesneimog/py4pd
-plugins:
-  - search
-  - social
-extra_css:
-  - extra/extra.css
+plugins: [search, social]
+extra_css: [extra/extra.css]
 nav:
   - Home: index.md
-  - Installation:
-      - Install: setup.md
-  - How-To:
-      - projects.md
-  - PureData Use:
+  - Installation: setup.md
+  - Hello World:
+      - Intro: projects/project1.md
+      - Pd Object: projects/project2.md
+      - First Library: projects/project3.md
+  - Pd Object:
       - pd-users/index.md
       - Arguments: pd-users/args.md
       - Methods: pd-users/methods.md
       - Config File: pd-users/py4pd-cfg.md
-  - Python Use:
+  - Pd Module:
       - Introduction: python-users/index.md
       - Creating Pd Libraries:
           - Pd Objs with Python: python-users/pylibrary.md
