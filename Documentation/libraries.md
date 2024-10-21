@@ -55,7 +55,7 @@ You can download the libraries using `deken`. To install the library search for 
     </tbody>
     <tbody>
       <tr>
-        <td><a href="https://github.com/charlesneimog/py4pd-partials">partials</a></td>
+        <td><a href="https://github.com/charlesneimog/py4pd-spt">simple partialtracking</a></td>
         <td>It allows to do Partial Tracking in PureData (under development yet)</td>
         <td><a href="https://charlesneimog.github.io/"</a> Charles K. Neimog</td>
       </tr>
