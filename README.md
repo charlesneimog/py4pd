@@ -28,9 +28,9 @@ py4pd allows write PureData Objects using Python instead of C/C++. The main goal
 1. Open PureData, `Help->Find Externals->` search for `py4pd` then select py4pd and click on `Install`: 
 2. You must install Python.
 
-* **Linux**: `sudo dnf install python3.11` or `sudo apt install python3.11`;
-* **MacOS**: Go to https://www.python.org/downloads/release/python-3115/ and install normally.
-* **Windows**: Go to https://www.python.org/downloads/release/python-3115/ and install normally.
+* **Linux**: `sudo dnf install python3.12` or `sudo apt install python3.12`;
+* **MacOS**: Go to https://www.python.org/downloads/release/python-3127/ and install normally.
+* **Windows**: Go to https://www.python.org/downloads/release/python-3127/ and install normally.
 
 ## Wiki | Instructions for use
 
