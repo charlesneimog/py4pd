@@ -62,7 +62,8 @@
 
 
 // PY4PD 
-extern t_class *Py4pdObjClass, *Py4pdVisObjClass;
+extern t_class *Py4pdObjClass, *Py4pdVisObjClass, *Py4pdPtrClass;
+
 
 // OUTLETS 
 /*
@@ -125,6 +126,13 @@ typedef struct _py4pd_edit_proxy{
     struct      _py *p_cnv;
 }t_py4pd_edit_proxy;
 
+
+typedef struct _PyObjectPtr {
+    t_pd x_pd;
+    t_symbol *Id;
+    t_py4pd_pValue *Py;
+} t_PyObjectPtr;
+
 // PY4PD 
 typedef struct _py { // It seems that all the objects are some kind of class.
     t_object            obj; // o objeto
@@ -142,8 +150,7 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     PyObject            *RecursiveObject; // object to check the number of recursive calls
     t_atom              *PdObjArgs;
     t_int               ObjArgsCount;
-     
-    // ===========
+
     t_int                VisMode; // is vis object
     t_int                FuncCalled; // flag to check if the set function was called
     t_int                pArgsCount; // number of arguments
@@ -157,6 +164,9 @@ typedef struct _py { // It seems that all the objects are some kind of class.
     t_int                 PlayerRunning;
     t_int                 MsOnset;
     t_int                 Playable;
+
+    // PyObject Ptr
+    t_PyObjectPtr       *PyObjectPtr;
 
     // Library
     t_int                   IsLib; // flag to check if is to use python library

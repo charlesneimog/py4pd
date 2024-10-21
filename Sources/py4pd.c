@@ -5,7 +5,8 @@
 // ============================================
 t_class *Py4pdObjClass; // For for normal objects, almost unused
 t_class *Py4pdLibClass; // For libraries
-int objCount = 0;       // To keep track of the number of objects created
+t_class *Py4pdPtrClass;
+int objCount = 0; // To keep track of the number of objects created
 
 // ============================================
 // =========== PY4PD LOAD LIBRARIES ===========
@@ -1099,6 +1100,7 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         x->PipGlobalInstall = 1;
         x->PyObject = 0;
         x->VectorSize = 0;
+        x->PyObjectPtr = Py4pdUtils_CreatePyObjPtr();
         Py4pdUtils_ParseArguments(x, c, argc, argv);
         x->PdPatchPath = patchDir;
         x->PkgPath = patchDir;
@@ -1209,6 +1211,9 @@ void py4pd_setup(void) {
                     0); // set function to be called
     class_addmethod(Py4pdObjClass, (t_method)Py4pd_PrintModuleFunctions, gensym("functions"),
                     A_GIMME, 0);
+
+    Py4pdPtrClass =
+        class_new(gensym("_py4pd-ptr-class"), 0, 0, sizeof(t_PyObjectPtr), CLASS_PD, A_NULL);
 
     if (!Py_IsInitialized()) {
         objCount = 0;

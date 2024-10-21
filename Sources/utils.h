@@ -10,7 +10,7 @@ t_py *Py4pdUtils_GetObject(PyObject *pd_module);
 void Py4pdUtils_ParseArguments(t_py *x, t_canvas *c, int argc, t_atom *argv);
 int Py4pdUtils_CreateObjInlets(PyObject *function, t_py *x, t_class *py4pdInlets_proxy_class, int argc, t_atom *argv);
 void Py4pdUtils_ExtraInletAnything(t_py4pdInlet_proxy *x, t_symbol *s, int ac, t_atom *av);
-void Py4pdUtils_ExtraInletPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_gpointer *gp);
+void Py4pdUtils_ExtraInletPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_symbol *id);
 PyObject *Py4pdUtils_CreatePyObjFromPdArgs(t_symbol *s, int argc, t_atom *argv);
 int Py4pdUtils_CheckNumpyInstall(t_py *x);
 char *Py4pdUtils_GetFolderName(char *path);
@@ -47,6 +47,12 @@ void *Py4pdUtils_FreeObj(t_py *x);
 void Py4pdUtils_CreatePicObj(t_py *x, PyObject *PdDict, t_class *object_PY4PD_Class, int argc, t_atom *argv);
 void Py4pdUtils_CopyPy4pdValueStruct(t_py4pd_pValue *src, t_py4pd_pValue *dest);
 
+// Py Object pointer
+t_PyObjectPtr *Py4pdUtils_CreatePyObjPtr(void);
+void Py4pdUtils_FreePyObjPtr(t_PyObjectPtr *x);
+t_py4pd_pValue *Py4pdUtils_GetPyObjPtr(t_symbol *s);
+
 #endif
+
 
 

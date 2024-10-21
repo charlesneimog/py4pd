@@ -139,34 +139,41 @@ void Py4pdLib_SetKwargs(t_py *x, t_symbol *s, int ac, t_atom *av) {
 }
 
 // ===========================================
-// ===========================================
-void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_gpointer *gp) {
+void Py4pdLib_ProxyPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_symbol *id) {
     LOG("Py4pdLib_ProxyPointer");
     (void)s;
     t_py *py4pd = (t_py *)x->p_master;
     t_py4pd_pValue *pArg;
-    pArg = (t_py4pd_pValue *)gp;
-    if (!pArg->PdOutCount)
+    pArg = Py4pdUtils_GetPyObjPtr(id);
+    if (!pArg) {
+        pd_error(py4pd, "The object %s doesn't exist", id->s_name);
+        return;
+    }
+    if (!pArg->PdOutCount) {
         Py_DECREF(py4pd->PyObjArgs[x->inletIndex]->pValue);
-
+    }
     Py4pdUtils_CopyPy4pdValueStruct(pArg, py4pd->PyObjArgs[x->inletIndex]);
-
-    if (!pArg->PdOutCount)
+    if (!pArg->PdOutCount) {
         Py_INCREF(py4pd->PyObjArgs[x->inletIndex]->pValue);
-
+    }
     return;
 }
 
 // =============================================
-void Py4pdLib_Pointer(t_py *x, t_symbol *s, t_gpointer *gp) {
+// void Py4pdLib_Pointer(t_py *x, t_symbol *s, t_gpointer *gp) {
+
+void Py4pdLib_Pointer(t_py *x, t_symbol *s, t_symbol *id) {
     LOG("Py4pdLib_Pointer");
     (void)s;
 
     t_py4pd_pValue *pArg;
-    pArg = (t_py4pd_pValue *)gp;
+    pArg = Py4pdUtils_GetPyObjPtr(id);
+    if (!pArg) {
+        pd_error(x, "The object %s doesn't exist", id->s_name);
+        return;
+    }
 
     if (x->ObjType > PY4PD_AUDIOINOBJ) {
-        pArg = (t_py4pd_pValue *)gp;
         if (!pArg->PdOutCount)
             Py_DECREF(x->PyObjArgs[0]->pValue);
 
@@ -354,6 +361,7 @@ void *Py4pdLib_NewObj(t_symbol *s, int argc, t_atom *argv) {
     x->Zoom = (int)x->Canvas->gl_zoom;
     x->IgnoreOnNone = PyLong_AsLong(ignoreOnNone);
     x->OutPyPointer = PyLong_AsLong(pyOUT);
+    x->PyObjectPtr = Py4pdUtils_CreatePyObjPtr();
     x->FuncCalled = 1;
     x->pFunction = pyFunction;
     x->PdPatchPath = patch_dir; // set name of the home path
@@ -725,7 +733,7 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     }
     // add methods to the class
     class_addanything(localClass, Py4pdLib_Anything);
-    class_addmethod(localClass, (t_method)Py4pdLib_Pointer, gensym("PyObject"), A_SYMBOL, A_POINTER,
+    class_addmethod(localClass, (t_method)Py4pdLib_Pointer, gensym("PyObject"), A_SYMBOL, A_SYMBOL,
                     0);
     class_addmethod(localClass, (t_method)Py4pd_PrintDocs, gensym("doc"), 0, 0);
     class_addmethod(localClass, (t_method)Py4pdLib_SetKwargs, gensym("kwargs"), A_GIMME, 0);
@@ -746,7 +754,7 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
                                      CLASS_DEFAULT, 0);
         class_addanything(Py4pdInletsProxy, Py4pdLib_ProxyAnything);
         class_addmethod(Py4pdInletsProxy, (t_method)Py4pdLib_ProxyPointer, gensym("PyObject"),
-                        A_SYMBOL, A_POINTER, 0);
+                        A_SYMBOL, A_SYMBOL, 0);
     }
     if (added2pd_info == 1) {
         post("[py4pd]: Object {%s} added to PureData", objectName);

@@ -196,12 +196,17 @@ static void Py4pdNewObj_PdExecAnythingMethod(t_py *x, t_symbol *s, int argc, t_a
 }
 
 // ====================================================
-static void Py4pdNewObj_PdExecPyObjectMethod(t_py *x, t_symbol *selector, t_gpointer *p) {
+static void Py4pdNewObj_PdExecPyObjectMethod(t_py *x, t_symbol *selector, t_symbol *id) {
     Py4pdNewObj *pObjSelf;
 
     pObjSelf = (Py4pdNewObj *)x->ObjClass;
     PyObject *pSelector = PyUnicode_FromString(selector->s_name);
-    t_py4pd_pValue *pArg = (t_py4pd_pValue *)p;
+    t_py4pd_pValue *pArg;
+    pArg = Py4pdUtils_GetPyObjPtr(id);
+    if (!pArg) {
+        pd_error(x, "The object %s doesn't exist", id->s_name);
+        return;
+    }
 
     // get the Dict
     PyObject *pDictSelectors = (PyObject *)pObjSelf->pDictTypes;
@@ -874,6 +879,7 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
     x->Zoom = (int)x->Canvas->gl_zoom;
     x->IgnoreOnNone = PyLong_AsLong(ignoreOnNone);
     x->OutPyPointer = PyLong_AsLong(pyOUT);
+    x->PyObjectPtr = Py4pdUtils_CreatePyObjPtr();
     x->FuncCalled = 1;
     x->pFunction = pyFunction;
     x->VectorSize = sys_getblksize();
@@ -1205,7 +1211,7 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
     Py_DECREF(PdModule);
 
     class_addmethod(objClass, (t_method)Py4pdNewObj_PdExecPyObjectMethod, gensym("PyObject"),
-                    A_SYMBOL, A_POINTER, 0);
+                    A_SYMBOL, A_SYMBOL, 0);
 
     if (self->objIsPlayable) {
         class_addmethod(objClass, (t_method)Py4pdPlayer_Play, gensym("play"), A_GIMME, 0);
@@ -1234,7 +1240,7 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
 
         class_addanything(InletsExtClassProxy, Py4pdUtils_ExtraInletAnything);
         class_addmethod(InletsExtClassProxy, (t_method)Py4pdUtils_ExtraInletPointer,
-                        gensym("PyObject"), A_SYMBOL, A_POINTER, 0);
+                        gensym("PyObject"), A_SYMBOL, A_SYMBOL, 0);
     }
     Py_RETURN_TRUE;
 }

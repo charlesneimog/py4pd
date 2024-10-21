@@ -431,11 +431,16 @@ PyObject *Py4pdUtils_CreatePyObjFromPdArgs(t_symbol *s, int argc, t_atom *argv) 
 }
 
 // ====================================================
-void Py4pdUtils_ExtraInletPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_gpointer *gp) {
+void Py4pdUtils_ExtraInletPointer(t_py4pdInlet_proxy *x, t_symbol *s, t_symbol *id) {
     (void)s;
     t_py *py4pd = (t_py *)x->p_master;
     t_py4pd_pValue *pArg;
-    pArg = (t_py4pd_pValue *)gp;
+    pArg = Py4pdUtils_GetPyObjPtr(id);
+    if (!pArg) {
+        pd_error(x, "The object %s doesn't exist", id->s_name);
+        return;
+    }
+
     if (!pArg->PdOutCount)
         Py_DECREF(py4pd->PyObjArgs[x->inletIndex]->pValue);
 
@@ -1153,6 +1158,9 @@ void *Py4pdUtils_FreeObj(t_py *x) {
     if (x->PdObjArgs != NULL) {
         free(x->PdObjArgs);
     }
+
+    pd_unbind((t_pd *)x->PyObjectPtr, x->PyObjectPtr->Id);
+
     return NULL;
 }
 
@@ -1179,9 +1187,10 @@ inline void *Py4pdUtils_ConvertToPd(t_py *x, t_py4pd_pValue *pValueStruct, t_out
         if (pValue == Py_None && x->IgnoreOnNone == 1) {
             return NULL;
         }
+        x->PyObjectPtr->Py = pValueStruct;
         t_atom args[2];
         SETSYMBOL(&args[0], gensym(Py_TYPE(pValue)->tp_name));
-        SETPOINTER(&args[1], (t_gpointer *)pValueStruct);
+        SETSYMBOL(&args[1], x->PyObjectPtr->Id);
         outlet_anything(outlet, gensym("PyObject"), 2, args);
         return NULL;
     }
@@ -1581,7 +1590,6 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
             if (!PathElem) {
                 break;
             }
-            post("PathElem: %s", PathElem);
             PyObject *PdSearchPath = PyUnicode_FromString(PathElem);
             PyList_Insert(SysPath, SysPathLen, PdSearchPath);
         }
@@ -2208,27 +2216,27 @@ int Py4pdUtils_ExecuteSystemCommand(const char *command, int thread) { // TODO: 
 }
 
 // ─────────────────────────────────────
-static t_class *py4pd_pyobj_ptr_class;
-
-// ─────────────────────────────────────
-t_py4pd_pValue *Py4pdUtils_PyObjectNew(int frameSize, int bufferSize) {
-    t_py4pd_pValue *x = (t_py4pd_pValue *)getbytes(sizeof(t_py4pd_pValue));
-    // x->x_pd = AnalysisPtr;
-    // x->x_data = new AnalysisData(frameSize, bufferSize);
-    // std::string PointerStr = std::to_string((long long)x->x_data);
-    // x->x_sym = gensym(PointerStr.c_str());
-    // pd_bind((t_pd *)x, x->x_sym);
+t_PyObjectPtr *Py4pdUtils_CreatePyObjPtr(void) {
+    char buf[64];
+    t_PyObjectPtr *x = (t_PyObjectPtr *)getbytes(sizeof(t_PyObjectPtr));
+    x->x_pd = Py4pdPtrClass;
+    int ret = snprintf(buf, sizeof(buf), "<%p>", (void *)x);
+    if (ret < 0 || ret >= sizeof(buf)) {
+        buf[sizeof(buf) - 1] = '\0';
+    }
+    x->Id = gensym(buf);
+    pd_bind((t_pd *)x, x->Id);
     return x;
 }
 
 // ─────────────────────────────────────
-void Py4pdUtils_PyObjectKill(t_py4pd_pValue *x) {
-    //
-    // pd_unbind((t_pd *)x, x->x_sym);
+void Py4pdUtils_FreePyObjPtr(t_PyObjectPtr *x) {
+    pd_unbind((t_pd *)x, x->Id);
+    freebytes(x, sizeof(t_PyObjectPtr));
 }
 
 // ─────────────────────────────────────
-t_py4pd_pValue *Py4pdUtils_PyObjectGet(t_symbol *s) {
-    t_py4pd_pValue *x = (t_py4pd_pValue *)pd_findbyclass(s, py4pd_pyobj_ptr_class);
-    return x;
+t_py4pd_pValue *Py4pdUtils_GetPyObjPtr(t_symbol *s) {
+    t_PyObjectPtr *x = (t_PyObjectPtr *)pd_findbyclass(s, Py4pdPtrClass);
+    return x ? x->Py : 0;
 }
