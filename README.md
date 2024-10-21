@@ -15,7 +15,7 @@
   <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml/badge.svg?branch=develop"></a>
 </p>
 
-py4pd allows write PureData Objects. The main goal is to allow easy IA, Scores, Graphics, and bring to Pd possibilities with array, list and others types. With Python, you can:
+py4pd allows write PureData Objects using Python instead of C/C++. The main goal is to allow easy IA, Scores, Graphics, and bring to Pd possibilities with array, list and others types. With Python, you can:
 * Use scores inside PureData;
 * Use svg/draws as scores;
 * OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
