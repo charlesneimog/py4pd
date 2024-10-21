@@ -1,8 +1,8 @@
+---
 name: Docs
 on:
   push:
-    branches:
-      - master
+    branches: [master]
 permissions:
   contents: write
 jobs:
@@ -17,7 +17,5 @@ jobs:
         with:
           key: ${{ github.ref }}
           path: .cache
-      - run: pip install -r docs/requirements.txt
+      - run: pip install -r Documentation/requirements.txt
       - run: mkdocs gh-deploy --force
-
-
