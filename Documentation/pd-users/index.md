@@ -3,7 +3,7 @@
 This section describes how the `py4pd` objects work in PureData environment. I split the content into two parts, one for arguments other for methods. I recommend reading the sections on arguments first then the section about the methods. 
 
 <p align="center">
-    <img src="../examples/pd-methods/geral.png" width="40%"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
+    <img src="../examples/pd-methods/geral.png" width="60%"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
 </p>
 
 <div class="grid cards" markdown>
