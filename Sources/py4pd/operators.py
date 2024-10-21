@@ -1,6 +1,11 @@
 import pd
 
 
+def pyisnone(args):
+    """Return the logical AND of all arguments."""
+    return args is None
+
+
 def pyand(*args):
     """Return the logical AND of all arguments."""
     return all(args)

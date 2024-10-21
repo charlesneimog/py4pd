@@ -40,6 +40,8 @@ def py4pd_setup():
     pd.add_object(getObjectArgs, "py.getargs")
 
     # Logic Functions
+
+    pd.add_object(pyisnone, "py.isnone", py_out=True)
     pd.add_object(pyand, "py.and", py_out=True, help_patch="py.logic-help.pd")
     pd.add_object(pyand, "py&&", py_out=True, help_patch="py.logic-help.pd")
     pd.add_object(pyor, "py.or", py_out=True, help_patch="py.logic-help.pd")
@@ -108,6 +110,7 @@ def py4pd_setup():
     pd.add_object(pdround, "py.round")
 
     pd.add_object(py4pdListComprehension, "py.listcomp", py_out=True)
+    pd.add_object(py4pdListComprehension, "py.expr", py_out=True)
 
     # Rhythm Tree
     pd.add_object(extract_numbers, "py.rhythm_tree")
