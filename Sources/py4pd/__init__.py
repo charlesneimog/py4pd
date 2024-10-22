@@ -82,6 +82,7 @@ def py4pd_setup():
         pd.add_object(list2np, "py.list2np", py_out=True)
 
     # Loop Functions
+    pd.add_object(pyrange, "py.range", py_out=True, ignore_none=True)
     pd.add_object(
         pyiterate, "py.iterate", py_out=True, n_outlets=2, ignore_none=True
     )  # these are special objects, they don't have a pyout argument but output py data types

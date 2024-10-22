@@ -139,6 +139,11 @@ def list2np(thelist):
     return np.array(thelist)
 
 
+def pyrange(mylist):
+    mylist = tuple(mylist)
+    return list(range(*mylist))
+
+
 def pysplit(mylist):
     outcount = pd.get_outlet_count()
     listcount = len(mylist)
