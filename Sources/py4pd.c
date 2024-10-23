@@ -41,12 +41,12 @@ static int Py4pd_LibraryLoad(t_py *Py4pd, int Argc, t_atom *Argv) {
     t_symbol *ScriptFileName = gensym(Py4pdCorrectLibName);
 
     char ScriptFilePath[MAXPDSTRING];
-    snprintf(ScriptFilePath, MAXPDSTRING, "%s/%s.py", Py4pd->PdPatchPath->s_name,
-             atom_gensym(Argv + 1)->s_name);
+    pd_snprintf(ScriptFilePath, MAXPDSTRING, "%s/%s.py", Py4pd->PdPatchPath->s_name,
+                atom_gensym(Argv + 1)->s_name);
 
     char ScriptInsidePy4pdFolder[MAXPDSTRING];
-    snprintf(ScriptInsidePy4pdFolder, MAXPDSTRING, "%s/%s.py", Py4pd->Py4pdPath->s_name,
-             atom_gensym(Argv + 1)->s_name);
+    pd_snprintf(ScriptInsidePy4pdFolder, MAXPDSTRING, "%s/%s.py", Py4pd->Py4pdPath->s_name,
+                atom_gensym(Argv + 1)->s_name);
 
     PyObject *SysPath = PySys_GetObject("path");
     if (access(ScriptFilePath, F_OK) == -1 && access(ScriptInsidePy4pdFolder, F_OK) == -1) {
@@ -58,25 +58,29 @@ static int Py4pd_LibraryLoad(t_py *Py4pd, int Argc, t_atom *Argv) {
                 break;
             }
             char *LibPath = (char *)malloc(strlen(PathElem) + strlen(ScriptFileName->s_name) + 1);
-            snprintf(LibPath, MAXPDSTRING, "%s/%s/", PathElem, atom_gensym(Argv + 1)->s_name);
-            if (access(LibPath, F_OK) != -1) { // Library found
-                LibNotFound = 0;
+            pd_snprintf(LibPath, MAXPDSTRING, "%s/%s/", PathElem, atom_gensym(Argv + 1)->s_name);
+            if (access(LibPath, F_OK) != -1) {
                 PyList_Append(SysPath, PyUnicode_FromString(LibPath));
             }
             free(LibPath);
         }
+    }
+    char dirbuf[MAXPDSTRING], *nameptr;
+    int fd = -1;
 
-        // if (LibNotFound) {
-        //     pd_error(Py4pd, "[py4pd] Library '%s' not found!", ScriptFileName->s_name);
-        //     pd_error(Py4pd,
-        //              "[py4pd] Please, make sure the library is in the search path of PureData");
-        //     return -1;
-        // }
+    // Try to open the folder
+    char pkgDir[MAXPDSTRING];
+    pd_snprintf(pkgDir, MAXPDSTRING, "%s/__init__.py", Py4pdLibName);
+    fd = canvas_open(Py4pd->Canvas, pkgDir, "", dirbuf, &nameptr, MAXPDSTRING, 0);
+    if (fd >= 0) {
+        dirbuf[strlen(dirbuf) - strlen(pkgDir) + 2] = '\0';
+        PyList_Append(SysPath, PyUnicode_FromString(dirbuf));
     }
 
-    PyObject *pModule, *pFunc; // Create the variables of the python objects
+    PyObject *pModule,
+        *pFunc; // Create the variables of the python objects
     char pyGlobalFolder[MAXPDSTRING];
-    snprintf(pyGlobalFolder, MAXPDSTRING, "%s/py4pd-env", Py4pd->Py4pdPath->s_name);
+    pd_snprintf(pyGlobalFolder, MAXPDSTRING, "%s/py4pd-env", Py4pd->Py4pdPath->s_name);
 
     // convert const char* to char*
     char *GlobalFolderChar = malloc(strlen(pyGlobalFolder) + 1);
@@ -162,7 +166,8 @@ static int Py4pd_LibraryLoad(t_py *Py4pd, int Argc, t_atom *Argv) {
     // check if module has the function Py4pdLoadObjects or
     // "sScriptFilename + setup"
     char *setupFuncName = malloc(strlen(ScriptFileName->s_name) + 7);
-    snprintf(setupFuncName, strlen(ScriptFileName->s_name) + 7, "%s_setup", ScriptFileName->s_name);
+    pd_snprintf(setupFuncName, strlen(ScriptFileName->s_name) + 7, "%s_setup",
+                ScriptFileName->s_name);
     PyObject *pFuncName = PyUnicode_FromString(setupFuncName);
     t_symbol *pFuncNameSymbol = gensym(setupFuncName);
     pFunc = PyObject_GetAttr(pModule, pFuncName);
@@ -275,44 +280,44 @@ static void *Py4pd_PipInstallRequirementsDetach(void *Args) {
 
 #ifdef __linux__
     size_t commandSize =
-        snprintf(NULL, 0,
-                 "python%d.%d -m pip install --target "
-                 "'%s/py4pd-env' -r %s --upgrade",
-                 PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
+        pd_snprintf(NULL, 0,
+                    "python%d.%d -m pip install --target "
+                    "'%s/py4pd-env' -r %s --upgrade",
+                    PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
         1;
 #elif defined _WIN32
     size_t commandSize =
-        snprintf(NULL, 0,
-                 "py -%d.%d -m pip install --target "
-                 "\"%s/py4pd-env\" -r %s --upgrade",
-                 PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
+        pd_snprintf(NULL, 0,
+                    "py -%d.%d -m pip install --target "
+                    "\"%s/py4pd-env\" -r %s --upgrade",
+                    PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
         1;
 
 #elif defined(__APPLE__) || defined(__MACH__)
     size_t commandSize =
-        snprintf(NULL, 0,
-                 "/usr/local/bin/python%d.%d -m pip install --target "
-                 "'%s/py4pd-env' -r %s --upgrade",
-                 PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
+        pd_snprintf(NULL, 0,
+                    "/usr/local/bin/python%d.%d -m pip install --target "
+                    "'%s/py4pd-env' -r %s --upgrade",
+                    PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
         1;
 #endif
     char *COMMAND = malloc(commandSize);
 #ifdef __linux__
-    snprintf(COMMAND, commandSize,
-             "python%d.%d -m pip install --target '%s/py4pd-env' -r %s --upgrade", PY_MAJOR_VERSION,
-             PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
+    pd_snprintf(COMMAND, commandSize,
+                "python%d.%d -m pip install --target '%s/py4pd-env' -r %s --upgrade",
+                PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 
 #elif defined __WIN64
-    snprintf(COMMAND, commandSize,
-             "py -%d.%d -m pip install --target \"%s/py4pd-env\" "
-             "-r %s --upgrade",
-             PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
+    pd_snprintf(COMMAND, commandSize,
+                "py -%d.%d -m pip install --target \"%s/py4pd-env\" "
+                "-r %s --upgrade",
+                PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 
 #elif defined(__APPLE__) || defined(__MACH__)
-    snprintf(COMMAND, commandSize,
-             "/usr/local/bin/python%d.%d -m pip install --target "
-             "-r '%s/py4pd-env' %s --upgrade",
-             PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
+    pd_snprintf(COMMAND, commandSize,
+                "/usr/local/bin/python%d.%d -m pip install --target "
+                "-r '%s/py4pd-env' %s --upgrade",
+                PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 #endif
     pd_error(NULL,
              "Installing %s in the background. Please DO NOT close PureData until you receive a "
@@ -362,45 +367,45 @@ static void *Py4pd_PipInstallDetach(void *Args) {
 
 #ifdef __linux__
     size_t commandSize =
-        snprintf(NULL, 0,
-                 "python%d.%d -m pip install --target "
-                 "'%s/py4pd-env' %s --upgrade",
-                 PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
+        pd_snprintf(NULL, 0,
+                    "python%d.%d -m pip install --target "
+                    "'%s/py4pd-env' %s --upgrade",
+                    PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
         1;
 #elif defined _WIN32
     size_t commandSize =
-        snprintf(NULL, 0,
-                 "py -%d.%d -m pip install --target "
-                 "\"%s/py4pd-env\" %s --upgrade",
-                 PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
+        pd_snprintf(NULL, 0,
+                    "py -%d.%d -m pip install --target "
+                    "\"%s/py4pd-env\" %s --upgrade",
+                    PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
         1;
 
 #elif defined(__APPLE__) || defined(__MACH__)
     size_t commandSize =
-        snprintf(NULL, 0,
-                 "/usr/local/bin/python%d.%d -m pip install --target "
-                 "'%s/py4pd-env' %s --upgrade",
-                 PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
+        pd_snprintf(NULL, 0,
+                    "/usr/local/bin/python%d.%d -m pip install --target "
+                    "'%s/py4pd-env' %s --upgrade",
+                    PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage) +
         1;
 #endif
     char *COMMAND = malloc(commandSize);
 #ifdef __linux__
-    snprintf(COMMAND, commandSize,
-             "python%d.%d -m pip install --target '%s/py4pd-env' %s --upgrade", PY_MAJOR_VERSION,
-             PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
+    pd_snprintf(COMMAND, commandSize,
+                "python%d.%d -m pip install --target '%s/py4pd-env' %s --upgrade", PY_MAJOR_VERSION,
+                PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
     post("Folder is %s", pipTarget->s_name);
 
 #elif defined _WIN32
-    snprintf(COMMAND, commandSize,
-             "py -%d.%d -m pip install --target \"%s/py4pd-env\" "
-             "%s --upgrade",
-             PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
+    pd_snprintf(COMMAND, commandSize,
+                "py -%d.%d -m pip install --target \"%s/py4pd-env\" "
+                "%s --upgrade",
+                PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 
 #elif defined(__APPLE__) || defined(__MACH__)
-    snprintf(COMMAND, commandSize,
-             "/usr/local/bin/python%d.%d -m pip install --target "
-             "'%s/py4pd-env' %s --upgrade",
-             PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
+    pd_snprintf(COMMAND, commandSize,
+                "/usr/local/bin/python%d.%d -m pip install --target "
+                "'%s/py4pd-env' %s --upgrade",
+                PY_MAJOR_VERSION, PY_MINOR_VERSION, pipTarget->s_name, pipPackage);
 #endif
     pd_error(NULL,
              "Installing %s in the background. Please DO NOT close PureData until you receive a "
@@ -586,7 +591,7 @@ static void Py4pd_SetPackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                 }
                 char cfgFile[MAXPDSTRING];
                 char const *py4pdDir = x->Py4pdPath->s_name;
-                snprintf(cfgFile, MAXPDSTRING, "%s/py4pd.cfg", py4pdDir);
+                pd_snprintf(cfgFile, MAXPDSTRING, "%s/py4pd.cfg", py4pdDir);
                 FILE *file = fopen(cfgFile, "w");
                 if (x->EditorName != NULL) {
                     fprintf(file, "editor = %s\n", x->EditorName->s_name);
@@ -724,7 +729,7 @@ static void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
             post("[py4pd] Editor set to: %s", x->EditorName->s_name);
             char cfgFile[MAXPDSTRING];
             char const *py4pdDir = x->Py4pdPath->s_name;
-            snprintf(cfgFile, MAXPDSTRING, "%s/py4pd.cfg", py4pdDir);
+            pd_snprintf(cfgFile, MAXPDSTRING, "%s/py4pd.cfg", py4pdDir);
             FILE *file = fopen(cfgFile, "w");
             fprintf(file, "editor = %s\n", x->EditorName->s_name);
             fprintf(file, "packages = %s", x->PkgPath->s_name);
@@ -863,8 +868,8 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
 
     // check if script file exists
     char ScriptFilePath[MAXPDSTRING];
-    snprintf(ScriptFilePath, MAXPDSTRING, "%s/%s.py", x->PdPatchPath->s_name,
-             ScriptFilename->s_name);
+    pd_snprintf(ScriptFilePath, MAXPDSTRING, "%s/%s.py", x->PdPatchPath->s_name,
+                ScriptFilename->s_name);
 
     PyObject *pModule, *pFunc; // Create the variables of the python objects
 
@@ -1084,7 +1089,6 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         t_canvas *c = x->Canvas;
         t_symbol *patchDir = canvas_getdir(c);
         size_t strLen = strlen(patchDir->s_name);
-
         if (strLen > 0 && (patchDir->s_name)[strLen - 1] != '/') {
             char *new_path = malloc(strLen + 2);
             Py4pdUtils_Strlcpy(new_path, patchDir->s_name, strLen + 1);
@@ -1122,11 +1126,11 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         x->Zoom = (int)x->Canvas->gl_zoom;
         t_symbol *PatchDir = canvas_getdir(c);
         if (PatchDir->s_name[strlen(PatchDir->s_name) - 1] != '/') {
-            char *NewPath = malloc(strlen(PatchDir->s_name) + 2);
+            size_t strLen = strlen(PatchDir->s_name);
+            char NewPath[strLen + 2];
             Py4pdUtils_Strlcpy(NewPath, PatchDir->s_name, strlen(PatchDir->s_name) + 1);
             Py4pdUtils_Strlcat(NewPath, "/\0", strlen(NewPath) + 1);
             PatchDir = gensym(NewPath);
-            free(NewPath);
         }
 
         x->PdPatchPath = PatchDir;
@@ -1136,6 +1140,7 @@ static void *Py4pd_Py4pdNew(t_symbol *s, int argc, t_atom *argv) {
         if (objCount == 0) {
             Py4pdUtils_AddPathsToPythonPath(x);
         }
+        x->PyObjectPtr = NULL;
         x->NumpyImported = Py4pdUtils_CheckNumpyInstall(x);
         if (!x->NumpyImported) {
             return NULL;
