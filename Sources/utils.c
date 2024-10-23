@@ -5,8 +5,6 @@
 #include "pic.h"
 #include "utils.h"
 
-#include <m_imp.h>
-
 #include <string.h>
 
 #define NO_IMPORT_ARRAY
@@ -537,28 +535,23 @@ t_py *Py4pdUtils_GetObject(PyObject *pd_module) {
     return py4pd;
 }
 
-// ====================================================
-// ========================= Files ====================
-// ====================================================
+// ╭─────────────────────────────────────╮
+// │                Files                │
+// ╰─────────────────────────────────────╯
 /*
  * @brief get the folder name of something
- * @param x is the py4pd object
  * @return save the py4pd folder in x->py4pdPath
  */
 char *Py4pdUtils_GetFolderName(char *Path) {
+    // TODO: Remove this
     LOG("Py4pdUtils_GetFolderName)");
-
     char *Folder = NULL;
     char *FolderSeparator = NULL;
-
-// Find the last occurrence of a path separator
 #ifdef _WIN32
     FolderSeparator = strrchr(Path, '\\');
 #else
     FolderSeparator = strrchr(Path, '/');
 #endif
-
-    // If a separator is found, extract the folder name
     if (FolderSeparator != NULL) {
         size_t FolderLen = FolderSeparator - Path;
         Folder = malloc(FolderLen + 1);
@@ -569,7 +562,7 @@ char *Py4pdUtils_GetFolderName(char *Path) {
     return Folder;
 }
 
-// ====================================================
+// ─────────────────────────────────────
 /*
  * @brief get the folder name of something
  * @param x is the py4pd object
@@ -617,7 +610,7 @@ int Py4pdUtils_CheckPkgNameConflict(t_py *x, char *folderToCheck, t_symbol *scri
     HANDLE hFind;
 
     char searchPath[MAX_PATH];
-    snprintf(searchPath, sizeof(searchPath), "%s\\*", folderToCheck);
+    pd_snprintf(searchPath, sizeof(searchPath), "%s\\*", folderToCheck);
 
     hFind = FindFirstFileA(searchPath, &findData);
     if (hFind != INVALID_HANDLE_VALUE) {
@@ -1037,7 +1030,7 @@ int Py4pdUtils_Snprintf(char *buffer, size_t size, const char *format, ...) {
 
     va_start(args, format);
 
-    // Use vsnprintf with the provided size to prevent buffer overflow
+    // Use vpd_snprintf with the provided size to prevent buffer overflow
     result = vsnprintf(buffer, size, format, args);
 
     // Check for errors or truncation (result is negative)
@@ -1159,7 +1152,10 @@ void *Py4pdUtils_FreeObj(t_py *x) {
         free(x->PdObjArgs);
     }
 
-    pd_unbind((t_pd *)x->PyObjectPtr, x->PyObjectPtr->Id);
+    if (x->PyObjectPtr != NULL) {
+        pd_unbind((t_pd *)x->PyObjectPtr, x->PyObjectPtr->Id);
+        freebytes(x->PyObjectPtr, sizeof(t_py4pd_pValue));
+    }
 
     return NULL;
 }
@@ -1476,8 +1472,8 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
     int folderLen = strlen("/py4pd-env/") + 1;
     char *PADRAO_packages_path =
         (char *)malloc(sizeof(char) * (strlen(x->PdPatchPath->s_name) + folderLen)); //
-    snprintf(PADRAO_packages_path, strlen(x->PdPatchPath->s_name) + folderLen, "%s/py4pd-env/",
-             x->PdPatchPath->s_name);
+    pd_snprintf(PADRAO_packages_path, strlen(x->PdPatchPath->s_name) + folderLen, "%s/py4pd-env/",
+                x->PdPatchPath->s_name);
     x->CondaPath = gensym(PADRAO_packages_path);
     if (x->EditorName == NULL) {
         const char *editor = PY4PD_EDITOR;
@@ -1488,7 +1484,7 @@ void Py4pdUtils_SetObjConfig(t_py *x) {
     }
 
     char config_path[MAXPDSTRING];
-    snprintf(config_path, sizeof(config_path), "%s/py4pd.cfg", x->Py4pdPath->s_name);
+    pd_snprintf(config_path, sizeof(config_path), "%s/py4pd.cfg", x->Py4pdPath->s_name);
     if (access(config_path, F_OK) != -1) {
         FILE *file = fopen(config_path, "r");
         char line[256];
@@ -1557,13 +1553,13 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
     LOG("Py4pdUtils_AddPathsToPythonPath");
 
     char Py4pdMod[MAXPDSTRING];
-    int ret = snprintf(Py4pdMod, MAXPDSTRING, "%s/py4pd", x->Py4pdPath->s_name);
+    int ret = pd_snprintf(Py4pdMod, MAXPDSTRING, "%s/py4pd", x->Py4pdPath->s_name);
     if (ret < 0) {
         pd_error(x, "[py4pd] Error when adding py4pd path to sys.path");
         return;
     }
     char Py4pdPkgs[MAXPDSTRING];
-    ret = snprintf(Py4pdPkgs, MAXPDSTRING, "%s/py4pd-env", x->Py4pdPath->s_name);
+    ret = pd_snprintf(Py4pdPkgs, MAXPDSTRING, "%s/py4pd-env", x->Py4pdPath->s_name);
     if (ret < 0) {
         pd_error(x, "[py4pd] Error when adding py4pd path to sys.path");
         return;
@@ -1574,25 +1570,23 @@ void Py4pdUtils_AddPathsToPythonPath(t_py *x) {
     PyObject *CondaPkg = PyUnicode_FromString(x->CondaPath->s_name);
     PyObject *Py4pdGlobalPkg = PyUnicode_FromString(Py4pdPkgs);
 
-    if (HomePath && SitePkg && CondaPkg && Py4pdGlobalPkg) {
-        PyObject *SysPath = PySys_GetObject("path"); // Borrowed reference
-        int SysPathLen = PyList_Size(SysPath);
-        if (SysPath && PyList_Check(SysPath)) {
-            PyList_Insert(SysPath, SysPathLen, HomePath);
-            PyList_Insert(SysPath, SysPathLen, SitePkg);
-            PyList_Insert(SysPath, SysPathLen, CondaPkg);
-            PyList_Insert(SysPath, SysPathLen, Py4pdGlobalPkg);
-        }
+    PyObject *SysPath = PySys_GetObject("path"); // Borrowed reference
+    int SysPathLen = PyList_Size(SysPath);
+    if (SysPath && PyList_Check(SysPath)) {
+        PyList_Insert(SysPath, SysPathLen, HomePath);
+        PyList_Insert(SysPath, SysPathLen, SitePkg);
+        PyList_Insert(SysPath, SysPathLen, CondaPkg);
+        PyList_Insert(SysPath, SysPathLen, Py4pdGlobalPkg);
+    }
 
-        // now the pd search path modules
-        for (int i = 0; 1; i++) {
-            const char *PathElem = namelist_get(STUFF->st_searchpath, i);
-            if (!PathElem) {
-                break;
-            }
-            PyObject *PdSearchPath = PyUnicode_FromString(PathElem);
-            PyList_Insert(SysPath, SysPathLen, PdSearchPath);
+    // now the pd search path modules
+    for (int i = 0; 1; i++) {
+        const char *PathElem = namelist_get(STUFF->st_searchpath, i);
+        if (!PathElem) {
+            break;
         }
+        PyObject *PdSearchPath = PyUnicode_FromString(PathElem);
+        PyList_Insert(SysPath, SysPathLen, PdSearchPath);
     }
 
     return;
@@ -2220,19 +2214,13 @@ t_PyObjectPtr *Py4pdUtils_CreatePyObjPtr(void) {
     char buf[64];
     t_PyObjectPtr *x = (t_PyObjectPtr *)getbytes(sizeof(t_PyObjectPtr));
     x->x_pd = Py4pdPtrClass;
-    int ret = snprintf(buf, sizeof(buf), "<%p>", (void *)x);
+    int ret = pd_snprintf(buf, sizeof(buf), "<%p>", (void *)x);
     if (ret < 0 || ret >= sizeof(buf)) {
         buf[sizeof(buf) - 1] = '\0';
     }
     x->Id = gensym(buf);
     pd_bind((t_pd *)x, x->Id);
     return x;
-}
-
-// ─────────────────────────────────────
-void Py4pdUtils_FreePyObjPtr(t_PyObjectPtr *x) {
-    pd_unbind((t_pd *)x, x->Id);
-    freebytes(x, sizeof(t_PyObjectPtr));
 }
 
 // ─────────────────────────────────────
