@@ -140,6 +140,8 @@ def list2np(thelist):
 
 
 def pyrange(mylist):
+    if type(mylist) == int or type(mylist) == float:
+        mylist = [mylist]
     mylist = tuple(mylist)
     return list(range(*mylist))
 
