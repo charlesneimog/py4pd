@@ -12,6 +12,8 @@
 #define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
 #include <numpy/arrayobject.h>
 
+#include <m_imp.h>
+
 /*
 This file serves as a versatile collection of functions utilized within the
 Py4pd object, providing a diverse set of utilities for various tasks and

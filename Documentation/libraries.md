@@ -34,38 +34,9 @@ You can download the libraries using `deken`. To install the library search for 
     </thead>
     <tbody>
       <tr>
-        <td><a href="https://github.com/charlesneimog/py4pd-ji">ji</a></td>
-        <td>It creates an environment for the microtonal music composition, mainly for Just Intonation composition.</td>
-        <td><a href="https://charlesneimog.github.io/"</a> Charles K. Neimog</td>
-      </tr>
-    </tbody>
-    <tbody>
-      <tr>
-        <td><a href="https://github.com/charlesneimog/orchidea">orchidea</a></td>
-        <td>It allows loading <a href="https://forum.ircam.fr/projects/detail/orchideasol/">Orchidea</a> samples using midi inputs.</td>
-        <td><a href="https://charlesneimog.github.io/"</a> Charles K. Neimog</td>
-      </tr>
-    </tbody>
-    <tbody>
-      <tr>
         <td><a href="https://github.com/charlesneimog/py4pd-upic">upic</a></td>
         <td>It allows to convert svg to audio parameters</td>
         <td><a href="https://charlesneimog.github.io/"</a> Charles K. Neimog</td>
       </tr>
-    </tbody>
-    <tbody>
-      <tr>
-        <td><a href="https://github.com/charlesneimog/py4pd-spt">simple partialtracking</a></td>
-        <td>It allows to do Partial Tracking in PureData (under development yet)</td>
-        <td><a href="https://charlesneimog.github.io/"</a> Charles K. Neimog</td>
-      </tr>
-    </tbody>
-    <tbody>
-      <tr>
-        <td><a href="https://github.com/charlesneimog/py4pd-freesound">freesound</a></td>
-        <td>Get freesound sound in PureData (under development yet)</td>
-        <td><a href="https://charlesneimog.github.io/"</a> Charles K. Neimog</td>
-      </tr>
-    </tbody>
   </table>
   

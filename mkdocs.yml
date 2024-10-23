@@ -108,6 +108,7 @@ nav:
           - Working with Audio: python-users/audio.md
           - Working with Objects: python-users/objects.md
           - Utilities and Info: python-users/info.md
+  - Create py4pd Libraries: py4pd-libs/index.md
   - libraries.md
 extra:
   analytics:
