@@ -8,6 +8,18 @@ This section describes how the `py4pd` objects work in PureData environment. I s
 
 <div class="grid cards" markdown>
 
+-   :fontawesome-solid-gear: __py4pd Library__
+
+    [:octicons-arrow-right-24: Library](py4pd-module.md)
+
+    
+</div>
+
+
+<div class="grid cards" markdown>
+
+
+
 -   :fontawesome-solid-gear: __Arguments__
 
     [:octicons-arrow-right-24: Arguments](args.md)
@@ -16,6 +28,6 @@ This section describes how the `py4pd` objects work in PureData environment. I s
 -   :fontawesome-solid-lightbulb: __Methods__
 
     [:octicons-arrow-right-24: Methods](methods.md)
-
+    
 </div>
 

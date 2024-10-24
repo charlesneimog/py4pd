@@ -3,6 +3,7 @@ hide:
   - navigation
   - toc
 ---
+
 # External Libraries
 
 For those unfamiliar with programming, `py4pd` will be useful through its libraries. In essence, these libraries consist of Python code that can be used as PureData Objects. Because of the simplicity of Python, there is a new world of possibilities for PureData Objects. Presented below is a compilation of libraries used, for now, in my musical composition workflows. **If you created a library**, let me know to put it here too. 

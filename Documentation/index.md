@@ -17,19 +17,35 @@ hide:
 
 ---
 
-<p align="center"><code>py4pd</code> allows to write PureData objects using Python instead of C/C++. If you use <a href="https://openmusic-project.github.io/openmusic/">OpenMusic</a> and <a href="https://www.bachproject.net/">BachLibrary</a>, you will find some inspiration in it.</p>
+<p><code>py4pd</code> bridges the capabilities of OpenMusic with the versatility of PureData. If you're familiar with <a href="https://openmusic-project.github.io/openmusic/">OpenMusic</a> and <a href="https://www.bachproject.net/">BachLibrary</a>, you'll discover a fresh source of inspiration here.</p>
 
+<p >We achieve this by using Python instead of OpenMusic's Common Lisp, unlocking a vast array of powerful tools developed by composers and artists. This approach makes it easier to create music while seamlessly integrating extra code when needed.</p>
+
+### <h3 align="center"> **PureData User** </h3>
+<div class="grid cards" markdown>
+
+-   :material-music-note: __OpenMusic Objects__
+
+    [:octicons-arrow-right-24: `py4pd` Objects](pd-users/py4pd-module.md)
+
+-   :simple-composer: __`py4pd` Libraries__
+
+    [:octicons-arrow-right-24: `py4pd` Libraries](libraries.md)
+    
+
+</div>
+
+### <h3 align="center"> **Python User** </h3>
 <div class="grid cards" markdown>
 
 -   :simple-python: __Create PureData Objects With Python__
 
     [:octicons-arrow-right-24: Learning about `py4pd`](python-users/index.md)
 
+-   :simple-composer: __Creating Libraries__
 
--   :simple-composer: __I don't program!__
-
-    [:octicons-arrow-right-24: If you don't know Python, click here!](libraries.md)
-
+    [:octicons-arrow-right-24: How to create Python Libraries](libraries.md)
+    
 </div>
 
 

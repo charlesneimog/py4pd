@@ -1,5 +1,8 @@
 # Introduction
 
+!!! danger "Nerd stuff"
+    This is a section for people that run Python, check how to use the [`py4pd`](../pd-users/py4pd-module.md) library instead.
+
 If you use [Python](https://www.python.org/) and [PureData](https://puredata.info/), you can interact with Pd via Python using the `pd` module. Once imported via `import pd`, the `pd` module is available for use in any Python module loaded via `py4pd`. This module allow to:
 
 - Use your own Python code as a PureData Object;

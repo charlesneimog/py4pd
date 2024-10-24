@@ -1,3 +1,8 @@
+!!! danger "Nerd stuff"
+    This is a section for people that run Python, check how to use the [`py4pd`](../pd-users/py4pd-module.md) library instead.
+    
+---
+
 <div class="grid cards" markdown>
 
 -   :simple-python: [__Hello World__](project1.md)
