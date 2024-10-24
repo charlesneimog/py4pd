@@ -87,9 +87,11 @@ nav:
       - First Library: projects/project3.md
   - Pd Object:
       - pd-users/index.md
+      - Py4pd Library: pd-users/py4pd-module.md
       - Arguments: pd-users/args.md
       - Methods: pd-users/methods.md
       - Config File: pd-users/py4pd-cfg.md
+      
   - Pd Module:
       - Introduction: python-users/index.md
       - Creating Pd Libraries:
@@ -108,7 +110,7 @@ nav:
           - Working with Audio: python-users/audio.md
           - Working with Objects: python-users/objects.md
           - Utilities and Info: python-users/info.md
-  - Create py4pd Libraries: py4pd-libs/index.md
+  - Publish py4pd Libraries: py4pd-libs/index.md
   - libraries.md
 extra:
   analytics:
