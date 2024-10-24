@@ -114,7 +114,7 @@ def py4pd_setup():
     pd.add_object(py4pdListComprehension, "py.expr", py_out=True)
 
     # Rhythm Tree
-    pd.add_object(extract_numbers, "py.rhythm_tree")
+    pd.add_object(omtree, "py.omtree", playable=True, n_outlets=2, ignore_none=True)
 
     # OpenMusic
     pd.add_object(arithm_ser, "py.arithm-ser")
@@ -130,4 +130,3 @@ def py4pd_setup():
     # test
     pd.add_object(py4pdtimer, "py.timer", no_outlet=True)
     pd.add_object(getMemoryUse, "py.memuse")
-
