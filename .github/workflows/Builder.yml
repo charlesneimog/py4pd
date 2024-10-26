@@ -3,53 +3,66 @@ name: C/C++ CI
 on:
   workflow_dispatch:
   push:
-    branches: [develop, master]
+    branches: [master]
   pull_request:
-    branches: [develop, master]
+    branches: [master]
 env:
   LIBNAME: py4pd
   LIBVERSION: 0.8.7
 jobs:
-  macos-universal-build:
-    runs-on: macos-latest
+  macos-x86:
+    runs-on: macos-13
     strategy:
       matrix:
-        arch: [amd64, arm64]
-        precision: [32, 64]
+        precision: [32, 64]  # bits must be update on winget first
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
-      - name: Install PureData and Deps x86_64 Mac
-        if: ${{ matrix.arch == 'amd64' }}
-        run: |
-          arch -x86_64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          arch -x86_64 /usr/local/bin/brew install pd
-          arch -x86_64 /usr/local/bin/brew install python@3.11
-          arch -x86_64 /usr/local/bin/pip3 install numpy
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install PureData and Deps arm64 Mac
-        if: ${{ matrix.arch == 'arm64' }}
         run: |
           brew install pd
-          brew install python@3.11
-          python3.11 -m pip install numpy
+      - name: Build Object
+        run: |
+          python3.12 -m pip install numpy --break-system-packages
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPYVERSION=3.12 -DPDLIBDIR=./
+          cmake --build build -j $(sysctl -n hw.logicalcpu)
+          cmake --install build
+      - name: Upload Object
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{env.LIBNAME}}-macos-x86-${{matrix.precision}}
+          path: ${{env.LIBNAME}}
+  macos-arm:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        arch: [arm64]
+        precision: [32]  # 64 bits must be update on winget first
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install PureData and Deps arm64 Mac
+        run: |
+          brew install pd
       - name: Build Object for Arm
         if: ${{ matrix.arch == 'arm64' }}
         run: |
+          python3.12 -m pip install numpy --break-system-packages
           export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:/opt/homebrew/include/"
           export LDFLAGS="-L/opt/homebrew/lib"
-          cmake . -B build -DCMAKE_OSX_ARCHITECTURES=arm64 -DPD_FLOATSIZE=${{ matrix.precision }} -DPDLIBDIR=./ -DPYVERSION=3.11
+          cmake . -B build -DCMAKE_OSX_ARCHITECTURES=arm64 -DPD_FLOATSIZE=${{ matrix.precision }} -DPYVERSION=3.12 -DPDLIBDIR=./
           cmake --build build -j $(sysctl -n hw.logicalcpu)
-          make install -C build
-      - name: Build Object for x86_64
-        if: ${{ matrix.arch == 'amd64' }}
-        run: |
-          export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:/usr/local/include/"
-          export LDFLAGS="-L/usr/local/lib"
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_OSX_ARCHITECTURES=x86_64 -DPDLIBDIR=./ -DPYVERSION=3.11
-          cmake --build build -j $(sysctl -n hw.logicalcpu)
-          make install -C build
+          cmake --install build
       - name: Upload Object
         uses: actions/upload-artifact@v4
         with:
@@ -61,10 +74,9 @@ jobs:
       matrix:
         compiler: [mingw]
         arch: [amd64]
-        precision: [32, 64]  # pd double and single float
+        precision: [32]  # need to update pd64 on winget
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
@@ -73,26 +85,27 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: mingw64
-          update: false
           install: make mingw-w64-x86_64-gcc mingw64/mingw-w64-x86_64-cmake
+          update: false
       - name: Install winget
         uses: Cyberboss/install-winget@v1
       - name: Install PureData Float 32
         if: matrix.precision == '32'
         run: |
           winget install -e --id MillerPuckette.PureData --accept-source-agreements
-          winget install -e --id Python.Python.3.11 --accept-source-agreements
-          py -3.11 -m pip install numpy
+          winget install --id=Python.Python.3.12  -e
+          py -3.12 -m pip install numpy
       - name: Install PureData Float 64
         if: matrix.precision == '64'
         run: |
           winget install -e --id MillerPuckette.Pd64 --accept-source-agreements
-          winget install -e --id Python.Python.3.11 --accept-source-agreements
-          py -3.11 -m pip install numpy
+          winget install --id=Python.Python.3.12  -e
+          py -3.12 -m pip install numpy
       - name: Configure and build Mingw
         shell: msys2 {0}
+        if: matrix.compiler == 'mingw'
         run: |
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPDLIBDIR=./ -DPYVERSION=3.11
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPYVERSION=3.12 -DPDLIBDIR=./
           cmake --build build
           cmake --install build
       - name: Upload
@@ -105,55 +118,35 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [amd64, aarch64, arm]
+        arch: [amd64]  # aarch64, arm]
         precision: [32, 64]
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
           fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: PureData Sources
         run: |
           sudo apt update
           sudo add-apt-repository ppa:pure-data/pure-data -y
           sudo apt install puredata -y
-          sudo apt install python3.11-dev -y
-          python3.11 -m pip install numpy
-      - name: Install aarch64 gcc
-        if: matrix.arch == 'aarch64'
-        run: |
-          sudo apt install gcc-aarch64-linux-gnu -y
-          sudo apt install g++-aarch64-linux-gnu -y
-      - name: Install arm gcc
-        if: matrix.arch == 'arm'
-        run: |
-          sudo apt install gcc-arm-linux-gnueabihf -y
-          sudo apt install g++-arm-linux-gnueabihf -y
+          python3.12 -m pip install numpy
       - name: Build Object
         if: matrix.arch == 'amd64'
         run: |
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPDLIBDIR=./ -DPYVERSION=3.11
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPYVERSION=3.12 -DPDLIBDIR=./
           cmake --build build -- -j$(nproc)
-          make install -C build
-      - name: Build Object
-        if: matrix.arch == 'aarch64'
-        run: |
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=aarch64 -DPDLIBDIR=./ -DPYVERSION=3.11
-          cmake --build build -- -j$(nproc)
-          make install -C build
-      - name: Build Object
-        if: matrix.arch == 'arm'
-        run: |
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=arm -DPDLIBDIR=./ -DPYVERSION=3.11
-          cmake --build build -- -j$(nproc)
-          make install -C build
+          cmake --install build
       - name: Upload Object
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.LIBNAME }}-linux-${{matrix.arch}}-${{matrix.precision}}
           path: ${{env.LIBNAME}}
   package-artifacts:
-    needs: [macos-universal-build, windows-build, linux-build]
+    needs: [macos-arm, macos-x86, windows-build, linux-build]
     runs-on: ubuntu-latest
     steps:
       - name: Download artifacts
