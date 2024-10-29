@@ -30,11 +30,11 @@ py4pd allows write PureData Objects using Python instead of C/C++. The main goal
 * **MacOS**: Go to https://www.python.org/downloads/release/python-3127/ and install normally.
 * **Windows**: Go to https://www.python.org/downloads/release/python-3127/ and install normally.
 
-# Wiki | Instructions for use
+## Wiki | Instructions for use
 
 * Go to [Docs](https://www.charlesneimog.com/py4pd).
 
-# For Developers
+## For Developers
 
 Just one thing, the development of this object occurs in de `develop` branch, the main branch corresponds to the last release available in `Deken`.
 
