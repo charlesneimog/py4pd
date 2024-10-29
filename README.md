@@ -21,10 +21,8 @@ py4pd allows write PureData Objects using Python instead of C/C++. The main goal
 * OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
 * Sound analisys with `magenta`, `librosa`, and `pyAudioAnalaysis`;
 
-> [!TIP]  
-> Go to [Docs](https://www.charlesneimog.com/py4pd) to see examples.
 
-### Download py4pd
+# Download py4pd
 1. Open PureData, `Help->Find Externals->` search for `py4pd` then select py4pd and click on `Install`: 
 2. You must install Python.
 
@@ -32,16 +30,36 @@ py4pd allows write PureData Objects using Python instead of C/C++. The main goal
 * **MacOS**: Go to https://www.python.org/downloads/release/python-3127/ and install normally.
 * **Windows**: Go to https://www.python.org/downloads/release/python-3127/ and install normally.
 
-## Wiki | Instructions for use
+# Wiki | Instructions for use
 
 * Go to [Docs](https://www.charlesneimog.com/py4pd).
 
-## For Developers
+# For Developers
 
 Just one thing, the development of this object occurs in de `develop` branch, the main branch corresponds to the last release available in `Deken`.
 
+### New Pd Object using Python
+
+``` py
+import pd
+
+def mylistsum(x, y):
+    x_sum = sum(x)
+    y_sum = sum(y)
+    return x_sum + y_sum
+
+def mylib_setup():
+    pd.add_object(mylistsum, "py.listsum")
+``` 
+
 ## Building from Source
 
-* To build from the source code, you can follow the steps: [Compiling from Source Code.](https://github.com/charlesneimog/py4pd/blob/master/Resources/BUILD.md).
+* To build from the source code:
+``` sh
+cmake . -B build -DPYVERSION=3.12
+cmake --build build
+```
+
+On windows you need Mingw64.
 
 
