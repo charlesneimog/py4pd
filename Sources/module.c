@@ -113,7 +113,6 @@ static void Py4pdMod_AccumItem(pdcollectHash *hash_table, char *key, PyObject *s
     if (item->WasCleaned) {
         item->WasCleaned = 0;
     }
-    // Py_INCREF(source);
     PyList_Append(item->pList, source);
     return;
 }
@@ -229,7 +228,7 @@ static PyObject *Py4pdMod_SetObjVar(PyObject *self, PyObject *args) {
     }
 
     key = malloc(strlen(varName) + 40);
-    snprintf(key, strlen(varName) + 40, "%s_%p", varName, x);
+    pd_snprintf(key, strlen(varName) + 40, "%s_%p", varName, x);
     if (x->PdCollect == NULL) {
         x->PdCollect = Py4pdMod_CreatePdcollectHash(8);
     }
@@ -259,7 +258,7 @@ static PyObject *Py4pdMod_GetObjVar(PyObject *self, PyObject *args, PyObject *ke
     }
 
     key = malloc(strlen(varName) + 40);
-    snprintf(key, strlen(varName) + 40, "%s_%p", varName, x);
+    pd_snprintf(key, strlen(varName) + 40, "%s_%p", varName, x);
     if (x->PdCollect == NULL) {
         x->PdCollect = Py4pdMod_CreatePdcollectHash(8);
     }
@@ -311,7 +310,7 @@ static PyObject *Py4pdMod_AccumObjVar(PyObject *self, PyObject *args) {
         return NULL;
     }
     char *key = malloc(strlen(varName) + 40);
-    snprintf(key, strlen(varName) + 40, "%s_%p", varName, x);
+    pd_snprintf(key, strlen(varName) + 40, "%s_%p", varName, x);
     if (x->PdCollect == NULL) {
         x->PdCollect = Py4pdMod_CreatePdcollectHash(8);
     }
@@ -342,7 +341,7 @@ static PyObject *Py4pdMod_ClearObjVar(PyObject *self, PyObject *args) {
     }
 
     key = malloc(strlen(varName) + 40);
-    snprintf(key, strlen(varName) + 40, "%s_%p", varName, x);
+    pd_snprintf(key, strlen(varName) + 40, "%s_%p", varName, x);
     if (x->PdCollect == NULL) {
         free(key);
         Py_RETURN_TRUE;
@@ -587,19 +586,12 @@ static PyObject *Py4pdMod_PdPrint(PyObject *self, PyObject *args, PyObject *keyw
         if (objPrefix == -1)
             post("[Python] pd.print: error in obj_prefix argument.");
         else if (objPrefix == 1) {
-            PyObject *resize_value = PyDict_GetItemString(keywords, "obj_prefix");
-            if (resize_value == Py_True)
-                objPrefix = 1;
-            else if (resize_value == Py_False)
-                objPrefix = 0;
-            else {
-                post("[Python] pd.print: obj_prefix argument must be True "
-                     "or "
-                     "False.");
-                objPrefix = 0;
-            }
-        } else
+            post("[Python] pd.print: obj_prefix argument must be True "
+                 "or "
+                 "False.");
+        } else {
             objPrefix = 0;
+        }
     }
 
     if (PyTuple_Size(args) > 0) {
@@ -715,10 +707,9 @@ static PyObject *Py4pdMod_PdSend(PyObject *self, PyObject *args) {
         }
     } else if (PyArg_ParseTuple(args, "sO", &receiver, &listargs)) {
         if (PyDict_Check(listargs)) {
-            char error_message[100];
-            sprintf(error_message, "[Python] pd.send received a type "
+            char error_message[] = "[Python] pd.send received a type "
                                    "'dict', it must be a list, "
-                                   "string, int, or float.");
+                                   "string, int, or float.";
             PyErr_SetString(PyExc_TypeError, error_message);
             return NULL;
         }
@@ -742,11 +733,8 @@ static PyObject *Py4pdMod_PdSend(PyObject *self, PyObject *args) {
             } else if (Py_IsNone(pValue_i)) {
                 // Not possible represent None in PureData
             } else {
-                char error_message[100];
-                sprintf(error_message,
-                        "[Python] received a type '%s' in index %d of the "
-                        "list, it must be a string, int, or float.",
-                        pValue_i->ob_type->tp_name, i);
+                char error_message[] = "[Python] received a type '%s' in index %d of the "
+                                       "list, it must be a string, int, or float.";
                 PyErr_SetString(PyExc_TypeError, error_message);
                 Py_DECREF(pValue_i);
                 Py_DECREF(args);
@@ -764,10 +752,10 @@ static PyObject *Py4pdMod_PdSend(PyObject *self, PyObject *args) {
     } else {
         char error_message[100];
         PyObject *pValue_i = PyTuple_GetItem(args, 1);
-        sprintf(error_message,
-                "[Python] pd.send received a type '%s', it must be a "
-                "string, int, or float.",
-                pValue_i->ob_type->tp_name);
+        pd_snprintf(error_message, MAXPDSTRING,
+                    "[Python] pd.send received a type '%s', it must be a "
+                    "string, int, or float.",
+                    pValue_i->ob_type->tp_name);
         PyErr_SetString(PyExc_TypeError, error_message);
         return NULL;
     }
@@ -1505,10 +1493,10 @@ PyMethodDef PdMethods[] = {
 
 static PyObject *pdmodule_init(PyObject *self) {
     char OUT_string[MAXPDSTRING];
-    snprintf(OUT_string, sizeof(OUT_string), "py4pdOut_%p", self);
+    pd_snprintf(OUT_string, sizeof(OUT_string), "py4pdOut_%p", self);
 
     char CLEAR_string[MAXPDSTRING];
-    snprintf(CLEAR_string, sizeof(CLEAR_string), "py4pdClear_%p", self);
+    pd_snprintf(CLEAR_string, sizeof(CLEAR_string), "py4pdClear_%p", self);
 
     PyObject *puredata_samplerate, *puredata_vecsize, *visObject, *normalObject, *audioINObject,
         *audioOUTObject, *pdAudio, *Py4pd_OutLoopString, *Py4pd_ClearLoopString;

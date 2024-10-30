@@ -49,9 +49,7 @@
     #endif
 #endif
 
-#define DEBUG 1
-
-#if DEBUG
+#if PY4PD_DEBUG
 #define LOG(message, ...) \
     do { \
         fprintf(stderr, "[%s:%d] " message "\n", __FILE__, __LINE__, ##__VA_ARGS__); \

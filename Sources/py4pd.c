@@ -1,5 +1,6 @@
 #include "py4pd.h"
 #include "module.h"
+#include "s_stuff.h"
 #include "utils.h"
 
 // ============================================
@@ -67,8 +68,6 @@ static int Py4pd_LibraryLoad(t_py *Py4pd, int Argc, t_atom *Argv) {
     }
     char dirbuf[MAXPDSTRING], *nameptr;
     int fd = -1;
-
-    // Try to open the folder
     char pkgDir[MAXPDSTRING];
     pd_snprintf(pkgDir, MAXPDSTRING, "%s/__init__.py", Py4pdLibName);
     fd = canvas_open(Py4pd->Canvas, pkgDir, "", dirbuf, &nameptr, MAXPDSTRING, 0);
@@ -594,9 +593,9 @@ static void Py4pd_SetPackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
                 pd_snprintf(cfgFile, MAXPDSTRING, "%s/py4pd.cfg", py4pdDir);
                 FILE *file = fopen(cfgFile, "w");
                 if (x->EditorName != NULL) {
-                    fprintf(file, "editor = %s\n", x->EditorName->s_name);
+                    pd_snprintf(cfgFile, MAXPDSTRING, "%s/py4pd.cfg", py4pdDir);
                 }
-                fprintf(file, "packages = %s", x->PkgPath->s_name);
+                pd_snprintf(cfgFile, MAXPDSTRING, "%s/py4pd.cfg", py4pdDir);
                 fclose(file);
             } else {
                 pd_error(x, "[py4pd] The packages path must be a string");
@@ -731,8 +730,10 @@ static void Py4pd_SetEditor(t_py *x, t_symbol *s, int argc, t_atom *argv) {
             char const *py4pdDir = x->Py4pdPath->s_name;
             pd_snprintf(cfgFile, MAXPDSTRING, "%s/py4pd.cfg", py4pdDir);
             FILE *file = fopen(cfgFile, "w");
-            fprintf(file, "editor = %s\n", x->EditorName->s_name);
-            fprintf(file, "packages = %s", x->PkgPath->s_name);
+            // fprintf(file, "editor = %s\n", x->EditorName->s_name);
+            pd_snprintf(cfgFile, MAXPDSTRING, "editor = %s\n", x->EditorName->s_name);
+            pd_snprintf(cfgFile, MAXPDSTRING, "packages = %s", x->PkgPath->s_name);
+            // fprintf(file, "packages = %s", x->PkgPath->s_name);
             fclose(file);
             return;
         }
@@ -894,6 +895,10 @@ void Py4pd_SetFunction(t_py *x, t_symbol *s, int argc, t_atom *argv) {
     }
 
     PyObject *ObjCapsule = Py4pdUtils_AddPdObject(x);
+    if (ObjCapsule == NULL) {
+        pd_error(x, "[Python] Failed to add object to Python");
+        return;
+    }
 
     // Import module
     pModule = PyImport_ImportModule(ScriptFilename->s_name);

@@ -818,7 +818,7 @@ static PyGetSetDef Py4pdNewObj_GetSet[] = {
 void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
     const char *objectName = s->s_name;
     char py4pd_objectName[MAXPDSTRING];
-    snprintf(py4pd_objectName, MAXPDSTRING, "py4pd_ObjectDict_%s", objectName);
+    pd_snprintf(py4pd_objectName, MAXPDSTRING, "py4pd_ObjectDict_%s", objectName);
     PyObject *pd_module = PyImport_ImportModule("pd");
 
     if (pd_module == NULL) {
@@ -906,7 +906,7 @@ void *Py4pdNewObj_NewObj(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
 
-    x->PdObjArgs = malloc(sizeof(t_symbol) * argc);
+    x->PdObjArgs = (t_atom *)malloc(sizeof(t_atom) * argc);
     for (int i = 0; i < argc; i++) {
         x->PdObjArgs[i] = argv[i];
     }
@@ -1004,6 +1004,13 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
     PyObject *PdModule = PyImport_ImportModule("pd");
     t_py *py4pd = Py4pdUtils_GetObject(PdModule);
 
+    if (self->helpPatch != NULL) {
+        class_set_extern_dir(gensym(self->helpPatch));
+    } else {
+        char helpPatch[MAXPDSTRING];
+        pd_snprintf(helpPatch, MAXPDSTRING, "%s%s", py4pd->LibraryFolder->s_name, "/help/");
+        class_set_extern_dir(gensym(helpPatch));
+    }
     t_class *objClass;
 
     if (self->objType < 5 && self->objType > -1) {
@@ -1205,7 +1212,7 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
     PyDict_SetItemString(objectDict, objectName, objConfigDict);
     PyObject *py4pd_capsule = PyCapsule_New(objectDict, objectName, NULL);
     char py4pd_objectName[MAXPDSTRING];
-    sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
+    pd_snprintf(py4pd_objectName, MAXPDSTRING, "py4pd_ObjectDict_%s", objectName);
 
     PyModule_AddObject(PdModule, py4pd_objectName, py4pd_capsule);
     Py_DECREF(PdModule);
@@ -1242,6 +1249,8 @@ static PyObject *Py4pdNewObj_Method_AddObj(Py4pdNewObj *self, PyObject *args) {
         class_addmethod(InletsExtClassProxy, (t_method)Py4pdUtils_ExtraInletPointer,
                         gensym("PyObject"), A_SYMBOL, A_SYMBOL, 0);
     }
+    class_set_extern_dir(&s_);
+
     Py_RETURN_TRUE;
 }
 

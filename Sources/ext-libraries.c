@@ -489,7 +489,7 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
         return NULL;
     }
 
-    snprintf(helpFolderCHAR, totalLength, "%s", py4pd->LibraryFolder->s_name);
+    pd_snprintf(helpFolderCHAR, totalLength, "%s", py4pd->LibraryFolder->s_name);
     strcat(helpFolderCHAR, helpFolder);
 
     if (!PyArg_ParseTuple(args, "Os", &Function, &objectName)) {
@@ -541,17 +541,12 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
             const char *suffix = "-help.pd";
             int suffixLen = strlen(suffix);
             int helpPatchLen = strlen(helpPatch);
-
             if (helpPatchLen >= suffixLen) {
                 if (strcmp(helpPatch + (helpPatchLen - suffixLen), suffix) == 0) {
                     personalisedHelp = 1;
                     char helpPatchName[MAXPDSTRING];
-
-                    // Use snprintf to avoid buffer overflow and ensure
-                    // null-termination
-                    snprintf(helpPatchName, sizeof(helpPatchName), "%.*s", helpPatchLen - suffixLen,
-                             helpPatch);
-
+                    pd_snprintf(helpPatchName, sizeof(helpPatchName), "%.*s",
+                                helpPatchLen - suffixLen, helpPatch);
                     helpPatch = helpPatchName;
                 } else {
                     pd_error(NULL, "Help patch must end with '-help.pd'");
@@ -587,6 +582,7 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
             }
         }
     }
+
     class_set_extern_dir(gensym(helpFolderCHAR));
     t_class *localClass;
 
@@ -677,11 +673,10 @@ PyObject *Py4pdLib_AddObj(PyObject *self, PyObject *args, PyObject *keywords) {
     PyDict_SetItemString(objectDict, objectName, nestedDict);
     PyObject *py4pd_capsule = PyCapsule_New(objectDict, objectName, NULL);
     char py4pd_objectName[MAXPDSTRING];
-    sprintf(py4pd_objectName, "py4pd_ObjectDict_%s", objectName);
+    pd_snprintf(py4pd_objectName, MAXPDSTRING, "py4pd_ObjectDict_%s", objectName);
 
     PyObject *pdModule = PyImport_ImportModule("pd");
     PyModule_AddObject(pdModule, py4pd_objectName, py4pd_capsule);
-
     Py_DECREF(pdModule);
 
     // =====================================
