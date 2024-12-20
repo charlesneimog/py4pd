@@ -1,4 +1,4 @@
-#N canvas 963 23 951 1016 8;
+#N canvas 1282 23 632 1016 8;
 #X declare -path mem;
 #X obj 8 6 py4pd -lib py4pd;
 #X obj 10 48 bng 25 250 50 0 empty empty empty 0 -8 0 8 #fcfcfc #000000 #000000;

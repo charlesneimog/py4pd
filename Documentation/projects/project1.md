@@ -1,17 +1,6 @@
 !!! danger "Nerd stuff"
     This is a section for people that run Python, check how to use the [`py4pd`](../pd-users/py4pd-module.md) library instead.
     
----
-
-<div class="grid cards" markdown>
-
--   :simple-python: [__Hello World__](project1.md)
--   :simple-python: [__Simple Pd Object__](project2.md)
--   :simple-python: [__First Library__](project3.md)
--   :simple-python: [__Audio Processing__](project1.md)
-
-</div>
-
 # Project 1
 
 Once you install Python and `py4pd`, the simple way to use Python inside PureData is by `.py` files. You must organize your work as
@@ -51,3 +40,10 @@ And after that you can use `[py4pd myscript mylistsum]` to load the object and a
 <p align="center">
         <img src="../../assets/project1-2.png" width="50%" loading="lazy" style="border-radius: 0px; box-shadow: 0px 4px 8px rgba(1, 0, 1, 0.2);">
 </p>
+
+---
+
+<div class="grid cards" markdown>
+-   :simple-python: [__Simple Pd Object__](project2.md)
+-   :simple-python: [__First Library__](project3.md)
+</div>

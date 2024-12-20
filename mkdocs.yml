@@ -3,7 +3,6 @@ site_name: py4pd
 docs_dir: Documentation
 copyright: Copyright &copy 2023 | Charles K. Neimog | University of São Paulo.
 theme:
-  logo: assets/py4pd-logo.svg
   custom_dir: Documentation/overrides
   logo_dark_mode: assets/py4pd-dark-home.svg
   logo_light_mode: assets/py4pd-light-home.svg

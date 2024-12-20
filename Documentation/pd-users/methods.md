@@ -36,10 +36,6 @@ Next, I present all methods used in `py4pd` object. The methods are messages tha
 
     Create a new `.py` script.
 
-- :my-icons-pd: __[functions](#functions)__
-
-    Print all the functions inside a script.
-
 - :my-icons-pd: __[reload](#reload)__
 
     Reload the Python Function.

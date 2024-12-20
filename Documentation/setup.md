@@ -26,6 +26,10 @@ hide:
 
 === ":material-linux: Linux"
 
+    !!! danger "Be careful of conflicts with numpy installed on the system"
+        Sometimes, if numpy is already installed on your system (with the same version), `py4pd` may not work. This is a known limitation, and I haven't found a solution for it yet besides **uninstall numpy from the system**. Be carefull.
+
+
     On `Linux`:
 
     * Open the terminal.
