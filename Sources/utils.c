@@ -692,8 +692,8 @@ void Py4pdUtils_CreateNewThread(t_py *x) {}
  */
 
 void Py4pdUtils_FindObjFolder(t_py *x) {
+    //
     x->Py4pdPath = x->obj.te_g.g_pd->c_externdir;
-    logpost(x, 4, "Obj path is %s", x->Py4pdPath->s_name);
 }
 
 // ===================================================================
