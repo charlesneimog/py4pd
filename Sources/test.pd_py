@@ -1,0 +1,32 @@
+import puredata as pd
+
+pd.post("Loading object")
+
+
+class Test(pd.NewObject):
+    def __init__(self):
+        self.name = "test"
+        self.outlets = 3
+        self.inlets = 2
+
+        super().__init__("test")
+
+    def in_1_ola(self, args):
+        print("hello " + str(args))
+
+    def in_1_bang(self):
+        print("hello bang")
+
+    def in_1_float(self, f):
+        print("hello float: " + str(f))
+
+    def in_1_symbol(self, s):
+        print("hello symbol: " + s)
+
+    def in_1_list(self, list):
+        print("hello list: " + str(list))
+
+
+Test()
+
+print(dir(pd))

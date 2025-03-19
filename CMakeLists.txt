@@ -1,19 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 project(py4pd C)
+set(CMAKE_C_STANDARD 23)
 
 set(PDCMAKE_DIR
     "${CMAKE_SOURCE_DIR}/Resources/pd.cmake/"
     CACHE PATH "Path to pd.cmake")
 include(${PDCMAKE_DIR}/pd.cmake)
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    add_compile_definitions(PY4PD_DEBUG)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0") # Adds debugging symbols and disables optimization
-    message(STATUS "Building in Debug Mode")
-else()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG") # Optimized for Release mode, disables debugging symbols
-    message(STATUS "Building in Release Mode")
-endif()
 
 # ╭──────────────────────────────────────╮
 # │          Object Definitions          │
@@ -113,26 +105,3 @@ target_include_directories(py4pd PUBLIC ${NUMPY_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC ${PYTHON_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC "/usr/include/python${PYVERSION}")
 target_link_libraries(py4pd PUBLIC "${PYTHON_LD_FLAGS}")
-
-# add debug flag
-target_compile_options(py4pd PRIVATE -g)
-
-# ╭──────────────────────────────────────╮
-# │              Data Files              │
-# ╰──────────────────────────────────────╯
-file(GLOB PY4PD_SRC_FILES ${CMAKE_SOURCE_DIR}/Sources/*.c ${CMAKE_SOURCE_DIR}/Sources/*.h)
-pd_add_datafile(py4pd "${PY4PD_SRC_FILES}" DESTINATION "Sources")
-
-file(GLOB PY4PD_SRC_FILES ${CMAKE_SOURCE_DIR}/Sources/py4pd/*.py)
-pd_add_datafile(py4pd "${PY4PD_SRC_FILES}" DESTINATION "py4pd")
-
-file(GLOB PY4PD_PY_FILES ${CMAKE_SOURCE_DIR}/Sources/py4pd.py)
-pd_add_datafile(py4pd "${PY4PD_PY_FILES}")
-
-file(GLOB PY4PD_HELP_FILES ${CMAKE_SOURCE_DIR}/Resources/*.pd)
-pd_add_datafile(py4pd "${PY4PD_HELP_FILES}")
-
-pd_add_datafile(py4pd "${CMAKE_SOURCE_DIR}/Resources/py.py")
-pd_add_datafile(py4pd "${CMAKE_SOURCE_DIR}/LICENSE")
-pd_add_datafile(py4pd "${CMAKE_SOURCE_DIR}/README.md")
-pd_add_datafile(py4pd "${CMAKE_SOURCE_DIR}/Resources/Help-Files/" DESTINATION "py4pd/help")
