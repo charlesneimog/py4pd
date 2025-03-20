@@ -1,0 +1,36 @@
+import puredata as pd
+import random
+
+
+class pyrandom(pd.NewObject):  # <== Class name is not important
+    name: str = "pyrandom"  # <== Object name, same as {name}.pd_py
+
+    def __init__(self):
+        self.inlets = 2
+        self.outlets = 1
+        self.random_range = 1000
+        pass
+
+    def in_1_random(self, _):
+        self.out(0, pd.FLOAT, random.random() * self.random_range)
+
+    def in_1_set(self, args: list):
+        self.random_range = args[0]
+
+    def in_2_float(self, args: float):
+        self.random_range = args
+
+    def in_1_float(self, args: float):
+        self.random_range = args
+
+    def in_1_outsymbol(self, _):
+        self.out(0, pd.SYMBOL, "random")
+
+    def in_1_outgimme(self, _):
+        self.out(0, pd.GIMME, [1, "random", 128])
+
+    def in_1_pyobj(self, _):
+        self.out(0, pd.PYOBJECT, {"mykey": random.random()})
+
+    def in_1_pyobj_dict(self, arg):
+        pd.post(arg["mykey"])

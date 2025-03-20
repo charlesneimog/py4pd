@@ -1,32 +1,19 @@
 import puredata as pd
+import random
 
-pd.post("Loading object")
 
+class pyrandom(pd.NewObject):  # <== Class name is not important
+    name: str = "pyrandom"  # <== Object name
 
-class Test(pd.NewObject):
     def __init__(self):
-        self.name = "test"
-        self.outlets = 3
-        self.inlets = 2
+        pd.post("create new instance")
+        self.inlets = 1
+        self.outlets = 1
+        self.random_range = 1000
+        pass
 
-        super().__init__("test")
+    def in_1_random(self, _):
+        self.out(0, pd.FLOAT, random.random() * self.random_range)
 
-    def in_1_ola(self, args):
-        print("hello " + str(args))
-
-    def in_1_bang(self):
-        print("hello bang")
-
-    def in_1_float(self, f):
-        print("hello float: " + str(f))
-
-    def in_1_symbol(self, s):
-        print("hello symbol: " + s)
-
-    def in_1_list(self, list):
-        print("hello list: " + str(list))
-
-
-Test()
-
-print(dir(pd))
+    def in_1_set(self, args):
+        self.random_range = args[0]

@@ -8,6 +8,8 @@
 
 extern PyMODINIT_FUNC PyInit_pd();
 extern void pdpy_proxyinlet_setup(void);
+extern void pdpy_pyobjectoutput_setup(void);
+extern int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf);
 
 // ─────────────────────────────────────
 int sys_trytoopenone(const char *dir, const char *name, const char *ext, char *dirresult,
@@ -27,29 +29,6 @@ typedef struct _py {
     t_outlet *out1;
     t_inlet *in1;
 } t_py;
-
-// ─────────────────────────────────────
-static int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
-    char fullpath[1024];
-    if (!dirbuf || !name) {
-        pd_error(NULL, "Error: dirbuf or name is NULL\n");
-        return 0;
-    }
-    pd_snprintf(fullpath, sizeof(fullpath), "%s/%s.pd_py", dirbuf, name);
-    FILE *file = fopen(fullpath, "r");
-    if (file == NULL) {
-        PyErr_SetString(PyExc_ImportError, "Failed to open module file");
-        return 0;
-    }
-
-    // Run the Python file
-    if (PyRun_SimpleFile(file, fullpath) != 0) {
-        fclose(file);
-        PyErr_SetString(PyExc_ImportError, "Failed to execute module");
-        return 0;
-    }
-    return 1;
-}
 
 // ─────────────────────────────────────
 static int pd4pd_loader_pathwise(t_canvas *canvas, const char *objectname, const char *path) {
@@ -116,6 +95,7 @@ void py4pd_setup(void) {
     }
 
     pdpy_proxyinlet_setup();
+    pdpy_pyobjectoutput_setup();
 }
 
 #ifdef __WIN64

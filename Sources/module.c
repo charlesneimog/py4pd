@@ -12,6 +12,15 @@
 
 typedef struct _py4pd_obj py4pd_obj;
 static t_class *pdpy_proxyinlet_class = NULL;
+static t_class *pdpy_pyobjectout_class = NULL;
+
+#define PYOBJECT -1997
+
+typedef struct _pyobjptr {
+    t_pd x_pd;
+    t_symbol *Id;
+    PyObject *pValue;
+} t_pyobjptr;
 
 // ╭─────────────────────────────────────╮
 // │          Object Base Class          │
@@ -21,6 +30,8 @@ typedef struct _pyobj {
     py4pd_obj *pyclass;
     t_symbol *script;
     t_canvas *canvas;
+    // output pointer
+    t_pyobjptr *outobjptr;
 
     // in and outs
     t_outlet **outs;
@@ -30,7 +41,6 @@ typedef struct _pyobj {
 
 typedef struct _py4pd_obj {
     PyObject_HEAD const char *name;
-    t_class *pdclass;
     PyObject *pyclass;
     t_pyobj *pyobj;
     const char *script_name;
@@ -107,43 +117,125 @@ void pdpy_proxyinlet_setup(void) {
     }
 }
 
+// ╭─────────────────────────────────────╮
+// │        Python Object Pointer        │
+// ╰─────────────────────────────────────╯
+void pdpy_pyobjectoutput_setup(void) {
+    pdpy_pyobjectout_class =
+        class_new(gensym("_py4pd-ptr-class"), 0, 0, sizeof(t_pyobjptr), CLASS_PD, A_NULL);
+}
+
 // ─────────────────────────────────────
-static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
+static t_pyobjptr *pdpy_createoutputptr(void) {
+    char buf[64];
+    t_pyobjptr *x = (t_pyobjptr *)getbytes(sizeof(t_pyobjptr));
+    x->x_pd = pdpy_pyobjectout_class;
+    int ret = pd_snprintf(buf, sizeof(buf), "<%p>", (void *)x);
+    if (ret < 0 || ret >= sizeof(buf)) {
+        buf[sizeof(buf) - 1] = '\0';
+    }
+    x->Id = gensym(buf);
+    pd_bind((t_pd *)x, x->Id);
+    return x;
+}
+
+// ─────────────────────────────────────
+static PyObject *pdpy_getoutptr(t_symbol *s) {
+    t_pyobjptr *x = (t_pyobjptr *)pd_findbyclass(s, pdpy_pyobjectout_class);
+    return x ? x->pValue : NULL;
+}
+
+// ─────────────────────────────────────
+static PyObject *pypd_newpyclass(t_symbol *s, PyObject *pdmod) {
+    // Get the NewObject class from the module
+    const char *name = s->s_name;
+    PyObject *pd_newobject = PyObject_GetAttrString(pdmod, "NewObject");
+    if (!pd_newobject) {
+        PyErr_SetString(PyExc_AttributeError, "Could not find 'NewObject' in 'puredata' module");
+        PyErr_Print();
+        Py_DECREF(pdmod);
+        return 0;
+    }
+
+    PyObject *subclasses = PyObject_CallMethod(pd_newobject, "__subclasses__", NULL);
+    if (!subclasses || !PyList_Check(subclasses)) {
+        PyErr_SetString(PyExc_TypeError, "'NewObject.__subclasses__()' did not return a list");
+        PyErr_Print();
+        Py_DECREF(pd_newobject);
+        Py_DECREF(pdmod);
+        return 0;
+    }
+
+    Py_ssize_t num_subclasses = PyList_Size(subclasses);
+    for (Py_ssize_t i = 0; i < num_subclasses; i++) {
+        PyObject *subclass = PyList_GetItem(subclasses, i); // Borrowed reference
+        if (!subclass) {
+            continue;
+        }
+
+        PyObject *self = PyObject_CallObject(subclass, NULL);
+        if (!self) {
+            PyErr_Print(); // Log error and continue
+            continue;
+        }
+        return self;
+    }
+    return NULL;
+}
+
+// ─────────────────────────────────────
+t_class *pdpyobj_get_class(const char *classname) {
     PyObject *pdmod = PyImport_ImportModule("puredata");
     if (!pdmod) {
-        PyErr_SetString(PyExc_ImportError, "Could not import module 'puredata'");
-        pd_error(NULL, "[%s], Could not import module 'puredata'", s->s_name);
-        return NULL;
-    }
-    PyObject *obj_dict = PyObject_GetAttrString(pdmod, "_objects");
-    if (!obj_dict || !PyDict_Check(obj_dict)) {
-        PyErr_SetString(PyExc_AttributeError, "puredata._objects is missing or not a dictionary");
-        Py_XDECREF(obj_dict);
-        Py_DECREF(pdmod);
-        pd_error(NULL, "[%s], Failed to get puredata._objects", s->s_name);
+        PyErr_SetString(PyExc_ImportError, "Failed to import 'puredata' module");
         return NULL;
     }
 
-    PyObject *capsule = PyDict_GetItemString(obj_dict, s->s_name);
+    PyObject *obj_dict = PyObject_GetAttrString(pdmod, "_objects");
+    if (!obj_dict || !PyDict_Check(obj_dict)) {
+        PyErr_SetString(PyExc_RuntimeError, "Missing or invalid '_objects' dictionary");
+        Py_XDECREF(obj_dict);
+        Py_DECREF(pdmod);
+        return NULL;
+    }
+
+    // Get the capsule from the dictionary
+    PyObject *capsule = PyDict_GetItemString(obj_dict, classname);
     if (!capsule) {
-        PyErr_SetString(PyExc_KeyError, "Key not found in puredata._objects");
-        pd_error(NULL, "[%s], Key not found in puredata._objects", s->s_name);
+        PyErr_SetString(PyExc_KeyError, "Class not found in _objects");
         Py_DECREF(obj_dict);
         Py_DECREF(pdmod);
         return NULL;
     }
 
-    py4pd_obj *self = (py4pd_obj *)PyCapsule_GetPointer(capsule, s->s_name);
-    if (!self) {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to extract C pointer from capsule");
-        pd_error(NULL, "[%s], Failed to find C pointer of the python object", s->s_name);
+    // Extract the t_class pointer from the capsule
+    t_class *pdclass = (t_class *)PyCapsule_GetPointer(capsule, NULL);
+    if (!pdclass) {
+        PyErr_SetString(PyExc_RuntimeError, "Invalid capsule for pdclass");
+        Py_DECREF(obj_dict);
+        Py_DECREF(pdmod);
         return NULL;
     }
 
-    //
-    t_pyobj *x = (t_pyobj *)pd_new(self->pdclass);
-    x->pyclass = self;
-    self->pyobj = x;
+    // Cleanup references (do NOT decrement the capsule—it's borrowed)
+    Py_DECREF(obj_dict);
+    Py_DECREF(pdmod);
+
+    return pdclass;
+}
+
+// ─────────────────────────────────────
+static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
+    t_class *pyobj = pdpyobj_get_class(s->s_name);
+    t_pyobj *x = (t_pyobj *)pd_new(pyobj);
+    PyObject *pdmod = PyImport_ImportModule("puredata");
+    PyObject *pyclass = pypd_newpyclass(s, pdmod);
+    Py_INCREF(pyclass);
+    py4pd_obj *self = (py4pd_obj *)pyclass;
+    if (self == NULL) {
+        pd_error(NULL, "Failed to create object");
+        return NULL;
+    }
 
     x->outs = (t_outlet **)malloc(self->outlets * sizeof(t_outlet *));
     for (int i = 0; i < self->outlets; i++) {
@@ -156,16 +248,19 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
         pdpy_proxyinlet_init(&x->proxy_in[i], x, i + 1);
         x->ins[i] = inlet_new(&x->obj, &x->proxy_in[i].pd, 0, 0);
     }
+    x->pyclass = self;
+    self->pyobj = x;
 
-    Py_DECREF(obj_dict);
-    Py_DECREF(pdmod);
+    x->outobjptr = pdpy_createoutputptr();
+
     return (void *)x;
 }
+
 // ─────────────────────────────────────
 static void py4pdobj_free(t_pyobj *x) {
     free(x->outs);
     free(x->ins);
-    // free(x->proxy_in);
+    free(x->proxy_in);
 }
 
 // ─────────────────────────────────────
@@ -175,7 +270,52 @@ void posterror(t_pyobj *x) {
 }
 
 // ─────────────────────────────────────
+void pdpy_printerror(t_pyobj *x) {
+    PyObject *ptype, *pvalue, *ptraceback;
+    PyErr_Fetch(&ptype, &pvalue, &ptraceback);
+    PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
+
+    if (pvalue == NULL) {
+        pd_error(x, "[py4pd] Call failed, unknown error");
+    } else {
+        if (ptraceback != NULL) {
+            PyObject *tracebackModule = PyImport_ImportModule("traceback");
+            if (tracebackModule != NULL) {
+                PyObject *formatException =
+                    PyObject_GetAttrString(tracebackModule, "format_exception");
+                if (formatException != NULL) {
+                    PyObject *formattedException = PyObject_CallFunctionObjArgs(
+                        formatException, ptype, pvalue, ptraceback, NULL);
+                    if (formattedException != NULL) {
+                        for (int i = 0; i < PyList_Size(formattedException); i++) {
+                            pd_error(x, "\n%s",
+                                     PyUnicode_AsUTF8(PyList_GetItem(formattedException, i)));
+                        }
+                        Py_DECREF(formattedException);
+                    }
+                    Py_DECREF(formatException);
+                }
+                Py_DECREF(tracebackModule);
+            }
+        } else {
+            PyObject *pstr = PyObject_Str(pvalue);
+            pd_error(x, "[py4pd] %s", PyUnicode_AsUTF8(pstr));
+            Py_DECREF(pstr);
+        }
+    }
+    Py_XDECREF(ptype);
+    Py_XDECREF(pvalue);
+    Py_XDECREF(ptraceback);
+    PyErr_Clear();
+}
+
+// ─────────────────────────────────────
 void pdpy_execute(t_pyobj *x, const char *methodname, t_symbol *s, int argc, t_atom *argv) {
+    if (x->pyclass == NULL) {
+        post("pyclass is NULL");
+        return;
+    }
+
     PyObject *pyclass = (PyObject *)x->pyclass;
     PyObject *method = PyObject_GetAttrString(pyclass, methodname);
     if (!method || !PyCallable_Check(method)) {
@@ -217,12 +357,12 @@ void pdpy_execute(t_pyobj *x, const char *methodname, t_symbol *s, int argc, t_a
             return;
         }
         PyTuple_SetItem(pTuple, 0, pArg);
-        PyObject *pValue = PyObject_CallObject(method, pTuple);
+        pValue = PyObject_CallObject(method, pTuple);
     }
 
     // Check for Python call errors
-    if (!pValue) {
-        PyErr_Print();
+    if (pValue == NULL) {
+        pdpy_printerror(x);
     }
 
     // Cleanup
@@ -247,9 +387,34 @@ static void pdpy_anything(t_pyobj *o, t_symbol *s, int argc, t_atom *argv) {
 }
 
 // ─────────────────────────────────────
+static void pdpy_pyobject(t_pyobj *x, t_symbol *s, t_symbol *id) {
+    if (x->pyclass == NULL) {
+        post("pyclass is NULL");
+        return;
+    }
+
+    char methodname[MAXPDSTRING];
+    pd_snprintf(methodname, MAXPDSTRING, "in_1_pyobj_%s", s->s_name);
+
+    PyObject *pyclass = (PyObject *)x->pyclass;
+    PyObject *method = PyObject_GetAttrString(pyclass, methodname);
+    if (!method || !PyCallable_Check(method)) {
+        PyErr_Clear();
+        pd_error(x, "[%s] method '%s' not found or not callable", x->obj.te_g.g_pd->c_name->s_name,
+                 methodname);
+        return;
+    }
+
+    PyObject *pArg = pdpy_getoutptr(id);
+    PyObject *pValue = PyObject_CallOneArg(method, pArg);
+
+    return;
+}
+
+// ─────────────────────────────────────
 static void pdpy_menu_open(t_pyobj *o) {
     // TODO:
-    post("script is %s", o->script->s_name);
+    post("Opening script");
     return;
 }
 
@@ -261,28 +426,144 @@ static void pdpy_proxyinlet_init(t_pdpy_proxyinlet *p, t_pyobj *owner, unsigned 
 }
 
 // ─────────────────────────────────────
-static int pdpyobj_init(py4pd_obj *self, PyObject *args, PyObject *kwds) {
-    static char *keywords[] = {"param_str", NULL};
-    char *param_str;
+int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
+    char fullpath[1024];
+    if (!dirbuf || !name) {
+        pd_error(NULL, "Error: dirbuf or name is NULL\n");
+        return 0;
+    }
+    pd_snprintf(fullpath, sizeof(fullpath), "%s/%s.pd_py", dirbuf, name);
+    FILE *file = fopen(fullpath, "r");
+    if (file == NULL) {
+        PyErr_SetString(PyExc_ImportError, "Failed to open module file");
+        return 0;
+    }
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", keywords, &param_str)) {
+    // Run the Python file
+    if (PyRun_SimpleFile(file, fullpath) != 0) {
+        pdpy_printerror(NULL);
+        fclose(file);
+        return 0;
+    }
+
+    PyObject *pdmod = PyImport_ImportModule("puredata");
+    if (!pdmod) {
+        PyErr_SetString(PyExc_ImportError, "Could not import module 'puredata'");
+        PyErr_Print();
+        return 0;
+    }
+
+    // Get the NewObject class from the module
+    PyObject *pd_newobject = PyObject_GetAttrString(pdmod, "NewObject");
+    if (!pd_newobject) {
+        PyErr_SetString(PyExc_AttributeError, "Could not find 'NewObject' in 'puredata' module");
+        PyErr_Print();
+        Py_DECREF(pdmod);
+        return 0;
+    }
+
+    PyObject *subclasses = PyObject_CallMethod(pd_newobject, "__subclasses__", NULL);
+    if (!subclasses || !PyList_Check(subclasses)) {
+        PyErr_SetString(PyExc_TypeError, "'NewObject.__subclasses__()' did not return a list");
+        PyErr_Print();
+        Py_DECREF(pd_newobject);
+        Py_DECREF(pdmod);
+        return 0;
+    }
+
+    Py_ssize_t num_subclasses = PyList_Size(subclasses);
+    for (Py_ssize_t i = 0; i < num_subclasses; i++) {
+        PyObject *subclass = PyList_GetItem(subclasses, i); // Borrowed reference
+        if (!subclass) {
+            continue;
+        }
+
+        PyObject *objname = PyObject_GetAttrString(subclass, "name");
+        if (!objname) {
+            pd_error(NULL,
+                     "[py4pd] not possible to read %s object, 'name' class attribute not found",
+                     name);
+            continue;
+        }
+        const char *objstring = PyUnicode_AsUTF8(objname);
+        if (strcmp(objstring, name) == 0) {
+
+            // python object methods
+            t_class *pdclass = class_new(gensym(name), (t_newmethod)pdpy_new,
+                                         (t_method)py4pdobj_free, sizeof(py4pd_obj), 0, A_GIMME, 0);
+            class_addmethod(pdclass, (t_method)pdpy_menu_open, gensym("menu-open"), A_NULL);
+            class_addmethod(pdclass, (t_method)pdpy_pyobject, gensym("PyObject"), A_SYMBOL,
+                            A_SYMBOL, 0);
+            class_addanything(pdclass, pdpy_anything);
+
+            // save pdclass as capsule inside puredata module
+            PyObject *pdmod = PyImport_ImportModule("puredata");
+            if (!pdmod) {
+                PyErr_SetString(PyExc_ImportError, "Could not import module 'puredata'");
+                return -1;
+            }
+            PyObject *obj_dict = PyObject_GetAttrString(pdmod, "_objects");
+            if (!obj_dict || !PyDict_Check(obj_dict)) {
+                Py_XDECREF(obj_dict);
+                obj_dict = PyDict_New();
+                if (!obj_dict) {
+                    PyErr_SetString(PyExc_MemoryError, "Failed to create _objects dictionary");
+                    Py_DECREF(pdmod);
+                    return -1;
+                }
+
+                // Set _objects in puredata module
+                if (PyObject_SetAttrString(pdmod, "_objects", obj_dict) < 0) {
+                    PyErr_SetString(PyExc_RuntimeError,
+                                    "Failed to set _objects in puredata module");
+                    Py_DECREF(obj_dict);
+                    Py_DECREF(pdmod);
+                    return -1;
+                }
+            }
+
+            // Create a capsule to hold the pdclass pointer
+            PyObject *capsule = PyCapsule_New((void *)pdclass, NULL, NULL);
+            if (!capsule) {
+                PyErr_SetString(PyExc_RuntimeError, "Failed to create capsule for pdclass");
+                Py_DECREF(obj_dict);
+                Py_DECREF(pdmod);
+                return -1;
+            }
+
+            // Add the capsule to the _objects dictionary using the class name as the key
+            if (PyDict_SetItemString(obj_dict, name, capsule) < 0) {
+                PyErr_SetString(PyExc_RuntimeError, "Failed to store pdclass in _objects");
+                Py_DECREF(capsule);
+                Py_DECREF(obj_dict);
+                Py_DECREF(pdmod);
+                return -1;
+            }
+
+            // Cleanup references
+            Py_DECREF(capsule);
+            Py_DECREF(obj_dict);
+            Py_DECREF(pdmod);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+// ─────────────────────────────────────
+static int pdpyobj_init(py4pd_obj *self, PyObject *args) {
+    char *objname;
+
+    if (!PyArg_ParseTuple(args, "s", &objname)) {
         return -1;
     }
 
-    // Create a Unicode string for the object name
-    PyObject *objectName = PyUnicode_FromString(param_str);
-    if (!objectName) {
-        PyErr_SetString(PyExc_TypeError, "Object name not valid");
-        return -1;
-    }
-    self->name = PyUnicode_AsUTF8(objectName);
-    self->pdclass = class_new(gensym(self->name), (t_newmethod)pdpy_new, (t_method)py4pdobj_free,
-                              sizeof(py4pd_obj), 0, A_GIMME, 0);
+    // python object methods
+    t_class *pdclass = class_new(gensym(objname), (t_newmethod)pdpy_new, (t_method)py4pdobj_free,
+                                 sizeof(py4pd_obj), 0, A_GIMME, 0);
+    class_addmethod(pdclass, (t_method)pdpy_menu_open, gensym("menu-open"), A_NULL);
+    class_addanything(pdclass, pdpy_anything);
 
-    class_addmethod(self->pdclass, (t_method)pdpy_menu_open, gensym("menu-open"), A_NULL);
-    class_addanything(self->pdclass, pdpy_anything);
-
-    // Import the 'puredata' module
     PyObject *pdmod = PyImport_ImportModule("puredata");
     if (!pdmod) {
         PyErr_SetString(PyExc_ImportError, "Could not import module 'puredata'");
@@ -309,37 +590,28 @@ static int pdpyobj_init(py4pd_obj *self, PyObject *args, PyObject *kwds) {
         }
     }
 
-    // Create a PyCapsule to store 'self' (C struct pointer) in the dictionary
-    PyObject *capsule = PyCapsule_New(self, self->name, NULL); // Use param_str as the capsule name
+    // Create a capsule to hold the pdclass pointer
+    PyObject *capsule = PyCapsule_New((void *)pdclass, NULL, NULL);
     if (!capsule) {
+        PyErr_SetString(PyExc_RuntimeError, "Failed to create capsule for pdclass");
         Py_DECREF(obj_dict);
         Py_DECREF(pdmod);
-        PyErr_SetString(PyExc_RuntimeError, "Failed to create capsule for object");
         return -1;
     }
 
-    // Store the capsule in the _objects dictionary with the key 'param_str'
-    if (PyDict_SetItemString(obj_dict, self->name, capsule) < 0) {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to store object in _objects");
+    // Add the capsule to the _objects dictionary using the class name as the key
+    if (PyDict_SetItemString(obj_dict, objname, capsule) < 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Failed to store pdclass in _objects");
         Py_DECREF(capsule);
         Py_DECREF(obj_dict);
         Py_DECREF(pdmod);
         return -1;
     }
 
-    PyObject *globals = PyEval_GetGlobals();
-    PyObject *script_file = PyDict_GetItemString(globals, "__file__");
-    if (script_file && PyUnicode_Check(script_file)) {
-        const char *script_name = PyUnicode_AsUTF8(script_file);
-        self->script_name = strdup(script_name); // Save the script path
-    }
-
-    // Clean up the references to objects
+    // Cleanup references
     Py_DECREF(capsule);
     Py_DECREF(obj_dict);
     Py_DECREF(pdmod);
-    Py_INCREF(self);
-    logpost(NULL, 4, "Object created: %s", self->name);
 
     return 0;
 }
@@ -351,8 +623,79 @@ static PyObject *pdpy_logpost(py4pd_obj *self, PyObject *args) {
 }
 
 // ─────────────────────────────────────
+static PyObject *pdpy_out(py4pd_obj *self, PyObject *args, PyObject *keywords) {
+    int outlet;
+    int type;
+    PyObject *pValue;
+
+    if (!PyArg_ParseTuple(args, "iiO", &outlet, &type, &pValue)) {
+        PyErr_SetString(PyExc_TypeError, "[Python] pd.out: wrong arguments");
+        return NULL;
+    }
+    t_atomtype pdtype = type;
+
+    t_pyobj *x = self->pyobj;
+    if (outlet > self->outlets - 1) {
+        PyErr_SetString(PyExc_IndexError, "Index out of range for outlet");
+        return NULL;
+    }
+
+    t_outlet *out = x->outs[outlet];
+
+    if (pdtype == PYOBJECT) {
+        x->outobjptr->pValue = pValue;
+        t_atom args[2];
+        SETSYMBOL(&args[0], gensym(Py_TYPE(pValue)->tp_name));
+        SETSYMBOL(&args[1], x->outobjptr->Id);
+        outlet_anything(out, gensym("PyObject"), 2, args);
+        Py_RETURN_TRUE;
+    } else if (pdtype == A_FLOAT) {
+        PyObject *f = PyNumber_Float(pValue);
+        t_float v = PyFloat_AsDouble(f);
+        outlet_float(out, v);
+    } else if (pdtype == A_SYMBOL) {
+        const char *s = PyUnicode_AsUTF8(pValue);
+        outlet_symbol(out, gensym(s));
+    } else if (pdtype == A_GIMME) {
+        if (PyList_Check(pValue)) {
+            int size = PyList_Size(pValue);
+            PyObject *pValue_i;
+            t_atom list_array[size];
+            for (int i = 0; i < size; ++i) {
+                pValue_i = PyList_GetItem(pValue, i); // borrowed reference
+                if (PyLong_Check(pValue_i)) {
+                    float result = (float)PyLong_AsLong(pValue_i);
+                    SETFLOAT(&list_array[i], result);
+                } else if (PyFloat_Check(pValue_i)) {
+                    float result = PyFloat_AsDouble(pValue_i);
+                    SETFLOAT(&list_array[i], result);
+                } else if (PyUnicode_Check(pValue_i)) { // If the function return a
+                    const char *result = PyUnicode_AsUTF8(pValue_i);
+                    SETSYMBOL(&list_array[i], gensym(result));
+                } else if (Py_IsNone(pValue_i)) {
+                    PyErr_SetString(PyExc_TypeError, "NoneType not allowed");
+                    return NULL;
+                } else {
+                    char msgerror[MAXPDSTRING];
+                    pd_snprintf(msgerror, MAXPDSTRING, "Type not allowed %s",
+                                Py_TYPE(pValue_i)->tp_name);
+                    PyErr_SetString(PyExc_TypeError, msgerror);
+                    return NULL;
+                }
+            }
+            outlet_list(out, &s_list, size, list_array);
+        } else {
+            PyErr_SetString(PyExc_TypeError, "Output with pd.GIMME require a list output");
+        }
+    }
+
+    Py_RETURN_TRUE;
+}
+
+// ─────────────────────────────────────
 static PyMethodDef pdpy_methods[] = {
     {"logpost", (PyCFunction)pdpy_logpost, METH_NOARGS, "Post things on PureData console"},
+    {"out", (PyCFunction)pdpy_out, METH_VARARGS | METH_KEYWORDS, "Post things on PureData console"},
     {NULL, NULL, 0, NULL} // Sentinel
 };
 
@@ -374,13 +717,18 @@ static PyObject *pdpy_post(PyObject *self, PyObject *args) {
     (void)self;
     char *string;
 
-    if (PyArg_ParseTuple(args, "s", &string)) {
-        post("%s", string);
-        return PyLong_FromLong(0);
-    } else {
-        PyErr_SetString(PyExc_TypeError, "pd.post works with strings and numbers.");
-        return NULL;
+    if (PyTuple_Size(args) > 0) {
+        startpost("[Python]: ");
+        for (int i = 0; i < PyTuple_Size(args); i++) {
+            PyObject *arg = PyTuple_GetItem(args, i);
+            PyObject *str = PyObject_Str(arg);
+            startpost(PyUnicode_AsUTF8(str));
+            startpost(" ");
+        }
+        startpost("\n");
     }
+
+    Py_RETURN_TRUE;
 }
 
 // ╭─────────────────────────────────────╮
@@ -396,6 +744,12 @@ static PyObject *pd4pdmodule_init(PyObject *self) {
     if (PyType_Ready(&pdpy_type) < 0) {
         return NULL;
     }
+
+    PyModule_AddObject(self, "FLOAT", PyLong_FromLong(A_FLOAT));
+    PyModule_AddObject(self, "SYMBOL", PyLong_FromLong(A_SYMBOL));
+    PyModule_AddObject(self, "GIMME", PyLong_FromLong(A_GIMME));
+    PyModule_AddObject(self, "PYOBJECT", PyLong_FromLong(PYOBJECT));
+
     Py_INCREF(&pdpy_type);
     PyModule_AddObject(self, "NewObject", (PyObject *)&pdpy_type);
     return 0;
