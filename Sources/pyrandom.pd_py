@@ -9,7 +9,11 @@ class pyrandom(pd.NewObject):  # <== Class name is not important
         self.inlets = 2
         self.outlets = 1
         self.random_range = 1000
-        pass
+        self.random_clock = self.new_clock(self.clock1)
+        self.random_clock.delay(20)
+
+    def clock1(self):
+        pd.post("executing function clock1")
 
     def in_1_random(self, _):
         self.out(0, pd.FLOAT, random.random() * self.random_range)
