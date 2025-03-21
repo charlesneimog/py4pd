@@ -73,6 +73,7 @@ typedef struct _pdpy_clock {
 // ╰─────────────────────────────────────╯
 static void pdpy_proxyinlet_init(t_pdpy_proxyinlet *p, t_pdpy_pdobj *owner, unsigned int id);
 static void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom *argv);
+static void pdpy_printerror(t_pdpy_pdobj *x);
 
 // ─────────────────────────────────────
 static PyObject *getoutlets(t_pdpy_pyclass *self) { return PyLong_FromLong(self->outlets); }
@@ -97,7 +98,7 @@ static int setinlets(t_pdpy_pyclass *self, PyObject *value) {
 }
 
 // ─────────────────────────────────────
-static PyGetSetDef pdpy_GetSet[] = {
+static PyGetSetDef pdpy_getset[] = {
     {"outlets", (getter)getoutlets, (setter)setoutlets, "Number of outlets", NULL},
     {"inlets", (getter)getinlets, (setter)setinlets, "Number of inlets", NULL},
     {NULL, NULL, NULL, NULL, NULL} /* Sentinel */
@@ -232,11 +233,12 @@ static PyObject *pypd_newpyclass(t_symbol *s, PyObject *pdmod) {
             continue;
         }
 
-        PyObject *self = PyObject_CallObject(subclass, NULL);
+        PyObject *self = PyObject_CallNoArgs(subclass);
         if (!self) {
-            PyErr_Print(); // Log error and continue
+            pdpy_printerror(NULL);
             continue;
         }
+
         return self;
     }
     return NULL;
@@ -288,6 +290,11 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
     t_class *pyobj = pdpyobj_get_class(s->s_name);
     t_pdpy_pdobj *x = (t_pdpy_pdobj *)pd_new(pyobj);
     PyObject *pdmod = PyImport_ImportModule("puredata");
+    if (pdmod == NULL) {
+        PyErr_SetString(PyExc_ImportError, "Failed to import 'puredata' module");
+        return NULL;
+    }
+
     PyObject *pyclass = pypd_newpyclass(s, pdmod);
     t_pdpy_pyclass *self = (t_pdpy_pyclass *)pyclass;
     if (self == NULL) {
@@ -300,8 +307,8 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
         x->outs[i] = outlet_new(&x->obj, &s_anything);
     }
 
-    x->ins = (t_inlet **)malloc(self->inlets * sizeof(t_inlet *));
-    x->proxy_in = (t_pdpy_proxyinlet *)malloc(self->inlets * sizeof(t_pdpy_proxyinlet));
+    x->ins = (t_inlet **)malloc((self->inlets - 1) * sizeof(t_inlet *));
+    x->proxy_in = (t_pdpy_proxyinlet *)malloc((self->inlets - 1) * sizeof(t_pdpy_proxyinlet));
     for (int i = 1; i < self->inlets; i++) {
         pdpy_proxyinlet_init(&x->proxy_in[i], x, i + 1);
         x->ins[i] = inlet_new(&x->obj, &x->proxy_in[i].pd, 0, 0);
@@ -465,14 +472,18 @@ static void pdpy_pyobject(t_pdpy_pdobj *x, t_symbol *s, t_symbol *id) {
 
     PyObject *pArg = pdpy_getoutptr(id);
     PyObject *pValue = PyObject_CallOneArg(method, pArg);
-
+    if (pValue == NULL) {
+        pdpy_printerror(x);
+        return;
+    }
     return;
 }
 
 // ─────────────────────────────────────
 static void pdpy_menu_open(t_pdpy_pdobj *o) {
-    // TODO:
-    post("Opening script");
+    char name[MAXPDSTRING];
+    pd_snprintf(name, MAXPDSTRING, "%s.pd_py", o->obj.te_g.g_pd->c_externdir->s_name);
+    pdgui_vmess("::pd_menucommands::menu_openfile", "s", name);
     return;
 }
 
@@ -554,6 +565,10 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
             class_addmethod(pdclass, (t_method)pdpy_pyobject, gensym("PyObject"), A_SYMBOL,
                             A_SYMBOL, 0);
             class_addanything(pdclass, pdpy_anything);
+
+            char script[MAXPDSTRING];
+            pd_snprintf(script, MAXPDSTRING, "%s/%s", dirbuf, name);
+            pdclass->c_externdir = gensym(script);
 
             // save pdclass as capsule inside puredata module
             PyObject *pdmod = PyImport_ImportModule("puredata");
@@ -798,13 +813,10 @@ static PyObject *pdpy_logpost(t_pdpy_pyclass *self, PyObject *args) {
                     msg_len++;
                 }
             }
-
             Py_DECREF(str_obj);
         }
     }
-
     logpost(self->pdobj, loglevel, "%s", msg);
-
     Py_RETURN_TRUE;
 }
 
@@ -997,7 +1009,7 @@ PyTypeObject pdpy_type = {
     .tp_methods = pdpy_methods,
     .tp_new = PyType_GenericNew,
     .tp_init = (initproc)pdpyobj_init,
-    .tp_getset = pdpy_GetSet,
+    .tp_getset = pdpy_getset,
 };
 
 // ─────────────────────────────────────
@@ -1022,7 +1034,7 @@ static PyObject *pdpy_post(PyObject *self, PyObject *args) {
 // ╭─────────────────────────────────────╮
 // │             MODULE INIT             │
 // ╰─────────────────────────────────────╯
-PyMethodDef PdMethods[] = {
+PyMethodDef pdpy_modulemethods[] = {
     {"post", pdpy_post, METH_VARARGS, "Print informations in PureData Console"},
     {NULL, NULL, 0, NULL} //
 };
@@ -1047,32 +1059,40 @@ static PyObject *pd4pdmodule_init(PyObject *self) {
         return NULL;
     }
 
+    PyObject *obj_dict = PyDict_New();
+    r = PyModule_AddObject(self, "_objects", obj_dict);
+    if (r != 0) {
+        PyErr_SetString(PyExc_RuntimeError, "Failed to add NewObject to module");
+        return NULL;
+    }
+
     return 0;
 }
 
 // ─────────────────────────────────────
-static PyModuleDef_Slot pdmodule_slots[] = { //
+static PyModuleDef_Slot pdpy_moduleslots[] = { //
     {Py_mod_exec, pd4pdmodule_init},
     {0, NULL}};
 
 // ─────────────────────────────────────
-static struct PyModuleDef pdModule = {
+static struct PyModuleDef pdpy_module = {
     PyModuleDef_HEAD_INIT,
     .m_name = "puredata",
     .m_doc = "pd module provide function to interact with PureData, see the "
              "docs in www.charlesneimog.github.io/py4pd",
     .m_size = 0,
-    .m_methods = PdMethods, // Methods of the module
-    .m_slots = pdmodule_slots,
+    .m_methods = pdpy_modulemethods, // Methods of the module
+    .m_slots = pdpy_moduleslots,
 };
 
 // ─────────────────────────────────────
 PyMODINIT_FUNC PyInit_pd() {
-    import_array() PyObject *py4pdModule;
-    py4pdModule = PyModuleDef_Init(&pdModule);
-    if (py4pdModule == NULL) {
+    import_array() PyObject *m;
+    m = PyModuleDef_Init(&pdpy_module);
+    if (m == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "Failed to create module");
         return NULL;
     }
 
-    return py4pdModule;
+    return m;
 }

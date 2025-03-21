@@ -90,7 +90,11 @@ void py4pd_setup(void) {
         post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION,
              PY_MICRO_VERSION);
         post("");
-        PyImport_AppendInittab("puredata", PyInit_pd);
+        int r = PyImport_AppendInittab("puredata", PyInit_pd);
+        if (r < 0) {
+            pd_error(NULL, "[py4pd] PyInit_pd failed");
+            return;
+        }
         Py_Initialize();
     }
 
