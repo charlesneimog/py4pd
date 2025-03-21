@@ -6,10 +6,6 @@
 
 #include <Python.h>
 
-#define PY_ARRAY_UNIQUE_SYMBOL PY4PD_NUMPYARRAY_API
-#define NPY_NO_DEPRECATED_API NPY_1_25_API_VERSION
-#include <numpy/arrayobject.h>
-
 typedef struct _pdpy_pyclass t_pdpy_pyclass;
 typedef struct _pdpy_clock t_pdpy_clock;
 static t_class *pdpy_proxyinlet_class = NULL;
@@ -1087,7 +1083,8 @@ static struct PyModuleDef pdpy_module = {
 
 // ─────────────────────────────────────
 PyMODINIT_FUNC PyInit_pd() {
-    import_array() PyObject *m;
+    // TODO: I will remove numpy
+    PyObject *m;
     m = PyModuleDef_Init(&pdpy_module);
     if (m == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "Failed to create module");

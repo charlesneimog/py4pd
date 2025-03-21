@@ -16,36 +16,6 @@ else()
     message(STATUS "Using Python version: ${PYVERSION}")
 endif()
 
-# ───────── Numpy Array Include ───────
-if(WIN32)
-    execute_process(
-        COMMAND powershell -Command "py -${PYVERSION} -c \"import numpy; print(numpy.get_include())\""
-        OUTPUT_VARIABLE NUMPY_INCLUDE_DIR
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        RESULT_VARIABLE EXEC_RESULT)
-else()
-    execute_process(
-        COMMAND python${PYVERSION} -c "import numpy; print(numpy.get_include())"
-        OUTPUT_VARIABLE NUMPY_INCLUDE_DIR
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        RESULT_VARIABLE EXEC_RESULT)
-endif()
-
-if(EXEC_RESULT)
-    message(FATAL_ERROR "Failed get NumPy include directory. Have you used 'pip install numpy'?")
-endif()
-
-message(STATUS "NumPy include directory: ${NUMPY_INCLUDE_DIR}")
-
-# Print numpy version
-execute_process(
-    COMMAND python${PYVERSION} -c "import numpy; print(numpy.__version__)"
-    OUTPUT_VARIABLE NUMPY_VERSION
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    RESULT_VARIABLE EXEC_RESULT)
-
-message(STATUS "NumPy version: ${NUMPY_VERSION}")
-
 # ──────────── Python Include ────────────
 if(WIN32)
     execute_process(
