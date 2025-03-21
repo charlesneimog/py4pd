@@ -1,0 +1,30 @@
+import puredata as pd
+import random
+
+
+class pyrandom(pd.NewObject):  # <== Class name is not important
+    name: str = "pytest"  # <== Object name, same as {name}.pd_py
+
+    def __init__(self):
+        self.inlets = 1
+        self.outlets = 1
+
+    def test_info(self):
+        self.logpost(1, "Logpost 1")
+        self.logpost(2, "Logpost 2")
+        self.logpost(3, "Logpost 3")
+        self.logpost(4, "Logpost 4")
+
+    def test_error(self):
+        self.error("Some fatal error")
+
+    def test_readarray(self):
+        _: tuple = self.tabread("myarray")
+
+    def test_writearray(self):
+        newtuple = tuple(random.random() for _ in range(100))
+        self.tabwrite("myarray", newtuple)
+
+    def in_1_bang(self):
+        self.test_readarray()
+        self.test_writearray()

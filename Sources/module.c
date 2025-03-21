@@ -289,7 +289,6 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
     t_pdpy_pdobj *x = (t_pdpy_pdobj *)pd_new(pyobj);
     PyObject *pdmod = PyImport_ImportModule("puredata");
     PyObject *pyclass = pypd_newpyclass(s, pdmod);
-    Py_INCREF(pyclass);
     t_pdpy_pyclass *self = (t_pdpy_pyclass *)pyclass;
     if (self == NULL) {
         pd_error(NULL, "Failed to create object");
@@ -721,6 +720,48 @@ static PyObject *pdpy_new_clock(PyObject *self, PyObject *args) {
 }
 
 // ─────────────────────────────────────
+static PyObject *pdpy_error(t_pdpy_pyclass *self, PyObject *args) {
+    char msg[MAXPDSTRING] = "";
+    size_t msg_len = 0;
+
+    Py_ssize_t num_args = PyTuple_Size(args);
+    if (num_args > 0) {
+        for (Py_ssize_t i = 0; i < num_args; i++) {
+            PyObject *arg = PyTuple_GetItem(args, i);
+            PyObject *str_obj = PyObject_Str(arg); // Convert to string
+            if (!str_obj) {
+                continue;
+            }
+
+            const char *str = PyUnicode_AsUTF8(str_obj);
+            if (str) {
+                size_t str_len = strlen(str);
+
+                // Check if adding this string would exceed MAXPDSTRING - 4
+                if (msg_len + str_len + 4 >= MAXPDSTRING) {
+                    strcat(msg, "...");
+                    msg_len += 3;
+                    Py_DECREF(str_obj);
+                    break;
+                }
+
+                strcat(msg, str);
+                msg_len += str_len;
+
+                if (i < num_args - 1 && msg_len + 1 < MAXPDSTRING) {
+                    strcat(msg, " ");
+                    msg_len++;
+                }
+            }
+
+            Py_DECREF(str_obj);
+        }
+    }
+    pd_error(self->pdobj, "%s", msg);
+    Py_RETURN_TRUE;
+}
+
+// ─────────────────────────────────────
 static PyObject *pdpy_logpost(t_pdpy_pyclass *self, PyObject *args) {
     char msg[MAXPDSTRING] = "";
     size_t msg_len = 0;
@@ -838,10 +879,110 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
 }
 
 // ─────────────────────────────────────
+static PyObject *pdpy_tabread(t_pdpy_pyclass *self, PyObject *args) {
+    char *tabname;
+    t_garray *pdarray;
+    int vecsize;
+    t_word *vec;
+
+    if (!PyArg_ParseTuple(args, "s", &tabname)) {
+        PyErr_SetString(PyExc_TypeError, "Wrong arguments, expected string tabname");
+        return NULL;
+    }
+
+    t_symbol *pd_symbol = gensym(tabname);
+    if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class))) {
+        PyErr_SetString(PyExc_TypeError, "self.tabread: array not found");
+        return NULL;
+    } else {
+        int i;
+        garray_getfloatwords(pdarray, &vecsize, &vec);
+        PyObject *pAudio = PyTuple_New(vecsize);
+        for (i = 0; i < vecsize; i++) {
+            PyTuple_SetItem(pAudio, i, PyFloat_FromDouble(vec[i].w_float));
+        }
+        return pAudio;
+    }
+}
+
+// ─────────────────────────────────────
+static PyObject *pdpy_tabwrite(t_pdpy_pyclass *self, PyObject *args, PyObject *kwargs) {
+    char *tabname;
+    t_garray *pdarray;
+    PyObject *array;
+    t_word *vec;
+    int vecsize;
+    bool resize = false;
+
+    if (!PyArg_ParseTuple(args, "sO", &tabname, &array)) {
+        PyErr_SetString(PyExc_TypeError, "Wrong arguments, expected string tabname");
+        return NULL;
+    }
+
+    if (kwargs != NULL && PyDict_Check(kwargs)) {
+        PyObject *pString = PyUnicode_FromString(tabname);
+        if (PyDict_Contains(kwargs, pString)) {
+            resize = PyDict_GetItem(kwargs, pString);
+        }
+        Py_DECREF(pString);
+    }
+
+    t_symbol *pd_symbol = gensym(tabname);
+    if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class))) {
+        PyErr_SetString(PyExc_TypeError, "self.tabwrite: array not found");
+        return NULL;
+    } else if (!garray_getfloatwords(pdarray, &vecsize, &vec)) {
+        PyErr_SetString(PyExc_TypeError, "Bad template for tabwrite");
+        return NULL;
+    }
+
+    if (PyList_Check(array)) {
+        vecsize = PyList_Size(array);
+        if (resize == 1) {
+            garray_resize_long(pdarray, PyList_Size(array));
+            garray_getfloatwords(pdarray, &vecsize, &vec);
+        }
+        for (int i = 0; i < vecsize; i++) {
+            PyObject *PyFloat = PyList_GetItem(array, i);
+            float result_float = PyFloat_AsDouble(PyFloat);
+            vec[i].w_float = result_float;
+        }
+        garray_redraw(pdarray);
+        Py_RETURN_TRUE;
+    } else if (PyTuple_Check(array)) {
+        vecsize = PyTuple_Size(array);
+        if (resize == 1) {
+            garray_resize_long(pdarray, PyTuple_Size(array));
+            garray_getfloatwords(pdarray, &vecsize, &vec);
+        }
+        for (int i = 0; i < vecsize; i++) {
+            PyObject *PyFloat = PyTuple_GetItem(array, i);
+            float result_float = PyFloat_AsDouble(PyFloat);
+            vec[i].w_float = result_float;
+        }
+        garray_redraw(pdarray);
+        Py_RETURN_TRUE;
+    } else {
+        PyErr_SetString(PyExc_TypeError, "Input must be either a list or a tuple");
+        return NULL;
+    }
+}
+
+// ─────────────────────────────────────
 static PyMethodDef pdpy_methods[] = {
     {"logpost", (PyCFunction)pdpy_logpost, METH_VARARGS, "Post things on PureData console"},
+    {"error", (PyCFunction)pdpy_error, METH_VARARGS,
+     "Print error, same as logpost with error level"},
+
     {"out", (PyCFunction)pdpy_out, METH_VARARGS | METH_KEYWORDS, "Post things on PureData console"},
+
     {"new_clock", (PyCFunction)pdpy_new_clock, METH_VARARGS, "Return a clock object"},
+
+    // arrays
+    {"tabwrite", (PyCFunction)pdpy_tabwrite, METH_VARARGS | METH_KEYWORDS,
+     "This read the content of a Pd Array"},
+    {"tabread", (PyCFunction)pdpy_tabread, METH_VARARGS | METH_KEYWORDS,
+     "This read the content of a Pd Array"},
 
     {NULL, NULL, 0, NULL} // Sentinel
 };

@@ -1,0 +1,12 @@
+#N canvas 963 23 951 1016 10;
+#X declare -lib py4pd;
+#N canvas 963 550 951 489 (subpatch) 0;
+#X array myarray 100 float 2;
+#X coords 0 1 100 0 200 140 1 0 0;
+#X restore 88 97 graph;
+#X obj 18 135 metro 100;
+#X obj 18 94 tgl 18 0 empty empty empty 0 -9 0 10 #fcfcfc #000000 #000000 0 1;
+#X obj 18 189 pytest;
+#X obj 4 5 declare -lib py4pd;
+#X connect 1 0 3 0;
+#X connect 2 0 1 0;
