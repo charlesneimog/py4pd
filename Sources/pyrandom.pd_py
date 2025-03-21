@@ -9,8 +9,15 @@ class pyrandom(pd.NewObject):  # <== Class name is not important
         self.inlets = 2
         self.outlets = 1
         self.random_range = 1000
-        self.random_clock = self.new_clock(self.clock1)
-        self.random_clock.delay(20)
+        # self.random_clock = self.new_clock(self.clock1)
+        # self.random_clock.delay(20)
+
+    def info(self):
+        self.logpost(1, "Logpost 1")
+        self.logpost(2, "Logpost 2")
+        self.logpost(3, "Logpost 3")
+        self.logpost(4, "Logpost 4")
+        self.logpost(2, self, "Log 2")
 
     def clock1(self):
         pd.post("executing function clock1")

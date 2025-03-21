@@ -722,7 +722,48 @@ static PyObject *pdpy_new_clock(PyObject *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_logpost(t_pdpy_pyclass *self, PyObject *args) {
-    //
+    char msg[MAXPDSTRING] = "";
+    size_t msg_len = 0;
+
+    PyObject *pyloglevel = PyTuple_GetItem(args, 0);
+    int loglevel = PyLong_AsLong(pyloglevel);
+
+    Py_ssize_t num_args = PyTuple_Size(args);
+    if (num_args > 0) {
+        for (Py_ssize_t i = 1; i < num_args; i++) {
+            PyObject *arg = PyTuple_GetItem(args, i);
+            PyObject *str_obj = PyObject_Str(arg); // Convert to string
+            if (!str_obj) {
+                continue;
+            }
+
+            const char *str = PyUnicode_AsUTF8(str_obj);
+            if (str) {
+                size_t str_len = strlen(str);
+
+                // Check if adding this string would exceed MAXPDSTRING - 4
+                if (msg_len + str_len + 4 >= MAXPDSTRING) {
+                    strcat(msg, "...");
+                    msg_len += 3;
+                    Py_DECREF(str_obj);
+                    break;
+                }
+
+                strcat(msg, str);
+                msg_len += str_len;
+
+                if (i < num_args - 1 && msg_len + 1 < MAXPDSTRING) {
+                    strcat(msg, " ");
+                    msg_len++;
+                }
+            }
+
+            Py_DECREF(str_obj);
+        }
+    }
+
+    logpost(self->pdobj, loglevel, "%s", msg);
+
     Py_RETURN_TRUE;
 }
 
@@ -798,7 +839,7 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
 
 // ─────────────────────────────────────
 static PyMethodDef pdpy_methods[] = {
-    {"logpost", (PyCFunction)pdpy_logpost, METH_NOARGS, "Post things on PureData console"},
+    {"logpost", (PyCFunction)pdpy_logpost, METH_VARARGS, "Post things on PureData console"},
     {"out", (PyCFunction)pdpy_out, METH_VARARGS | METH_KEYWORDS, "Post things on PureData console"},
     {"new_clock", (PyCFunction)pdpy_new_clock, METH_VARARGS, "Return a clock object"},
 
