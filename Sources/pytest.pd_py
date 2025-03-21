@@ -1,13 +1,36 @@
 import puredata as pd
 import random
+import math
 
 
 class pyrandom(pd.NewObject):  # <== Class name is not important
     name: str = "pytest"  # <== Object name, same as {name}.pd_py
+    dsp: bool = True
 
     def __init__(self):
-        self.inlets = 1
-        self.outlets = 1
+        self.inlets = (pd.SIGNAL, pd.SIGNAL)
+        self.outlets = (pd.SIGNAL, pd.SIGNAL)
+        self.phase = 0
+        self.freq = 440
+        self.sample_rate = 48000
+
+    def in_1_freq(self, args):
+        self.freq = args[0]
+
+    def dsp_perform(self, _):
+        buffer_size = 64
+        phase_increment = 2 * math.pi * self.freq / self.sample_rate
+        out_buffer = []
+
+        for _ in range(buffer_size):
+            sample = math.sin(self.phase)
+            out_buffer.append(sample)
+            self.phase += phase_increment
+            if self.phase > 2 * math.pi:
+                self.phase -= 2 * math.pi
+
+        out_tuple = tuple(out_buffer)
+        return (out_tuple, out_tuple)
 
     def test_info(self):
         self.logpost(1, "Logpost 1")
