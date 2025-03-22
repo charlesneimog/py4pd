@@ -123,6 +123,10 @@ static int setinlets(t_pdpy_pyclass *self, PyObject *value) {
         self->inlets = value;
         Py_INCREF(value);
         return 0;
+    } else if (PyUnicode_Check(value)) {
+        self->inlets = value;
+        Py_INCREF(value);
+        return 0;
     } else if (PyTuple_Check(value)) {
         self->inlets = value;
         Py_INCREF(value);
@@ -327,8 +331,8 @@ static void pdpy_inlets(t_pdpy_pdobj *x) {
         int count = PyLong_AsLong(x->pyclass->inlets);
         x->ins = (t_inlet **)malloc((count) * sizeof(t_inlet *));
         x->proxy_in = (t_pdpy_proxyinlet *)malloc((count) * sizeof(t_pdpy_proxyinlet));
-        for (int i = 1; i < count; i++) {
-            pdpy_proxyinlet_init(&x->proxy_in[i], x, i + 1);
+        for (int i = 0; i < count; i++) {
+            pdpy_proxyinlet_init(&x->proxy_in[i], x, i);
             x->ins[i] = inlet_new(&x->obj, &x->proxy_in[i].pd, 0, 0);
         }
         return;
@@ -338,20 +342,30 @@ static void pdpy_inlets(t_pdpy_pdobj *x) {
         x->proxy_in = (t_pdpy_proxyinlet *)malloc((count) * sizeof(t_pdpy_proxyinlet));
 
         // NOTE:I think that on signal objects, the first inlets are always signals
-        x->siginlets = 1;
-        for (int i = 1; i < count; i++) {
+        x->siginlets = 0;
+        for (int i = 0; i < count; i++) {
             PyObject *config = PyTuple_GetItem(x->pyclass->inlets, i);
             if (config == NULL) {
                 PyErr_SetString(PyExc_TypeError, "Invalid outlet type");
                 continue;
             }
             const char *outtype = PyUnicode_AsUTF8(config);
-            t_symbol *sym = strcmp(outtype, "anything") ? &s_signal : &s_anything;
-            pdpy_proxyinlet_init(&x->proxy_in[i], x, i + 1);
+            t_symbol *sym = strcmp(outtype, "anything") ? &s_signal : 0;
+            pdpy_proxyinlet_init(&x->proxy_in[i], x, i);
             x->ins[i] = inlet_new(&x->obj, &x->proxy_in[i].pd, sym, sym);
             if (strcmp(outtype, "signal") == 0) {
                 x->siginlets++;
             }
+        }
+        return;
+    } else if (PyUnicode_Check(x->pyclass->inlets)) {
+        const char *outtype = PyUnicode_AsUTF8(x->pyclass->inlets);
+        x->ins = (t_inlet **)malloc(1 * sizeof(t_inlet *));
+
+        t_symbol *sym = strcmp(outtype, "anything") ? &s_signal : 0;
+        x->ins[0] = inlet_new(&x->obj, &x->proxy_in[0].pd, sym, sym);
+        if (strcmp(outtype, "signal") == 0) {
+            x->siginlets = 1;
         }
         return;
     }
@@ -377,6 +391,7 @@ static void pdpy_outlets(t_pdpy_pdobj *x) {
         } else {
             x->outs[0] = outlet_new(&x->obj, &s_anything);
         }
+        x->outletsize = 1;
         return;
     } else if (PyTuple_Check(x->pyclass->outlets)) {
         int count = PyTuple_Size(x->pyclass->outlets);
@@ -619,6 +634,21 @@ static t_int *pdpy_perform(t_int *w) {
                     out[j] = PyFloat_AsDouble(pyf);
                 }
             }
+        } else if (size == n) {
+            PyObject *pyf = PyTuple_GetItem(pValue, 0);
+            if (PyFloat_Check(pyf)) {
+                t_sample *out = (t_sample *)w[3 + x->siginlets];
+                for (int j = 0; j < n; j++) {
+                    PyObject *pyf = PyTuple_GetItem(pValue, j);
+                    out[j] = PyFloat_AsDouble(pyf);
+                }
+            } else {
+                PyErr_SetString(PyExc_RuntimeError, "Return value is unknown!");
+                pdpy_printerror(x);
+            }
+        } else {
+            PyErr_SetString(PyExc_RuntimeError, "Return value is unknown!");
+            pdpy_printerror(x);
         }
     } else {
         PyErr_SetString(PyExc_RuntimeError, "Return value is not a tuple");
@@ -631,11 +661,10 @@ static t_int *pdpy_perform(t_int *w) {
 }
 
 // ─────────────────────────────────────
-static void pdpy_adddsp(t_pdpy_pdobj *x, t_signal **sp) {
+static void pdpy_dsp(t_pdpy_pdobj *x, t_signal **sp) {
     int sum = x->siginlets + x->sigoutlets;
     int sigvecsize = sum + 2; // +1 for x, +1 for blocksize
     t_int *sigvec = getbytes(sigvecsize * sizeof(t_int));
-
     for (int i = x->siginlets; i < sum; i++) {
         signal_setmultiout(&sp[i], 1);
     }
@@ -657,7 +686,7 @@ static void pdpy_adddsp(t_pdpy_pdobj *x, t_signal **sp) {
 
     x->dspfunction = method;
     dsp_addv(pdpy_perform, sigvecsize, sigvec);
-    // freebytes(sigvec, sigvecsize * sizeof(t_int));
+    freebytes(sigvec, sigvecsize * sizeof(t_int));
 }
 
 // ─────────────────────────────────────
@@ -750,14 +779,13 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
             // python object methods
             t_class *pdclass =
                 class_new(gensym(name), (t_newmethod)pdpy_new, (t_method)py4pdobj_free,
-                          sizeof(t_pdpy_pdobj), CLASS_DEFAULT | CLASS_MULTICHANNEL, A_GIMME, 0);
+                          sizeof(t_pdpy_pdobj), CLASS_NOINLET | CLASS_MULTICHANNEL, A_GIMME, 0);
             class_addmethod(pdclass, (t_method)pdpy_menu_open, gensym("menu-open"), A_NULL);
             class_addmethod(pdclass, (t_method)pdpy_pyobject, gensym("PyObject"), A_SYMBOL,
                             A_SYMBOL, 0);
             class_addanything(pdclass, pdpy_anything);
             if (havedsp) {
-                CLASS_MAINSIGNALIN(pdclass, t_pdpy_pdobj, sample);
-                class_addmethod(pdclass, (t_method)pdpy_adddsp, gensym("dsp"), A_CANT, 0);
+                class_addmethod(pdclass, (t_method)pdpy_dsp, gensym("dsp"), A_CANT, 0);
             }
 
             // save t_class on globals of puredata module

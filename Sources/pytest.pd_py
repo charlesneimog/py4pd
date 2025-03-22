@@ -1,15 +1,14 @@
 import puredata as pd
-import random
 import math
 
 
 class pyrandom(pd.NewObject):  # <== Class name is not important
     name: str = "pytest"  # <== Object name, same as {name}.pd_py
-    dsp: bool = True
+    dsp: bool = True  # <== Not required, False by default
 
     def __init__(self):
-        self.inlets = (pd.SIGNAL, pd.SIGNAL)
-        self.outlets = (pd.SIGNAL, pd.SIGNAL)
+        self.inlets = pd.SIGNAL
+        self.outlets = pd.SIGNAL
         self.phase = 0
         self.freq = 440
         self.sample_rate = 48000
@@ -21,7 +20,6 @@ class pyrandom(pd.NewObject):  # <== Class name is not important
         buffer_size = 64
         phase_increment = 2 * math.pi * self.freq / self.sample_rate
         out_buffer = []
-
         for _ in range(buffer_size):
             sample = math.sin(self.phase)
             out_buffer.append(sample)
@@ -30,24 +28,4 @@ class pyrandom(pd.NewObject):  # <== Class name is not important
                 self.phase -= 2 * math.pi
 
         out_tuple = tuple(out_buffer)
-        return (out_tuple, out_tuple)
-
-    def test_info(self):
-        self.logpost(1, "Logpost 1")
-        self.logpost(2, "Logpost 2")
-        self.logpost(3, "Logpost 3")
-        self.logpost(4, "Logpost 4")
-
-    def test_error(self):
-        self.error("Some fatal error")
-
-    def test_readarray(self):
-        _: tuple = self.tabread("myarray")
-
-    def test_writearray(self):
-        newtuple = tuple(random.random() for _ in range(100))
-        self.tabwrite("myarray", newtuple)
-
-    def in_1_bang(self):
-        self.test_readarray()
-        self.test_writearray()
+        return out_tuple
