@@ -61,6 +61,7 @@ typedef struct _pdpy_pyclass {
     const char *script_name;
     PyObject *outlets;
     PyObject *inlets;
+    PyObject *pyargs;
 } t_pdpy_pyclass;
 
 // ─────────────────────────────────────
@@ -89,6 +90,7 @@ static void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc,
 static void pdpy_clock_execute(t_pdpy_clock *x);
 static void pdpy_printerror(t_pdpy_pdobj *x);
 static void pdpy_pyobject(t_pdpy_pdobj *x, t_symbol *s, t_symbol *id);
+static PyObject *pdpy_newpyclass(t_symbol *s, t_pdpy_pdobj *x, PyObject *pdmod, PyObject *pyargs);
 
 // ╭─────────────────────────────────────╮
 // │                Clock                │
@@ -320,7 +322,7 @@ static PyObject *pdpy_getoutptr(t_symbol *s) {
 }
 
 // ─────────────────────────────────────
-static PyObject *pypd_newpyclass(t_symbol *s, t_pdpy_pdobj *x, PyObject *pdmod, PyObject *pyargs) {
+static PyObject *pdpy_newpyclass(t_symbol *s, t_pdpy_pdobj *x, PyObject *pdmod, PyObject *pyargs) {
     const char *name = s->s_name;
     PyObject *pd_newobject = PyObject_GetAttrString(pdmod, "NewObject");
     if (!pd_newobject) {
@@ -523,8 +525,8 @@ static void pdpy_outlets(t_pdpy_pdobj *x) {
 
 // ─────────────────────────────────────
 static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
-    t_class *pyobj = pdpyobj_get_class(s->s_name);
-    t_pdpy_pdobj *x = (t_pdpy_pdobj *)pd_new(pyobj);
+    t_class *pdobj = pdpyobj_get_class(s->s_name);
+    t_pdpy_pdobj *x = (t_pdpy_pdobj *)pd_new(pdobj);
 
     PyObject *pdmod = PyImport_ImportModule("puredata");
     if (pdmod == NULL) {
@@ -543,9 +545,7 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
         }
     }
 
-    PyObject *pyclass = pypd_newpyclass(s, x, pdmod, pyargs);
-    Py_DECREF(pyargs);
-
+    PyObject *pyclass = pdpy_newpyclass(s, x, pdmod, pyargs);
     t_pdpy_pyclass *self = (t_pdpy_pyclass *)pyclass;
     if (self == NULL) {
         pd_error(NULL, "Failed to create object");
@@ -555,6 +555,7 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
     x->pyclass = pyclass;
     self->name = s->s_name;
     self->pdobj = x;
+    self->pyargs = pyargs;
     pdpy_inlets(x);
     pdpy_outlets(x);
 
@@ -573,6 +574,7 @@ static void py4pdobj_free(t_pdpy_pdobj *x) {
     if (x->proxy_in) {
         free(x->proxy_in);
     }
+    Py_DECREF(x->pyclass);
 }
 
 // ─────────────────────────────────────
@@ -895,6 +897,7 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
         return 0;
     }
     pd_snprintf(fullpath, sizeof(fullpath), "%s/%s.pd_py", dirbuf, name);
+
     FILE *file = fopen(fullpath, "r");
     if (file == NULL) {
         PyErr_SetString(PyExc_ImportError, "Failed to open module file");
@@ -963,9 +966,11 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
             // python object methods
             t_class *pdclass = pdpy_classnew(name, havedsp);
 
+            // save object path
             char script[MAXPDSTRING];
-            pd_snprintf(script, MAXPDSTRING, "%s/%s", dirbuf, name);
+            pd_snprintf(script, MAXPDSTRING, "%s/%s.pd_py", dirbuf, name);
             pdclass->c_externdir = gensym(script);
+
             PyObject *pdmod = PyImport_ImportModule("puredata");
             if (!pdmod) {
                 pdpy_printerror(NULL);
@@ -1299,6 +1304,56 @@ static PyObject *pdpy_tabwrite(t_pdpy_pyclass *self, PyObject *args, PyObject *k
 }
 
 // ─────────────────────────────────────
+static PyObject *pdpy_reload(t_pdpy_pyclass *self, PyObject *args) {
+    t_pdpy_pdobj *x = (t_pdpy_pdobj *)self->pdobj;
+
+    // Check if pdobj is valid
+    if (x == NULL) {
+        PyErr_SetString(PyExc_TypeError, "self.reload: no pdobj");
+        return NULL;
+    }
+
+    // Get the script path
+    const char *script_path = x->obj.te_g.g_pd->c_externdir->s_name;
+
+    // Open the script file
+    FILE *fp = fopen(script_path, "r");
+    if (fp == NULL) {
+        PyErr_SetString(PyExc_FileNotFoundError, "Could not open script file");
+        return NULL;
+    }
+
+    // Clear any existing Python errors before reloading
+    PyErr_Clear();
+
+    // Execute the updated script file
+    PyRun_SimpleFile(fp, script_path);
+    fclose(fp);
+
+    // Import or reload your module (here, 'puredata')
+    PyObject *pdmod = PyImport_ImportModule("puredata");
+    if (pdmod == NULL) {
+        PyErr_SetString(PyExc_ImportError, "Failed to import 'puredata' module");
+        return NULL;
+    }
+
+    // Create a new Python class (heap type) from the updated module.
+    // (pdpy_newpyclass is assumed to be your function that creates the new class object.)
+    t_symbol *s = self->pdobj->obj.te_g.g_pd->c_name;
+    PyObject *newpyclass = pdpy_newpyclass(s, self->pdobj, pdmod, self->pyargs);
+    if (newpyclass == NULL) {
+        PyErr_SetString(PyExc_RuntimeError, "Failed to create new pyclass");
+        Py_DECREF(pdmod);
+        return NULL;
+    }
+
+    PyObject *old_dict = PyObject_GetAttrString(newpyclass, "__dir__");
+    PyObject_SetAttrString(old_dict, "__dir__", (PyObject *)self);
+
+    Py_RETURN_TRUE;
+}
+
+// ─────────────────────────────────────
 static PyMethodDef pdpy_methods[] = {
     {"logpost", (PyCFunction)pdpy_logpost, METH_VARARGS, "Post things on PureData console"},
     {"error", (PyCFunction)pdpy_error, METH_VARARGS,
@@ -1313,6 +1368,9 @@ static PyMethodDef pdpy_methods[] = {
      "This read the content of a Pd Array"},
     {"tabread", (PyCFunction)pdpy_tabread, METH_VARARGS | METH_KEYWORDS,
      "This read the content of a Pd Array"},
+
+    // reload
+    {"reload", (PyCFunction)pdpy_reload, METH_NOARGS, "Reload the current script and object"},
 
     {NULL, NULL, 0, NULL} // Sentinel
 };

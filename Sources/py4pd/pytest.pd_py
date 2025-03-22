@@ -35,3 +35,7 @@ class pytest(pd.NewObject):  # <== Class name is not important
 
     def in_1_list(self, l: list):
         self.logpost(2, f"received list {l}")
+
+    def in_1_reload(self, args: list):
+        print(__file__)
+        pass

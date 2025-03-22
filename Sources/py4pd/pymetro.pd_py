@@ -1,7 +1,10 @@
 import puredata as pd
+import os
+
+print("done")
 
 
-class pytest_tilde(pd.NewObject):  # <== Class name is not important
+class pymetro(pd.NewObject):  # <== Class name is not important
     name: str = "pymetro"  # <== Object name, same as {name}.pd_py | THIS IS IMPORTANT
 
     def __init__(self, args):
@@ -24,6 +27,10 @@ class pytest_tilde(pd.NewObject):  # <== Class name is not important
             self.tick()
         else:
             self.toggle = False
+
+    def in_1_reload(self, args: list):
+        self.reload()
+        self.logpost(2, "Reloaded 2")
 
     def tick(self):
         if self.toggle:

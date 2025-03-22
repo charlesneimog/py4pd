@@ -3,8 +3,8 @@
 #X obj 4 5 declare -lib py4pd;
 #X obj 23 63 tgl 18 0 empty empty empty 0 -9 0 10 #fcfcfc #000000 #000000 0 1;
 #X obj 23 182 bng 18 250 50 0 empty empty empty 0 -9 0 10 #fcfcfc #000000 #000000;
-#X obj 62 78 nbx 5 16 -1e+37 1e+37 0 0 empty empty empty 0 -9 0 10 #fcfcfc #000000 #000000 0 256;
-#X text 121 76 milliseconds;
+#X obj 86 87 nbx 5 16 -1e+37 1e+37 0 0 empty empty empty 0 -9 0 10 #fcfcfc #000000 #000000 0 256;
+#X text 145 84 milliseconds;
 #X obj 74 254 noise~;
 #X obj 125 256 line, f 10;
 #X msg 23 205 0 \, 1 200;
@@ -13,6 +13,7 @@
 #X obj 74 342 *~ 0.1;
 #X obj 74 394 dac~;
 #X obj 23 107 pymetro 430;
+#X msg 70 53 reload;
 #X connect 1 0 12 0;
 #X connect 2 0 7 0;
 #X connect 3 0 12 1;
@@ -24,3 +25,4 @@
 #X connect 10 0 11 0;
 #X connect 10 0 11 1;
 #X connect 12 0 2 0;
+#X connect 13 0 12 0;
