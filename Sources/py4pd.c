@@ -6,6 +6,10 @@
 
 #include <Python.h>
 
+#define PY4PD_MAJOR_VERSION 1
+#define PY4PD_MINOR_VERSION 0
+#define PY4PD_MICRO_VERSION 0
+
 extern PyMODINIT_FUNC PyInit_pd();
 extern void pdpy_proxyinlet_setup(void);
 extern void pdpy_pyobjectoutput_setup(void);
@@ -89,6 +93,8 @@ void py4pd_setup(void) {
         post("[py4pd] by Charles K. Neimog");
         post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION,
              PY_MICRO_VERSION);
+        post("[py4pd] version %d.%d.%d", PY4PD_MAJOR_VERSION, PY4PD_MINOR_VERSION,
+             PY4PD_MICRO_VERSION);
         post("");
         int r = PyImport_AppendInittab("puredata", PyInit_pd);
         if (r < 0) {
