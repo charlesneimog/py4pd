@@ -292,7 +292,7 @@ t_class *pdpyobj_get_class(const char *classname) {
 // ─────────────────────────────────────
 static void pdpy_inlets(t_pdpy_pdobj *x) {
     PyObject *inlets = PyObject_GetAttrString((PyObject *)x->pyclass, "inlets");
-    if (inlets == nullptr) {
+    if (inlets == NULL) {
         return;
     }
 
@@ -346,7 +346,7 @@ static void pdpy_inlets(t_pdpy_pdobj *x) {
 // ─────────────────────────────────────
 static void pdpy_outlets(t_pdpy_pdobj *x) {
     PyObject *outlets = PyObject_GetAttrString(x->pyclass, "outlets");
-    if (outlets == nullptr) {
+    if (outlets == NULL) {
         return;
     }
 
@@ -536,7 +536,7 @@ void pdpy_execute(t_pdpy_pdobj *x, char *methodname, t_symbol *s, int argc, t_at
     }
 
     // Check for Python call errors
-    if (pValue == nullptr) {
+    if (pValue == NULL) {
         pdpy_printerror(x);
         Py_DECREF(method);
         return;
@@ -562,7 +562,7 @@ void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom
     if (strcmp(s->s_name, "PyObject") == 0) {
         char *str = strdup(atom_getsymbol(argv)->s_name);
         char *p = str;
-        while ((p = strchr(p, '.')) != nullptr) {
+        while ((p = strchr(p, '.')) != NULL) {
             *p = '_';
         }
         pdpy_pyobject(proxy->owner, gensym(str), atom_getsymbol(argv + 1));
@@ -905,7 +905,7 @@ static int pdpyobj_init(t_pdpy_pyclass *self, PyObject *args) {
     if (!obj_dict || !PyDict_Check(obj_dict)) {
         Py_XDECREF(obj_dict);
         obj_dict = PyDict_New();
-        if (obj_dict == nullptr) {
+        if (obj_dict == NULL) {
             PyErr_SetString(PyExc_MemoryError, "Failed to create _objects dictionary");
             Py_DECREF(pdmod);
             return -1;
