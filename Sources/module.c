@@ -695,13 +695,13 @@ static void pdpy_dsp(t_pdpy_pdobj *x, t_signal **sp) {
         sigvec[i + 2] = (t_int)sp[i]->s_vec;
     }
 
-    PyObject *pysr = PyFloat_FromDouble(sp[0]->s_sr);
+    PyObject *pysr = PyLong_FromDouble(sp[0]->s_sr);
     if (PyObject_SetAttrString((PyObject *)x->pyclass, "samplerate", pysr) < 0) {
         pd_error(x, "Failed to set samplerate");
         PyErr_Clear();
     }
 
-    PyObject *pyvec = PyFloat_FromDouble(sp[0]->s_n);
+    PyObject *pyvec = PyLong_FromDouble(sp[0]->s_n);
     if (PyObject_SetAttrString((PyObject *)x->pyclass, "blocksize", pyvec) < 0) {
         pd_error(x, "Failed to set samplerate");
         PyErr_Clear();

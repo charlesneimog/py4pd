@@ -10,17 +10,13 @@ class pytest_tilde(pd.NewObject):  # <== Class name is not important
         self.inlets = pd.SIGNAL
         self.outlets = pd.SIGNAL
         self.phase = 0
-        self.freq = 440
-        self.sample_rate = 48000
-
-    def in_1_freq(self, args):
-        self.freq = args[0]
-
+        self.samplerate = 48000 # updated when turn on dsp
+        self.blocksize = 64 # updated when turn on dsp
+        
     def dsp_perform(self, input):
-        buffer_size = 64
         out_buffer = []
-        for i in range(buffer_size):
-            phase_increment = 2 * math.pi * input[0][i] / self.sample_rate
+        for i in range(self.blocksize):
+            phase_increment = 2 * math.pi * input[0][i] / self.samplerate
             sample = math.sin(self.phase)
             out_buffer.append(sample)
             self.phase += phase_increment

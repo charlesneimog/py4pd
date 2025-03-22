@@ -1,5 +1,5 @@
 import puredata as pd
-import math
+import numpy as np
 
 
 class pytest(pd.NewObject):  # <== Class name is not important
@@ -9,6 +9,30 @@ class pytest(pd.NewObject):  # <== Class name is not important
         self.inlets = (pd.DATA, pd.DATA)
         self.outlets = (pd.DATA, pd.DATA)
 
-    def in_1_freq(self, args):
-        self.freq = args[0]
+    def in_1_print(self, args: list):
+        self.logpost(2, args)
+        self.out(0, pd.SYMBOL, "out_1")
 
+    def in_2_print(self, args: list):
+        self.logpost(2, args)
+        self.out(1, pd.FLOAT, 1)
+        self.out(1, pd.SYMBOL, "out_2")
+        self.out(1, pd.LIST, [1, "oi", 2, 3])
+        array = np.array([[1, 2, 3], [4, 5, 6]])
+        self.out(1, pd.PYOBJECT, array)
+
+    def in_2_pyobj(self, args: list):
+        array = np.array([[1, 2, 3], [4, 5, 6]])
+        self.out(1, pd.PYOBJECT, array)
+
+    def in_1_pyobj_numpy_ndarray(self, arg):
+        self.logpost(2, arg)
+
+    def in_1_float(self, f: float):
+        self.logpost(2, f"received float {f}")
+
+    def in_1_symbol(self, s: str):
+        self.logpost(2, f"received symbol {s}")
+
+    def in_1_list(self, l: list):
+        self.logpost(2, f"received list {l}")
