@@ -86,6 +86,7 @@ typedef struct _pdpy_clock {
 static void pdpy_proxyinlet_init(t_pdpy_proxyinlet *p, t_pdpy_pdobj *owner, unsigned int id);
 static void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom *argv);
 static void pdpy_printerror(t_pdpy_pdobj *x);
+void pdpy_execute(t_pdpy_pdobj *x, const char *methodname, t_symbol *s, int argc, t_atom *argv);
 
 // ─────────────────────────────────────
 static PyObject *getoutlets(t_pdpy_pyclass *self) {
@@ -210,10 +211,24 @@ static PyObject *py4pdobj_converttopy(int argc, t_atom *argv) {
 }
 
 // ─────────────────────────────────────
+static void pdpy_proxyinlet_fwd(t_pdpy_proxyinlet *p, t_symbol *s, int argc, t_atom *argv) {
+    (void)s;
+    if (!argc) {
+        return;
+    }
+    char methodname[MAXPDSTRING];
+    pd_snprintf(methodname, MAXPDSTRING, "in_%d_%s", p->id, atom_getsymbol(argv)->s_name);
+    pdpy_execute(p->owner, methodname, atom_getsymbol(argv), argc - 1, argv + 1);
+}
+
+// ─────────────────────────────────────
 void pdpy_proxyinlet_setup(void) {
-    pdpy_proxyinlet_class = class_new(gensym("_pdpy"), 0, 0, sizeof(t_pdpy_proxyinlet), 0, 0);
+    pdpy_proxyinlet_class =
+        class_new(gensym("py4pd proxy inlet"), 0, 0, sizeof(t_pdpy_proxyinlet), 0, 0);
     if (pdpy_proxyinlet_class) {
         class_addanything(pdpy_proxyinlet_class, pdpy_proxy_anything);
+        class_addmethod(pdpy_proxyinlet_class, (t_method)pdpy_proxyinlet_fwd, gensym("fwd"),
+                        A_GIMME, 0);
     }
 }
 
@@ -332,7 +347,7 @@ static void pdpy_inlets(t_pdpy_pdobj *x) {
         x->ins = (t_inlet **)malloc((count) * sizeof(t_inlet *));
         x->proxy_in = (t_pdpy_proxyinlet *)malloc((count) * sizeof(t_pdpy_proxyinlet));
         for (int i = 0; i < count; i++) {
-            pdpy_proxyinlet_init(&x->proxy_in[i], x, i);
+            pdpy_proxyinlet_init(&x->proxy_in[i], x, i + 1);
             x->ins[i] = inlet_new(&x->obj, &x->proxy_in[i].pd, 0, 0);
         }
         return;
@@ -351,7 +366,7 @@ static void pdpy_inlets(t_pdpy_pdobj *x) {
             }
             const char *outtype = PyUnicode_AsUTF8(config);
             t_symbol *sym = strcmp(outtype, "anything") ? &s_signal : 0;
-            pdpy_proxyinlet_init(&x->proxy_in[i], x, i);
+            pdpy_proxyinlet_init(&x->proxy_in[i], x, i + 1);
             x->ins[i] = inlet_new(&x->obj, &x->proxy_in[i].pd, sym, sym);
             if (strcmp(outtype, "signal") == 0) {
                 x->siginlets++;
@@ -360,10 +375,12 @@ static void pdpy_inlets(t_pdpy_pdobj *x) {
         return;
     } else if (PyUnicode_Check(x->pyclass->inlets)) {
         const char *outtype = PyUnicode_AsUTF8(x->pyclass->inlets);
-        x->ins = (t_inlet **)malloc(1 * sizeof(t_inlet *));
+        x->ins = (t_inlet **)malloc(sizeof(t_inlet *));
+        x->proxy_in = (t_pdpy_proxyinlet *)malloc(sizeof(t_pdpy_proxyinlet));
 
         t_symbol *sym = strcmp(outtype, "anything") ? &s_signal : 0;
         x->ins[0] = inlet_new(&x->obj, &x->proxy_in[0].pd, sym, sym);
+        pdpy_proxyinlet_init(&x->proxy_in[0], x, 1);
         if (strcmp(outtype, "signal") == 0) {
             x->siginlets = 1;
         }
