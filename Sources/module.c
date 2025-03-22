@@ -12,6 +12,7 @@ typedef struct _pdpy_pyclass t_pdpy_pyclass;
 typedef struct _pdpy_clock t_pdpy_clock;
 static t_class *pdpy_proxyinlet_class = NULL;
 static t_class *pdpy_pyobjectout_class = NULL;
+static t_class *pdpy_proxyclock_class;
 
 #define PYOBJECT -1997
 #define PY4PDSIGTOTAL(s) ((t_int)((s)->s_length * (s)->s_nchans))
@@ -56,7 +57,6 @@ typedef struct _pdpy_pdobj {
 // ─────────────────────────────────────
 typedef struct _pdpy_pyclass {
     PyObject_HEAD const char *name;
-    PyObject *pyclass;
     t_pdpy_pdobj *pdobj;
     const char *script_name;
     PyObject *outlets;
@@ -74,8 +74,9 @@ typedef struct pdpy_proxyinlet {
 typedef struct _pdpy_clock {
     PyObject_HEAD PyObject *pyclass;
     PyObject *function;
-    t_pdpy_pdobj *pdobj;
+    t_pd pd;
     t_clock *clock;
+    t_pdpy_pdobj *owner;
     float delay_time;
 } t_pdpy_clock;
 
@@ -85,6 +86,7 @@ typedef struct _pdpy_clock {
 static void pdpy_execute(t_pdpy_pdobj *x, char *methodname, t_symbol *s, int argc, t_atom *argv);
 static void pdpy_proxyinlet_init(t_pdpy_proxyinlet *p, t_pdpy_pdobj *owner, unsigned int id);
 static void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom *argv);
+static void pdpy_clock_execute(t_pdpy_clock *x);
 static void pdpy_printerror(t_pdpy_pdobj *x);
 static void pdpy_pyobject(t_pdpy_pdobj *x, t_symbol *s, t_symbol *id);
 
@@ -98,26 +100,60 @@ static PyObject *pdpy_clock_create(PyTypeObject *type, PyObject *args, PyObject 
         PyErr_SetString(PyExc_TypeError, "ClockType not ready");
         return NULL;
     }
-    self->delay_time = 0;
-    // self->clock = clock_new(
     return (PyObject *)self;
 }
 
 // ─────────────────────────────────────
 static void pdpy_clock_destruct(t_pdpy_clock *self) {
-    //
+    Py_XDECREF(self->function);
+    clock_unset(self->clock);
+    clock_free(self->clock);
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 // ─────────────────────────────────────
-static PyObject *pdpy_clock_delay(t_pdpy_clock *self) {
-    clock_delay(self->clock, 2000);
+static PyObject *pdpy_clock_delay(t_pdpy_clock *self, PyObject *args) {
+    float f;
+    if (PyArg_ParseTuple(args, "f", &f)) {
+        clock_delay(self->clock, f);
+        Py_RETURN_TRUE;
+    }
+    PyErr_SetString(PyExc_TypeError, "expected float");
+    return NULL;
+}
+
+// ─────────────────────────────────────
+static PyObject *pdpy_clock_unset(t_pdpy_clock *self, PyObject *args) {
+    if (self->clock != NULL) {
+        clock_unset(self->clock);
+        Py_RETURN_TRUE;
+    }
+    Py_RETURN_TRUE;
+}
+
+// ─────────────────────────────────────
+static PyObject *pdpy_clock_set(t_pdpy_clock *self, PyObject *args) {
+    float time;
+    if (!PyArg_ParseTuple(args, "f", &time)) {
+        PyErr_SetString(PyExc_TypeError, "expected float");
+        return NULL;
+    }
+
+    if (self->clock != NULL) {
+        clock_set(self->clock, time);
+        Py_RETURN_TRUE;
+    }
     Py_RETURN_TRUE;
 }
 
 // ─────────────────────────────────────
 static PyMethodDef Clock_methods[] = {
-    {"delay", (PyCFunction)pdpy_clock_delay, METH_VARARGS, "Set the delay for the clock"},
+    {"delay", (PyCFunction)pdpy_clock_delay, METH_VARARGS,
+     "Sets the clock so that it will go off (and call the clock method) after time milliseconds."},
+    {"unset", (PyCFunction)pdpy_clock_unset, METH_NOARGS,
+     "Unsets the clock, canceling any timeout that has been set previously"},
+    {"set", (PyCFunction)pdpy_clock_set, METH_NOARGS,
+     "Sets the clock so that it will go off at the specified absolute systime"},
     {NULL, NULL, 0, NULL} // Sentinel
 };
 
@@ -130,6 +166,86 @@ static PyTypeObject ClockType = {
     .tp_dealloc = (destructor)pdpy_clock_destruct,
     .tp_methods = Clock_methods,
 };
+
+// ─────────────────────────────────────
+static PyObject *pdpy_new_clock(PyObject *self, PyObject *args) {
+    if (PyType_Ready(&ClockType) < 0) {
+        PyErr_SetString(PyExc_TypeError, "new_clock ClockType not ready");
+        return NULL;
+    }
+    // get pyfunction to be executed
+    PyObject *func;
+    if (!PyArg_ParseTuple(args, "O", &func)) {
+        PyErr_SetString(PyExc_TypeError, "new_clock require a function as argument");
+        return NULL;
+    }
+
+    if (!PyCallable_Check(func)) {
+        PyErr_SetString(PyExc_TypeError, "new_clock function is not callable");
+        return NULL;
+    }
+
+    t_pdpy_clock *clock = (t_pdpy_clock *)PyObject_CallObject((PyObject *)&ClockType, NULL);
+    if (!clock) {
+        return NULL;
+    }
+
+    PyObject *pdmod = PyImport_ImportModule("puredata");
+    if (pdmod == NULL) {
+        PyErr_SetString(PyExc_ImportError, "Failed to import 'puredata' module");
+        return NULL;
+    }
+    PyObject *capsule = PyObject_GetAttrString(pdmod, "_currentobj");
+    t_pdpy_pdobj *ptr;
+    t_pdpy_pyclass *cls = (t_pdpy_pyclass *)self;
+
+    if (!capsule) {
+        PyErr_SetString(PyExc_AttributeError, "No '_currentobj' attribute found");
+        return NULL;
+    } else if (!Py_IsNone(capsule)) {
+        if (!PyCapsule_CheckExact(capsule)) {
+            PyErr_SetString(PyExc_TypeError, "Expected a PyCapsule object");
+            Py_DECREF(capsule);
+            return NULL;
+        }
+
+        ptr = PyCapsule_GetPointer(capsule, "_currentobj");
+        if (!ptr) {
+            PyErr_SetString(PyExc_TypeError, "Pointer in _currentobj is NULL");
+            Py_DECREF(capsule);
+            return NULL;
+        }
+    } else if (cls->pdobj != NULL) {
+        ptr = cls->pdobj;
+    } else {
+        PyErr_SetString(PyExc_TypeError, "Impossible to get PureData objct pointer");
+        return NULL;
+    }
+
+    Py_INCREF(func);
+    clock->pd = pdpy_proxyclock_class;
+    clock->owner = ptr;
+    clock->function = func;
+    clock->clock = clock_new(clock, (t_method)pdpy_clock_execute);
+    return (PyObject *)clock;
+}
+
+// ─────────────────────────────────────
+static void pdpy_clock_execute(t_pdpy_clock *x) {
+    if (x->function == NULL) {
+        pd_error(x->owner, "Clock function is NULL");
+        return;
+    }
+
+    if (!PyCallable_Check(x->function)) {
+        pd_error(x->owner, "Clock function is not callable");
+        return;
+    }
+
+    PyObject_CallNoArgs(x->function);
+
+    return;
+}
 
 // ─────────────────────────────────────
 static PyObject *py4pdobj_converttopy(int argc, t_atom *argv) {
@@ -204,7 +320,7 @@ static PyObject *pdpy_getoutptr(t_symbol *s) {
 }
 
 // ─────────────────────────────────────
-static PyObject *pypd_newpyclass(t_symbol *s, PyObject *pdmod) {
+static PyObject *pypd_newpyclass(t_symbol *s, t_pdpy_pdobj *x, PyObject *pdmod) {
     // Get the NewObject class from the module
     const char *name = s->s_name;
     PyObject *pd_newobject = PyObject_GetAttrString(pdmod, "NewObject");
@@ -236,14 +352,25 @@ static PyObject *pypd_newpyclass(t_symbol *s, PyObject *pdmod) {
         }
         const char *objstring = PyUnicode_AsUTF8(objname);
         if (strcmp(objstring, name) == 0) {
+            PyObject *pdmod = PyImport_ImportModule("puredata");
+            if (pdmod == NULL) {
+                PyErr_SetString(PyExc_ImportError, "Failed to import 'puredata' module");
+                return NULL;
+            }
+
+            PyObject *currobj = PyCapsule_New((void *)x, "_currentobj", NULL);
+            PyObject_SetAttrString(pdmod, "_currentobj", currobj);
             PyObject *self = PyObject_CallNoArgs(subclass);
             if (!self) {
-                pdpy_printerror(NULL);
+                pdpy_printerror(x);
                 continue;
             }
 
+            PyObject_SetAttrString(pdmod, "_currentobj", Py_None);
+            Py_DECREF(pdmod);
             return self;
         }
+        Py_DECREF(objname);
     }
     return NULL;
 }
@@ -399,13 +526,14 @@ static void pdpy_outlets(t_pdpy_pdobj *x) {
 static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
     t_class *pyobj = pdpyobj_get_class(s->s_name);
     t_pdpy_pdobj *x = (t_pdpy_pdobj *)pd_new(pyobj);
+
     PyObject *pdmod = PyImport_ImportModule("puredata");
     if (pdmod == NULL) {
         PyErr_SetString(PyExc_ImportError, "Failed to import 'puredata' module");
         return NULL;
     }
 
-    PyObject *pyclass = pypd_newpyclass(s, pdmod);
+    PyObject *pyclass = pypd_newpyclass(s, x, pdmod);
     t_pdpy_pyclass *self = (t_pdpy_pyclass *)pyclass;
     if (self == NULL) {
         pd_error(NULL, "Failed to create object");
@@ -413,8 +541,8 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
     }
 
     x->pyclass = pyclass;
-    self->pdobj = x;
     self->name = s->s_name;
+    self->pdobj = x;
     pdpy_inlets(x);
     pdpy_outlets(x);
 
@@ -926,52 +1054,6 @@ static int pdpyobj_init(t_pdpy_pyclass *self, PyObject *args) {
 
     return 0;
 }
-// ─────────────────────────────────────
-static void pdpy_clock_execute(t_pdpy_clock *x) {
-    if (x->function == NULL) {
-        pd_error(x->pdobj, "Clock function is NULL");
-        return;
-    }
-
-    if (!PyCallable_Check(x->function)) {
-        pd_error(x->pdobj, "Clock function is not callable");
-        return;
-    }
-
-    // PyObject_CallNoArgs(x->function);
-
-    return;
-}
-
-// ─────────────────────────────────────
-static PyObject *pdpy_new_clock(PyObject *self, PyObject *args) {
-    if (PyType_Ready(&ClockType) < 0) {
-        PyErr_SetString(PyExc_TypeError, "ClockType not ready");
-        return NULL;
-    }
-    // get pyfunction to be executed
-    PyObject *func;
-    if (!PyArg_ParseTuple(args, "O", &func)) {
-        PyErr_SetString(PyExc_TypeError, "ClockType not ready");
-        return NULL;
-    }
-
-    if (!PyCallable_Check(func)) {
-        PyErr_SetString(PyExc_TypeError, "ClockType not ready");
-        return NULL;
-    }
-
-    t_pdpy_clock *clock_instance =
-        (t_pdpy_clock *)PyObject_CallObject((PyObject *)&ClockType, NULL);
-    if (!clock_instance) {
-        return NULL;
-    }
-    clock_instance->pyclass = self;
-    clock_instance->function = func;
-    clock_instance->pdobj = ((t_pdpy_pyclass *)self)->pdobj;
-    clock_instance->clock = clock_new(clock_instance->pdobj, (t_method)pdpy_clock_execute);
-    return (PyObject *)clock_instance;
-}
 
 // ─────────────────────────────────────
 static PyObject *pdpy_error(t_pdpy_pyclass *self, PyObject *args) {
@@ -1251,8 +1333,13 @@ static PyObject *pdpy_post(PyObject *self, PyObject *args) {
         }
         startpost("\n");
     }
-
     Py_RETURN_TRUE;
+}
+
+// ─────────────────────────────────────
+static PyObject *pdpy_hasgui(PyObject *self, PyObject *args) {
+    //
+    return PyLong_FromLong(sys_havegui());
 }
 
 // ╭─────────────────────────────────────╮
@@ -1260,6 +1347,7 @@ static PyObject *pdpy_post(PyObject *self, PyObject *args) {
 // ╰─────────────────────────────────────╯
 PyMethodDef pdpy_modulemethods[] = {
     {"post", pdpy_post, METH_VARARGS, "Print informations in PureData Console"},
+    {"hasgui", pdpy_hasgui, METH_NOARGS, "Return False is pd is running in console"},
     {NULL, NULL, 0, NULL} //
 };
 
@@ -1284,11 +1372,9 @@ static PyObject *pd4pdmodule_init(PyObject *self) {
     Py_INCREF(&pdpy_type);
     int r = PyModule_AddObject(self, "NewObject", (PyObject *)&pdpy_type);
     if (r != 0) {
-        // TODO: clear memory
         PyErr_SetString(PyExc_RuntimeError, "Failed to add NewObject to module");
         return NULL;
     }
-
     PyObject *obj_dict = PyDict_New();
     r = PyModule_AddObject(self, "_objects", obj_dict);
     if (r != 0) {
@@ -1305,25 +1391,23 @@ static PyModuleDef_Slot pdpy_moduleslots[] = { //
     {0, NULL}};
 
 // ─────────────────────────────────────
-static struct PyModuleDef pdpy_module = {
+static struct PyModuleDef pdpy_module_def = {
     PyModuleDef_HEAD_INIT,
     .m_name = "puredata",
     .m_doc = "pd module provide function to interact with PureData, see the "
              "docs in www.charlesneimog.github.io/py4pd",
     .m_size = 0,
-    .m_methods = pdpy_modulemethods, // Methods of the module
+    .m_methods = pdpy_modulemethods,
     .m_slots = pdpy_moduleslots,
 };
 
 // ─────────────────────────────────────
-PyMODINIT_FUNC PyInit_pd() {
-    // TODO: I will remove numpy
+PyMODINIT_FUNC pdpy_initpuredatamodule() {
     PyObject *m;
-    m = PyModuleDef_Init(&pdpy_module);
+    m = PyModuleDef_Init(&pdpy_module_def);
     if (m == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "Failed to create module");
         return NULL;
     }
-
     return m;
 }

@@ -10,28 +10,26 @@
 #define PY4PD_MINOR_VERSION 0
 #define PY4PD_MICRO_VERSION 0
 
-extern PyMODINIT_FUNC PyInit_pd();
+// ╭─────────────────────────────────────╮
+// │             Definitions             │
+// ╰─────────────────────────────────────╯
+//
+extern PyMODINIT_FUNC pdpy_initpuredatamodule();
 extern void pdpy_proxyinlet_setup(void);
 extern void pdpy_pyobjectoutput_setup(void);
 extern int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf);
+extern int sys_trytoopenone(const char *dir, const char *name, const char *ext, char *dirresult,
+                            char **nameresult, unsigned int size, int bin);
 
-// ─────────────────────────────────────
-int sys_trytoopenone(const char *dir, const char *name, const char *ext, char *dirresult,
-                     char **nameresult, unsigned int size, int bin);
-
-// ──────────── Definitions ─────────
 #define trytoopenone(dir, name, ...)                                                               \
     sys_trytoopenone(sys_isabsolutepath(name) ? "" : dir, name, __VA_ARGS__)
+
 t_class *py4pd_class;
 int objCount = 0;
 
 // ─────────────────────────────────────
 typedef struct _py {
     t_object obj;
-    t_glist *glist;
-    t_canvas *canvas;
-    t_outlet *out1;
-    t_inlet *in1;
 } t_py;
 
 // ─────────────────────────────────────
@@ -40,7 +38,6 @@ static int pd4pd_loader_pathwise(t_canvas *canvas, const char *objectname, const
     char *ptr;
     const char *classname;
     int fd;
-
     if (!path) {
         return 0;
     }
@@ -55,10 +52,9 @@ static int pd4pd_loader_pathwise(t_canvas *canvas, const char *objectname, const
             return 1;
         }
 
-    strncpy(filename, objectname, MAXPDSTRING);
-    filename[MAXPDSTRING - 2] = 0;
-    strcat(filename, "/");
-    strncat(filename, classname, MAXPDSTRING - strlen(filename));
+    pd_snprintf(filename, MAXPDSTRING, "%s", objectname);
+    pd_snprintf(filename + strlen(filename), MAXPDSTRING - strlen(filename), "/");
+    pd_snprintf(filename + strlen(filename), MAXPDSTRING - strlen(filename), "%s", classname);
     filename[MAXPDSTRING - 1] = 0;
     if ((fd = trytoopenone(path, filename, ".pd_py", dirbuf, &ptr, MAXPDSTRING, 1)) >= 0)
         if (pd4pd_loader_wrappath(fd, objectname, dirbuf)) {
@@ -95,7 +91,7 @@ void py4pd_setup(void) {
         post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION,
              PY_MICRO_VERSION);
         post("");
-        int r = PyImport_AppendInittab("puredata", PyInit_pd);
+        int r = PyImport_AppendInittab("puredata", pdpy_initpuredatamodule);
         if (r < 0) {
             pd_error(NULL, "[py4pd] PyInit_pd failed");
             return;

@@ -1,0 +1,27 @@
+import puredata as pd
+
+
+class pytest_tilde(pd.NewObject):  # <== Class name is not important
+    name: str = "pymetro"  # <== Object name, same as {name}.pd_py
+
+    def __init__(self):
+        self.inlets = 2
+        self.outlets = 1
+        self.toggle = False
+        self.time = 1000
+        self.metro = self.new_clock(self.tick)
+
+    def in_2_float(self, f: float):
+        self.time = f
+
+    def in_1_float(self, f: float):
+        if f:
+            self.toggle = True
+            self.tick()
+        else:
+            self.toggle = False
+
+    def tick(self):
+        if self.toggle:
+            self.metro.delay(self.time)
+        self.out(0, pd.SYMBOL, "bang")
