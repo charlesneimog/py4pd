@@ -1,7 +1,6 @@
 import puredata as pd
 import math
 
-
 class pytest_tilde(pd.NewObject):  # <== Class name is not important
     name: str = "pytest~"  # <== Object name, same as {name}.pd_py
     dsp: bool = True  # <== Not required, False by default

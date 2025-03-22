@@ -1,5 +1,4 @@
 import puredata as pd
-import numpy as np
 
 
 class pytest(pd.NewObject):  # <== Class name is not important
@@ -18,14 +17,14 @@ class pytest(pd.NewObject):  # <== Class name is not important
         self.out(1, pd.FLOAT, 1)
         self.out(1, pd.SYMBOL, "out_2")
         self.out(1, pd.LIST, [1, "oi", 2, 3])
-        array = np.array([[1, 2, 3], [4, 5, 6]])
-        self.out(1, pd.PYOBJECT, array)
+        mydict = {"mykey": "test", "mynumber": 12894}
+        self.out(1, pd.PYOBJECT, mydict)
 
     def in_2_pyobj(self, args: list):
-        array = np.array([[1, 2, 3], [4, 5, 6]])
-        self.out(1, pd.PYOBJECT, array)
+        mydict = {"mykey": "test", "mynumber": 12894}
+        self.out(1, pd.PYOBJECT, mydict)
 
-    def in_1_pyobj_numpy_ndarray(self, arg):
+    def in_1_pyobj_dict(self, arg):
         self.logpost(2, arg)
 
     def in_1_float(self, f: float):
