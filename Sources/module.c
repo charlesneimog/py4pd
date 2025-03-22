@@ -320,8 +320,7 @@ static PyObject *pdpy_getoutptr(t_symbol *s) {
 }
 
 // ─────────────────────────────────────
-static PyObject *pypd_newpyclass(t_symbol *s, t_pdpy_pdobj *x, PyObject *pdmod) {
-    // Get the NewObject class from the module
+static PyObject *pypd_newpyclass(t_symbol *s, t_pdpy_pdobj *x, PyObject *pdmod, PyObject *pyargs) {
     const char *name = s->s_name;
     PyObject *pd_newobject = PyObject_GetAttrString(pdmod, "NewObject");
     if (!pd_newobject) {
@@ -360,7 +359,7 @@ static PyObject *pypd_newpyclass(t_symbol *s, t_pdpy_pdobj *x, PyObject *pdmod) 
 
             PyObject *currobj = PyCapsule_New((void *)x, "_currentobj", NULL);
             PyObject_SetAttrString(pdmod, "_currentobj", currobj);
-            PyObject *self = PyObject_CallNoArgs(subclass);
+            PyObject *self = PyObject_CallOneArg(subclass, pyargs);
             if (!self) {
                 pdpy_printerror(x);
                 continue;
@@ -533,7 +532,20 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
 
-    PyObject *pyclass = pypd_newpyclass(s, x, pdmod);
+    PyObject *pyargs = PyList_New(argc);
+    for (int i = 0; i < argc; i++) {
+        if (argv[i].a_type == A_FLOAT) {
+            PyList_SetItem(pyargs, i, PyFloat_FromDouble(argv[i].a_w.w_float));
+        } else if (argv[i].a_type == A_SYMBOL) {
+            PyList_SetItem(pyargs, i, PyUnicode_FromString(argv[i].a_w.w_symbol->s_name));
+        } else {
+            logpost(x, 2, "Unknown argument type: %s", atom_getsymbol(argv + i)->s_name);
+        }
+    }
+
+    PyObject *pyclass = pypd_newpyclass(s, x, pdmod, pyargs);
+    Py_DECREF(pyargs);
+
     t_pdpy_pyclass *self = (t_pdpy_pyclass *)pyclass;
     if (self == NULL) {
         pd_error(NULL, "Failed to create object");

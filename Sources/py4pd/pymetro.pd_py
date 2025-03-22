@@ -2,14 +2,18 @@ import puredata as pd
 
 
 class pytest_tilde(pd.NewObject):  # <== Class name is not important
-    name: str = "pymetro"  # <== Object name, same as {name}.pd_py
+    name: str = "pymetro"  # <== Object name, same as {name}.pd_py | THIS IS IMPORTANT
 
-    def __init__(self):
+    def __init__(self, args):
         self.inlets = 2
         self.outlets = 1
         self.toggle = False
-        self.time = 1000
+        if len(args) > 0:
+            self.time = float(args[0])
+        else:
+            self.time = 1000
         self.metro = self.new_clock(self.tick)
+        self.args = args
 
     def in_2_float(self, f: float):
         self.time = f

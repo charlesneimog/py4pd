@@ -4,7 +4,7 @@ import puredata as pd
 class pytest(pd.NewObject):  # <== Class name is not important
     name: str = "pytest"  # <== Object name, same as {name}.pd_py
 
-    def __init__(self):
+    def __init__(self, args):
         self.inlets = (pd.DATA, pd.DATA)
         self.outlets = (pd.DATA, pd.DATA)
 
