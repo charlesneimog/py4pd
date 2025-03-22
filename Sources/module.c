@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include <m_pd.h>
 
 #include <g_canvas.h>
@@ -27,17 +29,17 @@ typedef struct _pdpy_objptr {
 typedef struct _pdpy_pdobj {
     t_object obj;
     t_sample sample;
-    t_pdpy_pyclass *pyclass;
-    t_symbol *script;
     t_canvas *canvas;
 
-    // dsp
-    int nchs;
-    int vecsize;
-    PyObject *dspfunction;
+    // PyClass
+    PyObject *pyclass;
 
-    // output pointer
-    t_pdpy_objptr *outobjptr;
+    // dsp
+    PyObject *dspfunction;
+    unsigned nchs;
+    unsigned vecsize;
+    unsigned siginlets;
+    unsigned sigoutlets;
 
     // clock
     t_pdpy_clock *clock;
@@ -47,11 +49,8 @@ typedef struct _pdpy_pdobj {
     t_inlet **ins;
     int outletsize;
     int inletsize;
-    int siginlets;
-    int sigoutlets;
-
     struct pdpy_proxyinlet *proxy_in;
-
+    t_pdpy_objptr *outobjptr; // PyObject <type> <pointer>
 } t_pdpy_pdobj;
 
 // ─────────────────────────────────────
@@ -83,67 +82,11 @@ typedef struct _pdpy_clock {
 // ╭─────────────────────────────────────╮
 // │            Declarations             │
 // ╰─────────────────────────────────────╯
+static void pdpy_execute(t_pdpy_pdobj *x, char *methodname, t_symbol *s, int argc, t_atom *argv);
 static void pdpy_proxyinlet_init(t_pdpy_proxyinlet *p, t_pdpy_pdobj *owner, unsigned int id);
 static void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom *argv);
 static void pdpy_printerror(t_pdpy_pdobj *x);
-void pdpy_execute(t_pdpy_pdobj *x, const char *methodname, t_symbol *s, int argc, t_atom *argv);
-
-// ─────────────────────────────────────
-static PyObject *getoutlets(t_pdpy_pyclass *self) {
-    //
-    return self->outlets;
-}
-
-// ─────────────────────────────────────
-static int setoutlets(t_pdpy_pyclass *self, PyObject *value) {
-    if (PyLong_Check(value)) {
-        self->outlets = value;
-        Py_INCREF(value);
-        return 0;
-    } else if (PyUnicode_Check(value)) {
-        self->outlets = value;
-        Py_INCREF(value);
-        return 0;
-    } else if (PyTuple_Check(value)) {
-        self->outlets = value;
-        Py_INCREF(value);
-        return 0;
-    }
-    PyErr_SetString(PyExc_TypeError, "Auxiliary outlets must be an integer or tuple");
-    return -1;
-}
-
-// ─────────────────────────────────────
-static PyObject *getinlets(t_pdpy_pyclass *self) {
-    //
-    return self->inlets;
-}
-
-static int setinlets(t_pdpy_pyclass *self, PyObject *value) {
-    if (PyLong_Check(value)) {
-        self->inlets = value;
-        Py_INCREF(value);
-        return 0;
-    } else if (PyUnicode_Check(value)) {
-        self->inlets = value;
-        Py_INCREF(value);
-        return 0;
-    } else if (PyTuple_Check(value)) {
-        self->inlets = value;
-        Py_INCREF(value);
-        return 0;
-    }
-
-    PyErr_SetString(PyExc_TypeError, "Auxiliary inlets must be an integer or tuple");
-    return -1;
-}
-
-// ─────────────────────────────────────
-static PyGetSetDef pdpy_getset[] = {
-    {"outlets", (getter)getoutlets, (setter)setoutlets, "Number of outlets", NULL},
-    {"inlets", (getter)getinlets, (setter)setinlets, "Number of inlets", NULL},
-    {NULL, NULL, NULL, NULL, NULL} /* Sentinel */
-};
+static void pdpy_pyobject(t_pdpy_pdobj *x, t_symbol *s, t_symbol *id);
 
 // ╭─────────────────────────────────────╮
 // │                Clock                │
@@ -287,14 +230,20 @@ static PyObject *pypd_newpyclass(t_symbol *s, PyObject *pdmod) {
         if (!subclass) {
             continue;
         }
-
-        PyObject *self = PyObject_CallNoArgs(subclass);
-        if (!self) {
-            pdpy_printerror(NULL);
+        PyObject *objname = PyObject_GetAttrString(subclass, "name");
+        if (!objname) {
             continue;
         }
+        const char *objstring = PyUnicode_AsUTF8(objname);
+        if (strcmp(objstring, name) == 0) {
+            PyObject *self = PyObject_CallNoArgs(subclass);
+            if (!self) {
+                pdpy_printerror(NULL);
+                continue;
+            }
 
-        return self;
+            return self;
+        }
     }
     return NULL;
 }
@@ -342,8 +291,13 @@ t_class *pdpyobj_get_class(const char *classname) {
 
 // ─────────────────────────────────────
 static void pdpy_inlets(t_pdpy_pdobj *x) {
-    if (PyLong_Check(x->pyclass->inlets)) {
-        int count = PyLong_AsLong(x->pyclass->inlets);
+    PyObject *inlets = PyObject_GetAttrString((PyObject *)x->pyclass, "inlets");
+    if (inlets == nullptr) {
+        return;
+    }
+
+    if (PyNumber_Check(inlets)) {
+        int count = PyLong_AsLong(inlets);
         x->ins = (t_inlet **)malloc((count) * sizeof(t_inlet *));
         x->proxy_in = (t_pdpy_proxyinlet *)malloc((count) * sizeof(t_pdpy_proxyinlet));
         for (int i = 0; i < count; i++) {
@@ -351,30 +305,30 @@ static void pdpy_inlets(t_pdpy_pdobj *x) {
             x->ins[i] = inlet_new(&x->obj, &x->proxy_in[i].pd, 0, 0);
         }
         return;
-    } else if (PyTuple_Check(x->pyclass->inlets)) {
-        int count = PyTuple_Size(x->pyclass->inlets);
+    } else if (PyTuple_Check(inlets)) {
+        int count = PyTuple_Size(inlets);
         x->ins = (t_inlet **)malloc(count * sizeof(t_inlet *));
         x->proxy_in = (t_pdpy_proxyinlet *)malloc((count) * sizeof(t_pdpy_proxyinlet));
 
         // NOTE:I think that on signal objects, the first inlets are always signals
         x->siginlets = 0;
         for (int i = 0; i < count; i++) {
-            PyObject *config = PyTuple_GetItem(x->pyclass->inlets, i);
+            PyObject *config = PyTuple_GetItem(inlets, i);
             if (config == NULL) {
                 PyErr_SetString(PyExc_TypeError, "Invalid outlet type");
                 continue;
             }
-            const char *outtype = PyUnicode_AsUTF8(config);
-            t_symbol *sym = strcmp(outtype, "anything") ? &s_signal : 0;
+            const char *intype = PyUnicode_AsUTF8(config);
+            t_symbol *sym = strcmp(intype, "anything") ? &s_signal : 0;
             pdpy_proxyinlet_init(&x->proxy_in[i], x, i + 1);
             x->ins[i] = inlet_new(&x->obj, &x->proxy_in[i].pd, sym, sym);
-            if (strcmp(outtype, "signal") == 0) {
+            if (strcmp(intype, "signal") == 0) {
                 x->siginlets++;
             }
         }
         return;
-    } else if (PyUnicode_Check(x->pyclass->inlets)) {
-        const char *outtype = PyUnicode_AsUTF8(x->pyclass->inlets);
+    } else if (PyUnicode_Check(inlets)) {
+        const char *outtype = PyUnicode_AsUTF8(inlets);
         x->ins = (t_inlet **)malloc(sizeof(t_inlet *));
         x->proxy_in = (t_pdpy_proxyinlet *)malloc(sizeof(t_pdpy_proxyinlet));
 
@@ -391,16 +345,21 @@ static void pdpy_inlets(t_pdpy_pdobj *x) {
 
 // ─────────────────────────────────────
 static void pdpy_outlets(t_pdpy_pdobj *x) {
-    if (PyLong_Check(x->pyclass->outlets)) {
-        int count = PyLong_AsLong(x->pyclass->outlets);
+    PyObject *outlets = PyObject_GetAttrString(x->pyclass, "outlets");
+    if (outlets == nullptr) {
+        return;
+    }
+
+    if (PyLong_Check(outlets)) {
+        int count = PyLong_AsLong(outlets);
         x->outs = (t_outlet **)malloc(count * sizeof(t_outlet *));
         for (int i = 0; i < count; i++) {
             x->outs[i] = outlet_new(&x->obj, &s_anything);
         }
         x->outletsize = count;
         return;
-    } else if (PyUnicode_Check(x->pyclass->outlets)) {
-        const char *sym = PyUnicode_AsUTF8(x->pyclass->outlets);
+    } else if (PyUnicode_Check(outlets)) {
+        const char *sym = PyUnicode_AsUTF8(outlets);
         x->outs = (t_outlet **)malloc(1 * sizeof(t_outlet *));
         if (strcmp(sym, "signal") == 0) {
             x->outs[0] = outlet_new(&x->obj, &s_signal);
@@ -410,12 +369,12 @@ static void pdpy_outlets(t_pdpy_pdobj *x) {
         }
         x->outletsize = 1;
         return;
-    } else if (PyTuple_Check(x->pyclass->outlets)) {
-        int count = PyTuple_Size(x->pyclass->outlets);
+    } else if (PyTuple_Check(outlets)) {
+        int count = PyTuple_Size(outlets);
         x->outs = (t_outlet **)malloc(count * sizeof(t_outlet *));
         x->sigoutlets = 0;
         for (int i = 0; i < count; i++) {
-            PyObject *config = PyTuple_GetItem(x->pyclass->outlets, i);
+            PyObject *config = PyTuple_GetItem(outlets, i);
             if (config == NULL) {
                 PyErr_SetString(PyExc_TypeError, "Invalid outlet type");
                 continue;
@@ -453,8 +412,9 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
         return NULL;
     }
 
-    x->pyclass = self;
+    x->pyclass = pyclass;
     self->pdobj = x;
+    self->name = s->s_name;
     pdpy_inlets(x);
     pdpy_outlets(x);
 
@@ -464,9 +424,15 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
 
 // ─────────────────────────────────────
 static void py4pdobj_free(t_pdpy_pdobj *x) {
-    free(x->outs);
-    free(x->ins);
-    free(x->proxy_in);
+    if (x->outs) {
+        free(x->outs);
+    }
+    if (x->ins) {
+        free(x->ins);
+    }
+    if (x->proxy_in) {
+        free(x->proxy_in);
+    }
 }
 
 // ─────────────────────────────────────
@@ -516,16 +482,16 @@ void pdpy_printerror(t_pdpy_pdobj *x) {
 }
 
 // ─────────────────────────────────────
-void pdpy_execute(t_pdpy_pdobj *x, const char *methodname, t_symbol *s, int argc, t_atom *argv) {
+void pdpy_execute(t_pdpy_pdobj *x, char *methodname, t_symbol *s, int argc, t_atom *argv) {
     if (x->pyclass == NULL) {
         post("pyclass is NULL");
         return;
     }
 
-    PyObject *pyclass = (PyObject *)x->pyclass;
-    PyObject *method = PyObject_GetAttrString(pyclass, methodname);
+    PyObject *method = PyObject_GetAttrString(x->pyclass, methodname);
     if (!method || !PyCallable_Check(method)) {
         PyErr_Clear();
+        Py_XDECREF(method);
         pd_error(x, "[%s] method '%s' not found or not callable", x->obj.te_g.g_pd->c_name->s_name,
                  methodname);
         return;
@@ -533,13 +499,13 @@ void pdpy_execute(t_pdpy_pdobj *x, const char *methodname, t_symbol *s, int argc
 
     PyObject *pValue = NULL;
     PyObject *pArg = NULL;
-
     if (strcmp(s->s_name, "bang") == 0) {
         pValue = PyObject_CallNoArgs(method);
     } else if (strcmp(s->s_name, "float") == 0) {
         t_float f = atom_getfloatarg(0, argc, argv);
         pArg = PyFloat_FromDouble(f);
         if (!pArg) {
+            Py_DECREF(method);
             return;
         }
         pValue = PyObject_CallOneArg(method, pArg);
@@ -547,12 +513,14 @@ void pdpy_execute(t_pdpy_pdobj *x, const char *methodname, t_symbol *s, int argc
         t_symbol *sym = atom_getsymbolarg(0, argc, argv); // Rename to avoid shadowing
         pArg = PyUnicode_FromString(sym->s_name);
         if (!pArg) {
+            Py_DECREF(method);
             return;
         }
         pValue = PyObject_CallOneArg(method, pArg);
     } else if (strcmp(s->s_name, "list") == 0) {
         pArg = py4pdobj_converttopy(argc, argv);
         if (!pArg) {
+            Py_DECREF(method);
             return;
         }
         pValue = PyObject_CallOneArg(method, pArg);
@@ -560,6 +528,7 @@ void pdpy_execute(t_pdpy_pdobj *x, const char *methodname, t_symbol *s, int argc
         PyObject *pTuple = PyTuple_New(1);
         pArg = py4pdobj_converttopy(argc, argv);
         if (!pArg) {
+            Py_DECREF(method);
             return;
         }
         PyTuple_SetItem(pTuple, 0, pArg);
@@ -567,8 +536,17 @@ void pdpy_execute(t_pdpy_pdobj *x, const char *methodname, t_symbol *s, int argc
     }
 
     // Check for Python call errors
-    if (pValue == NULL) {
+    if (pValue == nullptr) {
         pdpy_printerror(x);
+        Py_DECREF(method);
+        return;
+    }
+    if (!Py_IsNone(pValue)) {
+        pd_error(x,
+                 "[%s] '%s' not return None, py4pd method functions must return None, use "
+                 "'self.out' to output data to "
+                 "outputs.",
+                 x->obj.te_g.g_pd->c_name->s_name, methodname);
     }
 
     // Cleanup
@@ -580,8 +558,20 @@ void pdpy_execute(t_pdpy_pdobj *x, const char *methodname, t_symbol *s, int argc
 void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom *argv) {
     t_pdpy_pdobj *o = proxy->owner;
     char methodname[MAXPDSTRING];
-    pd_snprintf(methodname, MAXPDSTRING, "in_%d_%s", proxy->id, s->s_name);
-    pdpy_execute(o, methodname, s, argc, argv);
+
+    if (strcmp(s->s_name, "PyObject") == 0) {
+        char *str = strdup(atom_getsymbol(argv)->s_name);
+        char *p = str;
+        while ((p = strchr(p, '.')) != nullptr) {
+            *p = '_';
+        }
+        pdpy_pyobject(proxy->owner, gensym(str), atom_getsymbol(argv + 1));
+        free(str);
+    } else {
+        pd_snprintf(methodname, MAXPDSTRING, "in_%d_%s", proxy->id, s->s_name);
+        pdpy_execute(o, methodname, s, argc, argv);
+    }
+
     return;
 }
 
@@ -617,6 +607,19 @@ static void pdpy_pyobject(t_pdpy_pdobj *x, t_symbol *s, t_symbol *id) {
         pdpy_printerror(x);
         return;
     }
+
+    if (!Py_IsNone(pValue)) {
+        pd_error(x,
+                 "[%s] '%s' not return None, py4pd method functions must return None, use "
+                 "'self.out' to output data to "
+                 "outputs.",
+                 x->obj.te_g.g_pd->c_name->s_name, methodname);
+    }
+
+    Py_DECREF(method);
+    Py_XDECREF(pArg);
+    Py_XDECREF(pValue);
+
     return;
 }
 
@@ -692,6 +695,18 @@ static void pdpy_dsp(t_pdpy_pdobj *x, t_signal **sp) {
         sigvec[i + 2] = (t_int)sp[i]->s_vec;
     }
 
+    PyObject *pysr = PyFloat_FromDouble(sp[0]->s_sr);
+    if (PyObject_SetAttrString((PyObject *)x->pyclass, "samplerate", pysr) < 0) {
+        pd_error(x, "Failed to set samplerate");
+        PyErr_Clear();
+    }
+
+    PyObject *pyvec = PyFloat_FromDouble(sp[0]->s_n);
+    if (PyObject_SetAttrString((PyObject *)x->pyclass, "blocksize", pyvec) < 0) {
+        pd_error(x, "Failed to set samplerate");
+        PyErr_Clear();
+    }
+
     PyObject *pyclass = (PyObject *)x->pyclass;
     PyObject *method = PyObject_GetAttrString(pyclass, "dsp_perform");
     if (!method || !PyCallable_Check(method)) {
@@ -719,6 +734,17 @@ static void pdpy_proxyinlet_init(t_pdpy_proxyinlet *p, t_pdpy_pdobj *owner, unsi
     p->pd = pdpy_proxyinlet_class;
     p->owner = owner;
     p->id = id;
+}
+
+// ─────────────────────────────────────
+static t_class *pdpy_classnew(const char *n, bool dsp) {
+    t_class *c = class_new(gensym(n), (t_newmethod)pdpy_new, (t_method)py4pdobj_free,
+                           sizeof(t_pdpy_pdobj), CLASS_NOINLET | CLASS_MULTICHANNEL, A_GIMME, 0);
+    class_addmethod(c, (t_method)pdpy_menu_open, gensym("menu-open"), A_NULL);
+    if (dsp) {
+        class_addmethod(c, (t_method)pdpy_dsp, gensym("dsp"), A_CANT, 0);
+    }
+    return c;
 }
 
 // ─────────────────────────────────────
@@ -784,35 +810,27 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
 
         const char *objstring = PyUnicode_AsUTF8(objname);
         if (strcmp(objstring, name) == 0) {
-
             bool havedsp = false;
             PyObject *dsp = PyObject_GetAttrString(subclass, "dsp");
             if (dsp) {
                 havedsp = PyObject_IsTrue(dsp);
             } else {
                 havedsp = false;
+                PyErr_Clear(); // Ignore the error and clear the exception
             }
+            Py_XDECREF(dsp);
 
             // python object methods
-            t_class *pdclass =
-                class_new(gensym(name), (t_newmethod)pdpy_new, (t_method)py4pdobj_free,
-                          sizeof(t_pdpy_pdobj), CLASS_NOINLET | CLASS_MULTICHANNEL, A_GIMME, 0);
-            class_addmethod(pdclass, (t_method)pdpy_menu_open, gensym("menu-open"), A_NULL);
-            class_addmethod(pdclass, (t_method)pdpy_pyobject, gensym("PyObject"), A_SYMBOL,
-                            A_SYMBOL, 0);
-            class_addanything(pdclass, pdpy_anything);
-            if (havedsp) {
-                class_addmethod(pdclass, (t_method)pdpy_dsp, gensym("dsp"), A_CANT, 0);
-            }
+            t_class *pdclass = pdpy_classnew(name, havedsp);
 
-            // save t_class on globals of puredata module
             char script[MAXPDSTRING];
             pd_snprintf(script, MAXPDSTRING, "%s/%s", dirbuf, name);
             pdclass->c_externdir = gensym(script);
             PyObject *pdmod = PyImport_ImportModule("puredata");
             if (!pdmod) {
+                pdpy_printerror(NULL);
                 PyErr_SetString(PyExc_ImportError, "Could not import module 'puredata'");
-                return -1;
+                return 0;
             }
             PyObject *obj_dict = PyObject_GetAttrString(pdmod, "_objects");
             if (!obj_dict || !PyDict_Check(obj_dict)) {
@@ -820,17 +838,21 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
                 obj_dict = PyDict_New();
                 if (!obj_dict) {
                     PyErr_SetString(PyExc_MemoryError, "Failed to create _objects dictionary");
+                    logpost(NULL, 4, "Failed to create _objects dictionary");
                     Py_DECREF(pdmod);
-                    return -1;
+                    return 0;
                 }
 
                 // Set _objects in puredata module
                 if (PyObject_SetAttrString(pdmod, "_objects", obj_dict) < 0) {
                     PyErr_SetString(PyExc_RuntimeError,
                                     "Failed to set _objects in puredata module");
+                    logpost(NULL, 4, "Failed to set _objects in puredata module");
+
                     Py_DECREF(obj_dict);
+                    Py_DECREF(subclass);
                     Py_DECREF(pdmod);
-                    return -1;
+                    return 0;
                 }
             }
 
@@ -838,9 +860,11 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
             PyObject *capsule = PyCapsule_New((void *)pdclass, NULL, NULL);
             if (!capsule) {
                 PyErr_SetString(PyExc_RuntimeError, "Failed to create capsule for pdclass");
+                logpost(NULL, 4, "Failed to create capsule for pdclass");
                 Py_DECREF(obj_dict);
+                Py_DECREF(subclass);
                 Py_DECREF(pdmod);
-                return -1;
+                return 0;
             }
 
             // Add the capsule to the _objects dictionary using the class name as the key
@@ -848,13 +872,13 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
                 PyErr_SetString(PyExc_RuntimeError, "Failed to store pdclass in _objects");
                 Py_DECREF(capsule);
                 Py_DECREF(obj_dict);
+                Py_DECREF(subclass);
                 Py_DECREF(pdmod);
-                return -1;
+                return 0;
             }
-
-            // Cleanup references
             Py_DECREF(capsule);
             Py_DECREF(obj_dict);
+            Py_DECREF(subclass);
             Py_DECREF(pdmod);
             return 1;
         }
@@ -870,12 +894,6 @@ static int pdpyobj_init(t_pdpy_pyclass *self, PyObject *args) {
         return -1;
     }
 
-    // python object methods
-    t_class *pdclass = class_new(gensym(objname), (t_newmethod)pdpy_new, (t_method)py4pdobj_free,
-                                 sizeof(t_pdpy_pyclass), 0, A_GIMME, 0);
-    class_addmethod(pdclass, (t_method)pdpy_menu_open, gensym("menu-open"), A_NULL);
-    class_addanything(pdclass, pdpy_anything);
-
     PyObject *pdmod = PyImport_ImportModule("puredata");
     if (!pdmod) {
         PyErr_SetString(PyExc_ImportError, "Could not import module 'puredata'");
@@ -887,7 +905,7 @@ static int pdpyobj_init(t_pdpy_pyclass *self, PyObject *args) {
     if (!obj_dict || !PyDict_Check(obj_dict)) {
         Py_XDECREF(obj_dict);
         obj_dict = PyDict_New();
-        if (!obj_dict) {
+        if (obj_dict == nullptr) {
             PyErr_SetString(PyExc_MemoryError, "Failed to create _objects dictionary");
             Py_DECREF(pdmod);
             return -1;
@@ -903,25 +921,6 @@ static int pdpyobj_init(t_pdpy_pyclass *self, PyObject *args) {
     }
 
     // Create a capsule to hold the pdclass pointer
-    PyObject *capsule = PyCapsule_New((void *)pdclass, NULL, NULL);
-    if (!capsule) {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to create capsule for pdclass");
-        Py_DECREF(obj_dict);
-        Py_DECREF(pdmod);
-        return -1;
-    }
-
-    // Add the capsule to the _objects dictionary using the class name as the key
-    if (PyDict_SetItemString(obj_dict, objname, capsule) < 0) {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to store pdclass in _objects");
-        Py_DECREF(capsule);
-        Py_DECREF(obj_dict);
-        Py_DECREF(pdmod);
-        return -1;
-    }
-
-    // Cleanup references
-    Py_DECREF(capsule);
     Py_DECREF(obj_dict);
     Py_DECREF(pdmod);
 
@@ -953,10 +952,12 @@ static PyObject *pdpy_new_clock(PyObject *self, PyObject *args) {
     // get pyfunction to be executed
     PyObject *func;
     if (!PyArg_ParseTuple(args, "O", &func)) {
+        PyErr_SetString(PyExc_TypeError, "ClockType not ready");
         return NULL;
     }
 
     if (!PyCallable_Check(func)) {
+        PyErr_SetString(PyExc_TypeError, "ClockType not ready");
         return NULL;
     }
 
@@ -989,20 +990,14 @@ static PyObject *pdpy_error(t_pdpy_pyclass *self, PyObject *args) {
             const char *str = PyUnicode_AsUTF8(str_obj);
             if (str) {
                 size_t str_len = strlen(str);
-
-                // Check if adding this string would exceed MAXPDSTRING - 4
                 if (msg_len + str_len + 4 >= MAXPDSTRING) {
-                    strcat(msg, "...");
-                    msg_len += 3;
                     Py_DECREF(str_obj);
+                    pd_snprintf(msg + strlen(msg), sizeof(msg) - strlen(msg), "...");
                     break;
                 }
-
-                strcat(msg, str);
-                msg_len += str_len;
-
+                pd_snprintf(msg + strlen(msg), sizeof(msg) - strlen(msg), "%s", str);
                 if (i < num_args - 1 && msg_len + 1 < MAXPDSTRING) {
-                    strcat(msg, " ");
+                    pd_snprintf(msg + strlen(msg), sizeof(msg) - strlen(msg), " ");
                     msg_len++;
                 }
             }
@@ -1010,7 +1005,7 @@ static PyObject *pdpy_error(t_pdpy_pyclass *self, PyObject *args) {
             Py_DECREF(str_obj);
         }
     }
-    pd_error(self->pdobj, "%s", msg);
+    pd_error(self->pdobj, "[%s]: %s", self->name, msg);
     Py_RETURN_TRUE;
 }
 
@@ -1032,29 +1027,22 @@ static PyObject *pdpy_logpost(t_pdpy_pyclass *self, PyObject *args) {
             }
 
             const char *str = PyUnicode_AsUTF8(str_obj);
+            Py_DECREF(str_obj);
             if (str) {
                 size_t str_len = strlen(str);
-
-                // Check if adding this string would exceed MAXPDSTRING - 4
                 if (msg_len + str_len + 4 >= MAXPDSTRING) {
-                    strcat(msg, "...");
-                    msg_len += 3;
-                    Py_DECREF(str_obj);
+                    pd_snprintf(msg + strlen(msg), sizeof(msg) - strlen(msg), "...");
                     break;
                 }
-
-                strcat(msg, str);
-                msg_len += str_len;
-
+                pd_snprintf(msg + strlen(msg), sizeof(msg) - strlen(msg), "%s", str);
                 if (i < num_args - 1 && msg_len + 1 < MAXPDSTRING) {
-                    strcat(msg, " ");
+                    pd_snprintf(msg + strlen(msg), sizeof(msg) - strlen(msg), " ");
                     msg_len++;
                 }
             }
-            Py_DECREF(str_obj);
         }
     }
-    logpost(self->pdobj, loglevel, "%s", msg);
+    logpost(self->pdobj, loglevel, "[%s]: %s", self->name, msg);
     Py_RETURN_TRUE;
 }
 
@@ -1068,8 +1056,8 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
         PyErr_SetString(PyExc_TypeError, "[Python] pd.out: wrong arguments");
         return NULL;
     }
-    t_atomtype pdtype = type;
 
+    t_atomtype pdtype = type;
     t_pdpy_pdobj *x = self->pdobj;
     if (outlet > self->pdobj->outletsize - 1) {
         PyErr_SetString(PyExc_IndexError, "Index out of range for outlet");
@@ -1077,7 +1065,6 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
     }
 
     t_outlet *out = x->outs[outlet];
-
     if (pdtype == PYOBJECT) {
         x->outobjptr->pValue = pValue;
         t_atom args[2];
@@ -1086,8 +1073,7 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
         outlet_anything(out, gensym("PyObject"), 2, args);
         Py_RETURN_TRUE;
     } else if (pdtype == A_FLOAT) {
-        PyObject *f = PyNumber_Float(pValue);
-        t_float v = PyFloat_AsDouble(f);
+        t_float v = PyFloat_AsDouble(pValue);
         outlet_float(out, v);
     } else if (pdtype == A_SYMBOL) {
         const char *s = PyUnicode_AsUTF8(pValue);
@@ -1121,10 +1107,9 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
             }
             outlet_list(out, &s_list, size, list_array);
         } else {
-            PyErr_SetString(PyExc_TypeError, "Output with pd.GIMME require a list output");
+            PyErr_SetString(PyExc_TypeError, "Output with pd.LIST require a list output");
         }
     }
-
     Py_RETURN_TRUE;
 }
 
@@ -1149,6 +1134,7 @@ static PyObject *pdpy_tabread(t_pdpy_pyclass *self, PyObject *args) {
         garray_getfloatwords(pdarray, &vecsize, &vec);
         PyObject *pAudio = PyTuple_New(vecsize);
         for (i = 0; i < vecsize; i++) {
+            // PyTuple_SetItem steal the ref
             PyTuple_SetItem(pAudio, i, PyFloat_FromDouble(vec[i].w_float));
         }
         return pAudio;
@@ -1247,7 +1233,6 @@ PyTypeObject pdpy_type = {
     .tp_methods = pdpy_methods,
     .tp_new = PyType_GenericNew,
     .tp_init = (initproc)pdpyobj_init,
-    .tp_getset = pdpy_getset,
 };
 
 // ─────────────────────────────────────
@@ -1262,6 +1247,7 @@ static PyObject *pdpy_post(PyObject *self, PyObject *args) {
             PyObject *str = PyObject_Str(arg);
             startpost(PyUnicode_AsUTF8(str));
             startpost(" ");
+            Py_DECREF(str);
         }
         startpost("\n");
     }
@@ -1283,15 +1269,18 @@ static PyObject *pd4pdmodule_init(PyObject *self) {
         return NULL;
     }
 
+    // PyModule_AddObject steal ref
+    // outlets output type
     PyModule_AddObject(self, "FLOAT", PyLong_FromLong(A_FLOAT));
     PyModule_AddObject(self, "SYMBOL", PyLong_FromLong(A_SYMBOL));
-    PyModule_AddObject(self, "GIMME", PyLong_FromLong(A_GIMME));
+    PyModule_AddObject(self, "LIST", PyLong_FromLong(A_GIMME));
     PyModule_AddObject(self, "PYOBJECT", PyLong_FromLong(PYOBJECT));
 
+    // inlets type
     PyModule_AddObject(self, "SIGNAL", PyUnicode_FromString(s_signal.s_name));
     PyModule_AddObject(self, "DATA", PyUnicode_FromString(s_anything.s_name));
 
-    // NewObject
+    // NewObject class
     Py_INCREF(&pdpy_type);
     int r = PyModule_AddObject(self, "NewObject", (PyObject *)&pdpy_type);
     if (r != 0) {

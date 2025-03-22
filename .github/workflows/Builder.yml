@@ -3,12 +3,12 @@ name: C/C++ CI
 on:
   workflow_dispatch:
   push:
-    branches: [master]
+    branches: [master, py4pd-v1.0]
   pull_request:
-    branches: [master]
+    branches: [master, py4pd-v1.0]
 env:
   LIBNAME: py4pd
-  LIBVERSION: 0.8.7
+  LIBVERSION: 1.0.0
 jobs:
   macos-x86:
     runs-on: macos-13

@@ -90,11 +90,10 @@ void py4pd_setup(void) {
     if (!Py_IsInitialized()) {
         objCount = 0;
         post("");
-        post("[py4pd] by Charles K. Neimog");
+        post("[py4pd] by Charles K. Neimog | version %d.%d.%d", PY4PD_MAJOR_VERSION,
+             PY4PD_MINOR_VERSION, PY4PD_MICRO_VERSION);
         post("[py4pd] Python version %d.%d.%d", PY_MAJOR_VERSION, PY_MINOR_VERSION,
              PY_MICRO_VERSION);
-        post("[py4pd] version %d.%d.%d", PY4PD_MAJOR_VERSION, PY4PD_MINOR_VERSION,
-             PY4PD_MICRO_VERSION);
         post("");
         int r = PyImport_AppendInittab("puredata", PyInit_pd);
         if (r < 0) {

@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 project(py4pd C)
 set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_EXTENSIONS OFF) # Use pure C23 without compiler extensions
 
+# ╭──────────────────────────────────────╮
+# │               pd.cmake               │
+# ╰──────────────────────────────────────╯
 cmake_policy(SET CMP0135 NEW)
 set(PDCMAKE_FILE ${CMAKE_BINARY_DIR}/pd.cmake)
 if(NOT EXISTS ${PDCMAKE_FILE})
@@ -12,6 +16,7 @@ if(NOT EXISTS ${PDCMAKE_FILE})
         STATUS DOWNLOAD_STATUS)
 endif()
 include(${PDCMAKE_FILE})
+
 # ╭──────────────────────────────────────╮
 # │          Object Definitions          │
 # ╰──────────────────────────────────────╯
@@ -21,7 +26,9 @@ else()
     message(STATUS "Using Python version: ${PYVERSION}")
 endif()
 
-# ──────────── Python Include ────────────
+# ╭──────────────────────────────────────╮
+# │            Python Include            │
+# ╰──────────────────────────────────────╯
 if(WIN32)
     execute_process(
         COMMAND powershell -Command "py -${PYVERSION} -c \"import sysconfig; print(sysconfig.get_paths()['include'])\""
@@ -40,7 +47,9 @@ if(EXEC_RESULT)
     message(FATAL_ERROR "Failed get Python include directory.")
 endif()
 
-# ─────────── Python LD Flags ─────────
+# ╭──────────────────────────────────────╮
+# │           Python LD Flags            │
+# ╰──────────────────────────────────────╯
 if(WIN32)
     execute_process(
         COMMAND powershell -Command
@@ -69,14 +78,11 @@ else()
     list(APPEND PYTHON_LD_FLAGS "-lpython${PYVERSION}")
 endif()
 
-# split the flags into a list
-
 # ╭──────────────────────────────────────╮
 # │           PureData Object            │
 # ╰──────────────────────────────────────╯
 file(GLOB PY4PD_SOURCES ${CMAKE_SOURCE_DIR}/Sources/*.c)
 pd_add_external(py4pd "${PY4PD_SOURCES}")
-target_include_directories(py4pd PUBLIC ${NUMPY_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC ${PYTHON_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC "/usr/include/python${PYVERSION}")
 target_link_libraries(py4pd PUBLIC "${PYTHON_LD_FLAGS}")
