@@ -1,9 +1,0 @@
-#N canvas 669 32 610 327 8;
-#X obj 3 3 py4pd -lib py4pd;
-#X obj 5 115 py4pd.libs;
-#X msg 5 48 libraries;
-#X msg 12 78 install py4pd-upic;
-#X text 56 48 See all libraries of py4pd.;
-#X text 112 77 Install py4pd-upic library.;
-#X connect 2 0 1 0;
-#X connect 3 0 1 0;

@@ -1,0 +1,31 @@
+import puredata as pd
+import math
+
+
+class pytest_tilde(pd.NewObject):  # <== Class name is not important
+    name: str = "pytest~"  # <== Object name, same as {name}.pd_py
+    dsp: bool = True  # <== Not required, False by default
+
+    def __init__(self):
+        self.inlets = pd.SIGNAL
+        self.outlets = pd.SIGNAL
+        self.phase = 0
+        self.freq = 440
+        self.sample_rate = 48000
+
+    def in_1_freq(self, args):
+        self.freq = args[0]
+
+    def dsp_perform(self, input):
+        buffer_size = 64
+        out_buffer = []
+        for i in range(buffer_size):
+            phase_increment = 2 * math.pi * input[0][i] / self.sample_rate
+            sample = math.sin(self.phase)
+            out_buffer.append(sample)
+            self.phase += phase_increment
+            if self.phase > 2 * math.pi:
+                self.phase -= 2 * math.pi
+
+        out_tuple = tuple(out_buffer)
+        return out_tuple

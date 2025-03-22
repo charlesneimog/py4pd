@@ -1,0 +1,14 @@
+import puredata as pd
+import math
+
+
+class pytest(pd.NewObject):  # <== Class name is not important
+    name: str = "pytest"  # <== Object name, same as {name}.pd_py
+
+    def __init__(self):
+        self.inlets = (pd.DATA, pd.DATA)
+        self.outlets = (pd.DATA, pd.DATA)
+
+    def in_1_freq(self, args):
+        self.freq = args[0]
+
