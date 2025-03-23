@@ -1,7 +1,7 @@
 import puredata as pd
 import os
 
-print("done")
+print(pd._objects)
 
 
 class pymetro(pd.NewObject):  # <== Class name is not important
@@ -30,7 +30,7 @@ class pymetro(pd.NewObject):  # <== Class name is not important
 
     def in_1_reload(self, args: list):
         self.reload()
-        self.logpost(2, "Reloaded 2")
+        self.logpost(2, "Reloaded 32")
 
     def tick(self):
         if self.toggle:

@@ -90,7 +90,8 @@ static void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc,
 static void pdpy_clock_execute(t_pdpy_clock *x);
 static void pdpy_printerror(t_pdpy_pdobj *x);
 static void pdpy_pyobject(t_pdpy_pdobj *x, t_symbol *s, t_symbol *id);
-static PyObject *pdpy_newpyclass(t_symbol *s, t_pdpy_pdobj *x, PyObject *pdmod, PyObject *pyargs);
+// static PyObject *pdpy_newpyclass(t_symbol *s, t_pdpy_pdobj *x, PyObject *pdmod, PyObject
+// *pyargs);
 
 // ╭─────────────────────────────────────╮
 // │                Clock                │
@@ -277,6 +278,8 @@ static void pdpy_proxyinlet_fwd(t_pdpy_proxyinlet *p, t_symbol *s, int argc, t_a
     if (!argc) {
         return;
     }
+
+    //
     char methodname[MAXPDSTRING];
     pd_snprintf(methodname, MAXPDSTRING, "in_%d_%s", p->id, atom_getsymbol(argv)->s_name);
     pdpy_execute(p->owner, methodname, atom_getsymbol(argv), argc - 1, argv + 1);
@@ -322,99 +325,100 @@ static PyObject *pdpy_getoutptr(t_symbol *s) {
 }
 
 // ─────────────────────────────────────
-static PyObject *pdpy_newpyclass(t_symbol *s, t_pdpy_pdobj *x, PyObject *pdmod, PyObject *pyargs) {
-    const char *name = s->s_name;
-    PyObject *pd_newobject = PyObject_GetAttrString(pdmod, "NewObject");
-    if (!pd_newobject) {
-        PyErr_SetString(PyExc_AttributeError, "Could not find 'NewObject' in 'puredata' module");
-        PyErr_Print();
-        Py_DECREF(pdmod);
-        return 0;
-    }
-
-    PyObject *subclasses = PyObject_CallMethod(pd_newobject, "__subclasses__", NULL);
-    if (!subclasses || !PyList_Check(subclasses)) {
-        PyErr_SetString(PyExc_TypeError, "'NewObject.__subclasses__()' did not return a list");
-        PyErr_Print();
-        Py_DECREF(pd_newobject);
-        Py_DECREF(pdmod);
-        return 0;
-    }
-
-    Py_ssize_t num_subclasses = PyList_Size(subclasses);
-    for (Py_ssize_t i = 0; i < num_subclasses; i++) {
-        PyObject *subclass = PyList_GetItem(subclasses, i); // Borrowed reference
-        if (!subclass) {
-            continue;
-        }
-        PyObject *objname = PyObject_GetAttrString(subclass, "name");
-        if (!objname) {
-            continue;
-        }
-        const char *objstring = PyUnicode_AsUTF8(objname);
-        if (strcmp(objstring, name) == 0) {
-            PyObject *pdmod = PyImport_ImportModule("puredata");
-            if (pdmod == NULL) {
-                PyErr_SetString(PyExc_ImportError, "Failed to import 'puredata' module");
-                return NULL;
-            }
-
-            PyObject *currobj = PyCapsule_New((void *)x, "_currentobj", NULL);
-            PyObject_SetAttrString(pdmod, "_currentobj", currobj);
-            PyObject *self = PyObject_CallOneArg(subclass, pyargs);
-            if (!self) {
-                pdpy_printerror(x);
-                continue;
-            }
-
-            PyObject_SetAttrString(pdmod, "_currentobj", Py_None);
-            Py_DECREF(pdmod);
-            return self;
-        }
-        Py_DECREF(objname);
-    }
-    return NULL;
-}
-
-// ─────────────────────────────────────
-t_class *pdpyobj_get_class(const char *classname) {
+t_class *pdpyobj_get_pdclass(const char *classname) {
     PyObject *pdmod = PyImport_ImportModule("puredata");
     if (!pdmod) {
-        PyErr_SetString(PyExc_ImportError, "Failed to import 'puredata' module");
+        pd_error(NULL, "Failed to import puredata module");
+        pdpy_printerror(NULL);
         return NULL;
     }
 
     PyObject *obj_dict = PyObject_GetAttrString(pdmod, "_objects");
     if (!obj_dict || !PyDict_Check(obj_dict)) {
-        PyErr_SetString(PyExc_RuntimeError, "Missing or invalid '_objects' dictionary");
+        pdpy_printerror(NULL);
         Py_XDECREF(obj_dict);
         Py_DECREF(pdmod);
         return NULL;
     }
 
+    // Get the class dictionary
+    PyObject *objclasses = PyDict_GetItemString(obj_dict, classname);
+    if (!objclasses || !PyDict_Check(objclasses)) {
+        pdpy_printerror(NULL);
+        Py_DECREF(pdmod);
+        return NULL; // Don't decref obj_dict since it's borrowed
+    }
+
     // Get the capsule from the dictionary
-    PyObject *capsule = PyDict_GetItemString(obj_dict, classname);
-    if (!capsule) {
-        PyErr_SetString(PyExc_KeyError, "Class not found in _objects");
-        Py_DECREF(obj_dict);
+    PyObject *pdclass = PyDict_GetItemString(objclasses, "pd_class");
+    if (!pdclass || !PyCapsule_CheckExact(pdclass)) {
+        pd_error(NULL, "Class '%s' not found or invalid in _objects", classname);
         Py_DECREF(pdmod);
         return NULL;
     }
 
     // Extract the t_class pointer from the capsule
-    t_class *pdclass = (t_class *)PyCapsule_GetPointer(capsule, NULL);
-    if (!pdclass) {
-        PyErr_SetString(PyExc_RuntimeError, "Invalid capsule for pdclass");
-        Py_DECREF(obj_dict);
+    t_class *newobj = (t_class *)PyCapsule_GetPointer(pdclass, NULL);
+    if (!newobj) {
+        pd_error(NULL, "Invalid capsule for pdclass '%s'", classname);
         Py_DECREF(pdmod);
         return NULL;
     }
 
-    // Cleanup references (do NOT decrement the capsule—it's borrowed)
-    Py_DECREF(obj_dict);
+    // Cleanup references (do NOT decrement borrowed references)
     Py_DECREF(pdmod);
 
-    return pdclass;
+    return newobj;
+}
+
+// ─────────────────────────────────────
+PyObject *pdpyobj_get_pyclass(t_pdpy_pdobj *x, const char *classname, PyObject *args) {
+    PyObject *pdmod = PyImport_ImportModule("puredata");
+    if (!pdmod) {
+        pd_error(NULL, "Failed to import puredata module");
+        pdpy_printerror(NULL);
+        return NULL;
+    }
+
+    PyObject *obj_dict = PyObject_GetAttrString(pdmod, "_objects");
+    if (!obj_dict || !PyDict_Check(obj_dict)) {
+        pdpy_printerror(NULL);
+        Py_XDECREF(obj_dict);
+        Py_DECREF(pdmod);
+        return NULL;
+    }
+
+    // Get the class dictionary
+    PyObject *objclasses = PyDict_GetItemString(obj_dict, classname);
+    if (!objclasses) {
+        pdpy_printerror(NULL);
+        Py_DECREF(pdmod);
+        return NULL; // Don't decref obj_dict since it's borrowed
+    }
+
+    PyObject *pyclass = PyDict_GetItemString(objclasses, "py_class");
+    if (!pyclass) {
+        pd_error(NULL, "Class '%s' not found or invalid in _objects", classname);
+        Py_DECREF(pdmod);
+        return NULL;
+    }
+
+    PyObject *currobj = PyCapsule_New((void *)x, "_currentobj", NULL);
+    PyObject_SetAttrString(pdmod, "_currentobj", currobj);
+    PyObject *newobj = PyObject_CallOneArg(pyclass, args);
+    PyObject_SetAttrString(pdmod, "_currentobj", Py_None);
+
+    // ╭─────────────────────────────────────╮
+    // │   TODO: NEED MEMORY CHECK FOR ALL   │
+    // │          NEW WAYS TO DO IT          │
+    // ╰─────────────────────────────────────╯
+
+    if (newobj == NULL) {
+        pdpy_printerror(NULL);
+        pd_error(NULL, "Failed to create python class");
+    }
+
+    return newobj;
 }
 
 // ─────────────────────────────────────
@@ -525,9 +529,13 @@ static void pdpy_outlets(t_pdpy_pdobj *x) {
 
 // ─────────────────────────────────────
 static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
-    t_class *pdobj = pdpyobj_get_class(s->s_name);
-    t_pdpy_pdobj *x = (t_pdpy_pdobj *)pd_new(pdobj);
+    t_class *pdobj = pdpyobj_get_pdclass(s->s_name);
+    if (pdobj == NULL) {
+        pd_error(NULL, "[%s] t_class for %s is unvalid, please report!", s->s_name, s->s_name);
+        return NULL;
+    }
 
+    t_pdpy_pdobj *x = (t_pdpy_pdobj *)pd_new(pdobj);
     PyObject *pdmod = PyImport_ImportModule("puredata");
     if (pdmod == NULL) {
         PyErr_SetString(PyExc_ImportError, "Failed to import 'puredata' module");
@@ -545,13 +553,16 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
         }
     }
 
-    PyObject *pyclass = pdpy_newpyclass(s, x, pdmod, pyargs);
-    t_pdpy_pyclass *self = (t_pdpy_pyclass *)pyclass;
-    if (self == NULL) {
-        pd_error(NULL, "Failed to create object");
+    PyObject *objects = PyDict_GetItemString(pdmod, "_objects");
+
+    //
+    PyObject *pyclass = pdpyobj_get_pyclass(x, s->s_name, pyargs);
+    if (pyclass == NULL) {
+        pdpy_printerror(x);
         return NULL;
     }
 
+    t_pdpy_pyclass *self = (t_pdpy_pyclass *)pyclass;
     x->pyclass = pyclass;
     self->name = s->s_name;
     self->pdobj = x;
@@ -604,6 +615,7 @@ void pdpy_printerror(t_pdpy_pdobj *x) {
                         for (int i = 0; i < PyList_Size(formattedException); i++) {
                             pd_error(x, "\n%s",
                                      PyUnicode_AsUTF8(PyList_GetItem(formattedException, i)));
+                            printf("\n%s", PyUnicode_AsUTF8(PyList_GetItem(formattedException, i)));
                         }
                         Py_DECREF(formattedException);
                     }
@@ -614,6 +626,7 @@ void pdpy_printerror(t_pdpy_pdobj *x) {
         } else {
             PyObject *pstr = PyObject_Str(pvalue);
             pd_error(x, "[py4pd] %s", PyUnicode_AsUTF8(pstr));
+            printf("\n%s", PyUnicode_AsUTF8(pstr));
             Py_DECREF(pstr);
         }
     }
@@ -882,153 +895,169 @@ static void pdpy_proxyinlet_init(t_pdpy_proxyinlet *p, t_pdpy_pdobj *owner, unsi
 static t_class *pdpy_classnew(const char *n, bool dsp) {
     t_class *c = class_new(gensym(n), (t_newmethod)pdpy_new, (t_method)py4pdobj_free,
                            sizeof(t_pdpy_pdobj), CLASS_NOINLET | CLASS_MULTICHANNEL, A_GIMME, 0);
+
     class_addmethod(c, (t_method)pdpy_menu_open, gensym("menu-open"), A_NULL);
     if (dsp) {
+        // TODO: Ver como lua faz isso
         class_addmethod(c, (t_method)pdpy_dsp, gensym("dsp"), A_CANT, 0);
     }
+
     return c;
 }
 
 // ─────────────────────────────────────
-int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
-    char fullpath[1024];
-    if (!dirbuf || !name) {
-        pd_error(NULL, "Error: dirbuf or name is NULL\n");
-        return 0;
+static int pdpy_create_newpyobj(PyObject *subclass, const char *name) {
+    // TODO: Warning
+    bool havedsp = false;
+    PyObject *dsp = PyObject_GetAttrString(subclass, "dsp");
+    if (dsp) {
+        havedsp = PyObject_IsTrue(dsp);
+    } else {
+        havedsp = false;
+        PyErr_Clear(); // Ignore the error and clear the exception
     }
-    pd_snprintf(fullpath, sizeof(fullpath), "%s/%s.pd_py", dirbuf, name);
+    Py_XDECREF(dsp);
 
-    FILE *file = fopen(fullpath, "r");
-    if (file == NULL) {
-        PyErr_SetString(PyExc_ImportError, "Failed to open module file");
-        return 0;
-    }
-
-    // Run the Python file
-    if (PyRun_SimpleFile(file, fullpath) != 0) {
+    // save object classes (pd and python)
+    PyObject *pd_module = PyImport_ImportModule("puredata");
+    if (pd_module == NULL) {
         pdpy_printerror(NULL);
-        fclose(file);
         return 0;
     }
 
-    PyObject *pdmod = PyImport_ImportModule("puredata");
-    if (!pdmod) {
-        PyErr_SetString(PyExc_ImportError, "Could not import module 'puredata'");
+    // get all objects dict
+    PyObject *pyexternals = PyObject_GetAttrString(pd_module, "_objects");
+    if (pyexternals == NULL) {
+        pdpy_printerror(NULL);
+        return 0;
+    }
+
+    // create new dict for this object
+    PyObject *externaldict = PyDict_New();
+
+    // pyclass
+    PyDict_SetItemString(externaldict, "py_class", subclass);
+
+    // pdclass
+    t_class *pdclass = pdpy_classnew(name, havedsp);
+    PyObject *capsule = PyCapsule_New((void *)pdclass, NULL, NULL);
+    if (!capsule) {
+        pdpy_printerror(NULL);
+        logpost(NULL, 0, "Failed to create capsule for pdclass");
+        return 0;
+    }
+
+    if (PyDict_SetItemString(externaldict, "pd_class", capsule) < 0) {
+        Py_DECREF(capsule); // Free capsule reference to prevent memory leak
+        pdpy_printerror(NULL);
+        logpost(NULL, 0, "Failed to add capsule to dictionary");
+        return 0;
+    }
+
+    Py_DECREF(capsule); // Free capsule reference after adding to dictionary
+
+    // save both classes in external dict
+    if (PyDict_SetItemString(pyexternals, name, externaldict) < 0) {
+        pdpy_printerror(NULL);
+        logpost(NULL, 0, "Failed to create capsule for pdclass");
+        return 0;
+    }
+
+    return 1;
+}
+
+// ─────────────────────────────────────
+static int pdpy_validate_pd_subclasses(PyObject *module, const char *filename) {
+    // Get pd.NewObject type
+    PyObject *pd_module = PyImport_ImportModule("puredata");
+    if (!pd_module) {
         PyErr_Print();
         return 0;
     }
 
-    // Get the NewObject class from the module
-    PyObject *pd_newobject = PyObject_GetAttrString(pdmod, "NewObject");
-    if (!pd_newobject) {
-        PyErr_SetString(PyExc_AttributeError, "Could not find 'NewObject' in 'puredata' module");
+    PyObject *new_object_type = PyObject_GetAttrString(pd_module, "NewObject");
+    Py_DECREF(pd_module);
+    if (!new_object_type) {
         PyErr_Print();
-        Py_DECREF(pdmod);
         return 0;
     }
 
-    PyObject *subclasses = PyObject_CallMethod(pd_newobject, "__subclasses__", NULL);
-    if (!subclasses || !PyList_Check(subclasses)) {
-        PyErr_SetString(PyExc_TypeError, "'NewObject.__subclasses__()' did not return a list");
-        PyErr_Print();
-        Py_DECREF(pd_newobject);
-        Py_DECREF(pdmod);
-        return 0;
-    }
+    // Get module dictionary
+    PyObject *module_dict = PyModule_GetDict(module);
+    PyObject *items = PyDict_Items(module_dict);
+    Py_ssize_t num_items = PyList_Size(items);
 
-    Py_ssize_t num_subclasses = PyList_Size(subclasses);
-    for (Py_ssize_t i = 0; i < num_subclasses; i++) {
-        PyObject *subclass = PyList_GetItem(subclasses, i); // Borrowed reference
-        if (!subclass) {
-            continue;
-        }
-
-        PyObject *objname = PyObject_GetAttrString(subclass, "name");
-        if (!objname) {
-            pd_error(NULL,
-                     "[py4pd] not possible to read %s inside %s, 'name' class attribute is missing",
-                     name, dirbuf);
-            continue;
-        }
-
-        const char *objstring = PyUnicode_AsUTF8(objname);
-        if (strcmp(objstring, name) == 0) {
-            bool havedsp = false;
-            PyObject *dsp = PyObject_GetAttrString(subclass, "dsp");
-            if (dsp) {
-                havedsp = PyObject_IsTrue(dsp);
-            } else {
-                havedsp = false;
-                PyErr_Clear(); // Ignore the error and clear the exception
-            }
-            Py_XDECREF(dsp);
-
-            // python object methods
-            t_class *pdclass = pdpy_classnew(name, havedsp);
-
-            // save object path
-            char script[MAXPDSTRING];
-            pd_snprintf(script, MAXPDSTRING, "%s/%s.pd_py", dirbuf, name);
-            pdclass->c_externdir = gensym(script);
-
-            PyObject *pdmod = PyImport_ImportModule("puredata");
-            if (!pdmod) {
-                pdpy_printerror(NULL);
-                PyErr_SetString(PyExc_ImportError, "Could not import module 'puredata'");
-                return 0;
-            }
-            PyObject *obj_dict = PyObject_GetAttrString(pdmod, "_objects");
-            if (!obj_dict || !PyDict_Check(obj_dict)) {
-                Py_XDECREF(obj_dict);
-                obj_dict = PyDict_New();
-                if (!obj_dict) {
-                    PyErr_SetString(PyExc_MemoryError, "Failed to create _objects dictionary");
-                    logpost(NULL, 4, "Failed to create _objects dictionary");
-                    Py_DECREF(pdmod);
-                    return 0;
+    int objects = 0;
+    for (Py_ssize_t i = 0; i < num_items; i++) {
+        PyObject *item = PyList_GetItem(items, i);
+        PyObject *name_obj = PyTuple_GetItem(item, 0);
+        PyObject *obj = PyTuple_GetItem(item, 1);
+        if (PyType_Check(obj)) {
+            if (PyObject_IsSubclass(obj, new_object_type) && (obj != new_object_type)) {
+                const char *class_name = PyUnicode_AsUTF8(name_obj);
+                PyObject *objname = PyObject_GetAttrString(obj, "name");
+                if (!objname) {
+                    pd_error(NULL,
+                             "[py4pd] not possible to read %s inside %s, 'name' class attribute is "
+                             "missing",
+                             "test", "test");
+                    continue;
                 }
-
-                // Set _objects in puredata module
-                if (PyObject_SetAttrString(pdmod, "_objects", obj_dict) < 0) {
-                    PyErr_SetString(PyExc_RuntimeError,
-                                    "Failed to set _objects in puredata module");
-                    logpost(NULL, 4, "Failed to set _objects in puredata module");
-
-                    Py_DECREF(obj_dict);
-                    Py_DECREF(subclass);
-                    Py_DECREF(pdmod);
-                    return 0;
+                int ok = pdpy_create_newpyobj(obj, PyUnicode_AsUTF8(objname));
+                if (!ok) {
+                    pdpy_printerror(NULL);
+                } else {
+                    objects++;
                 }
             }
-
-            // Create a capsule to hold the pdclass pointer
-            PyObject *capsule = PyCapsule_New((void *)pdclass, NULL, NULL);
-            if (!capsule) {
-                PyErr_SetString(PyExc_RuntimeError, "Failed to create capsule for pdclass");
-                logpost(NULL, 4, "Failed to create capsule for pdclass");
-                Py_DECREF(obj_dict);
-                Py_DECREF(subclass);
-                Py_DECREF(pdmod);
-                return 0;
-            }
-
-            // Add the capsule to the _objects dictionary using the class name as the key
-            if (PyDict_SetItemString(obj_dict, name, capsule) < 0) {
-                PyErr_SetString(PyExc_RuntimeError, "Failed to store pdclass in _objects");
-                Py_DECREF(capsule);
-                Py_DECREF(obj_dict);
-                Py_DECREF(subclass);
-                Py_DECREF(pdmod);
-                return 0;
-            }
-            Py_DECREF(capsule);
-            Py_DECREF(obj_dict);
-            Py_DECREF(subclass);
-            Py_DECREF(pdmod);
-            return 1;
         }
     }
-    return 0;
+
+    logpost(NULL, 3, "[py4pd] %d objects found inside %s", objects, filename);
+    Py_DECREF(items);
+    Py_DECREF(new_object_type);
+    return 1;
+}
+
+// ─────────────────────────────────────
+int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
+    char filename[1024];
+    pd_snprintf(filename, sizeof(filename), "%s/%s.pd_py", dirbuf, name);
+
+    char module_name[1024];
+    pd_snprintf(module_name, sizeof(module_name), "_%s", name);
+
+    PyObject *importlib = PyImport_ImportModule("importlib.machinery");
+    if (!importlib) {
+        PyErr_Print();
+        return 0;
+    }
+
+    PyObject *source_file_loader = PyObject_GetAttrString(importlib, "SourceFileLoader");
+    Py_DECREF(importlib);
+    if (!source_file_loader) {
+        PyErr_Print();
+        return 0;
+    }
+
+    // Create a loader instance
+    PyObject *loader_args = Py_BuildValue("(ss)", module_name, filename);
+    PyObject *loader = PyObject_CallObject(source_file_loader, loader_args);
+    Py_DECREF(source_file_loader);
+    Py_DECREF(loader_args);
+    if (!loader) {
+        PyErr_Print();
+        return 0;
+    }
+
+    PyObject *module = PyObject_CallMethod(loader, "load_module", "s", module_name);
+    if (!module) {
+        PyErr_Print();
+        return 0;
+    }
+
+    pdpy_validate_pd_subclasses(module, filename);
+    return 1;
 }
 
 // ─────────────────────────────────────
@@ -1305,51 +1334,7 @@ static PyObject *pdpy_tabwrite(t_pdpy_pyclass *self, PyObject *args, PyObject *k
 
 // ─────────────────────────────────────
 static PyObject *pdpy_reload(t_pdpy_pyclass *self, PyObject *args) {
-    t_pdpy_pdobj *x = (t_pdpy_pdobj *)self->pdobj;
-
-    // Check if pdobj is valid
-    if (x == NULL) {
-        PyErr_SetString(PyExc_TypeError, "self.reload: no pdobj");
-        return NULL;
-    }
-
-    // Get the script path
-    const char *script_path = x->obj.te_g.g_pd->c_externdir->s_name;
-
-    // Open the script file
-    FILE *fp = fopen(script_path, "r");
-    if (fp == NULL) {
-        PyErr_SetString(PyExc_FileNotFoundError, "Could not open script file");
-        return NULL;
-    }
-
-    // Clear any existing Python errors before reloading
-    PyErr_Clear();
-
-    // Execute the updated script file
-    PyRun_SimpleFile(fp, script_path);
-    fclose(fp);
-
-    // Import or reload your module (here, 'puredata')
-    PyObject *pdmod = PyImport_ImportModule("puredata");
-    if (pdmod == NULL) {
-        PyErr_SetString(PyExc_ImportError, "Failed to import 'puredata' module");
-        return NULL;
-    }
-
-    // Create a new Python class (heap type) from the updated module.
-    // (pdpy_newpyclass is assumed to be your function that creates the new class object.)
-    t_symbol *s = self->pdobj->obj.te_g.g_pd->c_name;
-    PyObject *newpyclass = pdpy_newpyclass(s, self->pdobj, pdmod, self->pyargs);
-    if (newpyclass == NULL) {
-        PyErr_SetString(PyExc_RuntimeError, "Failed to create new pyclass");
-        Py_DECREF(pdmod);
-        return NULL;
-    }
-
-    PyObject *old_dict = PyObject_GetAttrString(newpyclass, "__dir__");
-    PyObject_SetAttrString(old_dict, "__dir__", (PyObject *)self);
-
+    // PyObject_SetAttrString((PyObject *)self, "name", Py_None);
     Py_RETURN_TRUE;
 }
 
@@ -1445,8 +1430,9 @@ static PyObject *pd4pdmodule_init(PyObject *self) {
         PyErr_SetString(PyExc_RuntimeError, "Failed to add NewObject to module");
         return NULL;
     }
-    PyObject *obj_dict = PyDict_New();
-    r = PyModule_AddObject(self, "_objects", obj_dict);
+
+    PyObject *new_dict = PyDict_New();
+    r = PyModule_AddObject(self, "_objects", new_dict);
     if (r != 0) {
         PyErr_SetString(PyExc_RuntimeError, "Failed to add NewObject to module");
         return NULL;
