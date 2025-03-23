@@ -26,13 +26,13 @@ class pymetro(pd.NewObject):  # <== Class name is not important
             self.toggle = True
             self.tick()
         else:
+            self.metro.unset()
             self.toggle = False
 
     def in_1_reload(self, args: list):
         self.reload()
-        self.logpost(2, "Reloaded 32")
 
     def tick(self):
         if self.toggle:
             self.metro.delay(self.time)
-        self.out(0, pd.SYMBOL, "bang")
+        self.out(0, pd.SYMBOL, "test238")

@@ -45,7 +45,8 @@ typedef struct _pdpy_pdobj {
     unsigned sigoutlets;
 
     // clock
-    t_pdpy_clock *clock;
+    t_pdpy_clock **clocks;
+    int clocks_size;
 
     // in and outs
     t_outlet **outs;
@@ -78,6 +79,7 @@ typedef struct _pdpy_clock {
     t_pd pd;
     t_clock *clock;
     t_pdpy_pdobj *owner;
+    const char *functionname;
     float delay_time;
 } t_pdpy_clock;
 
@@ -188,6 +190,13 @@ static PyObject *pdpy_newclock(PyObject *self, PyObject *args) {
         return NULL;
     }
 
+    PyObject *funcname = PyObject_GetAttrString(func, "__name__");
+    if (!funcname) {
+        PyErr_SetString(PyExc_TypeError, "new_clock function has no __name__ attribute");
+        return NULL;
+    }
+    const char *funcnamestr = PyUnicode_AsUTF8(funcname);
+
     t_pdpy_clock *clock = (t_pdpy_clock *)PyObject_CallObject((PyObject *)&ClockType, NULL);
     if (!clock) {
         return NULL;
@@ -231,7 +240,16 @@ static PyObject *pdpy_newclock(PyObject *self, PyObject *args) {
     clock->pd = pdpy_proxyclock_class;
     clock->owner = ptr;
     clock->function = func;
+    clock->functionname = funcnamestr;
     clock->clock = clock_new(clock, (t_method)pdpy_clock_execute);
+
+    ptr->clocks =
+        (t_pdpy_clock **)resizebytes(ptr->clocks, ptr->clocks_size * sizeof(t_pdpy_clock *),
+                                     (ptr->clocks_size + 1) * sizeof(t_pdpy_clock *));
+
+    ptr->clocks[ptr->clocks_size] = clock;
+    ptr->clocks_size++;
+
     return (PyObject *)clock;
 }
 
@@ -307,9 +325,10 @@ void pdpy_pyobjectoutput_setup(void) {
 
 // ─────────────────────────────────────
 static t_pdpy_objptr *pdpy_createoutputptr(void) {
-    char buf[64];
     t_pdpy_objptr *x = (t_pdpy_objptr *)getbytes(sizeof(t_pdpy_objptr));
     x->x_pd = pdpy_pyobjectout_class;
+
+    char buf[64];
     int ret = pd_snprintf(buf, sizeof(buf), "<%p>", (void *)x);
     if (ret < 0 || ret >= sizeof(buf)) {
         buf[sizeof(buf) - 1] = '\0';
@@ -539,6 +558,7 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
     }
 
     t_pdpy_pdobj *x = (t_pdpy_pdobj *)pd_new(pdobj);
+    x->clocks_size = 0;
     PyObject *pdmod = PyImport_ImportModule("puredata");
     if (pdmod == NULL) {
         PyErr_SetString(PyExc_ImportError, "Failed to import 'puredata' module");
@@ -556,7 +576,6 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
         }
     }
 
-    PyObject *objects = PyDict_GetItemString(pdmod, "_objects");
     PyObject *pyclass = pdpyobj_get_pyclass(x, s->s_name, pyargs);
     if (pyclass == NULL) {
         pdpy_printerror(x);
@@ -589,6 +608,14 @@ static void py4pdobj_free(t_pdpy_pdobj *x) {
         free(x->proxy_in);
     }
     Py_DECREF(x->pyclass);
+    for (int i = 0; i < x->clocks_size; i++) {
+        t_pdpy_clock *c = x->clocks[i];
+        clock_unset(c->clock);
+        clock_free(c->clock);
+    }
+
+    pd_unbind((t_pd *)x->outobjptr, x->outobjptr->id);
+    freebytes(x->outobjptr, sizeof(t_pdpy_objptr));
 }
 
 // ─────────────────────────────────────
@@ -1042,8 +1069,8 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
     pd_snprintf(modname, sizeof(modname), "%s", name);
 
     FILE *fp = fopen(filename, "r");
-    if (!fp) {
-        perror("fopen");
+    if (fp == NULL) {
+        PyErr_SetString(PyExc_IOError, "Failed to read script file");
         return 0;
     }
     fseek(fp, 0, SEEK_END);
@@ -1052,13 +1079,13 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
     char *source = (char *)malloc(size + 1);
     if (!source) {
         fclose(fp);
-        fprintf(stderr, "Failed to allocate memory for source\n");
+        PyErr_SetString(PyExc_IOError, "Failed to allocate memory for source");
         return 0;
     }
     if (fread(source, 1, size, fp) != (size_t)size) {
         fclose(fp);
         free(source);
-        fprintf(stderr, "Failed to read file %s\n", filename);
+        PyErr_SetString(PyExc_IOError, "Failed to read script file");
         return 0;
     }
     source[size] = '\0';
@@ -1483,9 +1510,24 @@ static PyObject *pdpy_reload(t_pdpy_pyclass *self, PyObject *args) {
     newself->name = self->name;
     newself->pdobj = self->pdobj;
     newself->pyargs = self->pyargs;
-
     PyObject *pyclass = (PyObject *)newself;
 
+    // stops old clocks
+    for (int i = 0; i < self->pdobj->clocks_size; i++) {
+        t_pdpy_clock *clock = self->pdobj->clocks[i];
+        PyObject *func = PyObject_GetAttrString(pyclass, clock->functionname);
+        if (func != NULL && PyCallable_Check(func)) {
+            Py_DECREF(clock->function);
+            clock->function = func;
+            Py_INCREF(func);
+        } else {
+            pd_error(self->pdobj, "Function %s not found or invalid, disabling clock",
+                     clock->functionname);
+            clock_unset(clock->clock);
+        }
+    }
+
+    // dsp update
     if (self->pdobj->dspfunction != NULL) {
         PyObject *dspmethod = PyObject_GetAttrString(pyclass, "dsp_perform");
         if (!dspmethod || !PyCallable_Check(dspmethod)) {
