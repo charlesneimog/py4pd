@@ -64,6 +64,88 @@ static int pd4pd_loader_pathwise(t_canvas *canvas, const char *objectname, const
 }
 
 // ─────────────────────────────────────
+void py4pd_addpath2syspath(const char *path) {
+    if (!path) {
+        pd_error(NULL, "Invalid path: NULL");
+        return;
+    }
+
+    PyObject *sys = PyImport_ImportModule("sys");
+    if (!sys) {
+        pd_error(NULL, "Failed to import sys module");
+        return;
+    }
+
+    PyObject *sysPath = PyObject_GetAttrString(sys, "path");
+    if (!sysPath || !PyList_Check(sysPath)) {
+        pd_error(NULL, "Failed to access sys.path or it is not a list");
+        Py_XDECREF(sysPath);
+        Py_DECREF(sys);
+        return;
+    }
+
+    PyObject *pathEntry = PyUnicode_FromString(path);
+    if (!pathEntry) {
+        pd_error(NULL, "Failed to create Python string from path");
+        Py_DECREF(sysPath);
+        Py_DECREF(sys);
+        return;
+    }
+
+    if (PySequence_Contains(sysPath, pathEntry) == 0) {
+        if (PyList_Append(sysPath, pathEntry) != 0) {
+            pd_error(NULL, "Failed to append path to sys.path");
+        }
+    }
+
+    Py_DECREF(pathEntry);
+    Py_DECREF(sysPath);
+    Py_DECREF(sys);
+}
+
+// ─────────────────────────────────────
+void py4pd_set_py4pdpath_env(const char *path) {
+    if (!path) {
+        pd_error(NULL, "Invalid path: NULL");
+        return;
+    }
+
+    PyObject *os = PyImport_ImportModule("os");
+    if (!os) {
+        pd_error(NULL, "Failed to import os module");
+        return;
+    }
+
+    PyObject *environ = PyObject_GetAttrString(os, "environ");
+    if (!environ) {
+        pd_error(NULL, "Failed to access os.environ");
+        Py_DECREF(os);
+        return;
+    }
+
+    PyObject *key = PyUnicode_FromString("PY4PD_PATH");
+    PyObject *value = PyUnicode_FromString(path);
+
+    if (!key || !value) {
+        pd_error(NULL, "Failed to create Python strings for environment key/value");
+        Py_XDECREF(key);
+        Py_XDECREF(value);
+        Py_DECREF(environ);
+        Py_DECREF(os);
+        return;
+    }
+
+    if (PyObject_SetItem(environ, key, value) != 0) {
+        pd_error(NULL, "Failed to set PY4PD_PATH in os.environ");
+    }
+
+    Py_DECREF(key);
+    Py_DECREF(value);
+    Py_DECREF(environ);
+    Py_DECREF(os);
+}
+
+// ─────────────────────────────────────
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
     t_py *x = (t_py *)pd_new(py4pd_class);
     return (void *)x;
@@ -97,6 +179,12 @@ void py4pd_setup(void) {
             return;
         }
         Py_Initialize();
+
+        const char *py4pd_path = py4pd_class->c_externdir->s_name;
+        py4pd_set_py4pdpath_env(py4pd_path);
+        char py4pd_env[MAXPDSTRING];
+        pd_snprintf(py4pd_env, MAXPDSTRING, "%s/py4pd-env", py4pd_path);
+        py4pd_addpath2syspath(py4pd_env);
     }
 
     pdpy_proxyinlet_setup();

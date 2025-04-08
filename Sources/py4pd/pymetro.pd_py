@@ -4,8 +4,8 @@ import os
 print(pd._objects)
 
 
-class pymetro(pd.NewObject):  # <== Class name is not important
-    name: str = "pymetro"  # <== Object name, same as {name}.pd_py | THIS IS IMPORTANT
+class pymetro(pd.NewObject):
+    name: str = "pymetro"
 
     def __init__(self, args):
         self.inlets = 2
@@ -17,6 +17,7 @@ class pymetro(pd.NewObject):  # <== Class name is not important
             self.time = 1000
         self.metro = self.new_clock(self.tick)
         self.args = args
+        pd.post("here", os.environ["PY4PD_PATH"])
 
     def in_2_float(self, f: float):
         self.time = f

@@ -1,0 +1,69 @@
+import puredata as pd
+import threading
+import sys
+import os
+import sys
+
+HAS_PIP = True
+try:
+    import pip
+except ImportError:
+    HAS_PIP = False
+
+
+class pypip(pd.NewObject):
+    name: str = "py.pip"
+
+    def __init__(self, args):
+        self.inlets = 1
+        self.outlets = 1
+        self.installing = {}
+        self.points = "..."
+        self.counter = 0
+        self.metro = self.new_clock(self.tick)
+        self.py4pd_path = os.environ["PY4PD_PATH"]
+
+        if not HAS_PIP:
+            self.error(
+                "pip not found, the object py.pip will not work, please install pip!"
+            )
+
+    def tick(self):
+        installing_packages = [pkg for pkg, status in self.installing.items() if status]
+        if installing_packages:
+            message = (
+                "Installing "
+                + ", ".join(installing_packages)
+                + self.points[: self.counter + 1]
+            )
+            self.logpost(2, message)
+            self.counter += 1
+            self.counter %= 3
+            self.metro.delay(1000)
+        else:
+            self.logpost(2, "Done")
+
+    def in_1_pip(self, args):
+        if not HAS_PIP:
+            return
+        method = args[0]
+        if method == "install":
+            packages = args[1:]
+            for package in packages:
+                if package not in self.installing or not self.installing[package]:
+                    self.installing[package] = True
+
+                    def install_thread(pkg):
+                        self.logpost(2, f"Starting installation of {pkg}")
+                        exec_path = sys.executable
+                        command = f"{exec_path} -m pip install {pkg} "
+                        command += f'--target "{self.py4pd_path}/py4pd-env"'
+                        os.system(command)
+                        self.installing[pkg] = False
+
+                    threading.Thread(target=install_thread, args=(package,)).start()
+            self.metro.delay(500)
+
+    def in_1_reload(self, args: list):
+        self.reload()
+        pd.post("Reloaded!")

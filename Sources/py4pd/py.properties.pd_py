@@ -1,0 +1,11 @@
+import puredata as pd
+import math
+
+
+class properties(pd.NewObject):  # <== Class name is not important
+    name: str = "py.properties"  # <== Object name, same as {name}.pd_py
+    properties = True
+
+    def __init__(self, args):
+        pd.post("Done!")
+

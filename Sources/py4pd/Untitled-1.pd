@@ -1,2 +1,4 @@
-#N canvas 770 61 839 575 10;
-#X obj 74 61 py4pd;
+#N canvas 965 30 938 1001 12;
+#X declare -lib py4pd;
+#X obj 69 36 declare -lib py4pd;
+#X obj 53 154 py.properties;

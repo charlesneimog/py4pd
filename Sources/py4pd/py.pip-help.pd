@@ -1,0 +1,11 @@
+#N canvas 965 30 938 1001 12;
+#X declare -lib py4pd;
+#X obj 8 7 declare -lib py4pd;
+#X obj 28 194 py.pip;
+#X msg 82 141 reload;
+#X msg 28 53 pip install librosa;
+#X msg 53 89 pip install music21;
+#X obj 155 266 py.properties;
+#X connect 2 0 1 0;
+#X connect 3 0 1 0;
+#X connect 4 0 1 0;
