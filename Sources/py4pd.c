@@ -1,36 +1,9 @@
-#include <m_pd.h>
-
-#include <g_canvas.h>
-#include <m_imp.h>
-#include <s_stuff.h>
-
-#include <Python.h>
-
-#define PY4PD_MAJOR_VERSION 1
-#define PY4PD_MINOR_VERSION 0
-#define PY4PD_MICRO_VERSION 0
+#include "py4pd.h"
 
 // ╭─────────────────────────────────────╮
 // │             Definitions             │
 // ╰─────────────────────────────────────╯
 //
-extern PyMODINIT_FUNC pdpy_initpuredatamodule();
-extern void pdpy_proxyinlet_setup(void);
-extern void pdpy_pyobjectoutput_setup(void);
-extern int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf);
-extern int sys_trytoopenone(const char *dir, const char *name, const char *ext, char *dirresult,
-                            char **nameresult, unsigned int size, int bin);
-
-#define trytoopenone(dir, name, ...)                                                               \
-    sys_trytoopenone(sys_isabsolutepath(name) ? "" : dir, name, __VA_ARGS__)
-
-t_class *py4pd_class;
-int objCount = 0;
-
-// ─────────────────────────────────────
-typedef struct _py {
-    t_object obj;
-} t_py;
 
 // ─────────────────────────────────────
 static int pd4pd_loader_pathwise(t_canvas *canvas, const char *objectname, const char *path) {

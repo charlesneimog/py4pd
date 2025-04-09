@@ -1,326 +1,4 @@
-#include <string.h>
-
-#include <m_pd.h>
-
-#include <g_canvas.h>
-#include <m_imp.h>
-#include <s_stuff.h>
-
-#include <Python.h>
-
-typedef struct _pdpy_pyclass t_pdpy_pyclass;
-typedef struct _pdpy_clock t_pdpy_clock;
-static t_class *pdpy_proxyinlet_class = NULL;
-static t_class *pdpy_pyobjectout_class = NULL;
-static t_class *pdpy_proxyclock_class = NULL;
-
-#define PYOBJECT -1997
-#define PY4PDSIGTOTAL(s) ((t_int)((s)->s_length * (s)->s_nchans))
-
-// ╭─────────────────────────────────────╮
-// │          Object Base Class          │
-// ╰─────────────────────────────────────╯
-typedef struct _pdpy_objptr {
-    t_pd x_pd;
-    t_symbol *id;
-    PyObject *pValue;
-} t_pdpy_objptr;
-
-// ─────────────────────────────────────
-typedef struct _pdpy_pdobj {
-    t_object obj;
-    t_sample sample;
-    t_canvas *canvas;
-
-    // PyClass
-    const char *script_filename;
-    PyObject *pyclass;
-    char id[MAXPDSTRING];
-
-    // dsp
-    PyObject *dspfunction;
-    unsigned nchs;
-    unsigned vecsize;
-    unsigned siginlets;
-    unsigned sigoutlets;
-
-    // clock
-    t_pdpy_clock **clocks;
-    int clocks_size;
-
-    // properties
-    t_symbol *current_frame;
-    t_symbol *properties_receiver;
-    int checkbox_count;
-    int current_row;
-    int current_col;
-
-    // in and outs
-    t_outlet **outs;
-    t_inlet **ins;
-    int outletsize;
-    int inletsize;
-    struct pdpy_proxyinlet *proxy_in;
-    t_pdpy_objptr *outobjptr; // PyObject <type> <pointer>
-} t_pdpy_pdobj;
-
-// ─────────────────────────────────────
-typedef struct _pdpy_pyclass {
-    PyObject_HEAD const char *name;
-    t_pdpy_pdobj *pdobj;
-    PyObject *outlets;
-    PyObject *inlets;
-    PyObject *pyargs;
-} t_pdpy_pyclass;
-
-// ─────────────────────────────────────
-typedef struct pdpy_proxyinlet {
-    t_pd pd;
-    t_pdpy_pdobj *owner;
-    unsigned int id;
-} t_pdpy_proxyinlet;
-
-// ─────────────────────────────────────
-typedef struct _pdpy_clock {
-    PyObject_HEAD PyObject *function;
-    t_pd pd;
-    t_clock *clock;
-    t_pdpy_pdobj *owner;
-    const char *functionname;
-    float delay_time;
-} t_pdpy_clock;
-
-// ╭─────────────────────────────────────╮
-// │            Declarations             │
-// ╰─────────────────────────────────────╯
-static void pdpy_execute(t_pdpy_pdobj *x, char *methodname, t_symbol *s, int argc, t_atom *argv);
-static void pdpy_proxyinlet_init(t_pdpy_proxyinlet *p, t_pdpy_pdobj *owner, unsigned int id);
-static void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom *argv);
-static void pdpy_clock_execute(t_pdpy_clock *x);
-static void pdpy_printerror(t_pdpy_pdobj *x);
-static void pdpy_pyobject(t_pdpy_pdobj *x, t_symbol *s, t_symbol *id);
-// static PyObject *pdpy_newpyclass(t_symbol *s, t_pdpy_pdobj *x, PyObject *pdmod, PyObject
-// *pyargs);
-
-// ╭─────────────────────────────────────╮
-// │                Clock                │
-// ╰─────────────────────────────────────╯
-static PyObject *pdpy_clock_create(PyTypeObject *type, PyObject *args, PyObject *kwargs) {
-    t_pdpy_clock *self;
-    self = (t_pdpy_clock *)type->tp_alloc(type, 0);
-    if (self == NULL) {
-        PyErr_SetString(PyExc_TypeError, "ClockType not ready");
-        return NULL;
-    }
-    return (PyObject *)self;
-}
-
-// ─────────────────────────────────────
-static void pdpy_clock_destruct(t_pdpy_clock *self) {
-    Py_XDECREF(self->function);
-    clock_unset(self->clock);
-    clock_free(self->clock);
-    Py_TYPE(self)->tp_free((PyObject *)self);
-}
-
-// ─────────────────────────────────────
-static PyObject *pdpy_clock_delay(t_pdpy_clock *self, PyObject *args) {
-    float f;
-    if (PyArg_ParseTuple(args, "f", &f)) {
-        clock_delay(self->clock, f);
-        Py_RETURN_TRUE;
-    }
-    PyErr_SetString(PyExc_TypeError, "expected float");
-    return NULL;
-}
-
-// ─────────────────────────────────────
-static PyObject *pdpy_clock_unset(t_pdpy_clock *self, PyObject *args) {
-    if (self->clock != NULL) {
-        clock_unset(self->clock);
-        Py_RETURN_TRUE;
-    }
-    Py_RETURN_TRUE;
-}
-
-// ─────────────────────────────────────
-static PyObject *pdpy_clock_set(t_pdpy_clock *self, PyObject *args) {
-    float time;
-    if (!PyArg_ParseTuple(args, "f", &time)) {
-        PyErr_SetString(PyExc_TypeError, "expected float");
-        return NULL;
-    }
-
-    if (self->clock != NULL) {
-        clock_set(self->clock, time);
-        Py_RETURN_TRUE;
-    }
-    Py_RETURN_TRUE;
-}
-
-// ─────────────────────────────────────
-static PyMethodDef Clock_methods[] = {
-    {"delay", (PyCFunction)pdpy_clock_delay, METH_VARARGS,
-     "Sets the clock so that it will go off (and call the clock method) after time milliseconds."},
-    {"unset", (PyCFunction)pdpy_clock_unset, METH_NOARGS,
-     "Unsets the clock, canceling any timeout that has been set previously"},
-    {"set", (PyCFunction)pdpy_clock_set, METH_NOARGS,
-     "Sets the clock so that it will go off at the specified absolute systime"},
-    {NULL, NULL, 0, NULL} // Sentinel
-};
-
-// ─────────────────────────────────────
-static PyTypeObject ClockType = {
-    PyVarObject_HEAD_INIT(NULL, 0).tp_name = "puredata.NewObject.clock",
-    .tp_basicsize = sizeof(t_pdpy_clock),
-    .tp_flags = Py_TPFLAGS_DEFAULT,
-    .tp_new = pdpy_clock_create,
-    .tp_dealloc = (destructor)pdpy_clock_destruct,
-    .tp_methods = Clock_methods,
-};
-
-// ─────────────────────────────────────
-static PyObject *pdpy_newclock(PyObject *self, PyObject *args) {
-    if (PyType_Ready(&ClockType) < 0) {
-        PyErr_SetString(PyExc_TypeError, "new_clock ClockType not ready");
-        return NULL;
-    }
-    // get pyfunction to be executed
-    PyObject *func;
-    if (!PyArg_ParseTuple(args, "O", &func)) {
-        PyErr_SetString(PyExc_TypeError, "new_clock require a function as argument");
-        return NULL;
-    }
-
-    if (!PyCallable_Check(func)) {
-        PyErr_SetString(PyExc_TypeError, "new_clock function is not callable");
-        return NULL;
-    }
-
-    PyObject *funcname = PyObject_GetAttrString(func, "__name__");
-    if (!funcname) {
-        PyErr_SetString(PyExc_TypeError, "new_clock function has no __name__ attribute");
-        return NULL;
-    }
-    const char *funcnamestr = PyUnicode_AsUTF8(funcname);
-
-    t_pdpy_clock *clock = (t_pdpy_clock *)PyObject_CallObject((PyObject *)&ClockType, NULL);
-    if (!clock) {
-        return NULL;
-    }
-
-    PyObject *pdmod = PyImport_ImportModule("puredata");
-    if (pdmod == NULL) {
-        PyErr_Print();
-        pdpy_printerror(NULL);
-        PyErr_SetString(PyExc_ImportError, "Failed to import 'puredata' module");
-        return NULL;
-    }
-    PyObject *capsule = PyObject_GetAttrString(pdmod, "_currentobj");
-    t_pdpy_pdobj *ptr;
-    t_pdpy_pyclass *cls = (t_pdpy_pyclass *)self;
-
-    if (!capsule) {
-        PyErr_SetString(PyExc_AttributeError, "No '_currentobj' attribute found");
-        return NULL;
-    } else if (!Py_IsNone(capsule)) {
-        if (!PyCapsule_CheckExact(capsule)) {
-            PyErr_SetString(PyExc_TypeError, "Expected a PyCapsule object");
-            Py_DECREF(capsule);
-            return NULL;
-        }
-
-        ptr = PyCapsule_GetPointer(capsule, "_currentobj");
-        if (!ptr) {
-            PyErr_SetString(PyExc_TypeError, "Pointer in _currentobj is NULL");
-            Py_DECREF(capsule);
-            return NULL;
-        }
-    } else if (cls->pdobj != NULL) {
-        ptr = cls->pdobj;
-    } else {
-        PyErr_SetString(PyExc_TypeError, "Impossible to get PureData objct pointer");
-        return NULL;
-    }
-
-    Py_INCREF(func);
-    clock->pd = pdpy_proxyclock_class;
-    clock->owner = ptr;
-    clock->function = func;
-    clock->functionname = funcnamestr;
-    clock->clock = clock_new(clock, (t_method)pdpy_clock_execute);
-
-    ptr->clocks =
-        (t_pdpy_clock **)resizebytes(ptr->clocks, ptr->clocks_size * sizeof(t_pdpy_clock *),
-                                     (ptr->clocks_size + 1) * sizeof(t_pdpy_clock *));
-
-    ptr->clocks[ptr->clocks_size] = clock;
-    ptr->clocks_size++;
-
-    return (PyObject *)clock;
-}
-
-// ─────────────────────────────────────
-static void pdpy_clock_execute(t_pdpy_clock *x) {
-    if (x->function == NULL) {
-        pd_error(x->owner, "Clock function is NULL");
-        return;
-    }
-
-    if (!PyCallable_Check(x->function)) {
-        pd_error(x->owner, "Clock function is not callable");
-        return;
-    }
-
-    PyObject_CallNoArgs(x->function);
-    return;
-}
-
-// ─────────────────────────────────────
-static PyObject *py4pdobj_converttopy(int argc, t_atom *argv) {
-    PyObject *pValue = PyList_New(argc);
-    for (int i = 0; i < argc; i++) {
-        if (argv[i].a_type == A_FLOAT) {
-            int isInt = atom_getintarg(i, argc, argv) == atom_getfloatarg(i, argc, argv);
-            if (isInt) {
-                t_int number = atom_getintarg(i, argc, argv);
-                PyList_SetItem(pValue, i, PyLong_FromLong(number));
-            } else {
-                t_float number = atom_getfloatarg(i, argc, argv);
-                PyList_SetItem(pValue, i, PyFloat_FromDouble(number));
-            }
-        } else if (argv[i].a_type == A_SYMBOL) {
-            t_symbol *k = atom_getsymbolarg(i, argc, argv);
-            PyList_SetItem(pValue, i, PyUnicode_FromString(k->s_name));
-        }
-    }
-
-    return pValue;
-}
-
-// ─────────────────────────────────────
-static void pdpy_proxyinlet_fwd(t_pdpy_proxyinlet *p, t_symbol *s, int argc, t_atom *argv) {
-    (void)s;
-    if (!argc) {
-        return;
-    }
-
-    //
-    char methodname[MAXPDSTRING];
-    pd_snprintf(methodname, MAXPDSTRING, "in_%d_%s", p->id, atom_getsymbol(argv)->s_name);
-    pdpy_execute(p->owner, methodname, atom_getsymbol(argv), argc - 1, argv + 1);
-}
-
-// ─────────────────────────────────────
-void pdpy_proxyinlet_setup(void) {
-    pdpy_proxyinlet_class =
-        class_new(gensym("py4pd proxy inlet"), 0, 0, sizeof(t_pdpy_proxyinlet), 0, 0);
-    if (pdpy_proxyinlet_class) {
-        class_addanything(pdpy_proxyinlet_class, pdpy_proxy_anything);
-        class_addmethod(pdpy_proxyinlet_class, (t_method)pdpy_proxyinlet_fwd, gensym("fwd"),
-                        A_GIMME, 0);
-    }
-}
+#include "py4pd.h"
 
 // ╭─────────────────────────────────────╮
 // │        Python Object Pointer        │
@@ -346,7 +24,7 @@ static t_pdpy_objptr *pdpy_createoutputptr(void) {
 }
 
 // ─────────────────────────────────────
-static PyObject *pdpy_getoutptr(t_symbol *s) {
+PyObject *pdpy_getoutptr(t_symbol *s) {
     t_pdpy_objptr *x = (t_pdpy_objptr *)pd_findbyclass(s, pdpy_pyobjectout_class);
     return x ? x->pValue : NULL;
 }
@@ -425,9 +103,22 @@ PyObject *pdpyobj_get_pyclass(t_pdpy_pdobj *x, const char *classname, PyObject *
 
     PyObject *pyclass = PyDict_GetItemString(objclasses, "py_class");
     if (!pyclass) {
-        pd_error(NULL, "Class '%s' not found or invalid in _objects", classname);
+        pd_error(x, "Class '%s' not found or invalid in _objects", classname);
         Py_DECREF(pdmod);
         return NULL;
+    }
+
+    PyObject *pyisgui = PyDict_GetItemString(objclasses, "isgui_object");
+    if (!pyisgui) {
+        pd_error(x, "Class '%s' not found or invalid in _object_isgui", classname);
+        Py_DECREF(pdmod);
+        return NULL;
+    }
+
+    if (PyBool_Check(pyisgui)) {
+        x->has_gui = true;
+        pd_snprintf(x->object_tag, 128, ".x%lx", (long)x);
+        x->object_tag[127] = '\0';
     }
 
     PyObject *currobj = PyCapsule_New((void *)x, "_currentobj", NULL);
@@ -450,6 +141,27 @@ PyObject *pdpyobj_get_pyclass(t_pdpy_pdobj *x, const char *classname, PyObject *
     return newobj;
 }
 
+// ─────────────────────────────────────
+PyObject *py4pdobj_converttopy(int argc, t_atom *argv) {
+    PyObject *pValue = PyList_New(argc);
+    for (int i = 0; i < argc; i++) {
+        if (argv[i].a_type == A_FLOAT) {
+            int isInt = atom_getintarg(i, argc, argv) == atom_getfloatarg(i, argc, argv);
+            if (isInt) {
+                t_int number = atom_getintarg(i, argc, argv);
+                PyList_SetItem(pValue, i, PyLong_FromLong(number));
+            } else {
+                t_float number = atom_getfloatarg(i, argc, argv);
+                PyList_SetItem(pValue, i, PyFloat_FromDouble(number));
+            }
+        } else if (argv[i].a_type == A_SYMBOL) {
+            t_symbol *k = atom_getsymbolarg(i, argc, argv);
+            PyList_SetItem(pValue, i, PyUnicode_FromString(k->s_name));
+        }
+    }
+
+    return pValue;
+}
 // ─────────────────────────────────────
 static void pdpy_inlets(t_pdpy_pdobj *x) {
     PyObject *inlets = PyObject_GetAttrString((PyObject *)x->pyclass, "inlets");
@@ -565,7 +277,8 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
     }
 
     t_pdpy_pdobj *x = (t_pdpy_pdobj *)pd_new(pdobj);
-    x->clocks_size = 0;
+    x->canvas = canvas_getcurrent();
+
     PyObject *pdmod = PyImport_ImportModule("puredata");
     if (pdmod == NULL) {
         PyErr_SetString(PyExc_ImportError, "Failed to import 'puredata' module");
@@ -591,6 +304,7 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
 
     t_pdpy_pyclass *self = (t_pdpy_pyclass *)pyclass;
     x->pyclass = pyclass;
+    x->clocks_size = 0;
 
     pd_snprintf(x->id, MAXPDSTRING, "%p", x->pyclass);
     self->name = s->s_name;
@@ -598,6 +312,11 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
     self->pyargs = pyargs;
     pdpy_inlets(x);
     pdpy_outlets(x);
+
+    if (x->has_gui) {
+        gobj_vis(&x->obj.te_g, x->canvas, 1);
+        canvas_fixlinesfor(x->canvas, (t_text *)x);
+    }
 
     x->outobjptr = pdpy_createoutputptr();
     return (void *)x;
@@ -743,75 +462,6 @@ void pdpy_execute(t_pdpy_pdobj *x, char *methodname, t_symbol *s, int argc, t_at
 
     Py_XDECREF(pArg);
     Py_XDECREF(pValue);
-}
-
-// ─────────────────────────────────────
-void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom *argv) {
-    t_pdpy_pdobj *o = proxy->owner;
-    char methodname[MAXPDSTRING];
-
-    if (strcmp(s->s_name, "PyObject") == 0) {
-        char *str = strdup(atom_getsymbol(argv)->s_name);
-        char *p = str;
-        while ((p = strchr(p, '.')) != NULL) {
-            *p = '_';
-        }
-        pdpy_pyobject(proxy->owner, gensym(str), atom_getsymbol(argv + 1));
-        free(str);
-    } else {
-        pd_snprintf(methodname, MAXPDSTRING, "in_%d_%s", proxy->id, s->s_name);
-        pdpy_execute(o, methodname, s, argc, argv);
-    }
-
-    return;
-}
-
-// ─────────────────────────────────────
-static void pdpy_anything(t_pdpy_pdobj *o, t_symbol *s, int argc, t_atom *argv) {
-    char methodname[MAXPDSTRING];
-    pd_snprintf(methodname, MAXPDSTRING, "in_1_%s", s->s_name);
-    pdpy_execute(o, methodname, s, argc, argv);
-}
-
-// ─────────────────────────────────────
-static void pdpy_pyobject(t_pdpy_pdobj *x, t_symbol *s, t_symbol *id) {
-    if (x->pyclass == NULL) {
-        post("pyclass is NULL");
-        return;
-    }
-
-    char methodname[MAXPDSTRING];
-    pd_snprintf(methodname, MAXPDSTRING, "in_1_pyobj_%s", s->s_name);
-
-    PyObject *pyclass = (PyObject *)x->pyclass;
-    PyObject *method = PyObject_GetAttrString(pyclass, methodname);
-    if (!method || !PyCallable_Check(method)) {
-        PyErr_Clear();
-        pd_error(x, "[%s] method '%s' not found or not callable", x->obj.te_g.g_pd->c_name->s_name,
-                 methodname);
-        return;
-    }
-
-    PyObject *pArg = pdpy_getoutptr(id);
-    PyObject *pValue = PyObject_CallOneArg(method, pArg);
-    if (pValue == NULL) {
-        pdpy_printerror(x);
-        return;
-    }
-
-    if (!Py_IsNone(pValue)) {
-        pd_error(x,
-                 "[%s] '%s' not return None, py4pd method functions must return None, use "
-                 "'self.out' to output data to "
-                 "outputs.",
-                 x->obj.te_g.g_pd->c_name->s_name, methodname);
-    }
-
-    Py_DECREF(method);
-    Py_XDECREF(pArg);
-    Py_XDECREF(pValue);
-
-    return;
 }
 
 // ─────────────────────────────────────
@@ -968,253 +618,36 @@ static void pdpy_menu_open(t_pdpy_pdobj *o) {
 }
 
 // ─────────────────────────────────────
-static void pdpy_proxyinlet_init(t_pdpy_proxyinlet *p, t_pdpy_pdobj *owner, unsigned int id) {
+void pdpy_proxyinlet_init(t_pdpy_proxyinlet *p, t_pdpy_pdobj *owner, unsigned int id) {
     p->pd = pdpy_proxyinlet_class;
     p->owner = owner;
     p->id = id;
 }
 
-// ╭─────────────────────────────────────╮
-// │         PROPERTIES METHODS          │
-// ╰─────────────────────────────────────╯
-static PyObject *pyproperties_addcheckbox(PyObject *self, PyObject *args) {
-    // t_pdpy_pdobj *o;
-    // self:addcheckbox("Check Box 1", "updatecheckbox1", self.checkbox1)
-    PyObject *name;
-    PyObject *method;
-    PyObject *init_value;
-    if (PyArg_ParseTuple(args, "ssb", name, method, init_value)) {
-    }
-
-    // const char *s;
-    // const char *text;
-    // int init_value;
-    //
-    // char pdsend[MAXPDSTRING];
-    // char checkid[MAXPDSTRING];
-    // char checkvariable[MAXPDSTRING];
-    // char sanitized_frame[MAXPDSTRING];
-    // checkbox_count++;
-    //
-    // // Sanitize frame name (replace '.' with '_')
-    // pd_snprintf(sanitized_frame, MAXPDSTRING, "%s", current_frame);
-    // for (char *p = sanitized_frame; *p != '\0'; p++) {
-    //     if (*p == '.') {
-    //         *p = '_';
-    //     }
-    // }
-    //
-    // // Generate unique variable name
-    // pd_snprintf(checkvariable, MAXPDSTRING, "::checkbox%d_%s_state", checkbox_count,
-    //             sanitized_frame);
-    //
-    // // Initialize the Tcl variable to 0 (unchecked)
-    // pdgui_vmess(0, "ssi", "set", checkvariable, init_value);
-    //
-    // // Build the pdsend command
-    // pd_snprintf(pdsend, MAXPDSTRING, "eval pdsend [concat %s _properties checkbox %s $%s]",
-    //             properties_receiver, method, checkvariable);
-    //
-    // // Create the checkbox
-    // pd_snprintf(checkid, MAXPDSTRING, "%s.check%d", current_frame, checkbox_count);
-    // pdgui_vmess(0, "ssssssss", "checkbutton", checkid, "-text", text, "-variable", checkvariable,
-    //             "-command", pdsend);
-    //
-    // pdgui_vmess(0, "sssisi", "grid", checkid, "-row", current_row, "-column", current_col,
-    //             "-sticky", "we");
-    // pdlua_properties_updaterow(o);
-
-    Py_RETURN_NONE;
-}
-
 // ─────────────────────────────────────
-static PyObject *pyproperties_addtextinput(PyObject *self, PyObject *args) {
-
-    //
-    Py_RETURN_NONE;
-}
-
-// ─────────────────────────────────────
-static PyMethodDef pyproperties_methods[] = {
-    {"addcheckbox", pyproperties_addcheckbox, METH_VARARGS, "Add new checkbox on value"},
-    {"addtextinput", pyproperties_addtextinput, METH_VARARGS, "Add new text input"},
-    {NULL, NULL, 0, NULL}};
-
-// ─────────────────────────────────────
-static PyTypeObject pyproperties_type = {PyVarObject_HEAD_INIT(NULL, 0).tp_name = "pd_properties",
-                                         .tp_basicsize = sizeof(PyObject),
-                                         .tp_flags = Py_TPFLAGS_DEFAULT,
-                                         .tp_doc = "MyClass objects",
-                                         .tp_methods = pyproperties_methods,
-                                         .tp_new = PyType_GenericNew};
-
-// ─────────────────────────────────────
-static PyObject *pdpy_properties_addcheckbox(PyObject *self, PyObject *args) {
-    t_pdpy_pdobj *o;
-    const char *s;
-
-    const char *text;
-    const char *method;
-    int init_value;
-
-    char pdsend[MAXPDSTRING];
-    char checkid[MAXPDSTRING];
-    char checkvariable[MAXPDSTRING];
-    char sanitized_frame[MAXPDSTRING];
-    o->checkbox_count++;
-
-    // Sanitize frame name (replace '.' with '_')
-    pd_snprintf(sanitized_frame, MAXPDSTRING, "%s", o->current_frame->s_name);
-    for (char *p = sanitized_frame; *p != '\0'; p++) {
-        if (*p == '.') {
-            *p = '_';
-        }
-    }
-
-    // Generate unique variable name
-    pd_snprintf(checkvariable, MAXPDSTRING, "::checkbox%d_%s_state", o->checkbox_count,
-                sanitized_frame);
-
-    // Initialize the Tcl variable to 0 (unchecked)
-    pdgui_vmess(0, "ssi", "set", checkvariable, init_value);
-
-    // Build the pdsend command
-    pd_snprintf(pdsend, MAXPDSTRING, "eval pdsend [concat %s _properties checkbox %s $%s]",
-                o->properties_receiver->s_name, method, checkvariable);
-
-    // Create the checkbox
-    pd_snprintf(checkid, MAXPDSTRING, "%s.check%d", o->current_frame->s_name, o->checkbox_count);
-    pdgui_vmess(0, "ssssssss", "checkbutton", checkid, "-text", text, "-variable", checkvariable,
-                "-command", pdsend);
-
-    pdgui_vmess(0, "sssisi", "grid", checkid, "-row", o->current_row, "-column", o->current_col,
-                "-sticky", "we");
-    // pdlua_properties_updaterow(o);
-
-    Py_RETURN_NONE;
-}
-
-// ─────────────────────────────────────
-static void pdpy_properties_receiver(t_pdpy_pdobj *o, t_symbol *s, int argc, t_atom *argv) {
-    if (argc < 2) {
-        return;
-    }
-}
-
-// ─────────────────────────────────────
-static void pdpy_properties_createdialog(t_pdpy_pdobj *o) {
-    pdgui_vmess(0, "ssss", "toplevel", o->properties_receiver->s_name, "-class", "DialogWindow");
-    pdgui_vmess(0, "ssss", "wm", "title", o->properties_receiver->s_name,
-                "{[mydialog] Properties}");
-    pdgui_vmess(0, "sss", "wm", "group", o->properties_receiver->s_name, ".");
-    pdgui_vmess(0, "sssii", "wm", "resizable", o->properties_receiver->s_name, 0, 0);
-
-    pdgui_vmess(0, "sss", "wm", "transient", o->properties_receiver->s_name, "$::focused_window");
-    pdgui_vmess(0, "ssss", o->properties_receiver->s_name, "configure", "-menu",
-                "$::dialog_menubar");
-    pdgui_vmess(0, "sssfsf", o->properties_receiver->s_name, "configure", "-padx", 0.0f, "-pady",
-                0.0f);
-}
-
-// ─────────────────────────────────────
-static void pdpy_properties_setupbuttons(t_pdpy_pdobj *o) {
-    char buttonsId[MAXPDSTRING];
-    pd_snprintf(buttonsId, MAXPDSTRING, ".%p.buttons", (void *)o);
-
-    char buttonCancelId[MAXPDSTRING];
-    char buttonApplyId[MAXPDSTRING];
-    char buttonOkId[MAXPDSTRING];
-    pd_snprintf(buttonCancelId, MAXPDSTRING, ".%p.buttons.cancel", (void *)o);
-    pd_snprintf(buttonApplyId, MAXPDSTRING, ".%p.buttons.apply", (void *)o);
-    pd_snprintf(buttonOkId, MAXPDSTRING, ".%p.buttons.ok", (void *)o);
-
-    char destroyCommand[MAXPDSTRING];
-    pd_snprintf(destroyCommand, MAXPDSTRING, "destroy .%p", (void *)o);
-
-    // Criando o frame dos botões
-    pdgui_vmess(0, "sssf", "frame", buttonsId, "-pady", 5.0f);
-    pdgui_vmess(0, "ssss", "pack", buttonsId, "-fill", "x");
-
-    // Cancel (Close window)
-    pdgui_vmess(0, "ssssss", "button", buttonCancelId, "-text", "Cancel", "-command",
-                destroyCommand);
-    pdgui_vmess(0, "sssssisisi", "pack", buttonCancelId, "-side", "left", "-expand", 1, "-padx", 10,
-                "-ipadx", 10);
-
-    // Apply (send all data to pd and lua obj) for this must be necessary to save all the variables
-    // used in the object in a char [128][MAXPDSTRING], I don't think that this is good, or there is
-    // better solution?
-    // TODO: Need to dev the apply command
-    pdgui_vmess(0, "ssss", "button", buttonApplyId, "-text", "Apply");
-    pdgui_vmess(0, "sssssisisi", "pack", buttonApplyId, "-side", "left", "-expand", 1, "-padx", 10,
-                "-ipadx", 10);
-
-    // Ok
-    pdgui_vmess(0, "ssssss", "button", buttonOkId, "-text", "OK", "-command", destroyCommand);
-    pdgui_vmess(0, "sssssisisi", "pack", buttonOkId, "-side", "left", "-expand", 1, "-padx", 10,
-                "-ipadx", 10);
-}
-
-// ─────────────────────────────────────
-static void pdpy_properties(t_gobj *z, t_glist *owner) {
-    t_pdpy_pdobj *o = (t_pdpy_pdobj *)z;
-    PyObject *pyclass = (PyObject *)o->pyclass;
-    PyObject *method = PyObject_GetAttrString(pyclass, "properties");
-    if (!method || !PyCallable_Check(method)) {
-        pd_error(o, "[%s] no properties method defined or not callable",
-                 o->obj.te_g.g_pd->c_name->s_name);
-        return;
-    }
-
-    char receiver[MAXPDSTRING];
-    pd_snprintf(receiver, MAXPDSTRING, ".%p", o);
-    o->properties_receiver = gensym(receiver);
-    o->current_frame = NULL;
-    pd_bind(&o->obj.ob_pd, o->properties_receiver); // new to unbind
-
-    pdpy_properties_createdialog(o); // <-- create hidden window
-
-    char frameId[MAXPDSTRING];
-    snprintf(frameId, MAXPDSTRING, ".%p.main", (void *)o);
-    pdgui_vmess(0, "sss", "wm", "deiconify", o->properties_receiver->s_name);
-    pdgui_vmess(0, "sssf", "frame", frameId, "-padx", 15.0f, "-pady", 15.0f);
-    pdgui_vmess(0, "sssssf", "pack", frameId, "-fill", "both", "-expand", 4.0f);
-    pdgui_vmess(0, "sssfsf", "pack", frameId, "-pady", 10.f, "-padx", 10.f);
-
-    // Create properties class
-    if (PyType_Ready(&pyproperties_type) < 0) {
-        PyErr_Print();
-        return;
-    }
-    // TODO: Add receiver on class to unbind it
-
-    PyObject *p = PyObject_CallObject((PyObject *)&pyproperties_type, NULL);
-    if (!p) {
-        pdpy_printerror(o);
-        return;
-    }
-
-    // TODO: Create an internal module
-    PyObject *r = PyObject_CallOneArg(method, p);
-    if (r == NULL) {
-        pdpy_printerror(o);
-        pdgui_vmess(0, "ss", "destroy", o->properties_receiver->s_name);
-        return;
-    }
-    pdpy_properties_setupbuttons(o);
-
-    return;
-}
-
-// ─────────────────────────────────────
-static t_class *pdpy_classnew(const char *n, bool dsp, bool prop) {
+static t_class *pdpy_classnew(const char *n, bool dsp, bool gui, bool prop) {
     t_class *c = class_new(gensym(n), (t_newmethod)pdpy_new, (t_method)py4pdobj_free,
                            sizeof(t_pdpy_pdobj), CLASS_NOINLET | CLASS_MULTICHANNEL, A_GIMME, 0);
 
     class_addmethod(c, (t_method)pdpy_menu_open, gensym("menu-open"), A_NULL);
+
     if (dsp) {
         class_addmethod(c, (t_method)pdpy_dsp, gensym("dsp"), A_CANT, 0);
-    } else {
+    }
+
+    if (gui) {
+        // TODO: MAYBE REDEFINE selectfn THIS FOR BLUE LINE
+        pdpy_widgetbehavior.w_getrectfn = pdpy_getrect;
+        pdpy_widgetbehavior.w_displacefn = pdpy_displace;
+        pdpy_widgetbehavior.w_selectfn = text_widgetbehavior.w_selectfn;
+        pdpy_widgetbehavior.w_deletefn = pdpy_delete;
+        pdpy_widgetbehavior.w_clickfn = pdpy_click;
+        pdpy_widgetbehavior.w_visfn = pdpy_vis;
+        pdpy_widgetbehavior.w_activatefn = pdpy_activate;
+        class_setwidget(c, &pdpy_widgetbehavior);
+    }
+
+    if (prop) {
         class_setpropertiesfn(c, (t_propertiesfn)pdpy_properties);
     }
 
@@ -1223,7 +656,20 @@ static t_class *pdpy_classnew(const char *n, bool dsp, bool prop) {
 
 // ─────────────────────────────────────
 static int pdpy_create_newpyobj(PyObject *subclass, const char *name, const char *filename) {
-    // TODO: Warning
+    // has gui interface
+    bool havegui = false;
+    PyObject *pyisgui = Py_False;
+    PyObject *gui = PyObject_GetAttrString(subclass, "paint");
+    if (gui) {
+        havegui = PyObject_IsTrue(gui);
+        pyisgui = havegui ? Py_True : Py_False;
+    } else {
+        havegui = false;
+        PyErr_Clear();
+    }
+    Py_XDECREF(gui);
+
+    // has dsp
     bool havedsp = false;
     PyObject *dsp = PyObject_GetAttrString(subclass, "perform");
     if (dsp) {
@@ -1234,6 +680,7 @@ static int pdpy_create_newpyobj(PyObject *subclass, const char *name, const char
     }
     Py_XDECREF(dsp);
 
+    // has properties
     bool haveprop = false;
     PyObject *properties = PyObject_GetAttrString(subclass, "pd_properties");
     if (properties) {
@@ -1264,9 +711,10 @@ static int pdpy_create_newpyobj(PyObject *subclass, const char *name, const char
     // pyclass
     PyDict_SetItemString(externaldict, "py_class", subclass);
     PyDict_SetItemString(externaldict, "script_file", PyUnicode_FromString(filename));
+    PyDict_SetItemString(externaldict, "isgui_object", pyisgui);
 
     // pdclass
-    t_class *pdclass = pdpy_classnew(name, havedsp, haveprop);
+    t_class *pdclass = pdpy_classnew(name, havedsp, havegui, haveprop);
     PyObject *capsule = PyCapsule_New((void *)pdclass, NULL, NULL);
     if (!capsule) {
         pdpy_printerror(NULL);
