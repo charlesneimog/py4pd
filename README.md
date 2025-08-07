@@ -15,6 +15,9 @@
   <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml/badge.svg?branch=master"></a>
 </p>
 
+> [!WARNING]
+> I recommend using [pd-lua](https://github.com/agraef/pd-lua) — it's what I'm currently using. It works with Pure Data (Pd), PlugData, and PurrData. Lua is faster and more lightweight than Python, and you don’t need to install anything beyond the Pd object itself.
+
 py4pd allows write PureData Objects using Python instead of C/C++. The main goal is to allow easy IA, Scores, Graphics, and bring to Pd possibilities with array, list and others types. With Python, you can:
 * Use scores inside PureData;
 * Use svg/draws as scores;
@@ -23,24 +26,47 @@ py4pd allows write PureData Objects using Python instead of C/C++. The main goal
 
 ## Wiki | How to install and Use
 
-* Go to [Docs](https://charlesneimog.github.io/py4pd).
-
-## For Developers
-
-Just one thing, the development of this object occurs in de `develop` branch, the main branch corresponds to the last release available in `Deken`.
+* Go to [Docs](https://charlesneimog.github.io/py4pd) (outdated).
 
 ### New Pd Object using Python
 
 ``` py
-import pd
+import puredata as pd
+import os
 
-def mylistsum(x, y):
-    x_sum = sum(x)
-    y_sum = sum(y)
-    return x_sum + y_sum
+class pymetro(pd.NewObject):
+    name: str = "pymetro"
 
-def mylib_setup():
-    pd.add_object(mylistsum, "py.listsum")
+    def __init__(self, args):
+        self.inlets = 2
+        self.outlets = 1
+        self.toggle = False
+        if len(args) > 0:
+            self.time = float(args[0])
+        else:
+            self.time = 1000
+        self.metro = self.new_clock(self.tick)
+        self.args = args
+        pd.post("here", os.environ["PY4PD_PATH"])
+
+    def in_2_float(self, f: float):
+        self.time = f
+
+    def in_1_float(self, f: float):
+        if f:
+            self.toggle = True
+            self.tick()
+        else:
+            self.metro.unset()
+            self.toggle = False
+
+    def in_1_reload(self, args: list):
+        self.reload()
+
+    def tick(self):
+        if self.toggle:
+            self.metro.delay(self.time)
+        self.out(0, pd.SYMBOL, "test238")
 ``` 
 
 ## Building from Source

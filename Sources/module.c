@@ -155,6 +155,7 @@ static PyObject *pdpy_clock_set(t_pdpy_clock *self, PyObject *args) {
         clock_set(self->clock, time);
         Py_RETURN_TRUE;
     }
+
     Py_RETURN_TRUE;
 }
 
@@ -962,7 +963,8 @@ static void pdpy_dsp(t_pdpy_pdobj *x, t_signal **sp) {
 // ─────────────────────────────────────
 static void pdpy_menu_open(t_pdpy_pdobj *o) {
     char name[MAXPDSTRING];
-    pd_snprintf(name, MAXPDSTRING, "%s.pd_py", o->obj.te_g.g_pd->c_externdir->s_name);
+
+    pd_snprintf(name, MAXPDSTRING, "%s", o->script_filename);
     pdgui_vmess("::pd_menucommands::menu_openfile", "s", name);
     return;
 }
@@ -974,238 +976,6 @@ static void pdpy_proxyinlet_init(t_pdpy_proxyinlet *p, t_pdpy_pdobj *owner, unsi
     p->id = id;
 }
 
-// ╭─────────────────────────────────────╮
-// │         PROPERTIES METHODS          │
-// ╰─────────────────────────────────────╯
-static PyObject *pyproperties_addcheckbox(PyObject *self, PyObject *args) {
-    // t_pdpy_pdobj *o;
-    // self:addcheckbox("Check Box 1", "updatecheckbox1", self.checkbox1)
-    PyObject *name;
-    PyObject *method;
-    PyObject *init_value;
-    if (PyArg_ParseTuple(args, "ssb", name, method, init_value)) {
-    }
-
-    // const char *s;
-    // const char *text;
-    // int init_value;
-    //
-    // char pdsend[MAXPDSTRING];
-    // char checkid[MAXPDSTRING];
-    // char checkvariable[MAXPDSTRING];
-    // char sanitized_frame[MAXPDSTRING];
-    // checkbox_count++;
-    //
-    // // Sanitize frame name (replace '.' with '_')
-    // pd_snprintf(sanitized_frame, MAXPDSTRING, "%s", current_frame);
-    // for (char *p = sanitized_frame; *p != '\0'; p++) {
-    //     if (*p == '.') {
-    //         *p = '_';
-    //     }
-    // }
-    //
-    // // Generate unique variable name
-    // pd_snprintf(checkvariable, MAXPDSTRING, "::checkbox%d_%s_state", checkbox_count,
-    //             sanitized_frame);
-    //
-    // // Initialize the Tcl variable to 0 (unchecked)
-    // pdgui_vmess(0, "ssi", "set", checkvariable, init_value);
-    //
-    // // Build the pdsend command
-    // pd_snprintf(pdsend, MAXPDSTRING, "eval pdsend [concat %s _properties checkbox %s $%s]",
-    //             properties_receiver, method, checkvariable);
-    //
-    // // Create the checkbox
-    // pd_snprintf(checkid, MAXPDSTRING, "%s.check%d", current_frame, checkbox_count);
-    // pdgui_vmess(0, "ssssssss", "checkbutton", checkid, "-text", text, "-variable", checkvariable,
-    //             "-command", pdsend);
-    //
-    // pdgui_vmess(0, "sssisi", "grid", checkid, "-row", current_row, "-column", current_col,
-    //             "-sticky", "we");
-    // pdlua_properties_updaterow(o);
-
-    Py_RETURN_NONE;
-}
-
-// ─────────────────────────────────────
-static PyObject *pyproperties_addtextinput(PyObject *self, PyObject *args) {
-
-    //
-    Py_RETURN_NONE;
-}
-
-// ─────────────────────────────────────
-static PyMethodDef pyproperties_methods[] = {
-    {"addcheckbox", pyproperties_addcheckbox, METH_VARARGS, "Add new checkbox on value"},
-    {"addtextinput", pyproperties_addtextinput, METH_VARARGS, "Add new text input"},
-    {NULL, NULL, 0, NULL}};
-
-// ─────────────────────────────────────
-static PyTypeObject pyproperties_type = {PyVarObject_HEAD_INIT(NULL, 0).tp_name = "pd_properties",
-                                         .tp_basicsize = sizeof(PyObject),
-                                         .tp_flags = Py_TPFLAGS_DEFAULT,
-                                         .tp_doc = "MyClass objects",
-                                         .tp_methods = pyproperties_methods,
-                                         .tp_new = PyType_GenericNew};
-
-// ─────────────────────────────────────
-static PyObject *pdpy_properties_addcheckbox(PyObject *self, PyObject *args) {
-    t_pdpy_pdobj *o;
-    const char *s;
-
-    const char *text;
-    const char *method;
-    int init_value;
-
-    char pdsend[MAXPDSTRING];
-    char checkid[MAXPDSTRING];
-    char checkvariable[MAXPDSTRING];
-    char sanitized_frame[MAXPDSTRING];
-    o->checkbox_count++;
-
-    // Sanitize frame name (replace '.' with '_')
-    pd_snprintf(sanitized_frame, MAXPDSTRING, "%s", o->current_frame->s_name);
-    for (char *p = sanitized_frame; *p != '\0'; p++) {
-        if (*p == '.') {
-            *p = '_';
-        }
-    }
-
-    // Generate unique variable name
-    pd_snprintf(checkvariable, MAXPDSTRING, "::checkbox%d_%s_state", o->checkbox_count,
-                sanitized_frame);
-
-    // Initialize the Tcl variable to 0 (unchecked)
-    pdgui_vmess(0, "ssi", "set", checkvariable, init_value);
-
-    // Build the pdsend command
-    pd_snprintf(pdsend, MAXPDSTRING, "eval pdsend [concat %s _properties checkbox %s $%s]",
-                o->properties_receiver->s_name, method, checkvariable);
-
-    // Create the checkbox
-    pd_snprintf(checkid, MAXPDSTRING, "%s.check%d", o->current_frame->s_name, o->checkbox_count);
-    pdgui_vmess(0, "ssssssss", "checkbutton", checkid, "-text", text, "-variable", checkvariable,
-                "-command", pdsend);
-
-    pdgui_vmess(0, "sssisi", "grid", checkid, "-row", o->current_row, "-column", o->current_col,
-                "-sticky", "we");
-    // pdlua_properties_updaterow(o);
-
-    Py_RETURN_NONE;
-}
-
-// ─────────────────────────────────────
-static void pdpy_properties_receiver(t_pdpy_pdobj *o, t_symbol *s, int argc, t_atom *argv) {
-    if (argc < 2) {
-        return;
-    }
-}
-
-// ─────────────────────────────────────
-static void pdpy_properties_createdialog(t_pdpy_pdobj *o) {
-    pdgui_vmess(0, "ssss", "toplevel", o->properties_receiver->s_name, "-class", "DialogWindow");
-    pdgui_vmess(0, "ssss", "wm", "title", o->properties_receiver->s_name,
-                "{[mydialog] Properties}");
-    pdgui_vmess(0, "sss", "wm", "group", o->properties_receiver->s_name, ".");
-    pdgui_vmess(0, "sssii", "wm", "resizable", o->properties_receiver->s_name, 0, 0);
-
-    pdgui_vmess(0, "sss", "wm", "transient", o->properties_receiver->s_name, "$::focused_window");
-    pdgui_vmess(0, "ssss", o->properties_receiver->s_name, "configure", "-menu",
-                "$::dialog_menubar");
-    pdgui_vmess(0, "sssfsf", o->properties_receiver->s_name, "configure", "-padx", 0.0f, "-pady",
-                0.0f);
-}
-
-// ─────────────────────────────────────
-static void pdpy_properties_setupbuttons(t_pdpy_pdobj *o) {
-    char buttonsId[MAXPDSTRING];
-    pd_snprintf(buttonsId, MAXPDSTRING, ".%p.buttons", (void *)o);
-
-    char buttonCancelId[MAXPDSTRING];
-    char buttonApplyId[MAXPDSTRING];
-    char buttonOkId[MAXPDSTRING];
-    pd_snprintf(buttonCancelId, MAXPDSTRING, ".%p.buttons.cancel", (void *)o);
-    pd_snprintf(buttonApplyId, MAXPDSTRING, ".%p.buttons.apply", (void *)o);
-    pd_snprintf(buttonOkId, MAXPDSTRING, ".%p.buttons.ok", (void *)o);
-
-    char destroyCommand[MAXPDSTRING];
-    pd_snprintf(destroyCommand, MAXPDSTRING, "destroy .%p", (void *)o);
-
-    // Criando o frame dos botões
-    pdgui_vmess(0, "sssf", "frame", buttonsId, "-pady", 5.0f);
-    pdgui_vmess(0, "ssss", "pack", buttonsId, "-fill", "x");
-
-    // Cancel (Close window)
-    pdgui_vmess(0, "ssssss", "button", buttonCancelId, "-text", "Cancel", "-command",
-                destroyCommand);
-    pdgui_vmess(0, "sssssisisi", "pack", buttonCancelId, "-side", "left", "-expand", 1, "-padx", 10,
-                "-ipadx", 10);
-
-    // Apply (send all data to pd and lua obj) for this must be necessary to save all the variables
-    // used in the object in a char [128][MAXPDSTRING], I don't think that this is good, or there is
-    // better solution?
-    // TODO: Need to dev the apply command
-    pdgui_vmess(0, "ssss", "button", buttonApplyId, "-text", "Apply");
-    pdgui_vmess(0, "sssssisisi", "pack", buttonApplyId, "-side", "left", "-expand", 1, "-padx", 10,
-                "-ipadx", 10);
-
-    // Ok
-    pdgui_vmess(0, "ssssss", "button", buttonOkId, "-text", "OK", "-command", destroyCommand);
-    pdgui_vmess(0, "sssssisisi", "pack", buttonOkId, "-side", "left", "-expand", 1, "-padx", 10,
-                "-ipadx", 10);
-}
-
-// ─────────────────────────────────────
-static void pdpy_properties(t_gobj *z, t_glist *owner) {
-    t_pdpy_pdobj *o = (t_pdpy_pdobj *)z;
-    PyObject *pyclass = (PyObject *)o->pyclass;
-    PyObject *method = PyObject_GetAttrString(pyclass, "properties");
-    if (!method || !PyCallable_Check(method)) {
-        pd_error(o, "[%s] no properties method defined or not callable",
-                 o->obj.te_g.g_pd->c_name->s_name);
-        return;
-    }
-
-    char receiver[MAXPDSTRING];
-    pd_snprintf(receiver, MAXPDSTRING, ".%p", o);
-    o->properties_receiver = gensym(receiver);
-    o->current_frame = NULL;
-    pd_bind(&o->obj.ob_pd, o->properties_receiver); // new to unbind
-
-    pdpy_properties_createdialog(o); // <-- create hidden window
-
-    char frameId[MAXPDSTRING];
-    snprintf(frameId, MAXPDSTRING, ".%p.main", (void *)o);
-    pdgui_vmess(0, "sss", "wm", "deiconify", o->properties_receiver->s_name);
-    pdgui_vmess(0, "sssf", "frame", frameId, "-padx", 15.0f, "-pady", 15.0f);
-    pdgui_vmess(0, "sssssf", "pack", frameId, "-fill", "both", "-expand", 4.0f);
-    pdgui_vmess(0, "sssfsf", "pack", frameId, "-pady", 10.f, "-padx", 10.f);
-
-    // Create properties class
-    if (PyType_Ready(&pyproperties_type) < 0) {
-        PyErr_Print();
-        return;
-    }
-    // TODO: Add receiver on class to unbind it
-
-    PyObject *p = PyObject_CallObject((PyObject *)&pyproperties_type, NULL);
-    if (!p) {
-        pdpy_printerror(o);
-        return;
-    }
-
-    // TODO: Create an internal module
-    PyObject *r = PyObject_CallOneArg(method, p);
-    if (r == NULL) {
-        pdpy_printerror(o);
-        pdgui_vmess(0, "ss", "destroy", o->properties_receiver->s_name);
-        return;
-    }
-    pdpy_properties_setupbuttons(o);
-
-    return;
-}
-
 // ─────────────────────────────────────
 static t_class *pdpy_classnew(const char *n, bool dsp, bool prop) {
     t_class *c = class_new(gensym(n), (t_newmethod)pdpy_new, (t_method)py4pdobj_free,
@@ -1214,9 +984,7 @@ static t_class *pdpy_classnew(const char *n, bool dsp, bool prop) {
     class_addmethod(c, (t_method)pdpy_menu_open, gensym("menu-open"), A_NULL);
     if (dsp) {
         class_addmethod(c, (t_method)pdpy_dsp, gensym("dsp"), A_CANT, 0);
-    } else {
-        class_setpropertiesfn(c, (t_propertiesfn)pdpy_properties);
-    }
+    } 
 
     return c;
 }
@@ -1264,6 +1032,7 @@ static int pdpy_create_newpyobj(PyObject *subclass, const char *name, const char
     // pyclass
     PyDict_SetItemString(externaldict, "py_class", subclass);
     PyDict_SetItemString(externaldict, "script_file", PyUnicode_FromString(filename));
+    PyDict_SetItemString(externaldict, "clocks", PyList_New(0));
 
     // pdclass
     t_class *pdclass = pdpy_classnew(name, havedsp, haveprop);
@@ -1702,7 +1471,6 @@ static PyObject *pdpy_tabwrite(t_pdpy_pyclass *self, PyObject *args, PyObject *k
 
 // ─────────────────────────────────────
 static PyObject *pdpy_reload(t_pdpy_pyclass *self, PyObject *args) {
-
     const char *filename = self->pdobj->script_filename;
     const char *name = self->name;
 
@@ -1718,7 +1486,7 @@ static PyObject *pdpy_reload(t_pdpy_pyclass *self, PyObject *args) {
     char *source = (char *)malloc(size + 1);
     if (source == NULL) {
         fclose(fp);
-        PyErr_SetString(PyExc_MemoryError, "Failed to allocate memory for source\n");
+        PyErr_SetString(PyExc_MemoryError, "Failed to allocate memory for source");
         return 0;
     }
     if (fread(source, 1, size, fp) != (size_t)size) {
