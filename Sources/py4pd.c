@@ -116,8 +116,8 @@ void py4pd_set_py4pdpath_env(const char *path) {
         return;
     }
 
-    PyObject *environ = PyObject_GetAttrString(os, "environ");
-    if (!environ) {
+    PyObject *py_environ = PyObject_GetAttrString(os, "environ");
+    if (!py_environ) {
         pd_error(NULL, "Failed to access os.environ");
         Py_DECREF(os);
         return;
@@ -130,18 +130,18 @@ void py4pd_set_py4pdpath_env(const char *path) {
         pd_error(NULL, "Failed to create Python strings for environment key/value");
         Py_XDECREF(key);
         Py_XDECREF(value);
-        Py_DECREF(environ);
+        Py_DECREF(py_environ);
         Py_DECREF(os);
         return;
     }
 
-    if (PyObject_SetItem(environ, key, value) != 0) {
+    if (PyObject_SetItem(py_environ, key, value) != 0) {
         pd_error(NULL, "Failed to set PY4PD_PATH in os.environ");
     }
 
     Py_DECREF(key);
     Py_DECREF(value);
-    Py_DECREF(environ);
+    Py_DECREF(py_environ);
     Py_DECREF(os);
 }
 
