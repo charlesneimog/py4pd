@@ -15,12 +15,8 @@
   <a href="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml"><img src="https://github.com/charlesneimog/py4pd/actions/workflows/Builder.yml/badge.svg?branch=master"></a>
 </p>
 
-> [!WARNING]
-> I recommend using [pd-lua](https://github.com/agraef/pd-lua) — it's what I'm currently using. It works with Pure Data (Pd), PlugData, and PurrData. Lua is faster and more lightweight than Python, and you don’t need to install anything beyond the Pd object itself.
-
 py4pd allows write PureData Objects using Python instead of C/C++. The main goal is to allow easy IA, Scores, Graphics, and bring to Pd possibilities with array, list and others types. With Python, you can:
-* Use scores inside PureData;
-* Use svg/draws as scores;
+* Parse svg/draws as scores;
 * OpenMusic functions in libraries like `om_py`, `music21`, `neoscore`, and others;
 * Sound analisys with `magenta`, `librosa`, and `pyAudioAnalaysis`;
 
