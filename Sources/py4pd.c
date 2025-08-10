@@ -18,11 +18,6 @@ extern PyMODINIT_FUNC pdpy_initpuredatamodule();
 extern void pdpy_proxyinlet_setup(void);
 extern void pdpy_pyobjectoutput_setup(void);
 extern int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf);
-extern int sys_trytoopenone(const char *dir, const char *name, const char *ext, char *dirresult,
-                            char **nameresult, unsigned int size, int bin);
-
-#define trytoopenone(dir, name, ...)                                                               \
-    sys_trytoopenone(sys_isabsolutepath(name) ? "" : dir, name, __VA_ARGS__)
 
 t_class *py4pd_class;
 int objCount = 0;
@@ -47,7 +42,7 @@ static int pd4pd_loader_pathwise(t_canvas *canvas, const char *objectname, const
     } else {
         classname = objectname;
     }
-    if ((fd = trytoopenone(path, objectname, ".pd_py", dirbuf, &ptr, MAXPDSTRING, 1)) >= 0)
+    if ((fd = open_via_path(path, objectname, ".pd_py", dirbuf, &ptr, MAXPDSTRING, 1)) >= 0)
         if (pd4pd_loader_wrappath(fd, objectname, dirbuf)) {
             return 1;
         }
@@ -56,7 +51,7 @@ static int pd4pd_loader_pathwise(t_canvas *canvas, const char *objectname, const
     pd_snprintf(filename + strlen(filename), MAXPDSTRING - strlen(filename), "/");
     pd_snprintf(filename + strlen(filename), MAXPDSTRING - strlen(filename), "%s", classname);
     filename[MAXPDSTRING - 1] = 0;
-    if ((fd = trytoopenone(path, filename, ".pd_py", dirbuf, &ptr, MAXPDSTRING, 1)) >= 0)
+    if ((fd = open_via_path(path, filename, ".pd_py", dirbuf, &ptr, MAXPDSTRING, 1)) >= 0)
         if (pd4pd_loader_wrappath(fd, objectname, dirbuf)) {
             return 1;
         }
@@ -189,6 +184,7 @@ void py4pd_setup(void) {
 
     pdpy_proxyinlet_setup();
     pdpy_pyobjectoutput_setup();
+    // TODO: receive
 }
 
 #ifdef __WIN64
