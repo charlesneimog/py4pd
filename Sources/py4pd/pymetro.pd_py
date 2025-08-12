@@ -1,7 +1,4 @@
 import puredata as pd
-import os
-
-print(pd._objects)
 
 
 class pymetro(pd.NewObject):

@@ -1,5 +1,0 @@
-#N canvas 854 408 646 300 8;
-#X obj 27 104 py4pd py pdsum;
-#X msg 27 23 open myscript;
-#X text 107 19 Open the script in myscript.py located in the patch currect folder. If script doesn't exits \, it creates a myscript.py., f 40;
-#X connect 1 0 0 0;

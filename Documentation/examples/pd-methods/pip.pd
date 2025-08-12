@@ -1,5 +1,0 @@
-#N canvas 854 408 780 300 8;
-#X msg 11 54 pip install numpy;
-#X obj 11 95 py4pd;
-#X text 106 50 Install module called numpy., f 15;
-#X connect 0 0 1 0;

@@ -80,36 +80,9 @@ extra_css: [extra/extra.css]
 nav:
   - Home: index.md
   - Installation: setup.md
-  - Hello World:
-      - Intro: projects/project1.md
-      - Pd Object: projects/project2.md
-      - First Library: projects/project3.md
-  - Pd Object:
-      - pd-users/index.md
-      - Py4pd Library: pd-users/py4pd-module.md
-      - Arguments: pd-users/args.md
-      - Methods: pd-users/methods.md
-      - Config File: pd-users/py4pd-cfg.md
-      
-  - Pd Module:
-      - Introduction: python-users/index.md
-      - Creating Pd Libraries:
-          - Pd Objs with Python: python-users/pylibrary.md
-          - Object Types:
-              - Default: python-users/objtypes/default.md
-              - Image: python-users/objtypes/image.md
-              - Audio: python-users/objtypes/audio.md
-          - pd.add_object: python-users/pd.add_object.md
-          - pd.new_object:
-              - Methods: python-users/pd.new_object/methods.md
-              - Configuration: python-users/pd.new_object/config.md
-      - Py4pd Internal Module:
-          - Py -> Pd | Pd -> Py Interaction: python-users/data.md
-          - Working with Images: python-users/images.md
-          - Working with Audio: python-users/audio.md
-          - Working with Objects: python-users/objects.md
-          - Utilities and Info: python-users/info.md
-  - Publish py4pd Libraries: py4pd-libs/index.md
+  - Hello World: hello.md
+  - Creating Objects: pdmodule.md
+  - Py4pd Libraries: py4pd-libs/index.md
   - libraries.md
 extra:
   analytics:

@@ -83,6 +83,13 @@ endif()
 # ╰──────────────────────────────────────╯
 file(GLOB PY4PD_SOURCES ${CMAKE_SOURCE_DIR}/Sources/*.c)
 pd_add_external(py4pd "${PY4PD_SOURCES}")
+
+file(GLOB PY4PD_OBJECTS ${CMAKE_SOURCE_DIR}/Sources/py4pd/*.pd_py)
+file(GLOB PY4PD_OBJECTS_HELP ${CMAKE_SOURCE_DIR}/Sources/py4pd/*.pd)
+pd_add_datafile(py4pd "${PY4PD_OBJECTS}")
+pd_add_datafile(py4pd "${PY4PD_OBJECTS_HELP}")
+
+
 target_include_directories(py4pd PUBLIC ${PYTHON_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC "/usr/include/python${PYVERSION}")
 target_link_libraries(py4pd PUBLIC "${PYTHON_LD_FLAGS}")

@@ -89,14 +89,6 @@ hide:
 
 Here are presented tools implemented with `py4pd`. <i>Users are encouraged to contribute their examples through [Github](https://github.com/charlesneimog/py4pd/discussions/categories/show-and-tell) </i>.
 
-=== "Score In PureData"
-
-    When I started to work with PureData, I missed score visualization tools. `py4pd` can easily solve this using `neoscore`.
-
-    <p align="center">
-        <img src="examples/score/score.gif" width="50%" loading="lazy" alt="Score GIF"  style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);">
-    </p>
-
 === "Artificial Inteligence"
 
     It is easy to use `AI` with `py4pd`. There are already powerful objects for real-time, like `nn~` and `ddsp~`, but they are designed to specify approaches. Below is an example using `py4pd` and the Python code used by `nn~` (offline processing).
@@ -151,14 +143,6 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
             <source src="examples/img2sound/img2sound.mp3" type="audio/mpeg">
             Your browser does not support the audio element.
         </audio>
-    </p>
-
-=== "Sound analysis"
-
-    In Python, there is not just one Spectral Analysis package. I mainly use `loristrck` because of the `.sdif` files. But there is `simpl`, `librosa`, [PyAudio_FFT](https://github.com/aiXander/Realtime_PyAudio_FFT), among others. If you want spectral manipulations you can work with `pysdif3` which is fast and amazing. Here is an example using `loristrck` in PureData.
-
-    <p align="center">
-        <img src="examples/spectral-analysis/analisys.gif" width="50%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);"></img>
     </p>
 
 === "Audio Descriptors Graphs"
