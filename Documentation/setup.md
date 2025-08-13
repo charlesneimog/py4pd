@@ -5,6 +5,9 @@ hide:
 ---
 # <h2 align="center"> **First Install `Python`** </h2>
 
+
+!!! danger "Always check if the Python version you install is the right one!"
+
 ---
 
 === ":material-apple: macOS"
@@ -67,7 +70,13 @@ To use `py4pd`, besides PureData, you *always* need to install Python and the pa
                 <th>Python Version</th>
               </tr>
             </thead>
-              <tbody>
+            <tbody>
+              <tr>
+                <td><code>1.0.0</code></td>
+                <td>Python 3.13</td>
+              </tr>
+            </tbody>
+            <tbody>
               <tr>
                 <td><code>0.9.0</code></td>
                 <td>Python 3.12</td>
@@ -79,13 +88,4 @@ To use `py4pd`, besides PureData, you *always* need to install Python and the pa
                 <td>Python 3.11</td>
               </tr>
             </tbody>
-            <tbody>
-              <tr>
-                <td><code>0.7.0</code></td>
-                <td>Python 3.10</td>
-              </tr>
-            </tbody>
         </table>
-
-!!! info
-    I have decided to always use one version below the current Python release. So, if the current Python version is `3.48`, `py4pd` will use Python version `3.47`. You can find additional releases of `py4pd` on GitHub: [https://github.com/charlesneimog/py4pd](https://github.com/charlesneimog/py4pd).

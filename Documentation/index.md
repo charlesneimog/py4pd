@@ -56,34 +56,6 @@ hide:
 
 <hr>
 
-## <h2 align="center"> **Pieces** </h2>
-
-=== "Ideias Roubadas (2024)"
-
-    Ideias Roubadas III is a work inspired by the proposal of the UPIC system, developed by Iannis Xenakis in collaboration with the Centre d'Etudes de Mathématique et Automatique Musicales (CEMAMu) in Paris. Like UPIC, this piece employs an approach that manipulates visual elements to generate music using PureData to render the audio. I employ the concept of instruments (inspired by Csound) to render the sounds. Each color represents a sound or a set of instructions for spacialization, envelope, and others.
-    <p align="center">
-        <iframe style="border-radius: 5px" width="560" height="315" src="https://www.youtube.com/embed/CuJsBlbFBeM?si=w6-aN2X__lMe9qlN" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-    </p>
-
-
-=== "Eco (2023)"
-
-    Eco (2023) is the first version of one under-developing piece that uses some concepts of the composer Ricardo Thomasi in his PhD research. The idea here is to use smartphones/tablets put in the performance music stand, to make real-time `FFT` and `Partial Tracking` and then, generate scores that are played. The smartphones/tablets send data to PureData, and using `py4pd`, we generate real-time scores using `neoscore`.
-
-    <p align="center">
-        <iframe style="border-radius: 5px" width="560" height="315" src="https://www.youtube.com/embed/XIEI7-W7t2o" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-    </p>
-
-=== "Moteto (2023)"
-
-    The piece Moteto aims to be a rereading of a medieval motet. In addition, to overlapping independent voices, we use Just Intonation structures. With the help of technology, I aim to make the piece playable, also by amateur choirs, it is available on this website: www.charlesneimog.com/moteto/.
-    <p align="center">
-        <iframe style="border-radius: 5px" width="560" height="315" src="https://www.youtube.com/embed/TVcHzLCmpDM?si=GIkYPPifzjhfFZvM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-    </p>
-    
-    
-    
-
 
 ## <h2 align="center"> **Examples and Use Cases** </h2>
 
@@ -131,12 +103,43 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
 
 === "Graphics"
 
-    TODO
+    With `py4pd`, we can create graphics in real-time, like the one below.
 
-=== "Audio Descriptors Graphs"
-
-    TODO
+    <div style="text-align: center;">
+        <video width="640" height="360" controls>
+            <source src="assets/vispy.mp4" type="video/mp4">
+            Your browser does not support the video tag.
+        </video>
+    </div>
 
 ---
 
+
+## <h2 align="center"> **Pieces where I use it** </h2>
+
+=== "Ideias Roubadas (2024)"
+
+    Ideias Roubadas III is a work inspired by the proposal of the UPIC system, developed by Iannis Xenakis in collaboration with the Centre d'Etudes de Mathématique et Automatique Musicales (CEMAMu) in Paris. Like UPIC, this piece employs an approach that manipulates visual elements to generate music using PureData to render the audio. I employ the concept of instruments (inspired by Csound) to render the sounds. Each color represents a sound or a set of instructions for spacialization, envelope, and others.
+    <p align="center">
+        <iframe style="border-radius: 5px" width="560" height="315" src="https://www.youtube.com/embed/CuJsBlbFBeM?si=w6-aN2X__lMe9qlN" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    </p>
+
+
+=== "Eco (2023)"
+
+    Eco (2023) is the first version of one under-developing piece that uses some concepts of the composer Ricardo Thomasi in his PhD research. The idea here is to use smartphones/tablets put in the performance music stand, to make real-time `FFT` and `Partial Tracking` and then, generate scores that are played. The smartphones/tablets send data to PureData, and using `py4pd`, we generate real-time scores using `neoscore`.
+
+    <p align="center">
+        <iframe style="border-radius: 5px" width="560" height="315" src="https://www.youtube.com/embed/XIEI7-W7t2o" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    </p>
+
+=== "Moteto (2023)"
+
+    The piece Moteto aims to be a rereading of a medieval motet. In addition, to overlapping independent voices, we use Just Intonation structures. With the help of technology, I aim to make the piece playable, also by amateur choirs, it is available on this website: www.charlesneimog.com/moteto/.
+    <p align="center">
+        <iframe style="border-radius: 5px" width="560" height="315" src="https://www.youtube.com/embed/TVcHzLCmpDM?si=GIkYPPifzjhfFZvM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+    </p>
+    
+    
+    
 

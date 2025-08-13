@@ -82,7 +82,7 @@ nav:
   - Installation: setup.md
   - Hello World: hello.md
   - Creating Objects: pdmodule.md
-  - Py4pd Libraries: py4pd-libs/index.md
+  # - Py4pd Libraries: setup-libs.md
   - libraries.md
 extra:
   analytics:
