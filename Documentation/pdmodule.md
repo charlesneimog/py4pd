@@ -1,16 +1,16 @@
 # Creating Objects
 
-As shown in the [Hello World](../hello) section, to create a new `py4pd` object you must subclass `puredata.NewObject`, define the object’s name, and save it in a folder using the pattern `<object_name>.pd_py`. To enable object creation, you must always import the `puredata` module, which is only available when the script is loaded via `py4pd`, and then create a subclass of `puredata.NewObject`. 
+As shown in the [Hello World](../hello) section, to create a new `py4pd` object you must use the subclass `puredata.NewObject`, define the object’s name, and save it in a folder using the pattern `<object_name>.pd_py`. To enable object creation, you must always import the `puredata` module, which is only available when the script `.pd_py` is loaded via `py4pd`.
 
 ## `NewObject` Class
 
-All `py4pd` object are created as subclasses from the base class `puredata.NewObject`. 
+All PureData Python objects are created as subclasses from the base class `puredata.NewObject`. 
 
 ```python
 import puredata as pd
 
 class pymetro(pd.NewObject):
-    name: str = "pymetro" # object name, must be exactly the same as the file name (pymetro.pd_py)
+    name: str = "pymetro" # object name, must be exactly the same as the file name without extension (pymetro.pd_py)
 
     def __init__(self, args):
         # Object initializer
@@ -19,35 +19,35 @@ class pymetro(pd.NewObject):
 
 ### Object Attributes
 
-From the class initializer (`__init__`), you need to define some object attributes. Like `self.inlets`, `self.outlets` and others. 
+From the class initializer (`__init__`), you need to define some object attributes. Like `self.inlets`, `self.outlets` and options attributes (like `clocks`, `receivers`, etc).
 
-* `self.inlets`: Can be an `integer` or a `Tuple` specifying inlet types (`puredata.SIGNAL` or `puredata.DATA`), where each element in the tuple defines the type of the inlet at the corresponding index.
+* `self.inlets`: Can be an `integer` (number of inlets) or a `Tuple` specifying inlet types (`puredata.SIGNAL` or `puredata.DATA`), where each element in the tuple defines the type of the inlet at the corresponding index.
 
-* `self.outlets`: Can be an `integer` or a `Tuple` specifying outlet types (`puredata.SIGNAL` or `puredata.DATA`), where each element in the tuple defines the type of the outlet at the corresponding index.
+* `self.outlets`: Can be an `integer` (number of outlets) or a `Tuple` specifying outlet types (`puredata.SIGNAL` or `puredata.DATA`), where each element in the tuple defines the type of the outlet at the corresponding index.
 
-### Simple Methods
+### `pd.NewObject` Methods 
 
-#### `self.NewObject.logpost`
+#### `self.logpost`
 
 Post things on PureData console.
 
-#### `self.NewObject.error`
+#### `self.error`
 
 Print error, same as logpost with error level.
 
-#### `self.NewObject.out`
+#### `self.out`
 
 Output data to the objecta.
 
-#### `self.NewObject.tabwrite`
+#### `self.tabwrite`
 
 Write `Tuple` of numbers in the `pd` array.
 
-#### `self.NewObject.tabread`
+#### `self.tabread`
 
 Read table from `pd`, returns a tuple.
 
-#### `self.NewObject.reload`
+#### `self.reload`
 
 Reload the object.
 
@@ -63,17 +63,25 @@ class pymetro(pd.NewObject):
         self.metro = self.new_clock(self.tick)
 ```
 
-#### `pd.NewObject.new_clock`
+#### `self.new_clock`
 
 `Clock` can be created using the `self.new_clock` method, which returns a `puredata.Clock` object. `new_clock` accepts a function as an argument, which will be executed when the clock ticks. In the above example, `self.metro` will have the methods: 
 
-#### `pd.NewObject.Clock.delay`
-#### `pd.NewObject.Clock.set`
-#### `pd.NewObject.Clock.unset`
+##### `delay`
+
+Set a delay in milliseconds to execute function (in this case, `self.tick`).
+
+##### `set`
+
+TODO: 
+
+##### `unset`
+
+TODO: 
 
 ### Receivers
 
-#### `pd.NewObject.new_receiver`
+#### `self.new_receiver`
 
 ## Extra `puredata` Methods
 

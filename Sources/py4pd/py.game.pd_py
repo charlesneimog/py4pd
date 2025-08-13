@@ -1,0 +1,44 @@
+import puredata as pd
+import pygame
+import math
+
+
+class mypygame(pd.NewObject):
+    name: str = "py.game"
+
+    def __init__(self, args):
+        self.inlets = 1
+        self.outlets = 0
+        self.running = False
+        self.frames = 30
+
+        self.pdclock = self.new_clock(self.tick)
+
+    def tick(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+
+        self.pygametick += 0.05
+        c = int((math.sin(self.pygametick) * 0.5 + 0.5) * 255)
+        self.pygamescreen.fill((c, 255, c))
+        pygame.display.flip()
+        self.pygameclock.tick(self.frames)
+        self.pdclock.delay(1000 / self.frames)
+
+    def in_1_reload(self, args: list):
+        pygame.quit()
+        self.reload()
+
+    def in_1_init(self, args: list):
+        if self.running:
+            pygame.quit()
+            self.pdclock.unset()
+            self.running = False
+        else:
+            self.running = True
+            pygame.init()
+            self.pygamescreen = pygame.display.set_mode((400, 400))
+            self.pygameclock = pygame.time.Clock()
+            self.pygametick = 0
+            self.pdclock.delay(40)

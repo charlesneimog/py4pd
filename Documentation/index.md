@@ -26,11 +26,11 @@ hide:
 
 -   :material-music-note: __OpenMusic Objects__
 
-    [:octicons-arrow-right-24: `py4pd` Objects](pd-users/py4pd-module.md)
+    [:octicons-arrow-right-24: NEED UPDATE](index.md)
 
--   :simple-composer: __`py4pd` Libraries__
+-   :material-music-note: __`py4pd` Libraries__
 
-    [:octicons-arrow-right-24: `py4pd` Libraries](libraries.md)
+    [:octicons-arrow-right-24: NEED UPDATE](index.md)
     
 
 </div>
@@ -38,13 +38,13 @@ hide:
 ### <h3 align="center"> **Python User** </h3>
 <div class="grid cards" markdown>
 
--   :simple-python: __Create PureData Objects With Python__
+-   :simple-python: __Hello World__ 
 
-    [:octicons-arrow-right-24: Learning about `py4pd`](python-users/index.md)
+    [:octicons-arrow-right-24: Hello World with `py4pd`](hello.md)
 
--   :simple-composer: __Creating Libraries__
+-   :simple-python: __Creating Libraries__
 
-    [:octicons-arrow-right-24: How to create Python Libraries](libraries.md)
+    [:octicons-arrow-right-24: Creating Pd Object with Python](pdmodule.md)
     
 </div>
 
@@ -94,12 +94,12 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
     It is easy to use `AI` with `py4pd`. There are already powerful objects for real-time, like `nn~` and `ddsp~`, but they are designed to specify approaches. Below is an example using `py4pd` and the Python code used by `nn~` (offline processing).
 
     <p align="center">
-        <img src="examples/ia/ia.png" width="60%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);"></img>
+        <img src="assets/ia.png" width="60%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);"></img>
     </p>
 
     <p align="center">
         <audio controls style="width: 60%; border-radius: 10px;">
-            <source src="./examples/ia/turvo-wheel.wav" type="audio/mpeg">
+            <source src="./assets/turvo-wheel.wav" type="audio/mpeg">
             Your browser does not support the audio element.
         </audio>
     </p>
@@ -129,29 +129,13 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
 
         ```
 
-=== "Draws as scores"
+=== "Graphics"
 
-    In this example, I use the SVG file above to render sounds using the new `else/plaits~`. Besides `earplug~`, and `cyclone/coll`. The colors control the `plaits~` parameters.
-
-
-    <p align="center">
-        <img src="examples/img2sound/img2sound.svg" style="width: 100%; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);"></img>
-    </p>
-
-    <p align="center">
-        <audio controls style="width: 70%;">
-            <source src="examples/img2sound/img2sound.mp3" type="audio/mpeg">
-            Your browser does not support the audio element.
-        </audio>
-    </p>
+    TODO
 
 === "Audio Descriptors Graphs"
 
-    You can use some of the Audio Descriptors provided by `audioflux` for some analysis.
-
-    <p align="center">
-        <img src="examples/descriptors/descriptors.png" width="35%" style="border-radius: 10px; box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);"></img>
-    </p>
+    TODO
 
 ---
 

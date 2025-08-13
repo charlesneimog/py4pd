@@ -1,0 +1,95 @@
+import puredata as pd
+from vispy import scene, app, color
+from vispy.visuals import transforms
+
+
+class MyVispy(pd.NewObject):
+    name = "py.vispy"
+
+    def __init__(self, args):
+        self.inlets = 1
+        self.outlets = 0
+        self.running = False
+        self.frames = 60
+        self.tick_val = 0
+
+        # Canvas VisPy
+        self.canvas = scene.SceneCanvas(keys="interactive", size=(200, 200), show=False)
+        self.canvas.bgcolor = (0.3, 0.3, 0.3, 1)
+
+        # View para objetos 3D
+        self.view = self.canvas.central_widget.add_view()
+        self.view.camera = scene.cameras.TurntableCamera(up="z", fov=60)
+
+        # Cubo 3D
+        self.cube = scene.visuals.Box(
+            width=1,
+            height=1,
+            depth=1,
+            edge_color="black",
+            parent=self.view.scene,
+        )
+
+        self.rgb = (1, 0.5, 0.5, 1)
+        self.cube.transform = transforms.MatrixTransform()
+        # pd que controla o loop principal
+        self.pdclock = self.new_clock(self.loop)
+
+    def loop(self):
+        if not self.running:
+            return
+
+        angle = self.tick_val * 10
+        self.cube.transform.reset()
+        self.cube.transform.rotate(angle, (0, 1, 0))
+        self.cube.transform.rotate(angle / 2, (1, 0, 0))
+
+        # Aplica a cor RGB atual
+        self.cube.unfreeze()
+        self.cube.color = color.Color(self.rgb)
+
+        self.tick_val += 0.03
+        self.canvas.update()
+        app.process_events()
+        self.pdclock.delay(1000 / self.frames)
+
+    def in_1_rgb(self, args: list):
+        """
+        Recebe lista [r, g, b] ou [r, g, b, a] com valores 0-255 (ou 0-1 se já normalizado)
+        """
+        if len(args) >= 3:
+
+            def norm(x):
+                return x / 255 if x > 1 else x
+
+            r = norm(float(args[0]))
+            g = norm(float(args[1]))
+            b = norm(float(args[2]))
+            a = norm(float(args[3])) if len(args) > 3 else 1.0
+            self.rgb = (r, g, b, a)
+            self.cube.parent = None
+            self.cube = scene.visuals.Box(
+                width=1,
+                height=1,
+                depth=1,
+                color=self.rgb,  # Aplica a cor nova
+                edge_color="black",
+                parent=self.view.scene,
+            )
+            self.cube.transform = transforms.MatrixTransform()
+            pd.post("Color set to", self.rgb)
+        else:
+            self.error("in_1_rgb: esperado ao menos 3 valores (r,g,b)")
+
+    def in_1_init(self, args: list):
+        if self.running:
+            self.running = False
+            self.canvas.close()
+            self.pdclock.unset()
+        else:
+            self.running = True
+            self.canvas.show()
+            self.pdclock.delay(1000 / self.frames)
+
+    def in_1_reload(self, args: list):
+        self.reload()
