@@ -1,6 +1,6 @@
 import puredata as pd
 import functools
-import numpy as np
+import operator
 
 pd.post("OpenMusic library from py4pd")
 pd.post("By Charles K. Neimog")
@@ -72,8 +72,13 @@ class pymklist(pd.NewObject):
         self.out(0, pd.PYOBJECT, self.mklist_list)
 
 
-class pynumpy(pd.NewObject):
-    name = "py.bignp"
+# ╭──────────────────────────────────────╮
+# │             Simple Math              │
+# ╰──────────────────────────────────────╯
+class _PyMathBase(pd.NewObject):
+    """Classe base para operações matemáticas em múltiplos inlets"""
+
+    name = ""
 
     def __init__(self, args):
         if len(args) > 0:
@@ -84,19 +89,74 @@ class pynumpy(pd.NewObject):
         self.mklist_list = [[] for _ in range(self.inlets)]
 
         for i in range(2, self.inlets + 1):
-            method_name = f"in_{i}_list"
-            bound_method = functools.partial(self._list_method, inlet_index=i)
-            setattr(self, method_name, bound_method)
+            setattr(
+                self,
+                f"in_{i}_list",
+                functools.partial(self._list_method, inlet_index=i),
+            )
+            setattr(
+                self,
+                f"in_{i}_float",
+                functools.partial(self._float_method, inlet_index=i),
+            )
 
     def _list_method(self, l: list, inlet_index: int):
-        arr = np.random.rand(10_000_000)
-        self.mklist_list[inlet_index - 1] = [arr]
+        self.mklist_list[inlet_index - 1] = l
+
+    def _float_method(self, f: float, inlet_index: int):
+        self.mklist_list[inlet_index - 1] = [f]
+
+    def _compute(self):
+        if not all(len(lst) == len(self.mklist_list[0]) for lst in self.mklist_list):
+            return None
+        result = []
+        for values in zip(*self.mklist_list):
+            res = values[0]
+            for v in values[1:]:
+                res = self.operation(res, v)
+            result.append(res)
+        return result
 
     def in_1_list(self, l: list):
         self.mklist_list[0] = l
-        self.out(0, pd.PYOBJECT, self.mklist_list)
+        value = self._compute()
+        if value is not None:
+            self.out(0, pd.PYOBJECT, value)
+
+    def in_1_float(self, f: float):
+        if not self.mklist_list[0]:
+            self.mklist_list[0] = [f]
+        else:
+            self.mklist_list[0][0] = f
+        value = self._compute()
+        if value is not None:
+            self.out(0, pd.PYOBJECT, value)
 
 
+# Classes com 'name' explícito
+class pyplus(_PyMathBase):
+    name = "py+"
+    operation = operator.add
+
+
+class pyminus(_PyMathBase):
+    name = "py-"
+    operation = operator.sub
+
+
+class pymult(_PyMathBase):
+    name = "py*"
+    operation = operator.mul
+
+
+class pydiv(_PyMathBase):
+    name = "py/"
+    operation = operator.truediv
+
+
+# ╭──────────────────────────────────────╮
+# │                Lists                 │
+# ╰──────────────────────────────────────╯
 class pynth(pd.NewObject):
     name = "py.nth"
 
@@ -112,13 +172,105 @@ class pynth(pd.NewObject):
         self.out(0, pd.PYOBJECT, l[self.nth])
 
 
-# py.mklist
-# py.len
-# py.nth
+# ──────────────────────────────────────
+class pylen(pd.NewObject):
+    name = "py.len"
+
+    def __init__(self, args):
+        self.inlets = 1
+        self.outlets = 1
+
+    def in_1_pyobj_list(self, l: list):
+        length = len(l)
+        self.out(0, pd.FLOAT, length)
+
+
+# ──────────────────────────────────────
+class _PyCompareBase(pd.NewObject):
+    """Classe base para max/min em múltiplos inlets"""
+
+    operation = None  # função max ou min
+    name = ""
+
+    def __init__(self, args):
+        if len(args) > 0:
+            self.inlets = int(args[0])
+        else:
+            self.inlets = 2
+        self.outlets = 1
+        self.mklist_list = [[] for _ in range(self.inlets)]
+
+        for i in range(2, self.inlets + 1):
+            setattr(
+                self,
+                f"in_{i}_list",
+                functools.partial(self._list_method, inlet_index=i),
+            )
+            setattr(
+                self,
+                f"in_{i}_float",
+                functools.partial(self._float_method, inlet_index=i),
+            )
+
+    def _list_method(self, l: list, inlet_index: int):
+        self.mklist_list[inlet_index - 1] = l
+
+    def _float_method(self, f: float, inlet_index: int):
+        self.mklist_list[inlet_index - 1] = [f]
+
+    def _compute(self):
+        if not all(len(lst) == len(self.mklist_list[0]) for lst in self.mklist_list):
+            return None
+        result = []
+        for values in zip(*self.mklist_list):
+            result.append(self.operation(values))
+        return result
+
+    def in_1_list(self, l: list):
+        self.mklist_list[0] = l
+        value = self._compute()
+        if value is not None:
+            self.out(0, pd.PYOBJECT, value)
+
+    def in_1_float(self, f: float):
+        if not self.mklist_list[0]:
+            self.mklist_list[0] = [f]
+        else:
+            self.mklist_list[0][0] = f
+        value = self._compute()
+        if value is not None:
+            self.out(0, pd.PYOBJECT, value)
+
+
+# Implementações específicas
+class pymax(_PyCompareBase):
+    name = "py.max"
+    operation = max
+
+
+class pymin(_PyCompareBase):
+    name = "py.min"
+    operation = min
+
+
+# ──────────────────────────────────────
+class pyexpr(pd.NewObject):
+    name = "py.expr"
+
+    def __init__(self, args):
+        for a in args:
+            if "$f" in a:
+                pd.post("float  input")
+            elif "$i" in a:
+                pd.post("int    input")
+            elif "$s" in a:
+                pd.post("symbol input")
+
+        self.inlets = 1
+        self.outlets = 1
+
+
 # py.append
-# py.list
-# py.max
-# py.min
 # py.reduce
 # py.mattrans
 # py.rotate
@@ -130,10 +282,6 @@ class pynth(pd.NewObject):
 # py.recursive
 # py.trigger
 # py.gate
-# py+
-# py-
-# py*
-# py/
 # py.abs
 # py//
 # py.listcomp
