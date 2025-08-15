@@ -1,6 +1,6 @@
 import puredata as pd
 import functools
-import math
+import numpy as np
 
 pd.post("OpenMusic library from py4pd")
 pd.post("By Charles K. Neimog")
@@ -66,6 +66,31 @@ class pymklist(pd.NewObject):
 
     def _list_method(self, l: list, inlet_index: int):
         self.mklist_list[inlet_index - 1] = l
+
+    def in_1_list(self, l: list):
+        self.mklist_list[0] = l
+        self.out(0, pd.PYOBJECT, self.mklist_list)
+
+
+class pynumpy(pd.NewObject):
+    name = "py.bignp"
+
+    def __init__(self, args):
+        if len(args) > 0:
+            self.inlets = int(args[0])
+        else:
+            self.inlets = 2
+        self.outlets = 1
+        self.mklist_list = [[] for _ in range(self.inlets)]
+
+        for i in range(2, self.inlets + 1):
+            method_name = f"in_{i}_list"
+            bound_method = functools.partial(self._list_method, inlet_index=i)
+            setattr(self, method_name, bound_method)
+
+    def _list_method(self, l: list, inlet_index: int):
+        arr = np.random.rand(10_000_000)
+        self.mklist_list[inlet_index - 1] = [arr]
 
     def in_1_list(self, l: list):
         self.mklist_list[0] = l

@@ -33,7 +33,6 @@ typedef struct _py {
     t_object obj;
 } t_py;
 
-
 typedef struct _pdpy_pyclass t_pdpy_pyclass;
 typedef struct _pdpy_clock t_pdpy_clock;
 static t_class *pdpy_proxyinlet_class = NULL;
@@ -362,6 +361,7 @@ static t_pdpy_objptr *pdpy_createoutputptr(void) {
     if (ret < 0 || ret >= sizeof(buf)) {
         buf[sizeof(buf) - 1] = '\0';
     }
+    x->pValue = NULL;
     x->id = gensym(buf);
     pd_bind((t_pd *)x, x->id);
     return x;
@@ -643,8 +643,13 @@ static void py4pdobj_free(t_pdpy_pdobj *x) {
         clock_free(c->clock);
     }
 
-    pd_unbind((t_pd *)x->outobjptr, x->outobjptr->id);
-    freebytes(x->outobjptr, sizeof(t_pdpy_objptr));
+    if (x->outobjptr) {
+        if (x->outobjptr->pValue) {
+            Py_DECREF(x->outobjptr->pValue);
+        }
+        pd_unbind((t_pd *)x->outobjptr, x->outobjptr->id);
+        freebytes(x->outobjptr, sizeof(t_pdpy_objptr));
+    }
 }
 
 // ─────────────────────────────────────
@@ -829,7 +834,6 @@ static void pdpy_pyobject(t_pdpy_pdobj *x, t_symbol *s, t_symbol *id) {
     }
 
     Py_DECREF(method);
-    Py_XDECREF(pArg);
     Py_XDECREF(pValue);
 
     return;
@@ -1021,7 +1025,6 @@ static int pdpy_create_newpyobj(PyObject *subclass, const char *name, const char
         PyErr_Clear(); // Ignore the error and clear the exception
     }
     Py_XDECREF(dsp);
-
 
     // save object classes (pd and python)
     PyObject *pd_module = PyImport_ImportModule("puredata");
@@ -1342,6 +1345,10 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
 
     t_outlet *out = x->outs[outlet];
     if (pdtype == PYOBJECT) {
+        if (x->outobjptr->pValue) {
+            Py_DECREF(x->outobjptr->pValue);
+        }
+        Py_INCREF(pValue);
         x->outobjptr->pValue = pValue;
         t_atom args[2];
         SETSYMBOL(&args[0], gensym(Py_TYPE(pValue)->tp_name));
@@ -1898,15 +1905,9 @@ PyMODINIT_FUNC pdpy_initpuredatamodule() {
     return m;
 }
 
-
-
-
-
-
-
-//╭─────────────────────────────────────╮
-//│            Py4pd Object             │
-//╰─────────────────────────────────────╯
+// ╭─────────────────────────────────────╮
+// │            Py4pd Object             │
+// ╰─────────────────────────────────────╯
 static int pd4pd_loader_pathwise(t_canvas *canvas, const char *objectname, const char *path) {
     char dirbuf[MAXPDSTRING], filename[MAXPDSTRING];
     char *ptr;
