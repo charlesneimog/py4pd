@@ -92,3 +92,53 @@ Post a message to PureData without being possible to detect the object (for exam
 #### `pd.hasgui` 
 
 Returns if PureData has a GUI interface.
+
+## Complet Examples
+
+Here some examples of objects:
+
+### Tradicional Objects
+
+``` python
+import puredata as pd
+
+
+class pymetro(pd.NewObject):
+    name: str = "pymetro"
+
+    def __init__(self, args):
+        self.inlets = 2
+        self.outlets = 1
+        self.toggle = False
+        if len(args) > 0:
+            self.time = float(args[0])
+        else:
+            self.time = 1000
+        self.metro = self.new_clock(self.tick)
+        self.args = args
+
+    def in_2_float(self, f: float):
+        self.time = f
+
+    def in_1_float(self, f: float):
+        if f:
+            self.toggle = True
+            self.tick()
+        else:
+            self.metro.unset()
+            self.toggle = False
+
+    def in_1_reload(self, args: list):
+        self.reload()
+
+    def tick(self):
+        if self.toggle:
+            self.metro.delay(self.time)
+        self.out(0, pd.SYMBOL, "test238")
+``` 
+
+
+### Python Data
+### Audio Objects
+### Graphical Objects
+

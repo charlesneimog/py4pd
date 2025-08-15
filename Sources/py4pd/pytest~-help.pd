@@ -1,4 +1,4 @@
-#N canvas 965 30 938 1001 10;
+#N canvas 0 0 943 1005 10;
 #X declare -lib py4pd;
 #X obj 4 5 declare -lib py4pd;
 #X obj 5 198 pytest, f 8;

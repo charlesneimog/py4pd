@@ -1,0 +1,16 @@
+#N canvas 0 0 943 1005 10;
+#X declare -lib py4pd;
+#X obj 8 7 declare -lib py4pd;
+#X msg 42 100 reload;
+#X obj 51 152 py.pip;
+#X obj 202 62 osc~ 440;
+#X obj 202 84 *~ 0.2;
+#X obj 202 106 dac~;
+#X msg 51 127 pip install neoscore;
+#X obj 33 193 py.score;
+#X msg 33 74 show;
+#X connect 1 0 7 0;
+#X connect 3 0 4 0;
+#X connect 4 0 5 0;
+#X connect 6 0 2 0;
+#X connect 8 0 7 0;

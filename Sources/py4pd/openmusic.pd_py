@@ -1,0 +1,122 @@
+import puredata as pd
+import functools
+import math
+
+pd.post("OpenMusic library from py4pd")
+pd.post("By Charles K. Neimog")
+
+# class pyand(pd.NewObject):
+#     name = "py.and"
+#     # TODO: Precisa implementar um jeito de executar coisas em multiplos inlets
+#
+#     def __init__(self, args):
+#         self.outlets = 1
+#         if len(args) > 0:
+#             self.inlets = args[0]
+#         else:
+#             self.inlets = 2
+
+# class pyor(pd.NewObject):
+# class pyequal(pd.NewObject):
+# class pyand(pd.NewObject):
+# class pyand(pd.NewObject):
+# class pyhigherthen(pd.NewObject):
+# class pylowerthen(pd.NewObject):
+# class py2pd(pd.NewObject):
+# class pd2py(pd.NewObject):
+
+
+class openmusic(pd.NewObject):
+    name = "openmusic"
+
+    def __init__(self, args):
+        self.inlets = 1
+        self.outlets = 0
+
+    def in_1_reload(self, args):
+        self.reload()
+
+
+class pyprint(pd.NewObject):
+    name = "py.print"
+
+    def __init__(self, args):
+        self.inlets = 1
+        self.outlets = 0
+
+    def in_1_pyobj_list(self, thing):
+        self.logpost(2, thing)
+
+
+class pymklist(pd.NewObject):
+    name = "py.mklist"
+
+    def __init__(self, args):
+        if len(args) > 0:
+            self.inlets = int(args[0])
+        else:
+            self.inlets = 2
+        self.outlets = 1
+        self.mklist_list = [[] for _ in range(self.inlets)]
+
+        for i in range(2, self.inlets + 1):
+            method_name = f"in_{i}_list"
+            bound_method = functools.partial(self._list_method, inlet_index=i)
+            setattr(self, method_name, bound_method)
+
+    def _list_method(self, l: list, inlet_index: int):
+        self.mklist_list[inlet_index - 1] = l
+
+    def in_1_list(self, l: list):
+        self.mklist_list[0] = l
+        self.out(0, pd.PYOBJECT, self.mklist_list)
+
+
+class pynth(pd.NewObject):
+    name = "py.nth"
+
+    def __init__(self, args):
+        if len(args) < 1:
+            raise Exception("Missing arguments")
+
+        self.nth = int(args[0])
+        self.inlets = 1
+        self.outlets = 1
+
+    def in_1_pyobj_list(self, l: list):
+        self.out(0, pd.PYOBJECT, l[self.nth])
+
+
+# py.mklist
+# py.len
+# py.nth
+# py.append
+# py.list
+# py.max
+# py.min
+# py.reduce
+# py.mattrans
+# py.rotate
+# py.flat
+# py.np2list       # only if numpyInstalled
+# py.list2np       # only if numpyInstalled
+# py.iterate
+# py.collect
+# py.recursive
+# py.trigger
+# py.gate
+# py+
+# py-
+# py*
+# py/
+# py.abs
+# py//
+# py.listcomp
+# py.rhythm_tree
+# py.arithm-ser
+# py.show
+# py.f2mc
+# py.mc2f
+# py.mc2n
+# py.timer
+# py.memuse
