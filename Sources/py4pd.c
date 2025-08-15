@@ -121,7 +121,7 @@ static void pdpy_proxyinlet_init(t_pdpy_proxyinlet *p, t_pdpy_pdobj *owner, unsi
 static void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom *argv);
 static void pdpy_clock_execute(t_pdpy_clock *x);
 static void pdpy_printerror(t_pdpy_pdobj *x);
-static void pdpy_pyobject(t_pdpy_pdobj *x, t_symbol *s, t_symbol *id);
+// static void pdpy_pyobject(t_pdpy_pdobj *x, t_symbol *s, t_symbol *id);
 static void pdpy_dealloc(t_pdpy_pyclass *self);
 
 // ╭─────────────────────────────────────╮
@@ -836,15 +836,27 @@ void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom
     char methodname[MAXPDSTRING];
 
     if (strcmp(s->s_name, "PyObject") == 0) {
-        char *str = strdup(atom_getsymbol(argv)->s_name);
-        if (!str)
+        pd_snprintf(methodname, MAXPDSTRING, "in_%d_pyobj", proxy->id);
+        PyObject *method = PyObject_GetAttrString(o->pyclass, methodname);
+        if (method == NULL) {
+            pd_error(o, "[%s] method '%s' not found", o->obj.te_g.g_pd->c_name->s_name, methodname);
             return;
-        char *p = str;
-        while ((p = strchr(p, '.')) != NULL) {
-            *p = '_';
         }
-        pdpy_pyobject(proxy->owner, gensym(str), atom_getsymbol(argv + 1));
-        free(str);
+
+        PyObject *pArg = pdpy_getoutptr(atom_getsymbol(argv + 1)); // borrowed
+        PyObject *pValue = PyObject_CallOneArg(method, pArg);
+        if (pValue == NULL) {
+            return;
+        }
+
+        if (pValue == NULL) {
+            pdpy_printerror(o);
+            Py_DECREF(method);
+            Py_XDECREF(pArg);
+            return;
+        }
+        Py_DECREF(method);
+
     } else {
         pd_snprintf(methodname, MAXPDSTRING, "in_%d_%s", proxy->id, s->s_name);
         pdpy_execute(o, methodname, s, argc, argv);
@@ -859,43 +871,38 @@ static void pdpy_anything(t_pdpy_pdobj *o, t_symbol *s, int argc, t_atom *argv) 
 }
 
 // ─────────────────────────────────────
-static void pdpy_pyobject(t_pdpy_pdobj *x, t_symbol *s, t_symbol *id) {
-    if (x->pyclass == NULL) {
-        post("pyclass is NULL");
-        return;
-    }
-
-    char methodname[MAXPDSTRING];
-    pd_snprintf(methodname, MAXPDSTRING, "in_1_pyobj_%s", s->s_name);
-
-    PyObject *pyclass = (PyObject *)x->pyclass;
-    PyObject *method = PyObject_GetAttrString(pyclass, methodname);
-    if (!method || !PyCallable_Check(method)) {
-        PyErr_Clear();
-        pd_error(x, "[%s] method '%s' not found or not callable", x->obj.te_g.g_pd->c_name->s_name,
-                 methodname);
-        Py_XDECREF(method);
-        return;
-    }
-
-    PyObject *pArg = pdpy_getoutptr(id); // borrowed
-    PyObject *pValue = PyObject_CallOneArg(method, pArg);
-    if (pValue == NULL) {
-        pdpy_printerror(x);
-        Py_DECREF(method);
-        return;
-    }
-
-    if (!Py_IsNone(pValue)) {
-        pd_error(x,
-                 "[%s] '%s' did not return None. py4pd methods must return None; use "
-                 "'self.out' to output data.",
-                 x->obj.te_g.g_pd->c_name->s_name, methodname);
-    }
-
-    Py_DECREF(method);
-    Py_XDECREF(pValue);
-}
+// static void pdpy_pyobject(t_pdpy_pdobj *x, t_symbol *s, t_symbol *id) {
+//     if (x->pyclass == NULL) {
+//         post("pyclass is NULL");
+//         return;
+//     }
+//
+//     PyObject *pyclass = (PyObject *)x->pyclass;
+//     PyObject *method = PyObject_GetAttrString(pyclass, "in_1_pyobj");
+//     if (!method || !PyCallable_Check(method)) {
+//         PyErr_Clear();
+//         pd_error(x, "[%s] method 'in_1_pyobj' not found or not callable",
+//         x->obj.te_g.g_pd->c_name->s_name); Py_XDECREF(method); return;
+//     }
+//
+//     PyObject *pArg = pdpy_getoutptr(id); // borrowed
+//     PyObject *pValue = PyObject_CallOneArg(method, pArg);
+//     if (pValue == NULL) {
+//         pdpy_printerror(x);
+//         Py_DECREF(method);
+//         return;
+//     }
+//
+//     if (!Py_IsNone(pValue)) {
+//         pd_error(x,
+//                  "[%s] 'in_1_pyobj' did not return None. py4pd methods must return None; use "
+//                  "'self.out' to output data.",
+//                  x->obj.te_g.g_pd->c_name->s_name);
+//     }
+//
+//     Py_DECREF(method);
+//     Py_XDECREF(pValue);
+// }
 
 // ─────────────────────────────────────
 static t_int *pdpy_perform(t_int *w) {
