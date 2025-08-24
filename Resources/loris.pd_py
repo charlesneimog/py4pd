@@ -1,0 +1,26 @@
+import puredata as pd
+import loris
+
+
+class l_analyzer(pd.NewObject):
+    name = "l.analyzer"
+
+    def __init__(self, args):
+        self.inlets = 1
+        self.outlets = 1
+
+        if len(args) == 0:
+            self.freq = 440
+        else:
+            self.freq = args[0]
+
+        self.analyzer = loris.Analyzer(self.freq)
+
+    def in_1_analyze(self, args):
+        pd.post("analyzing table " + args[0])
+        samples = self.tabread(args[0])
+        self.anal = self.analyzer.analyze(samples, pd.get_sample_rate())
+        self.out(0, pd.PYOBJECT, self.anal)
+
+    def in_1_reload(self, args):
+        self.reload()

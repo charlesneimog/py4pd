@@ -35,6 +35,7 @@ typedef struct _py {
 
 typedef struct _pdpy_pyclass t_pdpy_pyclass;
 typedef struct _pdpy_clock t_pdpy_clock;
+typedef struct _pdpy_receiver t_pdpy_receiver;
 static t_class *pdpy_proxyinlet_class = NULL;
 static t_class *pdpy_pyobjectout_class = NULL;
 static t_class *pdpy_proxyclock_class = NULL;
@@ -112,6 +113,15 @@ typedef struct _pdpy_clock {
     const char *functionname;
     float delay_time;
 } t_pdpy_clock;
+
+// ─────────────────────────────────────
+typedef struct _pdpy_receiver {
+    PyObject_HEAD PyObject *function;
+    t_pd pd;
+    t_pdpy_pdobj *owner;
+    const char *functionname;
+    t_symbol *r;
+} t_pdpy_receiver;
 
 // ╭─────────────────────────────────────╮
 // │            Declarations             │
@@ -324,7 +334,29 @@ static void pdpy_clock_execute(t_pdpy_clock *x) {
     return;
 }
 
-// ─────────────────────────────────────
+// ╭─────────────────────────────────────╮
+// │              Receiver               │
+// ╰─────────────────────────────────────╯
+// TODO:
+// static PyObject *pdpy_newreceiver(PyObject *self, PyObject *args) {
+//     PyObject *func;
+//     char receiver[MAXPDSTRING];
+//     if (!PyArg_ParseTuple(args, "sO", &receiver, &func)) {
+//         PyErr_SetString(PyExc_TypeError, "new_receiver require a function as argument");
+//         return NULL;
+//     }
+//
+//     if (!PyCallable_Check(func)) {
+//         PyErr_SetString(PyExc_TypeError, "new_receiver function is not callable");
+//         return NULL;
+//     }
+//
+//
+// }
+//
+// ╭─────────────────────────────────────╮
+// │            Py4pd objects            │
+// ╰─────────────────────────────────────╯
 static PyObject *py4pdobj_converttopy(int argc, t_atom *argv) {
     PyObject *pValue = PyList_New(argc);
     for (int i = 0; i < argc; i++) {
@@ -1771,6 +1803,12 @@ static PyObject *pdpy_hasgui(PyObject *self, PyObject *args) {
     return PyLong_FromLong(sys_havegui());
 }
 
+// ─────────────────────────────────────
+static PyObject *pdpy_sr(PyObject *self, PyObject *args) {
+    (void)self;
+    return PyLong_FromLong(sys_getsr());
+}
+
 // ╭─────────────────────────────────────╮
 // │            MODULE LOADER            │
 // ╰─────────────────────────────────────╯
@@ -1911,6 +1949,7 @@ static PyType_Spec ObjectLoaderSpec = {
 PyMethodDef pdpy_modulemethods[] = {
     {"post", pdpy_post, METH_VARARGS, "Print informations in PureData Console"},
     {"hasgui", pdpy_hasgui, METH_NOARGS, "Return False is pd is running in console"},
+    {"get_sample_rate", pdpy_sr, METH_NOARGS, "Return sample rate"},
     {NULL, NULL, 0, NULL}};
 
 // ─────────────────────────────────────

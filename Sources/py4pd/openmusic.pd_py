@@ -1,29 +1,12 @@
 import puredata as pd
 import functools
 import operator
+import random
+import math
+from typing import Any, Callable, Iterable, List, Sequence, Union
 
 pd.post("OpenMusic library from py4pd")
-pd.post("By Charles K. Neimog")
-
-# class pyand(pd.NewObject):
-#     name = "py.and"
-#     # TODO: Precisa implementar um jeito de executar coisas em multiplos inlets
-#
-#     def __init__(self, args):
-#         self.outlets = 1
-#         if len(args) > 0:
-#             self.inlets = args[0]
-#         else:
-#             self.inlets = 2
-
-# class pyor(pd.NewObject):
-# class pyequal(pd.NewObject):
-# class pyand(pd.NewObject):
-# class pyand(pd.NewObject):
-# class pyhigherthen(pd.NewObject):
-# class pylowerthen(pd.NewObject):
-# class py2pd(pd.NewObject):
-# class pd2py(pd.NewObject):
+pd.post("by Charles K. Neimog (2025)")
 
 
 class openmusic(pd.NewObject):
@@ -44,7 +27,7 @@ class pyprint(pd.NewObject):
         self.inlets = 1
         self.outlets = 0
 
-    def in_1_pyobj_list(self, thing):
+    def in_1_pyobj(self, thing):
         self.logpost(2, thing)
 
 
@@ -100,10 +83,19 @@ class _PyMathBase(pd.NewObject):
                 functools.partial(self._float_method, inlet_index=i),
             )
 
+            setattr(
+                self,
+                f"in_{i}_pyobj",
+                functools.partial(self._pyobj_method, inlet_index=i),
+            )
+
     def _list_method(self, l: list, inlet_index: int):
         self.mklist_list[inlet_index - 1] = l
 
     def _float_method(self, f: float, inlet_index: int):
+        self.mklist_list[inlet_index - 1] = [f]
+
+    def _pyobj_method(self, f, inlet_index: int):
         self.mklist_list[inlet_index - 1] = [f]
 
     def _compute(self):
@@ -117,20 +109,28 @@ class _PyMathBase(pd.NewObject):
             result.append(res)
         return result
 
-    def in_1_list(self, l: list):
+    def in_1_pyobj(self, l):
+        if isinstance(l, list):
+            self.in_1_list(l)
+        elif isinstance(l, float) or isinstance(l, int):
+            self.in_1_float(l)
+        else:
+            raise Exception("Invalid type")
+
+    def in_1_list(self, l):
         self.mklist_list[0] = l
         value = self._compute()
         if value is not None:
             self.out(0, pd.PYOBJECT, value)
 
-    def in_1_float(self, f: float):
+    def in_1_float(self, f):
         if not self.mklist_list[0]:
             self.mklist_list[0] = [f]
         else:
             self.mklist_list[0][0] = f
         value = self._compute()
         if value is not None:
-            self.out(0, pd.PYOBJECT, value)
+            self.out(0, pd.PYOBJECT, value[0])
 
 
 # Classes com 'name' explícito
@@ -168,7 +168,7 @@ class pynth(pd.NewObject):
         self.inlets = 1
         self.outlets = 1
 
-    def in_1_pyobj_list(self, l: list):
+    def in_1_pyobj(self, l: list):
         self.out(0, pd.PYOBJECT, l[self.nth])
 
 
@@ -180,7 +180,7 @@ class pylen(pd.NewObject):
         self.inlets = 1
         self.outlets = 1
 
-    def in_1_pyobj_list(self, l: list):
+    def in_1_pyobj(self, l: list):
         length = len(l)
         self.out(0, pd.FLOAT, length)
 
@@ -241,6 +241,12 @@ class _PyCompareBase(pd.NewObject):
         if value is not None:
             self.out(0, pd.PYOBJECT, value)
 
+    def in_1_pyobj(self, values):
+        if isinstance(values, list):
+            self.in_1_list(values)
+        elif isinstance(values, float):
+            self.in_1_float(values)
+
 
 # Implementações específicas
 class pymax(_PyCompareBase):
@@ -270,26 +276,141 @@ class pyexpr(pd.NewObject):
         self.outlets = 1
 
 
-# py.append
-# py.reduce
-# py.mattrans
-# py.rotate
-# py.flat
-# py.np2list       # only if numpyInstalled
-# py.list2np       # only if numpyInstalled
-# py.iterate
-# py.collect
-# py.recursive
-# py.trigger
-# py.gate
-# py.abs
-# py//
-# py.listcomp
-# py.rhythm_tree
-# py.arithm-ser
-# py.show
-# py.f2mc
-# py.mc2f
-# py.mc2n
-# py.timer
-# py.memuse
+# ╭──────────────────────────────────────╮
+# │            Python Methods            │
+# ╰──────────────────────────────────────╯
+class pydir(pd.NewObject):
+    name = "py.dir"
+
+    def __init__(self, args):
+        self.inlets = 1
+        self.outlets = 0
+
+    def in_1_pyobj(self, l):
+        set_get = dir(l)
+        good = []
+        for m in set_get:
+            if m[0] != "_":
+                good.append(m)
+        pd.post(good)
+
+
+# ──────────────────────────────────────
+class pygetattr(pd.NewObject):
+    name = "py.getattr"
+
+    def __init__(self, args):
+        self.inlets = 1
+        self.outlets = 1
+        if len(args) == 0:
+            raise Exception("Required attr name")
+
+        self.attr = args[0]
+
+    def in_1_pyobj(self, l):
+        self.out(0, pd.PYOBJECT, getattr(l, self.attr))
+
+
+# ╭──────────────────────────────────────╮
+# │             Python Loop              │
+# ╰──────────────────────────────────────╯
+import uuid
+
+id_unico = uuid.uuid4()
+
+
+class pyiterate(pd.NewObject):
+    name = "py.iterate"
+
+    def __init__(self, args):
+        self.inlets = 1
+        self.outlets = 2
+
+    def in_1_list(self, l):
+        self.out(1, pd.PYOBJECT, "iterate_init-" + str(id_unico))
+        for i in l:
+            self.out(0, pd.PYOBJECT, i)
+        self.out(1, pd.PYOBJECT, "iterate_end-" + str(id_unico))
+
+    def in_1_pyobj(self, l):
+        self.out(1, pd.PYOBJECT, "iterate_init-" + str(id_unico))
+        for i in l:
+            pd.post(i)
+            self.out(0, pd.PYOBJECT, i)
+        self.out(1, pd.PYOBJECT, "iterate_end-" + str(id_unico))
+
+    def in_1_reload(self, args):
+        self.reload()
+
+
+class pycollect(pd.NewObject):
+    name = "py.collect"
+
+    def __init__(self, args):
+        self.inlets = 2
+        self.outlets = 1
+        self.collected = []
+
+    def in_1_pyobj(self, thing):
+        self.collected.append(thing)
+
+    def in_2_pyobj(self, method):
+        if method == "iterate_init-" + str(id_unico):
+            self.collected = []
+        elif method == "iterate_end-" + str(id_unico):
+            self.out(0, pd.PYOBJECT, self.collected)
+
+    def in_1_reload(self, args):
+        self.reload()
+
+
+# TODO: List Processing
+# '(last-elem last-n first-n  x-append flat create-list expand-lst iterate-list
+#                              mat-trans group-list n-group-list remove-dup remove-nth subs-posn interlock list-modulo
+#                              list-explode list-filter table-filter band-filter range-filter posn-match apply-lambda-seq om-choose)
+
+# TODO: List utilities
+# (all-atoms? all-lists? treedepth member-pos) *list-utils-package*)
+
+# TODO: ARITHMETICS
+# (om+ om- om* om/ om// om^ om-e om-abs om-min om-max
+#                    list-min list-max om-mean om-log om-round om-scale om-scale^ om-scale/sum reduce-tree
+#                    interpolation factorize om-clip om-random perturbation
+#                    om-cos om-sin
+
+#
+# ;;; COMBINATORIAL
+# (defvar *comb-package* (omNG-protect-object (omNG-make-new-package "Combinatorial")))
+# (AddGenFun2Pack '(sort-list group-cons remove-iter rotate nth-random permut-random posn-order permutations) *comb-package*)
+# (AddPackage2Pack *comb-package* *basic-package*)
+#
+# ;;; SERIES
+# (defvar *numser-package* (omNG-protect-object (omNG-make-new-package "Series")))
+# (AddGenFun2Pack '(arithm-ser geometric-ser fibo-ser inharm-ser prime-ser prime? x->dx dx->x) *numser-package* )
+# (AddPackage2Pack *numser-package* *basic-package*)
+#
+# ;;; SETS
+# (defvar *set-package* (omNG-protect-object (omNG-make-new-package "Sets")))
+# (AddGenFun2Pack  '(x-union x-intersect x-Xor x-diff included?) *set-package*)
+# (AddPackage2Pack *set-package* *basic-package*)
+#
+#
+# ;;; FUNCTIONS
+# (defvar *function-package* (omNG-protect-object (omNG-make-new-package "Curves & Functions")))
+#
+# (AddGenFun2Pack '(point-pairs om-sample
+#                               x-transfer y-transfer
+#                               om-spline
+#                               linear-fun bpf-interpol
+#                               reduce-points reduce-n-points
+#                               bpf-offset bpf-crossfade bpf-extract bpf-scale
+#                               bpf-stretch bpf-concat
+#                               om-rotate om-translate om-mirror
+#                               export-svg import-svg
+#                               ) *function-package*)
+#
+# ;;; DATA STRUCTURES
+# (defvar *basic-data-package* (omNG-protect-object (omNG-make-new-package "Array")))
+# (AddGenFun2Pack '(new-comp get-comp comp-list comp-field add-comp remove-comp) *basic-data-package*)
+# (AddClass2Pack '(class-array) *basic-data-package* :position (list (om-make-point 175 50)))
+# (AddPackage2Pack *basic-data-package* *basic-package*)

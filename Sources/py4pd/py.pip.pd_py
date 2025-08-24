@@ -58,7 +58,10 @@ class pypip(pd.NewObject):
                         exec_path = sys.executable
                         command = f"{exec_path} -m pip install {pkg} "
                         command += f'--target "{self.py4pd_path}/py4pd-env"'
-                        os.system(command)
+                        ret = os.system(command)
+                        if ret != 0:
+                            self.error(f"Error installing {pkg}")
+                            self.installing[pkg] = False
                         self.installing[pkg] = False
 
                     threading.Thread(target=install_thread, args=(package,)).start()
