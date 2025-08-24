@@ -22,14 +22,14 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13'
       - name: Install PureData and Deps arm64 Mac
         run: |
           brew install pd
       - name: Build Object
         run: |
-          python3.12 -m pip install numpy --break-system-packages
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPYVERSION=3.12 -DPDLIBDIR=./
+          python3.13 -m pip install numpy --break-system-packages
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPYVERSION=3.13 -DPDLIBDIR=./
           cmake --build build -j $(sysctl -n hw.logicalcpu)
           cmake --install build
       - name: Upload Object
@@ -50,17 +50,17 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13'
       - name: Install PureData and Deps arm64 Mac
         run: |
           brew install pd
       - name: Build Object for Arm
         if: ${{ matrix.arch == 'arm64' }}
         run: |
-          python3.12 -m pip install numpy --break-system-packages
+          python3.13 -m pip install numpy --break-system-packages
           export CPLUS_INCLUDE_PATH="$CPLUS_INCLUDE_PATH:/opt/homebrew/include/"
           export LDFLAGS="-L/opt/homebrew/lib"
-          cmake . -B build -DCMAKE_OSX_ARCHITECTURES=arm64 -DPD_FLOATSIZE=${{ matrix.precision }} -DPYVERSION=3.12 -DPDLIBDIR=./
+          cmake . -B build -DCMAKE_OSX_ARCHITECTURES=arm64 -DPD_FLOATSIZE=${{ matrix.precision }} -DPYVERSION=3.13 -DPDLIBDIR=./
           cmake --build build -j $(sysctl -n hw.logicalcpu)
           cmake --install build
       - name: Upload Object
@@ -93,19 +93,19 @@ jobs:
         if: matrix.precision == '32'
         run: |
           winget install -e --id MillerPuckette.PureData --accept-source-agreements
-          winget install --id=Python.Python.3.12  -e
-          py -3.12 -m pip install numpy
+          winget install --id=Python.Python.3.13  -e
+          py -3.13 -m pip install numpy
       - name: Install PureData Float 64
         if: matrix.precision == '64'
         run: |
           winget install -e --id MillerPuckette.Pd64 --accept-source-agreements
-          winget install --id=Python.Python.3.12  -e
-          py -3.12 -m pip install numpy
+          winget install --id=Python.Python.3.13  -e
+          py -3.13 -m pip install numpy
       - name: Configure and build Mingw
         shell: msys2 {0}
         if: matrix.compiler == 'mingw'
         run: |
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPYVERSION=3.12 -DPDLIBDIR=./
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPYVERSION=3.13 -DPDLIBDIR=./
           cmake --build build
           cmake --install build
       - name: Upload
@@ -127,17 +127,17 @@ jobs:
           fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13'
       - name: PureData Sources
         run: |
           sudo apt update
           sudo add-apt-repository ppa:pure-data/pure-data -y
           sudo apt install puredata -y
-          python3.12 -m pip install numpy
+          python3.13 -m pip install numpy
       - name: Build Object
         if: matrix.arch == 'amd64'
         run: |
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPYVERSION=3.12 -DPDLIBDIR=./
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPYVERSION=3.13 -DPDLIBDIR=./
           cmake --build build -- -j$(nproc)
           cmake --install build
       - name: Upload Object

@@ -22,7 +22,7 @@ py4pd allows write PureData Objects using Python instead of C/C++. The main goal
 
 ## Wiki | How to install and Use
 
-* Go to [Docs](https://charlesneimog.github.io/py4pd) (outdated).
+* Go to [Docs](https://charlesneimog.github.io/py4pd) (outdated for now), check `Sources/py4pd` folder for examples.
 
 ### New Pd Object using Python
 
