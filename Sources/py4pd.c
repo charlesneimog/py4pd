@@ -6,10 +6,6 @@
 #include <m_imp.h>
 #include <s_stuff.h>
 
-#include <g_canvas.h>
-#include <m_imp.h>
-#include <s_stuff.h>
-
 #include <Python.h>
 
 #define PY4PD_MAJOR_VERSION 1
@@ -685,6 +681,7 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
     pdpy_outlets(x);
 
     x->outobjptr = pdpy_createoutputptr();
+    x->canvas = canvas_getcurrent();
 
     Py_DECREF(pdmod);
     return (void *)x;
@@ -1462,6 +1459,14 @@ static PyObject *pdpy_logpost(t_pdpy_pyclass *self, PyObject *args) {
 }
 
 // ─────────────────────────────────────
+static PyObject *pdpy_getcurrentdir(t_pdpy_pyclass *self, PyObject *args) {
+    t_symbol *dir = canvas_getdir(self->pdobj->canvas);
+    if (!dir)
+        Py_RETURN_NONE;
+    return PyUnicode_FromString(dir->s_name);
+}
+
+// ─────────────────────────────────────
 static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywords) {
     int outlet;
     int type;
@@ -1529,99 +1534,6 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
     Py_RETURN_TRUE;
 }
 
-// ─────────────────────────────────────
-static PyObject *pdpy_tabread(t_pdpy_pyclass *self, PyObject *args) {
-    char *tabname;
-    t_garray *pdarray;
-    int vecsize;
-    t_word *vec;
-
-    if (!PyArg_ParseTuple(args, "s", &tabname)) {
-        PyErr_SetString(PyExc_TypeError, "Wrong arguments, expected string tabname");
-        return NULL;
-    }
-
-    t_symbol *pd_symbol = gensym(tabname);
-    if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class))) {
-        PyErr_SetString(PyExc_TypeError, "self.tabread: array not found");
-        return NULL;
-    } else {
-        garray_getfloatwords(pdarray, &vecsize, &vec);
-        PyObject *pAudio = PyTuple_New(vecsize);
-        for (int i = 0; i < vecsize; i++) {
-            PyTuple_SetItem(pAudio, i, PyFloat_FromDouble(vec[i].w_float));
-        }
-        return pAudio;
-    }
-}
-
-// ─────────────────────────────────────
-static PyObject *pdpy_tabwrite(t_pdpy_pyclass *self, PyObject *args, PyObject *kwargs) {
-    char *tabname;
-    t_garray *pdarray;
-    PyObject *array;
-    t_word *vec;
-    int vecsize;
-    int resize = 0;
-
-    if (!PyArg_ParseTuple(args, "sO", &tabname, &array)) {
-        PyErr_SetString(PyExc_TypeError, "Wrong arguments, expected string tabname");
-        return NULL;
-    }
-
-    if (kwargs && PyDict_Check(kwargs)) {
-        PyObject *pString = PyUnicode_FromString(tabname);
-        if (pString && PyDict_Contains(kwargs, pString)) {
-            PyObject *r = PyDict_GetItem(kwargs, pString);
-            resize = PyObject_IsTrue(r);
-        }
-        Py_XDECREF(pString);
-    }
-
-    t_symbol *pd_symbol = gensym(tabname);
-    if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class))) {
-        PyErr_SetString(PyExc_TypeError, "self.tabwrite: array not found");
-        return NULL;
-    } else if (!garray_getfloatwords(pdarray, &vecsize, &vec)) {
-        PyErr_SetString(PyExc_TypeError, "Bad template for tabwrite");
-        return NULL;
-    }
-
-    if (PyList_Check(array)) {
-        int newsize = (int)PyList_Size(array);
-        if (resize) {
-            garray_resize_long(pdarray, newsize);
-            garray_getfloatwords(pdarray, &vecsize, &vec);
-        } else {
-            if (newsize > vecsize)
-                newsize = vecsize;
-        }
-        for (int i = 0; i < newsize; i++) {
-            PyObject *PyFloatObj = PyList_GetItem(array, i);
-            vec[i].w_float = (float)PyFloat_AsDouble(PyFloatObj);
-        }
-        garray_redraw(pdarray);
-        Py_RETURN_TRUE;
-    } else if (PyTuple_Check(array)) {
-        int newsize = (int)PyTuple_Size(array);
-        if (resize) {
-            garray_resize_long(pdarray, newsize);
-            garray_getfloatwords(pdarray, &vecsize, &vec);
-        } else {
-            if (newsize > vecsize)
-                newsize = vecsize;
-        }
-        for (int i = 0; i < newsize; i++) {
-            PyObject *PyFloatObj = PyTuple_GetItem(array, i);
-            vec[i].w_float = (float)PyFloat_AsDouble(PyFloatObj);
-        }
-        garray_redraw(pdarray);
-        Py_RETURN_TRUE;
-    } else {
-        PyErr_SetString(PyExc_TypeError, "Input must be either a list or a tuple");
-        return NULL;
-    }
-}
 
 // ─────────────────────────────────────
 static PyObject *pdpy_reload(t_pdpy_pyclass *self, PyObject *args) {
@@ -1754,9 +1666,12 @@ static PyMethodDef pdpy_methods[] = {
      "Print error, same as logpost with error level"},
     {"out", (PyCFunction)pdpy_out, METH_VARARGS | METH_KEYWORDS, "Send data to Pd outlet"},
     {"new_clock", (PyCFunction)pdpy_newclock, METH_VARARGS, "Return a clock object"},
-    {"tabwrite", (PyCFunction)pdpy_tabwrite, METH_VARARGS | METH_KEYWORDS, "Write to a Pd Array"},
-    {"tabread", (PyCFunction)pdpy_tabread, METH_VARARGS | METH_KEYWORDS, "Read a Pd Array"},
     {"reload", (PyCFunction)pdpy_reload, METH_NOARGS, "Reload the current script and object"},
+
+    {"get_current_dir", (PyCFunction)pdpy_getcurrentdir, METH_NOARGS, "Returns current canvas dir"},
+
+    // {"tabwrite", (PyCFunction)pdpy_tabwrite, METH_VARARGS | METH_KEYWORDS, "Write to a Pd Array"},
+    // {"tabread", (PyCFunction)pdpy_tabread, METH_VARARGS | METH_KEYWORDS, "Read a Pd Array"},
     {NULL, NULL, 0, NULL}};
 
 // ─────────────────────────────────────
@@ -1777,7 +1692,9 @@ PyTypeObject pdpy_type = {
     .tp_dealloc = (destructor)pdpy_dealloc,
 };
 
-// ─────────────────────────────────────
+//╭─────────────────────────────────────╮
+//│             pd methods              │
+//╰─────────────────────────────────────╯
 static PyObject *pdpy_post(PyObject *self, PyObject *args) {
     (void)self;
     if (PyTuple_Size(args) > 0) {
@@ -1807,6 +1724,105 @@ static PyObject *pdpy_hasgui(PyObject *self, PyObject *args) {
 static PyObject *pdpy_sr(PyObject *self, PyObject *args) {
     (void)self;
     return PyLong_FromLong(sys_getsr());
+}
+
+// ─────────────────────────────────────
+static PyObject *pdpy_tabread(PyObject *self, PyObject *args) {
+    char *tabname;
+    t_garray *pdarray;
+    int vecsize;
+    t_word *vec;
+
+    if (!PyArg_ParseTuple(args, "s", &tabname)) {
+        PyErr_SetString(PyExc_TypeError, "Wrong arguments, expected string tabname");
+        return NULL;
+    }
+
+    t_symbol *pd_symbol = gensym(tabname);
+    if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class))) {
+        PyErr_SetString(PyExc_TypeError, "self.tabread: array not found");
+        return NULL;
+    } else {
+        garray_getfloatwords(pdarray, &vecsize, &vec);
+        PyObject *pAudio = PyTuple_New(vecsize);
+        for (int i = 0; i < vecsize; i++) {
+            PyTuple_SetItem(pAudio, i, PyFloat_FromDouble(vec[i].w_float));
+        }
+        return pAudio;
+    }
+}
+
+// ─────────────────────────────────────
+static PyObject *pdpy_tabwrite(PyObject *self, PyObject *args, PyObject *kwargs) {
+    char *tabname;
+    t_garray *pdarray;
+    PyObject *array;
+    t_word *vec;
+    int vecsize;
+    int resize = 0;
+
+    // Parse arguments (positional: tabname, array)
+    if (!PyArg_ParseTuple(args, "sO", &tabname, &array)) {
+        PyErr_SetString(PyExc_TypeError, "Wrong arguments, expected string tabname and sequence");
+        return NULL;
+    }
+
+    // Check for "resize" keyword in kwargs
+    if (kwargs && PyDict_Check(kwargs)) {
+        PyObject *r = PyDict_GetItemString(kwargs, "resize");
+        if (r) {
+            resize = PyObject_IsTrue(r);
+        }
+    }
+
+    // Find Pd array
+    t_symbol *pd_symbol = gensym(tabname);
+    if (!(pdarray = (t_garray *)pd_findbyclass(pd_symbol, garray_class))) {
+        PyErr_SetString(PyExc_TypeError, "self.tabwrite: array not found");
+        return NULL;
+    } else if (!garray_getfloatwords(pdarray, &vecsize, &vec)) {
+        PyErr_SetString(PyExc_TypeError, "Bad template for tabwrite");
+        return NULL;
+    }
+
+    int newsize = 0;
+
+    if (PyList_Check(array)) {
+        newsize = (int)PyList_Size(array);
+        if (resize) {
+            garray_resize_long(pdarray, newsize);
+            garray_getfloatwords(pdarray, &vecsize, &vec);
+        } else if (newsize > vecsize) {
+            newsize = vecsize;
+        }
+
+        for (int i = 0; i < newsize; i++) {
+            PyObject *PyFloatObj = PyList_GetItem(array, i);
+            vec[i].w_float = (float)PyFloat_AsDouble(PyFloatObj);
+        }
+        garray_redraw(pdarray);
+        Py_RETURN_TRUE;
+
+    } else if (PyTuple_Check(array)) {
+        newsize = (int)PyTuple_Size(array);
+        if (resize) {
+            garray_resize_long(pdarray, newsize);
+            garray_getfloatwords(pdarray, &vecsize, &vec);
+        } else if (newsize > vecsize) {
+            newsize = vecsize;
+        }
+
+        for (int i = 0; i < newsize; i++) {
+            PyObject *PyFloatObj = PyTuple_GetItem(array, i);
+            vec[i].w_float = (float)PyFloat_AsDouble(PyFloatObj);
+        }
+        garray_redraw(pdarray);
+        Py_RETURN_TRUE;
+
+    } else {
+        PyErr_SetString(PyExc_TypeError, "Input must be either a list or a tuple");
+        return NULL;
+    }
 }
 
 // ╭─────────────────────────────────────╮
@@ -1949,7 +1965,11 @@ static PyType_Spec ObjectLoaderSpec = {
 PyMethodDef pdpy_modulemethods[] = {
     {"post", pdpy_post, METH_VARARGS, "Print informations in PureData Console"},
     {"hasgui", pdpy_hasgui, METH_NOARGS, "Return False is pd is running in console"},
+    {"tabwrite", (PyCFunction)pdpy_tabwrite, METH_VARARGS | METH_KEYWORDS, "Write to a Pd Array"},
+    {"tabread", pdpy_tabread, METH_VARARGS, "Read a Pd Array"},
+    
     {"get_sample_rate", pdpy_sr, METH_NOARGS, "Return sample rate"},
+    // {"get_current_dir", pdpy_getcurrentdir, METH_NOARGS, "Returns current canvas dir"},
     {NULL, NULL, 0, NULL}};
 
 // ─────────────────────────────────────
@@ -2090,9 +2110,10 @@ void py4pd_addpath2syspath(const char *path) {
         return;
     }
 
+    // Prepend path if not already in sys.path
     if (PySequence_Contains(sysPath, pathEntry) == 0) {
-        if (PyList_Append(sysPath, pathEntry) != 0) {
-            pd_error(NULL, "Failed to append path to sys.path");
+        if (PyList_Insert(sysPath, 0, pathEntry) != 0) {
+            pd_error(NULL, "Failed to insert path at start of sys.path");
         }
     }
 
