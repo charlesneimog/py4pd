@@ -1,7 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
-project(py4pd C)
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_EXTENSIONS OFF) # Use pure C23 without compiler extensions
+
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+    project(py4pd)
+endif()
+
 
 # ╭──────────────────────────────────────╮
 # │               pd.cmake               │
@@ -81,12 +85,12 @@ endif()
 # ╭──────────────────────────────────────╮
 # │           PureData Object            │
 # ╰──────────────────────────────────────╯
-file(GLOB PY4PD_SOURCES ${CMAKE_SOURCE_DIR}/Sources/*.c)
+file(GLOB PY4PD_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/Sources/*.c)
 pd_add_external(py4pd "${PY4PD_SOURCES}")
 
-file(GLOB PY4PD_OBJECTS ${CMAKE_SOURCE_DIR}/Sources/py4pd/*.pd_py)
-file(GLOB PY4PD_OBJECTS_HELP ${CMAKE_SOURCE_DIR}/Sources/py4pd/*.pd)
-file(GLOB PY4PD_EXAMPLES_OBJECTS ${CMAKE_SOURCE_DIR}/Resources/*.pd_py)
+file(GLOB PY4PD_OBJECTS ${CMAKE_CURRENT_SOURCE_DIR}/Sources/py4pd/*.pd_py)
+file(GLOB PY4PD_OBJECTS_HELP ${CMAKE_CURRENT_SOURCE_DIR}/Sources/py4pd/*.pd)
+file(GLOB PY4PD_EXAMPLES_OBJECTS ${CMAKE_CURRENT_SOURCE_DIR}/Resources/*.pd_py)
 
 pd_add_datafile(py4pd "${PY4PD_OBJECTS}")
 pd_add_datafile(py4pd "${PY4PD_OBJECTS_HELP}")
