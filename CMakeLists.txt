@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-set(CMAKE_C_STANDARD 23)
-set(CMAKE_C_EXTENSIONS OFF) # Use pure C23 without compiler extensions
+set(CMAKE_C_STANDARD 11)
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     project(py4pd)

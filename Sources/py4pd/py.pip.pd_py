@@ -1,8 +1,6 @@
 import puredata as pd
 import threading
-import sys
 import os
-import sys
 
 import pip
 
@@ -18,11 +16,6 @@ class pypip(pd.NewObject):
         self.counter = 0
         self.metro = self.new_clock(self.tick)
         self.py4pd_path = os.environ["PY4PD_PATH"]
-
-        if not HAS_PIP:
-            self.error(
-                "pip not found, the object py.pip will not work, please install pip!"
-            )
 
     def tick(self):
         installing_packages = [pkg for pkg, status in self.installing.items() if status]
