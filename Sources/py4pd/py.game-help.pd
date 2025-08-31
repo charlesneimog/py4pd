@@ -1,4 +1,4 @@
-#N canvas 0 0 943 1036 10;
+#N canvas 550 268 337 239 10;
 #X declare -lib py4pd;
 #X obj 8 7 declare -lib py4pd;
 #X msg 42 100 reload;
