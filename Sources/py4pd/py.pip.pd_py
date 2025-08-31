@@ -4,11 +4,7 @@ import sys
 import os
 import sys
 
-HAS_PIP = True
-try:
-    import pip
-except ImportError:
-    HAS_PIP = False
+import pip
 
 
 class pypip(pd.NewObject):
@@ -44,24 +40,30 @@ class pypip(pd.NewObject):
             self.logpost(2, "Done")
 
     def in_1_pip(self, args):
-        if not HAS_PIP:
-            return
         method = args[0]
         if method == "install":
             packages = args[1:]
             for package in packages:
                 if package not in self.installing or not self.installing[package]:
                     self.installing[package] = True
-
                     def install_thread(pkg):
                         self.logpost(2, f"Starting installation of {pkg}")
-                        exec_path = sys.executable
-                        command = f"{exec_path} -m pip install {pkg} "
-                        command += f'--target "{self.py4pd_path}/py4pd-env"'
-                        ret = os.system(command)
-                        if ret != 0:
-                            self.error(f"Error installing {pkg}")
+                        try:
+                            args = [
+                                "install",
+                                pkg,
+                                "--target", f"{self.py4pd_path}/py4pd-env"
+                            ]
+                            self.logpost(2, f"Running pip with args: {args}")
+                            ret = pip.main(args)
+                            if ret != 0:
+                                self.error(f"Error installing {pkg}")
+                                self.installing[pkg] = False
+                                return
+                        except Exception as e:
+                            self.error(f"Exception during install of {pkg}: {e}")
                             self.installing[pkg] = False
+                            return
                         self.installing[pkg] = False
 
                     threading.Thread(target=install_thread, args=(package,)).start()
