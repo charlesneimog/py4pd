@@ -1,5 +1,5 @@
-#include <string.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include <m_pd.h>
 
@@ -954,7 +954,19 @@ static t_int *pdpy_perform(t_int *w) {
     }
 
     PyObject *pValue = PyObject_CallOneArg(x->dspfunction, py_in);
-    if (pValue && PyTuple_Check(pValue)) {
+    if (pValue == NULL) {
+        pdpy_printerror(x);
+        Py_DECREF(py_in);
+        return w + x->siginlets + x->sigoutlets + 3;
+    }
+
+    if (x->sigoutlets == 0) {
+        Py_DECREF(pValue);
+        Py_DECREF(py_in);
+        return w + x->siginlets + x->sigoutlets + 3;
+    }
+
+    if (PyTuple_Check(pValue)) {
         int size = (int)PyTuple_Size(pValue);
         if (size == (int)x->sigoutlets) {
             for (int i = 0; i < (int)x->sigoutlets; i++) {
@@ -982,14 +994,12 @@ static t_int *pdpy_perform(t_int *w) {
             PyErr_SetString(PyExc_RuntimeError, "Unknown Tuple size or way to process it");
             pdpy_printerror(x);
         }
-    } else if (pValue) {
-        PyErr_SetString(PyExc_RuntimeError, "Returned value is not a tuple");
-        pdpy_printerror(x);
     } else {
+        PyErr_SetString(PyExc_RuntimeError, "Returned value is not a tuple");
         pdpy_printerror(x);
     }
 
-    Py_XDECREF(pValue);
+    Py_DECREF(pValue);
     Py_DECREF(py_in);
 
     return w + x->siginlets + x->sigoutlets + 3;
@@ -1011,20 +1021,6 @@ static void pdpy_dsp(t_pdpy_pdobj *x, t_signal **sp) {
     }
 
     PyObject *pyclass = (PyObject *)x->pyclass;
-    PyObject *pysr = PyLong_FromDouble(sp[0]->s_sr);
-    if (PyObject_SetAttrString(pyclass, "samplerate", pysr) < 0) {
-        pd_error(x, "Failed to set samplerate");
-        PyErr_Clear();
-    }
-    Py_DECREF(pysr);
-
-    PyObject *pyvec = PyLong_FromDouble(sp[0]->s_n);
-    if (PyObject_SetAttrString(pyclass, "blocksize", pyvec) < 0) {
-        pd_error(x, "Failed to set blocksize");
-        PyErr_Clear();
-    }
-    Py_DECREF(pyvec);
-
     PyObject *method = PyObject_GetAttrString(pyclass, "perform");
     if (!method || !PyCallable_Check(method)) {
         PyErr_Clear();
@@ -1047,6 +1043,13 @@ static void pdpy_dsp(t_pdpy_pdobj *x, t_signal **sp) {
         PyTuple_SetItem(py_in, 1, PyLong_FromDouble(sp[0]->s_n));
         PyTuple_SetItem(py_in, 2, PyLong_FromLong(x->siginlets));
         PyObject *r = PyObject_CallObject(dsp_method, py_in);
+        if (!PyBool_Check(r)) {
+            pd_error(x,
+                     "[%s] DSP method must return a boolean: True for success, False for failure",
+                     x->obj.te_g.g_pd->c_name->s_name);
+            return;
+        }
+
         Py_DECREF(py_in);
         if (r == NULL) {
             pdpy_printerror(x);
@@ -1059,9 +1062,9 @@ static void pdpy_dsp(t_pdpy_pdobj *x, t_signal **sp) {
             freebytes(sigvec, (size_t)sigvecsize * sizeof(t_int));
             return;
         }
-        int truth = PyObject_IsTrue(r);
+        int ok = PyObject_IsTrue(r);
         Py_DECREF(r);
-        if (!truth) {
+        if (!ok) {
             Py_DECREF(method);
             Py_DECREF(dsp_method);
             for (int i = 0; i < sum; i++) {
@@ -1087,11 +1090,7 @@ static void pdpy_dsp(t_pdpy_pdobj *x, t_signal **sp) {
 
     Py_XDECREF(dsp_method);
     PyErr_Clear();
-
-    // Store perform method (INCREF to persist)
     x->dspfunction = method;
-    // do NOT DECREF method here; hold reference
-
     dsp_addv(pdpy_perform, sigvecsize, sigvec);
     freebytes(sigvec, (size_t)sigvecsize * sizeof(t_int));
 }
@@ -1535,7 +1534,6 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
     Py_RETURN_TRUE;
 }
 
-
 // ─────────────────────────────────────
 static PyObject *pdpy_reload(t_pdpy_pyclass *self, PyObject *args) {
     const char *filename = self->pdobj->script_filename;
@@ -1671,7 +1669,8 @@ static PyMethodDef pdpy_methods[] = {
 
     {"get_current_dir", (PyCFunction)pdpy_getcurrentdir, METH_NOARGS, "Returns current canvas dir"},
 
-    // {"tabwrite", (PyCFunction)pdpy_tabwrite, METH_VARARGS | METH_KEYWORDS, "Write to a Pd Array"},
+    // {"tabwrite", (PyCFunction)pdpy_tabwrite, METH_VARARGS | METH_KEYWORDS, "Write to a Pd
+    // Array"},
     // {"tabread", (PyCFunction)pdpy_tabread, METH_VARARGS | METH_KEYWORDS, "Read a Pd Array"},
     {NULL, NULL, 0, NULL}};
 
@@ -1693,9 +1692,9 @@ PyTypeObject pdpy_type = {
     .tp_dealloc = (destructor)pdpy_dealloc,
 };
 
-//╭─────────────────────────────────────╮
-//│             pd methods              │
-//╰─────────────────────────────────────╯
+// ╭─────────────────────────────────────╮
+// │             pd methods              │
+// ╰─────────────────────────────────────╯
 static PyObject *pdpy_post(PyObject *self, PyObject *args) {
     (void)self;
     if (PyTuple_Size(args) > 0) {
@@ -1960,6 +1959,24 @@ static PyType_Spec ObjectLoaderSpec = {
     .slots = ObjectLoaderSlots,
 };
 
+// ─────────────────────────────────────
+static PyObject *pdpy_print(PyObject *self, PyObject *args, PyObject *kwargs) {
+    (void)self;
+    (void)kwargs;
+
+    if (PyTuple_Size(args) > 0) {
+        for (Py_ssize_t i = 0; i < PyTuple_Size(args); i++) {
+            PyObject *arg = PyTuple_GetItem(args, i);
+            PyObject *str = PyObject_Str(arg);
+            if (str) {
+                logpost(NULL, 3, "%s ", PyUnicode_AsUTF8(str));
+                Py_DECREF(str);
+            }
+        }
+    }
+    Py_RETURN_NONE;
+}
+
 // ╭─────────────────────────────────────╮
 /*             MODULE INIT             */
 // ╰─────────────────────────────────────╯
@@ -1968,8 +1985,9 @@ PyMethodDef pdpy_modulemethods[] = {
     {"hasgui", pdpy_hasgui, METH_NOARGS, "Return False is pd is running in console"},
     {"tabwrite", (PyCFunction)pdpy_tabwrite, METH_VARARGS | METH_KEYWORDS, "Write to a Pd Array"},
     {"tabread", pdpy_tabread, METH_VARARGS, "Read a Pd Array"},
-    
+
     {"get_sample_rate", pdpy_sr, METH_NOARGS, "Return sample rate"},
+    {"_print", (PyCFunction)pdpy_print, METH_VARARGS | METH_KEYWORDS, "Custom print"},
     // {"get_current_dir", pdpy_getcurrentdir, METH_NOARGS, "Returns current canvas dir"},
     {NULL, NULL, 0, NULL}};
 
@@ -2045,6 +2063,7 @@ PyMODINIT_FUNC pdpy_initpuredatamodule() {
         PyErr_SetString(PyExc_RuntimeError, "Failed to create module");
         return NULL;
     }
+
     return m;
 }
 
@@ -2121,6 +2140,69 @@ void py4pd_addpath2syspath(const char *path) {
     Py_DECREF(pathEntry);
     Py_DECREF(sysPath);
     Py_DECREF(sys);
+}
+
+// ─────────────────────────────────────
+void py4pd_fix_sys_pythonpath(void) {
+    PyObject *sys = PyImport_ImportModule("sys");
+    if (!sys) {
+        PyErr_Print();
+        return;
+    }
+
+    // import sysconfig
+    PyObject *sysconfig = PyImport_ImportModule("sysconfig");
+    if (!sysconfig) {
+        PyErr_Print();
+        Py_DECREF(sys);
+        return;
+    }
+
+    // call sysconfig.get_config_var("BINDIR")
+    PyObject *bindir_obj = PyObject_CallMethod(sysconfig, "get_config_var", "s", "BINDIR");
+    if (!bindir_obj || !PyUnicode_Check(bindir_obj)) {
+        PyErr_Print();
+        Py_XDECREF(bindir_obj);
+        Py_DECREF(sysconfig);
+        Py_DECREF(sys);
+        return;
+    }
+
+    const char *bindir = PyUnicode_AsUTF8(bindir_obj);
+
+#ifdef _WIN32
+    char path[1024];
+    snprintf(path, sizeof(path), "%s\\python.exe", bindir);
+    PyObject *new_exe = PyUnicode_FromString(path);
+#else
+    char path[1024];
+    snprintf(path, sizeof(path), "%s/python%d.%d", bindir, PY_MAJOR_VERSION, PY_MINOR_VERSION);
+    PyObject *new_exe = PyUnicode_FromString(path);
+#endif
+
+    if (!new_exe) {
+        pdpy_printerror(NULL);
+        Py_XDECREF(new_exe);
+        Py_XDECREF(bindir_obj);
+        Py_XDECREF(sysconfig);
+        Py_XDECREF(sys);
+        return;
+    }
+
+    if (PyUnicode_Check(new_exe)) {
+        const char *path_cstr = PyUnicode_AsUTF8(new_exe);
+        if (path_cstr) {
+            logpost(NULL, 3, "Python Executable: %s", path_cstr);
+        }
+    }
+
+    if (PyObject_SetAttrString(sys, "executable", new_exe) < 0) {
+        pdpy_printerror(NULL);
+    }
+
+    if (PyObject_SetAttrString(sys, "_base_executable", new_exe) < 0) {
+        pdpy_printerror(NULL);
+    }
 }
 
 // ─────────────────────────────────────
@@ -2207,7 +2289,20 @@ void py4pd_setup(void) {
         py4pd_set_py4pdpath_env(py4pd_path);
         char py4pd_env[MAXPDSTRING];
         pd_snprintf(py4pd_env, MAXPDSTRING, "%s/py4pd-env", py4pd_path);
+        py4pd_fix_sys_pythonpath();
         py4pd_addpath2syspath(py4pd_env);
+
+        PyObject *pd = PyImport_ImportModule("puredata");
+        PyObject *builtins = PyEval_GetBuiltins();
+        if (builtins) {
+            PyObject *func = PyObject_GetAttrString(pd, "_print"); // agora funciona
+            if (func) {
+                PyDict_SetItemString(builtins, "print", func);
+                Py_DECREF(func);
+            } else {
+                post("failed to get _print");
+            }
+        }
     }
 
     pdpy_proxyinlet_setup();
