@@ -18,9 +18,11 @@ class pypip(pd.NewObject):
         self.py4pd_path = os.environ["PY4PD_PATH"]
         bindir = sysconfig.get_config_var("BINDIR")
         pyversion = sys.version_info
-        self.python = os.path.join(bindir, "python{}.{}".format(pyversion.major, pyversion.minor))
-        if platform.system() == "Windows":
-            self.python += ".exe"
+
+        if platform.system() != "Windows":
+            self.python = os.path.join(bindir, "python{}.{}".format(pyversion.major, pyversion.minor))
+        else:
+            self.python = os.path.join(bindir, "python.exe")
         
         # check executable exists
         if not os.path.isfile(self.python):
