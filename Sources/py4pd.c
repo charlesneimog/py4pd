@@ -13,6 +13,14 @@
 #define PY4PD_MINOR_VERSION 0
 #define PY4PD_MICRO_VERSION 0
 
+#if 1
+#define PY4PD_DEBUG(func) post("%s", func)
+#else
+#define PY4PD_DEBUG(func) ((void)0) // não faz nada
+#endif
+
+static PyThreadState *g_main_tstate = NULL;
+
 // ╭─────────────────────────────────────╮
 // │             Definitions             │
 // ╰─────────────────────────────────────╯
@@ -135,6 +143,7 @@ static void pdpy_dealloc(t_pdpy_pyclass *self);
 // │                Clock                │
 // ╰─────────────────────────────────────╯
 static PyObject *pdpy_clock_create(PyTypeObject *type, PyObject *args, PyObject *kwargs) {
+    PY4PD_DEBUG(__FUNCTION__);
     t_pdpy_clock *self;
     self = (t_pdpy_clock *)type->tp_alloc(type, 0);
     if (self == NULL) {
@@ -146,6 +155,7 @@ static PyObject *pdpy_clock_create(PyTypeObject *type, PyObject *args, PyObject 
 
 // ─────────────────────────────────────
 static void pdpy_clock_destruct(t_pdpy_clock *self) {
+    PY4PD_DEBUG(__FUNCTION__);
     Py_XDECREF(self->function);
     if (self->clock) {
         clock_unset(self->clock);
@@ -157,6 +167,7 @@ static void pdpy_clock_destruct(t_pdpy_clock *self) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_clock_delay(t_pdpy_clock *self, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     float f;
     if (PyArg_ParseTuple(args, "f", &f)) {
         clock_delay(self->clock, f);
@@ -168,6 +179,7 @@ static PyObject *pdpy_clock_delay(t_pdpy_clock *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_clock_unset(t_pdpy_clock *self, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     if (self->clock != NULL) {
         clock_unset(self->clock);
         Py_RETURN_TRUE;
@@ -177,6 +189,7 @@ static PyObject *pdpy_clock_unset(t_pdpy_clock *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_clock_set(t_pdpy_clock *self, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     float time;
     if (!PyArg_ParseTuple(args, "f", &time)) {
         PyErr_SetString(PyExc_TypeError, "expected float");
@@ -214,6 +227,7 @@ static PyTypeObject ClockType = {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_newclock(PyObject *self, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     if (PyType_Ready(&ClockType) < 0) {
         PyErr_SetString(PyExc_TypeError, "new_clock ClockType not ready");
         return NULL;
@@ -312,6 +326,7 @@ static PyObject *pdpy_newclock(PyObject *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static void pdpy_clock_execute(t_pdpy_clock *x) {
+    PY4PD_DEBUG(__FUNCTION__);
     if (x->function == NULL) {
         pd_error(x->owner, "Clock function is NULL");
         return;
@@ -355,6 +370,7 @@ static void pdpy_clock_execute(t_pdpy_clock *x) {
 // │            Py4pd objects            │
 // ╰─────────────────────────────────────╯
 static PyObject *py4pdobj_converttopy(int argc, t_atom *argv) {
+    PY4PD_DEBUG(__FUNCTION__);
     PyObject *pValue = PyList_New(argc);
     for (int i = 0; i < argc; i++) {
         if (argv[i].a_type == A_FLOAT) {
@@ -377,6 +393,7 @@ static PyObject *py4pdobj_converttopy(int argc, t_atom *argv) {
 
 // ─────────────────────────────────────
 static void pdpy_proxyinlet_fwd(t_pdpy_proxyinlet *p, t_symbol *s, int argc, t_atom *argv) {
+    PY4PD_DEBUG(__FUNCTION__);
     (void)s;
     if (!argc) {
         return;
@@ -389,6 +406,7 @@ static void pdpy_proxyinlet_fwd(t_pdpy_proxyinlet *p, t_symbol *s, int argc, t_a
 
 // ─────────────────────────────────────
 void pdpy_proxyinlet_setup(void) {
+    PY4PD_DEBUG(__FUNCTION__);
     pdpy_proxyinlet_class =
         class_new(gensym("py4pd proxy inlet"), 0, 0, sizeof(t_pdpy_proxyinlet), 0, 0);
     if (pdpy_proxyinlet_class) {
@@ -402,12 +420,14 @@ void pdpy_proxyinlet_setup(void) {
 // │        Python Object Pointer        │
 // ╰─────────────────────────────────────╯
 void pdpy_pyobjectoutput_setup(void) {
+    PY4PD_DEBUG(__FUNCTION__);
     pdpy_pyobjectout_class =
         class_new(gensym("_py4pd-ptr-class"), 0, 0, sizeof(t_pdpy_objptr), CLASS_PD, A_NULL);
 }
 
 // ─────────────────────────────────────
 static t_pdpy_objptr *pdpy_createoutputptr(void) {
+    PY4PD_DEBUG(__FUNCTION__);
     t_pdpy_objptr *x = (t_pdpy_objptr *)getbytes(sizeof(t_pdpy_objptr));
     x->x_pd = pdpy_pyobjectout_class;
 
@@ -424,12 +444,14 @@ static t_pdpy_objptr *pdpy_createoutputptr(void) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_getoutptr(t_symbol *s) {
+    PY4PD_DEBUG(__FUNCTION__);
     t_pdpy_objptr *x = (t_pdpy_objptr *)pd_findbyclass(s, pdpy_pyobjectout_class);
     return x ? x->pValue : NULL;
 }
 
 // ─────────────────────────────────────
 t_class *pdpyobj_get_pdclass(const char *classname) {
+    PY4PD_DEBUG(__FUNCTION__);
     PyObject *pdmod = PyImport_ImportModule("puredata");
     if (!pdmod) {
         pd_error(NULL, "Failed to import puredata module in get_pdclass");
@@ -472,6 +494,7 @@ t_class *pdpyobj_get_pdclass(const char *classname) {
 
 // ─────────────────────────────────────
 PyObject *pdpyobj_get_pyclass(t_pdpy_pdobj *x, const char *classname, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     PyObject *pdmod = PyImport_ImportModule("puredata");
     if (!pdmod) {
         pd_error(x, "Failed to import puredata module in get_pyclass");
@@ -522,6 +545,7 @@ PyObject *pdpyobj_get_pyclass(t_pdpy_pdobj *x, const char *classname, PyObject *
 
 // ─────────────────────────────────────
 static void pdpy_inlets(t_pdpy_pdobj *x) {
+    PY4PD_DEBUG(__FUNCTION__);
     PyObject *inlets = PyObject_GetAttrString((PyObject *)x->pyclass, "inlets");
     if (inlets == NULL) {
         return;
@@ -577,6 +601,7 @@ static void pdpy_inlets(t_pdpy_pdobj *x) {
 
 // ─────────────────────────────────────
 static void pdpy_outlets(t_pdpy_pdobj *x) {
+    PY4PD_DEBUG(__FUNCTION__);
     PyObject *outlets = PyObject_GetAttrString(x->pyclass, "outlets");
     if (outlets == NULL) {
         return;
@@ -633,6 +658,7 @@ static void pdpy_outlets(t_pdpy_pdobj *x) {
 
 // ─────────────────────────────────────
 static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
+    PY4PD_DEBUG(__FUNCTION__);
     t_class *pdobj = pdpyobj_get_pdclass(s->s_name);
     if (pdobj == NULL) {
         pd_error(NULL, "[%s] t_class for %s is invalid, please report!", s->s_name, s->s_name);
@@ -690,6 +716,7 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
 
 // ─────────────────────────────────────
 static void py4pdobj_free(t_pdpy_pdobj *x) {
+    PY4PD_DEBUG(__FUNCTION__);
     if (x->outs) {
         free(x->outs);
         x->outs = NULL;
@@ -737,12 +764,14 @@ static void py4pdobj_free(t_pdpy_pdobj *x) {
 
 // ─────────────────────────────────────
 void posterror(t_pdpy_pdobj *x) {
+    PY4PD_DEBUG(__FUNCTION__);
     PyErr_Print();
     PyErr_Clear();
 }
 
 // ─────────────────────────────────────
 void pdpy_printerror(t_pdpy_pdobj *x) {
+    PY4PD_DEBUG(__FUNCTION__);
     PyObject *ptype, *pvalue, *ptraceback;
     PyErr_Fetch(&ptype, &pvalue, &ptraceback);
     PyErr_NormalizeException(&ptype, &pvalue, &ptraceback);
@@ -787,11 +816,13 @@ void pdpy_printerror(t_pdpy_pdobj *x) {
 
 // ─────────────────────────────────────
 void pdpy_execute(t_pdpy_pdobj *x, char *methodname, t_symbol *s, int argc, t_atom *argv) {
+    PY4PD_DEBUG(__FUNCTION__);
     if (x->pyclass == NULL) {
         post("pyclass is NULL");
         return;
     }
 
+    PyGILState_STATE gstate = PyGILState_Ensure();
     PyObject *method = PyObject_GetAttrString(x->pyclass, methodname);
     if (!method || !PyCallable_Check(method)) {
         PyErr_Clear();
@@ -838,7 +869,9 @@ void pdpy_execute(t_pdpy_pdobj *x, char *methodname, t_symbol *s, int argc, t_at
         }
         PyTuple_SetItem(pTuple, 0, pArg); // steals pArg
         pArg = NULL;                      // prevent double DECREF
+        PY4PD_DEBUG("Before call");
         pValue = PyObject_CallObject(method, pTuple);
+        PY4PD_DEBUG("After call");
         Py_DECREF(pTuple);
     }
 
@@ -858,10 +891,13 @@ void pdpy_execute(t_pdpy_pdobj *x, char *methodname, t_symbol *s, int argc, t_at
     Py_XDECREF(pArg);
     Py_XDECREF(pValue);
     Py_DECREF(method);
+    PyGILState_Release(gstate);
+    PY4PD_DEBUG("Executed");
 }
 
 // ─────────────────────────────────────
 void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom *argv) {
+    PY4PD_DEBUG(__FUNCTION__);
     t_pdpy_pdobj *o = proxy->owner;
     char methodname[MAXPDSTRING];
 
@@ -895,47 +931,15 @@ void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom
 
 // ─────────────────────────────────────
 static void pdpy_anything(t_pdpy_pdobj *o, t_symbol *s, int argc, t_atom *argv) {
+    PY4PD_DEBUG(__FUNCTION__);
     char methodname[MAXPDSTRING];
     pd_snprintf(methodname, MAXPDSTRING, "in_1_%s", s->s_name);
     pdpy_execute(o, methodname, s, argc, argv);
 }
 
 // ─────────────────────────────────────
-// static void pdpy_pyobject(t_pdpy_pdobj *x, t_symbol *s, t_symbol *id) {
-//     if (x->pyclass == NULL) {
-//         post("pyclass is NULL");
-//         return;
-//     }
-//
-//     PyObject *pyclass = (PyObject *)x->pyclass;
-//     PyObject *method = PyObject_GetAttrString(pyclass, "in_1_pyobj");
-//     if (!method || !PyCallable_Check(method)) {
-//         PyErr_Clear();
-//         pd_error(x, "[%s] method 'in_1_pyobj' not found or not callable",
-//         x->obj.te_g.g_pd->c_name->s_name); Py_XDECREF(method); return;
-//     }
-//
-//     PyObject *pArg = pdpy_getoutptr(id); // borrowed
-//     PyObject *pValue = PyObject_CallOneArg(method, pArg);
-//     if (pValue == NULL) {
-//         pdpy_printerror(x);
-//         Py_DECREF(method);
-//         return;
-//     }
-//
-//     if (!Py_IsNone(pValue)) {
-//         pd_error(x,
-//                  "[%s] 'in_1_pyobj' did not return None. py4pd methods must return None; use "
-//                  "'self.out' to output data.",
-//                  x->obj.te_g.g_pd->c_name->s_name);
-//     }
-//
-//     Py_DECREF(method);
-//     Py_XDECREF(pValue);
-// }
-
-// ─────────────────────────────────────
 static t_int *pdpy_perform(t_int *w) {
+    PY4PD_DEBUG(__FUNCTION__);
     t_pdpy_pdobj *x = (t_pdpy_pdobj *)(w[1]);
     int n = (int)w[2];
 
@@ -1007,6 +1011,7 @@ static t_int *pdpy_perform(t_int *w) {
 
 // ─────────────────────────────────────
 static void pdpy_dsp(t_pdpy_pdobj *x, t_signal **sp) {
+    PY4PD_DEBUG(__FUNCTION__);
     int sum = (int)(x->siginlets + x->sigoutlets);
     int sigvecsize = sum + 2; // +1 for x, +1 for blocksize
     t_int *sigvec = getbytes((size_t)sigvecsize * sizeof(t_int));
@@ -1097,6 +1102,7 @@ static void pdpy_dsp(t_pdpy_pdobj *x, t_signal **sp) {
 
 // ─────────────────────────────────────
 static void pdpy_menu_open(t_pdpy_pdobj *o) {
+    PY4PD_DEBUG(__FUNCTION__);
     char name[MAXPDSTRING];
     pd_snprintf(name, MAXPDSTRING, "%s", o->script_filename);
     pdgui_vmess("::pd_menucommands::menu_openfile", "s", name);
@@ -1104,6 +1110,7 @@ static void pdpy_menu_open(t_pdpy_pdobj *o) {
 
 // ─────────────────────────────────────
 static void pdpy_proxyinlet_init(t_pdpy_proxyinlet *p, t_pdpy_pdobj *owner, unsigned int id) {
+    PY4PD_DEBUG(__FUNCTION__);
     p->pd = pdpy_proxyinlet_class;
     p->owner = owner;
     p->id = id;
@@ -1111,6 +1118,7 @@ static void pdpy_proxyinlet_init(t_pdpy_proxyinlet *p, t_pdpy_pdobj *owner, unsi
 
 // ─────────────────────────────────────
 static t_class *pdpy_classnew(const char *n, bool dsp) {
+    PY4PD_DEBUG(__FUNCTION__);
     t_class *c = class_new(gensym(n), (t_newmethod)pdpy_new, (t_method)py4pdobj_free,
                            sizeof(t_pdpy_pdobj), CLASS_NOINLET | CLASS_MULTICHANNEL, A_GIMME, 0);
 
@@ -1123,7 +1131,7 @@ static t_class *pdpy_classnew(const char *n, bool dsp) {
 
 // ─────────────────────────────────────
 static int pdpy_create_newpyobj(PyObject *subclass, const char *name, const char *filename) {
-
+    PY4PD_DEBUG(__FUNCTION__);
     bool havedsp = false;
     PyObject *dsp = PyObject_GetAttrString(subclass, "perform");
     if (dsp) {
@@ -1206,6 +1214,7 @@ static int pdpy_create_newpyobj(PyObject *subclass, const char *name, const char
 
 // ─────────────────────────────────────
 static int pdpy_validate_pd_subclasses(PyObject *module, const char *filename) {
+    PY4PD_DEBUG(__FUNCTION__);
     PyObject *pd_module = PyImport_ImportModule("puredata");
     if (!pd_module) {
         PyErr_Print();
@@ -1273,6 +1282,9 @@ static int pdpy_validate_pd_subclasses(PyObject *module, const char *filename) {
 
 // ─────────────────────────────────────
 int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
+    PY4PD_DEBUG(__FUNCTION__);
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
     char filename[1024];
     pd_snprintf(filename, sizeof(filename), "%s/%s.pd_py", dirbuf, name);
 
@@ -1282,6 +1294,7 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
     FILE *fp = fopen(filename, "r");
     if (fp == NULL) {
         PyErr_SetString(PyExc_IOError, "Failed to read script file");
+        PyGILState_Release(gstate);
         return 0;
     }
     fseek(fp, 0, SEEK_END);
@@ -1291,12 +1304,14 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
     if (!source) {
         fclose(fp);
         pdpy_printerror(NULL);
+        PyGILState_Release(gstate);
         return 0;
     }
     if (fread(source, 1, (size_t)size, fp) != (size_t)size) {
         fclose(fp);
         free(source);
         pdpy_printerror(NULL);
+        PyGILState_Release(gstate);
         return 0;
     }
     source[size] = '\0';
@@ -1306,6 +1321,7 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
     if (!module) {
         free(source);
         pdpy_printerror(NULL);
+        PyGILState_Release(gstate);
         return 0;
     }
 
@@ -1314,6 +1330,7 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
     if (!code_obj) {
         pdpy_printerror(NULL);
         Py_DECREF(module);
+        PyGILState_Release(gstate);
         return 0;
     }
 
@@ -1322,6 +1339,7 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
         pdpy_printerror(NULL);
         Py_DECREF(code_obj);
         Py_DECREF(module);
+        PyGILState_Release(gstate);
         return 0;
     }
 
@@ -1331,6 +1349,7 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
             pdpy_printerror(NULL);
             Py_DECREF(code_obj);
             Py_DECREF(module);
+            PyGILState_Release(gstate);
             return 0;
         }
     }
@@ -1340,21 +1359,25 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
     if (!result) {
         pdpy_printerror(NULL);
         Py_DECREF(module);
+        PyGILState_Release(gstate);
         return 0;
     }
     Py_DECREF(result);
     if (!pdpy_validate_pd_subclasses(module, filename)) {
         pdpy_printerror(NULL);
         Py_DECREF(module);
+        PyGILState_Release(gstate);
         return 0;
     }
 
     Py_DECREF(module);
+    PyGILState_Release(gstate);
     return 1;
 }
 
 // ─────────────────────────────────────
 static int pdpyobj_init(t_pdpy_pyclass *self, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     char *objname;
     if (!PyArg_ParseTuple(args, "s", &objname)) {
         return -1;
@@ -1390,6 +1413,7 @@ static int pdpyobj_init(t_pdpy_pyclass *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_error(t_pdpy_pyclass *self, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     char msg[MAXPDSTRING] = "";
     size_t msg_len = 0;
 
@@ -1421,14 +1445,25 @@ static PyObject *pdpy_error(t_pdpy_pyclass *self, PyObject *args) {
 }
 
 // ─────────────────────────────────────
-static PyObject *pdpy_logpost(t_pdpy_pyclass *self, PyObject *args) {
+static PyObject *pdpy_logpost(t_pdpy_pyclass *self, PyObject *args, PyObject *kwargs) {
+    PY4PD_DEBUG(__FUNCTION__);
     char msg[MAXPDSTRING] = "";
     size_t msg_len = 0;
+    int prefix = 1; // default: include prefix
+
+    static char *kwlist[] = {"prefix", NULL};
+    if (kwargs && PyDict_Check(kwargs)) {
+        PyObject *prefix_obj = PyDict_GetItemString(kwargs, "prefix");
+        if (prefix_obj) {
+            prefix = PyObject_IsTrue(prefix_obj);
+        }
+    }
 
     if (PyTuple_Size(args) < 1) {
         PyErr_SetString(PyExc_TypeError, "logpost requires at least loglevel");
         return NULL;
     }
+
     PyObject *pyloglevel = PyTuple_GetItem(args, 0);
     int loglevel = (int)PyLong_AsLong(pyloglevel);
 
@@ -1454,12 +1489,18 @@ static PyObject *pdpy_logpost(t_pdpy_pyclass *self, PyObject *args) {
             }
         }
     }
-    logpost(self->pdobj, loglevel, "[%s]: %s", self->name, msg);
+
+    if (prefix)
+        logpost(self->pdobj, loglevel, "[%s]: %s", self->name, msg);
+    else
+        logpost(self->pdobj, loglevel, "%s", msg);
+
     Py_RETURN_TRUE;
 }
 
 // ─────────────────────────────────────
 static PyObject *pdpy_getcurrentdir(t_pdpy_pyclass *self, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     t_symbol *dir = canvas_getdir(self->pdobj->canvas);
     if (!dir)
         Py_RETURN_NONE;
@@ -1468,6 +1509,7 @@ static PyObject *pdpy_getcurrentdir(t_pdpy_pyclass *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywords) {
+    PY4PD_DEBUG(__FUNCTION__);
     int outlet;
     int type;
     PyObject *pValue;
@@ -1536,6 +1578,7 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
 
 // ─────────────────────────────────────
 static PyObject *pdpy_reload(t_pdpy_pyclass *self, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     const char *filename = self->pdobj->script_filename;
     const char *name = self->name;
 
@@ -1660,7 +1703,8 @@ static PyObject *pdpy_reload(t_pdpy_pyclass *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyMethodDef pdpy_methods[] = {
-    {"logpost", (PyCFunction)pdpy_logpost, METH_VARARGS, "Post things on PureData console"},
+    {"logpost", (PyCFunction)pdpy_logpost, METH_VARARGS | METH_KEYWORDS,
+     "Post things on PureData console"},
     {"error", (PyCFunction)pdpy_error, METH_VARARGS,
      "Print error, same as logpost with error level"},
     {"out", (PyCFunction)pdpy_out, METH_VARARGS | METH_KEYWORDS, "Send data to Pd outlet"},
@@ -1696,6 +1740,7 @@ PyTypeObject pdpy_type = {
 // │             pd methods              │
 // ╰─────────────────────────────────────╯
 static PyObject *pdpy_post(PyObject *self, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     (void)self;
     if (PyTuple_Size(args) > 0) {
         startpost("[Python]: ");
@@ -1715,6 +1760,7 @@ static PyObject *pdpy_post(PyObject *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_hasgui(PyObject *self, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     (void)self;
     (void)args;
     return PyLong_FromLong(sys_havegui());
@@ -1722,12 +1768,14 @@ static PyObject *pdpy_hasgui(PyObject *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_sr(PyObject *self, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     (void)self;
     return PyLong_FromLong(sys_getsr());
 }
 
 // ─────────────────────────────────────
 static PyObject *pdpy_tabread(PyObject *self, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     char *tabname;
     t_garray *pdarray;
     int vecsize;
@@ -1754,6 +1802,7 @@ static PyObject *pdpy_tabread(PyObject *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_tabwrite(PyObject *self, PyObject *args, PyObject *kwargs) {
+    PY4PD_DEBUG(__FUNCTION__);
     char *tabname;
     t_garray *pdarray;
     PyObject *array;
@@ -1829,6 +1878,7 @@ static PyObject *pdpy_tabwrite(PyObject *self, PyObject *args, PyObject *kwargs)
 // │            MODULE LOADER            │
 // ╰─────────────────────────────────────╯
 static int ObjectLoader_init(PyObject *self, PyObject *args, PyObject *kwargs) {
+    PY4PD_DEBUG(__FUNCTION__);
     const char *fullname = NULL;
     const char *path = NULL;
     static char *kwlist[] = {"fullname", "path", NULL};
@@ -1887,6 +1937,7 @@ static int ObjectLoader_init(PyObject *self, PyObject *args, PyObject *kwargs) {
 
 // ─────────────────────────────────────
 static PyObject *ObjectLoader_get_filename(PyObject *self, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     PyObject *fullname;
     if (!PyArg_ParseTuple(args, "O", &fullname))
         return NULL;
@@ -1896,6 +1947,7 @@ static PyObject *ObjectLoader_get_filename(PyObject *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *ObjectLoader_get_data(PyObject *self, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     const char *path;
     if (!PyArg_ParseTuple(args, "s", &path))
         return NULL;
@@ -1933,6 +1985,7 @@ static PyObject *ObjectLoader_get_data(PyObject *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *ObjectLoader_is_package(PyObject *self, PyObject *args) {
+    PY4PD_DEBUG(__FUNCTION__);
     PyObject *fullname;
     if (!PyArg_ParseTuple(args, "O", &fullname))
         return NULL;
@@ -1961,6 +2014,7 @@ static PyType_Spec ObjectLoaderSpec = {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_print(PyObject *self, PyObject *args, PyObject *kwargs) {
+    PY4PD_DEBUG(__FUNCTION__);
     (void)self;
     (void)kwargs;
 
@@ -1993,6 +2047,7 @@ PyMethodDef pdpy_modulemethods[] = {
 
 // ─────────────────────────────────────
 static PyObject *pd4pdmodule_init(PyObject *self) {
+    PY4PD_DEBUG(__FUNCTION__);
     if (PyType_Ready(&pdpy_type) < 0) {
         return NULL;
     }
@@ -2058,6 +2113,7 @@ static struct PyModuleDef pdpy_module_def = {
 
 // ─────────────────────────────────────
 PyMODINIT_FUNC pdpy_initpuredatamodule() {
+    PY4PD_DEBUG(__FUNCTION__);
     PyObject *m = PyModuleDef_Init(&pdpy_module_def);
     if (m == NULL) {
         PyErr_SetString(PyExc_RuntimeError, "Failed to create module");
@@ -2071,6 +2127,7 @@ PyMODINIT_FUNC pdpy_initpuredatamodule() {
 // │            Py4pd Object             │
 // ╰─────────────────────────────────────╯
 static int pd4pd_loader_pathwise(t_canvas *canvas, const char *objectname, const char *path) {
+    PY4PD_DEBUG(__FUNCTION__);
     (void)canvas;
     char dirbuf[MAXPDSTRING], filename[MAXPDSTRING];
     char *ptr;
@@ -2103,6 +2160,7 @@ static int pd4pd_loader_pathwise(t_canvas *canvas, const char *objectname, const
 
 // ─────────────────────────────────────
 void py4pd_addpath2syspath(const char *path) {
+    PY4PD_DEBUG(__FUNCTION__);
     if (!path) {
         pd_error(NULL, "Invalid path: NULL");
         return;
@@ -2144,6 +2202,7 @@ void py4pd_addpath2syspath(const char *path) {
 
 // ─────────────────────────────────────
 void py4pd_fix_sys_pythonpath(void) {
+    PY4PD_DEBUG(__FUNCTION__);
     PyObject *sys = PyImport_ImportModule("sys");
     if (!sys) {
         PyErr_Print();
@@ -2207,6 +2266,7 @@ void py4pd_fix_sys_pythonpath(void) {
 
 // ─────────────────────────────────────
 void py4pd_set_py4pdpath_env(const char *path) {
+    PY4PD_DEBUG(__FUNCTION__);
     if (!path) {
         pd_error(NULL, "Invalid path: NULL");
         return;
@@ -2249,6 +2309,7 @@ void py4pd_set_py4pdpath_env(const char *path) {
 
 // ─────────────────────────────────────
 void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
+    PY4PD_DEBUG(__FUNCTION__);
     (void)s;
     (void)argc;
     (void)argv;
@@ -2258,6 +2319,7 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
 
 // ─────────────────────────────────────
 void py4pd_setup(void) {
+    PY4PD_DEBUG(__FUNCTION__);
     int Major, Minor, Micro;
     sys_getversion(&Major, &Minor, &Micro);
     sys_register_loader((loader_t)pd4pd_loader_pathwise);
@@ -2303,6 +2365,7 @@ void py4pd_setup(void) {
                 post("failed to get _print");
             }
         }
+        g_main_tstate = PyEval_SaveThread();
     }
 
     pdpy_proxyinlet_setup();
