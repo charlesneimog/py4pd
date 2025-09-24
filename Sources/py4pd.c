@@ -159,31 +159,15 @@ typedef struct _pdpy_thread_data {
     char *msg;
     int loglevel;
 
-    t_atom *argv;
-    int argc;
-
 } t_pdpy_thread_data;
 
 // ─────────────────────────────────────
 int pdpy_is_main_thread(void) {
-    int result = -1;
-    PyObject *threading = PyImport_ImportModule("threading");
-    if (!threading) {
-        return -1;
+    PyThreadState *tstate = PyGILState_GetThisThreadState();
+    if (!tstate) {
+        return 0;
     }
-
-    PyObject *current = PyObject_CallMethod(threading, "current_thread", NULL);
-    PyObject *mainthr = PyObject_CallMethod(threading, "main_thread", NULL);
-
-    if (current && mainthr) {
-        result = Py_Is(current, mainthr) ? 1 : 0;
-    }
-
-    Py_XDECREF(current);
-    Py_XDECREF(mainthr);
-    Py_DECREF(threading);
-
-    return result;
+    return (tstate == g_main_tstate);
 }
 
 // ─────────────────────────────────────
@@ -1692,12 +1676,6 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
         PyErr_SetString(PyExc_IndexError, "Index out of range for outlet");
         return NULL;
     }
-
-    // if (pdpy_is_main_thread()) {
-    //     post("is main thread");
-    // } else {
-    //     post("is not main thread");
-    // }
 
     t_outlet *out = x->outs[outlet];
     if (pdtype == PYOBJECT) {
