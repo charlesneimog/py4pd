@@ -12,7 +12,7 @@ class pymetro(pd.NewObject):
             self.time = float(args[0])
         else:
             self.time = 1000
-        self.metro = self.new_clock(self.tick)
+        self.metro = pd.new_clock(self, self.tick)
         self.args = args
 
     def in_2_float(self, f: float):
