@@ -8,14 +8,10 @@ endif()
 # ╭──────────────────────────────────────╮
 # │               pd.cmake               │
 # ╰──────────────────────────────────────╯
-cmake_policy(SET CMP0135 NEW)
 set(PDCMAKE_FILE ${CMAKE_BINARY_DIR}/pd.cmake)
-if(NOT EXISTS ${PDCMAKE_FILE})
-    message(STATUS "Downloading pd.cmake")
-    file(
-        DOWNLOAD https://raw.githubusercontent.com/pure-data/pd.cmake/refs/tags/v0.1.0/pd.cmake ${PDCMAKE_FILE}
-        SHOW_PROGRESS
-        STATUS DOWNLOAD_STATUS)
+set(PDCMAKE_VERSION "v0.2.6")
+if(NOT EXISTS "${PDCMAKE_FILE}")
+    file(DOWNLOAD https://raw.githubusercontent.com/pure-data/pd.cmake/refs/tags/${PDCMAKE_VERSION}/pd.cmake ${PDCMAKE_FILE})
 endif()
 include(${PDCMAKE_FILE})
 
@@ -23,7 +19,7 @@ include(${PDCMAKE_FILE})
 # │          Object Definitions          │
 # ╰──────────────────────────────────────╯
 if(NOT DEFINED PYVERSION)
-    message(FATAL_ERROR "\nPYVERSION is not defined. Use -DPYVERSION=3.11, for example.")
+    message(FATAL_ERROR "PYVERSION is not defined. Use -DPYVERSION=3.13, for example.")
 else()
     message(STATUS "Using Python version: ${PYVERSION}")
 endif()
