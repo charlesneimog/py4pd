@@ -1,4 +1,4 @@
-#N canvas 476 73 599 565 12;
+#N canvas 0 0 1896 1005 12;
 #X obj 69 366 py4pd;
 #X obj 74 488 bng 23 250 50 0 nutelaOS akdkabdk empty 0 -10 0 12 #dfdfdf #000000 #000000;
 #X obj 74 518 bng 23 250 50 0 linux adjhkahdk empty 0 -10 0 12 #dfdfdf #000000 #000000;
@@ -32,5 +32,5 @@
 #X text 59 232 [py4pd] is used by third-party libraries. I already upload some objects to deken. You can search for pd-ji (Just Intonation Tools) \, Orchidea (load the free Orchidea samples using midi data) and others. Check the complete list in., f 71;
 #X msg 262 288 charlesneimog.github.io/py4pd;
 #X text 59 133 With Python in Pd you can generate scores \, work with AI \, use lots of Audio Analysis tools and OpenMusic functions with libraries like om_py \, music21 \, neoscore and others. It also brings the feature to write Pd externals in pure Python code \, what allows to use all the big Python enviroment in PureData., f 71;
-#X text 114 365 <-- IMPORTANT: If this object failed to load \, Python is not installed in your system. This version uses python 3.11 and you CAN'T use any other version.;
+#X text 114 365 <-- IMPORTANT: If this object failed to load \, Python is not installed in your system. This version uses python 3.13 and you CAN'T use any other version.;
 #X connect 11 0 3 0;

@@ -5,7 +5,6 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     project(py4pd)
 endif()
 
-
 # ╭──────────────────────────────────────╮
 # │               pd.cmake               │
 # ╰──────────────────────────────────────╯

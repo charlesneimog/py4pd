@@ -1633,9 +1633,9 @@ static PyObject *pdpy_logpost(t_pdpy_pyclass *self, PyObject *args, PyObject *kw
 
         char buf[MAXPDSTRING];
         if (prefix) {
-            snprintf(buf, sizeof(buf), "[%s]: %s", self->name, msg);
+            pd_snprintf(buf, sizeof(buf), "[%s]: %s", self->name, msg);
         } else {
-            snprintf(buf, sizeof(buf), "%s", msg);
+            pd_snprintf(buf, sizeof(buf), "%s", msg);
         }
         data->msg = strdup(buf);
         if (!data->msg) {
@@ -1935,14 +1935,12 @@ static PyObject *pdpy_tabwrite(t_pdpy_pyclass *self, PyObject *args, PyObject *k
             vec[i].w_float = (float)PyFloat_AsDouble(PyFloatObj);
         }
         if (redraw) {
-            t_pdpy_thread_data *data = (t_pdpy_thread_data *)malloc(sizeof(t_pdpy_thread_data));
-            data->type = REDRAW_ARRAY;
             if (pdpy_is_main_thread()) {
                 garray_redraw(pdarray);
             } else {
                 t_pdpy_thread_data *data = (t_pdpy_thread_data *)malloc(sizeof(t_pdpy_thread_data));
-                data->array = pdarray;
                 data->type = REDRAW_ARRAY;
+                data->array = pdarray;
                 pd_queue_mess(&pd_maininstance, &self->pdobj->obj.te_g.g_pd, data,
                               pdpy_thread_callback);
             }
@@ -1983,20 +1981,19 @@ static PyObject *pdpy_tabwrite(t_pdpy_pyclass *self, PyObject *args, PyObject *k
 
 // ─────────────────────────────────────
 static PyMethodDef pdpy_methods[] = {
-    {"logpost", (PyCFunction)pdpy_logpost, METH_VARARGS | METH_KEYWORDS,
-     "Post things on PureData console"},
-    {"error", (PyCFunction)pdpy_error, METH_VARARGS,
-     "Print error, same as logpost with error level"},
-    {"out", (PyCFunction)pdpy_out, METH_VARARGS | METH_KEYWORDS, "Send data to Pd outlet"},
     {"new_clock", (PyCFunction)pdpy_newclock, METH_VARARGS, "Return a clock object"},
-    {"reload", (PyCFunction)pdpy_reload, METH_NOARGS, "Reload the current script and object"},
+
+    {"out", (PyCFunction)pdpy_out, METH_VARARGS | METH_KEYWORDS, "Send data to Pd outlet"},
+
     {"tabwrite", (PyCFunction)pdpy_tabwrite, METH_VARARGS | METH_KEYWORDS, "Write to a Pd Array"},
     {"tabread", (PyCFunction)pdpy_tabread, METH_VARARGS, "Read a Pd Array"},
-    {"get_current_dir", (PyCFunction)pdpy_getcurrentdir, METH_NOARGS, "Returns current canvas dir"},
 
-    // {"tabwrite", (PyCFunction)pdpy_tabwrite, METH_VARARGS | METH_KEYWORDS, "Write to a Pd
-    // Array"},
-    // {"tabread", (PyCFunction)pdpy_tabread, METH_VARARGS | METH_KEYWORDS, "Read a Pd Array"},
+    // helpers
+    {"get_current_dir", (PyCFunction)pdpy_getcurrentdir, METH_NOARGS, "Returns current canvas dir"},
+    {"reload", (PyCFunction)pdpy_reload, METH_NOARGS, "Reload the current script and object"},
+    {"logpost", (PyCFunction)pdpy_logpost, METH_VARARGS | METH_KEYWORDS, "Post on Pd console"},
+    {"error", (PyCFunction)pdpy_error, METH_VARARGS, "Error on Pd Console"},
+
     {NULL, NULL, 0, NULL}};
 
 // ─────────────────────────────────────

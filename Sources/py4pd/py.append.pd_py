@@ -1,0 +1,34 @@
+import puredata as pd
+
+
+class pyappend(pd.NewObject):
+    name: str = "py.append"
+
+    def __init__(self, args):
+        if len(args) < 1:
+            raise Exception("Requires number of inlets")
+
+        self.inlets = int(args[0])
+        self.outlets = 1
+        self.dict = {}
+        for i in range(1, self.inlets + 1):
+            self._add_inlet(i)
+
+    def _add_inlet(self, idx: int):
+        def handler(args: list, idx=idx):
+            if type(args) != list:
+                args = [args]
+            self.dict[idx] = args
+            if idx == 1:
+                output = []
+                for i in range(1, self.inlets + 1):
+                    output.extend(self.dict.get(i, []))
+                self.out(0, pd.LIST, output)
+
+        setattr(self, f"in_{idx}_list", handler)
+        setattr(self, f"in_{idx}_float", handler)
+        setattr(self, f"in_{idx}_symbol", handler)
+
+    def in_1_reload(self, args: list):
+        self.reload()
+
