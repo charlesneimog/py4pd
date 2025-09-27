@@ -33,9 +33,7 @@ The input design is inspired by the mature `pd-lua` project. For methods, use th
 
 ### Output
 
-To produce output, use the method `self.out`. For example, `self.out(0, pd.SYMBOL, "test238")` sends the symbol `"test238"` to outlet 0. The second argument specifies the data type, which can be `pd.SYMBOL` or `pd.FLOAT`. To output a list, use `pd.LIST` instead.
-
-### PyObject
+To produce output, use the method `self.out`. For example, `self.out(0, pd.SYMBOL, "test238")` sends the symbol `"test238"` to outlet 0. The second argument specifies the data type, which can be `pd.SYMBOL` or `pd.FLOAT`. To output a list, use `pd.LIST` instead. To output `numpy.ndarray`, `class` and others you must use `pd.PYOBJECT`.
 
 `py4pd` also implements the `PyObject` message, which allows you to share Python data types between `py4pd` objects. This enables the transfer of class instances, NumPy arrays, and other Python objects that are not supported by Pure Data’s traditional data types.
 
@@ -56,7 +54,7 @@ class pymetro(pd.NewObject):
             self.time = float(args[0])
         else:
             self.time = 1000
-        self.metro = self.new_clock(self.tick)
+        self.metro = pd.new_clock(self, self.tick)
         self.args = args
 
     def in_2_float(self, f: float):

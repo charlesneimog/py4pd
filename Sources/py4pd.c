@@ -1337,6 +1337,7 @@ static t_class *pdpy_classnew(const char *n, bool dsp) {
     if (dsp) {
         class_addmethod(c, (t_method)pdpy_dsp, gensym("dsp"), A_CANT, 0);
     }
+
     return c;
 }
 
@@ -1353,6 +1354,15 @@ static int pdpy_create_newpyobj(PyObject *subclass, const char *name, const char
         PyErr_Clear();
     }
     Py_XDECREF(dsp);
+
+    PyObject *helppatch = PyObject_GetAttrString(subclass, "helppatch");
+    const char *helppatchstr = NULL;
+    if (helppatch) {
+        helppatchstr = PyUnicode_AsUTF8(helppatch);
+        Py_XDECREF(helppatch);
+    } else {
+        PyErr_Clear();
+    }
 
     PyObject *pd_module = PyImport_ImportModule("puredata");
     if (pd_module == NULL) {
@@ -1396,6 +1406,10 @@ static int pdpy_create_newpyobj(PyObject *subclass, const char *name, const char
     Py_DECREF(val_clocks);
 
     t_class *pdclass = pdpy_classnew(name, havedsp);
+    if (helppatchstr != NULL) {
+        class_sethelpsymbol(pdclass, gensym(helppatchstr));
+    }
+
     PyObject *capsule = PyCapsule_New((void *)pdclass, NULL, NULL);
     if (!capsule) {
         pdpy_printerror(NULL);
@@ -2691,7 +2705,17 @@ void py4pd_setup(void) {
     pdpy_proxyinlet_setup();
     pdpy_pyobjectoutput_setup();
     pdpy_proxyreceive_setup();
-    // TODO: receive
+
+    const char *py4pd_path = py4pd_class->c_externdir->s_name;
+    (void)namelist_append(STUFF->st_searchpath, py4pd_path, 0);
+
+    t_canvas *cnv = canvas_getcurrent();
+    int result = sys_load_lib(cnv, "openmusic");
+    if (!result){
+        pd_error(NULL, "Failed to load openmusic lib");
+    }
+
+
 }
 
 #ifdef __WIN64

@@ -24,13 +24,13 @@ hide:
 ### <h3 align="center"> **PureData User** </h3>
 <div class="grid cards" markdown>
 
--   :material-music-note: __OpenMusic Objects__
+-   :material-music-note: __Algorithm Composition__ 
 
-    [:octicons-arrow-right-24: NEED UPDATE](index.md)
+    [:octicons-arrow-right-24: List](openmusic.md)
 
 -   :material-music-note: __`py4pd` Libraries__
 
-    [:octicons-arrow-right-24: NEED UPDATE](index.md)
+    [:octicons-arrow-right-24: Libraries](libraries.md)
     
 
 </div>
@@ -60,6 +60,14 @@ hide:
 ## <h2 align="center"> **Examples and Use Cases** </h2>
 
 Here are presented tools implemented with `py4pd`. <i>Users are encouraged to contribute their examples through [Github](https://github.com/charlesneimog/py4pd/discussions/categories/show-and-tell) </i>.
+
+=== "AI Training"
+
+    With `py4pd`, you can train an AI using Pd, an share ways to train with composers, students, and others.
+
+    <div style="text-align: center;">
+        <iframe style="border-radius: 5px" width="750" height="500" src="https://www.youtube.com/embed/qIV0LigMuzo?si=D4v0XZX3myNkkshw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    </div>
 
 === "Artificial Inteligence"
 
@@ -101,16 +109,6 @@ Here are presented tools implemented with `py4pd`. <i>Users are encouraged to co
 
         ```
 
-=== "Graphics"
-
-    With `py4pd`, we can create graphics in real-time, like the one below.
-
-    <div style="text-align: center;">
-        <video width="640" height="360" controls>
-            <source src="assets/vispy.mp4" type="video/mp4">
-            Your browser does not support the video tag.
-        </video>
-    </div>
 
 ---
 

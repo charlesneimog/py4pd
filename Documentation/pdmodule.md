@@ -27,29 +27,12 @@ From the class initializer (`__init__`), you need to define some object attribut
 
 ### `pd.NewObject` Methods 
 
-#### `self.logpost`
-
-Post things on PureData console.
-
-#### `self.error`
-
-Print error, same as logpost with error level.
-
-#### `self.out`
-
-Output data to the objecta.
-
-#### `self.tabwrite`
-
-Write `Tuple` of numbers in the `pd` array.
-
-#### `self.tabread`
-
-Read table from `pd`, returns a tuple.
-
-#### `self.reload`
-
-Reload the object.
+* `self.logpost`: Post things on Pd console, `self,logpost(0, "This is a fatal error")` `self.logpost(1, "This is an error")`, `self.logpost(2, "This normal a log")`, `self.logpost(3, "This is a debug")`.
+* `self.error`: Print error, same as `self.logpost` with error level 1.
+* `self.out`: Output data to the object. `self.out(0, pd.FLOAT, 1)`, `self.out(0, pd.SYMBOL, "hello")`. `self.out(0, pd.PYOBJECT, [[1,2,3][4,5,6]])`. 
+* `self.tabwrite`: Write `Tuple` of numbers in the `pd` array.
+* `self.tabread`: Read table from `pd`, returns a tuple.
+* `self.reload`: Reload the object.
 
 ### Clocks
 
@@ -60,38 +43,37 @@ class pymetro(pd.NewObject):
     def __init__(self, args):
         self.inlets = 2
         self.outlets = 1
-        self.metro = self.new_clock(self.tick)
+        self.metro = pd.new_clock(self, self.tick)
 ```
 
-#### `self.new_clock`
+#### `pd.new_clock`
 
-`Clock` can be created using the `self.new_clock` method, which returns a `puredata.Clock` object. `new_clock` accepts a function as an argument, which will be executed when the clock ticks. In the above example, `self.metro` will have the methods: 
+`Clock` can be created using the `pd.new_clock` method, which returns a `puredata.Clock` object. `new_clock` accepts the `self` of the class and a function as an argument, which will be executed when the clock ticks. In the above example, `self.metro` will have the methods: 
 
-##### `delay`
-
-Set a delay in milliseconds to execute function (in this case, `self.tick`).
-
-##### `set`
-
-TODO: 
-
-##### `unset`
-
-TODO: 
+* `self.metro.delay`: Set a delay in milliseconds to execute function (in this case, `self.tick`).
 
 ### Receivers
 
-#### `self.new_receiver`
+class pyreceiver(pd.NewObject):
+    name: str = "pyreceiver"
+
+    def __init__(self, args):
+        self.inlets = 2
+        self.outlets = 1
+        self.receiver = pd.new_receiver(self, "pyreceiver", self.received)
+
+* `self.receiver.unbind()` = This make the object not receive messages from the symbol `pyreceiver`.
+* `self.receiver.bind()` = This make the object receive messages from the symbol `pyreceiver`.
+
 
 ## Extra `puredata` Methods
 
-#### `pd.post`
+* `pd.post`: Post a message to Pd without being possible to detect the object (for example, for credits in objects), or warnings when some package is not installed.
+* `pd.hasgui`: Returns if Pd has a GUI interface.
+* `pd.get_sample_rate`: Return sample rate of Pd.
 
-Post a message to PureData without being possible to detect the object (for example, for credits in objects).
 
-#### `pd.hasgui` 
 
-Returns if PureData has a GUI interface.
 
 ## Complet Examples
 
@@ -114,7 +96,7 @@ class pymetro(pd.NewObject):
             self.time = float(args[0])
         else:
             self.time = 1000
-        self.metro = self.new_clock(self.tick)
+        self.metro = pd.new_clock(self, self.tick)
         self.args = args
 
     def in_2_float(self, f: float):
@@ -137,8 +119,64 @@ class pymetro(pd.NewObject):
         self.out(0, pd.SYMBOL, "test238")
 ``` 
 
+### Python Data Types on Pd
 
-### Python Data
+One of the great things that made me start `py4pd` was that I missed some data types. With `py4pd`, you can use any datatype supported by Python. This includes:
+
+* **Numeric types:** `int`, `float`, `complex`
+* **Sequence types:** `list`, `tuple`, `range`
+* **Text type:** `str`
+* **Set types:** `set`, `frozenset`
+* **Mapping type:** `dict`
+* **Boolean type:** `bool`
+* **Binary types:** `bytes`, `bytearray`, `memoryview`
+
+This flexibility allows you to integrate Python data structures directly into your Pd patches, making data manipulation and processing much easier and more powerful.
+
+To use it, you must convert the Pd data to Python using `py.2py` or use the `pd.PYOBJECT` type when using `self.out` method.
+
+
+#Here’s a completed section including your example with a concise explanation:
+
+---
+
 ### Audio Objects
-### Graphical Objects
 
+With `py4pd`, you can create custom audio objects (tilde objects, like `osc~`) entirely in Python. This allows you to define signal processing logic directly in Python, while Pd handles the audio routing.
+
+Example:
+
+```python
+import puredata as pd
+import math
+
+class pytest_tilde(pd.NewObject):
+    name: str = "pytest~"
+
+    def __init__(self, args):
+        self.inlets = pd.SIGNAL
+        self.outlets = pd.SIGNAL
+        self.phase = 0
+
+    def perform(self, input):
+        # this is executed in each block of audio
+        blocksize = self.blocksize
+        samplerate = self.samplerate
+
+        out_buffer = []
+        for i in range(blocksize):
+            phase_increment = 2 * math.pi * input[0][i] / samplerate
+            sample = math.sin(self.phase)
+            out_buffer.append(sample)
+            self.phase += phase_increment
+            if self.phase > 2 * math.pi:
+                self.phase -= 2 * math.pi
+        return tuple(out_buffer)
+
+    def dsp(self, sr, blocksize, inchans):
+        # this is executed when you turn on the audio
+        self.samplerate = sr
+        self.blocksize = blocksize
+        self.inchans = inchans
+        return True
+```

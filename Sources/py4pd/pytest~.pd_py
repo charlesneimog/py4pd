@@ -2,8 +2,8 @@ import puredata as pd
 import math
 
 
-class pytest_tilde(pd.NewObject):  # <== Class name is not important
-    name: str = "pytest~"  # <== Object name, same as {name}.pd_py
+class pytest_tilde(pd.NewObject):
+    name: str = "pytest~"
 
     def __init__(self, args):
         self.inlets = pd.SIGNAL

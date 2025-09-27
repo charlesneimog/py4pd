@@ -92,11 +92,15 @@ pd_add_external(py4pd "${PY4PD_SOURCES}")
 
 file(GLOB PY4PD_OBJECTS ${CMAKE_CURRENT_SOURCE_DIR}/Sources/py4pd/*.pd_py)
 file(GLOB PY4PD_OBJECTS_HELP ${CMAKE_CURRENT_SOURCE_DIR}/Sources/py4pd/*.pd)
+file(GLOB PY4PD_OBJECTS_OPENMUSIC ${CMAKE_CURRENT_SOURCE_DIR}/Sources/*.pd_py)
 file(GLOB PY4PD_EXAMPLES_OBJECTS ${CMAKE_CURRENT_SOURCE_DIR}/Resources/*.pd_py)
+file(GLOB PY4PD_HELPS ${CMAKE_CURRENT_SOURCE_DIR}/Resources/Help/*.pd)
 
 pd_add_datafile(py4pd "${PY4PD_OBJECTS}")
 pd_add_datafile(py4pd "${PY4PD_OBJECTS_HELP}")
+pd_add_datafile(py4pd "${PY4PD_OBJECTS_OPENMUSIC}")
 pd_add_datafile(py4pd "${PY4PD_EXAMPLES_OBJECTS}")
+pd_add_datafile(py4pd "${PY4PD_HELPS}")
 
 target_include_directories(py4pd PUBLIC ${PYTHON_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC "/usr/include/python${PYVERSION}")

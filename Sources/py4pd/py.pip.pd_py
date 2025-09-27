@@ -5,6 +5,7 @@ import sysconfig
 import sys
 import platform
 
+
 class pypip(pd.NewObject):
     name: str = "py.pip"
 
@@ -14,19 +15,23 @@ class pypip(pd.NewObject):
         self.installing = {}
         self.points = "..."
         self.counter = 0
-        self.metro = self.new_clock(self.tick)
+        self.metro = pd.new_clock(self, self.tick)
         self.py4pd_path = os.environ["PY4PD_PATH"]
         bindir = sysconfig.get_config_var("BINDIR")
         pyversion = sys.version_info
 
         if platform.system() != "Windows":
-            self.python = os.path.join(bindir, "python{}.{}".format(pyversion.major, pyversion.minor))
+            self.python = os.path.join(
+                bindir, "python{}.{}".format(pyversion.major, pyversion.minor)
+            )
         else:
             self.python = os.path.join(bindir, "python.exe")
-        
+
         # check executable exists
         if not os.path.isfile(self.python):
-            raise FileNotFoundError(f"Python executable not found: {self.python}, please report this issue.")
+            raise FileNotFoundError(
+                f"Python executable not found: {self.python}, please report this issue."
+            )
 
     def tick(self):
         installing_packages = [pkg for pkg, status in self.installing.items() if status]
@@ -52,12 +57,15 @@ class pypip(pd.NewObject):
                     self.installing[package] = True
 
                     def install_thread(pkg):
-                        #self.logpost(2, f"Starting installation of {pkg}")
+                        # self.logpost(2, f"Starting installation of {pkg}")
                         try:
                             args = [
                                 "install",
                                 pkg,
-                                "--target", f"{self.py4pd_path}/py4pd-env", "--no-warn-script-location", "--no-cache-dir"
+                                "--target",
+                                f"{self.py4pd_path}/py4pd-env",
+                                "--no-warn-script-location",
+                                "--no-cache-dir",
                             ]
                             ret = os.system(f'"{self.python}" -m pip {" ".join(args)}')
                             if ret != 0:
@@ -70,7 +78,9 @@ class pypip(pd.NewObject):
                             return
                         self.installing[pkg] = False
 
-                    threading.Thread(target=install_thread, args=(package,), daemon=True).start()
+                    threading.Thread(
+                        target=install_thread, args=(package,), daemon=True
+                    ).start()
             self.metro.delay(0)
 
     def in_1_reload(self, args: list):
