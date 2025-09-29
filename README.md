@@ -41,9 +41,8 @@ class pymetro(pd.NewObject):
             self.time = float(args[0])
         else:
             self.time = 1000
-        self.metro = self.new_clock(self.tick)
+        self.metro = pd.new_clock(self, self.tick)
         self.args = args
-        pd.post("here", os.environ["PY4PD_PATH"])
 
     def in_2_float(self, f: float):
         self.time = f
