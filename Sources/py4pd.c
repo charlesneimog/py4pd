@@ -10,8 +10,8 @@
 #include <Python.h>
 
 #define PY4PD_MAJOR_VERSION 1
-#define PY4PD_MINOR_VERSION 1
-#define PY4PD_MICRO_VERSION 0
+#define PY4PD_MINOR_VERSION 0
+#define PY4PD_MICRO_VERSION 1
 
 #if !defined(NDEBUG)
 #define PY4PD_DEBUG(func) printf("%s\n", func)
