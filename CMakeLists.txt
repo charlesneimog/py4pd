@@ -9,7 +9,7 @@ endif()
 # │               pd.cmake               │
 # ╰──────────────────────────────────────╯
 set(PDCMAKE_FILE ${CMAKE_BINARY_DIR}/pd.cmake)
-set(PDCMAKE_VERSION "v0.2.6")
+set(PDCMAKE_VERSION "v0.2.9")
 if(NOT EXISTS "${PDCMAKE_FILE}")
   file(
     DOWNLOAD

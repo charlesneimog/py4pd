@@ -10,7 +10,7 @@ on:
         default: false
 env:
   LIBNAME: py4pd
-  LIBVERSION: "1.0.1"
+  LIBVERSION: "1.0.2"
   PYVERSION: "3.13"
 permissions:
   contents: write
@@ -109,8 +109,6 @@ jobs:
           msystem: mingw64
           install: make mingw-w64-x86_64-gcc mingw64/mingw-w64-x86_64-cmake
           update: false
-      - name: Install winget
-        uses: Cyberboss/install-winget@v1
       - name: Install PureData Float 32
         if: matrix.precision == '32'
         run: |
