@@ -11,8 +11,7 @@ endif()
 set(PDCMAKE_FILE ${CMAKE_BINARY_DIR}/pd.cmake)
 set(PDCMAKE_VERSION "v0.2.13")
 if(NOT EXISTS "${PDCMAKE_FILE}")
-    file(DOWNLOAD "https://raw.githubusercontent.com/charlesneimog/pd.cmake/refs/heads/main/pd.cmake"
-         ${PDCMAKE_FILE})
+    file(DOWNLOAD "https://raw.githubusercontent.com/charlesneimog/pd.cmake/refs/heads/main/pd.cmake" ${PDCMAKE_FILE})
 endif()
 include(${PDCMAKE_FILE})
 
@@ -84,8 +83,7 @@ file(GLOB PY4PD_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/Sources/*.c)
 pd_add_external(py4pd "${PY4PD_SOURCES}")
 
 if(LINUX)
-    target_compile_options(py4pd PRIVATE -Wall -Wextra -Wshadow -Wformat=2 -Wnull-dereference)
-
+    target_compile_options(py4pd PRIVATE -Wall -Wextra -Wshadow -Wformat=2 -Wnull-dereference -Wno-cast-function-type)
 endif()
 
 file(GLOB PY4PD_OBJECTS ${CMAKE_CURRENT_SOURCE_DIR}/Sources/py4pd/*.pd_py)

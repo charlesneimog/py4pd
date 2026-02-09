@@ -168,13 +168,13 @@ typedef struct {
 } py4pd_config_entry;
 
 // ─────────────────────────────────────
-const char *get_config_from_key(t_class *py4pd_class, const char *search_key) {
+const char *get_config_from_key(t_class *py4pd_obj_class, const char *search_key) {
     static py4pd_config_entry config[10];
     static int loaded = 0;
     static int count = 0;
 
     if (!loaded) {
-        const char *py4pd_path = py4pd_class->c_externdir->s_name;
+        const char *py4pd_path = py4pd_obj_class->c_externdir->s_name;
         char py4pd_config_path[MAXPDSTRING];
         pd_snprintf(py4pd_config_path, MAXPDSTRING, "%s/py4pd.cfg", py4pd_path);
         FILE *file = fopen(py4pd_config_path, "r");
@@ -252,6 +252,7 @@ int pdpy_is_main_thread(void) {
 
 // ─────────────────────────────────────
 void pdpy_thread_callback(t_pd *obj, void *data) {
+    (void)obj;
     t_pdpy_thread_data *p = (t_pdpy_thread_data *)data;
     switch (p->type) {
     case REDRAW_ARRAY:
@@ -1096,13 +1097,6 @@ void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom
     }
 }
 
-// ─────────────────────────────────────
-static void pdpy_anything(t_pdpy_pdobj *o, t_symbol *s, int argc, t_atom *argv) {
-    PY4PD_DEBUG(__FUNCTION__);
-    char methodname[MAXPDSTRING];
-    pd_snprintf(methodname, MAXPDSTRING, "in_1_%s", s->s_name);
-    pdpy_execute(o, methodname, s, argc, argv);
-}
 
 // ─────────────────────────────────────
 static t_int *pdpy_perform(t_int *w) {
@@ -1509,6 +1503,7 @@ static int pdpy_validate_pd_subclasses(PyObject *module, const char *filename) {
 
 // ─────────────────────────────────────
 int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
+    (void)fd;
     PY4PD_DEBUG(__FUNCTION__);
     PyGILState_STATE gstate = PyGILState_Ensure();
 
@@ -1604,6 +1599,7 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
 
 // ─────────────────────────────────────
 static int pdpyobj_init(t_pdpy_pyclass *self, PyObject *args) {
+    (void)self;
     PY4PD_DEBUG(__FUNCTION__);
     char *objname;
     if (!PyArg_ParseTuple(args, "s", &objname)) {
@@ -1678,7 +1674,6 @@ static PyObject *pdpy_logpost(t_pdpy_pyclass *self, PyObject *args, PyObject *kw
     size_t msg_len = 0;
     int prefix = 1; // default: include prefix
 
-    static char *kwlist[] = {"prefix", NULL};
     if (kwargs && PyDict_Check(kwargs)) {
         PyObject *prefix_obj = PyDict_GetItemString(kwargs, "prefix");
         if (prefix_obj) {
@@ -1752,6 +1747,7 @@ static PyObject *pdpy_logpost(t_pdpy_pyclass *self, PyObject *args, PyObject *kw
 
 // ─────────────────────────────────────
 static PyObject *pdpy_getcurrentdir(t_pdpy_pyclass *self, PyObject *args) {
+    (void)args;
     PY4PD_DEBUG(__FUNCTION__);
     t_symbol *dir = canvas_getdir(self->pdobj->canvas);
     if (!dir)
@@ -1761,6 +1757,7 @@ static PyObject *pdpy_getcurrentdir(t_pdpy_pyclass *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywords) {
+    (void)keywords;
     PY4PD_DEBUG(__FUNCTION__);
     int outlet;
     int type;
@@ -1779,7 +1776,7 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
     }
 
     t_outlet *out = x->outs[outlet];
-    if (pdtype == PYOBJECT) {
+    if (pdtype == (t_atomtype)PYOBJECT) {
         if (x->outobjptr->pValue) {
             Py_DECREF(x->outobjptr->pValue);
         }
@@ -1831,6 +1828,7 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
 
 // ─────────────────────────────────────
 static PyObject *pdpy_reload(t_pdpy_pyclass *self, PyObject *args) {
+    (void)args;
     PY4PD_DEBUG(__FUNCTION__);
     const char *filename = self->pdobj->script_filename;
     const char *name = self->name;
@@ -1956,6 +1954,7 @@ static PyObject *pdpy_reload(t_pdpy_pyclass *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_tabread(t_pdpy_pyclass *self, PyObject *args) {
+    (void)self;
     PY4PD_DEBUG(__FUNCTION__);
     char *tabname;
     t_garray *pdarray;
@@ -2146,6 +2145,7 @@ static PyObject *pdpy_hasgui(PyObject *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_sr(PyObject *self, PyObject *args) {
+    (void)args;
     PY4PD_DEBUG(__FUNCTION__);
     (void)self;
     return PyLong_FromLong(sys_getsr());
@@ -2243,6 +2243,7 @@ static PyObject *pdpy_loader_get_filename(PyObject *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_loader_get_data(PyObject *self, PyObject *args) {
+    (void)self;
     PY4PD_DEBUG(__FUNCTION__);
     const char *path;
     if (!PyArg_ParseTuple(args, "s", &path))
@@ -2281,6 +2282,7 @@ static PyObject *pdpy_loader_get_data(PyObject *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_loader_is_package(PyObject *self, PyObject *args) {
+    (void)self;
     PY4PD_DEBUG(__FUNCTION__);
     PyObject *fullname;
     if (!PyArg_ParseTuple(args, "O", &fullname))
