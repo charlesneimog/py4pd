@@ -1,6 +1,6 @@
 # Creating Objects
 
-As shown in the [Hello World](../hello) section, to create a new `py4pd` object you must use the subclass `puredata.NewObject`, define the object’s name, and save it in a folder using the pattern `<object_name>.pd_py`. To enable object creation, you must always import the `puredata` module, which is only available when the script `.pd_py` is loaded via `py4pd`.
+As shown in the [Hello World](hello.md) section, to create a new `py4pd` object you must use the subclass `puredata.NewObject`, define the object’s name, and save it in a folder using the pattern `<object_name>.pd_py`. To enable object creation, you must always import the `puredata` module, which is only available when the script `.pd_py` is loaded via `py4pd`.
 
 ## `NewObject` Class
 

@@ -72,6 +72,12 @@ To use `py4pd`, besides PureData, you *always* need to install Python and the pa
             </thead>
             <tbody>
               <tr>
+                <td><code>1.1.0</code></td>
+                <td>Python 3.14</td>
+              </tr>
+            </tbody>
+            <tbody>
+              <tr>
                 <td><code>1.0.0</code></td>
                 <td>Python 3.13</td>
               </tr>
