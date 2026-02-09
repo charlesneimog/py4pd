@@ -11,7 +11,7 @@ on:
 env:
   LIBNAME: py4pd
   LIBVERSION: "1.0.2"
-  PYVERSION: "3.13"
+  PYVERSION: "3.14"
 permissions:
   contents: write
 jobs:
