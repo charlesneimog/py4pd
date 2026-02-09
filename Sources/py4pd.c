@@ -295,6 +295,7 @@ static PyObject *pdpy_clock_delay(t_pdpy_clock *self, PyObject *args) {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_clock_unset(t_pdpy_clock *self, PyObject *args) {
+    (void)args;
     PY4PD_DEBUG(__FUNCTION__);
     if (self->clock != NULL) {
         clock_unset(self->clock);
@@ -332,6 +333,7 @@ static PyMethodDef pdpy_clock_methods[] = {
 };
 
 // ─────────────────────────────────────
+
 static PyTypeObject pdpy_clock_type = {
     PyVarObject_HEAD_INIT(NULL, 0).tp_name = "puredata.clock",
     .tp_basicsize = sizeof(t_pdpy_clock),
@@ -342,7 +344,10 @@ static PyTypeObject pdpy_clock_type = {
 };
 
 // ─────────────────────────────────────
+
+// ─────────────────────────────────────
 static PyObject *pdpy_clock_new(PyObject *self, PyObject *args) {
+    (void)self;
     PyObject *obj_self;
     PyObject *obj_method;
 
@@ -429,27 +434,6 @@ static void pdpy_receiver_destruct(t_pdpy_receiver *self) {
 }
 
 // ─────────────────────────────────────
-static PyObject *pdpy_receiver_bind(t_pdpy_receiver *self) {
-    pd_bind(&self->proxy_obj->pd, self->name);
-    Py_RETURN_TRUE;
-}
-
-// ─────────────────────────────────────
-static PyObject *pdpy_receiver_unbind(t_pdpy_receiver *self) {
-    pd_unbind(&self->proxy_obj->pd, self->name);
-    Py_RETURN_TRUE;
-}
-
-// ─────────────────────────────────────
-static PyMethodDef pdpy_receiver_methods[] = {
-    {"unbind", (PyCFunction)pdpy_receiver_unbind, METH_NOARGS,
-     "unbind the receiver. It stops to receive things"},
-    {"bind", (PyCFunction)pdpy_receiver_bind, METH_NOARGS,
-     "bind the receiver. It starts to receive things"},
-    {NULL, NULL, 0, NULL} // Sentinel
-};
-
-// ─────────────────────────────────────
 static PyTypeObject pdpy_receiver_type = {
     PyVarObject_HEAD_INIT(NULL, 0).tp_name = "puredata.receiver",
     .tp_basicsize = sizeof(t_pdpy_receiver),
@@ -461,6 +445,7 @@ static PyTypeObject pdpy_receiver_type = {
 
 // ─────────────────────────────────────
 static PyObject *pdpy_receiver_new(PyObject *self, PyObject *args) {
+    (void)self;
     PyObject *obj_self;
     char *symbol;
     PyObject *obj_method;
@@ -934,6 +919,7 @@ static void py4pdobj_free(t_pdpy_pdobj *x) {
 
 // ─────────────────────────────────────
 void posterror(t_pdpy_pdobj *x) {
+    (void)x;
     PY4PD_DEBUG(__FUNCTION__);
     PyGILState_STATE gstate = PyGILState_Ensure();
     PyErr_Print();
@@ -2311,14 +2297,53 @@ static PyMethodDef pdpy_loader_methods[] = {
     {NULL, NULL, 0, NULL}};
 
 // ─────────────────────────────────────
+static int pdpy_loader_traverse(PyObject *self, visitproc visit, void *arg) {
+    Py_VISIT(Py_TYPE(self));
+    PyObject_VisitManagedDict(self, visit, arg);
+    return 0;
+
+}
+
+// ─────────────────────────────────────
+static int pdpy_loader_clear(PyObject *self) {
+    PyObject_ClearManagedDict(self);
+    return 0;
+}
+
+// ─────────────────────────────────────
+static void pdpy_loader_dealloc(PyObject *self) {
+    PyObject_GC_UnTrack(self);
+    (void)pdpy_loader_clear(self);
+    Py_TYPE(self)->tp_free(self);
+}
+
+// ─────────────────────────────────────
+static PyObject *pdpy_loader_new(PyTypeObject *type, PyObject *args, PyObject *kwargs) {
+    (void)args;
+    (void)kwargs;
+    PyObject *self = type->tp_alloc(type, 0);
+    if (!self) {
+        return NULL;
+    }
+    PyObject_GC_Track(self);
+    return self;
+}
+
+// ─────────────────────────────────────
 static PyType_Slot pdpy_loader_slots[] = {
-    {Py_tp_init, (void *)pdpy_loader_init}, {Py_tp_methods, pdpy_loader_methods}, {0, NULL}};
+    {Py_tp_new, (void *)pdpy_loader_new},
+    {Py_tp_init, (void *)pdpy_loader_init},
+    {Py_tp_dealloc, (void *)pdpy_loader_dealloc},
+    {Py_tp_traverse, (void *)pdpy_loader_traverse},
+    {Py_tp_clear, (void *)pdpy_loader_clear},
+    {Py_tp_methods, pdpy_loader_methods},
+    {0, NULL}};
 
 // ─────────────────────────────────────
 static PyType_Spec pdpy_loader_spec = {
     .name = "puredata._ObjectLoader",
     .basicsize = sizeof(PyObject),
-    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HEAPTYPE,
+    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_MANAGED_DICT,
     .slots = pdpy_loader_slots,
 };
 
@@ -2366,23 +2391,28 @@ static int pdpy_pdmodule_init(PyObject *self) {
         return -1;
     }
 
-    PyObject *abc_module = PyImport_ImportModule("importlib.abc");
-    if (!abc_module)
-        return -1;
-    PyObject *source_loader = PyObject_GetAttrString(abc_module, "SourceLoader");
-    Py_DECREF(abc_module);
-    if (!source_loader)
-        return -1;
-
-    PyObject *bases = PyTuple_Pack(1, source_loader);
-    Py_DECREF(source_loader);
-    if (!bases)
-        return -1;
-
-    PyObject *object_loader_type = PyType_FromSpecWithBases(&pdpy_loader_spec, bases);
-    Py_DECREF(bases);
+    // Python 3.14+: PyType_FromSpecWithBases() rejects bases whose metaclass overrides tp_new
+    // (e.g. importlib.abc.SourceLoader uses ABCMeta). Since we don't rely on actual subclassing
+    // behavior, create a plain heap type here.
+    PyObject *object_loader_type = PyType_FromSpec(&pdpy_loader_spec);
     if (!object_loader_type)
         return -1;
+
+    // Best-effort: register as a virtual subclass of SourceLoader (keeps isinstance/issubclass
+    // checks working without inheriting from ABCMeta).
+    PyObject *abc_module = PyImport_ImportModule("importlib.abc");
+    if (abc_module) {
+        PyObject *source_loader = PyObject_GetAttrString(abc_module, "SourceLoader");
+        Py_DECREF(abc_module);
+        if (source_loader) {
+            PyObject *res = PyObject_CallMethod(source_loader, "register", "O", object_loader_type);
+            Py_XDECREF(res);
+            Py_DECREF(source_loader);
+        }
+        PyErr_Clear();
+    } else {
+        PyErr_Clear();
+    }
 
     if (PyModule_AddObject(self, "_ObjectLoader", object_loader_type) < 0) {
         Py_DECREF(object_loader_type);
