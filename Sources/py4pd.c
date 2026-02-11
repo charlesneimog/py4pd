@@ -1097,7 +1097,6 @@ void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom
     }
 }
 
-
 // ─────────────────────────────────────
 static t_int *pdpy_perform(t_int *w) {
     PY4PD_DEBUG(__FUNCTION__);
@@ -1452,6 +1451,7 @@ static int pdpy_validate_pd_subclasses(PyObject *module, const char *filename) {
     Py_ssize_t num_items = PyList_Size(items);
 
     int objects = 0;
+
     for (Py_ssize_t i = 0; i < num_items; i++) {
         PyObject *item = PyList_GetItem(items, i); // borrowed
         PyObject *obj = PyTuple_GetItem(item, 1);
@@ -1546,6 +1546,13 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
         PyGILState_Release(gstate);
         return 0;
     }
+
+    PyObject *sys_path = PySys_GetObject("path");
+    PyObject *path = PyUnicode_FromString(dirbuf);
+    if (sys_path && path) {
+        PyList_Append(sys_path, path);
+    }
+    Py_XDECREF(path);
 
     PyObject *code_obj = Py_CompileString(source, filename, Py_file_input);
     free(source);
@@ -1770,12 +1777,12 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
 
     t_atomtype pdtype = type;
     t_pdpy_pdobj *x = self->pdobj;
-    if (outlet > self->pdobj->outletsize - 1) {
+    if (outlet > self->pdobj->outletsize - 1 || outlet < 1) {
         PyErr_SetString(PyExc_IndexError, "Index out of range for outlet");
         return NULL;
     }
 
-    t_outlet *out = x->outs[outlet];
+    t_outlet *out = x->outs[outlet - 1];
     if (pdtype == (t_atomtype)PYOBJECT) {
         if (x->outobjptr->pValue) {
             Py_DECREF(x->outobjptr->pValue);
@@ -2303,7 +2310,6 @@ static int pdpy_loader_traverse(PyObject *self, visitproc visit, void *arg) {
     Py_VISIT(Py_TYPE(self));
     PyObject_VisitManagedDict(self, visit, arg);
     return 0;
-
 }
 
 // ─────────────────────────────────────
@@ -2332,20 +2338,20 @@ static PyObject *pdpy_loader_new(PyTypeObject *type, PyObject *args, PyObject *k
 }
 
 // ─────────────────────────────────────
-static PyType_Slot pdpy_loader_slots[] = {
-    {Py_tp_new, (void *)pdpy_loader_new},
-    {Py_tp_init, (void *)pdpy_loader_init},
-    {Py_tp_dealloc, (void *)pdpy_loader_dealloc},
-    {Py_tp_traverse, (void *)pdpy_loader_traverse},
-    {Py_tp_clear, (void *)pdpy_loader_clear},
-    {Py_tp_methods, pdpy_loader_methods},
-    {0, NULL}};
+static PyType_Slot pdpy_loader_slots[] = {{Py_tp_new, (void *)pdpy_loader_new},
+                                          {Py_tp_init, (void *)pdpy_loader_init},
+                                          {Py_tp_dealloc, (void *)pdpy_loader_dealloc},
+                                          {Py_tp_traverse, (void *)pdpy_loader_traverse},
+                                          {Py_tp_clear, (void *)pdpy_loader_clear},
+                                          {Py_tp_methods, pdpy_loader_methods},
+                                          {0, NULL}};
 
 // ─────────────────────────────────────
 static PyType_Spec pdpy_loader_spec = {
     .name = "puredata._ObjectLoader",
     .basicsize = sizeof(PyObject),
-    .flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_MANAGED_DICT,
+    .flags =
+        Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HAVE_GC | Py_TPFLAGS_MANAGED_DICT,
     .slots = pdpy_loader_slots,
 };
 
@@ -2683,7 +2689,7 @@ void py4pd_setup(void) {
 
     // fix: checagem correta
     if (Major == 0 && Minor < 54) {
-        pd_error(NULL, "[py4pd] py4pd requires Pd version 0.54 or later.");
+        pd_error(NULL, "[py4pd] py4pd requires Pd version 0.56 or later.");
         return;
     }
 
@@ -2743,11 +2749,9 @@ void py4pd_setup(void) {
 
     t_canvas *cnv = canvas_getcurrent();
     int result = sys_load_lib(cnv, "openmusic");
-    if (!result){
+    if (!result) {
         pd_error(NULL, "Failed to load openmusic lib");
     }
-
-
 }
 
 #ifdef __WIN64
