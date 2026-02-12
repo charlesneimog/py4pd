@@ -10,13 +10,13 @@ class topy(pd.NewObject):
         self.inlets = 1
         self.outlets = 1
 
-    def in_1_list(self, args):
+    def in_0_list(self, args):
         self.out(0, pd.PYOBJECT, args)
 
-    def in_1_float(self, f):
+    def in_0_float(self, f):
         self.out(0, pd.PYOBJECT, f)
 
-    def in_1_symbol(self, s):
+    def in_0_symbol(self, s):
         self.out(0, pd.PYOBJECT, s)
 
 
@@ -28,7 +28,7 @@ class topd(pd.NewObject):
         self.inlets = 1
         self.outlets = 1
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         if type(args) == float or type(args) == int:
             self.out(0, pd.FLOAT, args)
             return
@@ -48,7 +48,7 @@ class pyprint(pd.NewObject):
         self.inlets = 1
         self.outlets = 0
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         self.logpost(2, args)
 
 
@@ -127,7 +127,7 @@ class pdfirst(pd.NewObject):
         self.inlets = 1
         self.outlets = 1
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         try:
             self.out(0, pd.PYOBJECT, args[0])
         except Exception:
@@ -142,7 +142,7 @@ class pdsecond(pd.NewObject):
         self.inlets = 1
         self.outlets = 1
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         try:
             self.out(0, pd.PYOBJECT, args[1])
         except Exception:
@@ -157,7 +157,7 @@ class pdthird(pd.NewObject):
         self.inlets = 1
         self.outlets = 1
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         try:
             self.out(0, pd.PYOBJECT, args[2])
         except Exception:
@@ -178,13 +178,13 @@ class pynth(pd.NewObject):
             except Exception:
                 self.idx = 0
 
-    def in_2_float(self, f):
+    def in_1_float(self, f):
         self.idx = int(f)
 
-    def in_2_pyobj(self, obj):
+    def in_1_pyobj(self, obj):
         self.idx = int(obj)
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         self.out(0, pd.PYOBJECT, args[self.idx])
 
 
@@ -196,7 +196,7 @@ class pdrest(pd.NewObject):
         self.inlets = 1
         self.outlets = 1
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         try:
             self.out(0, pd.PYOBJECT, args[1:])
         except Exception:
@@ -217,13 +217,13 @@ class pynthcdr(pd.NewObject):
             except Exception:
                 self.idx = 0
 
-    def in_2_float(self, f):
+    def in_1_float(self, f):
         self.idx = int(f)
 
-    def in_2_pyobj(self, obj):
+    def in_1_pyobj(self, obj):
         self.idx = int(obj)
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         self.out(0, pd.PYOBJECT, args[self.idx :])
 
 
@@ -235,10 +235,10 @@ class pdbutlast(pd.NewObject):
         self.inlets = 1
         self.outlets = 1
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         self.out(0, pd.PYOBJECT, args[:-1])
 
-    def in_1_list(self, args):
+    def in_0_list(self, args):
         self.out(0, pd.PYOBJECT, args[:-1])
 
 
@@ -250,10 +250,10 @@ class pdreverse(pd.NewObject):
         self.inlets = 1
         self.outlets = 1
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         self.out(0, pd.PYOBJECT, list(reversed(args)))
 
-    def in_1_list(self, args):
+    def in_0_list(self, args):
         self.out(0, pd.PYOBJECT, list(reversed(args)))
 
 
@@ -265,10 +265,10 @@ class pdlength(pd.NewObject):
         self.inlets = 1
         self.outlets = 1
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         self.out(0, pd.FLOAT, len(args))
 
-    def in_1_list(self, args):
+    def in_0_list(self, args):
         self.out(0, pd.FLOAT, len(args))
 
 
@@ -283,20 +283,20 @@ class pdremove(pd.NewObject):
         if args and len(args) > 0:
             self.item = args[0]
 
-    def in_2_float(self, f):
+    def in_1_float(self, f):
         self.item = f
 
-    def in_2_pyobj(self, obj):
+    def in_1_pyobj(self, obj):
         self.item = obj
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         seq = list(args)
         if self.item is None:
             self.out(0, pd.PYOBJECT, seq)
             return
         self.out(0, pd.PYOBJECT, [x for x in seq if x != self.item])
 
-    def in_1_list(self, args):
+    def in_0_list(self, args):
         seq = list(args)
         if self.item is None:
             self.out(0, pd.PYOBJECT, seq)
@@ -315,13 +315,13 @@ class pdapply(pd.NewObject):
         if args and len(args) > 0:
             self.func = args[0]
 
-    def in_2_pyobj(self, obj):
+    def in_1_pyobj(self, obj):
         self.func = obj
 
-    def in_2_float(self, f):
+    def in_1_float(self, f):
         self.func = f
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         try:
             # args is the argument list; func must be provided via inlet 2 (or constructor)
             if self.func is None:
@@ -349,13 +349,13 @@ class pdfuncall(pd.NewObject):
         if args and len(args) > 0:
             self.func = args[0]
 
-    def in_2_pyobj(self, obj):
+    def in_1_pyobj(self, obj):
         self.func = obj
 
-    def in_2_float(self, f):
+    def in_1_float(self, f):
         self.func = f
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         try:
             if self.func is None:
                 self.out(0, pd.PYOBJECT, None)
@@ -381,13 +381,13 @@ class pdmapcar(pd.NewObject):
         if args and len(args) > 0:
             self.func = args[0]
 
-    def in_2_pyobj(self, obj):
+    def in_1_pyobj(self, obj):
         self.func = obj
 
-    def in_2_float(self, f):
+    def in_1_float(self, f):
         self.func = f
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         seq = list(args)
         if self.func is None:
             raise Exception("No function provided")
@@ -405,13 +405,13 @@ class pdmapcan(pd.NewObject):
         if args and len(args) > 0:
             self.func = args[0]
 
-    def in_2_pyobj(self, obj):
+    def in_1_pyobj(self, obj):
         self.func = obj
 
-    def in_2_float(self, f):
+    def in_1_float(self, f):
         self.func = f
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         try:
             seq = list(args)
             if self.func is None:
@@ -443,11 +443,11 @@ class pysplit(pd.NewObject):
         else:
             self.outlets = int(args[0])
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         for i in range(self.outlets):
             self.out(i, pd.PYOBJECT, args[i])
 
-    def in_1_list(self, args):
+    def in_0_list(self, args):
         for i in range(self.outlets):
             self.out(i, pd.PYOBJECT, args[i])
 
@@ -463,10 +463,10 @@ class pddefault(pd.NewObject):
         else:
             self.outlets = int(args[0])
 
-    def in_2_pyobj(self, obj):
+    def in_1_pyobj(self, obj):
         self.default = obj
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         if args is None:
             self.out(0, pd.PYOBJECT, self.default)
         else:
@@ -488,13 +488,13 @@ class pditerate(pd.NewObject):
         self.inlets = 1
         self.outlets = 2
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         self.out(1, pd.PYOBJECT, LOOP_INIT_ID)
         for value in args:
             self.out(0, pd.PYOBJECT, value)
         self.out(1, pd.PYOBJECT, LOOP_END_ID)
 
-    def in_1_list(self, args):
+    def in_0_list(self, args):
         self.out(1, pd.PYOBJECT, LOOP_INIT_ID)
         for value in args:
             self.out(0, pd.PYOBJECT, value)
@@ -510,7 +510,7 @@ class pdcollect(pd.NewObject):
         self.outlets = 1
         self.collector = []
 
-    def in_2_pyobj(self, args):
+    def in_1_pyobj(self, args):
         if args == LOOP_INIT_ID:
             self.collector = []
         elif args == LOOP_END_ID:
@@ -521,16 +521,16 @@ class pdcollect(pd.NewObject):
                 "Second inlet must be connected with 2nd inlet of py.iterate"
             )
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         self.collector.append(args)
 
-    def in_1_list(self, args):
+    def in_0_list(self, args):
         self.collector.append(args)
 
-    def in_1_float(self, args):
+    def in_0_float(self, args):
         self.collector.append(args)
 
-    def in_1_symbol(self, args):
+    def in_0_symbol(self, args):
         self.collector.append(args)
 
 
@@ -549,23 +549,23 @@ class pdplus(pd.NewObject):
         else:
             self.somator = None
 
-    def in_2_float(self, f):
+    def in_1_float(self, f):
         self.somator = f
 
-    def in_2_list(self, args):
+    def in_1_list(self, args):
         self.somator = args
 
-    def in_2_pyobj(self, args):
+    def in_1_pyobj(self, args):
         self.somator = args
 
-    def in_1_float(self, f):
+    def in_0_float(self, f):
         if type(self.somator) == list:
             out = [x + f for x in self.somator]
             self.out(0, pd.PYOBJECT, out)
         else:
             self.out(0, pd.PYOBJECT, f + self.somator)
 
-    def in_1_list(self, args):
+    def in_0_list(self, args):
         if type(self.somator) == list:
             out = [self.somator[x] + args[x] for x in range(len(self.somator))]
             self.out(0, pd.PYOBJECT, out)
@@ -573,7 +573,7 @@ class pdplus(pd.NewObject):
             out = [self.somator + args[x] for x in range(len(args))]
             self.out(0, pd.PYOBJECT, out)
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         if type(self.somator) == list:
             if type(args) != list:
                 out = [self.somator[x] + args for x in range(len(self.somator))]
@@ -602,23 +602,23 @@ class pdminus(pd.NewObject):
         else:
             self.somator = None
 
-    def in_2_float(self, f):
+    def in_1_float(self, f):
         self.somator = f
 
-    def in_2_list(self, args):
+    def in_1_list(self, args):
         self.somator = args
 
-    def in_2_pyobj(self, args):
+    def in_1_pyobj(self, args):
         self.somator = args
 
-    def in_1_float(self, f):
+    def in_0_float(self, f):
         if type(self.somator) == list:
             out = [x - f for x in self.somator]
             self.out(0, pd.PYOBJECT, out)
         else:
             self.out(0, pd.PYOBJECT, f - self.somator)
 
-    def in_1_list(self, args):
+    def in_0_list(self, args):
         if type(self.somator) == list:
             out = [self.somator[x] - args[x] for x in range(len(self.somator))]
             self.out(0, pd.PYOBJECT, out)
@@ -626,7 +626,7 @@ class pdminus(pd.NewObject):
             out = [self.somator - args[x] for x in range(len(args))]
             self.out(0, pd.PYOBJECT, out)
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         if type(self.somator) == list:
             if type(args) != list:
                 out = [self.somator[x] - args for x in range(len(self.somator))]
@@ -655,23 +655,23 @@ class pdtimes(pd.NewObject):
         else:
             self.somator = None
 
-    def in_2_float(self, f):
+    def in_1_float(self, f):
         self.somator = f
 
-    def in_2_list(self, args):
+    def in_1_list(self, args):
         self.somator = args
 
-    def in_2_pyobj(self, args):
+    def in_1_pyobj(self, args):
         self.somator = args
 
-    def in_1_float(self, f):
+    def in_0_float(self, f):
         if type(self.somator) == list:
             out = [x * f for x in self.somator]
             self.out(0, pd.PYOBJECT, out)
         else:
             self.out(0, pd.PYOBJECT, f * self.somator)
 
-    def in_1_list(self, args):
+    def in_0_list(self, args):
         if type(self.somator) == list:
             out = [self.somator[x] * args[x] for x in range(len(self.somator))]
             self.out(0, pd.PYOBJECT, out)
@@ -679,7 +679,7 @@ class pdtimes(pd.NewObject):
             out = [self.somator * args[x] for x in range(len(args))]
             self.out(0, pd.PYOBJECT, out)
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         if type(self.somator) == list:
             if type(args) != list:
                 out = [self.somator[x] * args for x in range(len(self.somator))]
@@ -708,23 +708,23 @@ class pddivider(pd.NewObject):
         else:
             self.somator = None
 
-    def in_2_float(self, f):
+    def in_1_float(self, f):
         self.somator = f
 
-    def in_2_list(self, args):
+    def in_1_list(self, args):
         self.somator = args
 
-    def in_2_pyobj(self, args):
+    def in_1_pyobj(self, args):
         self.somator = args
 
-    def in_1_float(self, f):
+    def in_0_float(self, f):
         if type(self.somator) == list:
             out = [x / f for x in self.somator]
             self.out(0, pd.PYOBJECT, out)
         else:
             self.out(0, pd.PYOBJECT, f / self.somator)
 
-    def in_1_list(self, args):
+    def in_0_list(self, args):
         if type(self.somator) == list:
             out = [self.somator[x] / args[x] for x in range(len(self.somator))]
             self.out(0, pd.PYOBJECT, out)
@@ -732,7 +732,7 @@ class pddivider(pd.NewObject):
             out = [self.somator / args[x] for x in range(len(args))]
             self.out(0, pd.PYOBJECT, out)
 
-    def in_1_pyobj(self, args):
+    def in_0_pyobj(self, args):
         if type(self.somator) == list:
             if type(args) != list:
                 out = [self.somator[x] / args for x in range(len(self.somator))]

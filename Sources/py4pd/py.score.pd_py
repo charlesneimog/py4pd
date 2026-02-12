@@ -12,10 +12,10 @@ class pyscore(pd.NewObject):
         self.frames = 30
         neoscore.setup()
 
-    def in_1_reload(self, args: list):
+    def in_0_reload(self, args: list):
         self.reload()
 
-    def in_1_show(self, args: list):
+    def in_0_show(self, args: list):
         flowable = Flowable(ORIGIN, None, Mm(1000), Mm(25))
         staff = Staff(ORIGIN, flowable, Mm(1000))
         Clef(ZERO, staff, 'treble')

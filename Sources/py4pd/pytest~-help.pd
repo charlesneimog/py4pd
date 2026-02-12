@@ -1,4 +1,4 @@
-#N canvas 0 0 943 1005 10;
+#N canvas 0 0 925 1132 10;
 #X declare -lib py4pd;
 #X obj 4 5 declare -lib py4pd;
 #X obj 5 198 pytest, f 8;
@@ -15,10 +15,10 @@
 #X msg 76 146 pyobj;
 #X obj 259 246 tgl 18 0 empty empty empty 0 -9 0 10 #fcfcfc #000000 #000000 0 1;
 #X obj 259 311 print;
-#X msg 317 219 reload;
 #X obj 259 289 pymetro 100;
 #X msg 113 237 pyobj;
 #X obj 122 363 print;
+#X obj 322 250 nbx 5 16 -1e+37 1e+37 0 0 empty empty empty 0 -9 0 10 #fcfcfc #000000 #000000 0 256;
 #X connect 1 0 9 0;
 #X connect 1 1 10 0;
 #X connect 1 1 11 0;
@@ -29,9 +29,9 @@
 #X connect 6 0 3 0;
 #X connect 7 0 1 0;
 #X connect 8 0 1 1;
-#X connect 11 1 18 0;
+#X connect 11 1 17 0;
 #X connect 12 0 1 1;
-#X connect 13 0 16 0;
-#X connect 15 0 16 0;
-#X connect 16 0 14 0;
-#X connect 17 0 11 1;
+#X connect 13 0 15 0;
+#X connect 15 0 14 0;
+#X connect 16 0 11 1;
+#X connect 18 0 15 1;

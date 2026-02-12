@@ -48,7 +48,7 @@ class pypip(pd.NewObject):
         else:
             self.logpost(2, "Done")
 
-    def in_1_pip(self, args):
+    def in_0_pip(self, args):
         method = args[0]
         if method == "install":
             packages = args[1:]
@@ -83,6 +83,6 @@ class pypip(pd.NewObject):
                     ).start()
             self.metro.delay(0)
 
-    def in_1_reload(self, args: list):
+    def in_0_reload(self, args: list):
         self.reload()
         pd.post("Reloaded!")

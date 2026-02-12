@@ -518,7 +518,7 @@ static void pdpy_proxyinlet_fwd(t_pdpy_proxyinlet *p, t_symbol *s, int argc, t_a
     }
 
     char methodname[MAXPDSTRING];
-    pd_snprintf(methodname, MAXPDSTRING, "in_%d_%s", p->id, atom_getsymbol(argv)->s_name);
+    pd_snprintf(methodname, MAXPDSTRING, "in_%d_%s", p->id - 1, atom_getsymbol(argv)->s_name);
     pdpy_execute(p->owner, methodname, atom_getsymbol(argv), argc - 1, argv + 1);
 }
 
@@ -1092,7 +1092,7 @@ void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom
         Py_DECREF(method);
         PyGILState_Release(gstate);
     } else {
-        pd_snprintf(methodname, MAXPDSTRING, "in_%d_%s", proxy->id, s->s_name);
+        pd_snprintf(methodname, MAXPDSTRING, "in_%d_%s", proxy->id-1, s->s_name);
         pdpy_execute(o, methodname, s, argc, argv);
     }
 }
@@ -1777,12 +1777,12 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
 
     t_atomtype pdtype = type;
     t_pdpy_pdobj *x = self->pdobj;
-    if (outlet -1> self->pdobj->outletsize || outlet < 1) {
+    if (outlet > self->pdobj->outletsize - 1 || outlet < 0) {
         PyErr_SetString(PyExc_IndexError, "Index out of range for outlet");
         return NULL;
     }
 
-    t_outlet *out = x->outs[outlet - 1];
+    t_outlet *out = x->outs[outlet];
     if (pdtype == (t_atomtype)PYOBJECT) {
         if (x->outobjptr->pValue) {
             Py_DECREF(x->outobjptr->pValue);

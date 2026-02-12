@@ -8,11 +8,11 @@ class pytest(pd.NewObject):  # <== Class name is not important
         self.inlets = (pd.DATA, pd.DATA)
         self.outlets = (pd.DATA, pd.DATA)
 
-    def in_1_print(self, args: list):
+    def in_0_print(self, args: list):
         self.logpost(2, args)
         self.out(0, pd.SYMBOL, "out_1")
 
-    def in_2_print(self, args: list):
+    def in_1_print(self, args: list):
         self.logpost(2, args)
         self.out(1, pd.FLOAT, 1)
         self.out(1, pd.SYMBOL, "out_2")
@@ -20,22 +20,22 @@ class pytest(pd.NewObject):  # <== Class name is not important
         mydict = {"mykey": "test", "mynumber": 12894}
         self.out(1, pd.PYOBJECT, mydict)
 
-    def in_2_pyobj(self, args: list):
+    def in_1_pyobj(self, args: list):
         mydict = {"mykey": "test", "mynumber": 12894}
         self.out(1, pd.PYOBJECT, mydict)
 
-    def in_1_pyobj_dict(self, arg):
+    def in_0_pyobj_dict(self, arg):
         self.logpost(2, arg)
 
-    def in_1_float(self, f: float):
+    def in_0_float(self, f: float):
         self.logpost(2, f"received float {f}")
 
-    def in_1_symbol(self, s: str):
+    def in_0_symbol(self, s: str):
         self.logpost(2, f"received symbol {s}")
 
-    def in_1_list(self, l: list):
+    def in_0_list(self, l: list):
         self.logpost(2, f"received list {l}")
 
-    def in_1_reload(self, args: list):
+    def in_0_reload(self, args: list):
         self.reload()
         pass

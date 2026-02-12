@@ -16,7 +16,7 @@ class openmusic(pd.NewObject):
         self.inlets = 1
         self.outlets = 0
 
-    def in_1_reload(self, args):
+    def in_0_reload(self, args):
         self.reload()
 
 
@@ -27,7 +27,7 @@ class pyprint(pd.NewObject):
         self.inlets = 1
         self.outlets = 0
 
-    def in_1_pyobj(self, thing):
+    def in_0_pyobj(self, thing):
         self.logpost(2, thing)
 
 
@@ -50,7 +50,7 @@ class pymklist(pd.NewObject):
     def _list_method(self, l: list, inlet_index: int):
         self.mklist_list[inlet_index - 1] = l
 
-    def in_1_list(self, l: list):
+    def in_0_list(self, l: list):
         self.mklist_list[0] = l
         self.out(0, pd.PYOBJECT, self.mklist_list)
 
@@ -109,21 +109,21 @@ class _PyMathBase(pd.NewObject):
             result.append(res)
         return result
 
-    def in_1_pyobj(self, l):
+    def in_0_pyobj(self, l):
         if isinstance(l, list):
-            self.in_1_list(l)
+            self.in_0_list(l)
         elif isinstance(l, float) or isinstance(l, int):
-            self.in_1_float(l)
+            self.in_0_float(l)
         else:
             raise Exception("Invalid type")
 
-    def in_1_list(self, l):
+    def in_0_list(self, l):
         self.mklist_list[0] = l
         value = self._compute()
         if value is not None:
             self.out(0, pd.PYOBJECT, value)
 
-    def in_1_float(self, f):
+    def in_0_float(self, f):
         if not self.mklist_list[0]:
             self.mklist_list[0] = [f]
         else:
@@ -168,7 +168,7 @@ class pynth(pd.NewObject):
         self.inlets = 1
         self.outlets = 1
 
-    def in_1_pyobj(self, l: list):
+    def in_0_pyobj(self, l: list):
         self.out(0, pd.PYOBJECT, l[self.nth])
 
 
@@ -180,7 +180,7 @@ class pylen(pd.NewObject):
         self.inlets = 1
         self.outlets = 1
 
-    def in_1_pyobj(self, l: list):
+    def in_0_pyobj(self, l: list):
         length = len(l)
         self.out(0, pd.FLOAT, length)
 
@@ -226,13 +226,13 @@ class _PyCompareBase(pd.NewObject):
             result.append(self.operation(values))
         return result
 
-    def in_1_list(self, l: list):
+    def in_0_list(self, l: list):
         self.mklist_list[0] = l
         value = self._compute()
         if value is not None:
             self.out(0, pd.PYOBJECT, value)
 
-    def in_1_float(self, f: float):
+    def in_0_float(self, f: float):
         if not self.mklist_list[0]:
             self.mklist_list[0] = [f]
         else:
@@ -241,11 +241,11 @@ class _PyCompareBase(pd.NewObject):
         if value is not None:
             self.out(0, pd.PYOBJECT, value)
 
-    def in_1_pyobj(self, values):
+    def in_0_pyobj(self, values):
         if isinstance(values, list):
-            self.in_1_list(values)
+            self.in_0_list(values)
         elif isinstance(values, float):
-            self.in_1_float(values)
+            self.in_0_float(values)
 
 
 # Implementações específicas
@@ -286,7 +286,7 @@ class pydir(pd.NewObject):
         self.inlets = 1
         self.outlets = 0
 
-    def in_1_pyobj(self, l):
+    def in_0_pyobj(self, l):
         set_get = dir(l)
         good = []
         for m in set_get:
@@ -307,7 +307,7 @@ class pygetattr(pd.NewObject):
 
         self.attr = args[0]
 
-    def in_1_pyobj(self, l):
+    def in_0_pyobj(self, l):
         self.out(0, pd.PYOBJECT, getattr(l, self.attr))
 
 
@@ -326,20 +326,20 @@ class pyiterate(pd.NewObject):
         self.inlets = 1
         self.outlets = 2
 
-    def in_1_list(self, l):
+    def in_0_list(self, l):
         self.out(1, pd.PYOBJECT, "iterate_init-" + str(id_unico))
         for i in l:
             self.out(0, pd.PYOBJECT, i)
         self.out(1, pd.PYOBJECT, "iterate_end-" + str(id_unico))
 
-    def in_1_pyobj(self, l):
+    def in_0_pyobj(self, l):
         self.out(1, pd.PYOBJECT, "iterate_init-" + str(id_unico))
         for i in l:
             pd.post(i)
             self.out(0, pd.PYOBJECT, i)
         self.out(1, pd.PYOBJECT, "iterate_end-" + str(id_unico))
 
-    def in_1_reload(self, args):
+    def in_0_reload(self, args):
         self.reload()
 
 
@@ -351,16 +351,16 @@ class pycollect(pd.NewObject):
         self.outlets = 1
         self.collected = []
 
-    def in_1_pyobj(self, thing):
+    def in_0_pyobj(self, thing):
         self.collected.append(thing)
 
-    def in_2_pyobj(self, method):
+    def in_1_pyobj(self, method):
         if method == "iterate_init-" + str(id_unico):
             self.collected = []
         elif method == "iterate_end-" + str(id_unico):
             self.out(0, pd.PYOBJECT, self.collected)
 
-    def in_1_reload(self, args):
+    def in_0_reload(self, args):
         self.reload()
 
 

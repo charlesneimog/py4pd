@@ -15,10 +15,10 @@ class pymetro(pd.NewObject):
         self.metro = pd.new_clock(self, self.tick)
         self.args = args
 
-    def in_2_float(self, f: float):
+    def in_1_float(self, f: float):
         self.time = f
 
-    def in_1_float(self, f: float):
+    def in_0_float(self, f: float):
         if f:
             self.toggle = True
             self.tick()
@@ -26,7 +26,7 @@ class pymetro(pd.NewObject):
             self.metro.unset()
             self.toggle = False
 
-    def in_1_reload(self, args: list):
+    def in_0_reload(self, args: list):
         self.reload()
 
     def tick(self):

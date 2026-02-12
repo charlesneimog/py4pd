@@ -83,7 +83,7 @@ nav:
   - Installation: setup.md
   - Hello World: hello.md
   - Pure Data API: puredata-api.md
-  - Creating Objects: pdmodule.md
+  # - Creating Objects: pdmodule.md
   - Objects with py4pd: openmusic.md
   - libraries.md
 extra:

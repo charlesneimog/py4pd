@@ -6,7 +6,7 @@ If you are writing `.pd_py` objects, you typically:
 
 - `import puredata as pd`
 - subclass `pd.NewObject`
-- implement inlet methods like `in_1_float(...)`
+- implement inlet methods like `in_0_float(...)`
 
 
 The object below reproduces the behavior of the Pure Data `metro` object.
@@ -28,10 +28,10 @@ class pymetro(pd.NewObject):
         self.metro = pd.new_clock(self, self.tick)
         self.args = args
 
-    def in_2_float(self, f: float):
+    def in_1_float(self, f: float):
         self.time = f
 
-    def in_1_float(self, f: float):
+    def in_0_float(self, f: float):
         if f:
             self.toggle = True
             self.tick()
@@ -39,7 +39,7 @@ class pymetro(pd.NewObject):
             self.metro.unset()
             self.toggle = False
 
-    def in_1_reload(self, args: list):
+    def in_0_reload(self, args: list):
         self.reload()
 
     def tick(self):
@@ -144,7 +144,7 @@ Check the use with clock `pymetro`
         self.metro = pd.new_clock(self, self.tick)
         self.args = args
 
-    def in_1_float(self, f: float):
+    def in_0_float(self, f: float):
         if f:
             self.toggle = True
             self.tick()
@@ -152,7 +152,7 @@ Check the use with clock `pymetro`
             self.metro.unset()
             self.toggle = False
 
-    def in_1_reload(self, args: list):
+    def in_0_reload(self, args: list):
         self.reload()
 
     def tick(self):
@@ -216,7 +216,7 @@ class pymetro(pd.NewObject):
 Send data to a Pd outlet.
 
 - `type` must be one of: `puredata.FLOAT`, `puredata.SYMBOL`, `puredata.LIST`, `puredata.PYOBJECT`
-- Outlet is 1-based.
+- Outlet is 0-based.
 
 !!! warning "`self.out` is 1-based"
 
@@ -289,16 +289,16 @@ The message dispatcher in `py4pd.c` looks for methods named:
 
 - `in_{INLET}_{SELECTOR}`
 
-Where `INLET` is 1-based.
+Where `INLET` is 0-based.
 
 Common selectors:
 
-- `bang` → `in_1_bang(self)`
-- `float` → `in_1_float(self, f)`
-- `symbol` → `in_1_symbol(self, s)`
-- `list` → `in_1_list(self, xs)`
-- any other selector (e.g. `set`) → `in_1_set(self, args)`
+- `bang` → `in_0_bang(self)`
+- `float` → `in_0_float(self, f)`
+- `symbol` → `in_0_symbol(self, s)`
+- `list` → `in_0_list(self, xs)`
+- any other selector (e.g. `set`) → `in_0_set(self, args)`
 
 To receive Python objects sent with `puredata.PYOBJECT` implement:
 
-- `in_{INLET}_pyobj(self, obj)`
+- `in_{INLET_INDEX}_pyobj(self, obj)`

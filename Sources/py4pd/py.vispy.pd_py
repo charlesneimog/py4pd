@@ -53,7 +53,7 @@ class MyVispy(pd.NewObject):
         app.process_events()
         self.pdclock.delay(1000 / self.frames)
 
-    def in_1_rgb(self, args: list):
+    def in_0_rgb(self, args: list):
         """
         Recebe lista [r, g, b] ou [r, g, b, a] com valores 0-255 (ou 0-1 se já normalizado)
         """
@@ -81,7 +81,7 @@ class MyVispy(pd.NewObject):
         else:
             self.error("in_1_rgb: esperado ao menos 3 valores (r,g,b)")
 
-    def in_1_init(self, args: list):
+    def in_0_init(self, args: list):
         if self.running:
             self.running = False
             self.canvas.close()
@@ -91,5 +91,5 @@ class MyVispy(pd.NewObject):
             self.canvas.show()
             self.pdclock.delay(1000 / self.frames)
 
-    def in_1_reload(self, args: list):
+    def in_0_reload(self, args: list):
         self.reload()

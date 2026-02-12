@@ -26,11 +26,11 @@ class mypygame(pd.NewObject):
         self.pygameclock.tick(self.frames)
         self.pdclock.delay(1000 / self.frames)
 
-    def in_1_reload(self, args: list):
+    def in_0_reload(self, args: list):
         pygame.quit()
         self.reload()
 
-    def in_1_init(self, args: list):
+    def in_0_init(self, args: list):
         if self.running:
             pygame.quit()
             self.pdclock.unset()

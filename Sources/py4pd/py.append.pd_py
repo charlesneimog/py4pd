@@ -11,7 +11,7 @@ class pyappend(pd.NewObject):
         self.inlets = int(args[0])
         self.outlets = 1
         self.dict = {}
-        for i in range(1, self.inlets + 1):
+        for i in range(0, self.inlets):
             self._add_inlet(i)
 
     def _add_inlet(self, idx: int):
@@ -29,6 +29,6 @@ class pyappend(pd.NewObject):
         setattr(self, f"in_{idx}_float", handler)
         setattr(self, f"in_{idx}_symbol", handler)
 
-    def in_1_reload(self, args: list):
+    def in_0_reload(self, args: list):
         self.reload()
 
