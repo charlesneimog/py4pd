@@ -24,7 +24,7 @@ jobs:
           - python: "3.14"
             py_tag: "314"
         precision: [32, 64]
-        machines: [macos-intel-latest, macos-latest]
+        machines: [macos-latest]
     steps:
       - uses: actions/setup-python@v5
         with:
@@ -38,7 +38,7 @@ jobs:
           brew install pd
       - name: Build
         run: |
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DPYVERSION=${{ matrix.python.python }}
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DPYVERSION=${{ matrix.python.python }} -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
           cmake --build build --parallel
           cmake --install build
       - name: Upload ONNX Folder
