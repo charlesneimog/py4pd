@@ -7,6 +7,7 @@ theme:
   logo_dark_mode: assets/py4pd-dark-home.svg
   logo_light_mode: assets/py4pd-light-home.svg
   favicon: assets/py4pd-favicon.png
+  logo: assets/py4pd-favicon.svg
   name: material
   icon:
     custom: [my-icons/pd, my-icons/pdobj]
@@ -81,6 +82,7 @@ nav:
   - Home: index.md
   - Installation: setup.md
   - Hello World: hello.md
+  - Pure Data API: puredata-api.md
   - Creating Objects: pdmodule.md
   - Objects with py4pd: openmusic.md
   - libraries.md

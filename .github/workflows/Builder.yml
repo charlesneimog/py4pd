@@ -11,7 +11,6 @@ on:
 env:
   LIBNAME: py4pd
   LIBVERSION: "1.1.0"
-  PYVERSION: "3.14"
 permissions:
   contents: write
 jobs:
@@ -19,12 +18,17 @@ jobs:
     runs-on: ${{ matrix.machines }}
     strategy:
       matrix:
+        python:
+          - python: "3.13"
+            py_tag: "313"
+          - python: "3.14"
+            py_tag: "314"
         precision: [32, 64]
-        machines: [macos-13, macos-latest]
+        machines: [macos-intel-latest, macos-latest]
     steps:
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{env.PYVERSION}}
+          python-version: ${{ matrix.python.python }}
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -34,13 +38,13 @@ jobs:
           brew install pd
       - name: Build
         run: |
-          cmake . -B build -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DPYVERSION=${{env.PYVERSION}}
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DPYVERSION=${{ matrix.python.python }}
           cmake --build build --parallel
           cmake --install build
       - name: Upload ONNX Folder
         uses: actions/upload-artifact@v4
         with:
-          name: ${{env.LIBNAME}}-${{env.LIBVERSION}}-${{matrix.machines}}-pd${{matrix.precision}}
+          name: ${{ env.LIBNAME }}-${{ env.LIBVERSION }}-python${{ matrix.python.py_tag }}-pd${{ matrix.precision }}-${{ matrix.machines }}
           path: ${{env.LIBNAME}}
   linux-build:
     runs-on: ubuntu-latest
@@ -48,10 +52,15 @@ jobs:
       matrix:
         arch: [amd64]
         precision: [32, 64]
+        python:
+          - python: "3.13"
+            py_tag: "313"
+          - python: "3.14"
+            py_tag: "314"
     steps:
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{env.PYVERSION}}
+          python-version: ${{ matrix.python.python }}
       - uses: actions/checkout@v4
         with:
           submodules: recursive
@@ -66,17 +75,17 @@ jobs:
         run: |
           sudo apt install gcc-aarch64-linux-gnu -y
           sudo apt install g++-aarch64-linux-gnu -y
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DPYVERSION=${{env.PYVERSION}}
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DPYVERSION=${{ matrix.python.python }}
       - name: Install arm gcc
         if: matrix.arch == 'arm'
         run: |
           sudo apt install gcc-arm-linux-gnueabihf -y
           sudo apt install g++-arm-linux-gnueabihf -y
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ -DPYVERSION=${{env.PYVERSION}}
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ -DPYVERSION=${{ matrix.python.python }}
       - name: Configure
         if: matrix.arch == 'amd64'
         run: |
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DPYVERSION=${{env.PYVERSION}}
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DPYVERSION=${{ matrix.python.python }}
       - name: Build Object
         run: |
           cmake --build build -- -j$(nproc)
@@ -84,7 +93,7 @@ jobs:
       - name: Upload Object
         uses: actions/upload-artifact@v4
         with:
-          name: ${{env.LIBNAME}}-${{env.LIBVERSION}}-linux-${{matrix.arch}}-pd${{matrix.precision}}
+          name: ${{ env.LIBNAME }}-${{ env.LIBVERSION }}-python${{ matrix.python.py_tag }}-pd${{ matrix.precision }}-linux-${{ matrix.arch }}
           path: ${{env.LIBNAME}}
   windows-build:
     runs-on: windows-latest
@@ -93,10 +102,15 @@ jobs:
         compiler: [mingw]
         arch: [amd64]
         precision: [32, 64]
+        python:
+          - python: "3.13"
+            py_tag: "313"
+          - python: "3.14"
+            py_tag: "314"
     steps:
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{env.PYVERSION}}
+          python-version: ${{ matrix.python.python }}
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -121,13 +135,13 @@ jobs:
         shell: msys2 {0}
         if: matrix.compiler == 'mingw'
         run: |
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DPYVERSION=${{env.PYVERSION}}
+          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DPYVERSION=${{ matrix.python.python }}
           cmake --build build --parallel
           cmake --install build
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: ${{env.LIBNAME}}-windows-${{ matrix.arch }}-pd${{matrix.precision}}
+          name: ${{ env.LIBNAME }}-${{ env.LIBVERSION }}-python${{ matrix.python.py_tag }}-pd${{ matrix.precision }}-windows-${{ matrix.arch }}
           path: ${{env.LIBNAME}}
   publish-release:
     if: ${{ github.event.inputs.publish_release == 'true' }}
@@ -138,18 +152,16 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-      - name: Create unified onnx directory and archive
+      - name: Create per-artifact zip archives
         run: |
-          set -e
-          TOPDIR="$LIBNAME"
-          mkdir -p "$TOPDIR"
+          set -euo pipefail
+          mkdir -p release_assets
           for artifact_dir in artifacts/*; do
             [ -d "$artifact_dir" ] || continue
-            cp -r "$artifact_dir/"* "$TOPDIR/"
+            name="$(basename "$artifact_dir")"
+            (cd "$artifact_dir" && zip -r "../../release_assets/${name}.zip" .)
           done
-          ls -1 "$TOPDIR"
-          ZIP_NAME="${LIBNAME}-${LIBVERSION}-all-platforms.zip"
-          zip -r "$ZIP_NAME" "$TOPDIR"
+          ls -1 release_assets
       - name: Create / Update GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -157,6 +169,6 @@ jobs:
           name: ${{ env.LIBNAME }} v${{ env.LIBVERSION }}
           target_commitish: ${{ github.sha }}
           files: |
-            ${{ env.LIBNAME }}-${{ env.LIBVERSION }}-all-platforms.zip
+            release_assets/*.zip
           draft: true
           prerelease: false

@@ -1777,7 +1777,7 @@ static PyObject *pdpy_out(t_pdpy_pyclass *self, PyObject *args, PyObject *keywor
 
     t_atomtype pdtype = type;
     t_pdpy_pdobj *x = self->pdobj;
-    if (outlet > self->pdobj->outletsize - 1 || outlet < 1) {
+    if (outlet -1> self->pdobj->outletsize || outlet < 1) {
         PyErr_SetString(PyExc_IndexError, "Index out of range for outlet");
         return NULL;
     }
@@ -2147,7 +2147,11 @@ static PyObject *pdpy_hasgui(PyObject *self, PyObject *args) {
     PY4PD_DEBUG(__FUNCTION__);
     (void)self;
     (void)args;
-    return PyLong_FromLong(sys_havegui());
+    if (sys_havegui()) {
+        Py_RETURN_TRUE;
+    } else {
+        Py_RETURN_FALSE;
+    }
 }
 
 // ─────────────────────────────────────
