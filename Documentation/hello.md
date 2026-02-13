@@ -12,7 +12,7 @@ To define a new `py4pd` object, create a subclass of `puredata.NewObject`, name 
 ```py
 import puredata as pd
 
-class pymetro(pd.NewObject):
+class pymetro_class(pd.NewObject):
     name: str = "pymetro"  # Name of the Pure Data object
 
     def __init__(self, args):
@@ -22,20 +22,20 @@ class pymetro(pd.NewObject):
 
 ### Key Points
 
-The Python class name (e.g., `pymetro`) can be any valid class name. The name attribute determines the name of the object inside Pure Data. `self.inlets` and `self.outlets` define the number of inlets and outlets for the object. When loading this object in Pure Data, use the name attribute value (`pymetro` in this example) as the object name.
+The Python class name (e.g., `pymetro_class`) can be any valid class name. The name attribute determines the name of the object inside Pure Data. `self.inlets` and `self.outlets` define the number of inlets and outlets for the object. When loading this object in Pure Data, use the name attribute value (`pymetro` in this example) as the object name.
 
 
 ## Input and Output
 
 ### Input 
 
-The input design is inspired by the mature `pd-lua` project. For methods, use the format `in_<inlet_number>_<method>`. For example, to execute code when a `float` is received on inlet 1, define a method called `in_1_float`. Pd provides predefined methods that do not require a custom selector: `bang`, `float`, `symbol`, `list`, and `anything`. You can also create custom selectors (prefixes); for instance, `in_1_mymethod` will be executed when the message `mymethod` is sent to inlet 1 of the object.
+The input design is inspired by the mature `pd-lua` project. For methods, use the format `in_<inlet_number>_<method>`. For example, to execute code when a `float` is received on first inlet, define a method called `in_0_float`. Pd provides predefined methods that do not require a custom selector: `bang`, `float`, `symbol`, `list`, and `anything`. You can also create custom selectors (prefixes); for instance, `in_0_mymethod` will be executed when the message `mymethod` is sent to the first inlet of the object.
 
 ### Output
 
-To produce output, use the method `self.out`. For example, `self.out(0, pd.SYMBOL, "test238")` sends the symbol `"test238"` to outlet 0. The second argument specifies the data type, which can be `pd.SYMBOL` or `pd.FLOAT`. To output a list, use `pd.LIST` instead. To output `numpy.ndarray`, `class` and others you must use `pd.PYOBJECT`.
+To produce output, use the method `self.out`. For example, `self.out(0, pd.SYMBOL, "test238")` sends the symbol `"test238"` to the firist outlet. The second argument specifies the data type, which can be `pd.SYMBOL` or `pd.FLOAT`. To output a list, use `pd.LIST` instead. To output `numpy.ndarray`, `class` and others you must use `pd.PYOBJECT`.
 
-`py4pd` also implements the `PyObject` message, which allows you to share Python data types between `py4pd` objects. This enables the transfer of class instances, NumPy arrays, and other Python objects that are not supported by Pure Data’s traditional data types.
+To receive this `pd.PYOBJECT` you need to use the `PyObject` message, which allows you to share Python data types between `py4pd` objects. This enables the transfer of class instances, NumPy arrays, and other Python objects that are not supported by Pure Data’s traditional data types.
 
 ## Metronome Example
 

@@ -1,13 +1,12 @@
 # `puredata` Python API of `py4pd`
 
-This page is a **reference** for what the C core exports in the `puredata` module and what methods exist on `puredata.NewObject`.
+This page is a **reference** for the use of the `puredata` module in `py4pd` objects.
 
 If you are writing `.pd_py` objects, you typically:
 
-- `import puredata as pd`
-- subclass `pd.NewObject`
+- `import puredata`
+- create a subclass inherent of `puredata.NewObject`
 - implement inlet methods like `in_0_float(...)`
-
 
 The object below reproduces the behavior of the Pure Data `metro` object.
 
@@ -59,7 +58,7 @@ class pymetro(pd.NewObject):
 - `puredata.LIST` (Pd `A_GIMME`)
 - `puredata.PYOBJECT` (output Python Objects for Pd)
 
-This is used inside methods like `self.out` and `pd.send`.
+This is used inside methods like `self.out` and `puredata.send`.
 
 ### Inlets types constants
 
@@ -83,7 +82,7 @@ In this object, we have 2 `pd.DATA` *inlets* and 3 *outlets*. First 2 outlets ar
 
 ---
 
-## `puredata` methods
+## `puredata` global methods
 
 ### `puredata.post`
 
@@ -132,7 +131,6 @@ Cancel any scheduled callback.
 * `puredata.clock.set(time: float) -> bool`
 
 Schedule clock for an absolute systime. `True` on sucess.
-
 
 Check the use with clock `pymetro`
 
@@ -216,7 +214,7 @@ class pymetro(pd.NewObject):
 Send data to a Pd outlet.
 
 - `type` must be one of: `puredata.FLOAT`, `puredata.SYMBOL`, `puredata.LIST`, `puredata.PYOBJECT`
-- Outlet is 0-based.
+- Outlet is 0-based (left -> right).
 
 !!! warning "`self.out` is 1-based"
 
@@ -252,7 +250,7 @@ Write Python numeric data into a Pd array.
 
 * `self.get_current_dir() -> str | None`
 
-Returns the directory of the current canvas.
+Returns the directory of the current canvas. Where is the patch in which the current object is located.
 
 ---
 
@@ -270,7 +268,6 @@ Reloads the current `.pd_py` source file and swaps the running class instance.
 
 Posts a log message to the Pd console.
 
-- If called from a non-main thread, the message is queued to the Pd main thread.
 - `prefix=True` prints `[{object_name}]: ...`.
 
 ---
@@ -287,9 +284,9 @@ Prints an error tagged with the object name.
 
 The message dispatcher in `py4pd.c` looks for methods named:
 
-- `in_{INLET}_{SELECTOR}`
+- `in_{INLET_INDEX}_{SELECTOR}`
 
-Where `INLET` is 0-based.
+Where `INLET_INDEX` is 0-based (left -> right).
 
 Common selectors:
 
