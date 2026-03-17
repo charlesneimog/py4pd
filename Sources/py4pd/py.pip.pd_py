@@ -20,6 +20,11 @@ class pypip(pd.NewObject):
         bindir = sysconfig.get_config_var("BINDIR")
         pyversion = sys.version_info
 
+        try:
+            import pip
+        except:
+            raise Exception("Pip is not installed, please install it first")
+
         if platform.system() != "Windows":
             self.python = os.path.join(
                 bindir, "python{}.{}".format(pyversion.major, pyversion.minor)

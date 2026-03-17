@@ -10,7 +10,7 @@
 #include <Python.h>
 
 #define PY4PD_MAJOR_VERSION 1
-#define PY4PD_MINOR_VERSION 1
+#define PY4PD_MINOR_VERSION 2
 #define PY4PD_MICRO_VERSION 0
 
 #if !defined(NDEBUG)
@@ -158,6 +158,8 @@ static void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc,
 static void pdpy_clock_execute(t_pdpy_clock *x);
 static void pdpy_printerror(t_pdpy_pdobj *x);
 static void pdpy_dealloc(t_pdpy_pyclass *self);
+static int py4pd_set_config_value(t_class *py4pd_obj_class, const char *key, const char *value);
+static void py4pd_sitepackages(t_py *x, t_symbol *s, int argc, t_atom *argv);
 
 // ╭─────────────────────────────────────╮
 // │               Config                │
@@ -182,7 +184,7 @@ const char *get_config_from_key(t_class *py4pd_obj_class, const char *search_key
             return NULL;
 
         char line[256];
-        while (fgets(line, sizeof(line), file) && count < 100) {
+        while (fgets(line, sizeof(line), file) && count < 10) {
             if (line[0] == '#' || line[0] == '\n')
                 continue;
 
@@ -209,7 +211,6 @@ const char *get_config_from_key(t_class *py4pd_obj_class, const char *search_key
             while (end > value && (*end == ' ' || *end == '\t'))
                 *end-- = '\0';
 
-            post("%s: %s", config[count].key, config[count].value);
             pd_snprintf(config[count].key, sizeof(config[count].key), "%s", key);
             pd_snprintf(config[count].value, sizeof(config[count].value), "%s", value);
             count++;
@@ -222,6 +223,76 @@ const char *get_config_from_key(t_class *py4pd_obj_class, const char *search_key
             return config[i].value;
     }
     return NULL;
+}
+
+// ─────────────────────────────────────
+static int py4pd_set_config_value(t_class *py4pd_obj_class, const char *key, const char *value) {
+    if (!py4pd_obj_class || !py4pd_obj_class->c_externdir || !key || !value) {
+        return 0;
+    }
+
+    const char *py4pd_path = py4pd_obj_class->c_externdir->s_name;
+    char py4pd_config_path[MAXPDSTRING];
+    pd_snprintf(py4pd_config_path, MAXPDSTRING, "%s/py4pd.cfg", py4pd_path);
+
+    char lines[128][512];
+    int line_count = 0;
+    int replaced = 0;
+
+    FILE *in = fopen(py4pd_config_path, "r");
+    if (in) {
+        while (line_count < 128 && fgets(lines[line_count], sizeof(lines[line_count]), in)) {
+            char line_copy[512];
+            pd_snprintf(line_copy, sizeof(line_copy), "%s", lines[line_count]);
+
+            char *scan = line_copy;
+            while (*scan == ' ' || *scan == '\t')
+                scan++;
+
+            if (*scan != '#' && *scan != '\0' && *scan != '\n') {
+                char *equals = strchr(scan, '=');
+                if (equals) {
+                    *equals = '\0';
+                    char *line_key = scan;
+                    char *line_key_end = line_key + strlen(line_key);
+                    while (line_key_end > line_key &&
+                           (line_key_end[-1] == ' ' || line_key_end[-1] == '\t')) {
+                        line_key_end--;
+                        *line_key_end = '\0';
+                    }
+
+                    if (strcmp(line_key, key) == 0) {
+                        pd_snprintf(lines[line_count], sizeof(lines[line_count]), "%s=%s\n", key,
+                                    value);
+                        replaced = 1;
+                    }
+                }
+            }
+
+            line_count++;
+        }
+        fclose(in);
+    }
+
+    if (!replaced) {
+        if (line_count >= 128) {
+            return 0;
+        }
+        pd_snprintf(lines[line_count], sizeof(lines[line_count]), "%s=%s\n", key, value);
+        line_count++;
+    }
+
+    FILE *out = fopen(py4pd_config_path, "w");
+    if (!out) {
+        return 0;
+    }
+
+    for (int i = 0; i < line_count; i++) {
+        fputs(lines[i], out);
+    }
+
+    fclose(out);
+    return 1;
 }
 
 // ╭─────────────────────────────────────╮
@@ -256,7 +327,9 @@ void pdpy_thread_callback(t_pd *obj, void *data) {
     t_pdpy_thread_data *p = (t_pdpy_thread_data *)data;
     switch (p->type) {
     case REDRAW_ARRAY:
-        garray_redraw(p->array);
+        if (p->array) {
+            garray_redraw(p->array);
+        }
         break;
     case LOGPOST:
         logpost(p->obj, p->loglevel, "%s", p->msg);
@@ -1092,7 +1165,7 @@ void pdpy_proxy_anything(t_pdpy_proxyinlet *proxy, t_symbol *s, int argc, t_atom
         Py_DECREF(method);
         PyGILState_Release(gstate);
     } else {
-        pd_snprintf(methodname, MAXPDSTRING, "in_%d_%s", proxy->id-1, s->s_name);
+        pd_snprintf(methodname, MAXPDSTRING, "in_%d_%s", proxy->id - 1, s->s_name);
         pdpy_execute(o, methodname, s, argc, argv);
     }
 }
@@ -1719,36 +1792,27 @@ static PyObject *pdpy_logpost(t_pdpy_pyclass *self, PyObject *args, PyObject *kw
         }
     }
 
-    if (pdpy_is_main_thread()) {
-        if (prefix) {
-            logpost(self->pdobj, loglevel, "[%s]: %s", self->name, msg);
-        } else {
-            logpost(self->pdobj, loglevel, "%s", msg);
-        }
-    } else {
-        t_pdpy_thread_data *data = malloc(sizeof(t_pdpy_thread_data));
-        if (!data) {
-            PyErr_NoMemory();
-            return NULL;
-        }
-        data->type = LOGPOST;
-        data->loglevel = loglevel;
-
-        char buf[MAXPDSTRING];
-        if (prefix) {
-            pd_snprintf(buf, sizeof(buf), "[%s]: %s", self->name, msg);
-        } else {
-            pd_snprintf(buf, sizeof(buf), "%s", msg);
-        }
-        data->msg = strdup(buf);
-        if (!data->msg) {
-            free(data);
-            PyErr_NoMemory();
-            return NULL;
-        }
-        pd_queue_mess(&pd_maininstance, &self->pdobj->obj.te_g.g_pd, data, pdpy_thread_callback);
+    t_pdpy_thread_data *data = malloc(sizeof(t_pdpy_thread_data));
+    if (!data) {
+        PyErr_NoMemory();
+        return NULL;
     }
+    data->type = LOGPOST;
+    data->loglevel = loglevel;
 
+    char buf[MAXPDSTRING];
+    if (prefix) {
+        pd_snprintf(buf, sizeof(buf), "[%s]: %s", self->name, msg);
+    } else {
+        pd_snprintf(buf, sizeof(buf), "%s", msg);
+    }
+    data->msg = strdup(buf);
+    if (!data->msg) {
+        free(data);
+        PyErr_NoMemory();
+        return NULL;
+    }
+    pd_queue_mess(&pd_maininstance, &self->pdobj->obj.te_g.g_pd, data, pdpy_thread_callback);
     Py_RETURN_TRUE;
 }
 
@@ -2068,15 +2132,11 @@ static PyObject *pdpy_tabwrite(t_pdpy_pyclass *self, PyObject *args, PyObject *k
             vec[i].w_float = (float)PyFloat_AsDouble(PyFloatObj);
         }
         if (redraw) {
-            if (pdpy_is_main_thread()) {
-                garray_redraw(pdarray);
-            } else {
-                t_pdpy_thread_data *data = (t_pdpy_thread_data *)malloc(sizeof(t_pdpy_thread_data));
-                data->array = pdarray;
-                data->type = REDRAW_ARRAY;
-                pd_queue_mess(&pd_maininstance, &self->pdobj->obj.te_g.g_pd, data,
-                              pdpy_thread_callback);
-            }
+            t_pdpy_thread_data *data = (t_pdpy_thread_data *)malloc(sizeof(t_pdpy_thread_data));
+            data->array = pdarray;
+            data->type = REDRAW_ARRAY;
+            pd_queue_mess(&pd_maininstance, &self->pdobj->obj.te_g.g_pd, data,
+                          pdpy_thread_callback);
         }
         Py_RETURN_TRUE;
 
@@ -2685,6 +2745,29 @@ void *py4pd_new(t_symbol *s, int argc, t_atom *argv) {
 }
 
 // ─────────────────────────────────────
+static void py4pd_sitepackages(t_py *x, t_symbol *s, int argc, t_atom *argv) {
+    (void)s;
+    if (argc < 1 || argv[0].a_type != A_SYMBOL) {
+        pd_error(x, "[py4pd] site-packages expects one symbol path argument");
+        return;
+    }
+
+    t_symbol *path_sym = atom_getsymbolarg(0, argc, argv);
+    if (!path_sym || !path_sym->s_name || path_sym->s_name[0] == '\0') {
+        pd_error(x, "[py4pd] site-packages got an invalid path");
+        return;
+    }
+
+    if (!py4pd_set_config_value(py4pd_class, "SITE_PACKAGES", path_sym->s_name)) {
+        pd_error(x, "[py4pd] failed to write py4pd.cfg");
+        return;
+    }
+
+    py4pd_addpath2syspath(path_sym->s_name);
+    post("[py4pd] site-packages path saved to py4pd.cfg: %s", path_sym->s_name);
+}
+
+// ─────────────────────────────────────
 void py4pd_setup(void) {
     PY4PD_DEBUG(__FUNCTION__);
     int Major, Minor, Micro;
@@ -2699,6 +2782,8 @@ void py4pd_setup(void) {
 
     py4pd_class =
         class_new(gensym("py4pd"), (t_newmethod)py4pd_new, NULL, sizeof(t_py), 0, A_GIMME, 0);
+    class_addmethod(py4pd_class, (t_method)py4pd_sitepackages, gensym("site-packages"), A_GIMME,
+                    0);
 
     if (!Py_IsInitialized()) {
         objCount = 0;
@@ -2722,6 +2807,31 @@ void py4pd_setup(void) {
         pd_snprintf(py4pd_env, MAXPDSTRING, "%s/py4pd-env", py4pd_path);
         py4pd_fix_sys_pythonpath();
         py4pd_addpath2syspath(py4pd_env);
+
+        const char *site_packages_path = get_config_from_key(py4pd_class, "SITE_PACKAGES");
+        if (site_packages_path && site_packages_path[0] != '\0') {
+            char saved_paths[MAXPDSTRING];
+            pd_snprintf(saved_paths, sizeof(saved_paths), "%s", site_packages_path);
+
+            char *saveptr = NULL;
+            char *path_token = strtok_r(saved_paths, ";,", &saveptr);
+            while (path_token) {
+                while (*path_token == ' ' || *path_token == '\t') {
+                    path_token++;
+                }
+
+                char *end = path_token + strlen(path_token);
+                while (end > path_token && (end[-1] == ' ' || end[-1] == '\t')) {
+                    end--;
+                    *end = '\0';
+                }
+
+                if (path_token[0] != '\0') {
+                    py4pd_addpath2syspath(path_token);
+                }
+                path_token = strtok_r(NULL, ";,", &saveptr);
+            }
+        }
 
         PyObject *pd = PyImport_ImportModule("puredata");
         if (!pd) {
