@@ -1,222 +1,108 @@
 # `puredata` Python API of `py4pd`
 
-This page is a **reference** for the use of the `puredata` module in `py4pd` objects.
+This page is a **reference** for what the C core exports in the `puredata` module and what methods exist on `puredata.NewObject`.
 
 If you are writing `.pd_py` objects, you typically:
 
-- `import puredata`
-- create a subclass inherent of `puredata.NewObject`
-- implement inlet methods like `in_0_float(...)`
-
-The object below reproduces the behavior of the Pure Data `metro` object.
-
-``` python
-import puredata as pd
-
-class pymetro(pd.NewObject):
-    name: str = "pymetro"
-
-    def __init__(self, args):
-        self.inlets = 2
-        self.outlets = 1
-        self.toggle = False
-        if len(args) > 0:
-            self.time = float(args[0])
-        else:
-            self.time = 1000
-        self.metro = pd.new_clock(self, self.tick)
-        self.args = args
-
-    def in_1_float(self, f: float):
-        self.time = f
-
-    def in_0_float(self, f: float):
-        if f:
-            self.toggle = True
-            self.tick()
-        else:
-            self.metro.unset()
-            self.toggle = False
-
-    def in_0_reload(self, args: list):
-        self.reload()
-
-    def tick(self):
-        if self.toggle:
-            self.metro.delay(self.time)
-        self.out(0, pd.SYMBOL, "test238")
-```
+- `import puredata as pd`
+- subclass `pd.NewObject`
+- implement inlet methods like `in_1_float(...)`
 
 ---
 
-## Constants
+## Module: `puredata`
 
-### Output type constants
+### Constants
+
+These are added during module init.
+
+## Output type constants
 
 - `puredata.FLOAT` (Pd `A_FLOAT`)
 - `puredata.SYMBOL` (Pd `A_SYMBOL`)
 - `puredata.LIST` (Pd `A_GIMME`)
 - `puredata.PYOBJECT` (output Python Objects for Pd)
 
-This is used inside methods like `self.out` and `puredata.send`.
-
-### Inlets types constants
+## Inlets types constants (for `self.inlets` / `self.outlets`)
 
 - `puredata.SIGNAL`, relative to `&s_signal`;
 - `puredata.DATA`, relative to `&s_anything`;
 
-Used to create objects for signal processing. Default is always `puredata.DATA`. For example:
-
-``` python
-import puredata as pd
-
-class pydsp(pd.NewObject):
-    name: str = "pydsp"
-
-    def __init__(self, args):
-        self.inlets = 2
-        self.outlets = (pd.SIGNAL, pd.SIGNAL, pd.DATA)
-```
-
-In this object, we have 2 `pd.DATA` *inlets* and 3 *outlets*. First 2 outlets are `pd.SIGNAL` (audio) and the last one is a `pd.DATA`.
-
 ---
 
-## `puredata` global methods
-
-### `puredata.post`
-
-* `puredata.post(*args) -> bool`
+### `puredata.post(*args) -> bool`
 
 Posts a message to the Pd console (not rastreable), 
 
 ---
 
-### `puredata.hasgui`
+### `puredata.hasgui() -> bool`
 
-* `puredata.hasgui() -> bool`
-
-Returns `True` when Pd is running with a GUI.
+Returns non-zero when Pd is running with a GUI.
 
 ---
 
-### `puredata.get_sample_rate`
-
-* `puredata.get_sample_rate() -> int`
+### `puredata.get_sample_rate() -> int`
 
 Returns Pd sample rate.
 
 ---
 
-## Time inside py4pd
+### `puredata._print(*args, **kwargs) -> None`
 
-### `puredata.new_clock`
-
-* `puredata.new_clock(owner, callback) -> puredata.clock`
-
-Creates a Pd clock owned by `owner` (`self`). When it fires it calls `callback()`.
-
-### `puredata.clock.delay`
-
-Schedule `callback()` after `ms` milliseconds.
-
-### `puredata.clock.unset`
-
-* `puredata.clock.unset() -> bool`
-
-Cancel any scheduled callback.
-
-### `puredata.clock.set`
-
-* `puredata.clock.set(time: float) -> bool`
-
-Schedule clock for an absolute systime. `True` on sucess.
-
-Check the use with clock `pymetro`
-
-```python
-    def __init__(self, args):
-        self.inlets = 2
-        self.outlets = 1
-        self.time = 1000
-        self.metro = pd.new_clock(self, self.tick)
-        self.args = args
-
-    def in_0_float(self, f: float):
-        if f:
-            self.toggle = True
-            self.tick()
-        else:
-            self.metro.unset()
-            self.toggle = False
-
-    def in_0_reload(self, args: list):
-        self.reload()
-
-    def tick(self):
-        if self.toggle:
-            self.metro.delay(self.time)
-```
+Internal print used by the runtime (prints with Pd `logpost` level 2).
 
 ---
 
-## Receivers in py4pd
+## `puredata.new_clock(owner, callback) -> puredata.clock`
 
-### `puredata.new_receiver`
+Creates a Pd clock owned by `owner` (`self`). When it fires it calls `callback()`.
 
-* `puredata.new_receiver(owner, symbol: str, callback) -> puredata.receiver`
+### `puredata.clock.delay(ms: float) -> bool`
+
+Schedule `callback()` after `ms` milliseconds.
+
+### `puredata.clock.unset() -> bool`
+
+Cancel any scheduled callback.
+
+### `puredata.clock.set(time: float) -> bool`
+
+Schedule clock for an absolute systime. `True` on sucess.
+
+---
+
+### `puredata.new_receiver(owner, symbol: str, callback) -> puredata.receiver`
 
 Binds to `symbol` (global Pd symbol) and forwards incoming messages to `callback`.
 
-```python
-    def __init__(self, args):
-        self.inlets = 0
-        self.outlets = 1
-        self.receiver = pd.new_receiver(self, "myreceiver", self.tick)
+Notes based on the current C implementation:
 
-    def tick(self, args):
-        self.logpost(1, "Received something")
-```
+- Binding happens immediately on creation and is automatically undone on destruction.
+- The receiver object is primarily for lifetime management; treat it as an **opaque handle**.
 
 ---
 
 ## Class: `puredata.NewObject`
 
-!!! tip "Main class to create a python object with `py4pd`"
-
 Your `.pd_py` object class must inherit from `puredata.NewObject`.
 
 ### Constructor
 
-`puredata.NewObject`
+`puredata.NewObject(name: str)`
 
-The C core uses this to ensure the module-level registry exists. In practice, you just need to define a class that is inherit of this.
-
-``` python
-import puredata as pd
-
-class pymetro(pd.NewObject):
-    name: str = "pymetro"  # Name of the Pure Data object
-
-    def __init__(self, args):
-        self.inlets = 2    # Number of inlets
-        self.outlets = 1   # Number of outlets
-```
+The C core uses this to ensure the module-level registry exists. In practice, you don’t call it directly; you inherit and let py4pd instantiate your class.
 
 ---
 
 ### Methods (available on your object instance)
 
-#### `self.out`
-
-* `self.out(outlet: int, type: int, value) -> bool`
+#### `self.out(outlet: int, type: int, value) -> bool`
 
 Send data to a Pd outlet.
 
 - `type` must be one of: `puredata.FLOAT`, `puredata.SYMBOL`, `puredata.LIST`, `puredata.PYOBJECT`
-- Outlet is 0-based (left -> right).
-
-!!! warning "`self.out` is 1-based"
+- Outlet is 0-based.
 
 Behavior:
 
@@ -227,17 +113,13 @@ Behavior:
 
 ---
 
-#### `self.tabread`
-
-`self.tabread(name: str) -> tuple[float, ...]`
+#### `self.tabread(name: str) -> tuple[float, ...]`
 
 Read a Pd array (`garray`) into a Python tuple.
 
 ---
 
-#### `self.tabwrite`
-
-* `self.tabwrite(name: str, data: list|tuple, resize=False, redraw=True) -> bool`
+#### `self.tabwrite(name: str, data: list|tuple, resize=False, redraw=True) -> bool`
 
 Write Python numeric data into a Pd array.
 
@@ -246,35 +128,33 @@ Write Python numeric data into a Pd array.
 
 ---
 
-#### `self.get_current_dir`
+#### `self.get_current_dir() -> str | None`
 
-* `self.get_current_dir() -> str | None`
-
-Returns the directory of the current canvas. Where is the patch in which the current object is located.
+Returns the directory of the current canvas.
 
 ---
 
-#### `self.reload`
-
-* `self.reload() -> bool`
+#### `self.reload() -> bool`
 
 Reloads the current `.pd_py` source file and swaps the running class instance.
 
+Also updates:
+
+- clock callbacks (rebinds by function name)
+- DSP callback (`perform`) if DSP is active
+
 ---
 
-#### `self.logpost`
-
-* `self.logpost(loglevel: int, *args, prefix=True) -> bool`
+#### `self.logpost(loglevel: int, *args, prefix=True) -> bool`
 
 Posts a log message to the Pd console.
 
+- If called from a non-main thread, the message is queued to the Pd main thread.
 - `prefix=True` prints `[{object_name}]: ...`.
 
 ---
 
-#### `self.error`
-
-* `self.error(*args) -> bool`
+#### `self.error(*args) -> bool`
 
 Prints an error tagged with the object name.
 
@@ -284,18 +164,18 @@ Prints an error tagged with the object name.
 
 The message dispatcher in `py4pd.c` looks for methods named:
 
-- `in_{INLET_INDEX}_{SELECTOR}`
+- `in_{INLET}_{SELECTOR}`
 
-Where `INLET_INDEX` is 0-based (left -> right).
+Where `INLET` is 1-based.
 
 Common selectors:
 
-- `bang` → `in_0_bang(self)`
-- `float` → `in_0_float(self, f)`
-- `symbol` → `in_0_symbol(self, s)`
-- `list` → `in_0_list(self, xs)`
-- any other selector (e.g. `set`) → `in_0_set(self, args)`
+- `bang` → `in_1_bang(self)`
+- `float` → `in_1_float(self, f)`
+- `symbol` → `in_1_symbol(self, s)`
+- `list` → `in_1_list(self, xs)`
+- any other selector (e.g. `set`) → `in_1_set(self, args)`
 
 To receive Python objects sent with `puredata.PYOBJECT` implement:
 
-- `in_{INLET_INDEX}_pyobj(self, obj)`
+- `in_{INLET}_pyobj(self, obj)`

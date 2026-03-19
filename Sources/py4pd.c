@@ -1575,6 +1575,102 @@ static int pdpy_validate_pd_subclasses(PyObject *module, const char *filename) {
 }
 
 // ─────────────────────────────────────
+int pd4pd_install_requirements(const char *requirements_path) {
+    PyGILState_STATE gstate = PyGILState_Ensure();
+
+    // Import puredata module
+    PyObject *pd_module = PyImport_ImportModule("puredata");
+    if (!pd_module) {
+        pdpy_printerror(NULL);
+        PyGILState_Release(gstate);
+        return 0;
+    }
+
+    // Get _objects dict
+    PyObject *objects_dict = PyObject_GetAttrString(pd_module, "_objects");
+    if (!objects_dict) {
+        pdpy_printerror(NULL);
+        Py_DECREF(pd_module);
+        PyGILState_Release(gstate);
+        return 0;
+    }
+
+    // Get the "py.pip" entry
+    PyObject *pip_entry = PyDict_GetItemString(objects_dict, "py.pip"); // borrowed
+    if (!pip_entry) {
+        pdpy_printerror(NULL);
+        Py_DECREF(objects_dict);
+        Py_DECREF(pd_module);
+        PyGILState_Release(gstate);
+        return 0;
+    }
+
+    // Get py_class
+    PyObject *pyclass = PyDict_GetItemString(pip_entry, "py_class");
+    if (!pyclass) {
+        pd_error(NULL, "Class py.pip not found");
+        Py_DECREF(objects_dict);
+        Py_DECREF(pd_module);
+        PyGILState_Release(gstate);
+        return 0;
+    }
+
+    // Instantiate the class with empty args list
+    PyObject *empty_list = PyList_New(0);
+    PyObject *instance = PyObject_CallOneArg(pyclass, empty_list);
+    Py_DECREF(empty_list);
+    if (!instance) {
+        pdpy_printerror(NULL);
+        Py_DECREF(objects_dict);
+        Py_DECREF(pd_module);
+        PyGILState_Release(gstate);
+        return 0;
+    }
+
+    // Get the in_0_pip method
+    PyObject *in_0_pip = PyObject_GetAttrString(instance, "in_0_pip");
+    if (!in_0_pip || !PyCallable_Check(in_0_pip)) {
+        pdpy_printerror(NULL);
+        Py_XDECREF(in_0_pip);
+        Py_DECREF(instance);
+        Py_DECREF(objects_dict);
+        Py_DECREF(pd_module);
+        PyGILState_Release(gstate);
+        return 0;
+    }
+
+    // Build the single argument: a list ["install", "-r", "<requirements_path>"]
+    PyObject *args_list = PyList_New(3);
+    PyList_SetItem(args_list, 0, PyUnicode_FromString("install"));
+    PyList_SetItem(args_list, 1, PyUnicode_FromString("-r"));
+    PyList_SetItem(args_list, 2, PyUnicode_FromString(requirements_path));
+
+    // Wrap the list in a tuple (CallObject expects a tuple of positional arguments)
+    PyObject *args_tuple = PyTuple_New(1);
+    PyTuple_SetItem(args_tuple, 0, args_list); // steals reference
+
+    // Call in_0_pip
+    PyObject *result = PyObject_CallObject(in_0_pip, args_tuple);
+
+    // Cleanup
+    Py_DECREF(args_tuple);
+    Py_DECREF(in_0_pip);
+    Py_DECREF(instance);
+    Py_DECREF(objects_dict);
+    Py_DECREF(pd_module);
+
+    if (!result) {
+        PyErr_Print();
+        PyGILState_Release(gstate);
+        return 0;
+    }
+
+    Py_DECREF(result);
+    PyGILState_Release(gstate);
+    return 1;
+}
+
+// ─────────────────────────────────────
 int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
     (void)fd;
     PY4PD_DEBUG(__FUNCTION__);
@@ -1659,7 +1755,15 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
     PyObject *result = PyEval_EvalCode(code_obj, mod_dict, mod_dict);
     Py_DECREF(code_obj);
     if (!result) {
+        char pip_requirements[MAXPDSTRING];
+        pd_snprintf(pip_requirements, MAXPDSTRING, "%s/%s", dirbuf, "requirements.txt");
+        post("Found requirements.txt for object, trying to install packages");
         pdpy_printerror(NULL);
+
+        if (access(pip_requirements, F_OK) == 0) {
+            (void)pd4pd_install_requirements(pip_requirements);
+        }
+
         Py_DECREF(module);
         PyGILState_Release(gstate);
         return 0;
@@ -2545,19 +2649,21 @@ static int pd4pd_loader_pathwise(t_canvas *canvas, const char *objectname, const
     } else {
         classname = objectname;
     }
-    if ((fd = open_via_path(path, objectname, ".pd_py", dirbuf, &ptr, MAXPDSTRING, 1)) >= 0)
+    if ((fd = open_via_path(path, objectname, ".pd_py", dirbuf, &ptr, MAXPDSTRING, 1)) >= 0) {
         if (pd4pd_loader_wrappath(fd, objectname, dirbuf)) {
             return 1;
         }
+    }
 
     pd_snprintf(filename, MAXPDSTRING, "%s", objectname);
     pd_snprintf(filename + strlen(filename), MAXPDSTRING - strlen(filename), "/");
     pd_snprintf(filename + strlen(filename), MAXPDSTRING - strlen(filename), "%s", classname);
     filename[MAXPDSTRING - 1] = 0;
-    if ((fd = open_via_path(path, filename, ".pd_py", dirbuf, &ptr, MAXPDSTRING, 1)) >= 0)
+    if ((fd = open_via_path(path, filename, ".pd_py", dirbuf, &ptr, MAXPDSTRING, 1)) >= 0) {
         if (pd4pd_loader_wrappath(fd, objectname, dirbuf)) {
             return 1;
         }
+    }
     return 0;
 }
 
@@ -2772,7 +2878,6 @@ void py4pd_setup(void) {
     PY4PD_DEBUG(__FUNCTION__);
     int Major, Minor, Micro;
     sys_getversion(&Major, &Minor, &Micro);
-    sys_register_loader((loader_t)pd4pd_loader_pathwise);
 
     // fix: checagem correta
     if (Major == 0 && Minor < 54) {
@@ -2782,8 +2887,7 @@ void py4pd_setup(void) {
 
     py4pd_class =
         class_new(gensym("py4pd"), (t_newmethod)py4pd_new, NULL, sizeof(t_py), 0, A_GIMME, 0);
-    class_addmethod(py4pd_class, (t_method)py4pd_sitepackages, gensym("site-packages"), A_GIMME,
-                    0);
+    class_addmethod(py4pd_class, (t_method)py4pd_sitepackages, gensym("site-packages"), A_GIMME, 0);
 
     if (!Py_IsInitialized()) {
         objCount = 0;
@@ -2866,6 +2970,7 @@ void py4pd_setup(void) {
     if (!result) {
         pd_error(NULL, "Failed to load openmusic lib");
     }
+    sys_register_loader((loader_t)pd4pd_loader_pathwise);
 }
 
 #ifdef __WIN64
