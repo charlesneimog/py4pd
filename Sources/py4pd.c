@@ -11,7 +11,7 @@
 
 #define PY4PD_MAJOR_VERSION 1
 #define PY4PD_MINOR_VERSION 2
-#define PY4PD_MICRO_VERSION 0
+#define PY4PD_MICRO_VERSION 1
 
 #if !defined(NDEBUG)
 #define PY4PD_DEBUG(func) printf("%s\n", func)
@@ -1394,7 +1394,8 @@ static t_class *pdpy_classnew(const char *n, bool dsp) {
 }
 
 // ─────────────────────────────────────
-static int pdpy_create_newpyobj(PyObject *subclass, const char *name, const char *filename) {
+static int pdpy_create_newpyobj(PyObject *subclass, const char *name, const char *dirbuf,
+                                const char *filename) {
     PY4PD_DEBUG(__FUNCTION__);
     PyGILState_STATE gstate = PyGILState_Ensure();
 
@@ -1457,9 +1458,13 @@ static int pdpy_create_newpyobj(PyObject *subclass, const char *name, const char
     Py_DECREF(val_script);
     Py_DECREF(val_clocks);
 
+    post("%s", dirbuf);
     t_class *pdclass = pdpy_classnew(name, havedsp);
+    pdclass->c_externdir = gensym(dirbuf);
     if (helppatchstr != NULL) {
         class_sethelpsymbol(pdclass, gensym(helppatchstr));
+    } else {
+        class_sethelpsymbol(pdclass, gensym(name));
     }
 
     PyObject *capsule = PyCapsule_New((void *)pdclass, NULL, NULL);
@@ -1500,7 +1505,7 @@ static int pdpy_create_newpyobj(PyObject *subclass, const char *name, const char
 }
 
 // ─────────────────────────────────────
-static int pdpy_validate_pd_subclasses(PyObject *module, const char *filename) {
+static int pdpy_validate_pd_subclasses(PyObject *module, const char *dirbuf, const char *filename) {
     PY4PD_DEBUG(__FUNCTION__);
     PyGILState_STATE gstate = PyGILState_Ensure();
 
@@ -1555,7 +1560,7 @@ static int pdpy_validate_pd_subclasses(PyObject *module, const char *filename) {
                     continue;
                 }
 
-                int ok = pdpy_create_newpyobj(obj, PyUnicode_AsUTF8(objname), filename);
+                int ok = pdpy_create_newpyobj(obj, PyUnicode_AsUTF8(objname), dirbuf, filename);
                 if (!ok) {
                     pdpy_printerror(NULL);
                 } else {
@@ -1576,6 +1581,10 @@ static int pdpy_validate_pd_subclasses(PyObject *module, const char *filename) {
 
 // ─────────────────────────────────────
 int pd4pd_install_requirements(const char *requirements_path) {
+
+    post("[py4pd] Creating of object failed, trying to install requirements, reinit PureData after "
+         "finish");
+
     PyGILState_STATE gstate = PyGILState_Ensure();
 
     // Import puredata module
@@ -1769,7 +1778,7 @@ int pd4pd_loader_wrappath(int fd, const char *name, const char *dirbuf) {
         return 0;
     }
     Py_DECREF(result);
-    if (!pdpy_validate_pd_subclasses(module, filename)) {
+    if (!pdpy_validate_pd_subclasses(module, dirbuf, filename)) {
         pdpy_printerror(NULL);
         Py_DECREF(module);
         PyGILState_Release(gstate);
@@ -2073,7 +2082,9 @@ static PyObject *pdpy_reload(t_pdpy_pyclass *self, PyObject *args) {
         return NULL;
     }
     Py_DECREF(result);
-    if (!pdpy_validate_pd_subclasses(module, filename)) {
+
+    const char *dirbuf = ((t_class *)self->pdobj->obj.te_g.g_pd)->c_externdir->s_name;
+    if (!pdpy_validate_pd_subclasses(module, dirbuf, filename)) {
         pdpy_printerror(NULL);
         Py_DECREF(module);
         return NULL;
@@ -2965,12 +2976,12 @@ void py4pd_setup(void) {
     const char *py4pd_path = py4pd_class->c_externdir->s_name;
     (void)namelist_append(STUFF->st_searchpath, py4pd_path, 0);
 
+    sys_register_loader((loader_t)pd4pd_loader_pathwise);
     t_canvas *cnv = canvas_getcurrent();
     int result = sys_load_lib(cnv, "openmusic");
     if (!result) {
         pd_error(NULL, "Failed to load openmusic lib");
     }
-    sys_register_loader((loader_t)pd4pd_loader_pathwise);
 }
 
 #ifdef __WIN64
