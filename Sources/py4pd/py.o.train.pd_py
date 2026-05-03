@@ -1,0 +1,68 @@
+import OpenScofo
+import puredata as pd
+
+
+class pytrain(pd.NewObject):
+    name = "py.o.train"
+
+    def __init__(self, args):
+        # pd
+        self.inlets = 1
+        self.outlets = 2
+        self.sr = 48000
+        self.fftsize = 2048
+        self.hopsize = 512
+        self.descriptors = [
+            "mfcc",
+            "logmel",
+            "centroid",
+            "flatness",
+            "hfr",
+            "flux",
+            "zcr",
+            "irregularity",
+            "kurtosis",
+        ]
+        self.trainfolder = ""
+        self.irfolders = []
+        self.trainer = None
+
+    def in_0_fftsize(self, args):
+        self.fftsize = args[0]
+
+    def in_0_hopsize(self, args):
+        self.hopsize = args[0]
+
+    def in_0_sr(self, args):
+        self.sr = args[0]
+
+    def in_0_descriptors(self, args):
+        self.descriptors = args
+
+    def in_0_train_folder(self, args):
+        self.trainfolder = args[0]
+
+    def in_0_ir_folder(self, args):
+        for arg in args:
+            self.irfolders.append(arg)
+
+    def in_0_analyze(self, _):
+        self.trainer = OpenScofo.ExtendedTechniqueClassifier(
+            sample_rate=self.sr,
+            fft_size=self.fftsize,
+            hop_size=self.hopsize,
+        )
+        self.trainer.set_descriptors(self.descriptors)
+        self.trainer.set_ir_folders(self.irfolders)
+        self.trainer.set_train_folder(self.trainfolder)
+
+    def in_0_train(self, _):
+        if self.trainer is not None:
+            self.trainer.train()
+        raise Exception("You need to analyze first")
+
+    def in_0_export(self, args):
+        if self.trainer is not None:
+            file = args[0]
+            self.trainer.export_model(file)
+        raise Exception("You need to analyze first")
