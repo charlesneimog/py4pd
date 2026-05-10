@@ -11,7 +11,7 @@
 
 #define PY4PD_MAJOR_VERSION 1
 #define PY4PD_MINOR_VERSION 2
-#define PY4PD_MICRO_VERSION 1
+#define PY4PD_MICRO_VERSION 2
 
 #if !defined(NDEBUG)
 #define PY4PD_DEBUG(func) printf("%s\n", func)
@@ -1359,7 +1359,6 @@ static void pdpy_menu_open(t_pdpy_pdobj *o) {
     PY4PD_DEBUG(__FUNCTION__);
     char name[MAXPDSTRING];
     pd_snprintf(name, MAXPDSTRING, "%s", o->script_filename);
-    post("%s", name);
     const char *editor = get_config_from_key(py4pd_class, "EDITOR");
     if (editor == NULL) {
         pdgui_vmess("::pd_menucommands::menu_openfile", "s", name);
@@ -1458,7 +1457,6 @@ static int pdpy_create_newpyobj(PyObject *subclass, const char *name, const char
     Py_DECREF(val_script);
     Py_DECREF(val_clocks);
 
-    post("%s", dirbuf);
     t_class *pdclass = pdpy_classnew(name, havedsp);
     pdclass->c_externdir = gensym(dirbuf);
     if (helppatchstr != NULL) {

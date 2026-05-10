@@ -1,5 +1,16 @@
+import io
+import sys
+import threading
+
 import OpenScofo
 import puredata as pd
+
+
+class RedirectStdout(io.StringIO):
+    def write(self, s):
+        if s.strip():  # ignore empty lines
+            pd.post(s.strip())  # your custom sink
+        return super().write(s)
 
 
 class pytrain(pd.NewObject):
@@ -39,30 +50,63 @@ class pytrain(pd.NewObject):
     def in_0_descriptors(self, args):
         self.descriptors = args
 
-    def in_0_train_folder(self, args):
+    def in_0_trainfolder(self, args):
         self.trainfolder = args[0]
 
-    def in_0_ir_folder(self, args):
+    def in_0_irfolders(self, args):
         for arg in args:
             self.irfolders.append(arg)
 
     def in_0_analyze(self, _):
+        def pdprint(value) -> None:
+            self.logpost(2, value)
+
+        def report_analyses(value):
+            self.out(1, pd.FLOAT, value)
+
         self.trainer = OpenScofo.ExtendedTechniqueClassifier(
             sample_rate=self.sr,
             fft_size=self.fftsize,
             hop_size=self.hopsize,
+            base_path=self.get_current_dir(),
         )
+
+        self.trainer.set_onprogress_callback(report_analyses)
+        self.trainer.set_print_callback(pdprint)
         self.trainer.set_descriptors(self.descriptors)
         self.trainer.set_ir_folders(self.irfolders)
         self.trainer.set_train_folder(self.trainfolder)
 
+        thread = threading.Thread(target=self.trainer.analyze)
+        thread.start()
+
+    def _run_with_callback(self, callback):
+        try:
+            self.trainer.train()
+        except Exception as e:
+            self._train_error = e
+        finally:
+            callback()
+
+    def on_train_finished(self):
+        sys.stdout = self.old_stdout
+
     def in_0_train(self, _):
         if self.trainer is not None:
-            self.trainer.train()
-        raise Exception("You need to analyze first")
+            buffer = RedirectStdout()
+            self.old_stdout = sys.stdout
+            sys.stdout = buffer
+            thread = threading.Thread(
+                target=self._run_with_callback, args=(self.on_train_finished,)
+            )
+            thread.start()
+        else:
+            raise Exception("You need to analyze first")
 
     def in_0_export(self, args):
         if self.trainer is not None:
-            file = args[0]
+            file = self.get_current_dir() + "/" + args[0]
+
             self.trainer.export_model(file)
-        raise Exception("You need to analyze first")
+        else:
+            raise Exception("You need to analyze first")
