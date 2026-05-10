@@ -1,174 +1,183 @@
 ---
 name: Compile PureData Object
 on:
-  workflow_dispatch:
-    inputs:
-      publish_release:
-        description: Publish a GitHub Release using LIBVERSION after build
-        required: false
-        type: boolean
-        default: false
+    workflow_dispatch:
+        inputs:
+            publish_release:
+                description: Publish a GitHub Release using LIBVERSION after build
+                required: false
+                type: boolean
+                default: false
 env:
-  LIBNAME: py4pd
-  LIBVERSION: "1.1.0"
+    LIBNAME: py4pd
+    LIBVERSION: "1.1.2"
 permissions:
-  contents: write
+    contents: write
 jobs:
-  macos:
-    runs-on: ${{ matrix.machines }}
-    strategy:
-      matrix:
-        python:
-          - python: "3.13"
-            py_tag: "313"
-          - python: "3.14"
-            py_tag: "314"
-        precision: [32, 64]
-        machines: [macos-latest]
-    steps:
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python.python }}
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-      - name: Install PureData and Deps
-        run: |
-          brew install pd
-      - name: Build
-        run: |
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DPYVERSION=${{ matrix.python.python }} -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
-          cmake --build build --parallel
-          cmake --install build
-      - name: Upload ONNX Folder
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.LIBNAME }}-${{ env.LIBVERSION }}-python${{ matrix.python.py_tag }}-pd${{ matrix.precision }}-${{ matrix.machines }}
-          path: ${{env.LIBNAME}}
-  linux-build:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        arch: [amd64]
-        precision: [32, 64]
-        python:
-          - python: "3.13"
-            py_tag: "313"
-          - python: "3.14"
-            py_tag: "314"
-    steps:
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python.python }}
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 1
-      - name: PureData Sources
-        run: |
-          sudo apt update
-          sudo add-apt-repository ppa:pure-data/pure-data -y
-          sudo apt install puredata -y
-      - name: Install aarch64 gcc
-        if: matrix.arch == 'aarch64'
-        run: |
-          sudo apt install gcc-aarch64-linux-gnu -y
-          sudo apt install g++-aarch64-linux-gnu -y
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DPYVERSION=${{ matrix.python.python }}
-      - name: Install arm gcc
-        if: matrix.arch == 'arm'
-        run: |
-          sudo apt install gcc-arm-linux-gnueabihf -y
-          sudo apt install g++-arm-linux-gnueabihf -y
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ -DPYVERSION=${{ matrix.python.python }}
-      - name: Configure
-        if: matrix.arch == 'amd64'
-        run: |
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DPYVERSION=${{ matrix.python.python }}
-      - name: Build Object
-        run: |
-          cmake --build build -- -j$(nproc)
-          cmake --install build
-      - name: Upload Object
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.LIBNAME }}-${{ env.LIBVERSION }}-python${{ matrix.python.py_tag }}-pd${{ matrix.precision }}-linux-${{ matrix.arch }}
-          path: ${{env.LIBNAME}}
-  windows-build:
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        compiler: [mingw]
-        arch: [amd64]
-        precision: [32, 64]
-        python:
-          - python: "3.13"
-            py_tag: "313"
-          - python: "3.14"
-            py_tag: "314"
-    steps:
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python.python }}
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-          fetch-depth: 0
-      - if: matrix.compiler == 'mingw'
-        name: Set up Msys2
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: mingw64
-          install: make mingw-w64-x86_64-gcc mingw64/mingw-w64-x86_64-cmake
-          update: false
-      - name: Install PureData Float 32
-        if: matrix.precision == '32'
-        run: |
-          winget install -e --id MillerPuckette.PureData --accept-source-agreements
-      - name: Install PureData Float 64
-        if: matrix.precision == '64'
-        run: |
-          winget install -e --id MillerPuckette.Pd64 --accept-source-agreements
-      - name: Configure and build Mingw
-        shell: msys2 {0}
-        if: matrix.compiler == 'mingw'
-        run: |
-          cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DPYVERSION=${{ matrix.python.python }}
-          cmake --build build --parallel
-          cmake --install build
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.LIBNAME }}-${{ env.LIBVERSION }}-python${{ matrix.python.py_tag }}-pd${{ matrix.precision }}-windows-${{ matrix.arch }}
-          path: ${{env.LIBNAME}}
-  publish-release:
-    if: ${{ github.event.inputs.publish_release == 'true' }}
-    needs: [macos, linux-build, windows-build]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download all artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-      - name: Create per-artifact zip archives
-        run: |
-          set -euo pipefail
-          mkdir -p release_assets
-          for artifact_dir in artifacts/*; do
-            [ -d "$artifact_dir" ] || continue
-            name="$(basename "$artifact_dir")"
-            (cd "$artifact_dir" && zip -r "../../release_assets/${name}.zip" .)
-          done
-          ls -1 release_assets
-      - name: Create / Update GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ env.LIBVERSION }}
-          name: ${{ env.LIBNAME }} v${{ env.LIBVERSION }}
-          target_commitish: ${{ github.sha }}
-          files: |
-            release_assets/*.zip
-          draft: true
-          prerelease: false
+    macos:
+        runs-on: ${{ matrix.machines }}
+        strategy:
+            matrix:
+                python:
+                    - python: "3.14"
+                      py_tag: "314"
+                precision: [32, 64]
+                machines: [macos-latest]
+        steps:
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ matrix.python.python }}
+            - uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+                  fetch-depth: 0
+            - name: Install PureData and Deps
+              run: |
+                  brew install pd
+            - name: Build
+              run: |
+                  cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DPYVERSION=${{ matrix.python.python }} -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+                  cmake --build build --parallel
+            - name: Upload ONNX Folder
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ${{ env.LIBNAME }}-${{ env.LIBVERSION }}-python${{ matrix.python.py_tag }}-pd${{ matrix.precision }}-${{ matrix.machines }}
+                  path: build/${{env.LIBNAME}}
+    linux:
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                arch: [amd64]
+                precision: [32, 64]
+                python:
+                    - python: "3.14"
+                      py_tag: "314"
+        steps:
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ matrix.python.python }}
+            - uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+                  fetch-depth: 1
+            - name: PureData Sources
+              run: |
+                  sudo apt update
+                  sudo add-apt-repository ppa:pure-data/pure-data -y
+                  sudo apt install puredata -y
+            - name: Install aarch64 gcc
+              if: matrix.arch == 'aarch64'
+              run: |
+                  sudo apt install gcc-aarch64-linux-gnu -y
+                  sudo apt install g++-aarch64-linux-gnu -y
+                  cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DPYVERSION=${{ matrix.python.python }}
+            - name: Install arm gcc
+              if: matrix.arch == 'arm'
+              run: |
+                  sudo apt install gcc-arm-linux-gnueabihf -y
+                  sudo apt install g++-arm-linux-gnueabihf -y
+                  cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=arm-linux-gnueabihf-gcc -DCMAKE_CXX_COMPILER=arm-linux-gnueabihf-g++ -DPYVERSION=${{ matrix.python.python }}
+            - name: Configure
+              if: matrix.arch == 'amd64'
+              run: |
+                  cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DPYVERSION=${{ matrix.python.python }}
+            - name: Build Object
+              run: |
+                  cmake --build build -- -j$(nproc)
+            - name: Upload Object
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ${{ env.LIBNAME }}-${{ env.LIBVERSION }}-python${{ matrix.python.py_tag }}-pd${{ matrix.precision }}-linux-${{ matrix.arch }}
+                  path: build/${{env.LIBNAME}}
+    windows:
+        runs-on: windows-latest
+        strategy:
+            matrix:
+                compiler: [mingw]
+                arch: [amd64]
+                precision: [32, 64]
+                python:
+                    - python: "3.14"
+                      py_tag: "314"
+        steps:
+            - uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ matrix.python.python }}
+            - name: Checkout repository
+              uses: actions/checkout@v4
+              with:
+                  submodules: recursive
+                  fetch-depth: 0
+            - if: matrix.compiler == 'mingw'
+              name: Set up Msys2
+              uses: msys2/setup-msys2@v2
+              with:
+                  msystem: mingw64
+                  install: make mingw-w64-x86_64-gcc mingw64/mingw-w64-x86_64-cmake
+                  update: false
+            - name: Install PureData Float 32
+              if: matrix.precision == '32'
+              run: |
+                  winget install -e --id MillerPuckette.PureData --accept-source-agreements
+            - name: Install PureData Float 64
+              if: matrix.precision == '64'
+              run: |
+                  winget install -e --id MillerPuckette.Pd64 --accept-source-agreements
+            - name: Configure and build Mingw
+              shell: msys2 {0}
+              if: matrix.compiler == 'mingw'
+              run: |
+                  cmake . -B build -DPD_FLOATSIZE=${{ matrix.precision }} -DCMAKE_SYSTEM_PROCESSOR=${{ matrix.arch }} -DPDLIBDIR=./ -DCMAKE_BUILD_TYPE=Release -DPYVERSION=${{ matrix.python.python }}
+                  cmake --build build --parallel
+            - name: Upload
+              uses: actions/upload-artifact@v4
+              with:
+                  name: ${{ env.LIBNAME }}-${{ env.LIBVERSION }}-python${{ matrix.python.py_tag }}-pd${{ matrix.precision }}-windows-${{ matrix.arch }}
+                  path: build/${{env.LIBNAME}}
+
+    publish-release:
+        if: ${{ github.event.inputs.publish_release }}
+        permissions:
+            contents: write
+        needs: [macos, linux, windows]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Download puredata
+              uses: actions/download-artifact@v4
+              with:
+                  pattern: py4pd-*
+                  merge-multiple: true
+                  path: ${{ env.LIBNAME }}
+
+            - name: Upload using docker deken
+              env:
+                  DEKEN_USERNAME: charlesneimog
+                  DEKEN_PASSWORD: ${{ secrets.DEKEN_PASSWORD }}
+              run: |
+                  docker run --rm \
+                    --user $(id -u) \
+                    --volume $(pwd):/deken \
+                    registry.git.iem.at/pd/deken \
+                    deken package --version ${{ env.LIBVERSION }} ${{ env.LIBNAME }}
+
+                  docker run --rm \
+                    --user $(id -u) \
+                    --volume $(pwd):/deken \
+                    -e DEKEN_USERNAME -e DEKEN_PASSWORD \
+                    registry.git.iem.at/pd/deken \
+                    deken upload -v ${{ env.LIBVERSION }} *.dek
+
+            - name: Create zip
+              run: |
+                  zip -r py4pd-${{ env.LIBVERSION }}.zip ${{ env.LIBNAME }}
+
+            - name: Create / Update GitHub Release
+              uses: softprops/action-gh-release@v2
+              with:
+                  tag_name: v${{ env.LIBVERSION }}
+                  name: v${{ env.LIBVERSION }}
+                  target_commitish: ${{ github.sha }}
+                  draft: true
+                  prerelease: false
+                  files: |
+                      py4pd-${{ env.LIBVERSION }}.zip

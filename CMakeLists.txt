@@ -9,7 +9,7 @@ endif()
 # │               pd.cmake               │
 # ╰──────────────────────────────────────╯
 set(PDCMAKE_FILE ${CMAKE_BINARY_DIR}/pd.cmake)
-set(PDCMAKE_VERSION "v0.2.13")
+set(PDCMAKE_VERSION "v0.2.15")
 if(NOT EXISTS "${PDCMAKE_FILE}")
     file(DOWNLOAD "https://raw.githubusercontent.com/pure-data/pd.cmake/refs/heads/main/pd.cmake" ${PDCMAKE_FILE})
 endif()
@@ -19,7 +19,7 @@ include(${PDCMAKE_FILE})
 # │          Object Definitions          │
 # ╰──────────────────────────────────────╯
 if(NOT DEFINED PYVERSION)
-    message(FATAL_ERROR "PYVERSION is not defined. Use -DPYVERSION=3.13, for example.")
+    message(FATAL_ERROR "PYVERSION is not defined. Use -DPYVERSION=3.14, for example.")
 else()
     message(STATUS "Using Python version: ${PYVERSION}")
 endif()
@@ -97,6 +97,7 @@ pd_add_datafile(py4pd "${PY4PD_OBJECTS_HELP}")
 pd_add_datafile(py4pd "${PY4PD_OBJECTS_OPENMUSIC}")
 pd_add_datafile(py4pd "${PY4PD_EXAMPLES_OBJECTS}")
 pd_add_datafile(py4pd "${PY4PD_HELPS}")
+pd_add_datafile(py4pd "${CMAKE_CURRENT_SOURCE_DIR}/Sources/py4pd.c")
 
 target_include_directories(py4pd PUBLIC ${PYTHON_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC "/usr/include/python${PYVERSION}")
