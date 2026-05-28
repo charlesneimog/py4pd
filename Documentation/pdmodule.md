@@ -66,7 +66,7 @@ Where:
 - Any other selector (example: `set`, `foo`, `bar`) → calls `in_N_set(self, args: list)`
   - the single argument is a Python `list` of the message atoms (same conversion rules)
 
-### Methods must return `None`
+``` warning "Methods must **always** return `None`"
 
 If your method returns anything other than `None`, `py4pd` will print an error in Pd.
 Use `self.out(...)` to output values.
@@ -79,14 +79,14 @@ In `__init__`, set `self.inlets` and `self.outlets`.
 
 These attributes can be:
 
-### 1) An integer (count)
+* 1) An integer (count)
 
 ```python
 self.inlets = 2
 self.outlets = 3
 ```
 
-### 2) A single string (one inlet/outlet)
+* 2) A single string (one inlet/outlet)
 
 Use the module constants:
 

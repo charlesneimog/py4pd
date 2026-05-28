@@ -3,97 +3,96 @@ site_name: py4pd
 docs_dir: Documentation
 copyright: Copyright &copy 2023 | Charles K. Neimog | University of São Paulo.
 theme:
-  custom_dir: Documentation/overrides
-  logo_dark_mode: assets/py4pd-dark-home.svg
-  logo_light_mode: assets/py4pd-light-home.svg
-  favicon: assets/py4pd-favicon.png
-  logo: assets/py4pd-favicon.svg
-  name: material
-  icon:
-    custom: [my-icons/pd, my-icons/pdobj]
-  features:
-    - navigation.top
-    - navigation.sections
-    - navigation.instant
-    - navigation.tracking
-    - navigation.prune
-    - content.code.annotate
-    - navigation.instant
-    - navigation.tracking
-    - navigation.prune
-    - content.code.annotate
-    - content.code.copy
-    - navigation.tabs
-    - navigation.tabs.sticky
-    - search.highlight
-    - search.suggest
-    - toc.integrate
-    - toc.follow
-    - navigation.instant
-    - header.autohide
+    custom_dir: Documentation/overrides
+    logo_dark_mode: assets/py4pd-dark-home.svg
+    logo_light_mode: assets/py4pd-light-home.svg
+    favicon: assets/py4pd-favicon.png
+    logo: assets/py4pd-favicon.svg
+    name: material
+    icon:
+        custom: [my-icons/pd, my-icons/pdobj]
+    features:
+        - navigation.top
+        - navigation.sections
+        - navigation.instant
+        - navigation.tracking
+        - navigation.prune
+        - content.code.annotate
+        - navigation.instant
+        - navigation.tracking
+        - navigation.prune
+        - content.code.annotate
+        - content.code.copy
+        - navigation.tabs
+        - navigation.tabs.sticky
+        - search.highlight
+        - search.suggest
+        - toc.integrate
+        - toc.follow
+        - navigation.instant
+        - header.autohide
+        - attr_list
+        - md_in_html
+        - pymdownx.superfences
+        - footnotes
+    palette:
+        - media: (prefers-color-scheme)
+          toggle:
+              icon: material/brightness-auto
+              name: Switch to light mode
+        - media: "(prefers-color-scheme: light)"
+          scheme: default
+          primary: white
+          accent: dark blue
+          toggle:
+              icon: material/lightbulb
+              name: Switch to dark mode
+        - media: "(prefers-color-scheme: dark)"
+          scheme: slate
+          accent: light blue
+          primary: black
+          toggle:
+              icon: material/lightbulb-outline
+              name: Switch to light mode
+markdown_extensions:
+    - pymdownx.superfences
+    - pymdownx.tabbed:
+          alternate_style: true
+    - pymdownx.emoji:
+          emoji_index: !!python/name:material.extensions.emoji.twemoji
+          emoji_generator: !!python/name:material.extensions.emoji.to_svg
+          options:
+              custom_icons: [Documentation/overrides/.icons]
+    - pymdownx.extra
+    - pymdownx.details
+    - pymdownx.inlinehilite
+    - pymdownx.tasklist
+    - pymdownx.magiclink
+    - pymdownx.highlight
+    - abbr
+    - toc
     - attr_list
     - md_in_html
-    - pymdownx.superfences
-    - footnotes
-  palette:
-    - media: (prefers-color-scheme)
-      toggle:
-        icon: material/brightness-auto
-        name: Switch to light mode
-    - media: '(prefers-color-scheme: light)'
-      scheme: default
-      primary: white
-      accent: dark blue
-      toggle:
-        icon: material/lightbulb
-        name: Switch to dark mode
-    - media: '(prefers-color-scheme: dark)'
-      scheme: slate
-      accent: light blue
-      primary: black
-      toggle:
-        icon: material/lightbulb-outline
-        name: Switch to light mode
-markdown_extensions:
-  - pymdownx.superfences
-  - pymdownx.tabbed:
-      alternate_style: true
-  - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
-      options:
-        custom_icons: [Documentation/overrides/.icons]
-  - pymdownx.extra
-  - pymdownx.details
-  - pymdownx.inlinehilite
-  - pymdownx.tasklist
-  - pymdownx.magiclink
-  - pymdownx.highlight
-  - abbr
-  - toc
-  - attr_list
-  - md_in_html
-  - admonition
-  - pymdownx.details
+    - admonition
+    - pymdownx.details
 repo_url: https://github.com/charlesneimog/py4pd
 plugins: [search, social]
 extra_css: [extra/extra.css]
 nav:
-  - Home: index.md
-  - Installation: setup.md
-  - Hello World: hello.md
-  - Pure Data API: puredata-api.md
-  # - Creating Objects: pdmodule.md
-  - Objects with py4pd: openmusic.md
-  - libraries.md
+    - Home: index.md
+    - Installation: setup.md
+    - Hello World: hello.md
+    - Creating Python Pd Objects: puredata-api.md
+    - Objects with py4pd: openmusic.md
+    - libraries.md
 extra:
-  analytics:
-    provider: google
-    property: G-E81RWT6R4V
-  social:
-    - icon: fontawesome/brands/instagram
-      link: https://www.instagram.com/charlesneimog/
-    - icon: fontawesome/brands/github
-      link: https://www.github.com/charlesneimog/
-    - icon: fontawesome/solid/paper-plane
-      link: mailto:charlesneimog@outlook.com
+    analytics:
+        provider: google
+        property: G-E81RWT6R4V
+    social:
+        - icon: fontawesome/brands/instagram
+          link: https://www.instagram.com/charlesneimog/
+        - icon: fontawesome/brands/github
+          link: https://www.github.com/charlesneimog/
+        - icon: fontawesome/solid/paper-plane
+          link: mailto:charlesneimog@outlook.com
