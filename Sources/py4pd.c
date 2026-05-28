@@ -11,7 +11,7 @@
 
 #define PY4PD_MAJOR_VERSION 1
 #define PY4PD_MINOR_VERSION 2
-#define PY4PD_MICRO_VERSION 2
+#define PY4PD_MICRO_VERSION 3
 
 #if !defined(NDEBUG)
 #define PY4PD_DEBUG(func) printf("%s\n", func)
@@ -873,6 +873,28 @@ static void pdpy_outlets(t_pdpy_pdobj *x) {
 // ─────────────────────────────────────
 static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
     PY4PD_DEBUG(__FUNCTION__);
+
+    t_symbol *dir = canvas_getcurrentdir();
+    PyGILState_STATE gstate = PyGILState_Ensure();
+    PyObject *sys_path = PySys_GetObject("path");
+    if (sys_path) {
+        PyObject *path = PyUnicode_FromString(dir->s_name);
+        if (path && PyList_Check(sys_path)) {
+            int exists = PySequence_Contains(sys_path, path);
+            if (exists == 0) {
+                if (PyList_Insert(sys_path, 0, path) < 0) {
+                    logpost(NULL, PD_DEBUG, "[py4pd] %s added to path", dir->s_name);
+                    pdpy_printerror(NULL);
+                }
+            } else if (exists < 0) {
+                pdpy_printerror(NULL);
+            } else {
+                logpost(NULL, PD_DEBUG, "[py4pd] %s already on path", dir->s_name);
+            }
+        }
+        Py_XDECREF(path);
+    }
+
     t_class *pdobj = pdpyobj_get_pdclass(s->s_name);
     if (pdobj == NULL) {
         pd_error(NULL, "[%s] t_class for %s is invalid, please report!", s->s_name, s->s_name);
@@ -883,9 +905,6 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
     x->clocks_size = 0;
     x->clocks = NULL;
     x->dspfunction = NULL;
-
-    // A partir daqui usamos API Python: garantir GIL
-    PyGILState_STATE gstate = PyGILState_Ensure();
 
     PyObject *pdmod = PyImport_ImportModule("puredata");
     if (pdmod == NULL) {
@@ -928,6 +947,9 @@ static void *pdpy_new(t_symbol *s, int argc, t_atom *argv) {
 
     pdpy_inlets(x);
     pdpy_outlets(x);
+
+    x->outobjptr = pdpy_createoutputptr();
+    x->canvas = canvas_getcurrent();
 
     x->outobjptr = pdpy_createoutputptr();
     x->canvas = canvas_getcurrent();
@@ -2781,7 +2803,7 @@ void py4pd_fix_sys_pythonpath(void) {
     if (PyUnicode_Check(new_exe)) {
         const char *path_cstr = PyUnicode_AsUTF8(new_exe);
         if (path_cstr) {
-            logpost(NULL, 3, "Python Executable: %s", path_cstr);
+            logpost(NULL, 3, "[py4pd] Python Executable: %s", path_cstr);
         }
     }
 
