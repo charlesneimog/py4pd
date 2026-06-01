@@ -1,0 +1,30 @@
+import puredata as pd
+
+
+class Gain(pd.NewObject):
+    name = "gain~"
+
+    def __init__(self, args):
+        self.inlets = (pd.SIGNAL, pd.DATA)
+        self.outlets = pd.SIGNAL
+        self.gain = float(args[0]) if args else 1.0
+        pd.post("Object created with", len(args), "arguments")
+
+    def in_1_float(self, f):
+        self.gain = max(0.0, f)
+
+    def in_1_list(self, args):
+        if args:
+            self.gain = max(0.0, float(args[0]))
+
+    def dsp(self, sr, block_size, audio_n_in):
+        pd.post("dsp called")
+        pd.post(type(sr))
+        pd.post(type(block_size))
+        pd.post(type(audio_n_in))
+        return True
+
+    def perform(self, ins):
+        in_sig = ins[0]
+        g = self.gain
+        return tuple(sample * g for sample in in_sig)

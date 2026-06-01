@@ -1,0 +1,14 @@
+#N canvas 0 0 925 1132 10;
+#X declare -lib xlab;
+#X obj 28 211 gain~;
+#X obj 14 18 declare -lib xlab;
+#X obj 111 337 saf.meter~ -width 8 -height 120 -frames 20 -inchs 1;
+#X obj 28 126 osc~ 440;
+#X msg 72 165 0.2;
+#X obj 174 32 vsl 18 153 0 127 0 0 empty empty empty 0 -9 0 10 #fcfcfc #000000 #000000 0 1;
+#X obj 174 193 / 127;
+#X connect 0 0 2 0;
+#X connect 3 0 0 0;
+#X connect 4 0 0 1;
+#X connect 5 0 6 0;
+#X connect 6 0 0 1;

@@ -82,7 +82,20 @@ nav:
     - Home: index.md
     - Installation: setup.md
     - Hello World: hello.md
-    - Creating Python Pd Objects: puredata-api.md
+    - Creating Python Pd Objects:
+          - NewObject:
+                - puredata/index.md
+                - Arrays: puredata/arrays.md
+                - Inlet: puredata/inlets.md
+                - Output: puredata/output.md
+                - Clock: puredata/clock.md
+                - Receiver: puredata/receiver.md
+                - Utils: puredata/utils.md
+                - DSP: puredata/dsp.md
+                - PIP: puredata/pip.md
+                - Libraries: puredata/libraries.md
+          - "puredata Methods":
+                - Globals: puredata/globals.md
     - Objects with py4pd: openmusic.md
     - libraries.md
 extra:

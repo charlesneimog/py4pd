@@ -1,8 +1,8 @@
-## Class: `puredata.NewObject`
+# Intro
 
 Base class for all custom Pd objects.
 
-### Instance Attributes
+## Instance Attributes
 
 | Attribute | Type | Default | Description |
 |-----------|------|---------|-------------|
@@ -21,3 +21,4 @@ class MyProcessor(pd.NewObject):
         self.outlets = 2  # two outputs
 ```
 
+---
