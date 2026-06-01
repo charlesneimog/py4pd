@@ -1,0 +1,3 @@
+mkdocs-material
+mkdocs-localsearch
+mkdocs-material[imaging]
