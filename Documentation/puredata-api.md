@@ -450,13 +450,11 @@ Signal processing callback.
 class SimpleGain(pd.NewObject):
     # ... __init__ as above ...
 
-    def perform(self, ins, outs, n):
+    # you cannot change this signature
+    def perform(self, ins):
         in_sig = ins[0]
-        out_sig = outs[0]
         g = self.gain
-        for i in range(n):
-            out_sig[i] = in_sig[i] * g
-        return n
+        return tuple(sample * g for sample in in_sig)
 ```
 
 ---
@@ -473,10 +471,11 @@ class Oscillator(pd.NewObject):
         self.outlets = (pd.SIGNAL)
         self.phase = 0.0
 
-    def dsp(self):
-        # Called when DSP graph is built
-        self.phase = 0.0
-        pd.post("DSP updated")
+    # you can not change this signature
+    def dsp(self, sr, block_size, audio_n_in):
+        pd.post(f"DSP update: sr {sr} | block: {block_size} | in {audio_n_in}")
+        return True
+
 ```
 
 ---
@@ -623,14 +622,13 @@ class pylength(pd.NewObject):
 ```python
 import puredata as pd
 
+
 class Gain(pd.NewObject):
-    name = "py.gain"
+    name = "gain~"
 
     def __init__(self, args):
-        self.inlets = 2
-        self.outlets = 1
-        self.inlet_types = [pd.SIGNAL, pd.DATA]
-        self.outlet_types = [pd.SIGNAL]
+        self.inlets = (pd.SIGNAL, pd.DATA)
+        self.outlets = pd.SIGNAL
         self.gain = float(args[0]) if args else 1.0
 
     def in_1_float(self, f):
@@ -640,13 +638,15 @@ class Gain(pd.NewObject):
         if args:
             self.gain = max(0.0, float(args[0]))
 
-    def perform(self, ins, outs, n):
+    def dsp(self, sr, block_size, audio_n_in):
+        pd.post("dsp called")
+        pd.post(f"DSP update: sr {sr} | block: {block_size} | in {audio_n_in}")
+        return True
+
+    def perform(self, ins):
         in_sig = ins[0]
-        out_sig = outs[0]
         g = self.gain
-        for i in range(n):
-            out_sig[i] = in_sig[i] * g
-        return n
+        return tuple(sample * g for sample in in_sig)
 ```
 
 ---
