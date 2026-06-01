@@ -431,10 +431,8 @@ class pyappend(pd.NewObject):
 ```python
 class SimpleGain(pd.NewObject):
     def __init__(self, args):
-        self.inlets = 2
-        self.outlets = 1
-        self.inlet_types = [pd.SIGNAL, pd.DATA]   # inlet 0: audio, inlet 1: gain
-        self.outlet_types = [pd.SIGNAL]            # outlet 0: audio
+        self.inlets = (pd.SIGNAL, pd.DATA)   # inlet 0: audio, inlet 1: gain
+        self.outlets = (pd.SIGNAL)            # outlet 0: audio
         self.gain = 1.0
 
     def in_1_float(self, f):
@@ -471,16 +469,14 @@ Override for DSP initialization.
 ```python
 class Oscillator(pd.NewObject):
     def __init__(self, args):
-        self.inlets = 1
-        self.outlets = 1
-        self.inlet_types = [pd.SIGNAL]   # frequency input
-        self.outlet_types = [pd.SIGNAL]
+        self.inlets = (pd.SIGNAL)
+        self.outlets = (pd.SIGNAL)
         self.phase = 0.0
 
     def dsp(self):
         # Called when DSP graph is built
         self.phase = 0.0
-        pd.post("DSP initialized")
+        pd.post("DSP updated")
 ```
 
 ---
