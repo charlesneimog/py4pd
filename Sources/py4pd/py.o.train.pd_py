@@ -36,6 +36,7 @@ class pytrain(pd.NewObject):
         ]
         self.trainfolder = ""
         self.irfolders = []
+        self.model_type = args[0] if args else "catboost"
         self.trainer = None
 
     def in_0_fftsize(self, args):
@@ -57,6 +58,17 @@ class pytrain(pd.NewObject):
         for arg in args:
             self.irfolders.append(arg)
 
+    def in_0_modeltype(self, args):
+        self.model_type = args[0]
+        if self.trainer is not None:
+            self.trainer.set_model_type(self.model_type)
+
+    def in_0_model_type(self, args):
+        self.in_0_modeltype(args)
+
+    def in_0_model(self, args):
+        self.in_0_modeltype(args)
+
     def in_0_analyze(self, _):
         def pdprint(value) -> None:
             self.logpost(2, value)
@@ -69,6 +81,7 @@ class pytrain(pd.NewObject):
             fft_size=self.fftsize,
             hop_size=self.hopsize,
             base_path=self.get_current_dir(),
+            model_type=self.model_type,
         )
 
         self.trainer.set_onprogress_callback(report_analyses)

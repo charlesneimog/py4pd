@@ -10,7 +10,9 @@ To access all objects contained within a library file, you must explicitly load 
 [declare -lib mylib]
 ```
 
-!!! danger "Loading the library using the library name will not work!"
+!!! warning "Always load `py4pd` first"
+    Use `declare -lib py4pd` to load `py4pd`.
+    
 
 After this declaration, all classes defined in `mylib.pd_py` become available as Pd objects.
 
