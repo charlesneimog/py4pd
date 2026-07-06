@@ -5,6 +5,7 @@
 To define a new `py4pd` object, create a subclass of `puredata.NewObject`, name the object, and finally name the script with the name + `.pd_py`. For example, `pymetro.pd_py` for the object `pymetro`. Place the file in a place where Pd can find it. 
 
 !!! Warning "Don't forget to load `py4pd` first"
+    Always use `declare -lib py4pd` to load `py4pd`.
 
 
 ### Example
