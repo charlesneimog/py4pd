@@ -13,11 +13,11 @@
 #define PY4PD_MINOR_VERSION 2
 #define PY4PD_MICRO_VERSION 3
 
-#if !defined(NDEBUG)
-#define PY4PD_DEBUG(func) printf("%s\n", func)
-#else
+// #if !defined(NDEBUG)
+// #define PY4PD_DEBUG(func) printf("%s\n", func)
+// #else
 #define PY4PD_DEBUG(func) ((void)0)
-#endif
+// #endif
 
 /*
  * Unlike Lua, Python does not support true multithreading due to the Global Interpreter Lock (GIL).
