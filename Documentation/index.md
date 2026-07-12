@@ -52,7 +52,7 @@ hide:
 
 !!! info "How to install?"
 
-    To check how to install go to [Installation](https://www.charlesneimog.com/py4pd/setup/).
+    To check how to install go to [Installation](https://charlesneimog.github.io/py4pd/setup/).
 
 <hr>
 
