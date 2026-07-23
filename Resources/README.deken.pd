@@ -1,4 +1,4 @@
-#N canvas 0 0 576 542 12;
+#N canvas 0 0 1112 1131 12;
 #X obj 18 331 py4pd;
 #X obj 23 453 bng 23 250 50 0 nutelaOS akdkabdk empty 0 -10 0 12 #dfdfdf #000000 #000000;
 #X obj 23 483 bng 23 250 50 0 linux adjhkahdk empty 0 -10 0 12 #dfdfdf #000000 #000000;
@@ -33,4 +33,5 @@
 #X msg 211 253 charlesneimog.github.io/py4pd;
 #X text 8 98 With Python in Pd you can generate scores \, work with AI \, use lots of Audio Analysis tools and OpenMusic functions with libraries like om_py \, music21 \, neoscore and others. It also brings the feature to write Pd externals in pure Python code \, what allows to use all the big Python enviroment in PureData., f 71;
 #X text 63 330 <-- IMPORTANT: If this object failed to load \, Python is not installed in your system. This version uses python 3.14 and you CAN'T use any other version.;
+#X obj 175 385 cnv 20 1 1 empty empty Python\ 3.14 20 12 0 12 #ffffff #ff0400 0;
 #X connect 11 0 3 0;

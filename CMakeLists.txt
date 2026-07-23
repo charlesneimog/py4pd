@@ -98,6 +98,8 @@ pd_add_datafile(py4pd "${PY4PD_OBJECTS_OPENMUSIC}")
 pd_add_datafile(py4pd "${PY4PD_EXAMPLES_OBJECTS}")
 pd_add_datafile(py4pd "${PY4PD_HELPS}")
 pd_add_datafile(py4pd "${CMAKE_CURRENT_SOURCE_DIR}/Sources/py4pd.c")
+pd_add_datafile(py4pd "${CMAKE_CURRENT_SOURCE_DIR}/Resources/README.deken.pd")
+pd_add_datafile(py4pd "${CMAKE_CURRENT_SOURCE_DIR}/Resources/py4pd-help.pd")
 
 target_include_directories(py4pd PUBLIC ${PYTHON_INCLUDE_DIR})
 target_include_directories(py4pd PUBLIC "/usr/include/python${PYVERSION}")

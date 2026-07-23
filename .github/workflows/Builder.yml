@@ -10,7 +10,7 @@ on:
                 default: false
 env:
     LIBNAME: py4pd
-    LIBVERSION: "1.2.3"
+    LIBVERSION: "1.2.4"
 permissions:
     contents: write
 jobs:
